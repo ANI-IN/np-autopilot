@@ -1352,3 +1352,71 @@ party has seen answered.** That is the real test, and it comes after B9.
 ## 2026-09-09 19:53:18Z — validate
 
 - validate: 0 FAIL, 19 WARN, 8/16 categories exercised, 4694 nodes, 34218 edges
+
+## 2026-09-09 19:57:06Z — 03_resolve
+
+- Nodes 4619 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:57:06Z — 03_resolve
+
+- Nodes 4619 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:59:20Z — 03_resolve
+
+- Nodes 4619 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:59:21Z — 03_resolve
+
+- Nodes 4619 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:59:29Z — 05_render_html
+
+- graph.html 3125 KB | rendered 2777 nodes (1847 connected, 930 isolated) and 3314 edges
+
+## 2026-09-09 19:59:30Z — validate
+
+- validate: 0 FAIL, 19 WARN, 8/16 categories exercised, 4694 nodes, 34218 edges
+
+---
+
+## 2026-09-10 — five fresh eval questions
+
+**Written against the finished graph, on shapes it was not designed around,
+covering staffing and coverage. Written before running, not tuned afterwards.**
+
+| set | score |
+|---|---|
+| original 22 | **20/22 = 91%** |
+| **fresh 5, first run** | **4/5 = 80%** |
+| fresh 5, after a query fix | 5/5 |
+| combined | 25/27 = 93% |
+
+**The fresh set scored 11 points worse on first run, as predicted.**
+
+### Q24 failed, and it was my query, not the graph
+
+*"Which domains are we most exposed on — where one person teaches everything?"*
+returned nothing. The graph holds the answer: **EM has exactly one instructor**
+(Sreeram Murkuri), Security has two. My implementation carried an arbitrary
+`>= 2 taught modules` filter, which excluded EM — the single most exposed domain,
+and the whole point of the question.
+
+**The question was not changed. The query defect it exposed was fixed**, and both
+scores are recorded above so the difference is visible.
+
+**This is the second time an arbitrary threshold I chose has hidden a correct
+answer** — the first was the module `>= 2` cross-file rule. Worth stating as a
+pattern: a threshold introduced for noise control silently becomes a filter on
+truth, and only an unrehearsed question finds it.
+
+### What the fresh five actually exercised
+
+- **Q23** ranked Security instructors by recency with the decline window —
+  `Bilal Zuberi`, last taught 2026-09-06, declined 3 of 29.
+- **Q25** program → domain in reverse.
+- **Q26** decline counts alongside `still_taught`, confirming availability and
+  delivery coexist: `Hiro Onizuka` declined 9 and still taught.
+- **Q27** the most recent class in the corpus: `Christopher Stires`, *Live
+  Behavioral Interview Patterns*, 2026-09-09.
+
+**Still 0 fabrications across all 27.** The four unanswerables remain 4/4.

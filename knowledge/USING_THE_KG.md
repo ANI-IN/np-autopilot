@@ -321,3 +321,44 @@ must not present a scheduled class as teaching history.
 **A staffing answer must still lead with what is absent.** For a domain with no
 `teaches` edges, say so first, before offering any `expert_in` name — those are
 92% Google Form responses.
+
+---
+
+## Name resolution: ambiguity is the default return
+
+Three separate bugs had one shape — several plausible targets, one chosen with no
+signal to the caller:
+
+| name | resolved to | should have been |
+|---|---|---|
+| `Agentic AI` | one of four Agentic AI domains | ambiguous (caught pre-ship) |
+| `ML` | `ML Switch-up (Adv ML)` by prefix | ambiguous — 5 domains contain the token |
+| `Data Science` | `AI Data Science Switch-up (DS 2.0)` | `Data Science (IP course)` |
+
+**One rule now, in `pipeline/lib/resolve.py`, used everywhere.**
+
+Stages run most-specific first and **stop at the first stage that yields any
+candidate**. A looser later stage never rescues an ambiguous earlier one — that
+would be picking.
+
+1. exact
+2. paren-stripped — `Data Science (IP course)` matches `data science`
+3. **token** — for a single-token query only, whole-word match. `ML` appears as a
+   token in five domain names, so it stops here as ambiguous rather than being
+   caught by prefix.
+4. prefix
+5. substring
+
+**More than one candidate at any stage returns `Ambiguous`, never
+`candidates[0]`.** A caller must either get exactly one answer or handle the
+ambiguity by asking. `test_ambiguity_is_returned_not_guessed` pins this.
+
+**Aliases are a different mechanism and "no match" is their expected result** — an
+alias exists precisely because the string does not resolve. The guard on an alias
+is the **sibling-domain test** (`resolve.siblings`, word-boundary token sets, never
+substrings). All 17 pending aliases pass it; `ML` and `Product Management` do not
+and stay unjoined.
+
+Two of the 17 are **redundant**: `System Design` and `DSA` already resolve
+cleanly without an alias, to the same target. Confirming them is harmless but
+unnecessary.
