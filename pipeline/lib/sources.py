@@ -159,3 +159,64 @@ SHEET_DOMAIN = {
     "M_SME_App. GenAI": None,
     "M_SME_Adv.GenAI": None,
 }
+
+
+# ---------------------------------------------------------------------------
+# TEACHES — module <-> instructor pairings, added 2026-09-10.
+#
+# The first build emitted 6 teaches edges from one sheet. Doc 05's other cited
+# example, "Suresh Venkatesan -> SQL Programming", turned out to be REAL and
+# sitting in a sheet no scan had ever opened. Ten sources exist; all are below.
+#
+# spec: (rel, sheet, header_row_1based, module_col_0based, [instructor_cols], domain_hint)
+# instructor columns are ordered: the first is primary, the rest are backups.
+# ---------------------------------------------------------------------------
+_DM = "02-curriculum/Data and Management.xlsx"
+_AG = "03-instructors/AgenticAI Instructors Training Plan.xlsx"
+_RCM = "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx"
+_UP = "01-workflows/UpLevel Schedule Structure.xlsx"
+
+TEACHES_GRIDS = [
+    (_DM, "Data  Instructors", 1, 0, [1, 2, 3], "DABA"),
+    (_DM, "Management  Instructors", 1, 0, [1, 2, 3, 4], "TPM"),
+    (_AG, "2.0 US Module<>SME", 2, 0, [1, 2, 3, 4, 5, 6], None),
+    (_AG, "WIP2.0 IND Module<>SME", 2, 0, [1, 2, 3, 4, 5, 6], None),
+    (_AG, "M_SME_App. Agentic AI", 2, 0, [1, 2, 3, 4, 5, 6], None),
+    (_AG, "IND_M_SME_Agentic AI", 2, 0, [1, 2, 3, 4, 5, 6], None),
+    (_AG, "M_SME_App. GenAI", 2, 0, [1, 2, 3, 4, 5, 6], None),
+    (_AG, "M_SME_Adv.GenAI", 2, 0, [1, 2, 3, 4, 5, 6], None),
+    (_AG, "Preferred SMEs for Each Topic", 2, 0, [1], None),
+    (_AG, "Preferred SMEs for Each Topic", 2, 5, [6], None),   # second block
+    (_RCM, "Instructor(FullStack)", 1, 0, [1, 2, 3, 4], "Fullstack"),
+    (_UP, "Resource Collections for FT Mas", 1, 0, [1], None),
+    (_UP, "Resource Collections for Fast T", 1, 1, [2], None),
+]
+
+#: instructor -> multi-valued module list, split on the given separator
+TEACHES_LISTS = [
+    (_DM, "Instructor Details", "Full Name", "Topic expertise", ","),
+    (_AG, "WIP_Training_Status", "Instructor", "Trained Modules", "/"),
+]
+
+# ---------------------------------------------------------------------------
+# UpLevel Schedule Structure — 30 sheets, entered the corpus mid-analysis and
+# went unscanned until 2026-09-10. 26 of its sheets are per-domain cohort
+# schedules sharing one schema, and the SHEET NAME is the domain. The
+# "Topic (For)" column is the best module evidence in the corpus.
+# ---------------------------------------------------------------------------
+UPLEVEL_DOMAIN_SHEETS = {
+    "Machine Learning": "Machine Learning (IP course)", "PM": "PM", "TPM": "TPM",
+    "PM Updates": "PM", "TPM Updates": "TPM", "EM-Regular": "EM", "EM-Upgrade": "EM",
+    "iOS": "iOS", "Fullstack ": "Fullstack", "Android": "Android", "Backend": "Backend",
+    "Frontend": "Frontend", "Cloud": "Cloud", "Embedded": "Embedded",
+    "Test Engineering": "Test Engineering", "Test Engineering DSA": "Test Engineering",
+    "SRE": "SRE", "Security Engineering": "Security",
+    "Security Engineering SYSD": "Security", "Early Engineering": "Early Engineering",
+    "Coding Pathway": "Coding Pathway", "System Design Pathway": "System Design Pathway",
+    # Deliberately unmapped: no owner-sheet domain corresponds.
+    " Masterclass": None, "Fast Track Masterclass": None, "India Cohort": None,
+    "New DSA - Easier Version": None, "Domain Resource Collections": None,
+    "Backend Domain Only (WIP)": None,
+    "Resource Collections for FT Mas": None, "Resource Collections for Fast T": None,
+}
+UPLEVEL_TOPIC_COLUMN = "Topic (For)"

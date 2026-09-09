@@ -78,3 +78,68 @@ all 92 workflows share one `File` node, so it is a degree-92 hub.
 `person`, `instructor` and `module` have no expected count. **25 of 75 corpus
 files have never been read by an entity scan**, so any figure is a floor over
 a subset. Never quote one as a total.
+
+---
+
+## What the edges mean — and what they do NOT
+
+### `contains` (program → module) is INFERRED, not observed
+
+**No file in this corpus pairs a program with a module on a row.** Not one.
+Every `contains` edge is derived `program → domain → module`, because the
+curriculum sheet name *is* a domain, and every edge carries `inferred: true`
+with its `join_basis`. Read 397 edges as 397 inferences, not 397 observations.
+
+**212 of 484 modules carry no `contains` edge at all.** They come from sheets
+with no owner-sheet domain — the `M_SME_*` Agentic AI pathway sheets and the
+instructor-expertise lists. They are unattached **on purpose**: a wrong join is
+worse than a missing one (R12), and no domain in the 42 corresponds to them.
+An unattached module is not a defect to fix.
+
+### `depends_on` is ZERO, and no workflow-to-workflow reasoning is possible
+
+Every workflow body was searched. One `N.M`-shaped hit, and it is a false
+positive — the string `1.5-2 hrs` in an Effort line. Zero references by workflow
+name. **There is no dependency evidence in this corpus.** Doc 08 Q5's `3.6 → 3.1`
+example is withdrawn.
+
+**Consequence, stated plainly: component A is 92 workflows pointing at 16 themes
+and nothing else.** No ordering, no prerequisites, no "what breaks if this stalls".
+Do not answer a sequencing question about workflows from this graph — the edges
+that would support it do not exist. `workflow_owned_by` is the only edge that
+will ever give component A internal structure, and it is filled by hand.
+
+### `covers` joins 28 of 42 programs. These 14 have NO domain
+
+Unjoined because they need spell-correction or abbreviation expansion, which R12
+forbids. **They are not domain-less products** — do not report them that way:
+
+- `Advanced Machine Learning Program (with Agentic AI)`
+- `Cloud Architect Interview Preparation Program`
+- `Data Analyst Businees Analyst EdgeUP KYP`
+- `Data Analyst Business Analyst Interview Preparation Program`
+- `Enginnering Mnagement EdgeUP KYP`
+- `FastTrack_ (Self Paced) Ad. Machine Learning(with Agentic AI) KYP`
+- `Flagship Machine Learning Program (with Agentic AI)`
+- `Forward Deployed Engineering Level-Up Program_ KYP - 2026`
+- `Forward Deployed Engineering[FDE] Course _ KYP - 2026`
+- `Forward Deployed Engineering[FDE] Upskilling Course _ KYP - 2026`
+- `Product Management EdgeUP KYP`
+- `Site Reliability Engineering EdgeUP KYP`
+- `Site Reliability Engineering Interview Preparation Program`
+- `v2 [New] AI Data Science Program`
+
+Each has an obvious human-readable domain (SRE, PM, EM, DABA, ML) that the
+corpus does not spell the same way twice. The join is left undone rather than
+forced.
+
+### Instructors: the graph holds a hiring funnel, the render does not
+
+`instructor` nodes carry `pipeline_status`. Only `roster` and `hired` are
+renderable; `in_pipeline`, `rejected` and `lapsed` are tagged `sensitive: true`
+and **excluded from the rendered graph** — 1,842 nodes, including 255 hiring
+rejections about named external people. They remain in `graph.json` so coverage
+can answer funnel questions. **Never surface a rejection to a general audience.**
+
+Counting the funnel as its outcome is how the reference implementation published
+773 instructors against a real 351.

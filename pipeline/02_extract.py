@@ -304,6 +304,112 @@ def extract_people(root: Path, out: list, rejected: list, blanks: list) -> None:
     wb.close()
 
 
+def extract_pairings(root: Path, out: list, rejected: list, pairs: list) -> None:
+    """module <-> instructor pairings, and modules from the UpLevel schedules.
+
+    Both feed relations that pass 4 turns into edges. Modules found here are
+    added as module candidates with their domain, because a module named only in
+    a pairing sheet is still a module.
+    """
+    # --- grids: module in one column, ranked instructors across others ---
+    for rel, sheet, hrow, mcol, icols, dom in SRC.TEACHES_GRIDS:
+        path = root / rel
+        if not path.exists():
+            continue
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        if sheet not in wb.sheetnames:
+            wb.close()
+            continue
+        ws = wb[sheet]
+        current = None
+        for rownum, row in enumerate(ws.iter_rows(min_row=hrow + 1, values_only=True),
+                                     start=hrow + 1):
+            def c(i):
+                return str(row[i]).strip() if i < len(row) and row[i] is not None else ""
+            if c(mcol):
+                current = c(mcol)
+            if not current or reject_reason(current, T_MODULE):
+                continue
+            prov = {"origin": "corpus", "file": rel, "sheet": sheet, "row": rownum}
+            out.append({"type": T_MODULE, "raw": current, "norm": norm(current),
+                        "sheet": sheet, "domain": dom, "sources": [prov]})
+            for rank, ic in enumerate(icols):
+                name = c(ic)
+                if not name:
+                    continue
+                # cells like "Robert/Shelby/" or "Ashish Kaila / JD Kelby"
+                for piece in [x.strip() for x in name.split("/") if x.strip()]:
+                    why = reject_reason(piece, T_INSTRUCTOR)
+                    if why:
+                        rejected.append({"type": T_INSTRUCTOR, "raw": piece,
+                                         "reason": why, "source": prov})
+                        continue
+                    out.append({"type": T_INSTRUCTOR, "raw": piece, "norm": norm(piece),
+                                "pipeline_status": "roster", "sources": [prov]})
+                    pairs.append({"module": norm(current), "instructor": norm(piece),
+                                  "rank": rank, "domain": dom, "source": prov})
+        wb.close()
+
+    # --- lists: one instructor, several modules in a delimited cell ---
+    for rel, sheet, namecol, modcol, sep in SRC.TEACHES_LISTS:
+        path = root / rel
+        if not path.exists():
+            continue
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        if sheet not in wb.sheetnames:
+            wb.close()
+            continue
+        ws = wb[sheet]
+        hrow, _, hdr = header_row(ws, namecol)
+        if hrow is None or modcol not in (hdr or []):
+            wb.close()
+            continue
+        ni, mi = hdr.index(namecol), hdr.index(modcol)
+        for rownum, row in enumerate(ws.iter_rows(min_row=hrow + 1, values_only=True),
+                                     start=hrow + 1):
+            def c(i):
+                return str(row[i]).strip() if i < len(row) and row[i] is not None else ""
+            name, mods = c(ni), c(mi)
+            if not name or not mods or reject_reason(name, T_INSTRUCTOR):
+                continue
+            prov = {"origin": "corpus", "file": rel, "sheet": sheet, "row": rownum}
+            for m in [x.strip() for x in mods.replace("\n", sep).split(sep) if x.strip()]:
+                if reject_reason(m, T_MODULE):
+                    continue
+                out.append({"type": T_MODULE, "raw": m, "norm": norm(m),
+                            "sheet": sheet, "domain": None, "sources": [prov]})
+                pairs.append({"module": norm(m), "instructor": norm(name),
+                              "rank": 0, "domain": None, "source": prov})
+
+        wb.close()
+
+    # --- UpLevel per-domain cohort schedules: Topic (For) is the module ---
+    path = root / "01-workflows/UpLevel Schedule Structure.xlsx"
+    if path.exists():
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        for sheet, dom in SRC.UPLEVEL_DOMAIN_SHEETS.items():
+            if not dom or sheet not in wb.sheetnames:
+                continue
+            ws = wb[sheet]
+            hrow, hcol, _ = header_row(ws, SRC.UPLEVEL_TOPIC_COLUMN)
+            if hrow is None:
+                continue
+            for rownum, row in enumerate(ws.iter_rows(min_row=hrow + 1, values_only=True),
+                                         start=hrow + 1):
+                v = row[hcol] if hcol < len(row) else None
+                if v is None or not str(v).strip():
+                    continue
+                raw = str(v).strip()
+                if reject_reason(raw, T_MODULE):
+                    continue
+                out.append({"type": T_MODULE, "raw": raw, "norm": norm(raw),
+                            "sheet": sheet, "domain": dom,
+                            "sources": [{"origin": "corpus",
+                                         "file": "01-workflows/UpLevel Schedule Structure.xlsx",
+                                         "sheet": sheet, "row": rownum}]})
+        wb.close()
+
+
 def extract_programs(root: Path, out: list) -> None:
     for pdf in sorted((root / "04-programs").glob("*.pdf")):
         rel = f"04-programs/{pdf.name}"
@@ -347,6 +453,8 @@ def main() -> int:
     extract_slack_grid(root, cands, rejected)
     extract_people(root, cands, rejected, blanks)
     extract_programs(root, cands)
+    pairs: list = []
+    extract_pairings(root, cands, rejected, pairs)
     for rel, sheet, col in SRC.INSTRUCTOR_SOURCES:
         scan_column(root, rel, sheet, col, T_INSTRUCTOR, cands, rejected, missing)
     for rel, sheet, col in SRC.MODULE_SOURCES:
@@ -407,6 +515,18 @@ def main() -> int:
     print()
 
     print("-" * 78)
+    print("MODULE <-> INSTRUCTOR PAIRINGS EXTRACTED")
+    print("-" * 78)
+    ps = defaultdict(int)
+    for pr in pairs:
+        ps[f"{pr['source']['file'].split('/')[-1][:34]}!{pr['source']['sheet']}"] += 1
+    for k in sorted(ps, key=lambda x: -ps[x]):
+        print(f"  {ps[k]:>5}  {k}")
+    print(f"  {len(pairs):>5}  TOTAL raw pairs "
+          f"({len({(p['module'], p['instructor']) for p in pairs})} distinct)")
+    print()
+
+    print("-" * 78)
     print("PROVENANCE COVERAGE")
     print("-" * 78)
     with_prov = sum(1 for c in cands if c.get("sources"))
@@ -443,6 +563,7 @@ def main() -> int:
     CANDIDATES.write_text(json.dumps(
         {"built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
          "source": manifest["source"], "candidates": cands,
+         "teaches_pairs": pairs,
          "blank_identifiers": blanks}, indent=1), encoding="utf-8")
     REJECTIONS.write_text(json.dumps(
         {"built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

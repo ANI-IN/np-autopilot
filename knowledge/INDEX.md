@@ -19,7 +19,7 @@ count here comes from `graph.json`.**
 > Until pass 0 runs, every count below is over what one person happened to
 > export by hand, and no statement about what Drive contains is supported.
 
-- Built: `2026-09-09T18:24:10+00:00`
+- Built: `2026-09-09T18:39:05+00:00`
 - Taxonomy version: `2`
 - Source: `local-folder`
 
@@ -32,10 +32,10 @@ count here comes from `graph.json`.**
 | `person` | 43 | —  (floor; coverage incomplete) |
 | `domain` | 42 | 42 |
 | `program` | 42 | 42 |
-| `module` | 172 | —  (floor; coverage incomplete) |
-| `instructor` | 3411 | —  (floor; coverage incomplete) |
+| `module` | 484 | —  (floor; coverage incomplete) |
+| `instructor` | 3486 | —  (floor; coverage incomplete) |
 | `file` | 0 | 74 |
-| **total** | **3892** | |
+| **total** | **4279** | |
 
 ## Edges
 
@@ -48,10 +48,10 @@ count here comes from `graph.json`.**
 | `supported_by` | 58 |
 | `delivered_by` | 43 |
 | `covers` | 28 |
-| `contains` | 214 |
-| `teaches` | 6 |
-| `sourced_from` | 6813 |
-| **total** | **7309** |
+| `contains` | 397 |
+| `teaches` | 694 |
+| `sourced_from` | 15656 |
+| **total** | **17023** |
 
 ## Coverage caveat
 

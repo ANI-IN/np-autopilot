@@ -7,12 +7,284 @@ proposed_merges:
   possible_match: Harsha
   similarity: 0.706
   applied: false
+  basis: string similarity
   reason_not_applied: fuzzy matching proposes only; a human confirms in people.yaml
 - candidate: Harsha
   possible_match: Harsh Arora
   similarity: 0.706
   applied: false
+  basis: string similarity
   reason_not_applied: fuzzy matching proposes only; a human confirms in people.yaml
+- candidate: Aayush Jagdish Singh
+  possible_match: Aayush Singh
+  similarity: 0.75
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Abhinav Kumar Maurya
+  possible_match: Abhinav Maurya
+  similarity: 0.824
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Abhinav Suraj Reddy Tummala
+  possible_match: Abhinav Suraj Tummala
+  similarity: 0.875
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Aditya Milind Rane
+  possible_match: Aditya Rane
+  similarity: 0.759
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Ajay Babu P
+  possible_match: Ajay P
+  similarity: 0.706
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Akansh Kumar Rai
+  possible_match: Akansh Rai
+  similarity: 0.769
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Amila Ariyawansa
+  possible_match: Amila Shamika Ariyawansa
+  similarity: 0.8
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Anand Kumar Kotriwal
+  possible_match: Anand kotriwal
+  similarity: 0.824
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Anuj Kumar Soni
+  possible_match: Anuj Soni
+  similarity: 0.75
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Arun Kumar Narayanan
+  possible_match: Arun Narayanan
+  similarity: 0.824
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Brendan E Gavin
+  possible_match: Brendan Gavin
+  similarity: 0.929
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Dan "Darcy" Li
+  possible_match: Dan Li
+  similarity: 0.6
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Daniel Ferreira
+  possible_match: Daniel Ribeiro Ferreira
+  similarity: 0.789
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Dharmendra Kripashankar Mishra
+  possible_match: Dharmendra Mishra
+  similarity: 0.723
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Dhruvil Dhiren Karani
+  possible_match: Dhruvil Karani
+  similarity: 0.8
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Dylan Daniels
+  possible_match: Dylan David Daniels
+  similarity: 0.812
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Edgar Martinez Rico
+  possible_match: Edgar Rico
+  similarity: 0.69
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Ethel Shiqi Zhang
+  possible_match: Ethel Zhang
+  similarity: 0.786
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Gaurav Kumar Rai
+  possible_match: Gaurav Rai
+  similarity: 0.769
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Hardik Gupta
+  possible_match: Hardik Lalit Gupta
+  similarity: 0.8
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Harish Kumar Verma
+  possible_match: Harish Verma
+  similarity: 0.8
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Harjot Pahwa
+  possible_match: Harjot Singh Pahwa
+  similarity: 0.8
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Harry Yuheng Zhang
+  possible_match: Harry Zhang
+  similarity: 0.759
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Henry Agbaeze
+  possible_match: Henry Onyecherelam Agbaeze
+  similarity: 0.667
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Jitesh Harinarayan Pande
+  possible_match: Jitesh Pande
+  similarity: 0.667
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Larry Asante
+  possible_match: Larry Boateng Asante
+  similarity: 0.75
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Mahmoud (Reza) Mohammadi
+  possible_match: Mahmoud Mohammadi
+  similarity: 0.829
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Marvin (Kyungtae) Kim
+  possible_match: Marvin Kim
+  similarity: 0.645
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Milad Amir Toutounchian
+  possible_match: Milad Toutounchian
+  similarity: 0.878
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Mohsen Karimzadeh Kiskani
+  possible_match: Mohsen Kiskani
+  similarity: 0.718
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: NISHANT MEHTA
+  possible_match: Nishant Sanjay Mehta
+  similarity: 0.788
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Nitesh Gajanan Nikhare
+  possible_match: Nitesh Nikhare
+  similarity: 0.778
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Priyal Bharat Doshi
+  possible_match: priyal doshi
+  similarity: 0.774
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Rahul Dubey
+  possible_match: Rahul Rajendra Dubey
+  similarity: 0.71
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Rutvik Acharya
+  possible_match: Rutvik Anil Acharya
+  similarity: 0.848
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Sachin Chaudhari
+  possible_match: Sachin Dadasaheb Chaudhari
+  similarity: 0.762
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Satya Pattnaik
+  possible_match: Satya Prakash Pattnaik
+  similarity: 0.778
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Saurabh Ravindra Shivgunde
+  possible_match: Saurabh Shivgunde
+  similarity: 0.791
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Shivam Nalin Patel
+  possible_match: Shivam Patel
+  similarity: 0.8
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Shoaibakhtar Dawood Shaikh
+  possible_match: shoaibakhtar shaikh
+  similarity: 0.844
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Shubham Agrawal
+  possible_match: Shubham Ajay Agrawal
+  similarity: 0.857
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Sindhu Dua
+  possible_match: Sindhu Singh Dua
+  similarity: 0.769
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Sunil Mathai Mathew
+  possible_match: Sunil Mathew
+  similarity: 0.774
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Suraj Chopade
+  possible_match: Suraj Hindurao Chopade
+  similarity: 0.743
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Wen Li
+  possible_match: Wen Noah Li
+  similarity: 0.706
+  applied: false
+  basis: middle-name variant
+  type: instructor
 unresolved_names:
 - Abhishek
 - Akshay Ginodia

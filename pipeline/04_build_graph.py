@@ -132,12 +132,12 @@ def main() -> int:
                 joined += 1
                 break
 
+    cand = json.loads((KNOWLEDGE_DIR / "candidates.json").read_text(encoding="utf-8"))
+
     # contains: program -> module. There is NO row-level program<->module pairing
     # in this corpus. The curriculum sheet name IS a domain, so the only honest
     # route is program -> domain -> module, and every edge is marked inferred
     # with the join basis recorded. A sheet with no domain mapping gets no edge.
-    from pipeline.lib import sources as SRC
-    cand = json.loads((KNOWLEDGE_DIR / "candidates.json").read_text(encoding="utf-8"))
     mod_domain = {}
     for c in cand["candidates"]:
         if c["type"] == "module" and c.get("domain"):
@@ -163,36 +163,28 @@ def main() -> int:
     # note printed below and config/workflow-depends-review.yaml.
     dep_review = []
 
-    # teaches: instructor -> module, from the one sheet that pairs them on a row.
-    # This is eval Q15's source and the file the `teaches` edge always named.
-    wb = openpyxl.load_workbook(root / AGENTIC, read_only=True, data_only=True)
-    ws = wb["Preferred SMEs for Each Topic"]
-    rows = list(ws.iter_rows(values_only=True))
-    taught = 0
-    for block in ((0, 1, 2, 3), (5, 6, 7, 8)):
-        mcol, icol, rcol, ccol = block
-        current_module = None
-        for rownum, row in enumerate(rows[2:], start=3):
-            def c(i):
-                return str(row[i]).strip() if i < len(row) and row[i] is not None else ""
-            if c(mcol):
-                current_module = c(mcol)
-            inst = c(icol)
-            if not current_module or not inst:
-                continue
-            mid = idx.get(("module", norm(current_module)))
-            iid = idx.get(("instructor", norm(inst)))
-            if mid and iid:
-                e = {"source": iid, "target": mid, "rel": R("instructor_module"),
-                     "provenance": {"file": AGENTIC,
-                                    "sheet": "Preferred SMEs for Each Topic", "row": rownum}}
-                if c(rcol):
-                    e["avg_rating"] = c(rcol)
-                if c(ccol):
-                    e["classes"] = c(ccol)
-                edges.append(e)
-                taught += 1
-    wb.close()
+    # teaches: instructor -> module, from all 14 pairing sources found on
+    # 2026-09-10. The first build used one sheet and emitted 6 edges. Doc 05's
+    # other cited example (Suresh Venkatesan -> SQL Programming) was REAL and sat
+    # in a sheet no scan had opened.
+    node_by = {(n["type"], norm(n["label"])): n for n in nodes}
+    taught, unmatched_pairs = 0, 0
+    seen_pair = set()
+    for pr in cand.get("teaches_pairs", []):
+        m = node_by.get(("module", pr["module"]))
+        i = node_by.get(("instructor", pr["instructor"]))
+        if not m or not i:
+            unmatched_pairs += 1
+            continue
+        key = (i["id"], m["id"])
+        if key in seen_pair:
+            continue
+        seen_pair.add(key)
+        edges.append({"source": i["id"], "target": m["id"],
+                      "rel": R("instructor_module"),
+                      "role": "primary" if pr["rank"] == 0 else "backup",
+                      "rank": pr["rank"], "provenance": pr["source"]})
+        taught += 1
 
     # workflow_owned_by: only confirmed rows
     wo = yaml.safe_load(WORKFLOW_OWNERS_FILE.read_text(encoding="utf-8"))
@@ -231,6 +223,16 @@ def main() -> int:
     notes.append(f"{len(barren)} of {len(file_nodes)} files yielded no entity")
     all_nodes = nodes + list(file_nodes.values())
 
+    # ---- render scope. A render decision, NOT an ingestion one: every status
+    # stays in graph.json so coverage can still answer funnel questions.
+    renderable = [n for n in all_nodes
+                  if n["type"] != "instructor" or n.get("renderable")]
+    render_default = [n for n in renderable
+                      if n["type"] != "instructor"
+                      or n.get("pipeline_status") == "roster"]
+    excluded_from_render = [n for n in all_nodes
+                            if n["type"] == "instructor" and not n.get("renderable")]
+
     counts = defaultdict(int)
     for e in edges:
         counts[e["rel"]] += 1
@@ -245,7 +247,8 @@ def main() -> int:
     print()
     print(f"  covers: {joined}/{len(by_type['program'])} programs joined to a domain "
           f"({len(by_type['program'])-joined} orphaned — R12, expected)")
-    print(f"  teaches: {taught} instructor->module pairs from {AGENTIC.split('/')[-1]}")
+    print(f"  teaches: {taught} distinct instructor->module edges "
+          f"({unmatched_pairs} pairs dropped — one side had no node)")
     print(f"  workflow_owned_by: {len(confirmed)} confirmed rows in workflow-owners.yaml")
     print()
     print("-" * 78)
@@ -302,6 +305,22 @@ def main() -> int:
                  "false positive — matched the duration '1.5-2 hrs' in the Effort line"}],
         }, sort_keys=False, allow_unicode=True, width=100), encoding="utf-8")
 
+    print("-" * 78)
+    print("RENDER SCOPE")
+    print("-" * 78)
+    print(f"  default render (roster only)      : {len(render_default)} nodes")
+    print(f"  with 'hired' toggle on            : {len(renderable)} nodes")
+    print(f"  EXCLUDED from render entirely     : {len(excluded_from_render)} instructors")
+    st = defaultdict(int)
+    for n in excluded_from_render:
+        st[n.get("pipeline_status", "unknown")] += 1
+    for k in sorted(st):
+        print(f"      {k:<14} {st[k]:>5}   sensitive: true")
+    print("  All statuses remain in graph.json — this is a render filter, not an")
+    print("  ingestion exclusion. Hiring rejections about named external people")
+    print("  must not be browsable by everyone at IK.")
+    print()
+
     GRAPH.write_text(json.dumps({
         "meta": {"built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                  "taxonomy_version": taxonomy.version(),
@@ -309,6 +328,9 @@ def main() -> int:
                  "drive_deferred": True,
                  "nodes": len(all_nodes), "edges": len(edges),
                  "node_counts": {t: len(v) for t, v in by_type.items()},
+                 "render": {"default_roster_only": len(render_default),
+                            "with_hired_toggle": len(renderable),
+                            "excluded_instructors": len(excluded_from_render)},
                  "edge_counts": dict(counts)},
         "nodes": all_nodes, "edges": edges}, indent=1, sort_keys=True), encoding="utf-8")
     print(f"wrote {GRAPH.name}: {len(all_nodes)} nodes, {len(edges)} edges")

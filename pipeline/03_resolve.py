@@ -122,13 +122,32 @@ def main() -> int:
     # ---------------- fuzzy: PROPOSE ONLY -----------------------------------
     canon_names = sorted({n["label"] for n in resolved_nodes.values()})
     unresolved_names = sorted({c["raw"].strip() for c in unmatched})
+    def middle_name_variant(a: str, b: str) -> bool:
+        """True when one name is the other plus a middle name.
+
+        A systematic pattern, not a fuzzy near-match: "Dharmendra Mishra" vs
+        "Dharmendra Kripashankar Mishra". Proposed at ANY threshold, because
+        similarity scoring under-rates it exactly when the middle name is long.
+        """
+        ta, tb = a.lower().split(), b.lower().split()
+        if len(ta) == len(tb) or not ta or not tb:
+            return False
+        short, long_ = (ta, tb) if len(ta) < len(tb) else (tb, ta)
+        return (len(short) >= 2 and len(long_) == len(short) + 1
+                and short[0] == long_[0] and short[-1] == long_[-1])
+
     for name in unresolved_names:
         close = difflib.get_close_matches(name, canon_names, n=3, cutoff=FUZZY_THRESHOLD)
         close = [m for m in close if m.lower() != name.lower()]
+        for m in canon_names:
+            if m.lower() != name.lower() and middle_name_variant(name, m) and m not in close:
+                close.append(m)
         for m in close:
             ratio = difflib.SequenceMatcher(None, name.lower(), m.lower()).ratio()
             proposed.append({"candidate": name, "possible_match": m,
                              "similarity": round(ratio, 3), "applied": False,
+                             "basis": ("middle-name variant" if middle_name_variant(name, m)
+                                       else "string similarity"),
                              "reason_not_applied":
                                  "fuzzy matching proposes only; a human confirms in people.yaml"})
 
@@ -144,6 +163,9 @@ def main() -> int:
                 "sources": [], "sensitive": False, "file_count": 0,
             })
             node["sources"].extend(c["sources"])
+            if t == T_INSTRUCTOR:
+                node.setdefault("_statuses", []).append(
+                    c.get("pipeline_status", "unknown"))
             for k in ("workflow_id", "theme_id", "cadence", "stage", "doctype", "family"):
                 if c.get(k) is not None and k not in node:
                     node[k] = c[k]
@@ -154,6 +176,17 @@ def main() -> int:
         if node["type"] == T_INSTRUCTOR:
             node["cross_validated"] = len(files) >= 2
             node["roster_count"] = len(files)
+            # Most-favourable status wins: a person on a roster AND in the funnel
+            # is deliverable, not a candidate.
+            rank = {"roster": 0, "hired": 1, "in_pipeline": 2, "lapsed": 3,
+                    "rejected": 4, "unknown": 5}
+            st = sorted(node.get("_statuses", ["unknown"]), key=lambda s: rank.get(s, 9))
+            node["pipeline_status"] = st[0]
+            node.pop("_statuses", None)
+            # A hiring REJECTION about a named external person is sensitive, and
+            # so is being mid-pipeline. Tagged here; the render excludes them.
+            node["sensitive"] = node["pipeline_status"] in ("rejected", "in_pipeline")
+            node["renderable"] = node["pipeline_status"] in ("roster", "hired")
 
     print("-" * 78)
     print("MERGES APPLIED  (people.yaml aliases — hand-confirmed)")
@@ -179,13 +212,43 @@ def main() -> int:
     print(f"  {len(proposed)} proposed, 0 applied")
     print()
 
+    inst_names = sorted({n["label"] for n in resolved_nodes.values()
+                         if n["type"] == T_INSTRUCTOR})
+    inst_pairs = []
+    seen_pair = set()
+    by_first_last = defaultdict(list)
+    for nm in inst_names:
+        tk = nm.lower().split()
+        if len(tk) >= 2:
+            by_first_last[(tk[0], tk[-1])].append(nm)
+    for _, group in by_first_last.items():
+        if len(group) < 2:
+            continue
+        for i in range(len(group)):
+            for j in range(i + 1, len(group)):
+                a_, b_ = group[i], group[j]
+                if middle_name_variant(a_, b_) and (a_, b_) not in seen_pair:
+                    seen_pair.add((a_, b_))
+                    inst_pairs.append({"candidate": a_, "possible_match": b_,
+                                       "similarity": round(difflib.SequenceMatcher(
+                                           None, a_.lower(), b_.lower()).ratio(), 3),
+                                       "applied": False, "basis": "middle-name variant",
+                                       "type": T_INSTRUCTOR})
+    print("-" * 78)
+    print("MIDDLE-NAME VARIANTS (instructors) — proposed at any threshold")
+    print("-" * 78)
+    for pr in inst_pairs[:20]:
+        print(f"  {pr['candidate']!r:<36} ~ {pr['possible_match']!r}  sim={pr['similarity']}")
+    print(f"  {len(inst_pairs)} proposed, 0 applied")
+    print()
+
     REVIEW.write_text(yaml.safe_dump({
         "version": 1,
         "note": ("Fuzzy matches PROPOSED by pass 3. Nothing here is applied. "
                  "To accept one, add the string to that person's aliases in "
                  "people.yaml and re-run. Deleting a row here rejects it."),
         "threshold": FUZZY_THRESHOLD,
-        "proposed_merges": proposed,
+        "proposed_merges": proposed + inst_pairs,
         "unresolved_names": unresolved_names,
     }, sort_keys=False, allow_unicode=True, width=100), encoding="utf-8")
 

@@ -645,3 +645,55 @@ point.
 ## 2026-09-09 18:25:09Z — validate
 
 - validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 3892 nodes, 7309 edges
+
+## 2026-09-09 18:38:08Z — 02_extract
+
+- Candidates 15656 | rejected 519 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 5462 raw, 3486 distinct
+    - module: 8350 raw, 484 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 18:38:39Z — 03_resolve
+
+- Nodes 4205 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:39:05Z — 04_build_graph
+
+- Nodes 4279 | edges 17023
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 397
+    - teaches: 694
+    - sourced_from: 15656
+
+## 2026-09-09 18:39:31Z — 03_resolve
+
+- Nodes 4205 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:39:31Z — 03_resolve
+
+- Nodes 4205 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:39:34Z — validate
+
+- validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 4279 nodes, 17023 edges
+
+## 2026-09-09 18:40:07Z — 01_walk_corpus
+
+- Source: `local-folder`  **NOT DRIVE — pass 0 has never run**
+- Found 76 | skipped 1 | extracted 74 | failed 1
+- Manifest diff: +1 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-09 18:40:08Z — validate
+
+- validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 4279 nodes, 17023 edges
