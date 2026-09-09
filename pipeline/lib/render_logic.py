@@ -144,7 +144,21 @@ const EXPERT=window.__NP.expert, LEFT=300, RIGHT=330, CAP=8;
 const idx=buildIndex(D);
 const cv=document.getElementById('c'),ctx=cv.getContext('2d'),tip=document.getElementById('tip');
 let W,H;function size(){W=cv.width=innerWidth;H=cv.height=innerHeight}
-size();addEventListener('resize',()=>{size();fit()});
+size();
+// Debounced, and it never restarts the simulation. Opening the detail panel
+// changes page layout and can add or remove a scrollbar, which fires resize;
+// undebounced that cleared the canvas and jumped the camera on a click.
+let _rt=null;
+addEventListener('resize',()=>{
+  clearTimeout(_rt);
+  _rt=setTimeout(()=>{
+    const before={k:cam.k,tx:cam.tx,ty:cam.ty};
+    size();                       // canvas backing store only
+    // Keep the same world point centred; do NOT refit, which would jump.
+    cam.k=before.k;cam.tx=before.tx;cam.ty=before.ty;
+    console.log('[np] resize: viewport kept, simulation untouched (frozen='+frozen+')');
+  },150);
+});
 const t0=performance.now();
 
 // ---- camera -------------------------------------------------------------
@@ -185,9 +199,19 @@ let A=[],E=[],anchors=new Map();
 // that assignment throw ReferenceError, the script died before the render loop
 // started, and the canvas stayed empty — while the stat line, written earlier in
 // the same function, still appeared. eval/drive_dom.mjs now catches this class.
-let settle=0;
+// Cooling schedule. `alpha` decays to zero and the simulation FREEZES.
+// Previously K floored at 0.35, so forces were applied on every frame forever
+// and the layout never stopped drifting — which is most of what "the graph
+// restarts" looked like.
+let settle=0, alpha=1, frozen=false;
+const ALPHA_DECAY=0.985, ALPHA_MIN=0.004;
 
 function recompute(refit, why){
+  // Preserved across every recompute: camera, and the open panel. Filters live
+  // in `state` and are read from the DOM, so they survive by construction.
+  const keepCam={k:cam.k,tx:cam.tx,ty:cam.ty};
+  const keepSel=state.sel;
+  const keepPanel=document.getElementById('right').style.display;
   window.__NP_RECOMPUTES++;
   console.log('[np] recompute #'+window.__NP_RECOMPUTES+' reason='+(why||'unspecified')+
               ' (a recompute re-scatters the layout; it is NOT a page reload)');
@@ -224,12 +248,17 @@ function recompute(refit, why){
   document.getElementById('stat').innerHTML=
     '<b>'+A.length+'</b> nodes / <b>'+E.length+'</b> edges / '+comps.length+
     ' components <span style="color:#6e7681">— currently visible</span>';
-  if(refit!==false){settle=0}
+  // A legitimate recompute restarts the simulation — and ONLY a recompute may.
+  if(refit!==false){settle=0;alpha=1;frozen=false}
+  cam.k=keepCam.k;cam.tx=keepCam.tx;cam.ty=keepCam.ty;
+  state.sel=keepSel;
+  document.getElementById('right').style.display=keepPanel;
 }
 recompute(true,'initial');
 
 function step(){
-  const K=settle<90?1:0.35;
+  if(frozen)return;                     // no forces, no drift, no motion
+  const K=alpha;
   for(const n of A){n.vx*=.85;n.vy*=.85;
     const a=anchors.get(n.id);
     if(a){n.vx+=(a[0]-n.x)*.006*K;n.vy+=(a[1]-n.y)*.006*K}}
@@ -243,7 +272,16 @@ function step(){
     a.vx+=dx/d*f;a.vy+=dy/d*f;b.vx-=dx/d*f;b.vy-=dy/d*f}
   for(const n of A){n.x+=n.vx;n.y+=n.vy}
   settle++;
+  alpha*=ALPHA_DECAY;
   if(settle===90)fit();
+  if(alpha<ALPHA_MIN && !frozen){
+    frozen=true;
+    console.log('[np] layout FROZEN after '+settle+' frames. '+
+      'Nothing moves again until a filter or data change calls recompute().');
+  }
+  // Published AFTER frozen is set, so the reported state is the real one.
+  window.__NP_STATE={settle:settle,alpha:alpha,frozen:frozen,
+                     recomputes:window.__NP_RECOMPUTES};
 }
 function draw(){
   ctx.clearRect(0,0,W,H);
@@ -303,8 +341,18 @@ document.getElementById('zin').onclick=()=>{cam.k=Math.min(4,cam.k*1.3)};
 document.getElementById('zout').onclick=()=>{cam.k=Math.max(0.05,cam.k/1.3)};
 
 // ---- panels -------------------------------------------------------------
+// ---- SELECTION. Touches state.sel and the panel ONLY.
+// It must never call recompute(), fit(), size() or touch node coordinates.
+// Enforced by tests/drive_dom: after a click, settle and every coordinate are
+// unchanged.
+function select(id){
+  state.sel=id;                          // repaint happens on the next frame
+}
+
 function openNode(id){
-  state.sel=id;const n=idx.byId.get(id);
+  const before=settle;
+  select(id);
+  const n=idx.byId.get(id);
   document.getElementById('right').style.display='block';
   document.getElementById('nl').textContent=n.l;
   document.getElementById('nt').textContent=n.t+(n.st?' · '+n.st:'')+
@@ -333,6 +381,9 @@ function openNode(id){
   for(const el of document.querySelectorAll('.nb'))
     el.onclick=()=>{const o=idx.byId.get(el.dataset.id);openNode(el.dataset.id);
       if(o&&o.x!==undefined)centreOn(o,Math.max(cam.k,1.2))};
+  if(settle!==before)
+    console.error('[np] BUG: opening a node changed the simulation clock '+
+                  before+' -> '+settle+'. Selection must not touch layout.');
 }
 function closePanel(){state.sel=null;document.getElementById('right').style.display='none'}
 document.getElementById('close').onclick=closePanel;

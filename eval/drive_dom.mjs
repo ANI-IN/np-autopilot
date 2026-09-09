@@ -117,5 +117,48 @@ try{ const f=rafFn; rafFn=null; painted={arcs:0,lines:0,arcPts:[]}; f();
   console.log('  frame after click  : ' + painted.arcs + ' arcs still painted'); }
 catch(e){ console.log('  frame after click  : THREW ' + e.message); }
 
+
+// ---- SELECTION MUST NOT TOUCH LAYOUT -------------------------------------
+// The previous check passed even when the whole graph had re-laid-out, which is
+// exactly why it missed the restart. Assert the simulation clock is unchanged
+// AND that every node coordinate is byte-identical after a click.
+console.log('\n=== SELECTION vs LAYOUT ===');
+function runFrames(n){ for(let i=0;i<n && rafFn;i++){ const f=rafFn; rafFn=null;
+  painted={arcs:0,lines:0,arcPts:[]}; f(); } }
+runFrames(600);
+const st0 = globalThis.window.__NP_STATE || {};
+console.log('  after 600 frames    : settle=' + st0.settle +
+            ' alpha=' + (st0.alpha||0).toFixed(4) + ' frozen=' + st0.frozen);
+const coordsOf = () => JSON.stringify(
+  (globalThis.window.__NP.data.nodes||[]).map(n=>[n.id, n.x, n.y]));
+const coordsBefore = coordsOf();
+const stBefore = JSON.stringify(globalThis.window.__NP_STATE);
+const clickPt = painted.arcPts[0] || [800,400];
+fire('click', clickPt[0], clickPt[1]);
+runFrames(1);
+const coordsAfter = coordsOf();
+const stAfter = JSON.stringify(globalThis.window.__NP_STATE);
+const coordsSame = coordsBefore === coordsAfter;
+const clockSame = stBefore === stAfter;
+console.log('  click -> coords byte-identical :', coordsSame);
+console.log('  click -> sim clock unchanged   :', clockSame);
+if(!coordsSame){
+  const b=JSON.parse(coordsBefore), a=JSON.parse(coordsAfter);
+  const moved=b.filter((x,i)=>x[1]!==a[i][1]||x[2]!==a[i][2]);
+  console.log('    ' + moved.length + ' nodes MOVED on a click — selection is touching layout');
+  errors.push('SELECTION MOVED THE LAYOUT: ' + moved.length + ' nodes');
+}
+if(!clockSame) errors.push('SELECTION ADVANCED THE SIM CLOCK: ' + stBefore + ' -> ' + stAfter);
+
+// a legitimate recompute MAY restart the sim — prove the distinction holds
+const rc = store.get('iso');
+if(rc && rc.onchange){
+  rc.checked = true;
+  rc.onchange({target:rc});
+  runFrames(1);                       // state publishes on the next frame
+  const stR = globalThis.window.__NP_STATE;
+  console.log('  filter toggle -> sim restarted :', (stR && stR.settle < st0.settle));
+}
+
 console.log('\nstat line:', (store.get('stat')||{}).innerHTML || '(never set)');
 process.exit(errors.length?1:0);

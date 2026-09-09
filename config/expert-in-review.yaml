@@ -9,45 +9,23 @@ unjoined:
   claims: 64
 - subject: Others (Only Mock Interviewer or Career Coaching)
   claims: 62
-- subject: Data Structures & Algorithms
-  claims: 58
-- subject: Data Analyst & Business Analyst
-  claims: 58
-- subject: Technical Program Management
-  claims: 54
 - subject: Product Management
   claims: 51
 - subject: Applied Gen AI
   claims: 44
-- subject: Scalable Systems / System Design
-  claims: 39
-- subject: Engineering Management
-  claims: 36
 - subject: System Design
   claims: 20
-- subject: AWS Cloud Solutions Architect
-  claims: 19
 - subject: Advanced Gen AI
   claims: 16
-- subject: Site Reliability Engineering
-  claims: 15
 - subject: DSA
   claims: 14
 - subject: Career
   claims: 13
-- subject: Cyber Security Engineering
-  claims: 11
-- subject: Product Mgmt
-  claims: 9
 - subject: Agentic AI - Instructor for Engineers
   claims: 8
 - subject: Agentic AI - Instructor for EM
   claims: 7
 - subject: Learning & Development / Training
-  claims: 6
-- subject: Engineering Manager
-  claims: 6
-- subject: DevOps / SRE
   claims: 6
 - subject: ML - Grader
   claims: 6
@@ -55,12 +33,8 @@ unjoined:
   claims: 6
 - subject: Agentic AI - Instructor for PM/TPM
   claims: 6
-- subject: AWS Cloud Solution Architect
-  claims: 5
 - subject: Agentic AI (Marketing Curriculum)
   claims: 5
-- subject: Andriod Engineering
-  claims: 4
 - subject: Marketing & Advertising
   claims: 4
 - subject: Executive Technical Mentor - AI
@@ -77,8 +51,6 @@ unjoined:
   claims: 2
 - subject: SME India - Agentic AI for EM
   claims: 2
-- subject: Data & Business Analyst
-  claims: 1
 - subject: Engineering Intern
   claims: 1
 - subject: Grader
@@ -86,8 +58,6 @@ unjoined:
 - subject: Product Marketing
   claims: 1
 - subject: Mental Health Consultant
-  claims: 1
-- subject: Cyber Security
   claims: 1
 - subject: MERN
   claims: 1

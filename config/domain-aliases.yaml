@@ -1,0 +1,246 @@
+# domain-aliases.yaml — CONFIRMED 2026-09-10 by the corpus owner, individually.
+#
+# The pipeline reads only rows with confirmed: true. Each alias passed the
+# SIBLING-DOMAIN TEST: exactly one domain could plausibly be meant.
+#
+# NOT here, deliberately:
+#   ML                 5 candidates (Machine Learning (IP course), Flagship ML/
+#                      ML Program, ML Switch-up (Adv ML), Advanced ML Ops,
+#                      Advanced ML Interview Prep) — 153 claims stay unjoined
+#   Product Management PM vs GPM (Growth Product Management) — 50 claims
+#   Agentic AI         4 domains — 64 claims
+#   System Design, DSA dropped as REDUNDANT: the hardened resolver already
+#                      resolves both cleanly to the same target
+#
+# Every edge these produce carries via_alias: true. That is TWO inference steps
+# — a self-declared form response, matched to a domain through a human-confirmed
+# alias — and a staffing query must rank it last.
+
+version: 1
+aliases:
+- alias: Data Analyst & Business Analyst
+  domain: DABA
+  claims: 57
+  sibling_test: passed
+  confirmed: true
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: Data Structures & Algorithms
+  domain: Coding Masterclass (DSA)
+  claims: 56
+  sibling_test: passed
+  confirmed: true
+  note: Could equally be 'Coding Pathway'. DSA is in the Masterclass label, so that is proposed — confirm
+    or switch.
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: Technical Program Management
+  domain: TPM
+  claims: 51
+  sibling_test: passed
+  confirmed: true
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: Scalable Systems / System Design
+  domain: System Design Pathway
+  claims: 39
+  sibling_test: passed
+  confirmed: true
+  note: Could be 'SysD Masterclass' or 'SysD TC'. Pathway is the broadest.
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: Engineering Management
+  domain: EM
+  claims: 34
+  sibling_test: passed
+  confirmed: true
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: AWS Cloud Solutions Architect
+  domain: Cloud
+  claims: 18
+  sibling_test: passed
+  confirmed: true
+  note: A vendor certification, not a domain name. Mapping it to Cloud is a judgement, not a synonym.
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: Site Reliability Engineering
+  domain: SRE
+  claims: 15
+  sibling_test: passed
+  confirmed: true
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: Cyber Security Engineering
+  domain: Security
+  claims: 10
+  sibling_test: passed
+  confirmed: true
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: Product Mgmt
+  domain: PM
+  claims: 9
+  sibling_test: passed
+  confirmed: true
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: Engineering Manager
+  domain: EM
+  claims: 6
+  sibling_test: passed
+  confirmed: true
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: DevOps / SRE
+  domain: SRE
+  claims: 6
+  sibling_test: passed
+  confirmed: true
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: AWS Cloud Solution Architect
+  domain: Cloud
+  claims: 4
+  sibling_test: passed
+  confirmed: true
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: Andriod Engineering
+  domain: Android
+  claims: 4
+  sibling_test: passed
+  confirmed: true
+  note: Source misspelling. Confirming this is you asserting the correction, not the pipeline inferring
+    it.
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: Data & Business Analyst
+  domain: DABA
+  claims: 1
+  sibling_test: passed
+  confirmed: true
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+- alias: Cyber Security
+  domain: Security
+  claims: 1
+  sibling_test: passed
+  confirmed: true
+  confirmed_by: corpus owner
+  confirmed_at: '2026-09-10'
+ambiguous:
+- alias: Agentic AI
+  claims: 64
+  candidates:
+  - Agentic AI - EM
+  - Agentic AI - SWE
+  - Agentic AI - TPM/Pm
+  - India Agentic AI Bootcamp
+  why: 'Four domains carry the name. A bare "Agentic AI" does not say which, and 64 instructors would
+    land on the wrong one. Options: map to all four (over-connects), leave unjoined (current), or add
+    a rule using the instructor''s other columns.'
+- alias: Applied Gen AI
+  claims: 42
+  candidates: []
+  why: No domain in the 42 is named Gen AI. May be a product that predates or postdates the owner sheet.
+- alias: Advanced Gen AI
+  claims: 16
+  candidates: []
+  why: Same as above.
+- alias: Career
+  claims: 13
+  candidates:
+  - Career Classes
+  - Career Coaching
+  why: Two domains, and the claim string is a bare prefix of both.
+- alias: ML
+  claims: 153
+  candidates:
+  - Machine Learning (IP course)
+  - Flagship ML/ ML Program
+  - ML Switch-up (Adv ML)
+  - Advanced ML Ops
+  - Advanced ML Interview Prep
+  why: FAILED the sibling-domain test — 5 domains could be meant. Moved here from the proposed list. Mapping
+    it to one would put 153 instructors on a domain that may be wrong.
+- alias: Product Management
+  claims: 50
+  candidates:
+  - PM
+  - GPM (Growth Product Management)
+  why: FAILED the sibling-domain test — 2 domains could be meant. Moved here from the proposed list. Mapping
+    it to one would put 50 instructors on a domain that may be wrong.
+not_a_domain:
+- alias: Others (Only Mock Interviewer or Career Coaching)
+  claims: 60
+  why: Form free-text answer, as you said. Not a domain.
+- alias: Agentic AI - Instructor for Engineers
+  claims: 8
+  why: Role-qualified Agentic AI; blocked on the Agentic AI ambiguity above.
+- alias: Agentic AI - Instructor for EM
+  claims: 7
+  why: Same.
+- alias: Principal
+  claims: 6
+  why: Seniority.
+- alias: ML - Grader
+  claims: 6
+  why: A role.
+- alias: Learning & Development / Training
+  claims: 6
+  why: A function, not an NP domain.
+- alias: Agentic AI - Instructor for PM/TPM
+  claims: 6
+  why: Same.
+- alias: Executive Technical Mentor - AI
+  claims: 4
+  why: A role.
+- alias: Microsoft Certified
+  claims: 4
+  why: A certification.
+- alias: Agentic AI (Marketing Curriculum)
+  claims: 4
+  why: Same.
+- alias: Marketing & Advertising
+  claims: 3
+  why: Not an NP domain.
+- alias: Agentic IP - Instructor for PM/TPM
+  claims: 3
+  why: Same.
+- alias: Agentic IP - Instructor for Engineers
+  claims: 3
+  why: Same.
+- alias: Product Marketing Management
+  claims: 2
+  why: Not an NP domain.
+- alias: Python
+  claims: 2
+  why: A technology, not a domain.
+- alias: SME India - Agentic AI for EM
+  claims: 2
+  why: Same.
+- alias: Grader
+  claims: 1
+  why: A role.
+- alias: Product Marketing
+  claims: 1
+  why: Not an NP domain.
+- alias: MERN
+  claims: 1
+  why: A technology stack.
+- alias: Engineering Intern
+  claims: 1
+  why: A role.
+- alias: Mental Health Consultant
+  claims: 1
+  why: A role, and out of scope.
+- alias: Gen AI
+  claims: 1
+  why: See Applied Gen AI above.
+- alias: SME India - Agentic AI for PM/TPM
+  claims: 1
+  why: Same.
+- alias: Gen AI - Instructor for PM/TPM
+  claims: 1
+  why: Same.

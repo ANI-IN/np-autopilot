@@ -177,16 +177,32 @@ def main() -> int:
                 ordered.append(k)
         return ordered
 
-    expert, exp_miss = 0, []
+    # Confirmed domain aliases. Only confirmed: true rows are read.
+    alias_path = WORKFLOW_OWNERS_FILE.parent / "domain-aliases.yaml"
+    alias_map = {}
+    if alias_path.exists():
+        _al = yaml.safe_load(alias_path.read_text(encoding="utf-8")) or {}
+        for _a in _al.get("aliases", []):
+            if _a.get("confirmed") is True:
+                alias_map[norm(_a["alias"])] = _a["domain"]
+
+    expert, exp_miss, via_alias_n = 0, [], 0
     seen_exp = set()
     node_by_pre = {(n["type"], norm(n["label"])): n for n in nodes}
     for cl in cand.get("expertise_claims", []):
         inode = node_by_pre.get(("instructor", cl["instructor"]))
-        did = None
+        did, via = None, False
         for k in domain_keys(cl["subject"]):
             if k in dom_key:
                 did = dom_key[k]
                 break
+        if did is None:
+            target = alias_map.get(norm(cl["subject"]))
+            if target:
+                for k in domain_keys(target):
+                    if k in dom_key:
+                        did, via = dom_key[k], True
+                        break
         if not inode or not did:
             exp_miss.append(cl)
             continue
@@ -194,9 +210,15 @@ def main() -> int:
         if key in seen_exp:
             continue
         seen_exp.add(key)
-        edges.append({"source": inode["id"], "target": did, "rel": R("instructor_domain"),
-                      "basis": cl["basis"], "subject_raw": cl["subject_raw"],
-                      "provenance": cl["source"]})
+        e = {"source": inode["id"], "target": did, "rel": R("instructor_domain"),
+             "basis": cl["basis"], "subject_raw": cl["subject_raw"],
+             "provenance": cl["source"]}
+        if via:
+            # TWO inference steps: a declared subject, matched through a
+            # human-confirmed alias. Ranked last by the staffing command.
+            e["via_alias"] = True
+            via_alias_n += 1
+        edges.append(e)
         expert += 1
 
     # teaches: instructor -> module, from all 14 pairing sources found on
@@ -317,6 +339,7 @@ def main() -> int:
     print("expert_in — instructor -> domain (DECLARED, not teaching evidence)")
     print("-" * 78)
     claims = cand.get("expertise_claims", [])
+    print(f"  {via_alias_n} of those matched through a CONFIRMED ALIAS (via_alias: true)")
     print(f"  {len(claims)} claims -> {expert} edges "
           f"({100*expert/max(1,len(claims)):.0f}% join rate)")
     bb = defaultdict(int)

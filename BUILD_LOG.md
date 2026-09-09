@@ -1633,7 +1633,7 @@ because the topic vocabulary lacked `web` and `js`. All recovered; 190 → 185.
 |---|---|---|
 | population | 1,098 | **3,817** |
 | confirmed non-people | 23 | **0** |
-| floor | 2.1% | **0.00%** |
+| floor | 2.1% | **0 found — see framing below** |
 
 Random 50 (seed 20260910): **0 non-people**, including previously-rejected shapes
 now admitted — `Arun K.`, `Matthew H.`, `Kwei-Herng "Henry" Lai`, `Romil`.
@@ -1641,5 +1641,111 @@ Exhaustive scan of all 199 flagged records plus a topic/filler sweep of the whol
 population: **1 hit, `Danielle Class`, which is a real person whose surname
 matched the audit regex** — a false positive of the audit, not a non-person.
 
-**The honest number is the upper bound, not the point estimate.** n=50 with zero
-hits gives ~6% at 95% confidence. The old 2.1% was likewise only "what I found".
+**Stated the way it should be stated: "no non-people found in a sample of 50,
+upper bound ~6% at 95% confidence."** Not 0.00%. A point estimate of zero from a
+50-item sample is a claim the sample cannot support, and the old 2.1% was
+likewise only "what I found" — both are floors on a search, not measurements of a
+population.
+
+## 2026-09-09 20:19:17Z — 05_render_html
+
+- graph.html 3333 KB | rendered 2998 nodes (2020 connected, 978 isolated) and 3701 edges
+
+## 2026-09-09 20:19:43Z — 05_render_html
+
+- graph.html 3333 KB | rendered 2998 nodes (2020 connected, 978 isolated) and 3701 edges
+
+## 2026-09-09 20:20:13Z — 05_render_html
+
+- graph.html 3333 KB | rendered 2998 nodes (2020 connected, 978 isolated) and 3701 edges
+
+## 2026-09-09 20:20:43Z — 04_build_graph
+
+- Nodes 5049 | edges 36677
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 1155
+    - teaches: 2239
+    - sourced_from: 32656
+
+## 2026-09-09 20:21:10Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:21:11Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:21:17Z — 05_render_html
+
+- graph.html 3362 KB | rendered 2998 nodes (2096 connected, 902 isolated) and 4021 edges
+
+## 2026-09-09 20:21:21Z — validate
+
+- validate: 0 FAIL, 6 WARN, 8/16 categories exercised, 5049 nodes, 36677 edges
+
+---
+
+## 2026-09-10 — restart-on-click: audit, fix, and the check that would have caught it
+
+### The audit, which is where the bug was
+
+**8 `recompute()` call sites — none is a click handler.** Clicking a node never
+called it, so the re-scatter was never coming from there.
+
+**1 `settle` write, and the bug beside it:**
+
+```
+232  const K = settle<90 ? 1 : 0.35     <-- forces NEVER reach zero
+245  settle++                            increments forever
+246  if(settle===90) fit()               fires exactly once
+```
+
+**The simulation never stopped.** `K` floored at `0.35`, so spring and repulsion
+forces were applied on every frame forever. The layout was never settled, only
+slowed — it drifted permanently.
+
+**And `addEventListener('resize', () => { size(); fit() })` was undebounced.**
+Opening the detail panel changes page layout and can add or remove a scrollbar,
+which fires `resize`; `size()` clears the canvas and `fit()` jumps the camera. A
+click could trigger it.
+
+### The fix
+
+- **Cooling schedule that reaches zero.** `alpha` decays at 0.985 to a floor of
+  0.004, then the simulation **freezes** — measured at **366 frames**. Nothing
+  moves again until a filter or data change.
+- **Selection split from layout.** `select()` touches `state.sel` only. `openNode`
+  asserts the simulation clock is unchanged and logs an error if it is not.
+  Neither can call `recompute()`.
+- **Debounced resize (150ms) that keeps the viewport** and never restarts the
+  simulation.
+- **Camera, selection and open panel preserved** across any legitimate recompute.
+
+### The check that would have caught it
+
+The old harness asserted arcs were painted — which passes even when the whole
+graph has re-laid-out. It now asserts, after a simulated click:
+
+```
+click -> coords byte-identical : true
+click -> sim clock unchanged   : true
+filter toggle -> sim restarted : true     (the legitimate case still works)
+```
+
+The load counter and the `recompute()` reason log stay on the page. **If the
+behaviour persists, that display says immediately it was the other cause.**
+
+### Aliases applied
+
+15 confirmed. `expert_in` **802 → 1,155 edges**, join rate **50% → 69%**, of which
+**320 carry `via_alias: true`**. The staffing command surfaces them as a separate
+`self_declared+via_alias` tier — visible on DABA (59), TPM (46), SRE (15 plus 5
+`hr_record+via_alias`). Top unjoined remains exactly the ambiguous set: `ML` 157,
+`Agentic AI` 64, `Product Management` 51.
