@@ -1,0 +1,320 @@
+# people.yaml — canonical person identities.
+#
+# PROVENANCE. Two source shapes, per config/taxonomy.yaml -> common_properties.
+#   origin: corpus  names a corpus file and emits a sourced_from edge.
+#   origin: hand    names out-of-corpus evidence and emits NO edge. It satisfies
+#                   sources min_length: 1 but must never be presented as though a
+#                   scan produced it. `evidence` is required and non-empty.
+#
+# The NP roster below comes from a screenshot of the HR system, hand-entered
+# 2026-09-09. It is authoritative and CLOSED at 15 people. It is not a corpus
+# file, has no file node, and every entry carries origin: hand.
+#
+# EMAILS. Directory emails are recorded under `work_email`, NOT under `aliases`.
+# The excluded-fields rule drops any property whose normalised header matches
+# Email / Work email / Personal email; putting an address in `aliases` would
+# smuggle it past that rule under a different key. `work_email` is declared
+# here as hand-entered identity evidence, is excluded from graph.json, and
+# exists so a future roster join has something to match on. See the check at
+# the end of this file.
+#
+# Local parts only — the domain is @interviewkickstart.com throughout.
+
+version: 1
+
+roster:
+  name: New Programs > Product Management
+  source: HR system (screenshot), hand-entered
+  entered_at: 2026-09-09
+  authoritative: true
+  closed: true
+  count: 15
+  location: Bangalore / Remote
+  director: Shashi Bhushan Kumar
+
+people:
+
+  # ================= team: np — the 15-person HR directory =================
+  # Every entry: origin hand, evidence the HR directory. Aliases are the corpus
+  # strings that resolve to this person; those carry their own corpus sources at
+  # build time.
+
+  - canonical: Shashi Bhushan Kumar
+    team: np
+    title: Director, Product Management
+    seniority: Director
+    work_email: shashi
+    employee_ids: [IK-013]
+    aliases: [Shashi, Shashi Bhushan Kumar]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — Director, Product Management"}]
+
+  - canonical: Deval Mahesh Purohit
+    team: np
+    title: Senior Product Manager
+    seniority: Senior PM
+    work_email: deval.purohit
+    employee_ids: [IK-446]
+    aliases: [Deval, Deval Purohit, Deval Mahesh Purohit]
+    merge_confirmed: 2026-09-09      # group (a) merge, confirmed against directory
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+
+  - canonical: Karthika S
+    team: np
+    title: Product Manager 2
+    seniority: PM2
+    work_email: karthika
+    employee_ids: [IK-115]           # IK-115..IK-121 is a fill-down artefact; the
+                                     # id increments while the name stays fixed.
+    aliases: [Karthika, "Karthika ", "KARTHIKA .", Karthika S]
+    not_same_as: [Karthika Pai, Karthika Saran]   # D3 + corpus scan. Pinned so no
+                                                  # fuzzy pass ever merges them.
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — Product Manager 2"}]
+
+  - canonical: Adil Panwar
+    team: np
+    title: Product Manager 1
+    seniority: PM1
+    work_email: adil.panwar
+    employee_ids: [IK-254]
+    aliases: [Adil, Adil Panwar]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+
+  - canonical: "Kalindi ."
+    team: np
+    title: Product Manager 1
+    seniority: PM1
+    work_email: kalindi
+    employee_ids: [IK-113]
+    aliases: [Kalindi, "Kalindi ."]
+    label_raw: "Kalindi ."
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+    note: >
+      The trailing " ." is her actual HR record, NOT a normalisation defect.
+      Do not strip it and do not flag it. Doc 07 R3 previously listed
+      "Kalindi ." as a corruption example; that characterisation is withdrawn.
+
+  - canonical: Navdeep Singh
+    team: np
+    title: Product Manager 1
+    seniority: PM1
+    work_email: navdeep
+    employee_ids: [IK-271, IK-272]   # two ids — evidence only, never the key
+    aliases: [Navdeep, Navdeep Singh]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+
+  - canonical: Utkarsh Raj
+    team: np
+    title: Product Manager 1
+    seniority: PM1
+    work_email: utkarsh.raj
+    employee_ids: [IK-250]
+    aliases: [Utkarsh, Utkarsh Raj]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+
+  - canonical: Animesh Kumar
+    team: np
+    title: Associate Product Manager 2
+    seniority: APM2
+    work_email: animesh.kumar
+    employee_ids: [IK-398, IK-INT16]  # two ids for one person — the reason
+                                      # people.yaml is keyed on a slug, not an id
+    aliases: [Animesh, Animesh Kumar]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+
+  - canonical: Donthoju Srushith Kumar
+    team: np
+    title: Associate Product Manager 2
+    seniority: APM2
+    work_email: donthoju.srushith
+    employee_ids: [IK-418, IK-INT19]
+    aliases: [Srushith, Srushit, Srusith, Srushith Kumar Donthoju, Donthoju Srushith Kumar]
+    merge_confirmed: 2026-09-09
+    name_order: surname-first          # confirmed by donthoju.srushith@
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — email confirms surname-first order"}]
+
+  - canonical: Tanmaya Kharyal
+    team: np
+    title: Associate Product Manager 2
+    seniority: APM2
+    work_email: tanmaya.kharyal
+    employee_ids: [IK-621]
+    aliases: [Tanmaya, Tanmaaya, Tanmaya Kharyal]
+    merge_confirmed: 2026-09-09
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+
+  - canonical: Prithika K
+    team: np
+    title: Associate Product Manager 1
+    seniority: APM1
+    work_email: prithika.k
+    employee_ids: [IK-915]           # IK-915..IK-922 fill-down artefact
+    aliases: [Prithika, Prithika K]
+    merge_confirmed: 2026-09-09
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+
+  - canonical: Uday Mehtani
+    team: np
+    title: Associate Product Manager 1
+    seniority: APM1
+    work_email: uday.mehtani
+    employee_ids: [IK-614, IK-INT23]
+    aliases: [Uday, Uday Mehtani]
+    merge_confirmed: 2026-09-09
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+
+  - canonical: Vineet Patel
+    team: np
+    title: Associate Product Manager 1
+    seniority: APM1
+    work_email: vineet.patel
+    employee_ids: [IK-1037, IK-INT42]
+    aliases: [Vineet, Vineet Patel]
+    not_same_as: [Vineet Paliwal]     # an instructor in Instructors Directory
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — moved out of doc 08 Q4 group (c)"}]
+
+  - canonical: Yash Mathur
+    team: np
+    title: Associate Product Manager 1
+    seniority: APM1
+    work_email: yash.mathur
+    employee_ids: []                  # NONE. His ENo column is blank.
+    aliases: [Yash Mathur, "Yash Mathur "]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+    note: >
+      Appears in NO list in doc 08 Q4, resolved or unresolved, despite having
+      ELEVEN I-Aim rows in IAims!Q226 (rows 104-114) — a file that WAS scanned.
+      His ENo cell is blank on every row, so an id-keyed read drops him
+      silently. This is a different failure from the coverage gap that hid
+      Karthika Pai, and a second independent reason doc 07 R3's employee-id
+      keying had to be reversed.
+
+  - canonical: Bishal Biprodas Roy
+    team: np
+    title: Intern — New Programs
+    seniority: Intern
+    work_email: bishal.roy
+    employee_ids: [IK-INT51]
+    aliases: [Bishal Roy, Bishal Biprodas Roy]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — moved out of doc 08 Q4 group (c)"}]
+
+  # ================= team: other — in the corpus, not on the NP directory ====
+  # These four were in the "resolved 13" but are absent from the current NP
+  # directory. Corpus locations below; classification is YOUR call.
+
+  - canonical: M Prasad Khuntia
+    team: other
+    employee_ids: [IK-294]           # IK-294 also maps to a second person
+    aliases: [Prasad, M Prasad, M Prasad Khuntia]
+    status: pending-classification
+    corpus_locations:
+      - "Domains_Courses Owners!Sheet1 — secondary owner, 9 rows ('M Prasad', 'M Prasad, Swarup')"
+      - "IAims — 13 sheets as 'M Prasad Khuntia', INCLUDING Q1 2026 (current quarter)"
+      - "Domains_Courses Owners!For Slack r7 — 'Prasad'"
+    read: >
+      Heaviest IAims presence of anyone outside the directory, and active in the
+      current quarter with B2B, ratings, NPS and refunds objectives. Reads as a
+      current employee on a different reporting line rather than former staff.
+    sources: [{origin: corpus, file: "00-master/IAims Setting Audit _ New Programs.xlsx", sheet: "Q1 2026", row: 2}]
+
+  - canonical: Swarup Yeole
+    team: other
+    employee_ids: [IK-282]           # also carries IK-294 on some rows
+    aliases: [Swarup, Swaroop, Swarup Yeole]
+    status: unresolved
+    not_same_as: [Swaroop Kulkarni, Swaroop Gunisity, Swaroop Shere, Tejaswaroop Vankadari]
+    corpus_locations:
+      - "IAims — 6 sheets as 'Swarup Yeole' (Q3 2024 through Q3 2025)"
+      - "Domains_Courses Owners!Sheet1 r29 — secondary owner, 'M Prasad, Swarup'"
+      - "Domains_Courses Owners!For Slack r12 — 'Swaroop'"
+    read: >
+      Not in the directory; stays unresolved per your instruction. Note the
+      IAims trail STOPS at Q3 2025 — he is absent from Q42025, Q226 and Q1 2026.
+      That pattern is consistent with former staff.
+      CAUTION: 'Swaroop Kulkarni' in Operational Metrics is a LEARNER (deposit
+      record, personal gmail, LinkedIn), not this person. Three further
+      'Swaroop *' learners exist. Pinned above so none is ever merged in.
+    sources: [{origin: corpus, file: "00-master/IAims Setting Audit _ New Programs.xlsx", sheet: "Q3 2025", row: null}]
+
+  - canonical: Simran Khemlani
+    team: delivery                   # NOT np, and not first-name-only
+    aliases: [Simran, Simran Khemlani]
+    work_email: simran.khemlani
+    status: resolved
+    not_same_as: [Simranjit Singh]   # a learner in Operational Metrics
+    corpus_locations:
+      - "New Combined Schedule!Delivery POC r3 — 'Simran Khemlani', simran.khemlani@"
+      - "Domains_Courses Owners!Sheet1 — Delivery Team Member on Backend, Fullstack, Coding Pathway, Test Engineering, Coding Masterclass, Coding TC"
+      - "New Combined Schedule!Sunday Monitors"
+    read: >
+      She is the one delivery-org member who already had a surname, which is why
+      she sat in the resolved 13. Same org as the 12 first-name-only names, not NP.
+    sources: [{origin: corpus, file: "05-operations/New Combined Schedule.xlsx", sheet: "Delivery POC", row: 3}]
+
+  - canonical: Abhinav Rawat
+    team: other
+    aliases: [Abhinav Rawat]
+    status: pending-classification
+    not_same_as: [Abhinav Kumar Maurya, Abhinav jain, Abhinav Jain, Abhinav Anand, Abhinav Kotha, Abhinav Kumar, "ABHINAV MAHATA", Abhinav Makrand]
+    corpus_locations:
+      - "Domains_Courses Owners!For Slack r8 — 'Abhinav Rawat'. THIS IS THE ONLY OCCURRENCE."
+    read: >
+      One cell in the entire 75-file corpus, in a Slack-channel mapping sheet,
+      with no IAims row, no domain ownership and no email. Every other 'Abhinav'
+      in the corpus is a different person — 8 of them, all instructors or
+      learners. Weakest-evidenced person in the graph.
+    sources: [{origin: corpus, file: "00-master/Domains_Courses Owners.xlsx", sheet: "For Slack", row: 8}]
+
+  - canonical: Rakshit Kapoor
+    team: other
+    employee_ids: [IK-INT29, IK-INT30]  # IK-INT30 also maps to a second person
+    aliases: [Rakshit, Rakshit Kapoor]
+    status: unresolved
+    corpus_locations:
+      - "IAims — Q3 2025, Q42025, Q1 2026 as 'Rakshit Kapoor'"
+      - "IAims!Adil + Copy of Adil — 'Rakshit, Uday'"
+      - "IAims!Karthika - Mahima — 'Uday / Rakshit'"
+    read: >
+      Not in the directory, stays unresolved. Unlike Swarup Yeole his IAims trail
+      RUNS INTO Q1 2026, so 'former staff' does not fit; another org or a
+      contractor is more likely. He was one of the four "new humans" behind the
+      old ceiling of 42 and still counts as a person.
+    sources: [{origin: corpus, file: "00-master/IAims Setting Audit _ New Programs.xlsx", sheet: "Q1 2026", row: null}]
+
+# ============================================================================
+# NOT IN THIS FILE, deliberately
+# ============================================================================
+#
+# Karthika Pai — RECLASSIFIED as instructor, not person, 2026-09-09. She is an
+#   SME hire, not NP staff. She appears in SME Tracker!Q4-24 (hire), SME
+#   Tracker!Tracker - All roles r1826-1827, SME_Interview r387 and the excluded
+#   payroll file. Her entry belongs in the instructor set. This closes the open
+#   question that motivated person.tolerance: 2.
+#
+# Karthika Saran — a third distinct Karthika, 15 corpus rows, US/Canada
+#   instructor with her own Calendly link. Also an instructor, not a person.
+#
+# The 12 delivery-org first names — Abhishek, Anshuman, Harsha, Kunal, Muskan,
+#   Rupali, Sinchana, Sourish, Tamanna, Tushar, Pooja, Anmol. They live in
+#   config/people-firstnames.yaml with team: delivery. ZERO of them appear on
+#   the NP directory, so no NP roster will resolve them and they must not be
+#   carried as unresolved NP identities. Pooja and Anmol are owners, not
+#   delivery POCs. Anshuman is NOT resolved by the directory — he is not on it —
+#   so the somya@ email mismatch on New Combined Schedule!Delivery POC r4 stands
+#   exactly as reported.
+#
+# Group (c) remainder, still team: other and unclassified — Akshay Ginodia,
+#   Aman Arora, Amit Mishra, Harsh Arora, Harshita Tanwar, Rishabh Bhardwaj,
+#   Siddharth R G, Sidharth Sundaram, Sweta Pandey, Vartika Rai, David Reed.
+#   11 people (was 13; Bishal Roy and Vineet Patel moved to np).
+#
+# ============================================================================
+# EXCLUDED-FIELDS CHECK
+# ============================================================================
+# `work_email` holds a LOCAL PART ONLY ("shashi", not "shashi@..."), is declared
+# hand-entered identity evidence, and is listed in taxonomy.yaml as excluded
+# from graph.json. It is NOT under `aliases`, because alias values become node
+# label variants and would carry an address into the graph under a key the
+# excluded-fields rule does not match. validate.py asserts:
+#   - no aliases value contains "@"
+#   - work_email appears on no node in graph.json
+#   - work_email values contain no "@" and no domain

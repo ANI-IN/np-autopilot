@@ -1,0 +1,33 @@
+# Google Drive credentials — never commit
+config/credentials.json
+config/token.json
+config/drive.yaml
+
+# Local corpus cache, fetched by pipeline/00_fetch_drive.py
+.drive-cache/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+.DS_Store
+
+# ---------------------------------------------------------------------------
+# THE CORPUS IS NEVER COMMITTED.
+# 75 source files holding ~8,000 learner names and personal emails, employee
+# performance records, and a payroll export with termination records. The plugin
+# does not bundle the corpus (doc 08 Q7) — teammates get knowledge/ only.
+# Committing these would recreate exactly the exposure documented in doc 04.
+# ---------------------------------------------------------------------------
+00-master/
+01-workflows/
+02-curriculum/
+03-instructors/
+04-programs/
+05-operations/
+06-analysis/
+
+# Local corpus cache from pass 0
+.drive-cache/

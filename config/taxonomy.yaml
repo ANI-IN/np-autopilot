@@ -1,0 +1,583 @@
+# taxonomy.yaml — the single source of truth for node types, edge types and
+# controlled vocabulary. pipeline/lib/taxonomy.py is the ONLY module permitted to
+# read this file; a grep test fails the build if any type string is written as a
+# literal anywhere else (B2 hard rule, doc 07 R8).
+#
+# Regenerated 2026-09-09 from the D-decisions (doc 08 part 1) and Q-answers
+# (doc 08 part 2), superseding the version embedded in doc 05.
+#
+# Changes from the doc 05 version, and why:
+#   - Tool removed as a node type            (Q3: degree>=2 pass rate 2/6; demoted)
+#   - uses_tool edge removed                 (pointed at a demoted type)
+#   - workflow.tools property added          (what the demotion produces)
+#   - person.expect 42, not "~28"            (Q4 recount; "~" parsed as YAML null)
+#   - instructor / module expect populated   (Q2: measured, no longer null)
+#   - part_of split into covers / contains   (fixed endpoints; list-valued from/to
+#                                             permitted module->domain and
+#                                             program->program)
+#   - has_doc edge added                     (D5: KYP is a doctype)
+#   - sensitive property added               (D4 / D9)
+#   - workflow_owned_by edge added           (D2 REVERSED 2026-09-09 — see note)
+#   - delivered_by edge added                (owners sheet column 2 was unmodelled)
+#   - excluded block added                   (ingestion exclusions, 2026-09-09)
+
+version: 2
+
+# ---------------------------------------------------------------------------
+# COVERAGE CAVEAT — read before trusting any `expect` value below.
+# 25 of the 75 corpus files have never been read by an entity-extraction scan
+# (see BUILD_LOG, round four). person=42, instructor=1098 and module=234 are
+# measured over 50 of 75 files. They are FLOORS, not counts, and their
+# tolerances are provisional until B4 reads the whole corpus.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# NOTE ON D2. Doc 08 recorded D2 as "no workflow-owners.yaml for v1", which
+# removed Workflow -> Person and left the graph in two disconnected components
+# (Q5, R6b). That decision was reversed on 2026-09-09 in favour of a hand-filled
+# config/workflow-owners.yaml. The bridge edge is `workflow_owned_by`, and it is
+# deliberately NOT folded into `owned_by`: `owned_by` reads the owners
+# spreadsheet and is domain-keyed, while `workflow_owned_by` reads a hand-filled
+# file and is workflow-keyed. Different sources, different confidence, different
+# edges. `owned_by` therefore has a single fixed source type (domain).
+# ---------------------------------------------------------------------------
+
+node_types:
+
+  - name: theme
+    description: A top-level grouping in the workflow inventory.
+    source: 00-master/Team_Task___Workflow_Inventory (## headings)
+    key: slug
+    expect: 16
+    tolerance: 0
+    properties: [label, label_raw, sources, sensitive]
+
+  - name: workflow
+    description: One recurring task the team owns. The hub type of component A.
+    source: 00-master/Team_Task___Workflow_Inventory (### headings)
+    key: slug          # from the "N.M" id, which is stable in the source
+    expect: 92
+    tolerance: 0
+    properties:
+      - label
+      - label_raw
+      - workflow_id     # "3.7"
+      - steps           # list[str], split on the source's arrow separator
+      - effort          # verbatim string, e.g. "1.5-2 hrs / candidate"
+      - alerts          # list[str]
+      - tools           # list[str] — closed vocab below. Replaces the Tool node
+                        # type (Q3). Query "what else uses Zoom" is a property
+                        # scan, not a traversal, and that is sufficient.
+      - sources
+      - sensitive
+
+  - name: person
+    description: >
+      An internal IK employee or team member. NOT instructors — instructors are a
+      separate type with a different source and a different junk profile.
+    source: >
+      00-master/Domains_Courses Owners.xlsx (Sheet1 + For Slack),
+      00-master/IAims Setting Audit _ New Programs.xlsx (17 sheets)
+    out_of_corpus_sources:
+      # These are NOT corpus files and have NO file node. A person whose only
+      # provenance is one of these would otherwise fail both sources
+      # min_length: 1 and the sourced_from endpoint check. They satisfy
+      # provenance via the `origin` schema below instead, and validate.py
+      # accepts that form ONLY for these two.
+      - config/people.yaml        # hand-entered, cites the HR directory
+      - config/workflow-owners.yaml  # hand-filled ownership
+    key: slug          # curated. NOT employee id — IDs are neither unique
+                       # (IK-294, IK-INT30 each map to two people) nor stable
+                       # (Animesh Kumar has two). IDs are kept as evidence only.
+    expect: null       # NOT a count. Current FLOOR is 43, over 50 of 75 files:
+                       #   15 NP staff (HR directory, out-of-corpus, authoritative)
+                       # + 14 IAims names outside that directory
+                       # + 12 delivery-org first names
+                       # + Simran Khemlani, Abhinav Rawat
+                       # Set at B4 once all 75 files are read. Do not guess.
+    tolerance: null    # The Karthika Pai question is CLOSED — she is an SME hire,
+                       # classified instructor, not person — so the +1 that
+                       # motivated tolerance 2 is gone. Set with expect at B4.
+    properties:
+      - label
+      - label_raw
+      - aliases
+      - employee_ids   # evidence only, never the key. Yash Mathur has 11 IAims
+                       # rows and a BLANK ENo; an id-keyed read drops him.
+      - team           # np | delivery | other — see team_vocabulary
+      - title          # verbatim from the HR directory, np only
+      - seniority      # see seniority_vocabulary, np only
+      - sources
+      - sensitive
+
+  - name: domain
+    description: A subject/product area that has an owner and a cadence.
+    source: 00-master/Domains_Courses Owners.xlsx!Sheet1 rows 2-43
+    key: slug
+    expect: 42
+    tolerance: 0
+    properties: [label, label_raw, cadence, stage, sources, sensitive]
+
+  - name: program
+    description: >
+      A saleable offering, one per curriculum document. Disjoint from domain —
+      raw-string intersection with domain is 0, 28 domains have no program and
+      20 programs have no domain (doc 08 Q1).
+    source: 04-programs/*.pdf
+    key: slug
+    expect: 42         # UNCHANGED by D5. The KYP collapse merges nothing: no two
+                       # documents describe the same product. "TPM EdgeUP KYP"
+                       # and "TPM-KYP" are two products, because per D5 EdgeUP is
+                       # itself the product line. Doc 08 Q1's claim that D5
+                       # "reduces the program count" is withdrawn.
+    tolerance: 0
+    properties:
+      - label
+      - label_raw
+      - family      # EdgeUP | InterviewPrep | Standalone — the product line
+      - doctype     # KYP | Curriculum — the kind of document. A PROPERTY, not a
+                    # node: see the fold note below.
+      - sources
+      - sensitive
+    # ---- doctype folded from a node type into this property, 2026-09-09 ----
+    # D5 asked for KYP as a doctype node joined by has_doc. Built that way first,
+    # then cross-tabulated doctype against family across all 42 documents:
+    #
+    #                 EdgeUP   InterviewPrep   Standalone
+    #     KYP            17          0             7
+    #     Curriculum      0         15             3
+    #
+    # doctype is a near-function of family: it is 100% determined for the 32
+    # EdgeUP and InterviewPrep programs, and splits only inside the 10
+    # Standalone ones. A 2-value type that is predictable from an existing
+    # property for 76% of instances fails the same earns-its-place test that
+    # demoted Tool (Q3), so it is demoted the same way rather than kept because
+    # a decision named it.
+    #
+    # The earlier doctype_vocabulary (KYP / Interview Preparation Program /
+    # Program) was itself wrong: two of its three values are product families,
+    # not document types, and duplicated `family`. Withdrawn.
+    #
+    # ALSO CORRECTING THE PREMISE: not every program has a KYP document.
+    # 24 of 42 do; the other 18 have a curriculum PDF that is not a KYP.
+
+  - name: module
+    description: A unit of teachable content inside a program.
+    source: 02-curriculum/*.xlsx module columns
+    key: slug
+    expect: null       # NOT a count. Current FLOOR is 234 cross-file-confirmed
+                       # of 1,348 normalised candidates, over the 2 curriculum
+                       # workbooks only. The >= 2 rule stands; the number does
+                       # not until B4 reads all 75 files.
+    tolerance: null
+    properties: [label, label_raw, file_count, sources, sensitive]
+
+  - name: instructor
+    description: >
+      An external person who teaches. Separate from person: different sources,
+      different volume, different failure mode.
+    source: >
+      03-instructors/Instructors Directory.xlsx!Responses,
+      03-instructors/SME database (For Ops + NP).xlsx!Master,
+      05-operations/New Combined Schedule.xlsx!Instructor Data,
+      02-curriculum/Resource Collection Mastersheet (Software + System).xlsx!Indian Instructors,
+      02-curriculum/Data and Management.xlsx!Instructor Details
+    key: slug
+    expect: null       # NOT a count. Current FLOOR is 1,098 distinct over 1,509
+                       # raw rows, measured across 5 rosters only. SME Tracker,
+                       # SME_Interview_Demo Audit Rubrics and AgenticAI
+                       # Instructors Training Plan are all unread and all hold
+                       # instructor names. Doc 08 Q2's 1,088 / 1,497 came from a
+                       # different normalisation. Set at B4; do not average.
+    tolerance: null
+    # NO >= 2 file threshold here, unlike module. Justified: the five sources are
+    # rosters whose purpose is to list instructors, so one appearance is a
+    # declaration, not a coincidence. Measured: >= 2 would cut 777 names to
+    # remove 13 junk entries (1.7% precision) and would still leave 2 junk
+    # entries that appear in >= 2 rosters.
+    #
+    # Junk found SO FAR is 23/1098 = 2.1%. That is a FLOOR, not a measured rate:
+    # a random 50 of the passers found zero, and the 8 extra came from targeted
+    # auditing of two weak classes, not from a uniform sample. The earlier 1.4%
+    # was circular (the heuristic's own hit count) and is withdrawn; 2.1% must
+    # not be quoted as a rate either. Heuristic recall is AT MOST 15/23 = 65%.
+    # The 8 known misses are all topic strings in the
+    # name column of Resource Collection Mastersheet!Indian Instructors:
+    # Cloud, Database, Frontend, Cloud Computing Architecture, Cloud
+    # Infrastructure, Frontend System Design, Full Stack, UI System Design.
+    # That sheet needs a column-specific parser, not a generic one.
+    #
+    # The heuristic is still the correct instrument and the threshold is still
+    # wrong; the heuristic just needs the two extra rules added under validate.
+    # See doc 05 "Threshold asymmetry".
+    properties:
+      - label
+      - label_raw
+      - cross_validated  # bool — true for the 321 in >= 2 rosters. A confidence
+                         # signal for ranking, never a filter.
+      - roster_count
+      - sources
+      - sensitive
+    # Contact fields (email, phone, linkedin, discord) are dropped at extraction
+    # per D4 and the 2026-09-09 exclusions. They are never node properties.
+
+  - name: file
+    description: Every ingested source file, carrying provenance.
+    source: corpus walk
+    key: relative_path
+    expect: 74         # 75 corpus files minus US Instructor Cost Analysis.xlsx.
+                       # Was 73 on a count of 74 files; corrected after
+                       # UpLevel Schedule Structure.xlsx (30 sheets) was found
+                       # to have entered the corpus mid-analysis. See BUILD_LOG.
+    tolerance: 2
+    properties: [relative_path, drive_url, mtime, sha256, sheet_count, sensitive]
+
+# ---------------------------------------------------------------------------
+# Edges. Every edge has EXACTLY ONE from-type and ONE to-type. No list-valued
+# endpoints — that is what let part_of permit module -> domain and
+# program -> program.
+#
+# ONE DELIBERATE EXCEPTION: `sourced_from` uses from: "*". It is provenance, not
+# a relation, and it fires for every node of every type, so enumerating the types
+# would just be a second place to update whenever a type is added. The endpoint
+# check below cannot evaluate a wildcard, so it SKIPS from: "*" and a separate
+# rule covers it: every node has exactly one sourced_from edge per entry in its
+# sources list, and every target is a file node. If another edge ever wants "*",
+# it does not get it — enumerate the types instead.
+# ---------------------------------------------------------------------------
+
+edge_types:
+
+  - name: belongs_to
+    from: workflow
+    to: theme
+    cardinality: n:1
+    expect: 92
+    source: workflow inventory structure
+
+  - name: depends_on
+    from: workflow
+    to: workflow
+    cardinality: n:n
+    expect: null       # measured at build; no prior figure is trustworthy
+    source: workflow inventory cross-references
+
+  - name: workflow_owned_by
+    from: workflow
+    to: person
+    cardinality: n:1
+    expect: null       # equals the number of confirmed rows in workflow-owners.yaml
+    source: config/workflow-owners.yaml
+    emit_when: "row.confirmed is true and row.owner is non-empty"
+    note: >
+      The ONLY bridge between component A and component B. Rows with
+      confirmed: false are ignored entirely, including their suggestion field.
+      A missing file is not an error — the pipeline omits these edges and
+      validate.py reports the graph as two components.
+
+  - name: owned_by
+    from: domain
+    to: person
+    cardinality: n:n
+    expect: null
+    source: Domains_Courses Owners.xlsx!Sheet1 column 3 (Primary Owner/s)
+
+  - name: supported_by
+    from: domain
+    to: person
+    cardinality: n:n
+    expect: null
+    source: Domains_Courses Owners.xlsx!Sheet1 column 4 (Secondary Owner/s)
+
+  - name: delivered_by
+    from: domain
+    to: person
+    cardinality: n:n
+    expect: null
+    source: Domains_Courses Owners.xlsx!Sheet1 column 2 (Delivery Team Member)
+    note: >
+      Previously unmodelled. This column is what makes eval Q12's "delivery
+      Anshuman" answerable, and 12 of its values are first-name-only.
+
+  - name: covers
+    from: program
+    to: domain
+    cardinality: n:1
+    expect: null
+    source: normalised name join, low confidence — route misses to a review queue
+    note: >
+      The lossiest edge in the graph (R12). Never spell-correct a filename-derived
+      label to force a join; keep label_raw and let the join fail visibly.
+
+  - name: contains
+    from: program
+    to: module
+    cardinality: 1:n
+    expect: null
+    source: curriculum sheets
+
+  - name: teaches
+    from: instructor
+    to: module
+    cardinality: n:n
+    expect: null
+    source: 03-instructors/AgenticAI Instructors Training Plan.xlsx and rosters
+
+  - name: sourced_from
+    from: "*"
+    to: file
+    cardinality: n:n
+    expect: null
+    source: provenance, emitted for every node
+    note: >
+      Citation only, never a traversal path. All 92 workflows share one file
+      node, so this is a degree-92 hub, not a bridge (R6b).
+
+# ---------------------------------------------------------------------------
+# Controlled vocabulary
+# ---------------------------------------------------------------------------
+
+tool_vocabulary:      # closed. workflow.tools may contain only these.
+  - Zoom
+  - Uplevel
+  - LinkedIn
+  - Discord
+  - GitHub
+  - Google Form
+
+doctype_vocabulary:   # program.doctype — the kind of document
+  - KYP                 # 24 of 42
+  - Curriculum          # 18 of 42
+
+family_vocabulary:    # program.family — the product line
+  - EdgeUP            # 17
+  - InterviewPrep     # 15
+  - Standalone        # 10
+
+cadence_vocabulary:   # validate.py asserts no person label matches any of these.
+  - Every Week        # This is the R5 blank-cell-shift guard.
+  - Every 3 weeks
+  - Every 45 days
+  - Once a month
+  - Once a Month
+  - Once in 2 months
+  - Twice a Month
+  - Thrice a month
+  - Based on entry point
+  - Video Only
+  - Discontinued
+  - TBD
+  - NA
+
+team_vocabulary:      # person.team — REQUIRED on every person.
+  - np                # on the New Programs > Product Management HR directory.
+                      # 15 people, closed set, authoritative, out-of-corpus.
+  - delivery          # the delivery org. Separate from NP: the 12 first-name-only
+                      # delivery-POC names have ZERO overlap with the NP
+                      # directory, so no NP roster will ever resolve them. Do not
+                      # treat them as unresolved NP identities.
+  - other             # appears in the corpus, on neither roster. Former staff,
+                      # another org, or unclassified. Not a defect — a fact.
+
+seniority_vocabulary: # person.seniority — np only, from the HR directory.
+  - Director
+  - Senior PM
+  - PM2
+  - PM1
+  - APM2
+  - APM1
+  - Intern
+
+stage_vocabulary:     # owners sheet column 6
+  - IP
+  - SU
+  - Skillup
+  - Switchup
+
+# ---------------------------------------------------------------------------
+# Properties applied across types
+# ---------------------------------------------------------------------------
+
+common_properties:
+
+  sensitive:
+    type: bool
+    default: false
+    required: true
+    description: >
+      D4/D9. Set true on nodes carrying compensation, ratings, written judgement
+      about a named individual, or employee performance data. Drives the
+      render filter, which per D9 exists as a config flag defaulting to OFF.
+      Tagging is mandatory even though nothing is filtered in v1.
+
+  sources:
+    type: list[object]
+    required: true
+    min_length: 1     # HARD. The reference implementation shipped 280 of 351
+                      # instructors with an empty source list (doc 04). A node
+                      # with no provenance is a build failure, not a warning.
+    schema: {file: relative_path, sheet: str|null, row: int|null, page: int|null}
+    # Two source SHAPES. Both satisfy min_length: 1; only the first gets a
+    # sourced_from edge, because only the first names a file that exists in the
+    # corpus.
+    #
+    #   corpus     {origin: corpus, file: <relative_path>, sheet:, row:, page:}
+    #              -> emits sourced_from to that file node.
+    #
+    #   hand       {origin: hand, entered_by:, entered_at:, evidence: <free text>}
+    #              -> emits NO sourced_from edge. Used for the HR directory and
+    #                 for facts carried over from the excluded payroll file.
+    #                 validate.py requires a non-empty `evidence` string and
+    #                 accepts this shape ONLY from config/people.yaml and
+    #                 config/workflow-owners.yaml.
+    #
+    # A hand-sourced fact must never be presentable as though a scan produced
+    # it: `origin` is required, has no default, and answers must surface it.
+
+  label_raw:
+    type: str
+    required: true
+    description: The verbatim source string, before normalisation. Never corrected.
+
+# ---------------------------------------------------------------------------
+# Ingestion exclusions — decided 2026-09-09. Rationale is relevance first:
+# none of this answers any question in the eval set. Privacy is the second
+# reason, not the first. Documented here and in README so the gap is a visible
+# decision rather than a silent omission.
+# ---------------------------------------------------------------------------
+
+excluded:
+
+  files:
+    - path: 03-instructors/US Instructor Cost Analysis.xlsx
+      reason: >
+        Misnamed. It is a Paycor HR payroll export — employee file numbers, work
+        and personal emails, department, employment status including
+        "Exited (Resigned)" and "Exited (Terminated)", and per-labour-code hourly
+        rates for 5,387 distinct names. It is an HR record misfiled into a New
+        Programs folder, not corpus material, and answers no eval question.
+      sheets_dropped: 37
+      known_cost: >
+        This file is the only corpus source for 14 of the 25 internal
+        @interviewkickstart.com addresses, and the only place that resolves
+        "Anshuman" to "Anshuman Bapna". Those facts were extracted before
+        exclusion and recorded by hand in people.yaml with this file cited as
+        the (now out-of-corpus) evidence.
+
+  fields:
+    description: >
+      Dropped at extraction from every sheet, so they never become node
+      properties and there is nothing to redact at render time (D4).
+    patterns:
+      - learner_email
+      - learner email
+      - Email
+      - Email Address
+      - Email ID
+      - Personal email
+      - Work email
+      - Alternate Email ID
+      - Gmail ID
+      - Phone
+      - "Phone No."
+      - Mobile
+      - LinkedIn
+      - LinkedIn Profile
+      - LinkedIn Profile URL
+      - LinkedIn Link
+      - Discord ID
+      - Discord Channel Link
+    kept:
+      - learner            # name only, where a cohort count needs it
+      - Coach
+      - Session_Title
+      - Student Name
+      - cohort fields
+      - session titles
+      - coach assignments
+    note: >
+      Matching is case-insensitive on the normalised header. A column whose
+      header is blank but whose values are >30% email- or phone-shaped is also
+      dropped, and the drop is logged — headerless contact columns exist in this
+      corpus.
+
+# ---------------------------------------------------------------------------
+# Build-time assertions. validate.py fails the build on any breach.
+# ---------------------------------------------------------------------------
+
+validate:
+  - every node has a non-empty sources list
+  - every node has sensitive set explicitly
+  - every person has team set explicitly; title and seniority are required when
+    team is np and must be absent otherwise
+  - no person label matches cadence_vocabulary or stage_vocabulary   # R5 guard
+  - no node label contains "@" or "http"          # all types — always wrong
+
+  # --- junk heuristics: PERSON and INSTRUCTOR labels ONLY. ---
+  # As global rules these reject the taxonomy's own vocabulary. Measured:
+  #   theme 15 "15. METRICS / QUALITY / CONTINUOUS IMPROVEMENT" = 46 chars
+  #   theme 14 "14. DOCUMENTATION & KNOWLEDGE MANAGEMENT"        = 40, zero margin
+  #   workflow 3.6 "Pre-Class -> Live Class -> TCS -> ARS Delivery Orchestration"
+  #   and "/", "&", "->", "(" are normal in workflow, theme, program and domain
+  #   labels ("Agentic AI - TPM/Pm", "GPM (Growth Product Management)").
+  - person and instructor labels are at most 40 characters
+  - person and instructor labels contain no sentence punctuation
+  - person and instructor labels match no stopword pattern
+  - >
+    a single-token person or instructor label is flagged for review, not accepted
+    silently. 30 exist among instructors; 3 (Cloud, Database, Frontend) are not
+    people.
+  - >
+    a person or instructor label matching the topic vocabulary (design, system,
+    cloud, frontend, full stack, infrastructure, architecture, ...) is rejected
+    to the log.
+  - workflow.tools values are all in tool_vocabulary
+  - >
+    every edge endpoint type matches its declared from/to. SKIPS sourced_from,
+    whose from is the wildcard "*" and cannot be evaluated by this rule.
+  - >
+    sourced_from specifically: every node has one sourced_from edge per entry in
+    its sources list, every target resolves to a file node, and no other edge
+    type declares a wildcard endpoint.
+  - counts within expect +/- tolerance for every type where expect is not null
+  - rejection log is non-empty
+  - report connected component count and the size of each
+  - no file node path is absolute
+  - excluded.files are absent from files.json
+  - excluded.fields patterns appear in no node property key
+
+  # --- multi-value cell integrity. R5's cadence-vocabulary check is
+  # structurally blind to a DROPPED name: it can only catch a wrong value that
+  # lands in a person field, never a right value that vanishes. These do. ---
+  - >
+    every multi-value cell splits without producing an empty token; a cell whose
+    raw text yields an empty token after splitting (e.g. "Deval, Srushith, , Adil"
+    -> ['Deval','Srushith','','Adil']) is a HARD FAIL, reported with file, sheet,
+    row, column and the raw string. Do not silently drop the empty and continue.
+  - >
+    owner-cell separators are "," and "/" only, applied to owner columns ONLY.
+    Never split a Domain label on "/" — "Agentic AI - TPM/Pm" is one domain, and
+    "Kunal/Abhishek" is two people in the adjacent column.
+  - >
+    token count per multi-value cell is recorded alongside the parsed names, so a
+    later parser change that alters the count is visible in a diff.
+
+  # --- corpus stability. Split by change class: the corpus is a live Drive
+  # folder, so people ADDING documents is normal and must not kill an
+  # unattended B10 v2 nightly. Editing or deleting one is not normal. ---
+  - >
+    HARD FAIL — a file present in the previous manifest whose sha256 has CHANGED,
+    or that has been REMOVED. Report path, old and new hash, and stop. These are
+    the cases that silently invalidate an already-published graph.
+  - >
+    REPORT ONLY — a file present now and absent from the previous manifest.
+    Listed in the build delta and in BUILD_LOG with path, size and sheet count,
+    and ingested normally. A new document is expected traffic, not an incident.
+  - >
+    file.expect / file.tolerance is the SEPARATE guard on total volume, and the
+    two must not contradict each other: expect 74 with tolerance 2 means up to
+    two new files pass silently and a third fails the count check even though the
+    manifest rule reported each one. That is the intended division — the manifest
+    rule says WHAT changed, the count check says the corpus has drifted far
+    enough to need a human. Raise tolerance in the same commit that acknowledges
+    the additions in BUILD_LOG.

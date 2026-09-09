@@ -1,0 +1,13 @@
+# Copy to config/drive.yaml and fill in. config/drive.yaml is gitignored.
+# The folder id is the last path segment of the Drive URL:
+#   https://drive.google.com/drive/u/2/folders/<THIS>
+folder_id: ""
+
+# Local, gitignored. 01_walk_corpus.py reads from here and never touches Drive.
+cache_dir: ".drive-cache"
+
+# OAuth client secret downloaded from Google Cloud Console. Gitignored.
+credentials_file: "config/credentials.json"
+
+# Written on first successful auth. Gitignored.
+token_file: "config/token.json"

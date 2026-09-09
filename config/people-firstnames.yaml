@@ -1,0 +1,164 @@
+# people-firstnames.yaml — fill in `full_name` for each entry, then this feeds
+# people.yaml as canonical entries.
+#
+# These are the 12 first-name-only strings from doc 08 Q4 group (b). Fill in
+# `full_name` and leave everything else alone. If a name should NOT become a
+# person (wrong reading, duplicate, no longer with the team), set
+# `full_name: DROP` and say why in `note`.
+#
+# TWO CORRECTIONS to the "12 delivery team members" framing:
+#   - Only 10 of the 12 are delivery team members. `Pooja` and `Anmol` never
+#     appear in the Delivery Team Member column at all — they are OWNERS.
+#   - `Pooja` is listed as BOTH primary and secondary owner of the same two
+#     domains (Career Classes, Career Coaching), which is either a data entry
+#     error or means those domains have no real backup. Worth checking.
+#
+# `surname_candidates` are strings found elsewhere in the corpus that start with
+# the same first name. Almost all are INSTRUCTORS or learners, not your team —
+# they are listed so you can rule them out, not so you can pick from them. Only
+# entries marked `evidence:` are backed by an internal @interviewkickstart.com
+# address or the Delivery POC sheet.
+
+version: 1
+
+# TEAM CLASSIFICATION — settled 2026-09-09.
+# All 12 are team: delivery. ZERO of them appear on the 15-person New Programs
+# HR directory (config/people.yaml). They are a SEPARATE ORG, not unresolved NP
+# identities, and no NP roster will ever resolve them. Stop expecting one to.
+#
+# What that changes: a blank full_name here is not a gap in NP coverage. It is
+# an identity in another org that NP's own records legitimately do not carry.
+# Surnames must come from the delivery org's roster or from you, not from a scan.
+#
+# Anshuman is NOT resolved by the HR directory — he is not on it. The
+# somya@interviewkickstart.com mismatch on New Combined Schedule!Delivery POC r4
+# stands exactly as reported.
+
+people:
+
+  # ---- confirmed from internal evidence: check and accept ----
+
+  - first_name: Anshuman
+    full_name: "Anshuman Bapna"          # <- CONFIRM
+    role: delivery
+    team: delivery
+    confidence: high
+    evidence: >
+      US Instructor Cost Analysis.xlsx!Sheet29 r595 — "Anshuman Bapna",
+      work email anshuman@interviewkickstart.com, Rippling profile 1132.
+      NOTE: that file is excluded from ingestion, so this is out-of-corpus
+      evidence carried over by hand. See README -> Exclusions.
+    domains: [System Design Pathway, Frontend, Security, Embedded]
+    note: >
+      New Combined Schedule!Delivery POC r4 lists this person as "Anshuman" with
+      email somya@interviewkickstart.com. That email is WRONG, not an alias —
+      see the Anshuman/Somya finding. Do not key on it.
+
+  - first_name: Sourish
+    full_name: "Sourish Kumar Deb"       # <- CONFIRM
+    role: delivery
+    team: delivery
+    confidence: high
+    evidence: >
+      New Combined Schedule!Delivery POC r5 — "Sourish Kumar Deb",
+      sourish.deb@interviewkickstart.com. Also appears as "Sourish Deb" (56 rows).
+    domains: [Cloud, SRE, Career Classes, Career Coaching, "Agentic AI - TPM/Pm"]
+
+  - first_name: Tamanna
+    full_name: "Tamanna Rout"            # <- CONFIRM
+    role: delivery
+    team: delivery
+    confidence: high
+    evidence: >
+      New Combined Schedule!Delivery POC r6 — "Tamanna Rout",
+      tamanna.rout@interviewkickstart.com.
+    domains: [TPM, EM, PM, "GPM (Growth Product Management)"]
+
+  # ---- no internal evidence: surname needed ----
+
+  - first_name: Abhishek
+    full_name: ""                        # <- FILL IN
+    role: delivery
+    team: delivery
+    confidence: none
+    domains: ["ML Switch-up (Adv ML)", "AI Data Science Switch-up (DS 2.0)", "Advanced ML Ops"]
+    surname_candidates: ["Abhishek Gupta (442 rows)", "Abhishek Garai (208)", "Abhishek Agrawal (91)", "Abhishek Kumar (35)", "Abhishek Prasad (23)", "Abhishek Marathe (8)"]
+    note: All candidates look like instructors. None has an internal address.
+
+  - first_name: Harsha
+    full_name: ""                        # <- FILL IN
+    role: delivery
+    team: delivery
+    confidence: none
+    domains: ["Agentic AI - EM"]
+    surname_candidates: ["Harsha Alagud (5)", "Harsha Kapa (2)", "Harsha Munnaluri (1)", "Harsha Kota (1)", "Harsha Vardhini Vasu (1)", "Harsha Priya Gupta (1)"]
+
+  - first_name: Kunal
+    full_name: ""                        # <- FILL IN
+    role: delivery
+    team: delivery
+    confidence: none
+    domains: [Android, iOS, "ML Switch-up (Adv ML)", "AI Data Science Switch-up (DS 3.0)", "Advanced ML Interview Prep"]
+    surname_candidates: ["Kunal Ekawde (12)", "Kunal Rajani (7)", "Kunal Thorat (4)", "Kunal Joshi (4)", "Kunal Kamdar (3)", "Kunal Seth (2)"]
+
+  - first_name: Muskan
+    full_name: ""                        # <- FILL IN
+    role: delivery
+    team: delivery
+    confidence: none
+    domains: ["Project- Up"]
+    surname_candidates: ["Muskan Kesharwani (1)"]
+    note: >
+      Only one candidate in the whole corpus. Source cell is "Muskan  " with
+      trailing spaces in the owners sheet.
+
+  - first_name: Rupali
+    full_name: ""                        # <- FILL IN
+    role: delivery
+    team: delivery
+    confidence: none
+    domains: ["Machine Learning (IP course)", "Data Science (IP course)", "Data Engineering", DABA, "Early Engineering", "AI Data Science Switch-up (DS 2.0)"]
+    surname_candidates: []
+    note: No long form anywhere in the corpus. Six domains — a significant gap.
+
+  - first_name: Sinchana
+    full_name: ""                        # <- FILL IN
+    role: delivery
+    team: delivery
+    confidence: none
+    domains: ["India Agentic AI Bootcamp", "India Masterclass"]
+    surname_candidates: []
+    note: No long form anywhere in the corpus.
+
+  - first_name: Tushar
+    full_name: ""                        # <- FILL IN
+    role: delivery
+    team: delivery
+    confidence: none
+    domains: ["Flagship ML/ ML Program"]
+    surname_candidates: ["Tushar Mahale (6)", "Tushar Gupta (4)", "Tushar Dave (3)", "Tushar Tilwani (2)", "Tushar Limaye (1)", "Tushar Chugh (1)"]
+
+  # ---- NOT delivery team members — owners ----
+
+  - first_name: Pooja
+    full_name: ""                        # <- FILL IN
+    role: owner                          # primary AND secondary on both domains
+    team: delivery
+    confidence: none
+    domains: ["Career Classes", "Career Coaching"]
+    surname_candidates: ["Pooja Shetty (18)", "Pooja Umathe (11)", "Pooja Prakash (8)", "Pooja Modala (5)", "Pooja Prabhakar (5)", "Pooja Voladoddi (3)"]
+    note: >
+      Listed as BOTH primary and secondary owner of the same two domains. Either
+      a data entry error or those domains genuinely have no backup owner.
+
+  - first_name: Anmol
+    full_name: ""                        # <- FILL IN
+    role: owner
+    team: delivery
+    confidence: none
+    domains: ["AI Data Science Switch-up (DS 3.0)"]
+    surname_candidates: ["Anmol Gulwani (6)", "Anmol Darak (3)"]
+    note: >
+      Source cell is "Anmol,Navdeep" — no space after the comma. Splits cleanly,
+      but it is the same class of defect as the "Deval, Srushith, , Adil"
+      double-comma in rows 36-38.
