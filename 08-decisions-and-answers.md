@@ -220,7 +220,23 @@ The test that demoted `Alert` was **degree ≥ 2** — a degree-1 node adds a ho
 
 ### Q5 · Hop paths that exist, and how many multi-hop questions survive
 
-#### ⚠ The structural consequence: the graph is in two disconnected components
+#### ⚠ CORRECTED 2026-09-10 — the graph is in **36** components, not two
+
+The "two components" framing below is **withdrawn**. Measured on the built graph:
+**1 large component of 1,144 nodes** (domain/person/instructor/module/program),
+**16 theme-stars** (one theme plus its workflows — a workflow's only edge is
+`belongs_to`, so themes never touch each other), and ~19 small fragments.
+
+**From a workflow you reach its theme and its sibling workflows. Nothing else.**
+No person, no program, no module, no instructor — not by a long path, by any
+path. Two workflows in different themes are also mutually unreachable.
+
+The original text described component A as a connected "how we work" cluster.
+It is not connected; it is 16 stars.
+
+#### Original text follows
+
+#### The structural consequence: the graph is in two disconnected components
 
 With `Workflow → Person` gone, nothing joins the workflow world to the delivery world except `File` nodes.
 

@@ -637,6 +637,30 @@ validate:
   - person and instructor labels are at most 40 characters
   - person and instructor labels contain no sentence punctuation
   - person and instructor labels match no stopword pattern
+  # --- alias matching. A substring test silently corrupts alias work:
+  # norm("Product Management") CONTAINS "em", so a naive check matched the
+  # domain EM through the letters in "managEMent". Caught by hand; it would have
+  # put 50 instructors on the wrong domain. ---
+  - >
+    domain-alias matching compares TOKEN SETS with word boundaries, never
+    substrings. An alias matches a domain only when their normalised token sets
+    are equal or one is a subset of the other.
+  - >
+    every proposed alias passes the SIBLING-DOMAIN TEST before it may be
+    confirmed: exactly one domain may plausibly be meant. "ML" fails it with
+    five candidates and stays unjoined; so do "Product Management" (PM vs GPM)
+    and "Agentic AI" (four domains).
+  - >
+    an alias-recovered expert_in edge carries via_alias: true, so a staffing
+    query can separate it from a direct match. It is two inference steps, not one.
+
+  # --- cross-type label collision: a string that is BOTH a module and an
+  # instructor is almost always one of them leaking into the other's column ---
+  - >
+    a label appearing as both a module and an instructor is reported for review.
+    Person names were found in Module Name columns ("Nisarg", "Shelby",
+    "Cathy Ma") in Resource Collection Mastersheet!Full Stack Engineering.
+
   # --- quarters: an explicit map, never sheet-name parsing ---
   - >
     every quarter-labelled sheet in IAims resolves to an entry in

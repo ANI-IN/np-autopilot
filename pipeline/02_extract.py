@@ -73,6 +73,17 @@ def reject_reason(raw: str, node_type: str) -> str | None:
             return "phone-number shaped"
         if len(s) < 3:
             return "shorter than 3 characters"
+        low = s.strip().lower().rstrip(".")
+        # Status / filler values. "done" had become a module with 18 teaches
+        # edges before this rule existed.
+        if low in {"done", "na", "n/a", "tbd", "yes", "no", "wip", "pending",
+                   "complete", "completed", "nil", "none", "ok", "default",
+                   "-", "--", "n.a"}:
+            return "status or filler value, not a module"
+        # Column headers that leaked into the data region.
+        if low in {"topic", "topics", "week no", "week", "module", "module name",
+                   "name", "resource name", "pathways", "course", "instructor"}:
+            return "column header, not a module"
         return None
     if node_type != T_PERSON and node_type != T_INSTRUCTOR:
         return None
@@ -580,6 +591,54 @@ def main() -> int:
         scan_column(root, rel, sheet, col, T_INSTRUCTOR, cands, rejected, missing)
     for rel, sheet, col in SRC.MODULE_SOURCES:
         scan_column(root, rel, sheet, col, T_MODULE, cands, rejected, missing)
+
+    # Cross-type collision. A label that is both a module and an instructor is
+    # a person's name leaking into a Module Name column — 42 of them, mostly in
+    # Resource Collection Mastersheet!Full Stack Engineering. The instructor
+    # reading is the trustworthy one, so the module is dropped and logged.
+    # A collision does NOT always mean the module is wrong. "UI & DOM" is a real
+    # module that also leaked into an instructor name column; "Cathy Ma" is a
+    # real person that leaked into a module column. Decide per label by SHAPE,
+    # and log which way it went.
+    def looks_like_person(s):
+        toks = s.split()
+        return (1 < len(toks) <= 4
+                and all(re.fullmatch(r"[(\"']?[A-Za-z][A-Za-z.'\-]*[)\"']?", w) for w in toks)
+                and not TOPIC_WORDS.search(s))
+
+    inst_by_norm = {c["norm"]: c for c in cands if c["type"] == T_INSTRUCTOR}
+    mod_by_norm = {c["norm"]: c for c in cands if c["type"] == T_MODULE}
+    drop_mod, drop_inst = set(), set()
+    for nz in set(inst_by_norm) & set(mod_by_norm):
+        raw = mod_by_norm[nz]["raw"]
+        if looks_like_person(raw):
+            drop_mod.add(nz)
+            rejected.append({"type": T_MODULE, "raw": raw,
+                             "reason": "person name leaked into a module column",
+                             "source": mod_by_norm[nz]["sources"][0]})
+        else:
+            drop_inst.add(nz)
+            rejected.append({"type": T_INSTRUCTOR, "raw": inst_by_norm[nz]["raw"],
+                             "reason": "module/topic string leaked into a name column",
+                             "source": inst_by_norm[nz]["sources"][0]})
+    collided = [mod_by_norm[n] for n in drop_mod] + [inst_by_norm[n] for n in drop_inst]
+    dropped_norms = drop_mod
+    cands = [c for c in cands
+             if not (c["type"] == T_MODULE and c["norm"] in drop_mod)
+             and not (c["type"] == T_INSTRUCTOR and c["norm"] in drop_inst)]
+    pairs = [pr for pr in pairs
+             if pr["module"] not in drop_mod and pr["instructor"] not in drop_inst]
+
+    print("-" * 78)
+    print("CROSS-TYPE COLLISIONS (module label that is also an instructor)")
+    print("-" * 78)
+    print(f"  {len(drop_mod)} dropped from MODULE (person leaked into a module column)")
+    for n in sorted(drop_mod)[:5]:
+        print(f"      {mod_by_norm[n]['raw']!r}  <- {mod_by_norm[n]['sources'][0].get('sheet')}")
+    print(f"  {len(drop_inst)} dropped from INSTRUCTOR (module/topic leaked into a name column)")
+    for n in sorted(drop_inst)[:5]:
+        print(f"      {inst_by_norm[n]['raw']!r}  <- {inst_by_norm[n]['sources'][0].get('sheet')}")
+    print()
 
     print("-" * 78)
     print("CANDIDATES BY TYPE  (raw rows -> distinct normalised)")

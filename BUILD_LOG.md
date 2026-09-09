@@ -1021,3 +1021,141 @@ favour of an earlier pair from another sheet. Fixed; the graph now reaches
 ## 2026-09-09 19:12:11Z — validate
 
 - validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 4255 nodes, 17524 edges
+
+## 2026-09-09 19:15:14Z — 02_extract
+
+- Candidates 14405 | rejected 549 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 5420 raw, 3479 distinct
+    - module: 7141 raw, 453 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 19:15:14Z — 03_resolve
+
+- Nodes 4167 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:15:15Z — 04_build_graph
+
+- Nodes 4242 | edges 16502
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 802
+    - teaches: 668
+    - sourced_from: 14405
+
+## 2026-09-09 19:16:00Z — 02_extract
+
+- Candidates 14348 | rejected 606 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 5420 raw, 3479 distinct
+    - module: 7084 raw, 408 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 19:16:01Z — 03_resolve
+
+- Nodes 4122 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:16:02Z — 04_build_graph
+
+- Nodes 4197 | edges 16373
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 279
+    - expert_in: 802
+    - teaches: 668
+    - sourced_from: 14348
+
+## 2026-09-09 19:16:56Z — 02_extract
+
+- Candidates 14353 | rejected 594 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 5418 raw, 3477 distinct
+    - module: 7091 raw, 410 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 19:17:35Z — 02_extract
+
+- Candidates 14353 | rejected 594 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 5419 raw, 3478 distinct
+    - module: 7090 raw, 409 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 19:17:35Z — 03_resolve
+
+- Nodes 4122 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:17:36Z — 04_build_graph
+
+- Nodes 4197 | edges 16380
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 281
+    - expert_in: 802
+    - teaches: 668
+    - sourced_from: 14353
+
+## 2026-09-09 19:18:22Z — 05_render_html
+
+- graph.html 1656 KB | rendered 2280 nodes (1271 connected, 1009 isolated) and 2027 edges
+
+## 2026-09-09 19:18:38Z — 05_render_html
+
+- graph.html 1656 KB | rendered 2280 nodes (1271 connected, 1009 isolated) and 2027 edges
+
+
+### Caveat on the 20/22 eval score — recorded at the owner's request
+
+**These 22 questions were written alongside the graph, and several were
+reclassified or corrected during the build.** Q10 and Q16 were re-labelled from
+multi-hop to single-hop-plus-observation; Q17's expected answer was strengthened
+after R2 was reclassified; Q14's answer key was found to be factually wrong and
+corrected; Q21 and Q22 were written as replacements after the multi-hop count was
+challenged.
+
+**So 20/22 measures the question shapes we designed for, not unrehearsed
+questions.** It says the graph reaches the facts we already knew were in it. It
+does not say the graph answers what a teammate will actually ask.
+
+**Next: five questions written fresh against the finished graph, which neither
+party has seen answered.** That is the real test, and it comes after B9.
+
+## 2026-09-09 19:19:16Z — 03_resolve
+
+- Nodes 4122 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:19:17Z — 03_resolve
+
+- Nodes 4122 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:19:46Z — validate
+
+- validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 4197 nodes, 16380 edges

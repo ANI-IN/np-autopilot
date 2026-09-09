@@ -41,6 +41,7 @@ def main() -> int:
     expert = taxonomy.edge_for_role("instructor_domain")
 
     BY = {n["id"]: n for n in nodes}
+    BY_FILE = {n.get("relative_path"): n for n in nodes if n["type"] == "file"}
     renderable = [n for n in nodes
                   if n["type"] != "file"
                   and (n["type"] != "instructor" or n.get("renderable"))]
@@ -90,6 +91,23 @@ def main() -> int:
     for e in redges:
         ecounts[e["rel"]] += 1
 
+    # File payload — reverse provenance. Files are NOT nodes in the drawn graph;
+    # they are a separate search section, so the 15,403 sourced_from edges are
+    # never rendered.
+    files_idx = defaultdict(list)
+    for n in renderable:
+        for s in n.get("sources", []):
+            f = s.get("file")
+            if f:
+                files_idx[f].append({"i": n["id"], "sh": s.get("sheet"),
+                                     "r": s.get("row"), "pg": s.get("page")})
+    manifest = json.loads((KNOWLEDGE_DIR / "files.json").read_text(encoding="utf-8"))
+    all_files = [r["path"] for r in manifest["files"] + manifest["failures"]]
+    file_payload = json.dumps(
+        [{"p": p_, "e": files_idx.get(p_, []),
+          "d": (BY_FILE.get(p_) or {}).get("drive_url")} for p_ in sorted(all_files)],
+        separators=(",", ":"))
+
     payload = json.dumps({"nodes": slim, "edges": slim_e}, separators=(",", ":"))
     colors = json.dumps(COLORS)
     expert_js = json.dumps(expert)   # edge name from the single source, never a literal
@@ -97,6 +115,7 @@ def main() -> int:
     # same logic, written out so eval/drive_render.mjs executes the SHIPPED code
     (KNOWLEDGE_DIR / "_graph_logic.mjs").write_text(LOGIC, encoding="utf-8")
     (KNOWLEDGE_DIR / "_graph_data.json").write_text(payload, encoding="utf-8")
+    (KNOWLEDGE_DIR / "_graph_files.json").write_text(file_payload, encoding="utf-8")
     meta = g["meta"]
     legend = "".join(
         f'<span class="k"><i style="background:{COLORS.get(t,"#888")}"></i>'
@@ -176,6 +195,8 @@ module counts are floors, not totals.</div>
 <input type="search" id="q" placeholder="name or type — try 8.2, rating, Animesh" autocomplete="off">
 <div id="res"></div>
 
+<div id="fres"></div>
+
 <h2>Theme</h2>
 <select id="th"><option value="">All themes (component A + B)</option>{theme_opts}</select>
 
@@ -212,12 +233,14 @@ Form response. Not evidence anyone has taught.</div>
 <div id="more"></div>
 <h2>Source files</h2>
 <div id="files"></div>
+<div id="fpanel"></div>
 </div>
 
 <script type="module">
 {logic}
 
 const D={payload};
+const F={file_payload};
 const C={colors};
 const EXPERT={expert_js};
 const CAP=8;
@@ -340,7 +363,40 @@ function open(id){{
 function close(){{state.sel=null;document.getElementById('right').style.display='none'}}
 document.getElementById('close').onclick=close;
 
-const res=document.getElementById('res');
+const res=document.getElementById('res'),fres=document.getElementById('fres');
+
+function openFile(path){{
+  const ents=entitiesOf(F,path);
+  const f=F.find(x=>x.p===path);
+  document.getElementById('right').style.display='block';
+  document.getElementById('nl').textContent=path.split('/').pop();
+  document.getElementById('nt').textContent='source file';
+  const kinds={{}}; ents.forEach(e=>{{const n=idx.byId.get(e.i);if(n)kinds[n.t]=(kinds[n.t]||0)+1}});
+  document.getElementById('nprops').innerHTML=
+    '<div class="src">'+path+'</div>'+
+    '<button id="cp">copy path</button>'+
+    (f&&f.d?'<div class="src"><a href="'+f.d+'">open in Drive</a></div>'
+      :'<div class="src" style="color:#f0c674">Link inactive: the corpus is a '+
+       'hand-exported local folder and browsers block file:// links from HTML. '+
+       'Opening the source activates when pass 0 populates file.drive_url.</div>');
+  document.getElementById('ncount').textContent=ents.length;
+  document.getElementById('nbrs').innerHTML=
+    '<div class="rel">'+JSON.stringify(kinds)+'</div>'+
+    ents.slice(0,60).map(e=>{{const n=idx.byId.get(e.i);if(!n)return '';
+      return '<div class="nb" data-id="'+e.i+'">'+n.l+
+        '<div class="rel">'+n.t+(e.sh?' · '+e.sh:'')+(e.r?' r'+e.r:'')+
+        (e.pg?' p'+e.pg:'')+'</div></div>'}}).join('');
+  document.getElementById('more').innerHTML=ents.length>60
+    ?'<div class="src">'+(ents.length-60)+' more not shown</div>':'';
+  document.getElementById('files').innerHTML=ents.length?'':
+    '<div class="src" style="color:#f0c674">This file yielded NO entities.</div>';
+  document.getElementById('fpanel').innerHTML='';
+  const cp=document.getElementById('cp');
+  if(cp)cp.onclick=()=>{{navigator.clipboard&&navigator.clipboard.writeText(path);
+    cp.textContent='copied'}};
+  for(const el of document.querySelectorAll('.nb')) el.onclick=()=>open(el.dataset.id);
+}}
+
 let tq=null;
 document.getElementById('q').addEventListener('input',ev=>{{
   clearTimeout(tq);
@@ -350,6 +406,14 @@ document.getElementById('q').addEventListener('input',ev=>{{
       return '<div class="hit" data-id="'+id+'"><i style="background:'+
         (C[n.t]||'#888')+'"></i><span>'+n.l+'</span><em>'+n.t+'</em></div>'}}).join('')
       ||(ev.target.value?'<div class="src">no match</div>':'');
+    // file results — separate section, two hit kinds
+    const fh=searchFiles(F,idx,ev.target.value,15);
+    fres.innerHTML=fh.length?('<h2>Files ('+fh.length+')</h2>'+fh.map(f=>
+      '<div class="hit fh" data-p="'+f.path+'"><i style="background:#8a94a6"></i>'+
+      '<span>'+f.path.split('/').pop()+'</span><em>'+
+      (f.kind==='filename'?'filename':f.kind==='both'?'name+'+f.matchedTotal:
+       'contains '+f.matchedTotal)+'</em></div>').join('')):'';
+    for(const el of fres.querySelectorAll('.fh')) el.onclick=()=>openFile(el.dataset.p);
     for(const el of res.querySelectorAll('.hit'))
       el.onclick=()=>{{open(el.dataset.id);
         const n=idx.byId.get(el.dataset.id);

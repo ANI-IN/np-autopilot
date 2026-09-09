@@ -69,6 +69,34 @@ export function degreeMap(D,ids){
   return d;
 }
 
+// ---- FILE SEARCH. Files are NOT graph nodes — the 15,403 provenance edges
+// stay undrawn. They are a separate result section with two hit kinds.
+export function searchFiles(F,index,q,limit){
+  q=(q||'').trim().toLowerCase();
+  if(!q)return [];
+  const out=[];
+  for(const f of F){
+    const nameHit=f.p.toLowerCase().includes(q);
+    const ents=f.e.filter(x=>{const n=index.byId.get(x.i);
+      return n&&(n.l+' '+n.t+' '+(n.wid||'')).toLowerCase().includes(q)});
+    if(nameHit||ents.length){
+      out.push({path:f.p, kind:nameHit&&ents.length?'both':(nameHit?'filename':'contains'),
+                matched:ents.slice(0,6), matchedTotal:ents.length,
+                total:f.e.length, drive:f.d||null});
+      if(out.length>=(limit||20))break;
+    }
+  }
+  // filename hits first — a direct name match is the stronger signal
+  const rank={filename:0,both:0,contains:1};
+  out.sort((a,b)=>rank[a.kind]-rank[b.kind]||b.matchedTotal-a.matchedTotal);
+  return out;
+}
+
+export function entitiesOf(F,path){
+  const f=F.find(x=>x.p===path);
+  return f?f.e:[];
+}
+
 // Edge cap: a node with more than CAP neighbours shows CAP, rest behind a click.
 export function neighboursOf(index,id,cap,expanded){
   const all=index.adj.get(id)||[];

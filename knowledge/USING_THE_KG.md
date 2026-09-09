@@ -146,7 +146,7 @@ Counting the funnel as its outcome is how the reference implementation published
 
 ---
 
-## The graph is two components BY DESIGN
+## The graph is many components BY DESIGN
 
 Not a limitation to work around. A description of how New Programs works.
 
@@ -233,3 +233,34 @@ carry that name (`Machine Learning (IP course)`, `Flagship ML/ ML Program`,
 mapping it would have put 153 instructors on a possibly-wrong domain. It stays
 unjoined, as does `Product Management` (PM vs GPM) and `Agentic AI` (four
 domains).
+
+---
+
+## The graph has 36 components, not 2 — and component A is 16 stars
+
+The earlier "two components" framing was wrong and is withdrawn everywhere.
+Measured on the rendered subgraph:
+
+| # | nodes | contents |
+|---|---|---|
+| 1 | **1,144** | domain 42 · person 26 · instructor 700 · module 348 · program 28 |
+| 2 | 16 | theme 1 · workflow 15 |
+| 3 | 10 | theme 1 · workflow 9 |
+| 4 | 9 | theme 1 · workflow 8 |
+| 5–17 | 2–8 each | one theme + its workflows |
+| … | | 36 components in total |
+
+**"Component A" is not one cluster of 92 workflows. It is SIXTEEN separate
+star clusters, one per theme**, because a workflow's only edge is `belongs_to`
+pointing at its theme. `depends_on` has no evidence and `workflow_owned_by` is
+empty by design.
+
+**The consequence, stated plainly:**
+
+> From a workflow you can reach **its theme, and its sibling workflows under that
+> theme. Nothing else.** There is no path from any workflow to any person,
+> program, module or instructor. Not a long path — **no path**.
+
+Two themes cannot even reach each other. Any question that starts at a workflow
+and needs a person, a program or an instructor is unanswerable, and no amount of
+traversal will find one.

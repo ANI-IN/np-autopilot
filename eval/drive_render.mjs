@@ -108,3 +108,32 @@ for(const q of ['a','e','rating','singh']){
   const [h,t]=ms(()=>search(fidx.idx,q,40));
   line(`  search ${JSON.stringify(q).padEnd(10)} -> ${String(h.length).padStart(3)} hits (capped 40) in ${t.toFixed(2)} ms`);
 }
+
+// ---------- 9. FILE SEARCH (added after the file-results request)
+import {searchFiles, entitiesOf} from '../knowledge/_graph_logic.mjs';
+const F = JSON.parse(readFileSync('knowledge/_graph_files.json','utf8'));
+line('\n--- 9. typed "backend" — file results section ---');
+const [fh,tf9] = ms(()=>searchFiles(F,idx,'backend',15));
+line(`  ${fh.length} file hits in ${tf9.toFixed(2)} ms`);
+fh.slice(0,6).forEach(f=>line(`    [${f.kind.padEnd(8)}] ${f.path}   (${f.matchedTotal} matching entities of ${f.total})`));
+line('\n--- 10. clicked a file result -> reverse provenance ---');
+const target = fh.find(f=>f.kind==='contains') || fh[0];
+if(target){
+  const ents = entitiesOf(F, target.path);
+  const kinds={}; ents.forEach(e=>{const n=idx.byId.get(e.i); if(n)kinds[n.t]=(kinds[n.t]||0)+1});
+  line(`  ${target.path}`);
+  line(`    ${ents.length} entities sourced from it: ${JSON.stringify(kinds)}`);
+  ents.slice(0,4).forEach(e=>{const n=idx.byId.get(e.i);
+    line(`      ${n.t.padEnd(10)} ${n.l}${e.sh?'  !'+e.sh:''}${e.r?' r'+e.r:''}`)});
+  line(`    drive_url: ${target.drive ?? '(null — link inactive until pass 0 runs)'}`);
+}
+line('\n--- 11. searched a filename directly, to see what it yielded ---');
+for(const fname of ['UpLevel Schedule Structure','Taking Class Confirmation']){
+  const hits = searchFiles(F,idx,fname,5);
+  const h = hits[0];
+  if(h){ const e=entitiesOf(F,h.path);
+    const k={}; e.forEach(x=>{const n=idx.byId.get(x.i); if(n)k[n.t]=(k[n.t]||0)+1});
+    line(`  ${h.path}`);
+    line(`    yielded ${e.length} entities ${e.length?JSON.stringify(k):'<-- NOTHING'}`);
+  } else line(`  ${fname}: no file hit`);
+}

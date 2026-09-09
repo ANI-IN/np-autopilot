@@ -133,7 +133,25 @@ My first pass said *"no learner personal data found."* **That was wrong**, and i
 
 ---
 
-## R6b — The graph is two disconnected components
+## R6b — ~~The graph is two disconnected components~~ → **36 components. Reclassified as a description, not a risk.**
+
+**CORRECTED 2026-09-10.** "Two components" was wrong. The rendered graph has
+**36**, and the shape matters:
+
+- **1 large component of 1,144** — domain, person, instructor, module, program.
+- **16 theme-stars** — each a single theme plus the workflows that point at it.
+  A workflow's only edge is `belongs_to`, so themes cannot reach each other.
+- ~19 small fragments — modules and programs joined to each other but not to the
+  main mass.
+
+**From a workflow you can reach its theme and its sibling workflows, and nothing
+else. There is no path to any person, program, module or instructor.** This is
+correct given R2 — workflow-level ownership does not exist in NP — so it is a
+description of how the team works, not a defect.
+
+### Original entry follows
+
+
 **Likelihood: certain (design consequence of D2) · Impact: medium**
 
 With `Workflow → Person` out of scope for v1, nothing joins **Component A** (`Theme`–`Workflow`, from the master file) to **Component B** (`Domain`–`Person`–`Program`–`Module`–`Instructor`, from the spreadsheets) except `File` nodes — and all 92 workflows share one `File` node, so that "bridge" is a degree-92 hub, not a path.

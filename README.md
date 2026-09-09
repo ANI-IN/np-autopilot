@@ -159,6 +159,23 @@ visibly explained, not mysterious.
 
 ---
 
+## Deferred to v2 — click-to-open a source file
+
+`graph.html` shows, for every entity, the **relative path, sheet and row** of each
+source file, and a file search that answers "what did this file yield?" in reverse.
+
+**What it does not do is open the file, and that is deliberate.** Browsers block
+`file://` links initiated from an HTML page, so a link to a local corpus file
+cannot work at all — it would render as a dead link that looks like a bug.
+
+`file.drive_url` is already a declared property in `config/taxonomy.yaml`. It is
+**null** until `pipeline/00_fetch_drive.py` runs and records each file's Drive
+URL. Until then the panel renders the path as unlinked text with a note saying
+links activate after the Drive migration.
+
+**This is a recorded deferral gated on pass 0, not a missing feature** — and it
+is one more concrete reason to complete the Drive migration.
+
 ## Exclusions
 
 Some corpus material is deliberately **not ingested**. This is recorded here so
