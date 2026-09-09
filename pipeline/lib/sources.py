@@ -263,3 +263,43 @@ TEACHES_RATINGS = {
     ("03-instructors/AgenticAI Instructors Training Plan.xlsx",
      "Preferred SMEs for Each Topic", 5): (7, 8),
 }
+
+
+# ---------------------------------------------------------------------------
+# CLASS DELIVERY LOG — added 2026-09-10, and it is the largest teaches source
+# in the corpus by a wide margin.
+#
+# 05-operations/New Combined Schedule.xlsx has 62 sheets. Only ONE ("Instructor
+# Data", a bare name list) had ever been read. 44 of the others are per-domain
+# CLASS SCHEDULES carrying "Instructor Name" against "Class Topic" — i.e. who
+# actually taught what. 1,807 distinct pairs, 264 instructors, 824 topics,
+# covering Backend, Frontend, Cloud, Security, Test, iOS, EM, TPM, Fullstack,
+# Data Engineering and Machine Learning.
+#
+# Before this, all 668 teaches edges came from the AgenticAI workbook, so the
+# graph had teaching evidence for Agentic AI and none for any domain we run at
+# scale.
+# ---------------------------------------------------------------------------
+SCHEDULE_FILE = "05-operations/New Combined Schedule.xlsx"
+SCHEDULE_INSTRUCTOR_COL = "Instructor Name"
+SCHEDULE_TOPIC_COL = "Class Topic"
+
+#: Sheets that are NOT a single domain's schedule.
+SCHEDULE_NON_DOMAIN = {
+    "Combined Schedule Mastersheet",   # every domain at once; kept, domain=None
+    "Dashboard", "Sunday Monitors", "Career Coaching New Students",
+    "Last Class Date", "Class Confirmation Record", "Delivery POC",
+    "Instructor Data", "US Holiday",
+}
+
+#: Resource-type suffixes on a Class Topic. "Object Modeling Live Class" and
+#: "Object Modeling Assignment Review Class" are the SAME module delivered in
+#: two formats — strip the suffix so they resolve to one module node.
+CLASS_SUFFIX_RE = (
+    r"\s*[-\u2013]?\s*("
+    r"live class(es)?|assignment review( class| session)?|test review( session)?|"
+    r"pre[- ]?class|post[- ]?class|doubt (clearing )?session|"
+    r"coaching( session)?|ars|tcs|dtc|ama|q\s*&\s*a|office hours|"
+    r"class|session|workshop|lecture|review"
+    r")\s*$"
+)

@@ -264,3 +264,44 @@ empty by design.
 Two themes cannot even reach each other. Any question that starts at a workflow
 and needs a person, a program or an instructor is unanswerable, and no amount of
 traversal will find one.
+
+---
+
+## Staffing: teaching history now covers the core domains — CORRECTED 2026-09-10
+
+An earlier build had **668 `teaches` edges, every one from the AgenticAI
+workbook**. The graph had teaching evidence for Agentic AI and none for any
+domain NP runs at scale. That is no longer true.
+
+**`05-operations/New Combined Schedule.xlsx` is the class delivery log**, and
+only one of its 62 sheets had ever been read. **44 more are per-domain class
+schedules carrying `Instructor Name` against `Class Topic`** — who actually
+taught what. Class-format suffixes (`Live Class`, `Assignment Review Class`,
+`Test Review Session`) are stripped so the same module in two formats resolves
+to one node.
+
+**`teaches`: 668 → 1,889.** 369 instructors, 736 modules.
+
+| domain | taught / modules |
+|---|---|
+| TPM | 36 / 43 |
+| Fullstack | 11 / 17 |
+| Security | 8 / 16 |
+| Embedded | 8 / 18 |
+| Backend | 7 / 21 |
+| PM | 7 / 18 |
+| Cloud | 5 / 13 |
+| Data Engineering | 5 / 5 |
+| Frontend | 4 / 6 |
+| Test Engineering | 3 / 14 |
+| EM | 1 / 14 |
+| **Android** | **0 / 4** |
+| **iOS** | **0 / 7** |
+
+**Android and iOS still have zero**, and that is consistent rather than missing:
+the owners sheet records both as cadence **`Video Only`**, so there are no live
+classes to log. Say that, rather than reporting them as a data gap.
+
+**A staffing answer must still lead with what is absent.** For a domain with no
+`teaches` edges, say so first, before offering any `expert_in` name — those are
+92% Google Form responses.

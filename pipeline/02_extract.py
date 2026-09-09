@@ -107,7 +107,7 @@ def reject_reason(raw: str, node_type: str) -> str | None:
     return None
 
 
-def header_row(ws, wanted: str, limit: int = 4):
+def header_row(ws, wanted: str, limit: int = 5):
     """Find the row holding `wanted`. Headers are not always row 1."""
     for i, row in enumerate(ws.iter_rows(min_row=1, max_row=limit, values_only=True)):
         cells = [str(v).strip() if v is not None else "" for v in row]
@@ -539,6 +539,52 @@ def extract_expertise(root: Path, out: list, rejected: list, claims: list) -> No
         wb.close()
 
 
+def extract_schedule(root: Path, out: list, rejected: list, pairs: list) -> list:
+    """Who actually taught what, from the per-domain class schedules."""
+    path = root / SRC.SCHEDULE_FILE
+    if not path.exists():
+        return []
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    dom_labels = {norm(c["raw"]): c["raw"] for c in out if c["type"] == T_DOMAIN}
+    seen_sheets = []
+    for sheet in wb.sheetnames:
+        if sheet in SRC.SCHEDULE_NON_DOMAIN and sheet != "Combined Schedule Mastersheet":
+            continue
+        ws = wb[sheet]
+        hrow, icol, hdr = header_row(ws, SRC.SCHEDULE_INSTRUCTOR_COL, limit=5)
+        if hrow is None or SRC.SCHEDULE_TOPIC_COL not in (hdr or []):
+            continue
+        tcol = hdr.index(SRC.SCHEDULE_TOPIC_COL)
+        # sheet name -> domain. "Backend DTC" and "Backend" are both Backend.
+        base = re.sub(r"\s*(DTC|SSD|\(NS\)|New Students)\s*$", "", sheet).strip()
+        dom = dom_labels.get(norm(base))
+        seen_sheets.append((sheet, dom))
+        for rownum, row in enumerate(ws.iter_rows(min_row=hrow + 1, values_only=True),
+                                     start=hrow + 1):
+            def c(i):
+                return str(row[i]).strip() if i < len(row) and row[i] is not None else ""
+            name, topic = c(icol), c(tcol)
+            if not name or not topic:
+                continue
+            prov = {"origin": "corpus", "file": SRC.SCHEDULE_FILE,
+                    "sheet": sheet, "row": rownum}
+            if reject_reason(name, T_INSTRUCTOR):
+                continue
+            module = re.sub(SRC.CLASS_SUFFIX_RE, "", topic, flags=re.I).strip(" -")
+            if not module or reject_reason(module, T_MODULE):
+                continue
+            out.append({"type": T_MODULE, "raw": module, "norm": norm(module),
+                        "sheet": sheet, "domain": dom, "granularity": "module",
+                        "sources": [prov]})
+            out.append({"type": T_INSTRUCTOR, "raw": name, "norm": norm(name),
+                        "pipeline_status": "roster", "sources": [prov]})
+            pairs.append({"module": norm(module), "instructor": norm(name),
+                          "rank": 0, "domain": dom, "delivered": True,
+                          "source": prov})
+    wb.close()
+    return seen_sheets
+
+
 def extract_programs(root: Path, out: list) -> None:
     for pdf in sorted((root / "04-programs").glob("*.pdf")):
         rel = f"04-programs/{pdf.name}"
@@ -587,6 +633,7 @@ def main() -> int:
     extract_pairings(root, cands, rejected, pairs)
     claims: list = []
     extract_expertise(root, cands, rejected, claims)
+    sched = extract_schedule(root, cands, rejected, pairs)
     for rel, sheet, col in SRC.INSTRUCTOR_SOURCES:
         scan_column(root, rel, sheet, col, T_INSTRUCTOR, cands, rejected, missing)
     for rel, sheet, col in SRC.MODULE_SOURCES:
@@ -692,6 +739,16 @@ def main() -> int:
             print(f"    [{r['type']}] {r['raw'][:50]!r}")
             print(f"        {r['reason']}  <- {s.get('file','?').split('/')[-1]}"
                   f"!{s.get('sheet','')} r{s.get('row','?')}")
+    print()
+
+    print("-" * 78)
+    print("CLASS DELIVERY LOG — New Combined Schedule.xlsx")
+    print("-" * 78)
+    print(f"  {len(sched)} per-domain schedule sheets read "
+          f"({sum(1 for _, d in sched if d)} mapped to a domain)")
+    dp = [pr for pr in pairs if pr.get("delivered")]
+    print(f"  {len(dp)} delivery rows -> "
+          f"{len({(x['module'], x['instructor']) for x in dp})} distinct pairs")
     print()
 
     print("-" * 78)
