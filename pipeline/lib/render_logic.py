@@ -204,6 +204,22 @@ let A=[],E=[],anchors=new Map();
 // and the layout never stopped drifting — which is most of what "the graph
 // restarts" looked like.
 let settle=0, alpha=1, frozen=false;
+// ---- DECORATIVE DRIFT -------------------------------------------------
+// Paint-time ONLY. It never writes to n.x/n.y, never touches the simulation,
+// and hit-testing uses the true settled coordinates. Raising the force floor
+// instead would re-introduce the never-settling bug we just fixed.
+let drift=true;
+const DRIFT_AMP=1.6, DRIFT_SPEED=0.0007;
+function driftPhase(id){            // deterministic, so it is stable per node
+  let h=0; for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))|0;
+  return (h%628)/100;
+}
+function paintPos(n,now){
+  if(!drift) return [n.x,n.y];
+  const ph=n._ph!==undefined?n._ph:(n._ph=driftPhase(n.id));
+  return [n.x+DRIFT_AMP*Math.sin(now*DRIFT_SPEED+ph),
+          n.y+DRIFT_AMP*Math.cos(now*DRIFT_SPEED*0.87+ph)];
+}
 const ALPHA_DECAY=0.985, ALPHA_MIN=0.004;
 
 function recompute(refit, why){
@@ -285,9 +301,11 @@ function step(){
 }
 function draw(){
   ctx.clearRect(0,0,W,H);
+  const now=performance.now();
   for(const e of E){const a=idx.byId.get(e.s),b=idx.byId.get(e.t);
     if(!a||!b||a.x===undefined)continue;
-    const [ax,ay]=toScreen(a.x,a.y),[bx,by]=toScreen(b.x,b.y);
+    const [awx,awy]=paintPos(a,now),[bwx,bwy]=paintPos(b,now);
+    const [ax,ay]=toScreen(awx,awy),[bx,by]=toScreen(bwx,bwy);
     if(Math.max(ax,bx)<LEFT-40)continue;
     const hot=state.sel&&(e.s===state.sel||e.t===state.sel);
     ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
@@ -298,7 +316,8 @@ function draw(){
     ctx.lineWidth=hot?1.8:1;ctx.stroke()}
   ctx.setLineDash([]);
   for(const n of A){if(n.x===undefined)continue;
-    const [sx,sy]=toScreen(n.x,n.y);
+    const [wx,wy]=paintPos(n,now);
+    const [sx,sy]=toScreen(wx,wy);
     if(sx<-20||sx>W+20||sy<-20||sy>H+20)continue;
     const r=(n.iso?2:Math.min(3+Math.sqrt(n.d)*1.1,11))*Math.max(.55,Math.min(cam.k,1.6));
     ctx.beginPath();ctx.arc(sx,sy,r,0,7);
@@ -306,9 +325,15 @@ function draw(){
     if(state.sel===n.id){ctx.globalAlpha=1;ctx.lineWidth=2.5;ctx.strokeStyle='#fff';ctx.stroke()}
     ctx.globalAlpha=1}
 }
+// The loop keeps PAINTING after the simulation freezes — step() returns
+// immediately once frozen, so this animates the drift without any physics.
 (function loop(){step();draw();requestAnimationFrame(loop)})();
 
 // ---- interaction --------------------------------------------------------
+// Hit-testing uses the TRUE settled coordinates, never the drifted paint
+// position, so a click is never off-target while a node is displaced. At
+// amplitude 1.6px against a 16px pick radius the difference is immaterial, but
+// relying on that would be luck rather than design.
 function hit(sx,sy){const [wx,wy]=toWorld(sx,sy);let best=null,bd=1e9;
   for(const n of A){if(n.x===undefined)continue;
     const d=Math.hypot(n.x-wx,n.y-wy);if(d<bd){bd=d;best=n}}
@@ -456,6 +481,10 @@ for(const el of document.querySelectorAll('.ty'))
 document.getElementById('iso').onchange=e=>{state.showIso=e.target.checked;recompute(true,'iso-toggle')};
 document.getElementById('hired').onchange=e=>{state.showHired=e.target.checked;recompute(true,'hired-toggle')};
 document.getElementById('dash').onchange=e=>{state.showDash=e.target.checked;recompute(false,'dash-toggle')};
+const _dr=document.getElementById('drift');
+if(_dr)_dr.onchange=e=>{drift=e.target.checked;
+  console.log('[np] decorative drift '+(drift?'on':'off')+
+              ' — paint-time only, layout untouched')};
 document.getElementById('sep').onchange=e=>{state.separate=e.target.checked;
   for(const n of D.nodes)delete n.x;recompute(true,'separate-toggle')};
 """

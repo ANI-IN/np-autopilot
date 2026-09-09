@@ -150,6 +150,22 @@ if(!coordsSame){
 }
 if(!clockSame) errors.push('SELECTION ADVANCED THE SIM CLOCK: ' + stBefore + ' -> ' + stAfter);
 
+
+// ---- DRIFT: must move the PAINT and not the DATA -------------------------
+// A drift that fails to move anything is dead decoration; a drift that moves
+// node.x has re-introduced the bug. Assert both directions.
+const paintA = JSON.stringify(painted.arcPts.slice(0,40));
+const dataA = coordsOf();
+let tick = Date.now();
+globalThis.performance = {now: () => (tick += 400)};   // advance the clock
+runFrames(1);
+const paintB = JSON.stringify(painted.arcPts.slice(0,40));
+const dataB = coordsOf();
+console.log('  drift moves the PAINT           :', paintA !== paintB);
+console.log('  drift leaves node.x/y UNTOUCHED :', dataA === dataB);
+if(paintA === paintB) errors.push('DRIFT IS DEAD: paint identical across time');
+if(dataA !== dataB) errors.push('DRIFT WROTE TO node.x — the frozen layout moved');
+
 // a legitimate recompute MAY restart the sim — prove the distinction holds
 const rc = store.get('iso');
 if(rc && rc.onchange){

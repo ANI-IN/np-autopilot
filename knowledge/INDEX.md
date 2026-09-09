@@ -19,7 +19,7 @@ count here comes from `graph.json`.**
 > Until pass 0 runs, every count below is over what one person happened to
 > export by hand, and no statement about what Drive contains is supported.
 
-- Built: `2026-09-09T20:32:17+00:00`
+- Built: `2026-09-09T20:42:32+00:00`
 - Taxonomy version: `2`
 - Source: `local-folder`
 
@@ -35,7 +35,7 @@ count here comes from `graph.json`.**
 | `module` | 922 | —  (floor; coverage incomplete) |
 | `instructor` | 3817 | —  (floor; coverage incomplete) |
 | `file` | 0 | 74 |
-| **total** | **5048** | |
+| **total** | **5049** | |
 
 ## Edges
 

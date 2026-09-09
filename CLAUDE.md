@@ -180,6 +180,25 @@ grows by an order of magnitude, aggregate.
 
 ---
 
+## 6 · Assume the extractor before you assume the corpus
+
+**Every "the corpus doesn't have it" conclusion in this project eventually became
+"the extractor hadn't looked there yet." Five times.**
+
+| I concluded | it was actually |
+|---|---|
+| no workflow-to-person link | true, but the person scan had never read `For Slack` — `Abhinav Rawat` was missing entirely |
+| `teaches` only reaches Agentic AI | 44 of 62 sheets in a file I had opened held the whole class delivery log |
+| `UpLevel Schedule Structure` is probably nothing | 26 per-domain schedules and the best module evidence in the corpus |
+| doc 05's `Suresh Venkatesan` example must be wrong | it was right; the sheet had never been opened |
+| the module layer is thin | 671 of 922 modules were reachable, just not by the edge I was looking at |
+
+Before writing "not in the corpus" in any answer, doc or commit message: **name
+the sheets you actually read.** If you cannot, you have found a gap in the
+extractor, not in the data.
+
+---
+
 ## Other traps
 
 - **`A_sample_Mock_Session_Feedback_Documentation.docx` is not a docx.** It is
