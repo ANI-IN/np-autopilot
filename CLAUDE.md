@@ -41,12 +41,64 @@ Unread files that certainly contain entities: `SME Tracker - Bullseye_IK.xlsx`,
 Plan.xlsx` (18 sheets, and the source for eval Q15), `Operational Metrics.xlsx`,
 `UpLevel Schedule Structure.xlsx`.
 
-**Two miss classes, not one.** A file can be unread (Karthika Pai), *or* read
-with rows silently dropped (Yash Mathur — 11 I-Aim rows, blank `ENo`, dropped by
-an id-keyed read). A coverage audit only catches the first. **Never key people on
-employee IDs** — they are not unique (`IK-294`, `IK-INT30` each map to two
-people), not stable (`Animesh Kumar` has two), and sometimes absent. Key on a
-curated slug in `config/people.yaml`; IDs are evidence only.
+---
+
+## 2a · The three ways a person disappears
+
+All three have happened in this corpus. They need different fixes, and only the
+first is caught by auditing file coverage.
+
+### (i) Coverage gap — a file no scan ever read  ← **most serious**
+
+`Karthika Pai` exists only in `SME Tracker - Bullseye_IK.xlsx` and
+`SME_Interview_Demo Audit Rubrics.xlsx`. Both sit outside every entity scan, so
+nothing that read the corpus could have found her. 25 of 75 files are in this
+state. **This is the one that hides unknown quantities** — you cannot estimate
+what is missing from files you have not opened.
+
+### (ii) Key-dependent extraction miss — file read, rows dropped
+
+`Yash Mathur` has 11 I-Aim rows in `IAims!Q226` with a **blank `ENo`**. The file
+was scanned. An id-keyed read dropped him.
+
+**The blank ENo is normal HR lag for a recent joiner, not corrupt data.** Every
+new joiner will present exactly this way, so this is a **permanent condition to
+handle**, not a defect to clean up. Consequences:
+
+- **Key person extraction on NAME.** `ENo` is secondary evidence only, never the
+  identity, and never a filter.
+- **A blank identifier is reported and the row RETAINED.** Never silently
+  dropped. `validate.py` reports every person row with a blank identifier.
+- Severity is **lower than (i)**: he was missing mostly because he had just
+  joined, not because extraction is broadly unreliable. The mechanism is real;
+  the blast radius is one recent joiner at a time.
+
+### (iii) Classification miss — found, then shelved
+
+`Vineet Patel` and `Bishal Biprodas Roy` were both extracted, then parked under
+"IAims employees who never appear in the owner sheet — in scope or not?" Absence
+from the owner sheet is not an out-of-scope signal. The `team` property
+(`np` / `delivery` / `other`) exists so this question has an answer instead of a
+holding pen.
+
+### Recurring risk: the newest team member is the most likely to be missing
+
+Yash Mathur was caught only because an HR directory happened to be available.
+**There will not always be one.** A recent joiner has: no `ENo` yet, few or no
+corpus rows, no domain ownership, and no history in older sheets — every signal
+the pipeline leans on is weakest exactly when the person is newest.
+
+Two standing mitigations:
+
+- `validate.py` reports any person row with a blank identifier rather than
+  dropping it.
+- Coverage must be able to answer **"who appears in an objectives sheet but has
+  no other corpus presence?"** That query is the tripwire for this class, and it
+  works without an HR directory.
+
+**Never key people on employee IDs.** Not unique (`IK-294` and `IK-INT30` each
+map to two people), not stable (`Animesh Kumar` has two), and sometimes absent.
+Key on a curated slug in `config/people.yaml`; IDs are evidence only.
 
 ---
 

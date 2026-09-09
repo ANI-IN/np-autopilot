@@ -523,6 +523,20 @@ validate:
   - person and instructor labels are at most 40 characters
   - person and instructor labels contain no sentence punctuation
   - person and instructor labels match no stopword pattern
+  # --- identity: name is the key, ENo is evidence ---
+  - >
+    person extraction keys on NAME. A blank, malformed or duplicate employee id
+    NEVER causes a row to be skipped or a person to be dropped.
+  - >
+    every person row with a blank identifier is REPORTED and RETAINED. A blank
+    ENo is normal HR lag for a recent joiner, not corrupt data, and every new
+    joiner presents this way. Yash Mathur had 11 such rows in a file that WAS
+    scanned.
+  - >
+    coverage report answers "who appears in an objectives sheet but has no other
+    corpus presence?" — the tripwire for a recent joiner, and it works without
+    an HR directory to check against.
+
   - >
     a single-token person or instructor label is flagged for review, not accepted
     silently. 30 exist among instructors; 3 (Cloud, Database, Frontend) are not

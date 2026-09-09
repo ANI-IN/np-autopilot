@@ -205,31 +205,55 @@ people:
     team: other
     employee_ids: [IK-294]           # IK-294 also maps to a second person
     aliases: [Prasad, M Prasad, M Prasad Khuntia]
-    status: pending-classification
+    status: unresolved                # NOT marked former — see investigation
     corpus_locations:
       - "Domains_Courses Owners!Sheet1 — secondary owner, 9 rows ('M Prasad', 'M Prasad, Swarup')"
-      - "IAims — 13 sheets as 'M Prasad Khuntia', INCLUDING Q1 2026 (current quarter)"
       - "Domains_Courses Owners!For Slack r7 — 'Prasad'"
+      - "IAims — 87 rows across 9 quarter sheets: Q3 2024, Q4 2024, Q1 2025, Q1 2025 on 5 Pointer Scale, Q2 2025, Q3 2025, Q42025, Q1 2026, Q226"
+    identity_check: >
+      NOT an identity bug. All 87 rows carry Employee Name 'M Prasad Khuntia'
+      and ENo 'IK-294' — no blank, no variant spelling, no second id on his
+      rows. The IK-294 collision doc 08 reported is real but tiny and on the
+      OTHER side: Swarup Yeole carries IK-282 on 48 of his 49 rows and IK-294 on
+      exactly ONE row in Q3 2024. That is a single stray cell, not a systematic
+      collision, and it does not touch any Prasad row.
     read: >
-      Heaviest IAims presence of anyone outside the directory, and active in the
-      current quarter with B2B, ratings, NPS and refunds objectives. Reads as a
-      current employee on a different reporting line rather than former staff.
+      Two corrections to my earlier report, both of which weakened it.
+      (1) It was 9 sheets by Employee Name, not 13 — the 13 came from a loose
+      substring match that also hit the owners workbook.
+      (2) Q1 2026 is NOT the current quarter. Q226 is the latest sheet in the
+      workbook; Q1 2026 is the one before it. So "active current-quarter
+      objectives" was wrong.
+      What actually holds: he has a COMPLETE 10-objective set at 100% weightage
+      in Q1 2026, the second-most-recent quarter. In Q226, the latest, he has a
+      name-and-ENo row with NO objectives.
+      That bare row is NOT a departure signal by itself — Utkarsh Raj, Deval
+      Mahesh Purohit and Tanmaya Kharyal have exactly the same shape in Q226 and
+      all three are on the current HR directory. It means objectives not yet set.
+      There IS a departure trail in this workbook and it has three stages: full
+      objectives, then a name-only row, then absence. David Reed and Sweta
+      Pandey followed it (name-only in Q1 2026, gone from Q226). Prasad is at
+      stage two, which is ambiguous — the next quarter's sheet resolves it.
+      VERDICT: the Q1 2026 rows hold up. The corpus does not show a departure;
+      if anything it leans against one. Your side needs to settle it.
     sources: [{origin: corpus, file: "00-master/IAims Setting Audit _ New Programs.xlsx", sheet: "Q1 2026", row: 2}]
 
   - canonical: Swarup Yeole
     team: other
     employee_ids: [IK-282]           # also carries IK-294 on some rows
     aliases: [Swarup, Swaroop, Swarup Yeole]
-    status: unresolved
+    status: switched-teams            # confirmed 2026-09-09: still at IK, no
+                                      # longer New Programs. NOT former staff.
     not_same_as: [Swaroop Kulkarni, Swaroop Gunisity, Swaroop Shere, Tejaswaroop Vankadari]
     corpus_locations:
       - "IAims — 6 sheets as 'Swarup Yeole' (Q3 2024 through Q3 2025)"
       - "Domains_Courses Owners!Sheet1 r29 — secondary owner, 'M Prasad, Swarup'"
       - "Domains_Courses Owners!For Slack r12 — 'Swaroop'"
     read: >
-      Not in the directory; stays unresolved per your instruction. Note the
-      IAims trail STOPS at Q3 2025 — he is absent from Q42025, Q226 and Q1 2026.
-      That pattern is consistent with former staff.
+      Switched teams — still at IK, no longer in New Programs. The IAims trail
+      stopping at Q3 2025 (absent from Q42025, Q1 2026 and Q226) is therefore a
+      record of him LEAVING NP, not leaving the company. An NP-scoped corpus
+      cannot tell those apart, which is exactly why `team` exists as a property.
       CAUTION: 'Swaroop Kulkarni' in Operational Metrics is a LEARNER (deposit
       record, personal gmail, LinkedIn), not this person. Three further
       'Swaroop *' learners exist. Pinned above so none is ever merged in.
@@ -253,15 +277,21 @@ people:
   - canonical: Abhinav Rawat
     team: other
     aliases: [Abhinav Rawat]
-    status: pending-classification
+    status: switched-teams            # confirmed 2026-09-09: no longer NP
+    evidence_strength: weakest-in-graph   # flagged deliberately; see below
     not_same_as: [Abhinav Kumar Maurya, Abhinav jain, Abhinav Jain, Abhinav Anand, Abhinav Kotha, Abhinav Kumar, "ABHINAV MAHATA", Abhinav Makrand]
     corpus_locations:
       - "Domains_Courses Owners!For Slack r8 — 'Abhinav Rawat'. THIS IS THE ONLY OCCURRENCE."
     read: >
-      One cell in the entire 75-file corpus, in a Slack-channel mapping sheet,
-      with no IAims row, no domain ownership and no email. Every other 'Abhinav'
-      in the corpus is a different person — 8 of them, all instructors or
-      learners. Weakest-evidenced person in the graph.
+      WEAKEST-EVIDENCED PERSON IN THE GRAPH — keep this flag. One cell in the
+      entire 75-file corpus, in a Slack-channel mapping sheet, with no IAims
+      row, no domain ownership, no email and no id. Every other 'Abhinav' in the
+      corpus is a different person — 8 of them, all instructors or learners, so
+      any fuzzy pass will find plenty of wrong things to merge him with.
+      Switched teams, confirmed 2026-09-09. Note what that means for the graph:
+      a person who left NP before the corpus was assembled leaves almost no
+      trace, so single-cell provenance is the EXPECTED shape for that class, not
+      an anomaly to clean up.
     sources: [{origin: corpus, file: "00-master/Domains_Courses Owners.xlsx", sheet: "For Slack", row: 8}]
 
   - canonical: Rakshit Kapoor

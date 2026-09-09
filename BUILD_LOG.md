@@ -242,3 +242,103 @@ The gap: the `teaches` edge named this file as its source while the `instructor`
 node type did not list it among its five rosters — an edge sourced from a file
 its node type never read. **B4 blocker:** this workbook's 18 sheets must join the
 instructor scan before any instructor count is final.
+
+---
+
+## 2026-09-09 — Part A, sixth round: M Prasad investigated; classifications settled
+
+### M Prasad Khuntia — checked before classifying. Do NOT mark him former.
+
+Asked to treat this as a possible third identity bug. **It is not one.**
+
+**87 rows across 9 quarter sheets**, by `Employee Name`:
+
+| Sheet | Rows | ENo |
+|---|---|---|
+| `Q226` | 1 | `IK-294` |
+| `Q1 2026` | 10 | `IK-294` |
+| `Q42025` | 11 | `IK-294` |
+| `Q3 2025` | 11 | `IK-294` |
+| `Q2 2025` | 12 | `IK-294` |
+| `Q1 2025 on 5 Pointer Scale` | 10 | `IK-294` |
+| `Q1 2025` | 10 | `IK-294` |
+| `Q4 2024` | 11 | `IK-294` |
+| `Q3 2024` | 11 | `IK-294` |
+
+Every row: name `M Prasad Khuntia`, ENo `IK-294`. No blank, no variant spelling,
+no second id. Nothing resembling the Yash Mathur failure.
+
+**The IK-294 collision is real but tiny, and on the other side.** `Swarup Yeole`
+carries `IK-282` on **48 of 49** rows and `IK-294` on **exactly one** row in
+`Q3 2024`. A single stray cell, not a systematic collision, and it touches no
+Prasad row. Doc 08's "IK-294 = two people" is literally true and materially
+misleading; corrected here.
+
+**Two corrections to my own earlier report, both of which weakened it:**
+
+1. **9 sheets, not 13.** The 13 came from a loose substring match that also hit
+   the owners workbook and `For Slack`.
+2. **`Q1 2026` is NOT the current quarter.** `Q226` is the latest sheet in the
+   workbook; `Q1 2026` is the one before it. My phrase "active current-quarter
+   objectives" was wrong.
+
+**What survives, and it is the part you asked about: the Q1 2026 rows hold up.**
+A complete 10-objective set at 100% weightage. In `Q226` he has a name-and-ENo
+row with no objectives.
+
+**That bare row is not a departure signal.** Four people have that exact shape in
+`Q226` — `Utkarsh Raj`, `M Prasad Khuntia`, `Deval Mahesh Purohit`,
+`Tanmaya Kharyal` — and three of the four are on the current HR directory. It
+means objectives not yet set.
+
+**There is a departure trail in this workbook, and it has three stages:** full
+objectives → name-only row → absent. `David Reed` and `Sweta Pandey` both
+followed it (name-only in `Q1 2026`, gone from `Q226`). Prasad is at stage two,
+which is ambiguous; the next quarter's sheet resolves it.
+
+**Verdict: the corpus does not show a departure, and leans slightly against
+one.** Left `status: unresolved` with this note. Over to you.
+
+### Q226 quarter label — noted, not acted on
+
+As asked, given Q19 found five contradictory quarter-scoped rubric versions in
+this workbook.
+
+- **56% copy-forward.** 73 of 131 distinct `(name, I-Aim Title)` pairs in `Q226`
+  are identical to a pair in `Q1 2026`. Some recurrence is legitimate — ratings
+  and NPS objectives repeat every quarter — so this is suggestive, not proof.
+- **No date column anywhere in the sheet.** Headers are ENo, Employee Name,
+  I-Aim Title, Rubrics, Metric Type, Metric Unit, Metric Target Type, Initial
+  Value, Target Value, Weightage. **There is no in-sheet evidence of when any row
+  was entered**, so backfill cannot be distinguished from live entry from the
+  file alone.
+- **Naming is inconsistent across sheets**: `Q1 2026` and `Q226` denote adjacent
+  quarters in different formats, and the rubric sheets use a third (`Q126`,
+  `Q325`, `Q425`). Any quarter-ordering logic must be written against an explicit
+  map, never parsed from the sheet name.
+
+No action taken.
+
+### Classifications recorded
+
+| Person | team | status |
+|---|---|---|
+| Swarup Yeole | `other` | `switched-teams` — still at IK, **not former** |
+| Abhinav Rawat | `other` | `switched-teams`, flagged `evidence_strength: weakest-in-graph` |
+| M Prasad Khuntia | `other` | `unresolved` — pending your investigation |
+
+Recorded alongside Abhinav: a person who left NP *before* the corpus was
+assembled leaves almost no trace, so single-cell provenance is the **expected**
+shape for that class, not an anomaly to clean up.
+
+### Yash Mathur severity downgraded
+
+The blank `ENo` is normal HR lag for a recent joiner, not corrupt data. Reframed
+in CLAUDE.md as a **permanent condition to handle** rather than a defect to fix:
+key on name, keep `ENo` as secondary evidence, report-and-retain blank
+identifiers. Karthika Pai — a file no scan ever read — remains the more serious
+finding, because a coverage audit cannot even see the class Yash falls into but
+at least bounds the class she falls into.
+
+`file.expect` stays **74**, tolerance **2**. Not pre-raised; the tripwire is the
+point.

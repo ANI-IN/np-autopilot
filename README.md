@@ -209,6 +209,32 @@ than a gap.
 
 ---
 
+## Distribution — v1 is a single-user private repo
+
+**`ANI-IN/np-autopilot`, private, no collaborators.**
+
+**This deliberately overrides D10 for v1.** D10 specified a GitHub Organization
+plus a team, so access is managed centrally rather than per-collaborator. That
+remains the target. It is not what v1 ships.
+
+**What this costs, stated plainly:**
+
+- **No teammate can install anything.** Not "installs with extra steps" — a
+  private repo with no collaborators is unreachable by `/plugin marketplace add`
+  for everyone except the owner. Until the repo moves, this is a single-user
+  tool.
+- **Moving it later changes the marketplace URL**, and that **breaks
+  `/plugin marketplace add` for anyone already installed.** They must remove the
+  old marketplace and re-add the new one — and per the reference
+  implementation's own documentation, removing a marketplace auto-uninstalls its
+  plugins, so it is a remove-and-reinstall, not an update.
+- **That cost scales with adoption.** One user today, so the move is nearly
+  free. At ten users it is ten people doing a manual remove-and-reinstall, each
+  of whom can get it wrong. **Move it before the second user, not after the
+  tenth.**
+
+The two sections below describe the **target state** under D10, not v1.
+
 ## Installing (for teammates)
 
 Honest first-time cost — this is **not** two commands:
