@@ -66,10 +66,32 @@ def _run(graph_path: Path | None = None):
     print(f"source     : {g['meta']['source']}  (Drive deferred to v2)")
     print()
 
+    # --- version-bump enforcement. The documented failure mode is a forgotten
+    # bump meaning fixes never reach anyone. Automatic is not enough; it must
+    # also be ENFORCED, or a manual build silently ships an unreachable graph.
+    lock_path = KNOWLEDGE_DIR / ".version-lock.json"
+    plugin_path = KNOWLEDGE_DIR.parent / ".claude-plugin" / "plugin.json"
+    if lock_path.exists() and plugin_path.exists():
+        import hashlib as _h
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        cur_ver = json.loads(plugin_path.read_text(encoding="utf-8"))["version"]
+        payload = json.dumps({"nodes": g["nodes"], "edges": g["edges"]},
+                             sort_keys=True, separators=(",", ":"))
+        cur_hash = _h.sha256(payload.encode()).hexdigest()
+        if cur_hash != lock.get("content_hash") and cur_ver == lock.get("plugin_version"):
+            r.add(FAIL, "version-bump",
+                  f"graph.json content changed but plugin.json is still {cur_ver}. "
+                  "Teammates would never receive this build. Run pipeline/refresh.py, "
+                  "which bumps automatically.")
+        else:
+            r.add(INFO, "version-bump",
+                  f"plugin {cur_ver}, graph hash {cur_hash[:12]} — consistent with the lock")
+
     for c in ["provenance", "sensitive-flag", "junk-label", "cadence-collision",
               "endpoint-type", "wildcard-edge", "count-vs-expect", "empty-edge-type",
               "orphan-node", "components", "absolute-path", "excluded-file",
-              "excluded-field", "duplicate-id", "blank-identifier", "quarter-map"]:
+              "excluded-field", "duplicate-id", "blank-identifier", "quarter-map",
+              "version-bump"]:
         r.category(c)
 
     # provenance

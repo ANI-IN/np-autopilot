@@ -36,8 +36,12 @@ MAGIC = {
     b"\x89PNG": "png",
 }
 SKIP_NAMES = {".DS_Store"}
+# Project directories, not corpus. `commands` and `eval` were missing, so pass 1
+# swept in 8 of our own files and the file-count check caught it — which is what
+# that check is for. Any new top-level project directory must be added here.
 SKIP_DIRS = {"pipeline", "config", "tests", "knowledge", ".git",
-             "__pycache__", ".drive-cache", ".claude-plugin"}
+             "__pycache__", ".drive-cache", ".claude-plugin",
+             "commands", "skills", "eval", "scripts", "docs"}
 # This repo's own analysis documents live at the corpus root and are not corpus.
 OWN_DOCS = {"README.md", "BUILD_LOG.md", "CLAUDE.md"}
 
@@ -138,6 +142,10 @@ def load_previous() -> dict[str, str]:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--rebaseline", action="store_true",
+                    help="accept a changed/removed set ONCE, e.g. after fixing "
+                         "which directories count as corpus. Never silent: the "
+                         "diff is printed and written to BUILD_LOG.")
     ap.add_argument("--allow-fallback", action="store_true",
                     help="proceed when no pass-0 cache exists (reads the local folder)")
     args = ap.parse_args()
@@ -300,8 +308,20 @@ def main() -> int:
             fh.write(f"    - FAILED `{f['path']}` — {f['cause']}\n")
 
     if changed or removed:
-        print("\nHARD FAIL — the corpus is read-only; a changed or removed file must be explained.")
-        return 1
+        if args.rebaseline:
+            print("\nREBASELINED — the change above was accepted explicitly via "
+                  "--rebaseline and recorded in BUILD_LOG. This flag must never "
+                  "be used to make an unexplained diff go away.")
+            with BUILD_LOG.open("a", encoding="utf-8") as fh:
+                fh.write(f"    - REBASELINE accepted: {len(changed)} changed, "
+                         f"{len(removed)} removed\n")
+                for x in changed + removed:
+                    fh.write(f"        {x}\n")
+        else:
+            print("\nHARD FAIL — the corpus is read-only; a changed or removed "
+                  "file must be explained. If the change is intended, re-run "
+                  "with --rebaseline.")
+            return 1
     return 1 if failures and not args.allow_fallback else 0
 
 

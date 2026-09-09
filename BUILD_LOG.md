@@ -1749,3 +1749,295 @@ behaviour persists, that display says immediately it was the other cause.**
 `self_declared+via_alias` tier — visible on DABA (59), TPM (46), SRE (15 plus 5
 `hr_record+via_alias`). Top unjoined remains exactly the ambiguous set: `ML` 157,
 `Agentic AI` 64, `Product Management` 51.
+
+## 2026-09-09 20:27:18Z — 01_walk_corpus
+
+- Source: `local-folder`  **NOT DRIVE — pass 0 has never run**
+- Found 83 | skipped 1 | extracted 81 | failed 1
+- Manifest diff: +7 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-09 20:27:51Z — 02_extract
+
+- Candidates 32656 | rejected 185 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 15617 raw, 3817 distinct
+    - module: 15195 raw, 922 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 20:27:51Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:27:52Z — 04_build_graph
+
+- Nodes 5056 | edges 36677
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 1155
+    - teaches: 2239
+    - sourced_from: 32656
+
+## 2026-09-09 20:27:53Z — 05_render_html
+
+- graph.html 3362 KB | rendered 2998 nodes (2096 connected, 902 isolated) and 4021 edges
+
+## 2026-09-09 20:27:53Z — validate
+
+- validate: 1 FAIL, 6 WARN, 9/17 categories exercised, 5056 nodes, 36677 edges
+
+## 2026-09-09 20:28:02Z — validate
+
+- validate: 1 FAIL, 6 WARN, 9/17 categories exercised, 5056 nodes, 36677 edges
+
+## 2026-09-09 20:28:38Z — 01_walk_corpus
+
+- Source: `local-folder`  **NOT DRIVE — pass 0 has never run**
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +0 added, ~0 changed, -8 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-09 20:29:08Z — 01_walk_corpus
+
+- Source: `local-folder`  **NOT DRIVE — pass 0 has never run**
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +0 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-09 20:29:26Z — 01_walk_corpus
+
+- Source: `local-folder`  **NOT DRIVE — pass 0 has never run**
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +0 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-09 20:30:04Z — 02_extract
+
+- Candidates 32656 | rejected 185 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 15617 raw, 3817 distinct
+    - module: 15195 raw, 922 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 20:30:04Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:30:05Z — 04_build_graph
+
+- Nodes 5048 | edges 36677
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 1155
+    - teaches: 2239
+    - sourced_from: 32656
+
+## 2026-09-09 20:30:06Z — 05_render_html
+
+- graph.html 3362 KB | rendered 2998 nodes (2096 connected, 902 isolated) and 4021 edges
+
+## 2026-09-09 20:30:06Z — validate
+
+- validate: 0 FAIL, 6 WARN, 9/17 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-09 20:30:25Z — 01_walk_corpus
+
+- Source: `local-folder`  **NOT DRIVE — pass 0 has never run**
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +0 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-09 20:31:05Z — 02_extract
+
+- Candidates 32656 | rejected 185 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 15617 raw, 3817 distinct
+    - module: 15195 raw, 922 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 20:31:06Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:31:07Z — 04_build_graph
+
+- Nodes 5048 | edges 36677
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 1155
+    - teaches: 2239
+    - sourced_from: 32656
+
+## 2026-09-09 20:31:07Z — 05_render_html
+
+- graph.html 3362 KB | rendered 2998 nodes (2096 connected, 902 isolated) and 4021 edges
+
+## 2026-09-09 20:31:08Z — validate
+
+- validate: 0 FAIL, 6 WARN, 9/17 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-09 20:31:25Z — 01_walk_corpus
+
+- Source: `local-folder`  **NOT DRIVE — pass 0 has never run**
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +0 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-09 20:32:14Z — 02_extract
+
+- Candidates 32656 | rejected 185 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 15617 raw, 3817 distinct
+    - module: 15195 raw, 922 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 20:32:15Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:32:17Z — 04_build_graph
+
+- Nodes 5048 | edges 36677
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 1155
+    - teaches: 2239
+    - sourced_from: 32656
+
+## 2026-09-09 20:32:17Z — 05_render_html
+
+- graph.html 3362 KB | rendered 2998 nodes (2096 connected, 902 isolated) and 4021 edges
+
+## 2026-09-09 20:32:18Z — validate
+
+- validate: 0 FAIL, 6 WARN, 9/17 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-09 20:33:16Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:33:16Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+---
+
+## 2026-09-10 — B10: refresh v1
+
+### The delta line from a real run, not a template
+
+```
+REFRESH v1
+  plugin version : 0.1.1
+  graph hash     : a53462823ca26466
+
+  01_walk_corpus.py      ok
+  02_extract.py          ok
+  03_resolve.py          ok
+  04_build_graph.py      ok
+  gen_index.py           ok
+  05_render_html.py      ok
+
+DELTA
+  nodes 5056 -> 5048  (-8)
+  edges 36677 -> 36677  (+0)
+
+  version bumped 0.1.1 -> 0.1.2
+
+VALIDATE
+  RESULT: 0 FAIL, 6 WARN, 6 INFO — graph accepted with warnings
+
+STOPPED FOR CONFIRMATION — nothing has been committed.
+```
+
+### Determinism holds — second run, no corpus change
+
+```
+  plugin version : 0.1.2
+  graph hash     : a53462823ca26466
+
+DELTA
+  IDENTICAL — nodes and edges byte-identical to the previous build
+  version unchanged at 0.1.2 (graph did not change)
+```
+
+**Definition of done met.** Determinism has not regressed since B5.
+
+### The first refresh FAILED, and the check that caught it was the file count
+
+```
+[count-vs-expect] file: 82, expected 74 +/- 2
+REFRESH ABORTED — validation failed. Nothing to commit.
+```
+
+Pass 1's `SKIP_DIRS` was missing `commands/` and `eval/`, so it had swept in 8 of
+our own project files as corpus. **That is exactly what `file.expect` is for**,
+and it is the first time a count check has caught a live regression rather than
+documenting a known number.
+
+Fixing it then triggered the manifest rule — 8 removals, a hard fail — which is
+also correct. Added `--rebaseline` to accept a change **explicitly**, printing the
+diff and writing it to BUILD_LOG. It must never be used to make an unexplained
+diff go away.
+
+### Version bump: automatic AND enforced
+
+`validate.py` gained a `version-bump` category. It compares a content hash of
+nodes+edges (meta excluded, so the timestamp does not perturb it) against
+`knowledge/.version-lock.json`, and hard-fails if the content changed while
+`plugin.json` did not:
+
+> *graph.json content changed but plugin.json is still 0.1.2. Teammates would
+> never receive this build.*
+
+17 validation categories now, still all fault-injection tested.
+
+### Module layer finding recorded
+
+**671 of 922 modules (73%) connect only through `teaches`.** 351 `contains`
+edges against 2,239 `teaches`, and `contains` is itself inferred. Hiding
+instructors leaves 1,157 nodes / 627 edges / **772 components, 755 of them
+singletons**. Recorded in `USING_THE_KG.md`: the module layer is a delivery
+record that names modules, not curriculum structure.
+
+### Held deliberately
+
+- **Cloudflare Access** — documented in README, **nothing configured**.
+- **Refresh v2 (nightly)** — needs pass 0, which needs Drive.
+- **Load counter and recompute reason log** — permanent on the page.

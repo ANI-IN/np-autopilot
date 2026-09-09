@@ -362,3 +362,32 @@ and stay unjoined.
 Two of the 17 are **redundant**: `System Design` and `DSA` already resolve
 cleanly without an alias, to the same target. Confirming them is harmless but
 unnecessary.
+
+---
+
+## The module layer hangs off INSTRUCTORS, not programs
+
+Read this before treating modules as program-anchored. They are not.
+
+| how a module is reached | modules | |
+|---|---|---|
+| by `teaches` (instructor → module) | **768** | 83% |
+| by `contains` (program → module) | 198 | 21% |
+| **only** by `teaches` | **671** | **73% — these vanish if instructors are hidden** |
+| only by `contains` | 101 | |
+| by neither | 53 | |
+
+**351 `contains` edges against 2,239 `teaches` edges.** And `contains` is itself
+inferred (program → domain → module) — there is no row-level program↔module
+pairing anywhere in the corpus.
+
+**Consequence, measured:** hide instructors in the render and the graph goes to
+**1,157 nodes / 627 edges / 772 components, 755 of them singletons.** The module
+layer shatters, because for three modules in four the only thing joining them to
+anything is the person who taught them.
+
+**So:**
+- A question about what a *program* contains is answerable for **21%** of modules.
+- A question about who *taught* a module is answerable for **83%**.
+- Do not present the module layer as curriculum structure. It is a **delivery
+  record** that happens to name modules.

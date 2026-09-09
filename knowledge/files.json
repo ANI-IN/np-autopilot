@@ -1,11 +1,11 @@
 {
- "built_at": "2026-09-09T18:40:07+00:00",
+ "built_at": "2026-09-09T20:31:25+00:00",
  "source": "local-folder",
  "root": "/Users/animesh/Desktop/NP-Autopilot-Corpus",
  "counts": {
-  "found": 76,
+  "found": 75,
   "skipped": 1,
-  "extracted": 74,
+  "extracted": 73,
   "failed": 1
  },
  "files": [
@@ -1213,17 +1213,6 @@
     "Ratings Weekly",
     "Response% Weekly"
    ]
-  },
-  {
-   "path": "commands/setup.md",
-   "sha256": "16b9d12ad50111a426633968eda80f6a3efc7b6e6ac80cc89e361b1656beb75a",
-   "bytes": 1199,
-   "mtime": "2026-09-09T18:17:56+00:00",
-   "sniffed": "text",
-   "suffix": ".md",
-   "parsed": true,
-   "chars": 1193,
-   "lines": 25
   }
  ],
  "failures": [

@@ -2,285 +2,215 @@
 
 A knowledge graph over the New Programs corpus, packaged as a Claude Code plugin.
 
-Status: **Part A complete, pending approval. Part B not started.**
+**Read the limitations before the features.** They are first on purpose.
 
 ---
 
+# What you should not trust
 
-## ⚠ Built from a local folder, not Drive
+## Every count is a floor, not a total
 
-`pipeline/00_fetch_drive.py` **has never been run.** The graph is built from a
-**hand-exported local folder**. Drive ingestion is **deferred to v2, not
-cancelled**.
+**127 of 374 worksheets have been read by an entity scan.** The rest breaks down
+as 37 sheets in the excluded payroll file, 139 sheets of learner data (both
+deliberate), and **71 sheets / 4,572 rows that are a genuine blind spot**.
 
-**The three-tab "NP Autopilot" master spreadsheet has never been located.** If it
-turns out to exist in Drive, `Owner` and `Automation` may return as node types
-and doc 05 is redone. Until pass 0 runs, nothing here supports any claim about
-what Drive contains.
+`person`, `instructor` and `module` carry **no expected count** in
+`config/taxonomy.yaml` for this reason. Never quote one as a total.
 
-## Pipeline
+**Coverage was audited per FILE for six rounds before anyone audited it per
+SHEET.** That hid the biggest single finding in the project: `New Combined
+Schedule.xlsx` had 1 of 62 sheets read, and the other 44 held the entire class
+delivery log. A file counted as "read" while 98% of it was not.
 
-Passes are separate on purpose. Each writes its output to disk and the next
-reads it from disk, so any pass can be re-run without repeating the one before.
+## The master spreadsheet has never been located
 
-| Pass | Script | Reads | Writes |
+The brief's taxonomy derives from an "NP Autopilot" spreadsheet with
+`Automations`, `All Tasks` and `To-Do & Working Notes` tabs. **No such file is in
+the corpus.** If it exists in Drive, `Owner` and `Automation` may return as node
+types and the taxonomy is redone.
+
+## The filters had a bias, and it ran for several rounds
+
+Six name-shape rules were rejecting candidates outright. Re-applied to today's
+population they would exclude **336 people (8.8%)**:
+
+- **84 for holding a PhD, Dr, MD or Jr** — two thirds of everything the
+  punctuation rule removed
+- **28 for a middle initial** (`Benjamin O. Tayo`, `Minh P. Vo`)
+- **4 of 5 stopword hits were people named `Will`** — the word is in the stopword
+  list and is also a first name
+- **22 for long multi-part names, disproportionately South Asian**
+  (`Achanta Sri Surya Srinivasa Sai Kiran`)
+
+**Noise removal that correlates with a category of person is not noise removal.**
+All six now flag rather than reject. Full audit in `10-threshold-audit.md`.
+
+## The junk rate
+
+**No non-people found in a sample of 50. Upper bound ~6% at 95% confidence.**
+Not "0%" — a point estimate of zero is a claim a 50-item sample cannot support.
+
+## The module layer hangs off instructors, not programs
+
+**671 of 922 modules (73%) connect only through `teaches`.** `contains` is 351
+edges against 2,239 `teaches`, and `contains` is itself inferred via domain —
+there is no row-level program↔module pairing anywhere in the corpus. Hide
+instructors and the module layer shatters into 772 components.
+
+## What the graph cannot answer
+
+- **Workflow ownership.** It does not exist — everyone in NP does every kind of
+  work. 92 workflows, all blank, and that is the correct final state.
+- **Workflow sequencing.** `depends_on` has zero evidence.
+- **Anything crossing from a workflow to a person, program or module.** From a
+  workflow you reach its theme and its sibling workflows. No path exists onward.
+- **`expert_in` is not teaching evidence.** 1,155 edges, ~92% Google Form
+  responses. 320 also went through a confirmed alias — two inference steps.
+
+---
+
+# What it holds
+
+`5,048 nodes · 36,677 edges` at plugin **v0.1.2**.
+
+| nodes | | edges | |
 |---|---|---|---|
-| 0 | `pipeline/00_fetch_drive.py` | Google Drive | `.drive-cache/` |
-| 1 | `pipeline/01_walk_corpus.py` | `.drive-cache/` | `files.json` |
-| 2 | `pipeline/02_extract.py` | `files.json` | raw entities + rejection log |
-| 3 | `pipeline/03_resolve.py` | raw entities | resolved entities |
-| 4 | `pipeline/04_build_graph.py` | resolved entities | `knowledge/graph.json` |
-| 5 | `pipeline/05_render_html.py` | `graph.json` | `graph.html` |
-| — | `pipeline/validate.py` | everything | pass/fail |
+| instructor | 3,817 | sourced_from | 32,656 |
+| module | 922 | teaches | 2,239 |
+| person | 43 | expert_in | 1,155 |
+| domain | 42 | contains | 351 |
+| program | 42 | belongs_to | 92 |
+| workflow | 92 | owned/supported/delivered_by | 156 |
+| theme | 16 | covers | 28 |
 
-**Pass 0 and Pass 1 must not be fused.** Pass 0 is the only script that touches
-the network. Pass 1 only reads local files. Re-parsing must never re-download.
+**Eval: 20/22 on the original set, 5/5 on five questions written fresh against
+the finished graph. Zero fabrications. 4/4 on the correctly-unanswerable set.**
 
----
+## Commands
 
-## Google Drive access
-
-Corpus files are fetched from Drive by `pipeline/00_fetch_drive.py`, not from a
-Drive-desktop sync folder. **This replaces §1.4 of the brief.**
-
-**Why.** Two reasons, both verifiable. Neither is "the sync produced stubs" —
-see the correction at the end of this section.
-
-**1 · Tab fidelity.** A Google Sheet has no on-disk form that preserves its
-tabs. Exporting it through the Drive API to `.xlsx` keeps **every tab**, which is
-the only way the multi-tab workbooks this corpus depends on survive intact. The
-alternative — a person opening each Sheet and choosing *File → Download* — is
-per-tab-fragile and silently lossy.
-
-**2 · Machine independence.** The current corpus was **hand-exported by someone**
-onto one laptop. That makes the corpus a property of that machine: nobody else
-can reproduce it, nobody can tell which files are stale, and a re-export is
-manual work that will not happen on a schedule. Fetching from a folder ID makes
-the corpus reproducible by anyone with read access and diffable between runs,
-which is what the B10 v2 nightly job needs.
-
-**Correction — a hypothesis I recorded as fact and have since disproved.** An
-earlier version of this section said native files "sync as tiny URL stubs that no
-parser can open" and called that "the most likely reason the master spreadsheet
-never appeared locally." **I checked, and it is false for this folder.** There
-are **zero** stub files: no `.gsheet`, `.gdoc` or `.gslides` anywhere, and no file
-under 500 bytes. The eight extensionless files are full UTF-8 text extracts
-ranging from 1.0 KB to 522 KB. So stub-syncing does not explain the missing
-master spreadsheet, and the reason for its absence is still **unknown**. Pass 0
-will settle it by enumerating what is actually in the folder.
-
-### Setting up OAuth
-
-1. Google Cloud Console → new project → enable the **Google Drive API**.
-2. **OAuth consent screen → user type: Internal.** Not External.
-3. Credentials → OAuth client ID → **Desktop app** → download JSON.
-4. Save it as `config/credentials.json` (gitignored).
-5. `cp config/drive.yaml.example config/drive.yaml` and set `folder_id`.
-6. `python3 pipeline/00_fetch_drive.py` — a browser opens once, then
-   `config/token.json` is written (gitignored, mode 600).
-
-> **The consent screen must be user type Internal.** External + Testing issues a
-> refresh token that **expires after seven days**; the pipeline then dies with
-> `invalid_grant` and needs a manual re-auth every week. Internal issues a
-> non-expiring refresh token and is available to us because we are a Workspace
-> domain. This is the single most important setting on this page.
-
-### Scope
-
-`https://www.googleapis.com/auth/drive.readonly`, and nothing else. **The
-pipeline must never hold write access to Drive.** If a future pass needs to
-write, it gets a separate credential — do not widen this one.
-
-### Never committed
-
-`config/credentials.json`, `config/token.json`, `config/drive.yaml` and
-`.drive-cache/` are all in `.gitignore`. The folder ID lives in
-`config/drive.yaml`, never in a script.
-
-### Nightly job (B10 v2) — not built yet
-
-The nightly refresh should use a **service account** with the Drive folder
-shared to its address, not this user OAuth flow — a headless job cannot complete
-a browser consent, and a job tied to one person's account breaks when that person
-leaves. Nothing in `00_fetch_drive.py` blocks this: replace `authenticate()` with
-`service_account.Credentials.from_service_account_file(...)` and every other
-function is unchanged, because they all take a `service` object and an account
-label.
-
-### If the folder returns nothing or 404s
-
-`00_fetch_drive.py` **exits non-zero on an empty enumeration** and prints a
-folder probe. An empty tree is never treated as success — that is the specific
-failure mode a Shared Drive produces: `files.list` returns `[]` with HTTP 200,
-not an error.
-
-Shared-drive flags are set on both call sites that accept them:
-
-| Call | Flags |
+| command | |
 |---|---|
-| `files().list()` | `supportsAllDrives=True`, `includeItemsFromAllDrives=True` |
-| `files().get_media()` | `supportsAllDrives=True` |
-| `files().get()` (probe) | `supportsAllDrives=True` |
-| `files().export_media()` | *takes neither — the Drive v3 export endpoint has no such parameter. Correct as written.* |
-
-**If the id 404s, check in this order:**
-
-1. **Is it the folder id, not a file id?** Take the last path segment of the
-   URL, after `/folders/`. Drop any `?usp=…` query string.
-2. **Which account did you authenticate as?** The script prints it. A URL
-   containing `/u/2/` means it was copied from your **third** signed-in Google
-   account in that browser — the OAuth flow may have authenticated a different
-   one. `/u/0/` is the first account. This mismatch is the single most common
-   cause.
-3. **Is it on a Shared Drive?** The probe prints `shared drive=<id>` or
-   `My Drive`. If it is a Shared Drive, your account needs to be a **member of
-   the drive**; folder-level sharing is not always enough.
-4. **`canListChildren`.** The probe reports this explicitly. If false, you have
-   view access to the folder but not permission to enumerate it.
-5. **Trashed.** A trashed folder still resolves by id and returns no children.
-   The probe reports it.
-6. **Wrong Cloud project.** If the consent screen and the credential come from
-   different projects, or the Drive API is not enabled on the project, auth
-   succeeds and every call 404s. Confirm the Drive API is enabled on the same
-   project that issued `credentials.json`.
-7. **Stale token after changing the consent screen.** Changing user type from
-   External to Internal invalidates the existing grant. Delete
-   `config/token.json` and re-run.
-
-If the probe says the folder is visible with `canListChildren` and still returns
-zero children, it is genuinely empty and the id is not the one you meant.
-
-### Every build is attributed
-
-`00_fetch_drive.py` appends the **authenticated account** and the **folder ID**
-to `BUILD_LOG.md` on every run. Different people have different Drive
-visibility; a corpus that changes because someone else ran the fetch should be
-visibly explained, not mysterious.
+| `/staffing <domain>` | Who can teach it. **Tiers never merged**: taught → HR record → form response → alias-matched form response. Leads with absence. |
+| `/coverage` | What is missing. Never reports workflows as missing an owner. |
+| `/workflow <id>` | Steps, effort, alerts, tools. Lookup, not reasoning. |
+| `/domain-owner <domain>` | Primary, secondary, delivery POC, cadence. |
+| `/setup` | Graph counts, build date, and the Drive-deferral warning. |
 
 ---
 
-## Deferred to v2 — click-to-open a source file
+# Running it
 
-`graph.html` shows, for every entity, the **relative path, sheet and row** of each
-source file, and a file search that answers "what did this file yield?" in reverse.
+## Refresh
 
-**What it does not do is open the file, and that is deliberate.** Browsers block
-`file://` links initiated from an HTML page, so a link to a local corpus file
-cannot work at all — it would render as a dead link that looks like a bug.
+```
+python3 pipeline/refresh.py
+```
 
-`file.drive_url` is already a declared property in `config/taxonomy.yaml`. It is
-**null** until `pipeline/00_fetch_drive.py` runs and records each file's Drive
-URL. Until then the panel renders the path as unlinked text with a note saying
-links activate after the Drive migration.
+Runs all six passes, validates, prints a delta, **bumps the version, and stops.
+It never commits.**
 
-**This is a recorded deferral gated on pass 0, not a missing feature** — and it
-is one more concrete reason to complete the Drive migration.
+**The version bump is automatic AND enforced.** `validate.py` hard-fails if
+`graph.json` content changed while `plugin.json` did not:
+
+> *graph.json content changed but plugin.json is still 0.1.2. Teammates would
+> never receive this build.*
+
+Automatic-and-trusted is how a graph nobody can receive gets shipped.
+
+**Determinism, verified:** a second refresh with no corpus change reports
+`IDENTICAL — nodes and edges byte-identical` and does not bump.
+
+## Passes
+
+Pass 0 is the only one that touches the network; pass 1 only reads local files.
+**Do not fuse them** — re-parsing must never re-download.
+
+| 0 | `00_fetch_drive.py` | **never run** — deferred to v2 |
+| 1 | `01_walk_corpus.py` | discovery, integrity, manifest |
+| 2 | `02_extract.py` | candidates + rejection log |
+| 3 | `03_resolve.py` | identity; fuzzy **proposes only** |
+| 4 | `04_build_graph.py` | assembly |
+| 5 | `05_render_html.py` | `graph.html` |
+| — | `validate.py` | 17 categories, all fault-injection tested |
+
+**Manifest rules:** a **changed or removed** file is a hard fail; an **added**
+file is reported and ingested. `--rebaseline` accepts a change explicitly and
+records it in BUILD_LOG — never use it to make an unexplained diff go away.
+
+---
+
+# Deferred and decided
+
+## Drive ingestion — v2
+
+`00_fetch_drive.py` exists and **has never run**. The graph is built from a
+hand-exported local folder. Consequences: the master spreadsheet question stays
+open, and **click-to-open a source file cannot work** — browsers block `file://`
+links from HTML, so `file.drive_url` stays null and paths render as unlinked
+text.
+
+Setup, when you do it: enable the Drive API, **OAuth consent screen user type
+Internal** (External + Testing expires the refresh token after 7 days and the
+pipeline dies with `invalid_grant`), Desktop app credentials, scope
+`drive.readonly` and nothing wider.
+
+## Distribution — single-owner, deliberately
+
+**`ANI-IN/np-autopilot`, private, no collaborators. This overrides D10 for v1.**
+
+- **No teammate can install anything.** A private repo with no collaborators is
+  unreachable by `/plugin marketplace add`.
+- **Moving it later changes the marketplace URL**, which breaks
+  `/plugin marketplace add` for anyone already installed — and removing a
+  marketplace auto-uninstalls its plugins, so it is a remove-and-reinstall.
+- **That cost scales with adoption. Move it before the second user, not after
+  the tenth.**
+
+Target state under D10 is a GitHub Organization + team. Honest first-time install
+cost is **four steps**, not two: a GitHub account with org access, `gh auth
+login`, `/plugin marketplace add`, `/plugin install`.
+
+**Offboarding:** removing someone from the org stops *future* updates. It does
+**not** remove the graph snapshot already in their local plugin cache.
+
+## Cloudflare Access — documented, NOT configured
+
+Nothing has been set up. When distribution becomes urgent:
+
+- One rule: email domain `@interviewkickstart.com` (D7). No per-node filtering in
+  the render (D8).
+- The `sensitive` flag drives a render filter that **exists and defaults to off**
+  (D9). It is not the access control.
+- **Before enabling any of this**, re-read `07-risks.md` R6: the graph carries
+  ratings and written judgements about named individuals, and the render already
+  excludes 1,842 in-pipeline/rejected/lapsed instructors including 255 hiring
+  rejections. Access control is not a substitute for that exclusion.
+
+## Not built
+
+**Refresh v2 (nightly)** needs pass 0 working. When built, it should use a
+**service account** with the folder shared to its address — a headless job cannot
+complete a browser consent, and a job tied to one person breaks when they leave.
+
+---
+
+# The corpus is read-only
+
+It mirrors a live Drive folder and **has already changed under an active
+analysis**. Filename typos (`Businees`, `Enginnering Mnagement`) are load-bearing
+citation keys — correcting one breaks provenance.
 
 ## Exclusions
 
-Some corpus material is deliberately **not ingested**. This is recorded here so
-the gap is a visible decision rather than a silent hole. The machine-readable
-list is `excluded:` in `config/taxonomy.yaml`; `validate.py` fails the build if
-an excluded file reaches `files.json` or an excluded field becomes a node
-property.
+`03-instructors/US Instructor Cost Analysis.xlsx` — a Paycor payroll export with
+termination records for 5,387 people. 17 contact-field patterns are dropped at
+extraction. Cohort counts, session titles, coach assignments and names are kept.
+Machine-readable list in `config/taxonomy.yaml` under `excluded:`.
 
-**The primary reason is relevance, not privacy.** None of the material below
-answers any question in the evaluation set. That it is also sensitive is the
-second reason, not the first.
-
-### Excluded file
-
-| File | Why |
-|---|---|
-| `03-instructors/US Instructor Cost Analysis.xlsx` | Misnamed. It is a **Paycor HR payroll export** — employee file numbers, work and personal emails, department, employment status including `Exited (Resigned)` and `Exited (Terminated)`, and per-labour-code hourly rates for 5,387 distinct names. An HR record misfiled into a New Programs folder. 37 sheets, ~75,000 rows. |
-
-**A cost worth stating.** This file is the only corpus source for 14 of the 25
-internal `@interviewkickstart.com` addresses, and the only place that resolves
-`Anshuman` → `Anshuman Bapna`. Those specific facts were extracted before the
-exclusion took effect and are recorded by hand in `people.yaml`, citing this file
-as out-of-corpus evidence. Nothing else is carried over.
-
-### Excluded fields
-
-Dropped at extraction from **every** sheet, so they never become node properties
-and there is nothing to redact at render time:
-
-`learner_email` · `Email` · `Email Address` · `Email ID` · `Personal email` ·
-`Work email` · `Alternate Email ID` · `Gmail ID` · `Phone` · `Phone No.` ·
-`Mobile` · `LinkedIn` · `LinkedIn Profile` · `LinkedIn Profile URL` ·
-`LinkedIn Link` · `Discord ID` · `Discord Channel Link`
-
-**Kept:** cohort counts, session titles, coach assignments, learner and student
-*names* where a cohort count needs them.
-
-Header matching is case-insensitive on the normalised header. A column with a
-blank header whose values are >30% email- or phone-shaped is also dropped, and
-the drop is logged — headerless contact columns exist in this corpus.
+**Known cost:** that file is the only corpus source for 14 of the 25 internal
+`@interviewkickstart.com` addresses.
 
 ---
 
-## Workflow owners
-
-No file in the corpus assigns an owner to a workflow. `config/workflow-owners.yaml`
-is the only source for the `Workflow → Person` edge, and that edge is the only
-bridge between the two halves of the graph. Without it the graph ships as two
-disconnected components.
-
-Generate the stub with `python3 pipeline/gen_workflow_owners.py` — 92 rows, `id`,
-`name`, `theme_id` and `theme` pre-filled, `owner` blank. 39 rows carry a
-`suggestion` with the evidence it came from; **suggestions are guesses and the
-pipeline ignores them.** To accept one, copy the name into `owner` yourself.
-
-Every row ships `confirmed: false`. The pipeline emits an edge only where
-`confirmed: true` and `owner` is non-empty, so a half-filled file is safe to
-build from, and an empty `owner` is preserved as a real "no owner" answer rather
-than a gap.
-
----
-
-## Distribution — v1 is a single-user private repo
-
-**`ANI-IN/np-autopilot`, private, no collaborators.**
-
-**This deliberately overrides D10 for v1.** D10 specified a GitHub Organization
-plus a team, so access is managed centrally rather than per-collaborator. That
-remains the target. It is not what v1 ships.
-
-**What this costs, stated plainly:**
-
-- **No teammate can install anything.** Not "installs with extra steps" — a
-  private repo with no collaborators is unreachable by `/plugin marketplace add`
-  for everyone except the owner. Until the repo moves, this is a single-user
-  tool.
-- **Moving it later changes the marketplace URL**, and that **breaks
-  `/plugin marketplace add` for anyone already installed.** They must remove the
-  old marketplace and re-add the new one — and per the reference
-  implementation's own documentation, removing a marketplace auto-uninstalls its
-  plugins, so it is a remove-and-reinstall, not an update.
-- **That cost scales with adoption.** One user today, so the move is nearly
-  free. At ten users it is ten people doing a manual remove-and-reinstall, each
-  of whom can get it wrong. **Move it before the second user, not after the
-  tenth.**
-
-The two sections below describe the **target state** under D10, not v1.
-
-## Installing (for teammates)
-
-Honest first-time cost — this is **not** two commands:
-
-1. A GitHub account with access to the organisation.
-2. `gh auth login` (or working SSH keys).
-3. `/plugin marketplace add <org>/np-autopilot`
-4. `/plugin install np-autopilot@np-autopilot`
-
-Access is managed centrally through a **GitHub Organization + team**, not
-per-collaborator invites, and the repository is **private**.
-
-**Offboarding.** Removing someone from the org stops *future updates*. It does
-**not** remove the graph snapshot already sitting in their local plugin cache.
-Treat a shipped graph as shipped.
-
-**The corpus is not bundled.** Teammates get `knowledge/`, `skills/` and
-`pipeline/` — no corpus files. Every fact a skill needs must be baked into
-`knowledge/graph.json` at build time; there is no fallback to reading a source
-file at query time.
+See `CLAUDE.md` for the five working rules, `knowledge/USING_THE_KG.md` for
+traversal guidance, `BUILD_LOG.md` for every build and finding.
