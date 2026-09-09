@@ -189,7 +189,32 @@ The test that demoted `Alert` was **degree ≥ 2** — a degree-1 node adds a ho
 
 **Total `Person` estimate: 13 confirmed + 37 pending = up to 50**, against my earlier guess of ~28. The guess was low because I had only read the owner sheet, not all 17 `IAims` sheets.
 
-**And the keying recommendation is reversed** — see doc 02. Employee IDs are **not unique** (`IK-294` = two people; `IK-INT30` = two people) and **not stable** (`Animesh Kumar` has two). Key on a curated slug; keep IDs as evidence only.
+**And the keying recommendation is reversed** — see doc 02. Key on a curated slug; keep IDs as evidence only.
+
+> **CORRECTED 2026-09-09 — the "not unique" argument was thinner than it read.**
+> This line originally said IDs are "not unique (`IK-294` = two people;
+> `IK-INT30` = two people)". Both statements are literally true and materially
+> misleading. Exhaustive check of every `ENo`→name mapping across all nine
+> quarter sheets found **6** ids mapping to more than one name string:
+>
+> | ENo | Rows | What it actually is |
+> |---|---|---|
+> | `IK-418` | 60 | **Not a collision** — two spellings of `Donthoju Srushith Kumar` |
+> | `IK-446` | 58 | **Not a collision** — two spellings of `Deval Mahesh Purohit` |
+> | `IK-915` | 18 | **Not a collision** — `Prithika` / `Prithika K` |
+> | `IK-294` | 88 | Real, and **one stray cell**: Prasad 87, Swarup Yeole 1 |
+> | `IK-INT30` | 10 | Real, and **one stray cell**: Prithika 9, Rakshit Kapoor 1 |
+> | `(BLANK)` | 13 | Not an id at all |
+>
+> So three of the six are alias pairs, and the two genuine collisions are single
+> typos. **The keying decision stands regardless**, on two grounds that are
+> structural rather than clerical:
+>
+> - **Blank ids.** `Yash Mathur` has 11 rows and *all eleven* are blank — normal
+>   HR lag for a recent joiner, and every future joiner will present the same
+>   way. This is sufficient on its own.
+> - **Unstable ids.** `Animesh Kumar` carries `IK-INT16` and `IK-398` — an
+>   intern-to-FTE renumber. Real, and it will recur.
 
 ---
 

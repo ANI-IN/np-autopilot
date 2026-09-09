@@ -202,10 +202,38 @@ people:
   # directory. Corpus locations below; classification is YOUR call.
 
   - canonical: M Prasad Khuntia
-    team: other
-    employee_ids: [IK-294]           # IK-294 also maps to a second person
+    team: former                      # SET ON YOUR AUTHORITY, 2026-09-09.
+    employee_ids: [IK-294]            # 87 of 88 IK-294 rows; 1 stray is Swarup's
     aliases: [Prasad, M Prasad, M Prasad Khuntia]
-    status: unresolved                # NOT marked former — see investigation
+    status: former
+    classification_basis: out-of-corpus
+    classification_evidence: >
+      Absent from the New Programs HR directory, and departure confirmed
+      directly by Animesh Kumar on 2026-09-09. This is asserted on his authority
+      as the corpus owner. It is NOT derived from any file.
+    corpus_disagrees: true            # <-- READ THIS BEFORE ANSWERING ABOUT HIM
+    corpus_reading: >
+      THE CORPUS DOES NOT SUPPORT THIS AND LEANS SLIGHTLY THE OTHER WAY. Any
+      answer that reports him as former MUST say the basis is out-of-corpus and
+      must not imply a file established it.
+      What the files actually show: 87 rows across 9 quarter sheets, Q3 2024
+      through Q226 with no gap; a COMPLETE 10-objective set at 100% weightage in
+      Q1 2026, the second-most-recent quarter; and in Q226, the latest sheet, a
+      name-and-ENo row carrying no objectives.
+      That bare row is NOT evidence of departure. Utkarsh Raj, Deval Mahesh
+      Purohit and Tanmaya Kharyal have exactly the same shape in Q226 and all
+      three are on the current directory — it means objectives not yet set.
+      The workbook's real departure trail runs full objectives -> name-only row
+      -> absent (David Reed and Sweta Pandey both walked it). Prasad is at stage
+      two, which is ambiguous.
+    investigation_note: >
+      Recorded because the record should show how this was settled. The
+      identity-bug hypothesis was WRONG: all 87 rows carry the same name and the
+      same ENo, with no blank, no variant and nothing resembling the Yash Mathur
+      failure. The investigation that established this was correct, and it
+      contradicted the classification that was later applied on external
+      authority. Both facts stand; they are not in conflict, because they answer
+      different questions — what the files show, and what is true.
     corpus_locations:
       - "Domains_Courses Owners!Sheet1 — secondary owner, 9 rows ('M Prasad', 'M Prasad, Swarup')"
       - "Domains_Courses Owners!For Slack r7 — 'Prasad'"

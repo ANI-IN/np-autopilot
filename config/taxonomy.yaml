@@ -86,9 +86,31 @@ node_types:
       # accepts that form ONLY for these two.
       - config/people.yaml        # hand-entered, cites the HR directory
       - config/workflow-owners.yaml  # hand-filled ownership
-    key: slug          # curated. NOT employee id — IDs are neither unique
-                       # (IK-294, IK-INT30 each map to two people) nor stable
-                       # (Animesh Kumar has two). IDs are kept as evidence only.
+    key: slug          # curated. NOT employee id.
+                       #
+                       # CORRECTED 2026-09-09. Doc 08 said "IDs are not unique
+                       # (IK-294, IK-INT30 each map to two people)". True, but
+                       # much thinner than it reads. Of 6 ENo values mapping to
+                       # more than one name string:
+                       #   - 3 are ALIAS PAIRS, not collisions — IK-418, IK-446
+                       #     and IK-915 each map to two spellings of ONE person
+                       #     (Donthoju Srushith Kumar, Deval Mahesh Purohit,
+                       #     Prithika K).
+                       #   - 2 are real collisions and BOTH are a single stray
+                       #     cell: IK-294 is Prasad on 87 of 88 rows (Swarup
+                       #     Yeole on 1), IK-INT30 is Prithika on 9 of 10
+                       #     (Rakshit Kapoor on 1).
+                       #   - 1 is (BLANK), which is not an id.
+                       #
+                       # So collisions are two typos, not a structural defect.
+                       # The keying decision STANDS anyway, on two structural
+                       # grounds that have nothing to do with collisions:
+                       #   (a) BLANK ids. Yash Mathur has 11 rows, all blank —
+                       #       normal HR lag, permanent for every new joiner.
+                       #   (b) UNSTABLE ids. Animesh Kumar carries IK-INT16 and
+                       #       IK-398 — an intern-to-FTE renumber. Real, and it
+                       #       will recur.
+                       # IDs are evidence only.
     expect: null       # NOT a count. Current FLOOR is 43, over 50 of 75 files:
                        #   15 NP staff (HR directory, out-of-corpus, authoritative)
                        # + 14 IAims names outside that directory
@@ -104,7 +126,16 @@ node_types:
       - aliases
       - employee_ids   # evidence only, never the key. Yash Mathur has 11 IAims
                        # rows and a BLANK ENo; an id-keyed read drops him.
-      - team           # np | delivery | other — see team_vocabulary
+      - team           # np | delivery | former | other — see team_vocabulary
+      - first_seen_quarter  # earliest quarter sheet this person appears in
+      - last_seen_quarter   # latest. B4 populates both from quarter_vocabulary.
+      - seen_in_sheets      # list[str] — every sheet the person appears in.
+                            # CAPTURE THIS EVEN IF NOTHING QUERIES IT YET. The
+                            # departure trail (full objectives -> name-only row
+                            # -> absent) is legible ONLY while IAims keeps one
+                            # sheet per quarter. If that workbook is ever
+                            # consolidated the signal is destroyed permanently
+                            # and cannot be recovered from a later build.
       - title          # verbatim from the HR directory, np only
       - seniority      # see seniority_vocabulary, np only
       - sources
@@ -372,6 +403,9 @@ cadence_vocabulary:   # validate.py asserts no person label matches any of these
 team_vocabulary:      # person.team — REQUIRED on every person.
   - np                # on the New Programs > Product Management HR directory.
                       # 15 people, closed set, authoritative, out-of-corpus.
+  - former            # left Interview Kickstart. Can ONLY be set from
+                      # out-of-corpus evidence — see the leaving-NP caveat in
+                      # USING_THE_KG.md. The corpus cannot establish it.
   - delivery          # the delivery org. Separate from NP: the 12 first-name-only
                       # delivery-POC names have ZERO overlap with the NP
                       # directory, so no NP roster will ever resolve them. Do not
@@ -387,6 +421,30 @@ seniority_vocabulary: # person.seniority — np only, from the HR directory.
   - APM2
   - APM1
   - Intern
+
+quarter_vocabulary:
+  # Explicit sheet-label -> quarter map. THREE naming conventions coexist in
+  # IAims Setting Audit _ New Programs.xlsx and none is parseable:
+  #   "Q1 2026" / "Q2 2025"        space-separated, full year
+  #   "Q226" / "Q42025"            compressed, inconsistent digit count
+  #   "Q126" / "Q325" / "Q425"     rubric sheets only
+  # "Q226" is Q2 2026 and "Q42025" is Q4 2025 — the same two-digit position
+  # means different things. NEVER parse a sheet name; resolve through this map.
+  # `order` is the only thing that may be used to sort quarters.
+  - {sheet: "Q3 2024",                    quarter: 2024Q3, order: 1}
+  - {sheet: "Q4 2024",                    quarter: 2024Q4, order: 2}
+  - {sheet: "Q1 2025",                    quarter: 2025Q1, order: 3}
+  - {sheet: "Q1 2025 on 5 Pointer Scale", quarter: 2025Q1, order: 3, variant: 5-point-rescore}
+  - {sheet: "Q2 2025",                    quarter: 2025Q2, order: 4}
+  - {sheet: "Q3 2025",                    quarter: 2025Q3, order: 5}
+  - {sheet: "Q42025",                     quarter: 2025Q4, order: 6}
+  - {sheet: "Q1 2026",                    quarter: 2026Q1, order: 7}
+  - {sheet: "Q226",                       quarter: 2026Q2, order: 8}   # LATEST
+  # Rubric sheets — thresholds, not objectives. Not person-bearing.
+  - {sheet: "Rubrics - Q126",             quarter: 2026Q1, order: 7, kind: rubric}
+  - {sheet: "Updated Rubrics - Q226",     quarter: 2026Q2, order: 8, kind: rubric}
+  - {sheet: " New Rubrics - Q425",        quarter: 2025Q4, order: 6, kind: rubric}
+  - {sheet: "NewTilted Rubrics - Q325 Onward", quarter: 2025Q3, order: 5, kind: rubric}
 
 stage_vocabulary:     # owners sheet column 6
   - IP
@@ -523,6 +581,17 @@ validate:
   - person and instructor labels are at most 40 characters
   - person and instructor labels contain no sentence punctuation
   - person and instructor labels match no stopword pattern
+  # --- quarters: an explicit map, never sheet-name parsing ---
+  - >
+    every quarter-labelled sheet in IAims resolves to an entry in
+    quarter_vocabulary. An unmapped sheet is a HARD FAIL, not a skip — a new
+    quarter sheet must be added to the map deliberately, because none of the
+    three naming conventions in use can be parsed safely ("Q226" is 2026Q2 but
+    "Q42025" is 2025Q4).
+  - >
+    quarter ordering uses quarter_vocabulary.order ONLY. No lexical sort, no
+    regex on the sheet name.
+
   # --- identity: name is the key, ENo is evidence ---
   - >
     person extraction keys on NAME. A blank, malformed or duplicate employee id

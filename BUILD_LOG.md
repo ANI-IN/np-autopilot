@@ -342,3 +342,38 @@ at least bounds the class she falls into.
 
 `file.expect` stays **74**, tolerance **2**. Not pre-raised; the tripwire is the
 point.
+
+## 2026-09-09 18:02:35Z — 01_walk_corpus
+
+- Source: `local-folder`  **NOT DRIVE — pass 0 has never run**
+- Found 82 | skipped 1 | extracted 80 | failed 1
+- Manifest diff: +81 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-09 18:03:11Z — 01_walk_corpus
+
+- Source: `local-folder`  **NOT DRIVE — pass 0 has never run**
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +74 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-09 18:03:41Z — 01_walk_corpus
+
+- Source: `local-folder`  **NOT DRIVE — pass 0 has never run**
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +1 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-09 18:04:04Z — 01_walk_corpus
+
+- Source: `local-folder`  **NOT DRIVE — pass 0 has never run**
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +74 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-09 18:04:15Z — 01_walk_corpus
+
+- Source: `local-folder`  **NOT DRIVE — pass 0 has never run**
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +0 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
