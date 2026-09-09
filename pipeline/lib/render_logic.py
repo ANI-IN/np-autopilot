@@ -160,6 +160,12 @@ const state={types:new Set([...document.querySelectorAll('.ty')].map(e=>e.value)
   sel:null,expanded:new Set()};
 const allDeg=degreeMap(D,D.nodes.map(n=>n.id));
 let A=[],E=[],anchors=new Map();
+// Declared BEFORE recompute(), which assigns it on its last line. When this was
+// declared after the top-level recompute() call, `let`'s temporal dead zone made
+// that assignment throw ReferenceError, the script died before the render loop
+// started, and the canvas stayed empty — while the stat line, written earlier in
+// the same function, still appeared. eval/drive_dom.mjs now catches this class.
+let settle=0;
 
 function recompute(refit){
   A=visible(D,{types:state.types,themes:state.themes,showIso:state.showIso,
@@ -195,7 +201,6 @@ function recompute(refit){
 }
 recompute();
 
-let settle=0;
 function step(){
   const K=settle<90?1:0.35;
   for(const n of A){n.vx*=.85;n.vy*=.85;

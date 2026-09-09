@@ -1251,3 +1251,15 @@ party has seen answered.** That is the real test, and it comes after B9.
 ## 2026-09-09 19:34:02Z — validate
 
 - validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 4693 nodes, 32529 edges
+
+## 2026-09-09 19:37:56Z — 05_render_html
+
+- graph.html 2992 KB | rendered 2776 nodes (1847 connected, 929 isolated) and 3314 edges
+
+## 2026-09-09 19:39:24Z — 03_resolve
+
+- Nodes 4618 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:39:24Z — 03_resolve
+
+- Nodes 4618 | alias merges applied 23 | fuzzy proposed 2 | applied 0
