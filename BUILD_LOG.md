@@ -1558,3 +1558,88 @@ nothing is navigating.
 ## 2026-09-09 20:09:35Z — validate
 
 - validate: 0 FAIL, 6 WARN, 8/16 categories exercised, 5045 nodes, 36305 edges
+
+## 2026-09-09 20:11:52Z — 02_extract
+
+- Candidates 32656 | rejected 185 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 15617 raw, 3817 distinct
+    - module: 15195 raw, 922 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 20:11:52Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:12:04Z — 04_build_graph
+
+- Nodes 5049 | edges 36357
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 835
+    - teaches: 2239
+    - sourced_from: 32656
+
+## 2026-09-09 20:13:24Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:13:24Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:13:30Z — 05_render_html
+
+- graph.html 3331 KB | rendered 2998 nodes (2020 connected, 978 isolated) and 3701 edges
+
+## 2026-09-09 20:13:32Z — validate
+
+- validate: 0 FAIL, 6 WARN, 8/16 categories exercised, 5049 nodes, 36357 edges
+
+### Threshold audit, round two — the bias and the surviving rejections
+
+**The filters had a shape.** Re-applying the six original rules to today's
+3,817-name population, they would still exclude **336 people (8.8%)**:
+
+- **84** for holding a **PhD, Dr, MD or Jr** — two thirds of everything the
+  punctuation rule removed
+- **28** for a **middle initial** (`Benjamin O. Tayo`, `Minh P. Vo`)
+- **4 of 5** stopword hits were people named **Will** — the word is in the
+  stopword list and is also a first name
+- **22** for **long multi-part names**, disproportionately South Asian
+- **195** single-token names
+
+Noise removal that correlates with a category of person is not noise removal.
+Recorded in `10-threshold-audit.md` and `CLAUDE.md`.
+
+**The surviving 190 were re-audited by hand, and the principle did not hold —
+three were false positives:** `EM`/`PM`/`V2` rejected as modules for being under
+3 characters, `Shelby` dropped because the collision resolver treated a single
+token as "not a person", and `JS and Web Development` classified a person name
+because the topic vocabulary lacked `web` and `js`. All recovered; 190 → 185.
+
+### Junk floor re-measured at the loosened population
+
+| | then | now |
+|---|---|---|
+| population | 1,098 | **3,817** |
+| confirmed non-people | 23 | **0** |
+| floor | 2.1% | **0.00%** |
+
+Random 50 (seed 20260910): **0 non-people**, including previously-rejected shapes
+now admitted — `Arun K.`, `Matthew H.`, `Kwei-Herng "Henry" Lai`, `Romil`.
+Exhaustive scan of all 199 flagged records plus a topic/filler sweep of the whole
+population: **1 hit, `Danielle Class`, which is a real person whose surname
+matched the audit regex** — a false positive of the audit, not a non-person.
+
+**The honest number is the upper bound, not the point estimate.** n=50 with zero
+hits gives ~6% at 95% confidence. The old 2.1% was likewise only "what I found".

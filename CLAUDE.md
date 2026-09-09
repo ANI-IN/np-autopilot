@@ -151,7 +151,32 @@ filter.
 - **Exclude only** when the shape cannot be the thing at all: an `@` in a name, a
   newline meaning several names in one cell, a phone number as a module.
 
+**And the bias, not just the count.** Re-applied to today's population, the six
+rules would still exclude 336 people — **84 of them for holding a PhD, Dr or MD,
+28 for a middle initial, 4 of 5 stopword hits for being named Will, and 22 for
+long multi-part names that are disproportionately South Asian.** Noise removal
+that correlates with a category of person is not noise removal.
+
 Full audit in `10-threshold-audit.md`.
+
+---
+
+## 5 · Validation output must stay readable or it stops being read
+
+Converting six filters to flags was a correctness fix. It took validation from
+**19 warnings to 212**, because every retained record printed its own line — and
+buried the two findings that actually mattered.
+
+**A buried finding gets ignored until someone reverts the fix that buried it.**
+That is the real cost, and it is worse than the noise.
+
+**Count, do not enumerate.** One line reading *"199 nodes retained with a shape
+flag: 99x single-token, 71x comma or semicolon, 23x >4 tokens"* carries the same
+information and leaves the report scannable. Enumerate only what a human must act
+on individually.
+
+Before landing a change that increases validation output, check the total. If it
+grows by an order of magnitude, aggregate.
 
 ---
 

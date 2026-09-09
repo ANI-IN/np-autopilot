@@ -43,7 +43,8 @@ STOPWORDS = re.compile(
 TOPIC_WORDS = re.compile(
     r"\b(design|system|systems|architecture|infrastructure|cloud|frontend|"
     r"backend|full ?stack|database|networking|security|devops|analytics|"
-    r"pipeline|framework|fundamentals|crash course)\b", re.I)
+    r"pipeline|framework|fundamentals|crash course|web|javascript|\bjs\b|"
+    r"programming|algorithms|networking|testing|deployment)\b", re.I)
 
 
 def norm(s: str) -> str:
@@ -71,8 +72,8 @@ def reject_reason(raw: str, node_type: str) -> str | None:
             return "numeric only — not a module name"
         if re.fullmatch(r"\+?\d[\d\s().-]{7,}", s):
             return "phone-number shaped"
-        if len(s) < 3:
-            return "shorter than 3 characters"
+        if len(s) < 2:
+            return "single character"
         low = s.strip().lower().rstrip(".")
         # Status / filler values. "done" had become a module with 18 teaches
         # edges before this rule existed.
@@ -129,6 +130,16 @@ def review_flag(raw: str, node_type: str) -> str | None:
         return "contains a digit"
     if len(n.split()) == 1:
         return "single-token name"
+    return None
+
+
+def module_review_flag(raw: str) -> str | None:
+    """Non-fatal module shape warnings. Retained, never dropped."""
+    s = str(raw).strip()
+    if len(s) < 3:
+        # "EM", "PM", "V2" are real labels; rejecting them for length was a
+        # false positive found in the surviving-rejection audit.
+        return "shorter than 3 characters"
     return None
 
 
@@ -740,6 +751,13 @@ def main() -> int:
     drop_mod, drop_inst = set(), set()
     for nz in set(inst_by_norm) & set(mod_by_norm):
         raw = mod_by_norm[nz]["raw"]
+        if len(raw.split()) == 1:
+            # One token is ambiguous in both directions — "Shelby" is a person,
+            # "Frontend" is a topic. Keep both readings and flag them rather
+            # than picking, which dropped Shelby.
+            mod_by_norm[nz]["review"] = "label is also an instructor name"
+            inst_by_norm[nz]["review"] = "label is also a module name"
+            continue
         if looks_like_person(raw):
             drop_mod.add(nz)
             rejected.append({"type": T_MODULE, "raw": raw,
