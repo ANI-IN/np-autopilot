@@ -163,6 +163,42 @@ def main() -> int:
     # note printed below and config/workflow-depends-review.yaml.
     dep_review = []
 
+    # expert_in: instructor -> domain, DECLARED subject. Same lossy join as
+    # covers, same rule: never spell-correct to force a match (R12).
+    def domain_keys(label: str) -> list[str]:
+        base = norm(label)
+        trimmed = norm(re.sub(r"\b(engineering|systems|program|programme)\b", " ",
+                              label, flags=re.I))
+        out_k = [base, trimmed, base.replace(" ", ""), trimmed.replace(" ", "")]
+        seen_k, ordered = set(), []
+        for k in out_k:
+            if k and k not in seen_k:
+                seen_k.add(k)
+                ordered.append(k)
+        return ordered
+
+    expert, exp_miss = 0, []
+    seen_exp = set()
+    node_by_pre = {(n["type"], norm(n["label"])): n for n in nodes}
+    for cl in cand.get("expertise_claims", []):
+        inode = node_by_pre.get(("instructor", cl["instructor"]))
+        did = None
+        for k in domain_keys(cl["subject"]):
+            if k in dom_key:
+                did = dom_key[k]
+                break
+        if not inode or not did:
+            exp_miss.append(cl)
+            continue
+        key = (inode["id"], did, cl["basis"])
+        if key in seen_exp:
+            continue
+        seen_exp.add(key)
+        edges.append({"source": inode["id"], "target": did, "rel": R("instructor_domain"),
+                      "basis": cl["basis"], "subject_raw": cl["subject_raw"],
+                      "provenance": cl["source"]})
+        expert += 1
+
     # teaches: instructor -> module, from all 14 pairing sources found on
     # 2026-09-10. The first build used one sheet and emitted 6 edges. Doc 05's
     # other cited example (Suresh Venkatesan -> SQL Programming) was REAL and sat
@@ -252,6 +288,27 @@ def main() -> int:
     print(f"  workflow_owned_by: {len(confirmed)} confirmed rows in workflow-owners.yaml")
     print()
     print("-" * 78)
+    print("expert_in — instructor -> domain (DECLARED, not teaching evidence)")
+    print("-" * 78)
+    claims = cand.get("expertise_claims", [])
+    print(f"  {len(claims)} claims -> {expert} edges "
+          f"({100*expert/max(1,len(claims)):.0f}% join rate)")
+    bb = defaultdict(int)
+    for e in edges:
+        if e["rel"] == R("instructor_domain"):
+            bb[e["basis"]] += 1
+    for k in sorted(bb):
+        print(f"      {k:<16} {bb[k]:>5} edges")
+    missct = defaultdict(int)
+    for m in exp_miss:
+        missct[m["subject"]] += 1
+    print(f"  {len(exp_miss)} claims unjoined, {len(missct)} distinct subjects")
+    print("  top unjoined subjects (routed to review, never spell-corrected):")
+    for s, n in sorted(missct.items(), key=lambda z: -z[1])[:12]:
+        print(f"      {n:>4}  {s[:56]!r}")
+    print()
+
+    print("-" * 78)
     print("contains — program -> module (INFERRED via domain)")
     print("-" * 78)
     print(f"  {contained} edges")
@@ -288,6 +345,17 @@ def main() -> int:
     for b_ in barren:
         print(f"    {b_}")
     print()
+
+    Path(WORKFLOW_OWNERS_FILE.parent / "expert-in-review.yaml").write_text(
+        yaml.safe_dump({
+            "version": 1,
+            "note": ("Declared subjects that matched no domain. NOT spell-corrected "
+                     "(R12). Most are abbreviations or role labels the owner sheet "
+                     "spells differently. Add an alias to the domain in taxonomy.yaml "
+                     "if a mapping is real; leaving one here is a valid answer."),
+            "unjoined": [{"subject": s, "claims": n} for s, n in
+                         sorted(missct.items(), key=lambda z: -z[1])],
+        }, sort_keys=False, allow_unicode=True, width=100), encoding="utf-8")
 
     Path(WORKFLOW_OWNERS_FILE.parent / "workflow-depends-review.yaml").write_text(
         yaml.safe_dump({

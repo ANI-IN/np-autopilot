@@ -143,3 +143,57 @@ can answer funnel questions. **Never surface a rejection to a general audience.*
 
 Counting the funnel as its outcome is how the reference implementation published
 773 instructors against a real 351.
+
+---
+
+## The graph is two components BY DESIGN
+
+Not a limitation to work around. A description of how New Programs works.
+
+- **Component A** — `Theme` ← `Workflow`. 16 themes, 92 workflows, and no
+  internal structure: `depends_on` has no evidence and `workflow_owned_by` is
+  empty.
+- **Component B** — `Person` ← `Domain` → `Program` → `Module` ← `Instructor`,
+  plus `Instructor` → `Domain`.
+
+**They do not join, and they should not.** Ownership in NP attaches to
+**domains**, not workflows: everyone does every kind of work, and each person
+coordinates with SMEs across development, live class, ARS and RCA. There is no
+per-workflow owner to record, so `workflow-owners.yaml` is 92 blank rows and that
+is its correct final state.
+
+**Answering "who owns workflow N":** return the **domain-level** owner with an
+explanation. Never a workflow-level name — no such fact exists, and inventing one
+is the worst failure this graph can produce.
+
+**Coverage must not report 92 workflows as missing an owner.** That presents a
+correct state as a defect and invites someone to fix it by making data up.
+Coverage says workflow-level ownership is out of scope and points at domain
+owners.
+
+---
+
+## `expert_in` is NOT teaching evidence
+
+`expert_in` (instructor → domain) is a **declared subject field**. `teaches`
+(instructor → module) is a **row-level pairing**. They are separate edge types on
+purpose, so a staffing query can tell the two apart.
+
+Every `expert_in` edge carries `basis`:
+
+| basis | source | what it means |
+|---|---|---|
+| `self_declared` | `Instructors Directory!Responses` | **A Google Form signup.** Someone ticked a domain box. **Not verified capability, and not evidence they have ever taught anything.** 740 edges. |
+| `hr_record` | `SME database!Master` | An HR roster assignment. 62 edges. |
+
+**Never answer "who can teach X" from `expert_in` alone.** Nine out of ten of
+these edges are someone's own form response. Use `teaches` for delivery history
+and `expert_in` only to widen a shortlist, saying which is which.
+
+**The join is lossy — 802 edges from 1,607 claims, a 50% rate.** The 803
+unjoined claims are in `config/expert-in-review.yaml`; the largest is `ML` (153
+claims), which the owner sheet spells `Machine Learning (IP course)`. Nothing is
+spell-corrected to force a match (R12). Confirming a small number of aliases —
+`ML`, `Technical Program Management`, `Product Management`, `Engineering
+Management` — would recover most of the remainder, and that is a decision for a
+human, not the pipeline.

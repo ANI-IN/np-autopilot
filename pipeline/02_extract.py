@@ -440,6 +440,46 @@ def extract_pairings(root: Path, out: list, rejected: list, pairs: list) -> None
         wb.close()
 
 
+def extract_expertise(root: Path, out: list, rejected: list, claims: list) -> None:
+    """instructor -> declared domain. Not teaching evidence — see taxonomy note."""
+    for rel, sheet, namecol, subjcol, basis, sep in SRC.EXPERT_IN_SOURCES:
+        path = root / rel
+        if not path.exists():
+            continue
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        if sheet not in wb.sheetnames:
+            wb.close()
+            continue
+        ws = wb[sheet]
+        hrow, _, hdr = header_row(ws, namecol)
+        if hrow is None or subjcol not in (hdr or []):
+            wb.close()
+            continue
+        ni, si = hdr.index(namecol), hdr.index(subjcol)
+        for rownum, row in enumerate(ws.iter_rows(min_row=hrow + 1, values_only=True),
+                                     start=hrow + 1):
+            def c(i):
+                return str(row[i]).strip() if i < len(row) and row[i] is not None else ""
+            name, subj = c(ni), c(si)
+            if not name or not subj or reject_reason(name, T_INSTRUCTOR):
+                continue
+            prov = {"origin": "corpus", "file": rel, "sheet": sheet, "row": rownum}
+            for piece in [x.strip() for x in subj.split(sep) if x.strip()]:
+                raw = piece
+                stripped = re.sub(SRC.ROLE_SUFFIX_RE, "", piece, flags=re.I).strip(" -")
+                recovered = stripped != piece
+                if not stripped or stripped.lower() in SRC.ROLE_ONLY_VALUES:
+                    rejected.append({"type": taxonomy.edge_for_role("instructor_domain"),
+                                     "raw": raw,
+                                     "reason": "role, not a domain", "source": prov})
+                    continue
+                claims.append({"instructor": norm(name), "subject_raw": raw,
+                               "subject": stripped, "norm": norm(stripped),
+                               "basis": basis, "role_suffix_stripped": recovered,
+                               "source": prov})
+        wb.close()
+
+
 def extract_programs(root: Path, out: list) -> None:
     for pdf in sorted((root / "04-programs").glob("*.pdf")):
         rel = f"04-programs/{pdf.name}"
@@ -485,6 +525,8 @@ def main() -> int:
     extract_programs(root, cands)
     pairs: list = []
     extract_pairings(root, cands, rejected, pairs)
+    claims: list = []
+    extract_expertise(root, cands, rejected, claims)
     for rel, sheet, col in SRC.INSTRUCTOR_SOURCES:
         scan_column(root, rel, sheet, col, T_INSTRUCTOR, cands, rejected, missing)
     for rel, sheet, col in SRC.MODULE_SOURCES:
@@ -557,6 +599,20 @@ def main() -> int:
     print()
 
     print("-" * 78)
+    print("EXPERTISE CLAIMS (expert_in) — declared subject, NOT teaching evidence")
+    print("-" * 78)
+    cb = defaultdict(int)
+    for cl in claims:
+        cb[cl["basis"]] += 1
+    for k in sorted(cb):
+        print(f"  {k:<16} {cb[k]:>6} claims")
+    rec = sum(1 for cl in claims if cl["role_suffix_stripped"])
+    print(f"  {'TOTAL':<16} {len(claims):>6} claims, "
+          f"{len({cl['instructor'] for cl in claims})} distinct instructors")
+    print(f"  role suffix stripped on {rec} claims (e.g. 'ML - Instructor' -> 'ML')")
+    print()
+
+    print("-" * 78)
     print("PROVENANCE COVERAGE")
     print("-" * 78)
     with_prov = sum(1 for c in cands if c.get("sources"))
@@ -594,6 +650,7 @@ def main() -> int:
         {"built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
          "source": manifest["source"], "candidates": cands,
          "teaches_pairs": pairs,
+         "expertise_claims": claims,
          "blank_identifiers": blanks}, indent=1), encoding="utf-8")
     REJECTIONS.write_text(json.dumps(
         {"built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

@@ -239,7 +239,16 @@ is treated as final.
 
 ### Q17  *(the `domain-owner` command must decline this)*
 **Question:** Who owns the *Instructor Rating Communication* workflow?
-**Expected:** **NOT IN THE CORPUS.** Workflow `8.2` exists with full workflow, effort (30–60 min/week) and four alerts — but **no file assigns owners to workflows**. Ownership exists only at *domain* level. A good answer says so and offers the domain-level owner list instead.
+**Expected — STRENGTHENED 2026-09-10.** **CORRECTLY UNANSWERABLE, and now for a substantive reason rather than a data gap.**
+
+Workflow `8.2` exists with full workflow, effort (30–60 min/week) and four alerts. No file assigns an owner to it — and the reason is not that the data is missing. **Workflow-level ownership does not exist in New Programs.** Everyone does every kind of work; each person coordinates with SMEs across development, live class, ARS and RCA. There is no per-workflow owner to record.
+
+A passing answer must:
+1. decline to name a workflow owner;
+2. say **why** — this team does not organise ownership at workflow level;
+3. offer the **domain-level** owners, which are real and recorded.
+
+An answer that says only "not in the corpus" is now **incomplete**, because it implies a gap that could be filled. An answer that names anyone is a **fabrication**. `config/workflow-owners.yaml` exists with all 92 rows blank, and blank is the correct final state, not an unfinished one.
 **Source:** absence verified across all 74 files; `Domains_Courses Owners.xlsx` is domain-keyed
 **Wrong answer looks like:** naming whoever owns a plausibly-related domain, or inferring from `IAims` objectives. **This is the brief's own example question, and it currently cannot be answered.** Per the v1 decision the command is named `domain-owner` precisely so it does not promise this.
 

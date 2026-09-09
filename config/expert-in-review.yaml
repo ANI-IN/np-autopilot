@@ -1,0 +1,99 @@
+version: 1
+note: Declared subjects that matched no domain. NOT spell-corrected (R12). Most are abbreviations or role
+  labels the owner sheet spells differently. Add an alias to the domain in taxonomy.yaml if a mapping
+  is real; leaving one here is a valid answer.
+unjoined:
+- subject: ML
+  claims: 153
+- subject: Agentic AI
+  claims: 64
+- subject: Others (Only Mock Interviewer or Career Coaching)
+  claims: 60
+- subject: Data Analyst & Business Analyst
+  claims: 57
+- subject: Data Structures & Algorithms
+  claims: 56
+- subject: Technical Program Management
+  claims: 51
+- subject: Product Management
+  claims: 50
+- subject: Applied Gen AI
+  claims: 42
+- subject: Scalable Systems / System Design
+  claims: 39
+- subject: Engineering Management
+  claims: 34
+- subject: System Design
+  claims: 19
+- subject: AWS Cloud Solutions Architect
+  claims: 18
+- subject: Advanced Gen AI
+  claims: 16
+- subject: Site Reliability Engineering
+  claims: 15
+- subject: DSA
+  claims: 14
+- subject: Career
+  claims: 13
+- subject: Cyber Security Engineering
+  claims: 10
+- subject: Product Mgmt
+  claims: 9
+- subject: Agentic AI - Instructor for Engineers
+  claims: 8
+- subject: Agentic AI - Instructor for EM
+  claims: 7
+- subject: Learning & Development / Training
+  claims: 6
+- subject: Engineering Manager
+  claims: 6
+- subject: DevOps / SRE
+  claims: 6
+- subject: ML - Grader
+  claims: 6
+- subject: Principal
+  claims: 6
+- subject: Agentic AI - Instructor for PM/TPM
+  claims: 6
+- subject: Andriod Engineering
+  claims: 4
+- subject: AWS Cloud Solution Architect
+  claims: 4
+- subject: Agentic AI (Marketing Curriculum)
+  claims: 4
+- subject: Executive Technical Mentor - AI
+  claims: 4
+- subject: Microsoft Certified
+  claims: 4
+- subject: Marketing & Advertising
+  claims: 3
+- subject: Agentic IP - Instructor for PM/TPM
+  claims: 3
+- subject: Agentic IP - Instructor for Engineers
+  claims: 3
+- subject: Product Marketing Management
+  claims: 2
+- subject: Python
+  claims: 2
+- subject: SME India - Agentic AI for EM
+  claims: 2
+- subject: Data & Business Analyst
+  claims: 1
+- subject: Engineering Intern
+  claims: 1
+- subject: Grader
+  claims: 1
+- subject: Product Marketing
+  claims: 1
+- subject: Mental Health Consultant
+  claims: 1
+- subject: Cyber Security
+  claims: 1
+- subject: MERN
+  claims: 1
+- subject: Gen AI
+  claims: 1
+- subject: Gen AI - Instructor for PM/TPM
+  claims: 1
+- subject: SME India - Agentic AI for PM/TPM
+  claims: 1

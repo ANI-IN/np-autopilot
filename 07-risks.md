@@ -13,13 +13,43 @@ The brief's taxonomy derives from an "NP Autopilot" spreadsheet with `Automation
 
 ---
 
-## R2 — Workflow ownership does not exist in any file
-**Likelihood: certain · Impact: high**
+## R2 — ~~Workflow ownership does not exist in any file~~ → **NOT A RISK. A finding.**
+**Status: CLOSED 2026-09-10. Reclassified from a data gap to a fact about how the team works.**
 
-"Who owns X?" is the flagship query, and it is currently answerable only at *domain* level. The brief's own example — *"who owns instructor rating communication"* — is **unanswerable** (eval Q17).
+**This entry was wrong, and the error mattered.** It read as *"ownership data is
+missing"* and prescribed a fill-in file as the mitigation. It is not missing.
 
-**Mitigation — now decided (2026-09-09).** D2 is reversed; `config/workflow-owners.yaml` **is** being built. `pipeline/gen_workflow_owners.py` emits the 92-row stub with `id`, `name`, `theme_id` and `theme` pre-filled and `owner` blank; 39 rows carry an evidence-cited `suggestion` that the pipeline ignores. Every row ships `confirmed: false`, and the pipeline skips any row not explicitly confirmed, so a half-filled file is safe to build from. ~45–60 minutes to fill, once. The pipeline reads it if present and omits the edges if not, so this never blocks a build. **Highest value-per-minute item in the project.**
-**If not done:** the `owner` skill must decline at workflow level rather than guess — and that must be tested, not assumed.
+**Workflow-level ownership does not exist because that is not how New Programs is
+organised.** Confirmed by the corpus owner, 2026-09-10:
+
+> Everyone does every kind of work — each person has SMEs to coordinate with
+> across development, live class, ARS, RCA. There is no per-workflow owner.
+
+So any value in `workflow-owners.yaml` would be an **invention**, not a gap
+someone failed to fill. The earlier decision to fill it is reversed on better
+information, and the reversal is the right call: filling it would have
+manufactured 92 false facts and made them look sourced.
+
+**What ownership actually attaches to: `Domain`.** That is real, recorded in
+`Domains_Courses Owners.xlsx`, and modelled as `owned_by` / `supported_by` /
+`delivered_by`.
+
+**The mechanism stays in place, empty.** `config/workflow-owners.yaml` (92 rows,
+all blank, all `confirmed: false`), `pipeline/gen_workflow_owners.py` and the
+`workflow_owned_by` edge type are all retained and emit zero edges. If ownership
+ever formalises, nothing needs building. **Do not delete them, and do not fill
+them speculatively.**
+
+**Consequence for the graph, accepted deliberately:** it stays two components.
+Component A is 92 workflows and 16 themes with no internal structure. That is the
+correct picture of this corpus, not a defect (see R6b, which is likewise
+reclassified from a cost to a description).
+
+**Consequence for coverage — important.** Coverage must **NOT** report 92
+workflows as "missing an owner". That would be a false-negative finding: it would
+present a correct state as a defect and invite someone to fix it by inventing
+data. Coverage must say **workflow-level ownership is out of scope** and point to
+the domain owners.
 
 ---
 
@@ -222,7 +252,7 @@ Not in our scope to fix. Flagging it because it is your company's data and it in
 | # | Risk | Likelihood | Impact |
 |---|---|---|---|
 | R1 | Master file differs from brief | certain | high |
-| R2 | No workflow ownership in corpus | certain | high |
+| R2 | ~~No workflow ownership~~ — **CLOSED, not a risk**: ownership attaches to domains, not workflows | n/a | n/a |
 | R3 | Person-name duplication | certain | high |
 | R4 | Freeform extraction invents entities | high | high |
 | R5 | Column misalignment from blanks | high | high |

@@ -753,3 +753,99 @@ point.
 ## 2026-09-09 18:45:36Z — validate
 
 - validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 4255 nodes, 16722 edges
+
+## 2026-09-09 18:54:58Z — 02_extract
+
+- Candidates 15403 | rejected 602 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 5450 raw, 3486 distinct
+    - module: 8109 raw, 459 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 18:55:21Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:55:22Z — 04_build_graph
+
+- Nodes 4255 | edges 17524
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 355
+    - expert_in: 802
+    - teaches: 688
+    - sourced_from: 15403
+
+## 2026-09-09 18:56:19Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:56:19Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:56:23Z — validate
+
+- validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 4255 nodes, 17524 edges
+
+## 2026-09-09 18:56:51Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:56:51Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:57:18Z — 02_extract
+
+- Candidates 15403 | rejected 589 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 5450 raw, 3486 distinct
+    - module: 8109 raw, 459 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 18:57:18Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:57:19Z — 04_build_graph
+
+- Nodes 4255 | edges 17524
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 355
+    - expert_in: 802
+    - teaches: 688
+    - sourced_from: 15403
+
+## 2026-09-09 18:57:34Z — validate
+
+- validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 4255 nodes, 17524 edges
+
+## 2026-09-09 18:58:30Z — 05_render_html
+
+- graph.html 427 KB | rendered 2338 nodes (1318 connected, 1020 isolated) and 2121 edges
+
+## 2026-09-09 18:58:31Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:58:31Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0

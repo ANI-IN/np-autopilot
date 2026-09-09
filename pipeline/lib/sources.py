@@ -220,3 +220,35 @@ UPLEVEL_DOMAIN_SHEETS = {
     "Resource Collections for FT Mas": None, "Resource Collections for Fast T": None,
 }
 UPLEVEL_TOPIC_COLUMN = "Topic (For)"
+
+
+# ---------------------------------------------------------------------------
+# EXPERT_IN — instructor -> domain, declared subject fields. Added 2026-09-10.
+#
+# 1,381 renderable instructors had no module edge, and 823 of them come from a
+# single sheet. Two sheets list people without subject matter at MODULE level
+# but do carry it at DOMAIN level:
+#   Instructors Directory!Responses  Domain column, 85% filled — a Google Form
+#   SME database!Master              Program column, 54% filled — an HR roster
+# (rel, sheet, name_column, subject_column, basis, split_on)
+# ---------------------------------------------------------------------------
+EXPERT_IN_SOURCES = [
+    ("03-instructors/Instructors Directory.xlsx", "Responses",
+     "Full Name", "Domain", "self_declared", ","),
+    ("03-instructors/SME database (For Ops + NP).xlsx", "Master",
+     "Full Name", "Program", "hr_record", ","),
+]
+
+#: Role suffixes on the SME database Program column: "ML - Instructor" is the
+#: domain ML plus a role. Stripped before joining; the recovery is reported.
+#: Written as a PATTERN, not a word list — one of the words is also a doctype
+#: value, and hardcoding it here would duplicate taxonomy vocabulary.
+#: "Curricul\w+" deliberately covers the "Curriculam" misspelling in the sheet.
+ROLE_SUFFIX_RE = (
+    r"\s*[-\u2013]?\s*(Instructor|Curricul\w+|TAs?|Coach|Mentor|Trainer|SME)\s*$"
+)
+#: Program-column values that are a ROLE, not a domain. Never joined.
+ROLE_ONLY_VALUES = {
+    "teaching assistant", "career coach", "mock interviewer", "ta", "coach",
+    "curriculum", "instructor", "sme", "na", "n/a", "others",
+}

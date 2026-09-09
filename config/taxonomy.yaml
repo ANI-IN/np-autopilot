@@ -372,6 +372,29 @@ edge_types:
     expect: null
     source: curriculum sheets
 
+  - name: expert_in
+    role: instructor_domain
+    from: instructor
+    to: domain
+    cardinality: n:n
+    expect: null
+    source: >
+      03-instructors/Instructors Directory.xlsx!Responses (Domain column),
+      03-instructors/SME database (For Ops + NP).xlsx!Master (Program column)
+    edge_properties: [basis]
+    note: >
+      DELIBERATELY NOT folded into `teaches`. Different evidence class entirely:
+      `teaches` is a row-level instructor<->module pairing, `expert_in` is a
+      DECLARED subject field. Keeping them apart lets a staffing query tell
+      someone who has taught a module from someone who ticked a domain on a form.
+      Every edge carries `basis`:
+        self_declared — Instructors Directory!Responses. A Google Form signup.
+                        People stating interest. NOT evidence of capability and
+                        NOT evidence anyone has ever taught.
+        hr_record     — SME database!Master Program column. An HR assignment.
+      Expect a lossy join, like `covers` (R12). Misses go to review; nothing is
+      spell-corrected to force a match.
+
   - name: teaches
     role: instructor_module       # stable semantic key — code resolves edges by role,
                        # never by writing the edge name as a literal
@@ -474,6 +497,10 @@ quarter_vocabulary:
   - {sheet: "Updated Rubrics - Q226",     quarter: 2026Q2, order: 8, kind: rubric}
   - {sheet: " New Rubrics - Q425",        quarter: 2025Q4, order: 6, kind: rubric}
   - {sheet: "NewTilted Rubrics - Q325 Onward", quarter: 2025Q3, order: 5, kind: rubric}
+
+expert_in_basis_vocabulary:   # edge property `basis` on expert_in
+  - self_declared     # a Google Form signup. Interest, not verified capability.
+  - hr_record         # an HR roster assignment.
 
 stage_vocabulary:     # owners sheet column 6
   - IP
