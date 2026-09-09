@@ -197,3 +197,39 @@ spell-corrected to force a match (R12). Confirming a small number of aliases —
 `ML`, `Technical Program Management`, `Product Management`, `Engineering
 Management` — would recover most of the remainder, and that is a decision for a
 human, not the pipeline.
+
+---
+
+## Alias-recovered `expert_in` edges are TWO inference steps, not one
+
+Domain aliases (`config/domain-aliases.yaml`, hand-confirmed) only ever expand
+`expert_in`. They add **zero** `teaches` edges. That matters, because
+`expert_in` is already **92% `self_declared`** — someone's own form response.
+
+So an alias-recovered edge carries **two** inference steps stacked:
+
+1. the person **declared** a subject on a form (not verified capability), and
+2. that declared string was **matched to a domain through a human-confirmed
+   alias**, not because the two strings agree.
+
+Every such edge carries **`via_alias: true`** and records the alias that matched
+it. A staffing query must be able to tell these apart, and should rank:
+
+```
+teaches (row-level pairing)
+  > expert_in basis=hr_record
+    > expert_in basis=self_declared
+      > expert_in basis=self_declared AND via_alias=true   ← weakest
+```
+
+**Never present an alias-recovered self-declared edge as evidence someone can
+teach something.** It means: this person wrote a subject on a form, and we
+decided that subject probably meant this domain.
+
+**The sibling-domain test guards the second step.** An alias is only proposed
+when exactly ONE domain could plausibly be meant. `ML` failed it — five domains
+carry that name (`Machine Learning (IP course)`, `Flagship ML/ ML Program`,
+`ML Switch-up (Adv ML)`, `Advanced ML Ops`, `Advanced ML Interview Prep`) — and
+mapping it would have put 153 instructors on a possibly-wrong domain. It stays
+unjoined, as does `Product Management` (PM vs GPM) and `Agentic AI` (four
+domains).

@@ -989,3 +989,35 @@ the pairing extractor then **dropped the ratings** — the edge existed, the
 `avg_rating` did not, and dedup was discarding the one rating-bearing pair in
 favour of an earlier pair from another sheet. Fixed; the graph now reaches
 `Anshaj Khare` **with** the rating, not just the name.
+
+## 2026-09-09 19:10:18Z — 05_render_html
+
+- graph.html 827 KB | rendered 2338 nodes (1318 connected, 1020 isolated) and 2121 edges
+
+## 2026-09-09 19:11:16Z — 05_render_html
+
+- graph.html 827 KB | rendered 2338 nodes (1318 connected, 1020 isolated) and 2121 edges
+
+## 2026-09-09 19:11:26Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:11:26Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:11:49Z — 05_render_html
+
+- graph.html 827 KB | rendered 2338 nodes (1318 connected, 1020 isolated) and 2121 edges
+
+## 2026-09-09 19:11:51Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:11:51Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:12:11Z — validate
+
+- validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 4255 nodes, 17524 edges

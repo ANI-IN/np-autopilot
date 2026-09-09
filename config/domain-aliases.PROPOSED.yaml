@@ -1,113 +1,205 @@
-# domain-aliases.yaml — PROPOSAL, 2026-09-10. NOTHING HERE IS APPLIED.
+# domain-aliases.yaml — 17 proposals for INDIVIDUAL confirmation, 2026-09-10.
 #
-# Same discipline as people.yaml: the pipeline NEVER infers an alias. Each entry
-# below is a proposal you confirm by setting `confirmed: true`. Anything left
-# false is ignored by the build, exactly like workflow-owners.yaml.
+# NOTHING HERE IS APPLIED. Set confirmed: true on each line you accept. The
+# pipeline reads only confirmed rows, exactly like workflow-owners.yaml.
 #
-# Direction: `alias` is the string as written in a source sheet;
-#            `domain` is the label in Domains_Courses Owners!Sheet1.
+# SIBLING-DOMAIN TEST — run across all 19 after you asked for it. An alias fails
+# if MORE THAN ONE domain could plausibly be meant. Two failed and have been
+# moved to `ambiguous` below:
+#   ML                 -> 5 candidates (Machine Learning (IP course), Flagship ML/
+#                         ML Program, ML Switch-up (Adv ML), Advanced ML Ops,
+#                         Advanced ML Interview Prep). 153 claims. You called this.
+#   Product Management -> 2 candidates (PM, GPM (Growth Product Management)). 50 claims.
 #
-# TWO CORRECTIONS to the list you sent:
-#   - You wrote "DABA -> Data Analyst & Business Analyst" and
-#     "DSA -> Data Structures & Algorithms". That is backwards: DABA and
-#     Coding Masterclass (DSA) are the DOMAIN labels; the long forms are the
-#     alias strings that need mapping onto them. Written the right way round below.
-#   - "Agentic AI" (64 claims) is AMBIGUOUS and is NOT proposed. Three domains
-#     exist — Agentic AI - EM, Agentic AI - SWE, Agentic AI - TPM/Pm — and a
-#     bare "Agentic AI" does not say which. Guessing would put 64 instructors on
-#     the wrong domain. See `ambiguous:` at the bottom.
+# Recovery if ALL 17 confirmed: 344 of 816 unjoined claims = 42%.
+# (Was 547/67% before the sibling test removed ML and Product Management.)
 
 version: 1
 
 aliases:
+  - alias: 'Data Analyst & Business Analyst'
+    domain: 'DABA'
+    claims: 57
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
 
-  # ---- unambiguous abbreviation or long-form of exactly one domain ----
-  - {alias: "ML",                              domain: "Machine Learning (IP course)", claims: 153, confirmed: false}
-  - {alias: "Data Analyst & Business Analyst", domain: "DABA",                         claims: 57,  confirmed: false}
-  - {alias: "Data & Business Analyst",         domain: "DABA",                         claims: 1,   confirmed: false}
-  - {alias: "Technical Program Management",    domain: "TPM",                          claims: 51,  confirmed: false}
-  - {alias: "Product Management",              domain: "PM",                           claims: 50,  confirmed: false}
-  - {alias: "Product Mgmt",                    domain: "PM",                           claims: 9,   confirmed: false}
-  - {alias: "Engineering Management",          domain: "EM",                           claims: 34,  confirmed: false}
-  - {alias: "Engineering Manager",             domain: "EM",                           claims: 6,   confirmed: false}
-  - {alias: "Site Reliability Engineering",    domain: "SRE",                          claims: 15,  confirmed: false}
-  - {alias: "DevOps / SRE",                    domain: "SRE",                          claims: 6,   confirmed: false}
-  - {alias: "Cyber Security Engineering",      domain: "Security",                     claims: 10,  confirmed: false}
-  - {alias: "Cyber Security",                  domain: "Security",                     claims: 1,   confirmed: false}
+  - alias: 'Data Structures & Algorithms'
+    domain: 'Coding Masterclass (DSA)'
+    claims: 56
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+    note: >-
+      Could equally be 'Coding Pathway'. DSA is in the Masterclass label, so that is proposed — confirm or switch.
 
-  # ---- needs a judgement call, flagged ----
-  - {alias: "Data Structures & Algorithms",    domain: "Coding Masterclass (DSA)",     claims: 56,  confirmed: false,
-     note: "Could equally be 'Coding Pathway'. DSA is in the Masterclass label, so that is proposed — confirm or switch."}
-  - {alias: "DSA",                             domain: "Coding Masterclass (DSA)",     claims: 14,  confirmed: false,
-     note: "Same call as above; keep both consistent."}
-  - {alias: "Scalable Systems / System Design", domain: "System Design Pathway",       claims: 39,  confirmed: false,
-     note: "Could be 'SysD Masterclass' or 'SysD TC'. Pathway is the broadest."}
-  - {alias: "System Design",                   domain: "System Design Pathway",        claims: 19,  confirmed: false,
-     note: "Same call as above."}
-  - {alias: "AWS Cloud Solutions Architect",   domain: "Cloud",                        claims: 18,  confirmed: false,
-     note: "A vendor certification, not a domain name. Mapping it to Cloud is a judgement, not a synonym."}
-  - {alias: "AWS Cloud Solution Architect",    domain: "Cloud",                        claims: 4,   confirmed: false}
+  - alias: 'Technical Program Management'
+    domain: 'TPM'
+    claims: 51
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
 
-  # ---- TYPO. This one is spell-correction, which R12 forbids the pipeline from
-  # doing on its own. It is legitimate ONLY as a human-confirmed alias. ----
-  - {alias: "Andriod Engineering",             domain: "Android",                      claims: 4,   confirmed: false,
-     note: "Source misspelling. Confirming this is you asserting the correction, not the pipeline inferring it."}
+  - alias: 'Scalable Systems / System Design'
+    domain: 'System Design Pathway'
+    claims: 39
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+    note: >-
+      Could be 'SysD Masterclass' or 'SysD TC'. Pathway is the broadest.
 
-# ---------------------------------------------------------------------------
-# AMBIGUOUS — deliberately not proposed. Resolving these needs a rule you supply,
-# not a mapping I choose.
-# ---------------------------------------------------------------------------
+  - alias: 'Engineering Management'
+    domain: 'EM'
+    claims: 34
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+
+  - alias: 'System Design'
+    domain: 'System Design Pathway'
+    claims: 19
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+    note: >-
+      Same call as above.
+
+  - alias: 'AWS Cloud Solutions Architect'
+    domain: 'Cloud'
+    claims: 18
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+    note: >-
+      A vendor certification, not a domain name. Mapping it to Cloud is a judgement, not a synonym.
+
+  - alias: 'Site Reliability Engineering'
+    domain: 'SRE'
+    claims: 15
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+
+  - alias: 'DSA'
+    domain: 'Coding Masterclass (DSA)'
+    claims: 14
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+    note: >-
+      Same call as above; keep both consistent.
+
+  - alias: 'Cyber Security Engineering'
+    domain: 'Security'
+    claims: 10
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+
+  - alias: 'Product Mgmt'
+    domain: 'PM'
+    claims: 9
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+
+  - alias: 'Engineering Manager'
+    domain: 'EM'
+    claims: 6
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+
+  - alias: 'DevOps / SRE'
+    domain: 'SRE'
+    claims: 6
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+
+  - alias: 'AWS Cloud Solution Architect'
+    domain: 'Cloud'
+    claims: 4
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+
+  - alias: 'Andriod Engineering'
+    domain: 'Android'
+    claims: 4
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+    note: >-
+      Source misspelling. Confirming this is you asserting the correction, not the pipeline inferring it.
+
+  - alias: 'Data & Business Analyst'
+    domain: 'DABA'
+    claims: 1
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+
+  - alias: 'Cyber Security'
+    domain: 'Security'
+    claims: 1
+    sibling_test: passed   # exactly one domain could be meant
+    confirmed: false
+
+# --------------------------------------------------------------------------
+# AMBIGUOUS — not proposed. Resolving these needs a rule you supply.
+# --------------------------------------------------------------------------
 ambiguous:
-  - alias: "Agentic AI"
+  - alias: 'Agentic AI'
     claims: 64
-    candidates: ["Agentic AI - EM", "Agentic AI - SWE", "Agentic AI - TPM/Pm",
-                 "India Agentic AI Bootcamp"]
-    why: >
-      Four domains carry the name. A bare "Agentic AI" does not say which, and
-      64 instructors would land on the wrong one. Options: map to all four
-      (over-connects), leave unjoined (current), or add a rule using the
-      instructor's other columns.
-  - alias: "Applied Gen AI"
+    candidates: ['Agentic AI - EM', 'Agentic AI - SWE', 'Agentic AI - TPM/Pm', 'India Agentic AI Bootcamp']
+    why: >-
+      Four domains carry the name. A bare "Agentic AI" does not say which, and 64 instructors would land on the wrong one. Options: map to all four (over-connects), leave unjoined (current), or add a rule using the instructor's other columns.
+
+  - alias: 'Applied Gen AI'
     claims: 42
     candidates: []
-    why: "No domain in the 42 is named Gen AI. May be a product that predates or postdates the owner sheet."
-  - alias: "Advanced Gen AI"
+    why: >-
+      No domain in the 42 is named Gen AI. May be a product that predates or postdates the owner sheet.
+
+  - alias: 'Advanced Gen AI'
     claims: 16
     candidates: []
-    why: "Same as above."
-  - alias: "Career"
-    claims: 13
-    candidates: ["Career Classes", "Career Coaching"]
-    why: "Two domains, and the claim string is a bare prefix of both."
+    why: >-
+      Same as above.
 
-# ---------------------------------------------------------------------------
-# NOT DOMAINS — leave unjoined permanently. These are roles, certifications or
-# free-text form answers.
-# ---------------------------------------------------------------------------
+  - alias: 'Career'
+    claims: 13
+    candidates: ['Career Classes', 'Career Coaching']
+    why: >-
+      Two domains, and the claim string is a bare prefix of both.
+
+  - alias: 'ML'
+    claims: 153
+    candidates: ['Machine Learning (IP course)', 'Flagship ML/ ML Program', 'ML Switch-up (Adv ML)', 'Advanced ML Ops', 'Advanced ML Interview Prep']
+    why: >-
+      FAILED the sibling-domain test — 5 domains could be meant.
+      Moved here from the proposed list. Mapping it to one would put
+      153 instructors on a domain that may be wrong.
+
+  - alias: 'Product Management'
+    claims: 50
+    candidates: ['PM', 'GPM (Growth Product Management)']
+    why: >-
+      FAILED the sibling-domain test — 2 domains could be meant.
+      Moved here from the proposed list. Mapping it to one would put
+      50 instructors on a domain that may be wrong.
+
+# --------------------------------------------------------------------------
+# NOT A DOMAIN — roles, certifications, technologies, free text.
+# --------------------------------------------------------------------------
 not_a_domain:
-  - {alias: "Others (Only Mock Interviewer or Career Coaching)", claims: 60,
-     why: "Form free-text answer, as you said. Not a domain."}
-  - {alias: "Principal", claims: 6, why: "Seniority."}
-  - {alias: "ML - Grader", claims: 6, why: "A role."}
-  - {alias: "Grader", claims: 1, why: "A role."}
-  - {alias: "Learning & Development / Training", claims: 6, why: "A function, not an NP domain."}
-  - {alias: "Executive Technical Mentor - AI", claims: 4, why: "A role."}
-  - {alias: "Microsoft Certified", claims: 4, why: "A certification."}
-  - {alias: "Marketing & Advertising", claims: 3, why: "Not an NP domain."}
-  - {alias: "Product Marketing Management", claims: 2, why: "Not an NP domain."}
-  - {alias: "Product Marketing", claims: 1, why: "Not an NP domain."}
-  - {alias: "Python", claims: 2, why: "A technology, not a domain."}
-  - {alias: "MERN", claims: 1, why: "A technology stack."}
-  - {alias: "Engineering Intern", claims: 1, why: "A role."}
-  - {alias: "Mental Health Consultant", claims: 1, why: "A role, and out of scope."}
-  - {alias: "Gen AI", claims: 1, why: "See Applied Gen AI above."}
-  - {alias: "Agentic AI - Instructor for Engineers", claims: 8,
-     why: "Role-qualified Agentic AI; blocked on the Agentic AI ambiguity above."}
-  - {alias: "Agentic AI - Instructor for EM", claims: 7, why: "Same."}
-  - {alias: "Agentic AI - Instructor for PM/TPM", claims: 6, why: "Same."}
-  - {alias: "Agentic IP - Instructor for PM/TPM", claims: 3, why: "Same."}
-  - {alias: "Agentic IP - Instructor for Engineers", claims: 3, why: "Same."}
-  - {alias: "SME India - Agentic AI for EM", claims: 2, why: "Same."}
-  - {alias: "SME India - Agentic AI for PM/TPM", claims: 1, why: "Same."}
-  - {alias: "Gen AI - Instructor for PM/TPM", claims: 1, why: "Same."}
-  - {alias: "Agentic AI (Marketing Curriculum)", claims: 4, why: "Same."}
+  - {alias: 'Others (Only Mock Interviewer or Career Coaching)', claims: 60, why: 'Form free-text answer, as you said. Not a domain.'}
+  - {alias: 'Agentic AI - Instructor for Engineers', claims: 8, why: 'Role-qualified Agentic AI; blocked on the Agentic AI ambiguity above.'}
+  - {alias: 'Agentic AI - Instructor for EM', claims: 7, why: 'Same.'}
+  - {alias: 'Principal', claims: 6, why: 'Seniority.'}
+  - {alias: 'ML - Grader', claims: 6, why: 'A role.'}
+  - {alias: 'Learning & Development / Training', claims: 6, why: 'A function, not an NP domain.'}
+  - {alias: 'Agentic AI - Instructor for PM/TPM', claims: 6, why: 'Same.'}
+  - {alias: 'Executive Technical Mentor - AI', claims: 4, why: 'A role.'}
+  - {alias: 'Microsoft Certified', claims: 4, why: 'A certification.'}
+  - {alias: 'Agentic AI (Marketing Curriculum)', claims: 4, why: 'Same.'}
+  - {alias: 'Marketing & Advertising', claims: 3, why: 'Not an NP domain.'}
+  - {alias: 'Agentic IP - Instructor for PM/TPM', claims: 3, why: 'Same.'}
+  - {alias: 'Agentic IP - Instructor for Engineers', claims: 3, why: 'Same.'}
+  - {alias: 'Product Marketing Management', claims: 2, why: 'Not an NP domain.'}
+  - {alias: 'Python', claims: 2, why: 'A technology, not a domain.'}
+  - {alias: 'SME India - Agentic AI for EM', claims: 2, why: 'Same.'}
+  - {alias: 'Grader', claims: 1, why: 'A role.'}
+  - {alias: 'Product Marketing', claims: 1, why: 'Not an NP domain.'}
+  - {alias: 'MERN', claims: 1, why: 'A technology stack.'}
+  - {alias: 'Engineering Intern', claims: 1, why: 'A role.'}
+  - {alias: 'Mental Health Consultant', claims: 1, why: 'A role, and out of scope.'}
+  - {alias: 'Gen AI', claims: 1, why: 'See Applied Gen AI above.'}
+  - {alias: 'SME India - Agentic AI for PM/TPM', claims: 1, why: 'Same.'}
+  - {alias: 'Gen AI - Instructor for PM/TPM', claims: 1, why: 'Same.'}
