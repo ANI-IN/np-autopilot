@@ -1,0 +1,244 @@
+# BUILD_LOG
+
+Append-only. `pipeline/00_fetch_drive.py` writes a block here on every run; other
+passes append their own. Never hand-edit an existing entry.
+
+---
+
+## 2026-09-09 — Part A, third round: exclusions recorded
+
+No pipeline run. This entry records the ingestion exclusions agreed today, so the
+decision is in the build record before the first build rather than after it.
+
+### Files excluded from ingestion
+
+| File | Sheets | Reason |
+|---|---|---|
+| `03-instructors/US Instructor Cost Analysis.xlsx` | 37 | Paycor HR payroll export — employee file numbers, work and personal emails, department, employment status including `Exited (Resigned)` / `Exited (Terminated)`, per-labour-code hourly rates for 5,387 distinct names. Misfiled HR record, not corpus material, answers no eval question. |
+
+Corpus file count: **75 → 74**. Worksheet count: **374 → 337**.
+
+> **Corrected.** An earlier version of this line read "74 → 73" and "374 → 337".
+> The file count was wrong: the corpus holds **75** files, not 74. See the
+> sheet-count resolution below for the cause.
+
+### Field names excluded at extraction
+
+Dropped from every sheet in the corpus, matched case-insensitively on the
+normalised header:
+
+```
+learner_email        Email                Email Address        Email ID
+Personal email       Work email           Alternate Email ID   Gmail ID
+Phone                Phone No.            Mobile               LinkedIn
+LinkedIn Profile     LinkedIn Profile URL LinkedIn Link        Discord ID
+Discord Channel Link
+```
+
+Also dropped: any blank-headered column whose values are >30% email- or
+phone-shaped. Each such drop is logged individually at build time with its file,
+sheet and column index.
+
+Retained: cohort counts, session titles, coach assignments, and learner/student
+names.
+
+### Known cost of the file exclusion
+
+- 14 of the 25 internal `@interviewkickstart.com` addresses in the corpus occur
+  **only** in the excluded file.
+- `anshuman@interviewkickstart.com` → `Anshuman Bapna` (Rippling 1132) occurs
+  **only** in the excluded file. Carried into `people.yaml` by hand, citing this
+  file as out-of-corpus evidence.
+- `Karthika Pai`'s payroll rows are gone; her identity as a person distinct from
+  `Karthika S` now rests on the D3 confirmation plus her `SME Tracker` and
+  `SME_Interview` name rows, since her email and LinkedIn are dropped as fields.
+
+### Measurements taken this round
+
+| Measure | Value | Method |
+|---|---|---|
+| Workflows in inventory | 92 across 16 themes | `##` / `###` heading parse |
+| Instructor raw name rows | 1,509 | 5 rosters, header-driven positional read |
+| Instructor distinct (normalised) | 1,098 | case + punctuation normalisation |
+| Instructor in ≥ 2 rosters | 321 | — |
+| Instructor junk rate | **23 / 1,098 = 2.1%** | heuristic (15) **+ hand audit (8 more)** |
+| Module confirmed | 234 of 1,348 | appears in ≥ 2 files |
+| Program docs | 42 → **42** after D5 KYP collapse | filename classification; zero merges |
+| Person ceiling | **42** | 13 confirmed + 4 + 12 + 13 |
+| Domains | 42 | owners sheet rows 2–43 |
+
+Doc 08 Q2 reported 1,497 / 1,088 / 319 for the instructor figures from a slightly
+different normalisation. The numbers above are the reproducible ones; reconcile
+at B4 and adopt one, do not average.
+
+
+---
+
+## 2026-09-09 — Part A, fourth round: three corrections
+
+### 1 · The 344 vs 374 worksheet discrepancy — RESOLVED. A corpus file changed.
+
+Not a normalisation difference. I was wrong to suggest it might be, and wrong to
+defer it to B4.
+
+**`01-workflows/UpLevel Schedule Structure.xlsx` was added to the corpus during
+this session.** 1,171,377 bytes, **30 worksheets**, mtime `2026-09-09 22:38` —
+roughly six minutes after the inventory scan that produced the 344 figure and six
+minutes before the count that produced 374.
+
+```
+374 (now) − 344 (doc 01) = 30 = exactly this file's sheet count
+```
+
+Both counts were correct when taken. Docs 01, 02, 06, 07 and 08 all cite 344 and
+are correct **as of their timestamp**; they are now stale by one file. Corpus
+totals: **75 files / 374 sheets**, or **74 / 337** after the payroll exclusion.
+
+**This file has not been read by any scan.** It is not in the workflow, person,
+instructor, module or program scan, and it postdates the sensitive full-row scan.
+Its 30 sheets are entirely unexamined. Nothing in `taxonomy.yaml` accounts for
+it.
+
+**Process consequence.** The corpus is supposed to be read-only and it changed
+under an active analysis. Pass 1 must record a manifest hash per file and fail
+loudly when the set changes between passes, rather than silently re-measuring.
+
+### 2 · Coverage matrix — 25 of 75 files have never been read by an entity scan
+
+`Karthika Pai` was missed because her two source files sit outside every entity
+scan. That is not a one-off. Full matrix in the round-four response; the summary:
+
+| | Files |
+|---|---|
+| Total corpus | 75 |
+| Touched by ≥1 entity scan (workflow / person / instructor / module / program) | 50 |
+| **Touched by NO entity scan** | **25** |
+| Touched by no scan of any kind | 15 |
+
+The 25 include `AgenticAI Instructors Training Plan.xlsx` — which is the cited
+source for eval **Q15** — plus `SME Tracker`, `SME_Interview_Demo Audit Rubrics`,
+`Operational Metrics`, `UpLevel Schedule Structure` and all four `.docx` files.
+
+**Therefore `Person = 42`, `Instructor = 1,098` and `Module = 234` are measured
+over 50 of 75 files, not over the corpus.** They are floors, not counts. The
+`expect` values in `taxonomy.yaml` carry this caveat and their tolerances are not
+meaningful until B4 reads everything.
+
+### 3 · Instructor junk rate — 2.1%, and the heuristic's recall is 65%
+
+The **1.4%** figure quoted earlier was circular: it was the heuristic's own hit
+count presented as the population rate, which is not comparable to Acceler's
+externally-observed 8%. Corrected by hand audit.
+
+- Random 50 of the 1,083 names the heuristic **passed** (seed `20260909`):
+  **0 non-people**. One marginal (`Usha`, single token).
+- Exhaustive audit of two weak classes among the passers found **8 real misses**:
+  `Cloud`, `Database`, `Frontend` (single-token) and `Cloud Computing
+  Architecture`, `Cloud Infrastructure`, `Frontend System Design`, `Full Stack`,
+  `UI System Design`. **All 8 come from
+  `Resource Collection Mastersheet!Indian Instructors`** — topic strings in the
+  name column.
+
+| | Value |
+|---|---|
+| Caught by heuristic | 15 |
+| Missed, found by hand | 8 |
+| **True junk** | **23 / 1,098 = 2.1%** |
+| **Heuristic recall** | **15/23 = 65%** |
+
+The earlier claim that the heuristic "catches 15/15" is withdrawn. The ≥1
+threshold decision is unaffected — ≥2 would still remove 764 real people — but
+`validate.py` gains two rules to close the gap (single-token names, and topic
+words in a name field), and `Resource Collection Mastersheet` needs a
+column-specific parser rather than a generic one.
+
+---
+
+## 2026-09-09 — Part A, fifth round: NP directory applied; three miss classes
+
+### NP HR directory — out-of-corpus, authoritative, closed at 15
+
+Hand-entered into `config/people.yaml` from a screenshot of the HR system. It is
+**not a corpus file**, has no file node, and every entry carries
+`origin: hand` with the directory named as `evidence`. It satisfies
+`sources min_length: 1` and emits **no** `sourced_from` edge, so it can never be
+presented as though a scan produced it.
+
+**Emails are held as `work_email` (local part only, no `@`), not as aliases.**
+Putting an address under `aliases` would carry it into the graph as a node label
+variant under a key the excluded-fields rule does not match — i.e. it would
+smuggle contact data past the D4 exclusion. `validate.py` now asserts no alias
+value contains `@`, and that `work_email` reaches no node in `graph.json`.
+
+### Person ceiling recomputed: **43**, of which 15 are NP
+
+| Group | Count |
+|---|---|
+| `team: np` — the HR directory, closed | **15** |
+| `team: other` — IAims names outside the directory | 14 |
+| `team: delivery` — the 12 first-name-only, plus Simran Khemlani | 13 |
+| Abhinav Rawat (`other`, one cell in the whole corpus) | 1 |
+| **Total** | **43** |
+
+Was 42. The delta is **+1 for Yash Mathur** and **−0 for Karthika Pai**, who was
+never in the 42 (she was the reason for `tolerance: 2`). `expect` is now `null`
+per the round-five instruction — 43 is recorded as the current floor.
+
+Rakshit Kapoor stays counted: not on the directory, unresolved, but his IAims
+trail runs into **Q1 2026**, so "former staff" does not fit. Swarup Yeole's trail
+**stops at Q3 2025** — absent from Q42025, Q226 and Q1 2026 — which is consistent
+with former staff. Both remain `team: other`, pending your call.
+
+### THREE distinct miss classes, not one
+
+`Karthika Pai` was the first. The other two are different failures and need
+different fixes.
+
+| # | Person | Why missed | Class | Fix |
+|---|---|---|---|---|
+| 1 | **Karthika Pai** | Her only sources — `SME Tracker`, `SME_Interview_Demo Audit Rubrics` — are outside **every** entity scan | **Coverage gap.** File never read. | Read all 75 files at B4 |
+| 2 | **Yash Mathur** | 11 I-Aim rows in `IAims!Q226` (rows 104–114) with a **blank `ENo`**. The file WAS scanned; the rows were dropped. | **Key-dependent extraction miss.** | Never key on employee id — already reversed in R3; now also enforced by `validate.py` |
+| 3 | **Vineet Patel / Bishal Biprodas Roy** | Found, but parked in "IAims employees who never appear in the owner sheet — in scope or not?" | **Classification miss.** Found and shelved. | `team` property; owner-sheet absence is not an out-of-scope signal |
+
+**Class 2 is the worst of the three** because it is invisible: the file appears
+in the coverage matrix as scanned, so no audit of *file* coverage would ever
+surface it. An exhaustive re-read of the `Employee Name` column found **32
+distinct values**, of which doc 08 accounted for 30. The two missing were
+`Yash Mathur` and the string `Kalindi .`.
+
+### `Kalindi .` is correct data
+
+Doc 07 R3 listed `Kalindi .` as a corruption example ("a literal trailing
+space-dot"). **Withdrawn.** It is her actual HR record, confirmed against the
+directory. `label_raw` preserved; not flagged; not stripped.
+
+### doctype folded into `program.family`
+
+Cross-tabulating the 42 program documents:
+
+| | EdgeUP | InterviewPrep | Standalone |
+|---|---|---|---|
+| **KYP** | 17 | 0 | 7 |
+| **Curriculum** | 0 | 15 | 3 |
+
+`doctype` is 100% determined by `family` for the 32 EdgeUP and InterviewPrep
+programs and splits only inside the 10 Standalone ones. A 2-value type
+predictable from an existing property for 76% of instances fails the same
+earns-its-place test that demoted `Tool`. **Demoted to `program.doctype`; the
+`doctype` node type and the `has_doc` edge are removed.** The previous
+`doctype_vocabulary` (KYP / Interview Preparation Program / Program) was itself
+wrong — two of its three values were product families duplicating `family`.
+
+**Premise correction: not every program has a KYP document.** 24 of 42 do.
+
+### Q15 reconciled — verified, but the taxonomy had a real gap
+
+`AgenticAI Instructors Training Plan.xlsx` **was** read for eval verification and
+**was not** in any entity scan. Re-read positionally today: `Preferred SMEs for
+Each Topic` r3–r5 gives Anshaj Khare 4.73/4 and Kuldeep Singh 4.66/3; `M_SME_App.
+Agentic AI` r3 gives the backup chain. Q15's key is exact and stands.
+
+The gap: the `teaches` edge named this file as its source while the `instructor`
+node type did not list it among its five rosters — an edge sourced from a file
+its node type never read. **B4 blocker:** this workbook's 18 sheets must join the
+instructor scan before any instructor count is final.

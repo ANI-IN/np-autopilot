@@ -1,0 +1,7 @@
+{
+  "name": "np-autopilot",
+  "version": "0.1.0",
+  "description": "Query the New Programs knowledge graph: workflows, themes, domain owners, programs, modules and instructors, every answer carrying a citation back to the source file.",
+  "author": { "name": "Interview Kickstart — New Programs" },
+  "license": "Proprietary · Interview Kickstart"
+}

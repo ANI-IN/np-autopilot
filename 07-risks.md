@@ -1,0 +1,240 @@
+# 07 — Risk Register
+
+Likelihood and impact are my judgement, stated plainly. Risks are ordered by expected damage, not by category.
+
+---
+
+## R1 — The master file the brief describes does not exist
+**Likelihood: certain (already happened) · Impact: high**
+
+The brief's taxonomy derives from an "NP Autopilot" spreadsheet with `Automations`, `All Tasks` and `To-Do & Working Notes` tabs. The corpus contains a Markdown workflow inventory with four fields and **no owner column**. Two of your nine node types (`Owner`, `Automation`) have no source in the file you expected them to come from.
+
+**Mitigation:** taxonomy revised in doc 05 — `Automation` dropped, `Owner` re-sourced from `Domains_Courses Owners.xlsx` and renamed `Person`, `Domain` added as the bridge. **Before Part B starts, confirm whether the 3-tab spreadsheet exists elsewhere.** If it does, doc 05 changes materially and I should redo it.
+
+---
+
+## R2 — Workflow ownership does not exist in any file
+**Likelihood: certain · Impact: high**
+
+"Who owns X?" is the flagship query, and it is currently answerable only at *domain* level. The brief's own example — *"who owns instructor rating communication"* — is **unanswerable** (eval Q17).
+
+**Mitigation — now decided (2026-09-09).** D2 is reversed; `config/workflow-owners.yaml` **is** being built. `pipeline/gen_workflow_owners.py` emits the 92-row stub with `id`, `name`, `theme_id` and `theme` pre-filled and `owner` blank; 39 rows carry an evidence-cited `suggestion` that the pipeline ignores. Every row ships `confirmed: false`, and the pipeline skips any row not explicitly confirmed, so a half-filled file is safe to build from. ~45–60 minutes to fill, once. The pipeline reads it if present and omits the edges if not, so this never blocks a build. **Highest value-per-minute item in the project.**
+**If not done:** the `owner` skill must decline at workflow level rather than guess — and that must be tested, not assumed.
+
+---
+
+## R3 — Person-name duplication
+**Likelihood: certain · Impact: high**
+
+I found **~28 humans expressed in 38+ distinct strings**. Specifically in this corpus:
+
+- **`Srushit` / `Srushith` / `Srusith`** — three spellings, *inside one spreadsheet*
+- **`Swarup` / `Swaroop`** — same file, two sheets
+- **`Tanmaaya` / `Tanmaya`** — same file, two sheets
+- ~~**`Kalindi .`** — a literal trailing space-dot in `IAims`~~ — **WITHDRAWN 2026-09-09.** `Kalindi .` is her actual HR record, confirmed against the NP directory. It is correct data, not corruption. Keep `label_raw`, do not strip, do not flag.
+- Short/long pairs throughout: `Animesh`/`Animesh Kumar`, `Adil`/`Adil Panwar`, `Shashi`/`Shashi Bhushan Kumar`, `Prasad`/`M Prasad`/`M Prasad Khuntia`, `Utkarsh`/`Utkarsh Raj`, `Navdeep`/`Navdeep Singh`
+- **`Karthika S` vs `Karthika Pai`** — unresolved; may be two people
+- `Michael Savafi`/`Mickael Savafi`, `Huzaifa`/`Huzefa` among instructors
+- One row where name and email disagree: `Anshuman` ↔ `somya@interviewkickstart.com` — still unresolved; Anshuman is not on the NP directory
+- **A person no scan found at all:** `Yash Mathur` — 11 I-Aim rows in `IAims!Q226` with a **blank `ENo`**. He is on the current NP directory and appears in neither doc 08 list. An employee-id-keyed read drops him silently. **Second independent reason the R3 keying recommendation had to be reversed**, and a failure mode distinct from the coverage gap (the file was scanned; the row was dropped).
+
+**Why it is worse than it looks:** fuzzy matching that correctly merges `Srushit`/`Srushith` will *also* be confident about `Karthika S`/`Karthika Pai`, which may be wrong. Precision and recall pull in opposite directions on the same threshold.
+
+**Mitigation — CORRECTED 2026-09-09. Do not key on employee IDs.** The earlier version of this line recommended keying `people.yaml` on `IAims` employee IDs. **That is wrong and was reversed by doc 08 Q4.** The IDs are neither unique nor stable:
+
+- **`IK-294` maps to two people**; so does **`IK-INT30`**.
+- **`Animesh Kumar` carries two different IDs.**
+- There is a fill-down artefact: `Karthika S` reads as `IK-115`…`IK-121` and `Prithika K` as `IK-915`…`IK-922` down consecutive rows — the ID increments while the name stays fixed.
+
+Keying on them reproduces the `IK-294` collision directly in the graph.
+
+**Key on a curated slug in `people.yaml`.** Employee IDs are carried as *evidence only*, in an `employee_ids` list property, never as the identity. Fuzzy matching **proposes only**, never applies; everything under threshold goes to `people-review.yaml`.
+
+---
+
+## R4 — Freeform extraction invents entities
+**Likelihood: high · Impact: high**
+
+Not hypothetical. The reference implementation's shipped graph contains **27 fake instructors (8% of that node type)** — slide bullets split on a comma into name + role: *"Workflows are powerful"* / *"but they have boundaries."*, *"AI doesn't read your mind"* / *"it follows your instructions."*, and a CSV row that lost its quoting and became a node ID containing someone's email and employment history. It is live in a public repo.
+
+Our corpus is *more* dangerous for this: `AgenticAI Instructors Training Plan` alone has 18 sheets of loosely structured name grids, and `New Combined Schedule` has 62.
+
+**Mitigation:** closed vocabulary in Pass 2 with a **non-empty rejection log**; structured parsers for the sheets whose columns are known (owners sheet, IAims, schedule); junk-name heuristics in `validate.py` (multi-word labels, sentence punctuation, stopwords, `@`, `http`, length > 40). The brief's extract/resolve split is the structural defence — the reference implementation fused them and this is the result.
+
+---
+
+## R5 — Column misalignment from blank cells
+**Likelihood: high · Impact: high · *I hit this myself during A1***
+
+`Domains_Courses Owners.xlsx` row 8 (`Early Engineering`) has no Secondary Owner. Any parser that compacts non-empty cells shifts `Every Week` into the owner column and produces **"Early Engineering is owned by Every Week"**. My own inspection dump did exactly this before I noticed. Row 36/37 (`Deval, Srushith, , Adil`) has a double comma yielding a blank owner.
+
+**Mitigation:** read cells **positionally by index, never by filtering out blanks**. Add a `validate.py` check that no `Person` name matches a known cadence/status vocabulary (`Every Week`, `Once a month`, `TBD`, `NA`, `Discontinued`, `IP`, `SU`). Cheap, catches a whole class of error.
+
+---
+
+## R6 — Sensitive content
+**Likelihood: certain · Impact: high (reputational/legal, not technical)**
+
+Full detail in doc 01. Summary:
+
+- **Compensation:** `US Instructor Cost Analysis.xlsx` — 23 MB, 74,961 rows, per-instructor hourly rates for 2025 and 2026.
+- **Contact PII of external people:** personal Gmail addresses, **phone numbers**, LinkedIn URLs and Discord IDs across six files, including *rejected* candidates in `SME Tracker!Rejected, Re-applying`.
+- **Written judgements about named individuals:** `AgenticAI Instructors Training Plan` sheets `WIP` and `Instructors` contain free text such as *"Bad ratings"*, *"GenAI ratings are not good"*, *"Unresponsive"* against named people.
+- **Employee performance:** `IAims` holds named employees, IDs, goal attainment, `Manager's Ratings`, `People Effectiveness Score`.
+### ⚠ CORRECTED after the full-row scan — this is far larger than I first reported
+
+My first pass said *"no learner personal data found."* **That was wrong**, and it was wrong because I read headers instead of rows. The full scan of 344 sheets / 153,793 rows / 2,539,079 cells found: *(344 was correct when measured; the corpus is now **374 sheets / 75 files** after `UpLevel Schedule Structure.xlsx` was added mid-analysis — see BUILD_LOG round four.)*
+
+| Measure | Count |
+|---|---|
+| **Distinct email addresses** | **8,001** (7,976 external; 7,313 `gmail.com`) |
+| **Distinct phone numbers** | **8,074** |
+| **Distinct LinkedIn URLs** | **4,524** |
+
+**Learner data is explicit, not inferred.** `Operational Metrics.xlsx!Cohort Type Wise Coaching Raw D` (12,986 rows) has literal columns `learner | learner_email | Coach | Session_Title` — every row is a named learner, their personal email, their coach and their session. `Single cohort per student all w` (9,789 rows) carries `Student Name` against weekly activity.
+
+**And `US Instructor Cost Analysis.xlsx` is misnamed.** It is a **Paycor HR payroll export**: `Employee File Number | Full Name | Email | Department | Employement Status | LWD`, with statuses including `Exited (Resigned)` and `Exited (Terminated)`, and per-labour-code hourly rates. It is employee compensation **plus termination records** for 5,387 distinct names — materially more sensitive than the filename implies.
+
+**Per your decisions (D4, D7–D9), all of this is in scope**: ingested, tagged `sensitive: true`, rendered in `graph.html`, behind a single Cloudflare Access rule for `@interviewkickstart.com`, with a render filter that exists but defaults to off. Instructor contact fields are dropped at extraction.
+
+**What I still owe you as a flag, having been asked to report rather than certify:** the decision was made when the understood exposure was "instructor cost and ratings." The actual exposure is **~8,000 learners' names and personal emails plus employee termination records**, visible to every `@interviewkickstart.com` account. That is a different decision surface, and it may be a GDPR/DPDP question rather than an access-control one. I have implemented your decision as given; I am noting the changed facts once, here, so the record shows you decided with them.
+
+**This remains the risk most likely to cause real harm, and the one least fixable after the fact.**
+
+---
+
+## R6b — The graph is two disconnected components
+**Likelihood: certain (design consequence of D2) · Impact: medium**
+
+With `Workflow → Person` out of scope for v1, nothing joins **Component A** (`Theme`–`Workflow`, from the master file) to **Component B** (`Domain`–`Person`–`Program`–`Module`–`Instructor`, from the spreadsheets) except `File` nodes — and all 92 workflows share one `File` node, so that "bridge" is a degree-92 hub, not a path.
+
+Consequence: the graph answers *"how do we do X"* and *"who runs Y"* well, and **cannot answer anything crossing between them**. All 8 multi-hop eval questions survive because none crosses A↔B, but a question like *"which domains are exposed by workflow 3.7 having no owner?"* is permanently unanswerable in v1.
+
+**Mitigation:** state it plainly in `USING_THE_KG.md` so queries are not written against a path that does not exist; have `validate.py` report component count and the size of each, so if a future bridge is added the change is visible. Revisit if the cross-component question shape turns out to matter.
+
+---
+
+## R7 — Nobody rebuilds the graph for three months
+**Likelihood: high · Impact: medium-high**
+
+The brief asks what happens. Concretely, from what I can see in this corpus:
+
+The graph does not visibly break — it silently becomes wrong. Instructors marked active have resigned; `Advanced ML Ops` is already `Discontinued` in the source; rating rubrics change **every quarter** (5 versions already exist); the schedule file runs to 2027 dates, so class data ages continuously. Answers stay fluent and confident while drifting from reality — the worst failure mode for a system whose purpose is trustworthy grounding.
+
+**Precedent:** the reference implementation's `plugin.json` claims *1,072 files · 61 clients · 773 instructors*; its actual graph holds *1,833 files · 32 clients · 351 instructors*. Roughly 70% off, published, and nobody caught it. Their `USING_THE_KG.md` also references two files that no longer exist.
+
+**Mitigation:** stamp `built_at` and source-file `mtime` range into `INDEX.md` and into every answer's citation block; have `setup` **warn when the build is older than 30 days**; auto-generate all counts (never hand-write them, per doc 04); and the B10 v2 nightly job. Also: name the owner of the rebuild (open question 4) — an unowned refresh is the thing that stops happening.
+
+---
+
+## R8 — Taxonomy drift
+**Likelihood: medium-high · Impact: high**
+
+The reference implementation's own docs say it plainly: *"Topic taxonomy lives in `build_graph.py` (`TOPICS`) and must stay in sync with `CANON` in `merge_instructors.py`."* They documented the hazard and shipped with it.
+
+Additional drift sources specific to us: theme names contain `&`, `/` and inconsistent spacing, so any hand-retyping diverges; themes **5 `LEARNER SUPPORT & LEARNER EXPERIENCE`** and **9 `LEARNERS`** overlap and someone will eventually merge them in the source doc.
+
+**Mitigation:** B2 exactly as written — `taxonomy.yaml` single source, `pipeline/lib/taxonomy.py` the only module holding the strings, and the grep test that fails the build on a literal elsewhere. Add: **version the taxonomy** (`version: 1`) and record it in every build-log line, so a graph can be traced to the taxonomy that produced it.
+
+---
+
+## R9 — Files I cannot parse
+**Likelihood: certain but small · Impact: low**
+
+Only **1 of 74** files is unreadable: `Taking Class Confirmation Template.png` (image, no text layer). Two traps that look like parse failures but aren't:
+
+- `A_sample_Mock_Session_Feedback_Documentation.docx` is **not a docx** — plain UTF-8 with a wrong extension; `python-docx` raises on it. **Sniff magic bytes, don't trust extensions.**
+- Naming a pipeline script `inspect.py` shadows the stdlib module `openpyxl` and `python-docx` both import, and every spreadsheet and Word file fails with a misleading `circular import` error. I lost one run to this. Worth a line in `CLAUDE.md`.
+
+**Mitigation:** record every failure with a stated reason; assert the failure count against an expected baseline so a *new* failure is loud.
+
+---
+
+## R10 — Near-duplicate documents double-count entities
+**Likelihood: certain · Impact: medium**
+
+Two pairs are near-identical (doc 01): the tools/reviews export differs from its `.md` twin by **3 bytes**; the course reference pair differs by ~2 KB. Ingesting both roughly doubles every entity they contain, and no error is raised.
+
+**Mitigation:** normalised-text hash in Pass 1; keep the newer mtime; log the skip in `BUILD_LOG.md`. Do **not** delete source files — the corpus is read-only.
+
+---
+
+## R11 — Graph volume swamps the entity layer
+**Likelihood: medium · Impact: medium**
+
+153,793 non-blank spreadsheet rows exist, but the mass is transactional: 74,961 rows of cost data, 39,343 of 2019–2024 metrics, 13,706 of poll responses. A naive "ingest every row" produces a graph that is 95% time-series and unusable — and `graph.json` would balloon well past the multi-MB size that already causes private-repo clone timeouts (doc 03, §8).
+
+**Mitigation:** entity-and-relationship layer only, as scoped in doc 05. Historical metrics stay in the source files. If they ever need querying, that is a separate artefact.
+
+---
+
+## R12 — Program ↔ Domain join is lossy
+**Likelihood: high · Impact: medium**
+
+There is no shared key between the 42 program PDFs (`Backend Engineering EdgeUP KYP`) and the 42 owner-sheet domains (`Backend`). Filename typos create phantom distinctions (`Businees`, `Enginnering Mnagement`, `Backend␣␣`), and `KYP` vs `EdgeUP KYP` may be two products or two versions — unresolved. Several domains (`Coding TC`, `SysD TC`, `Career Coaching`) have no program PDF at all.
+
+**Mitigation:** expect this to be the noisiest edge; route low-confidence joins to a review queue rather than asserting them; **never spell-correct a filename-derived label** (it breaks the citation back to the file). Keep `label_raw`.
+
+---
+
+## R13 — Skill descriptions collide and the wrong skill fires
+**Likelihood: medium · Impact: medium**
+
+Per doc 03 §4, skill selection is pure description matching against a **1,536-character combined budget**. Our proposed `workflow`, `precedent` and `coverage` skills all describe "find things about workflows in the corpus" and will compete.
+
+**Mitigation:** write the six descriptions as a set, not individually; lead each with its distinguishing use case; consider `disable-model-invocation: true` on `setup` and `refresh` so they never fire by accident. Test by asking the six eval question shapes and checking which skill actually activates.
+
+---
+
+## R14 — Silent plugin component drop
+**Likelihood: low · Impact: medium**
+
+A path that escapes the plugin root fails with `"path escapes plugin directory"` and **the plugin still loads, just without that component** (doc 03 §6). No hard error. If `knowledge/` were ever referenced by an absolute or `../` path, queries would return "not in the graph" and look like a data problem rather than a packaging problem.
+
+**Mitigation:** `${CLAUDE_PLUGIN_ROOT}` everywhere; `claude plugin validate --strict` in CI; and a `setup` command whose whole job is to prove the graph loaded and report counts — which the brief already specifies.
+
+---
+
+## R15 — Forgotten version bump means fixes never ship
+**Likelihood: medium-high · Impact: medium**
+
+Confirmed by the docs: *"users only receive updates when you bump it"*, and auto-update is **off by default** for non-Anthropic marketplaces. A teammate keeps a stale graph indefinitely with no warning.
+
+**Mitigation:** `refresh` bumps `version` automatically (B10, already specified); `setup` prints the graph build date so staleness is visible at the point of use.
+
+---
+
+## R16 — Public exposure of the reference implementation *(not our risk, but you should know)*
+**Likelihood: certain · Impact: unknown — your call**
+
+`voldemortuk/acceler-presales-plugin` is a **public** GitHub repo, licensed `Proprietary · Acceler / Interview Kickstart`, containing client account names (`Deloitte`, `Lytx`, `e&`, `PwC`), pricing bands, margin percentages, and instructor names with LinkedIn URLs (123 distinct profile URLs). One node ID contains an individual's email address and employment history.
+
+**Largest monetary value present: `$940M`** — 237 distinct monetary values, 47 at `$__M` scale. *(This line previously read `$537M`; corrected per doc 04.)*
+
+**And its own documentation contradicts itself about whether the repo may be public** — see doc 04, which is the authority. The repo is public in fact; the docs site instructs readers to keep it private.
+
+Not in our scope to fix. Flagging it because it is your company's data and it informed our decision to keep this repo private.
+
+---
+
+## Summary
+
+| # | Risk | Likelihood | Impact |
+|---|---|---|---|
+| R1 | Master file differs from brief | certain | high |
+| R2 | No workflow ownership in corpus | certain | high |
+| R3 | Person-name duplication | certain | high |
+| R4 | Freeform extraction invents entities | high | high |
+| R5 | Column misalignment from blanks | high | high |
+| R6 | Sensitive content — **~8,000 learner emails + payroll/termination records** | certain | high |
+| R6b | Graph is two disconnected components | certain | medium |
+| R7 | Graph goes stale unnoticed | high | med-high |
+| R8 | Taxonomy drift | med-high | high |
+| R9 | Unparseable files | certain | low |
+| R10 | Near-duplicate double-counting | certain | medium |
+| R11 | Transactional volume swamps graph | medium | medium |
+| R12 | Program↔Domain join lossy | high | medium |
+| R13 | Skill description collision | medium | medium |
+| R14 | Silent plugin component drop | low | medium |
+| R15 | Forgotten version bump | med-high | medium |
+| R16 | Reference impl is public | certain | your call |
