@@ -63,7 +63,18 @@ def reject_reason(raw: str, node_type: str) -> str | None:
         return "empty"
     if "@" in s or "http" in s.lower():
         return "contains @ or http"
-    if node_type not in (T_PERSON, T_INSTRUCTOR):
+    if node_type == T_MODULE:
+        # Module labels get almost no heuristic, which let 7 pure numbers
+        # ("1.0".."7.0") and 2 PHONE NUMBERS become module nodes. These are the
+        # only shapes a module label can never legitimately take.
+        if re.fullmatch(r"[\d.\s]+", s):
+            return "numeric only — not a module name"
+        if re.fullmatch(r"\+?\d[\d\s().-]{7,}", s):
+            return "phone-number shaped"
+        if len(s) < 3:
+            return "shorter than 3 characters"
+        return None
+    if node_type != T_PERSON and node_type != T_INSTRUCTOR:
         return None
     n = norm(s)
     if not n:
@@ -153,6 +164,7 @@ def scan_column(root: Path, rel: str, sheet: str, column: str, node_type: str,
                     if node_type == T_MODULE:
                         rec["sheet"] = sn
                         rec["domain"] = SRC.SHEET_DOMAIN.get(sn)
+                        rec["granularity"] = "module"   # declared Module Name column
                     out.append(rec)
     finally:
         wb.close()
@@ -332,7 +344,9 @@ def extract_pairings(root: Path, out: list, rejected: list, pairs: list) -> None
                 continue
             prov = {"origin": "corpus", "file": rel, "sheet": sheet, "row": rownum}
             out.append({"type": T_MODULE, "raw": current, "norm": norm(current),
-                        "sheet": sheet, "domain": dom, "sources": [prov]})
+                        "sheet": sheet, "domain": dom,
+                        "granularity": "module",   # Module<>SME grids name modules
+                        "sources": [prov]})
             for rank, ic in enumerate(icols):
                 name = c(ic)
                 if not name:
@@ -377,7 +391,10 @@ def extract_pairings(root: Path, out: list, rejected: list, pairs: list) -> None
                 if reject_reason(m, T_MODULE):
                     continue
                 out.append({"type": T_MODULE, "raw": m, "norm": norm(m),
-                            "sheet": sheet, "domain": None, "sources": [prov]})
+                            "sheet": sheet, "domain": None,
+                            "granularity": "expertise",  # self-declared topic
+                                                         # expertise, coarsest
+                            "sources": [prov]})
                 pairs.append({"module": norm(m), "instructor": norm(name),
                               "rank": 0, "domain": None, "source": prov})
 
@@ -391,9 +408,10 @@ def extract_pairings(root: Path, out: list, rejected: list, pairs: list) -> None
             if not dom or sheet not in wb.sheetnames:
                 continue
             ws = wb[sheet]
-            hrow, hcol, _ = header_row(ws, SRC.UPLEVEL_TOPIC_COLUMN)
+            hrow, hcol, hdr = header_row(ws, SRC.UPLEVEL_TOPIC_COLUMN)
             if hrow is None:
                 continue
+            ri = hdr.index("Resource Type") if hdr and "Resource Type" in hdr else None
             for rownum, row in enumerate(ws.iter_rows(min_row=hrow + 1, values_only=True),
                                          start=hrow + 1):
                 v = row[hcol] if hcol < len(row) else None
@@ -402,8 +420,20 @@ def extract_pairings(root: Path, out: list, rejected: list, pairs: list) -> None
                 raw = str(v).strip()
                 if reject_reason(raw, T_MODULE):
                     continue
+                # "Topic (For)" is BROADER than a module: it labels what an
+                # activity is for, and the activities include feedback forms,
+                # onboarding videos and tests. Only teaching-shaped rows yield a
+                # module; the rest are activity labels and are skipped.
+                rtype = (str(row[ri]).strip().lower()
+                         if ri is not None and ri < len(row) and row[ri] else "")
+                if rtype and not any(k in rtype for k in ("class", "resourcecollection",
+                                                          "resource collection")):
+                    continue
                 out.append({"type": T_MODULE, "raw": raw, "norm": norm(raw),
                             "sheet": sheet, "domain": dom,
+                            "granularity": "topic",   # coarser than a declared
+                                                      # Module Name; see below
+                            "resource_type": rtype,
                             "sources": [{"origin": "corpus",
                                          "file": "01-workflows/UpLevel Schedule Structure.xlsx",
                                          "sheet": sheet, "row": rownum}]})

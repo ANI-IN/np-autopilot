@@ -169,8 +169,15 @@ def main() -> int:
             for k in ("workflow_id", "theme_id", "cadence", "stage", "doctype", "family"):
                 if c.get(k) is not None and k not in node:
                     node[k] = c[k]
+            if c.get("granularity"):
+                # A string named in BOTH a declared Module Name column and a
+                # coarser Topic (For) column resolves to ONE node carrying both
+                # granularities — the evidence is recorded, not merged away.
+                node.setdefault("granularity", []).append(c["granularity"])
 
     for node in resolved_nodes.values():
+        if isinstance(node.get("granularity"), list):
+            node["granularity"] = sorted(set(node["granularity"]))
         files = {s.get("file") for s in node["sources"] if s.get("file")}
         node["file_count"] = len(files)
         if node["type"] == T_INSTRUCTOR:

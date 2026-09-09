@@ -697,3 +697,59 @@ point.
 ## 2026-09-09 18:40:08Z — validate
 
 - validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 4279 nodes, 17023 edges
+
+## 2026-09-09 18:44:36Z — 02_extract
+
+- Candidates 15403 | rejected 531 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 5450 raw, 3486 distinct
+    - module: 8109 raw, 459 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 18:44:36Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:45:15Z — 02_extract
+
+- Candidates 15403 | rejected 531 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 5450 raw, 3486 distinct
+    - module: 8109 raw, 459 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 18:45:16Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:45:16Z — 04_build_graph
+
+- Nodes 4255 | edges 16722
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 355
+    - teaches: 688
+    - sourced_from: 15403
+
+## 2026-09-09 18:45:32Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:45:33Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:45:36Z — validate
+
+- validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 4255 nodes, 16722 edges
