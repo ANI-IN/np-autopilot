@@ -56,6 +56,7 @@ def _run(graph_path: Path | None = None):
     for n in nodes:
         by_type[n["type"]].append(n)
     r = Report()
+    review_flags = Counter()
 
     print("=" * 78)
     print("VALIDATION REPORT")
@@ -88,11 +89,16 @@ def _run(graph_path: Path | None = None):
             r.add(WARN, "junk-label", f"{n['type']} label >40 chars: {lab[:44]!r}")
         if "@" in lab or "http" in lab.lower():
             r.add(FAIL, "junk-label", f"{n['type']} label contains @/http: {lab!r}")
-        if len(re.sub(r"[^\w\s]", " ", lab).split()) == 1:
-            why = n.get("admitted_by")
-            r.add(WARN, "junk-label",
-                  f"single-token {n['type']}: {lab!r}"
-                  + (f" — retained, admitted by {why}" if why else ""))
+        # Review flags are RETAINED records, not defects. Counted, not
+        # enumerated — 199 individual lines would drown the real findings.
+        if n.get("review"):
+            review_flags[n["review"]] += 1
+    if review_flags:
+        total_rf = sum(review_flags.values())
+        r.add(WARN, "junk-label",
+              f"{total_rf} nodes retained with a shape flag (not rejected): "
+              + ", ".join(f"{v}x {k}" for k, v in review_flags.most_common()))
+
     # cadence collision — R5 guard
     vocab = {v.lower() for v in taxonomy.cadences() + taxonomy.stages()}
     for n in by_type["person"]:

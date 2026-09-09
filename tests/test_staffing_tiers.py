@@ -13,6 +13,8 @@ import pytest
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
+from pipeline import query as _q                                      # noqa: E402
+from pipeline.lib import taxonomy                                     # noqa: E402
 from pipeline.query import coverage, staffing                          # noqa: E402
 from pipeline.lib.resolve import Ambiguous, resolve                    # noqa: E402
 
@@ -139,7 +141,8 @@ def test_extracted_evidence_actually_exists_for_an_overridden_subject():
     by = {n["id"]: n for n in g["nodes"]}
     overridden = 0
     for e in g["edges"]:
-        if e["rel"] == "expert_in" and by[e["target"]]["label"] in NO_INSTRUCTOR:
+        if (e["rel"] == taxonomy.edge_for_role("instructor_domain")
+                and by[e["target"]]["label"] in NO_INSTRUCTOR):
             overridden += 1
     assert overridden > 0, (
         "no extracted edges point at an owner-confirmed subject, so the override "

@@ -1538,3 +1538,23 @@ need opposite fixes:
 
 If the counter stays at 1 while the graph re-scatters, it is a layout reset and
 nothing is navigating.
+
+## 2026-09-09 20:09:14Z — 03_resolve
+
+- Nodes 4970 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:09:14Z — 03_resolve
+
+- Nodes 4970 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:09:22Z — validate
+
+- validate: 0 FAIL, 6 WARN, 8/16 categories exercised, 5045 nodes, 36305 edges
+
+## 2026-09-09 20:09:34Z — 05_render_html
+
+- graph.html 3325 KB | rendered 2993 nodes (2009 connected, 984 isolated) and 3681 edges
+
+## 2026-09-09 20:09:35Z — validate
+
+- validate: 0 FAIL, 6 WARN, 8/16 categories exercised, 5045 nodes, 36305 edges
