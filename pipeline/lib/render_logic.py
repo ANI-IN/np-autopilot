@@ -119,6 +119,26 @@ export function neighboursOf(index,id,cap,expanded){
 # Python arrive via the window.__NP object the HTML defines before this runs.
 # ---------------------------------------------------------------------------
 VIEW = r"""
+// ---- RESTART DIAGNOSTIC -------------------------------------------------
+// Distinguishes a real page navigation from a layout reset. If the load counter
+// increments when you click, the page is genuinely reloading and something is
+// navigating. If it stays at 1 while the graph re-scatters, the layout is being
+// recomputed and nothing is reloading. Those need opposite fixes.
+(function(){
+  let n=0;
+  try{ n=(parseInt(sessionStorage.getItem('np_loads')||'0',10)||0)+1;
+       sessionStorage.setItem('np_loads',String(n)); }catch(e){ n=-1; }
+  window.__NP_LOADS=n;
+  console.log('[np] script load #'+n+' at '+new Date().toISOString());
+  addEventListener('beforeunload',()=>{
+    console.warn('[np] BEFOREUNLOAD — the page is navigating away. '+
+      'This is a real reload, not a layout reset.');
+  });
+  addEventListener('error',e=>console.error('[np] window error:',e.message));
+  addEventListener('unhandledrejection',e=>console.error('[np] promise:',e.reason));
+})();
+window.__NP_RECOMPUTES=0;
+
 const D=window.__NP.data, F=window.__NP.files, C=window.__NP.colors;
 const EXPERT=window.__NP.expert, LEFT=300, RIGHT=330, CAP=8;
 const idx=buildIndex(D);
@@ -167,7 +187,10 @@ let A=[],E=[],anchors=new Map();
 // the same function, still appeared. eval/drive_dom.mjs now catches this class.
 let settle=0;
 
-function recompute(refit){
+function recompute(refit, why){
+  window.__NP_RECOMPUTES++;
+  console.log('[np] recompute #'+window.__NP_RECOMPUTES+' reason='+(why||'unspecified')+
+              ' (a recompute re-scatters the layout; it is NOT a page reload)');
   A=visible(D,{types:state.types,themes:state.themes,showIso:state.showIso,
     showHired:state.showHired,degree:allDeg});
   const ids=new Set(A.map(n=>n.id));
@@ -194,12 +217,16 @@ function recompute(refit){
     const s=state.separate?a[2]:A.length;
     const rad=Math.max(30,Math.sqrt(s)*10);
     n.x=a[0]+(Math.random()-.5)*rad;n.y=a[1]+(Math.random()-.5)*rad;n.vx=0;n.vy=0} }
+  const dg=document.getElementById('diag');
+  if(dg)dg.textContent='script load #'+window.__NP_LOADS+
+    ' · '+window.__NP_RECOMPUTES+' layout recomputes'+
+    (window.__NP_LOADS>1?'  ← THE PAGE HAS RELOADED':'');
   document.getElementById('stat').innerHTML=
     '<b>'+A.length+'</b> nodes / <b>'+E.length+'</b> edges / '+comps.length+
     ' components <span style="color:#6e7681">— currently visible</span>';
   if(refit!==false){settle=0}
 }
-recompute();
+recompute(true,'initial');
 
 function step(){
   const K=settle<90?1:0.35;
@@ -356,7 +383,7 @@ document.getElementById('q').addEventListener('input',ev=>{
       el.onclick=()=>{const id=el.dataset.id,n=idx.byId.get(id);
         // A hit is useless if it is off-canvas: open AND move the view to it.
         if(n&&n.x===undefined){state.showIso=true;
-          document.getElementById('iso').checked=true;recompute(false)}
+          document.getElementById('iso').checked=true;recompute(false,'search-hit-offscreen')}
         openNode(id);const m=idx.byId.get(id);if(m&&m.x!==undefined)centreOn(m,1.6)};
     const fh=searchFiles(F,idx,v,15);
     fres.innerHTML=fh.length?('<h2>Files ('+fh.length+')</h2>'+fh.map(f=>
@@ -371,13 +398,13 @@ document.getElementById('q').addEventListener('input',ev=>{
 // ---- controls -----------------------------------------------------------
 document.getElementById('th').onchange=e=>{
   state.themes=e.target.value?new Set([e.target.value]):null;
-  for(const n of D.nodes)delete n.x;recompute()};
+  for(const n of D.nodes)delete n.x;recompute(true,'theme-filter')};
 for(const el of document.querySelectorAll('.ty'))
   el.onchange=()=>{state.types=new Set([...document.querySelectorAll('.ty')]
-    .filter(x=>x.checked).map(x=>x.value));recompute()};
-document.getElementById('iso').onchange=e=>{state.showIso=e.target.checked;recompute()};
-document.getElementById('hired').onchange=e=>{state.showHired=e.target.checked;recompute()};
-document.getElementById('dash').onchange=e=>{state.showDash=e.target.checked;recompute(false)};
+    .filter(x=>x.checked).map(x=>x.value));recompute(true,'type-filter')};
+document.getElementById('iso').onchange=e=>{state.showIso=e.target.checked;recompute(true,'iso-toggle')};
+document.getElementById('hired').onchange=e=>{state.showHired=e.target.checked;recompute(true,'hired-toggle')};
+document.getElementById('dash').onchange=e=>{state.showDash=e.target.checked;recompute(false,'dash-toggle')};
 document.getElementById('sep').onchange=e=>{state.separate=e.target.checked;
-  for(const n of D.nodes)delete n.x;recompute()};
+  for(const n of D.nodes)delete n.x;recompute(true,'separate-toggle')};
 """

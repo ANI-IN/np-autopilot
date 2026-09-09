@@ -178,7 +178,7 @@ def main() -> int:
                 node.setdefault("_statuses", []).append(
                     c.get("pipeline_status", "unknown"))
             for k in ("workflow_id", "theme_id", "cadence", "stage", "doctype",
-                      "family", "steps", "effort", "alerts", "tools"):
+                      "family", "steps", "effort", "alerts", "tools", "review"):
                 if c.get(k) is not None and k not in node:
                     node[k] = c[k]
             if c.get("granularity"):

@@ -4,29 +4,29 @@ note: Declared subjects that matched no domain. NOT spell-corrected (R12). Most 
   is real; leaving one here is a valid answer.
 unjoined:
 - subject: ML
-  claims: 153
+  claims: 157
 - subject: Agentic AI
   claims: 64
 - subject: Others (Only Mock Interviewer or Career Coaching)
-  claims: 60
-- subject: Data Analyst & Business Analyst
-  claims: 57
+  claims: 62
 - subject: Data Structures & Algorithms
-  claims: 56
+  claims: 58
+- subject: Data Analyst & Business Analyst
+  claims: 58
 - subject: Technical Program Management
-  claims: 51
+  claims: 54
 - subject: Product Management
-  claims: 50
+  claims: 51
 - subject: Applied Gen AI
-  claims: 42
+  claims: 44
 - subject: Scalable Systems / System Design
   claims: 39
 - subject: Engineering Management
-  claims: 34
+  claims: 36
 - subject: System Design
-  claims: 19
+  claims: 20
 - subject: AWS Cloud Solutions Architect
-  claims: 18
+  claims: 19
 - subject: Advanced Gen AI
   claims: 16
 - subject: Site Reliability Engineering
@@ -36,7 +36,7 @@ unjoined:
 - subject: Career
   claims: 13
 - subject: Cyber Security Engineering
-  claims: 10
+  claims: 11
 - subject: Product Mgmt
   claims: 9
 - subject: Agentic AI - Instructor for Engineers
@@ -55,25 +55,25 @@ unjoined:
   claims: 6
 - subject: Agentic AI - Instructor for PM/TPM
   claims: 6
+- subject: AWS Cloud Solution Architect
+  claims: 5
+- subject: Agentic AI (Marketing Curriculum)
+  claims: 5
 - subject: Andriod Engineering
   claims: 4
-- subject: AWS Cloud Solution Architect
-  claims: 4
-- subject: Agentic AI (Marketing Curriculum)
+- subject: Marketing & Advertising
   claims: 4
 - subject: Executive Technical Mentor - AI
   claims: 4
+- subject: Agentic IP - Instructor for Engineers
+  claims: 4
 - subject: Microsoft Certified
   claims: 4
-- subject: Marketing & Advertising
+- subject: Python
   claims: 3
 - subject: Agentic IP - Instructor for PM/TPM
   claims: 3
-- subject: Agentic IP - Instructor for Engineers
-  claims: 3
 - subject: Product Marketing Management
-  claims: 2
-- subject: Python
   claims: 2
 - subject: SME India - Agentic AI for EM
   claims: 2

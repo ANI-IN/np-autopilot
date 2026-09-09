@@ -90,20 +90,45 @@ def reject_reason(raw: str, node_type: str) -> str | None:
     n = norm(s)
     if not n:
         return "no alphanumeric content"
+    # ---- HARD REJECTS. Each excludes a shape that cannot be one person. ----
+    if "\n" in s:
+        return "multiple names in one cell"
+    if TOPIC_WORDS.search(s):
+        return "matches the topic vocabulary, not a person"
+    if re.fullmatch(r"[\d\W]+", s):
+        return "no letters"
+    if re.fullmatch(r"(back ?up|option|primary|secondary)\s*\d*", n):
+        return "column filler value"
+    # ---- Everything below USED to reject and now only FLAGS. The threshold
+    # audit found these were dominated by false positives:
+    #   sentence punctuation : 127 dropped, nearly all real — "Dr. Raju
+    #                          Penmatcha", "Chuhong Mai, PhD", "Minh P. Vo"
+    #   stopword             : 9 dropped, 4 of them "Will ..." — "will" is in
+    #                          the stopword list and is also a first name
+    #   > 4 tokens           : real names like "Satya Sai Shiva Rama Akula"
+    #   single token         : 156 dropped; Usha was one and she is a person
+    # A threshold may rank or warn. It must not silently exclude. ----
+    return None
+
+
+def review_flag(raw: str, node_type: str) -> str | None:
+    """Non-fatal shape warnings. The candidate is RETAINED and carries this."""
+    s = str(raw).strip()
+    if node_type not in (T_PERSON, T_INSTRUCTOR):
+        return None
+    n = norm(s)
     if len(s) > 40:
         return "longer than 40 characters"
-    if re.search(r"[.!?,;:]", s.rstrip(".")):
-        return "sentence punctuation"
     if len(n.split()) > 4:
         return "more than 4 tokens"
+    if re.search(r"[,;:]", s):
+        return "contains a comma or semicolon — may be two people or a credential"
     if STOPWORDS.search(f" {n} "):
         return "contains a stopword"
     if re.search(r"\d", s):
         return "contains a digit"
-    if TOPIC_WORDS.search(s):
-        return "matches the topic vocabulary, not a person"
     if len(n.split()) == 1:
-        return "single-token name — review, not accepted silently"
+        return "single-token name"
     return None
 
 
@@ -170,6 +195,9 @@ def scan_column(root: Path, rel: str, sheet: str, column: str, node_type: str,
                 else:
                     rec = {"type": node_type, "raw": raw, "norm": norm(raw),
                            "sources": [prov]}
+                    rf = review_flag(raw, node_type)
+                    if rf:
+                        rec["review"] = rf
                     if node_type == T_INSTRUCTOR:
                         rec["pipeline_status"] = _status_for(rel, sn, row, hdr_cells or [])
                     if node_type == T_MODULE:

@@ -1420,3 +1420,121 @@ truth, and only an unrehearsed question finds it.
   Behavioral Interview Patterns*, 2026-09-09.
 
 **Still 0 fabrications across all 27.** The four unanswerables remain 4/4.
+
+## 2026-09-09 20:06:09Z — 02_extract
+
+- Candidates 32624 | rejected 190 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 15604 raw, 3817 distinct
+    - module: 15176 raw, 918 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 20:06:23Z — 03_resolve
+
+- Nodes 4970 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:06:24Z — 04_build_graph
+
+- Nodes 5045 | edges 36305
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 345
+    - expert_in: 835
+    - teaches: 2225
+    - sourced_from: 32624
+
+## 2026-09-09 20:06:36Z — 03_resolve
+
+- Nodes 4970 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:06:37Z — 04_build_graph
+
+- Nodes 5045 | edges 36305
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 345
+    - expert_in: 835
+    - teaches: 2225
+    - sourced_from: 32624
+
+## 2026-09-09 20:06:38Z — 03_resolve
+
+- Nodes 4970 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:06:39Z — 03_resolve
+
+- Nodes 4970 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:08:07Z — 05_render_html
+
+- graph.html 3325 KB | rendered 2993 nodes (2009 connected, 984 isolated) and 3681 edges
+
+## 2026-09-09 20:08:39Z — 03_resolve
+
+- Nodes 4970 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:08:40Z — 03_resolve
+
+- Nodes 4970 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 20:08:46Z — validate
+
+- validate: 0 FAIL, 212 WARN, 8/16 categories exercised, 5045 nodes, 36305 edges
+
+---
+
+## 2026-09-10 — threshold audit
+
+**Convention adopted permanently: first-run score and post-fix score are BOTH
+recorded, every time.**
+
+### Six instructor filters were dominated by false positives
+
+Sampling what each dropped was decisive:
+
+| filter | dropped | what it excluded |
+|---|---|---|
+| sentence punctuation | 127 | `Dr. Raju Penmatcha`, `Chuhong Mai, PhD`, `Minh P. Vo` — credentials and initials |
+| stopword | 9 | `Will Yao`, `Will Drevo`, `Will Carhart` — "will" is a stopword AND a first name |
+| >4 tokens | 17 | `Satya Sai Shiva Rama Akula`, `Tanikella V S S Pavan Kumar` |
+| single token | 156 | `Usha`, later proven a person by a Confirmation ID |
+| contains a digit | 4 | `2- Prateek` |
+| >40 characters | 9 | genuinely multi-name cells — the real signal is the newline |
+
+**All six now FLAG instead of REJECT.** Instructor **3,488 → 3,817** (+329 real
+people), rejections **594 → 190**, and 199 nodes carry a visible `review` flag.
+`teaches` 1,889 → 2,225.
+
+Kept as hard rejects only where the shape cannot be the thing: `@`/`http`, a
+newline meaning several names in one cell, topic-vocabulary matches, numeric or
+phone-shaped, column filler.
+
+Full audit in `10-threshold-audit.md`. Rule recorded in `CLAUDE.md`.
+
+### Restart-on-click instrumentation
+
+The graph draws; the remaining report is restart-on-click, persisting in
+incognito. Added a diagnostic that distinguishes the two possible causes, which
+need opposite fixes:
+
+- a `sessionStorage` **load counter** shown on the page — if it increments when
+  you click, the page is genuinely reloading;
+- a `beforeunload` listener that logs **"the page is navigating away"**;
+- every `recompute()` logs its reason — a recompute re-scatters the layout and is
+  **not** a reload.
+
+If the counter stays at 1 while the graph re-scatters, it is a layout reset and
+nothing is navigating.

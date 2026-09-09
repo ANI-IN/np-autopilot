@@ -126,6 +126,35 @@ The same applies to any stdlib name in `pipeline/`: `types.py`, `io.py`,
 
 ---
 
+---
+
+## 4 · Thresholds may rank or warn. They must not silently exclude.
+
+Two cutoffs have already hidden correct answers, and **both were found by an
+unrehearsed question, not by review**:
+
+- module `>= 2` cross-file — presented as noise control, it was a filter on truth.
+- staffing `>= 2` taught modules — hid **EM**, the domain with exactly one
+  instructor and the entire point of the question being asked.
+
+A third audit then found that **six name-shape filters were dominated by false
+positives**, silently dropping ~330 real people: `Dr. Raju Penmatcha` and
+`Chuhong Mai, PhD` for punctuation, `Will Yao` and `Will Drevo` because "will" is
+in the stopword list, `Usha` for being one token.
+
+**Before adding any numeric cutoff, answer this: what would a correct answer
+excluded by it look like?** If that question has an answer, the cutoff must not
+filter.
+
+- **Rank** — put it on the node as a confidence property (`cross_validated`).
+- **Warn** — retain the record and flag it (`review`).
+- **Exclude only** when the shape cannot be the thing at all: an `@` in a name, a
+  newline meaning several names in one cell, a phone number as a module.
+
+Full audit in `10-threshold-audit.md`.
+
+---
+
 ## Other traps
 
 - **`A_sample_Mock_Session_Feedback_Documentation.docx` is not a docx.** It is

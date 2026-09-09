@@ -81,6 +81,12 @@ proposed_merges:
   applied: false
   basis: middle-name variant
   type: instructor
+- candidate: Carlos A. Escobar
+  possible_match: Carlos Escobar
+  similarity: 0.903
+  applied: false
+  basis: middle-name variant
+  type: instructor
 - candidate: Dan "Darcy" Li
   possible_match: Dan Li
   similarity: 0.6
@@ -186,6 +192,12 @@ proposed_merges:
 - candidate: Milad Amir Toutounchian
   possible_match: Milad Toutounchian
   similarity: 0.878
+  applied: false
+  basis: middle-name variant
+  type: instructor
+- candidate: Minh P. Vo
+  possible_match: Minh Vo
+  similarity: 0.824
   applied: false
   basis: middle-name variant
   type: instructor

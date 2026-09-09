@@ -11,7 +11,10 @@
 #                         Advanced ML Interview Prep). 153 claims. You called this.
 #   Product Management -> 2 candidates (PM, GPM (Growth Product Management)). 50 claims.
 #
-# Recovery if ALL 17 confirmed: 344 of 816 unjoined claims = 42%.
+# 15 aliases (was 17). System Design and DSA were DROPPED as redundant — the
+# hardened resolver already resolves both cleanly to the same target, so an
+# alias for them would be a thing to maintain wrong later.
+# Recovery if ALL 15 confirmed: 311 of 816 unjoined claims = 38%.
 # (Was 547/67% before the sibling test removed ML and Product Management.)
 
 version: 1
@@ -51,14 +54,6 @@ aliases:
     sibling_test: passed   # exactly one domain could be meant
     confirmed: false
 
-  - alias: 'System Design'
-    domain: 'System Design Pathway'
-    claims: 19
-    sibling_test: passed   # exactly one domain could be meant
-    confirmed: false
-    note: >-
-      Same call as above.
-
   - alias: 'AWS Cloud Solutions Architect'
     domain: 'Cloud'
     claims: 18
@@ -72,14 +67,6 @@ aliases:
     claims: 15
     sibling_test: passed   # exactly one domain could be meant
     confirmed: false
-
-  - alias: 'DSA'
-    domain: 'Coding Masterclass (DSA)'
-    claims: 14
-    sibling_test: passed   # exactly one domain could be meant
-    confirmed: false
-    note: >-
-      Same call as above; keep both consistent.
 
   - alias: 'Cyber Security Engineering'
     domain: 'Security'

@@ -226,6 +226,7 @@ module counts are floors, not totals.</div>
 <label class="ck"><input type="checkbox" id="dash" checked><span>Show dashed <b>expert_in</b> edges (declared, not taught)</span></label>
 <label class="ck"><input type="checkbox" id="sep"><span>Separate disconnected components <b>(off by default)</b> — structure view, harder to browse</span></label>
 <div id="stat"></div>
+<div id="diag" style="font-size:10px;color:#6e7681;margin-top:4px"></div>
 
 <h2>Relationships <span>— all rendered, pre-filter</span></h2>
 <table>{erows}</table>

@@ -81,3 +81,67 @@ def test_ambiguity_is_returned_not_guessed():
     assert len(r.candidates) > 1
     # and a genuinely unique name still resolves
     assert resolve("Advanced ML Ops", labels) == "Advanced ML Ops"
+
+
+# ---------------------------------------------------------------------------
+# Owner-confirmed facts override every extracted tier. This is a GENERAL rule,
+# not an iOS special case: anything asserted out-of-corpus in
+# config/out-of-corpus-facts.yaml wins over anything the extractor produced.
+# ---------------------------------------------------------------------------
+import yaml                                                            # noqa: E402
+
+from pipeline.lib.paths import CONFIG_DIR                              # noqa: E402
+
+FACTS = yaml.safe_load((CONFIG_DIR / "out-of-corpus-facts.yaml").read_text(encoding="utf-8"))
+NO_INSTRUCTOR = [s for f in FACTS["facts"]
+                 for s in (f.get("subject") or []) if "no instructors" in f["fact"]]
+
+
+def test_out_of_corpus_facts_file_is_wired_in():
+    """If nobody reads the facts file, the override cannot hold."""
+    assert NO_INSTRUCTOR, "no owner-confirmed no-instructor subjects found"
+    from pipeline import query
+    assert set(NO_INSTRUCTOR) <= query.NO_INSTRUCTOR_DOMAINS, (
+        "query.py is not reading out-of-corpus-facts.yaml"
+    )
+
+
+@pytest.mark.parametrize("subject", NO_INSTRUCTOR)
+def test_owner_fact_overrides_every_extracted_tier(subject):
+    """The graph may hold extracted evidence. The confirmed fact still wins."""
+    r = staffing(subject)
+    assert r["no_instructors_confirmed"] is True
+    assert r["taught"] == [], f"{subject}: taught tier must be empty"
+    for tier, names in r["declared"].items():
+        assert not names, (
+            f"{subject}: declared[{tier}] returned {len(names)} names despite an "
+            "owner-confirmed fact that there are no instructors. iOS did exactly "
+            "this with 6 self_declared names."
+        )
+
+
+@pytest.mark.parametrize("subject", NO_INSTRUCTOR)
+def test_owner_fact_subjects_are_excluded_from_coverage_gaps(subject):
+    c = coverage()
+    assert subject not in c["domains_with_modules_but_no_teaching"]
+    assert subject in c["excluded_from_report_by_owner_confirmation"]
+
+
+def test_extracted_evidence_actually_exists_for_an_overridden_subject():
+    """Prove the override is doing work, not passing because the data is empty.
+
+    iOS had 6 self_declared expert_in edges in the graph. If that stops being
+    true this test should fail loudly rather than let the override look proven.
+    """
+    import json
+    from pipeline.lib.paths import KNOWLEDGE_DIR
+    g = json.loads((KNOWLEDGE_DIR / "graph.json").read_text(encoding="utf-8"))
+    by = {n["id"]: n for n in g["nodes"]}
+    overridden = 0
+    for e in g["edges"]:
+        if e["rel"] == "expert_in" and by[e["target"]]["label"] in NO_INSTRUCTOR:
+            overridden += 1
+    assert overridden > 0, (
+        "no extracted edges point at an owner-confirmed subject, so the override "
+        "tests would pass vacuously — re-check that this is still a real conflict"
+    )
