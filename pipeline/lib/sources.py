@@ -304,3 +304,18 @@ CLASS_SUFFIX_RE = (
     r"class|session|workshop|lecture|review"
     r")\s*$"
 )
+
+
+# ---------------------------------------------------------------------------
+# CLASS CONFIRMATION RECORD — the only availability signal in the corpus.
+#
+# 1,689 rows: 1,529 Confirmed, 160 Declined, 136 instructors. It is NOT a second
+# delivery log — 126 of those instructors already carry teaches edges from the
+# schedule sheets. What it adds is whether an instructor, when ASKED, said yes.
+#
+# Modelled as PROPERTIES on the instructor node, never as an edge type. It is
+# scheduling friction, not a performance judgment, and any surface must say so.
+# ---------------------------------------------------------------------------
+CONFIRMATION_SHEET = "Class Confirmation Record"
+CONFIRMATION_COLS = {"instructor": "Instructor", "status": "Status",
+                     "date": "Date", "domain": "Domain", "id": "Confirmation ID"}

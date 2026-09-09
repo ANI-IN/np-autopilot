@@ -589,6 +589,55 @@ def extract_schedule(root: Path, out: list, rejected: list, pairs: list) -> list
     return seen_sheets
 
 
+def extract_confirmations(root: Path, out: list) -> dict:
+    """Per-instructor confirm/decline counts. Availability, not performance."""
+    path = root / SRC.SCHEDULE_FILE
+    if not path.exists():
+        return {}
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    if SRC.CONFIRMATION_SHEET not in wb.sheetnames:
+        wb.close()
+        return {}
+    ws = wb[SRC.CONFIRMATION_SHEET]
+    C = SRC.CONFIRMATION_COLS
+    hrow, _, hdr = header_row(ws, C["instructor"], limit=5)
+    if hrow is None:
+        wb.close()
+        return {}
+    ix = {k: hdr.index(v) for k, v in C.items() if v in hdr}
+    acc: dict = {}
+    for rownum, row in enumerate(ws.iter_rows(min_row=hrow + 1, values_only=True),
+                                 start=hrow + 1):
+        def c(k):
+            i = ix.get(k)
+            return (str(row[i]).strip()
+                    if i is not None and i < len(row) and row[i] is not None else "")
+        name = c("instructor")
+        if not name:
+            continue
+        rec = acc.setdefault(norm(name), {"raw": name, "confirmed": 0, "declined": 0,
+                                          "dates": [], "confirmation_ids": []})
+        st = c("status").lower()
+        if st.startswith("confirm"):
+            rec["confirmed"] += 1
+        elif st.startswith("declin"):
+            rec["declined"] += 1
+        di = ix.get("date")
+        if di is not None and di < len(row) and isinstance(row[di], datetime):
+            rec["dates"].append(row[di].date().isoformat())
+        if c("id") and len(rec["confirmation_ids"]) < 2:
+            rec["confirmation_ids"].append(c("id"))
+        # A system-generated Confirmation ID is evidence of personhood, which is
+        # how "Usha" — a single-token name the junk heuristic had rejected — is
+        # admitted. The override is EVIDENCE-BASED, not a relaxed threshold.
+        out.append({"type": T_INSTRUCTOR, "raw": name, "norm": norm(name),
+                    "pipeline_status": "roster", "admitted_by": "confirmation_id",
+                    "sources": [{"origin": "corpus", "file": SRC.SCHEDULE_FILE,
+                                 "sheet": SRC.CONFIRMATION_SHEET, "row": rownum}]})
+    wb.close()
+    return acc
+
+
 def extract_programs(root: Path, out: list) -> None:
     for pdf in sorted((root / "04-programs").glob("*.pdf")):
         rel = f"04-programs/{pdf.name}"
@@ -638,6 +687,7 @@ def main() -> int:
     claims: list = []
     extract_expertise(root, cands, rejected, claims)
     sched = extract_schedule(root, cands, rejected, pairs)
+    confirmations = extract_confirmations(root, cands)
     for rel, sheet, col in SRC.INSTRUCTOR_SOURCES:
         scan_column(root, rel, sheet, col, T_INSTRUCTOR, cands, rejected, missing)
     for rel, sheet, col in SRC.MODULE_SOURCES:
@@ -746,6 +796,19 @@ def main() -> int:
     print()
 
     print("-" * 78)
+    print("CLASS CONFIRMATION RECORD — availability, NOT performance")
+    print("-" * 78)
+    dec = {k: v for k, v in confirmations.items() if v["declined"]}
+    print(f"  {len(confirmations)} instructors, "
+          f"{sum(v['confirmed'] for v in confirmations.values())} confirmed / "
+          f"{sum(v['declined'] for v in confirmations.values())} declined")
+    print(f"  {len(dec)} instructors have declined at least once")
+    for k, v in sorted(dec.items(), key=lambda z: -z[1]["declined"])[:5]:
+        tot = v["confirmed"] + v["declined"]
+        print(f"      {v['raw']:<24} declined {v['declined']:>2} of {tot:>2}")
+    print()
+
+    print("-" * 78)
     print("CLASS DELIVERY LOG — New Combined Schedule.xlsx")
     print("-" * 78)
     print(f"  {len(sched)} per-domain schedule sheets read "
@@ -820,6 +883,7 @@ def main() -> int:
          "source": manifest["source"], "candidates": cands,
          "teaches_pairs": pairs,
          "expertise_claims": claims,
+         "confirmations": confirmations,
          "blank_identifiers": blanks}, indent=1), encoding="utf-8")
     REJECTIONS.write_text(json.dumps(
         {"built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

@@ -1263,3 +1263,49 @@ party has seen answered.** That is the real test, and it comes after B9.
 ## 2026-09-09 19:39:24Z — 03_resolve
 
 - Nodes 4618 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:47:12Z — 02_extract
+
+- Candidates 30904 | rejected 594 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 14539 raw, 3489 distinct
+    - module: 14521 raw, 895 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 19:47:13Z — 03_resolve
+
+- Nodes 4619 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:47:52Z — 04_build_graph
+
+- Nodes 4694 | edges 34218
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 347
+    - expert_in: 802
+    - teaches: 1889
+    - sourced_from: 30904
+
+## 2026-09-09 19:49:23Z — 05_render_html
+
+- graph.html 3125 KB | rendered 2777 nodes (1847 connected, 930 isolated) and 3314 edges
+
+## 2026-09-09 19:49:27Z — 03_resolve
+
+- Nodes 4619 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:49:28Z — 03_resolve
+
+- Nodes 4619 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:49:35Z — validate
+
+- validate: 0 FAIL, 19 WARN, 8/16 categories exercised, 4694 nodes, 34218 edges

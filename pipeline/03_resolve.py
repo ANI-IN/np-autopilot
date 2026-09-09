@@ -36,6 +36,13 @@ T_PERSON, T_INSTRUCTOR = "person", "instructor"
 FUZZY_THRESHOLD = 0.70
 
 
+def norm_label(s: str) -> str:
+    import re as _re
+    import unicodedata as _u
+    s = _u.normalize("NFKD", str(s))
+    return _re.sub(r"\s+", " ", _re.sub(r"[^\w\s]", " ", s).lower()).strip()
+
+
 def node_id(node_type: str, canonical: str) -> str:
     """Deterministic id. Hash of type + canonical name, never of the raw label.
 
@@ -62,6 +69,7 @@ def load_people() -> tuple[dict, dict]:
 def main() -> int:
     payload = json.loads((KNOWLEDGE_DIR / "candidates.json").read_text(encoding="utf-8"))
     cands = payload["candidates"]
+    confirmations = payload.get("confirmations", {})
     alias_to_canon, people_meta = load_people()
 
     print("=" * 78)
@@ -182,6 +190,18 @@ def main() -> int:
         files = {s.get("file") for s in node["sources"] if s.get("file")}
         node["file_count"] = len(files)
         if node["type"] == T_INSTRUCTOR:
+            conf = confirmations.get(norm_label(node["label"]))
+            if conf:
+                # Availability, not performance. A high decline rate means this
+                # person is hard to schedule, NOT that they teach badly.
+                node["confirmed_count"] = conf["confirmed"]
+                node["declined_count"] = conf["declined"]
+                total = conf["confirmed"] + conf["declined"]
+                node["decline_rate"] = round(conf["declined"] / total, 3) if total else None
+                ds = sorted(conf["dates"])
+                if ds:
+                    node["requests_from"] = ds[0]
+                    node["requests_to"] = ds[-1]
             node["cross_validated"] = len(files) >= 2
             node["roster_count"] = len(files)
             # Most-favourable status wins: a person on a roster AND in the funnel
