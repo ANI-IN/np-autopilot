@@ -2,6 +2,18 @@
 
 Read this before touching the pipeline. Three rules that have already cost time.
 
+
+## ⚠ Built from a local folder, not Drive
+
+`pipeline/00_fetch_drive.py` **has never been run.** The graph is built from a
+**hand-exported local folder**. Drive ingestion is **deferred to v2, not
+cancelled**.
+
+**The three-tab "NP Autopilot" master spreadsheet has never been located.** If it
+turns out to exist in Drive, `Owner` and `Automation` may return as node types
+and doc 05 is redone. Until pass 0 runs, nothing here supports any claim about
+what Drive contains.
+
 ---
 
 ## 1 · The corpus is READ-ONLY

@@ -377,3 +377,170 @@ point.
 - Found 75 | skipped 1 | extracted 73 | failed 1
 - Manifest diff: +0 added, ~0 changed, -0 removed
     - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-09 18:10:09Z — 02_extract
+
+- Candidates 6741 | rejected 303 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 4704 raw, 3411 distinct
+    - module: 265 raw, 172 distinct
+    - person: 1580 raw, 58 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 18:11:00Z — 03_resolve
+
+- Nodes 3817 | alias merges applied 19 | fuzzy proposed 0 | applied 0
+
+## 2026-09-09 18:11:11Z — 03_resolve
+
+- Nodes 3817 | alias merges applied 19 | fuzzy proposed 0 | applied 0
+
+## 2026-09-09 18:12:10Z — 02_extract
+
+- Candidates 6813 | rejected 303 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 4704 raw, 3411 distinct
+    - module: 265 raw, 172 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 18:12:17Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:12:33Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:12:33Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:12:35Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:12:35Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:13:26Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:13:26Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:13:42Z — 02_extract
+
+- Candidates 6813 | rejected 303 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 4704 raw, 3411 distinct
+    - module: 265 raw, 172 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 18:13:42Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:14:36Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:14:36Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:14:37Z — 04_build_graph
+
+- Nodes 3871 | edges 7088
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 21
+    - contains: 0
+    - teaches: 6
+    - sourced_from: 6813
+
+## 2026-09-09 18:15:14Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:15:15Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:15:16Z — 04_build_graph
+
+- Nodes 3871 | edges 7088
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 21
+    - contains: 0
+    - teaches: 6
+    - sourced_from: 6813
+
+## 2026-09-09 18:16:01Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:16:01Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:16:02Z — validate
+
+- validate: 1 FAIL, 19 WARN, 8/16 categories exercised, 3871 nodes, 7088 edges
+
+## 2026-09-09 18:16:29Z — 04_build_graph
+
+- Nodes 3892 | edges 7088
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 21
+    - contains: 0
+    - teaches: 6
+    - sourced_from: 6813
+
+## 2026-09-09 18:16:49Z — validate
+
+- validate: 0 FAIL, 19 WARN, 8/16 categories exercised, 3892 nodes, 7088 edges
+
+## 2026-09-09 18:17:22Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:17:22Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:17:57Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:17:57Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:18:06Z — validate
+
+- validate: 0 FAIL, 19 WARN, 8/16 categories exercised, 3892 nodes, 7088 edges

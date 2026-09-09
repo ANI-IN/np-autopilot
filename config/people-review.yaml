@@ -1,0 +1,39 @@
+version: 1
+note: Fuzzy matches PROPOSED by pass 3. Nothing here is applied. To accept one, add the string to that
+  person's aliases in people.yaml and re-run. Deleting a row here rejects it.
+threshold: 0.7
+proposed_merges:
+- candidate: Harsh Arora
+  possible_match: Harsha
+  similarity: 0.706
+  applied: false
+  reason_not_applied: fuzzy matching proposes only; a human confirms in people.yaml
+- candidate: Harsha
+  possible_match: Harsh Arora
+  similarity: 0.706
+  applied: false
+  reason_not_applied: fuzzy matching proposes only; a human confirms in people.yaml
+unresolved_names:
+- Abhishek
+- Akshay Ginodia
+- Aman Arora
+- Amit Mishra
+- Anmol
+- Anshuman
+- David Reed
+- Harsh Arora
+- Harsha
+- Harshita Tanwar
+- Kunal
+- Muskan
+- Pooja
+- Rishabh Bhardwaj
+- Rupali
+- Siddharth R G
+- Sidharth Sundaram
+- Sinchana
+- Sourish
+- Sweta Pandey
+- Tamanna
+- Tushar
+- Vartika Rai

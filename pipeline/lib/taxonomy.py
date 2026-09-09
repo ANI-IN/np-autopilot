@@ -99,6 +99,34 @@ def wildcard_edge_names() -> list[str]:
     return [e["name"] for e in edge_types() if e["from"] == WILDCARD]
 
 
+def edge_for_role(role: str) -> str:
+    """Edge-type NAME for a stable semantic role.
+
+    Callers resolve edges through this so no edge name is ever written as a
+    literal outside taxonomy.yaml and this module. Raises rather than returning
+    a default: a missing role means the taxonomy and the code have diverged,
+    which is the exact failure this indirection exists to prevent.
+    """
+    for e in edge_types():
+        if e.get("role") == role:
+            return e["name"]
+    known = sorted(e["role"] for e in edge_types() if e.get("role"))
+    raise KeyError(f"no edge with role {role!r}; known roles: {known}")
+
+
+def owner_sheet_edges() -> list[tuple[str, int]]:
+    """(edge_name, 1-based column) for the Domains_Courses Owners sheet.
+
+    Lets the extractor iterate the owner columns without writing an edge name or
+    a column index as a literal.
+    """
+    return sorted(
+        ((e["name"], e["owner_sheet_column"]) for e in edge_types()
+         if "owner_sheet_column" in e),
+        key=lambda pair: pair[1],
+    )
+
+
 def has_wildcard_source(name: str) -> bool:
     """True for the one edge whose from-type cannot be checked structurally.
 

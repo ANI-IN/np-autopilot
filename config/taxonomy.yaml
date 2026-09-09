@@ -280,6 +280,8 @@ node_types:
 edge_types:
 
   - name: belongs_to
+    role: workflow_theme       # stable semantic key — code resolves edges by role,
+                       # never by writing the edge name as a literal
     from: workflow
     to: theme
     cardinality: n:1
@@ -287,6 +289,8 @@ edge_types:
     source: workflow inventory structure
 
   - name: depends_on
+    role: workflow_dependency       # stable semantic key — code resolves edges by role,
+                       # never by writing the edge name as a literal
     from: workflow
     to: workflow
     cardinality: n:n
@@ -294,6 +298,8 @@ edge_types:
     source: workflow inventory cross-references
 
   - name: workflow_owned_by
+    role: workflow_owner       # stable semantic key — code resolves edges by role,
+                       # never by writing the edge name as a literal
     from: workflow
     to: person
     cardinality: n:1
@@ -307,30 +313,47 @@ edge_types:
       validate.py reports the graph as two components.
 
   - name: owned_by
+    role: domain_primary       # stable semantic key — code resolves edges by role,
+                       # never by writing the edge name as a literal
     from: domain
     to: person
     cardinality: n:n
     expect: null
+    owner_sheet_column: 3   # 1-based column in Domains_Courses Owners!Sheet1.
+                        # Declared here so the extractor reads it from the single
+                        # source instead of hardcoding the edge name and index.
     source: Domains_Courses Owners.xlsx!Sheet1 column 3 (Primary Owner/s)
 
   - name: supported_by
+    role: domain_secondary       # stable semantic key — code resolves edges by role,
+                       # never by writing the edge name as a literal
     from: domain
     to: person
     cardinality: n:n
     expect: null
+    owner_sheet_column: 4   # 1-based column in Domains_Courses Owners!Sheet1.
+                        # Declared here so the extractor reads it from the single
+                        # source instead of hardcoding the edge name and index.
     source: Domains_Courses Owners.xlsx!Sheet1 column 4 (Secondary Owner/s)
 
   - name: delivered_by
+    role: domain_delivery       # stable semantic key — code resolves edges by role,
+                       # never by writing the edge name as a literal
     from: domain
     to: person
     cardinality: n:n
     expect: null
+    owner_sheet_column: 2   # 1-based column in Domains_Courses Owners!Sheet1.
+                        # Declared here so the extractor reads it from the single
+                        # source instead of hardcoding the edge name and index.
     source: Domains_Courses Owners.xlsx!Sheet1 column 2 (Delivery Team Member)
     note: >
       Previously unmodelled. This column is what makes eval Q12's "delivery
       Anshuman" answerable, and 12 of its values are first-name-only.
 
   - name: covers
+    role: program_domain       # stable semantic key — code resolves edges by role,
+                       # never by writing the edge name as a literal
     from: program
     to: domain
     cardinality: n:1
@@ -341,6 +364,8 @@ edge_types:
       label to force a join; keep label_raw and let the join fail visibly.
 
   - name: contains
+    role: program_module       # stable semantic key — code resolves edges by role,
+                       # never by writing the edge name as a literal
     from: program
     to: module
     cardinality: 1:n
@@ -348,6 +373,8 @@ edge_types:
     source: curriculum sheets
 
   - name: teaches
+    role: instructor_module       # stable semantic key — code resolves edges by role,
+                       # never by writing the edge name as a literal
     from: instructor
     to: module
     cardinality: n:n
@@ -355,6 +382,8 @@ edge_types:
     source: 03-instructors/AgenticAI Instructors Training Plan.xlsx and rosters
 
   - name: sourced_from
+    role: provenance       # stable semantic key — code resolves edges by role,
+                       # never by writing the edge name as a literal
     from: "*"
     to: file
     cardinality: n:n
