@@ -252,3 +252,14 @@ ROLE_ONLY_VALUES = {
     "teaching assistant", "career coach", "mock interviewer", "ta", "coach",
     "curriculum", "instructor", "sme", "na", "n/a", "others",
 }
+
+
+#: (rel, sheet, module_col) -> (rating_col, classes_col). Only one sheet in the
+#: corpus records a per-instructor rating against a module. The first build read
+#: it; generalising the pairing extractor dropped it, and eval Q15 caught that.
+TEACHES_RATINGS = {
+    ("03-instructors/AgenticAI Instructors Training Plan.xlsx",
+     "Preferred SMEs for Each Topic", 0): (2, 3),
+    ("03-instructors/AgenticAI Instructors Training Plan.xlsx",
+     "Preferred SMEs for Each Topic", 5): (7, 8),
+}

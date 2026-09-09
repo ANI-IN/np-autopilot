@@ -849,3 +849,143 @@ point.
 ## 2026-09-09 18:58:31Z — 03_resolve
 
 - Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:03:12Z — 02_extract
+
+- Candidates 15403 | rejected 589 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 5450 raw, 3486 distinct
+    - module: 8109 raw, 459 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 19:03:12Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:03:54Z — 02_extract
+
+- Candidates 15403 | rejected 589 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 5450 raw, 3486 distinct
+    - module: 8109 raw, 459 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 19:03:54Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:03:55Z — 04_build_graph
+
+- Nodes 4255 | edges 17524
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 355
+    - expert_in: 802
+    - teaches: 688
+    - sourced_from: 15403
+
+## 2026-09-09 19:03:57Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:03:57Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:04:50Z — 04_build_graph
+
+- Nodes 4255 | edges 17524
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 355
+    - expert_in: 802
+    - teaches: 688
+    - sourced_from: 15403
+
+## 2026-09-09 19:06:10Z — 05_render_html
+
+- graph.html 427 KB | rendered 2338 nodes (1318 connected, 1020 isolated) and 2121 edges
+
+## 2026-09-09 19:06:11Z — validate
+
+- validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 4255 nodes, 17524 edges
+
+## 2026-09-09 19:06:12Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:06:12Z — 03_resolve
+
+- Nodes 4180 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+---
+
+## 2026-09-10 — B8 eval harness
+
+**Honest score: 20/22 (91%). Zero fabrications.**
+
+| kind | score |
+|---|---|
+| single-hop | 8/8 |
+| multi-hop | 6/8 |
+| single+observation | 2/2 |
+| **correctly unanswerable** | **4/4 — no invention on any of Q17–Q20** |
+
+### The first run scored 14/22, and the second scored 22/22. Neither was honest.
+
+- **14/22** was real: 8 Component A questions failed because pass 2 extracted only
+  workflow id/name/theme and never read `alerts`, `effort`, `steps` or `tools`
+  from the inventory body. Fixed — all 92 workflows now carry them.
+- **22/22 was not real.** The harness scored a question PASS on a *non-empty*
+  result. Q13 returned 11 workflows where 3 are correct, and Q15 returned
+  instructors with `rating: null`. Both were counted as passes. The harness now
+  checks CONTENT against the documented answer, which is what produced 20/22.
+
+### The two remaining failures are query problems, not data problems
+
+The graph holds both answers; a loose substring query does not find them.
+
+- **Q13** — querying `owner` over alert text returns **12** alerts. Only **3**
+  (`5.5`, `8.4`, `14.1`) carry the clause *"ownership is unclear"*. The other 9
+  are different clauses: *"no clear owner/workaround"*, *"has no systemic
+  owner/action"*, *"corrective action has no owner/date"*.
+- **Q14** — querying `drop` returns **3**. Only `11.5` is about an instructor
+  dropping; `2.6` and `15.1` are about **rating** drops.
+
+Not fixed by tightening the queries, deliberately: fitting a query to a known
+answer would make the score meaningless. Recorded instead as a constraint on B9 —
+**any skill must match clauses, not keywords**, or it will answer Q13 with 12
+workflows and sound confident.
+
+### The harness found a factual error in the answer key
+
+Doc 06 Q14 asserted *"the corpus defines no 48-hour or any other threshold"*.
+**False.** Workflow `2.7` carries the alert *"the session is within **72 hours**
+and no instructor is confirmed"*. The key asserted a corpus-wide absence without
+checking — the same failure mode the question exists to catch. Doc 06 corrected;
+the question is now harder, not easier.
+
+### Q15 verified against the graph, not the file
+
+Asked specifically because Q15's answer was verified when `AgenticAI Instructors
+Training Plan.xlsx` had been read for eval but never entity-scanned. Generalising
+the pairing extractor then **dropped the ratings** — the edge existed, the
+`avg_rating` did not, and dedup was discarding the one rating-bearing pair in
+favour of an earlier pair from another sheet. Fixed; the graph now reaches
+`Anshaj Khare` **with** the rating, not just the name.

@@ -183,7 +183,25 @@ by a positional re-read of the source sheet, not inferred.
 
 ### Q14
 **Question:** *"What breaks if an instructor drops shortly before a class?"* — what does the corpus actually say?
-**Expected:** Two relevant places, **and no notice-period rule anywhere**. `11.5 B2B Instructor Scheduling & Session Confirmation` alert: *"there is no alternative if the instructor drops."* `3.7 Class Reschedule / Cancellation Exception Management` gives the recovery workflow. A good answer states plainly that **the corpus defines no 48-hour or any other threshold**.
+**Expected — CORRECTED 2026-09-10 by the B8 harness. The previous key was factually wrong.**
+
+It read: *"no notice-period rule anywhere … the corpus defines no 48-hour or any other threshold."* **That is false.** Workflow **`2.7 AMA / Technical Coaching / Assignment Review Instructor Assignment`** carries the alert:
+
+> *"the session is within **72 hours** and no instructor is confirmed"*
+
+So a threshold **does** exist — 72 hours — in exactly one workflow, and I asserted its absence across the whole corpus without checking. That is the same failure mode this question was written to catch, committed in the answer key itself.
+
+**Corrected expected answer — three places:**
+
+- **`2.7`** — *"the session is within 72 hours and no instructor is confirmed."* **The only time-based threshold in the inventory.**
+- **`11.5 B2B Instructor Scheduling & Session Confirmation`** — *"there is no alternative if the instructor drops."*
+- **`3.7 Class Reschedule / Cancellation Exception Management`** — the recovery workflow.
+
+A passing answer names the 72-hour threshold in 2.7, notes it is the **only** one and applies to AMA/coaching sessions rather than live classes generally, and does not generalise it into a company-wide policy.
+
+**Wrong answer looks like:** inventing a 48-hour rule (still the worst outcome), **or** asserting no threshold exists — which is what this key itself did.
+
+**A retrieval note the harness exposed.** A naive substring query for `drop` over alert text returns **three** workflows: 11.5 plus `2.6` and `15.1`, which are about **rating** drops, not instructor drops. Same for Q13: querying `owner` returns **12** alerts where only **3** carry the clause *"ownership is unclear"*. The graph holds the right answer in both cases; a loose query does not find it. Any skill built on these must match clauses, not keywords.
 **Source:** `Team_Task___Workflow_Inventory` → `11.5`, `3.7`
 **Hops:** 2 · **Wrong answer looks like:** inventing a 48-hour policy because the question implies one. **This is the most important question in the set** — it is the brief's own example, and the honest answer is partial.
 

@@ -214,12 +214,22 @@ def main() -> int:
             continue
         key = (i["id"], m["id"])
         if key in seen_pair:
-            continue
+            # A pair already seen. Keep it UNLESS this one carries a rating and
+            # the stored one does not — dedup was silently discarding the only
+            # rating evidence in the corpus, which eval Q15 exposed.
+            if not pr.get("avg_rating"):
+                continue
+            edges[:] = [x for x in edges
+                        if not (x["rel"] == R("instructor_module")
+                                and x["source"] == i["id"] and x["target"] == m["id"])]
         seen_pair.add(key)
-        edges.append({"source": i["id"], "target": m["id"],
-                      "rel": R("instructor_module"),
-                      "role": "primary" if pr["rank"] == 0 else "backup",
-                      "rank": pr["rank"], "provenance": pr["source"]})
+        e = {"source": i["id"], "target": m["id"], "rel": R("instructor_module"),
+             "role": "primary" if pr["rank"] == 0 else "backup",
+             "rank": pr["rank"], "provenance": pr["source"]}
+        for k in ("avg_rating", "classes"):
+            if pr.get(k):
+                e[k] = pr[k]
+        edges.append(e)
         taught += 1
 
     # workflow_owned_by: only confirmed rows

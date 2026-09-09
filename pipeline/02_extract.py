@@ -174,10 +174,12 @@ def extract_workflows(root: Path, out: list, rejected: list) -> None:
     rel = "00-master/Team_Task___Workflow_Inventory"
     text = (root / rel).read_text(encoding="utf-8")
     theme = None
+    current_wf = None
     for lineno, line in enumerate(text.split("\n"), 1):
         m = re.match(r"^##\s+(\d+)\.\s+(.+?)\s*$", line)
         if m:
             theme = (int(m.group(1)), m.group(2).strip())
+            current_wf = None
             out.append({"type": T_THEME, "raw": m.group(2).strip(),
                         "norm": norm(m.group(2)), "theme_id": theme[0],
                         "sources": [{"origin": "corpus", "file": rel, "row": lineno}]})
@@ -189,6 +191,45 @@ def extract_workflows(root: Path, out: list, rejected: list) -> None:
                         "workflow_id": f"{m.group(1)}.{m.group(2)}",
                         "theme_id": theme[0],
                         "sources": [{"origin": "corpus", "file": rel, "row": lineno}]})
+            current_wf = out[-1]
+            continue
+        # Workflow BODY properties. The first build extracted only id/name/theme
+        # and every Component A eval question failed as a result — 8 of 22.
+        if current_wf is None:
+            continue
+        m = re.match(r"^-\s*Workflow:\s*(.+)$", line)
+        if m:
+            current_wf["steps"] = [s.strip() for s in
+                                   re.split(r"\u2192|->", m.group(1)) if s.strip()]
+            continue
+        m = re.match(r"^-\s*Effort:\s*(.+)$", line)
+        if m:
+            current_wf["effort"] = m.group(1).strip()
+            continue
+        m = re.match(r"^-\s*Alerts?:\s*(.+)$", line)
+        if m:
+            current_wf["alerts"] = [s.strip().rstrip(".") for s in
+                                    re.split(r"\u2192|->", m.group(1)) if s.strip()]
+            continue
+
+
+def attach_tools(root: Path, out: list) -> None:
+    """workflow.tools from the closed vocabulary — the Tool demotion's product."""
+    rel = "00-master/Team_Task___Workflow_Inventory"
+    text = (root / rel).read_text(encoding="utf-8")
+    blocks = re.split(r"^### ", text, flags=re.M)[1:]
+    body = {}
+    for b in blocks:
+        head = b.split("\n", 1)[0]
+        m = re.match(r"(\d+\.\d+)\s", head)
+        if m:
+            body[m.group(1)] = b.lower()
+    vocab = taxonomy.tools()
+    for c in out:
+        if c["type"] != T_WORKFLOW:
+            continue
+        blk = body.get(c.get("workflow_id"), "")
+        c["tools"] = [t for t in vocab if t.lower() in blk]
 
 
 def extract_domains(root: Path, out: list, rejected: list, blanks: list) -> None:
@@ -360,8 +401,15 @@ def extract_pairings(root: Path, out: list, rejected: list, pairs: list) -> None
                         continue
                     out.append({"type": T_INSTRUCTOR, "raw": piece, "norm": norm(piece),
                                 "pipeline_status": "roster", "sources": [prov]})
-                    pairs.append({"module": norm(current), "instructor": norm(piece),
-                                  "rank": rank, "domain": dom, "source": prov})
+                    pair = {"module": norm(current), "instructor": norm(piece),
+                            "rank": rank, "domain": dom, "source": prov}
+                    rc = SRC.TEACHES_RATINGS.get((rel, sheet, mcol))
+                    if rc:
+                        if c(rc[0]):
+                            pair["avg_rating"] = c(rc[0])
+                        if c(rc[1]):
+                            pair["classes"] = c(rc[1])
+                    pairs.append(pair)
         wb.close()
 
     # --- lists: one instructor, several modules in a delimited cell ---
@@ -516,6 +564,7 @@ def main() -> int:
     blanks: list = []
 
     extract_workflows(root, cands, rejected)
+    attach_tools(root, cands)
     extract_domains(root, cands, rejected, blanks)
     # Domain labels are known only after extract_domains; the Slack grid uses
     # them as headers and they must not become people.
