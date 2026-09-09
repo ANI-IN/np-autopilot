@@ -544,3 +544,104 @@ point.
 ## 2026-09-09 18:18:06Z — validate
 
 - validate: 0 FAIL, 19 WARN, 8/16 categories exercised, 3892 nodes, 7088 edges
+
+## 2026-09-09 18:22:37Z — 02_extract
+
+- Candidates 6813 | rejected 303 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 4704 raw, 3411 distinct
+    - module: 265 raw, 172 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-09 18:23:05Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:23:06Z — 04_build_graph
+
+- Nodes 3892 | edges 7246
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 21
+    - contains: 158
+    - teaches: 6
+    - sourced_from: 6813
+
+## 2026-09-09 18:23:27Z — 04_build_graph
+
+- Nodes 3892 | edges 7165
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 15
+    - contains: 83
+    - teaches: 6
+    - sourced_from: 6813
+
+## 2026-09-09 18:23:48Z — 04_build_graph
+
+- Nodes 3892 | edges 7297
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 27
+    - contains: 203
+    - teaches: 6
+    - sourced_from: 6813
+
+## 2026-09-09 18:24:10Z — 04_build_graph
+
+- Nodes 3892 | edges 7309
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 214
+    - teaches: 6
+    - sourced_from: 6813
+
+## 2026-09-09 18:24:39Z — validate
+
+- validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 3892 nodes, 7309 edges
+
+## 2026-09-09 18:24:46Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:24:46Z — 03_resolve
+
+- Nodes 3818 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 18:24:49Z — 04_build_graph
+
+- Nodes 3892 | edges 7309
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 214
+    - teaches: 6
+    - sourced_from: 6813
+
+## 2026-09-09 18:25:09Z — validate
+
+- validate: 0 FAIL, 18 WARN, 8/16 categories exercised, 3892 nodes, 7309 edges

@@ -75,3 +75,87 @@ PERSON_EXCLUSIONS = {
     "06-analysis/Domain Classes Poll Feedback 2026.xlsx":
         "learner poll responses",
 }
+
+
+# ---------------------------------------------------------------------------
+# HIRING FUNNEL vs ROSTER — added 2026-09-09 after the instructor count hit 3,411.
+#
+# Two of the newly-added sources are not rosters. They are hiring funnels, and
+# counting a funnel as its outcome is the same class of error as the reference
+# implementation's 773 instructors. SME Tracker!Tracker - All roles holds 2,252
+# named candidates of whom 294 read "Hire"; the SME_Interview audit sheets hold
+# interview records with Reject / Shall proceed further.
+#
+# Every instructor candidate therefore carries pipeline_status, and only
+# roster-backed or explicitly-hired people should be treated as deliverable.
+# ---------------------------------------------------------------------------
+
+#: sheet -> (outcome column header, {raw value: status})
+FUNNEL_OUTCOMES = {
+    ("03-instructors/SME Tracker - Bullseye_IK.xlsx", "Tracker - All roles"):
+        ("Hiring Decision (PM)", {
+            "hire": "hired", "decline": "rejected", "no show": "lapsed",
+            "hold": "in_pipeline"}),
+    ("03-instructors/SME_Interview_Demo Audit Rubrics.xlsx", "SME_Interview"):
+        ("Hiring Decision", {
+            "shall proceed further": "hired", "reject": "rejected",
+            "on hold": "in_pipeline", "dropped out": "lapsed"}),
+    ("03-instructors/SME_Interview_Demo Audit Rubrics.xlsx", "Agentic AI"):
+        ("Hiring Decision", {
+            "shall proceed further": "hired", "reject": "rejected",
+            "on hold": "in_pipeline"}),
+    ("03-instructors/SME_Interview_Demo Audit Rubrics.xlsx", "Level_Up_SME_Interview"):
+        ("Final Status", {
+            "shall proceed further": "hired", "reject": "rejected",
+            "on hold": "in_pipeline"}),
+    ("03-instructors/SME_Interview_Demo Audit Rubrics.xlsx", "Agentic AI IP"):
+        ("Final Status", {"shall proceed further": "hired", "reject": "rejected"}),
+    ("03-instructors/SME_Interview_Demo Audit Rubrics.xlsx", "AI for Non-Tech Instructors"):
+        ("Hiring Decision", {"shall proceed further": "hired", "reject": "rejected"}),
+}
+
+#: Sources that ARE rosters — presence means the person is on the books.
+ROSTER_SHEETS = {
+    ("03-instructors/Instructors Directory.xlsx", "Responses"),
+    ("03-instructors/SME database (For Ops + NP).xlsx", "Master"),
+    ("05-operations/New Combined Schedule.xlsx", "Instructor Data"),
+    ("02-curriculum/Resource Collection Mastersheet (Software + System).xlsx", "Indian Instructors"),
+    ("02-curriculum/Data and Management.xlsx", "Instructor Details"),
+    ("03-instructors/AgenticAI Instructors Training Plan.xlsx", "SME Roster"),
+    ("03-instructors/AgenticAI Instructors Training Plan.xlsx", "SME Roster - IND"),
+    ("03-instructors/AgenticAI Instructors Training Plan.xlsx", "WIP_Training_Status"),
+    ("02-curriculum/Resource Collection Mastersheet (Software + System).xlsx", "Instructor(FullStack)"),
+    ("02-curriculum/Data and Management.xlsx", "Management  Instructors"),
+    ("02-curriculum/Data and Management.xlsx", "PM India domain schedule"),
+    ("03-instructors/SME Tracker - Bullseye_IK.xlsx", "AI Enthusiasts"),
+    ("03-instructors/SME Tracker - Bullseye_IK.xlsx", "Q2 - 25"),
+    ("03-instructors/SME Tracker - Bullseye_IK.xlsx", "Q4-24"),
+    ("03-instructors/SME Tracker - Bullseye_IK.xlsx", "Q3 2024"),
+}
+
+# ---------------------------------------------------------------------------
+# MODULE -> DOMAIN. Explicit, because the curriculum sheet name IS the domain
+# and nothing else in the corpus links a module to a program. `contains` is
+# derived program -> domain -> module and every such edge is marked inferred.
+# A sheet with no domain gets NO edge rather than a guessed one.
+# ---------------------------------------------------------------------------
+SHEET_DOMAIN = {
+    "Backend Engineering": "Backend",
+    "Cloud Engineering": "Cloud",
+    "SRE Engineering": "SRE",
+    "Security Engineering": "Security",
+    "Test Engineering": "Test Engineering",
+    "Embedded Systems": "Embedded",
+    "Full Stack Engineering": "Fullstack",
+    "Frontend Engineering": "Frontend",
+    "DABA": "DABA",
+    "TPM": "TPM",
+    "EM": "EM",
+    "PM India": "PM",
+    "PMTPM SD India": "PM",
+    # The two Agentic AI module sheets describe pathway products, not one of the
+    # 42 owner-sheet domains. Left unmapped ON PURPOSE — a wrong join is worse
+    # than a missing one (R12).
+    "M_SME_App. GenAI": None,
+    "M_SME_Adv.GenAI": None,
+}

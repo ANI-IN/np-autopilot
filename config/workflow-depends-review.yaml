@@ -1,0 +1,11 @@
+version: 1
+note: 'depends_on is NOT extracted. Searched every workflow body for cross-references: 1 explicit ''N.M''
+  hit, which is the false positive ''1.5-2 hrs'' in an Effort line, and 0 references by workflow name.
+  Doc 05 flagged this edge low-confidence and the corpus does not support it. Doc 08''s ''3.6 -> 3.1''
+  example is withdrawn. Add pairs here by hand if you know of real dependencies; the builder emits an
+  edge only for confirmed: true.'
+confirmed_dependencies: []
+rejected_automatic_candidates:
+- from: '2.2'
+  to: '1.5'
+  reason: false positive — matched the duration '1.5-2 hrs' in the Effort line

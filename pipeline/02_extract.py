@@ -94,6 +94,24 @@ def header_row(ws, wanted: str, limit: int = 4):
     return None, None, None
 
 
+def _status_for(rel: str, sn: str, row, hdr_cells) -> str:
+    """Roster presence vs hiring-funnel outcome. Never conflate the two."""
+    key = (rel, sn)
+    if key in SRC.FUNNEL_OUTCOMES:
+        col, mapping = SRC.FUNNEL_OUTCOMES[key]
+        if col in hdr_cells:
+            i = hdr_cells.index(col)
+            v = str(row[i]).strip().lower() if i < len(row) and row[i] is not None else ""
+            for needle, status in mapping.items():
+                if v.startswith(needle):
+                    return status
+            return "in_pipeline"          # named candidate, outcome not recorded
+        return "in_pipeline"
+    if key in SRC.ROSTER_SHEETS:
+        return "roster"
+    return "unknown"
+
+
 def scan_column(root: Path, rel: str, sheet: str, column: str, node_type: str,
                 out: list, rejected: list, missing: list) -> None:
     path = root / rel
@@ -108,7 +126,7 @@ def scan_column(root: Path, rel: str, sheet: str, column: str, node_type: str,
                 missing.append({"file": rel, "sheet": sn, "reason": "sheet not found"})
                 continue
             ws = wb[sn]
-            hrow, hcol, _ = header_row(ws, column)
+            hrow, hcol, hdr_cells = header_row(ws, column)
             if hrow is None:
                 missing.append({"file": rel, "sheet": sn,
                                 "reason": f"column {column!r} not found in first 4 rows"})
@@ -128,8 +146,14 @@ def scan_column(root: Path, rel: str, sheet: str, column: str, node_type: str,
                     rejected.append({"type": node_type, "raw": raw,
                                      "reason": why, "source": prov})
                 else:
-                    out.append({"type": node_type, "raw": raw, "norm": norm(raw),
-                                "sources": [prov]})
+                    rec = {"type": node_type, "raw": raw, "norm": norm(raw),
+                           "sources": [prov]}
+                    if node_type == T_INSTRUCTOR:
+                        rec["pipeline_status"] = _status_for(rel, sn, row, hdr_cells or [])
+                    if node_type == T_MODULE:
+                        rec["sheet"] = sn
+                        rec["domain"] = SRC.SHEET_DOMAIN.get(sn)
+                    out.append(rec)
     finally:
         wb.close()
 
@@ -339,6 +363,28 @@ def main() -> int:
         d = len({c["norm"] for c in by_type[t]})
         print(f"  {t:<12} {len(by_type[t]):>7} {d:>9}")
     print(f"  {'TOTAL':<12} {len(cands):>7}")
+    print()
+
+    print("-" * 78)
+    print("INSTRUCTOR PIPELINE STATUS  (roster presence vs hiring-funnel outcome)")
+    print("-" * 78)
+    st = defaultdict(set)
+    for c in by_type[T_INSTRUCTOR]:
+        st[c.get("pipeline_status", "unknown")].add(c["norm"])
+    allnames = {c["norm"] for c in by_type[T_INSTRUCTOR]}
+    roster = st.get("roster", set())
+    hired = st.get("hired", set())
+    deliverable = roster | hired
+    for k in sorted(st, key=lambda x: -len(st[x])):
+        print(f"  {k:<14} {len(st[k]):>6} distinct")
+    print(f"  {'-'*30}")
+    print(f"  {'DELIVERABLE':<14} {len(deliverable):>6}  (roster or explicitly hired)")
+    print(f"  {'candidates':<14} {len(allnames - deliverable):>6}  (in pipeline / rejected / lapsed only)")
+    print(f"  {'TOTAL':<14} {len(allnames):>6}")
+    print()
+    print("  A person appearing in BOTH a roster and the funnel counts as deliverable.")
+    print("  Counting the funnel as its outcome is how the reference implementation")
+    print("  published 773 instructors against a real 351.")
     print()
 
     print("-" * 78)
