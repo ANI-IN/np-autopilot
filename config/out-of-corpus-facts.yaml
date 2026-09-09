@@ -1,0 +1,32 @@
+# Facts asserted by the corpus owner that NO file establishes.
+#
+# Same discipline as the HR directory in people.yaml: origin: hand, evidence
+# required, and any answer using one must say the basis is out-of-corpus. The
+# pipeline never infers these and never overwrites them from data.
+
+version: 1
+
+facts:
+  - id: android-ios-no-instructors
+    subject: [Android, iOS]
+    fact: >
+      Android and iOS have no instructors. This is a staffing fact about the
+      business, not a gap in the data.
+    origin: hand
+    asserted_by: corpus owner
+    asserted_at: 2026-09-10
+    evidence: >
+      Direct confirmation, 2026-09-10. No file states it.
+    consequence: >
+      Zero teaches edges for Android (0/4 modules) and iOS (0/7) is EXPECTED and
+      CORRECT. Never list these two in a "domains with no teaching evidence"
+      report, and never suggest someone go and find the missing file — there
+      isn't one.
+    correction_recorded: >
+      An earlier build inferred the zero from the owner sheet's cadence value
+      `Video Only` — reasoning that with no live classes there is nothing to log.
+      That inference was WRONG and is withdrawn. `Video Only` is a real value in
+      Domains_Courses Owners!Sheet1 rows 16 and 17, but it is a separate
+      observation and NOT the cause. The cause is that there are no instructors.
+      Recorded because the difference matters: one explanation implies the
+      domains are staffed but undocumented, the other says they are not staffed.

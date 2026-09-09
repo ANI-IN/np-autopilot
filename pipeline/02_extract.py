@@ -555,6 +555,7 @@ def extract_schedule(root: Path, out: list, rejected: list, pairs: list) -> list
         if hrow is None or SRC.SCHEDULE_TOPIC_COL not in (hdr or []):
             continue
         tcol = hdr.index(SRC.SCHEDULE_TOPIC_COL)
+        dcol = hdr.index(SRC.SCHEDULE_DATE_COL) if SRC.SCHEDULE_DATE_COL in hdr else None
         # sheet name -> domain. "Backend DTC" and "Backend" are both Backend.
         base = re.sub(r"\s*(DTC|SSD|\(NS\)|New Students)\s*$", "", sheet).strip()
         dom = dom_labels.get(norm(base))
@@ -578,9 +579,12 @@ def extract_schedule(root: Path, out: list, rejected: list, pairs: list) -> list
                         "sources": [prov]})
             out.append({"type": T_INSTRUCTOR, "raw": name, "norm": norm(name),
                         "pipeline_status": "roster", "sources": [prov]})
+            when = None
+            if dcol is not None and dcol < len(row) and isinstance(row[dcol], datetime):
+                when = row[dcol].date().isoformat()
             pairs.append({"module": norm(module), "instructor": norm(name),
                           "rank": 0, "domain": dom, "delivered": True,
-                          "source": prov})
+                          "date": when, "source": prov})
     wb.close()
     return seen_sheets
 

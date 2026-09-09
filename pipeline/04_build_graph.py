@@ -206,6 +206,13 @@ def main() -> int:
     node_by = {(n["type"], norm(n["label"])): n for n in nodes}
     taught, unmatched_pairs = 0, 0
     seen_pair = set()
+    # Aggregate every recorded class date per (instructor, module) first, so the
+    # edge can say when it was last taught and how often, not just that it was.
+    TODAY = datetime.now(timezone.utc).date().isoformat()
+    dates_for = defaultdict(list)
+    for pr in cand.get("teaches_pairs", []):
+        if pr.get("date"):
+            dates_for[(pr["instructor"], pr["module"])].append(pr["date"])
     for pr in cand.get("teaches_pairs", []):
         m = node_by.get(("module", pr["module"]))
         i = node_by.get(("instructor", pr["instructor"]))
@@ -229,6 +236,15 @@ def main() -> int:
         for k in ("avg_rating", "classes"):
             if pr.get(k):
                 e[k] = pr[k]
+        ds = sorted(dates_for.get((pr["instructor"], pr["module"]), []))
+        if ds:
+            past = [d for d in ds if d <= TODAY]
+            future = [d for d in ds if d > TODAY]
+            e["first_taught"] = ds[0]
+            e["last_taught"] = past[-1] if past else None
+            e["sessions_recorded"] = len(ds)
+            e["sessions_past"] = len(past)
+            e["sessions_scheduled"] = len(future)
         edges.append(e)
         taught += 1
 

@@ -298,9 +298,25 @@ to one node.
 | **Android** | **0 / 4** |
 | **iOS** | **0 / 7** |
 
-**Android and iOS still have zero**, and that is consistent rather than missing:
-the owners sheet records both as cadence **`Video Only`**, so there are no live
-classes to log. Say that, rather than reporting them as a data gap.
+**Android and iOS have zero, and the reason is that THEY HAVE NO INSTRUCTORS** —
+confirmed by the corpus owner on 2026-09-10 (`config/out-of-corpus-facts.yaml`).
+It is a staffing fact about the business, **not a data gap**.
+
+- **Never** list Android or iOS in a "domains with no teaching evidence" report.
+- **Never** suggest someone go and find the missing file. There isn't one.
+- Any answer stating this must say the basis is **out-of-corpus**.
+
+**A withdrawn inference, recorded because the difference matters.** An earlier
+build explained the zero by the owner sheet's `Video Only` cadence — no live
+classes, nothing to log. That was wrong. `Video Only` is a real value in rows 16
+and 17, but it is a separate observation, not the cause. One explanation implies
+these domains are staffed but undocumented; the other says they are not staffed.
+
+**Class dates are on the edge.** `teaches` carries `first_taught`, `last_taught`,
+`sessions_past` and `sessions_scheduled`. 1,294 of 1,889 edges have dates,
+`last_taught` running to 2026-09-09, and **13 edges are future-only — scheduled
+but never yet delivered**. A staffing answer should prefer recent delivery and
+must not present a scheduled class as teaching history.
 
 **A staffing answer must still lead with what is absent.** For a domain with no
 `teaches` edges, say so first, before offering any `expert_in` name — those are

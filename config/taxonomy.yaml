@@ -24,6 +24,29 @@
 version: 2
 
 # ---------------------------------------------------------------------------
+# SHEET-LEVEL COVERAGE CAVEAT — added 2026-09-10, and it is stricter than the
+# file-level one below.
+#
+# Coverage had only ever been audited PER FILE. That hid two findings: New
+# Combined Schedule.xlsx had 1 of 62 sheets read (the other 44 held the entire
+# class delivery log), and UpLevel Schedule Structure.xlsx went unscanned for
+# three rounds. A file counted as "read" even when 98% of it was not.
+#
+# Audited per WORKSHEET, 2026-09-10:
+#     374 worksheets total
+#     127 read by an entity scan
+#     247 never read  — of which:
+#         37 sheets / 74,961 rows  excluded payroll file (deliberate)
+#        139 sheets / 55,655 rows  learner data (deliberate, PERSON_EXCLUSIONS)
+#         71 sheets /  4,572 rows  GENUINE BLIND SPOT
+#
+# The largest blind-spot sheet is New Combined Schedule!Class Confirmation
+# Record (1,690 rows: Response Date, Confirmation ID, Instructor).
+#
+# EVERY count and edge count in this file is a floor over 127 of 374 sheets.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
 # COVERAGE CAVEAT — read before trusting any `expect` value below.
 # 25 of the 75 corpus files have never been read by an entity-extraction scan
 # (see BUILD_LOG, round four). person=42, instructor=1098 and module=234 are
@@ -396,7 +419,9 @@ edge_types:
       spell-corrected to force a match.
 
   - name: teaches
-    role: instructor_module       # stable semantic key — code resolves edges by role,
+    role: instructor_module
+    edge_properties: [role, rank, avg_rating, classes, first_taught, last_taught,
+                      sessions_recorded, sessions_past, sessions_scheduled]       # stable semantic key — code resolves edges by role,
                        # never by writing the edge name as a literal
     from: instructor
     to: module

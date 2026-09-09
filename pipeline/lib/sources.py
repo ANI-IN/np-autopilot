@@ -52,7 +52,7 @@ MODULE_SOURCES = [
     ("02-curriculum/Resource Collection Mastersheet (Software + System).xlsx", s, "Module Name")
     for s in ["Full Stack Engineering", "Backend Engineering", "Test Engineering",
               "Cloud Engineering", "SRE Engineering", "Security Engineering",
-              "Embedded Systems"]
+              "Embedded Systems", "Frontend Engineering"]   # Frontend was missing
 ] + [
     ("02-curriculum/Data and Management.xlsx", s, "Module Name")
     for s in ["DABA", "PM India", "TPM", "PMTPM SD India", "EM"]
@@ -283,6 +283,7 @@ TEACHES_RATINGS = {
 SCHEDULE_FILE = "05-operations/New Combined Schedule.xlsx"
 SCHEDULE_INSTRUCTOR_COL = "Instructor Name"
 SCHEDULE_TOPIC_COL = "Class Topic"
+SCHEDULE_DATE_COL = "Date"   # class schedules record WHEN, which staffing needs
 
 #: Sheets that are NOT a single domain's schedule.
 SCHEDULE_NON_DOMAIN = {
