@@ -40,6 +40,10 @@ TEACHES = taxonomy.edge_for_role("instructor_module")
 EXPERT = taxonomy.edge_for_role("instructor_domain")
 COVERS = taxonomy.edge_for_role("program_domain")
 CONTAINS = taxonomy.edge_for_role("program_module")
+# (edge name, owner-sheet column) resolved from the single source, in column
+# order: delivery, primary, secondary.
+OWNER_EDGES = [name for name, _ in taxonomy.owner_sheet_edges()]
+DELIVERED, PRIMARY, SECONDARY = OWNER_EDGES
 
 
 def norm(s):
@@ -137,7 +141,7 @@ def staffing(query):
         "no_instructors_confirmed": d["label"] in NO_INSTRUCTOR_DOMAINS,
         "taught": tier1,
         "declared": {k: sorted(v, key=lambda r: r["name"]) for k, v in tiers.items()},
-        "owners": [BY[e["target"]]["label"] for e in OUT[d["id"]] if e["rel"] == "owned_by"],
+        "owners": [BY[e["target"]]["label"] for e in OUT[d["id"]] if e["rel"] == PRIMARY],
     }
 
 
@@ -148,8 +152,7 @@ def coverage():
     joined = {e["source"] for e in EDGES if e["rel"] == COVERS}
     contained = {e["target"] for e in EDGES if e["rel"] == CONTAINS}
     taught = {e["target"] for e in EDGES if e["rel"] == TEACHES}
-    owned = {e["source"] for e in EDGES if e["rel"] in ("owned_by", "supported_by",
-                                                        "delivered_by")}
+    owned = {e["source"] for e in EDGES if e["rel"] in OWNER_EDGES}
     prov = taxonomy.edge_for_role("provenance")
     deg = defaultdict(int)
     for e in EDGES:

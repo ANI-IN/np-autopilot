@@ -89,7 +89,10 @@ def _run(graph_path: Path | None = None):
         if "@" in lab or "http" in lab.lower():
             r.add(FAIL, "junk-label", f"{n['type']} label contains @/http: {lab!r}")
         if len(re.sub(r"[^\w\s]", " ", lab).split()) == 1:
-            r.add(WARN, "junk-label", f"single-token {n['type']}: {lab!r}")
+            why = n.get("admitted_by")
+            r.add(WARN, "junk-label",
+                  f"single-token {n['type']}: {lab!r}"
+                  + (f" — retained, admitted by {why}" if why else ""))
     # cadence collision — R5 guard
     vocab = {v.lower() for v in taxonomy.cadences() + taxonomy.stages()}
     for n in by_type["person"]:

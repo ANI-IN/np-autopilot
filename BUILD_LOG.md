@@ -1309,3 +1309,46 @@ party has seen answered.** That is the real test, and it comes after B9.
 ## 2026-09-09 19:49:35Z — validate
 
 - validate: 0 FAIL, 19 WARN, 8/16 categories exercised, 4694 nodes, 34218 edges
+
+## 2026-09-09 19:49:52Z — validate
+
+- validate: 0 FAIL, 19 WARN, 8/16 categories exercised, 4694 nodes, 34218 edges
+
+## 2026-09-09 19:52:34Z — 03_resolve
+
+- Nodes 4619 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:52:48Z — 04_build_graph
+
+- Nodes 4694 | edges 34218
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 347
+    - expert_in: 802
+    - teaches: 1889
+    - sourced_from: 30904
+
+## 2026-09-09 19:52:50Z — 03_resolve
+
+- Nodes 4619 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:52:51Z — 03_resolve
+
+- Nodes 4619 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-09 19:53:02Z — 05_render_html
+
+- graph.html 3125 KB | rendered 2777 nodes (1847 connected, 930 isolated) and 3314 edges
+
+## 2026-09-09 19:53:04Z — validate
+
+- validate: 0 FAIL, 19 WARN, 8/16 categories exercised, 4694 nodes, 34218 edges
+
+## 2026-09-09 19:53:18Z — validate
+
+- validate: 0 FAIL, 19 WARN, 8/16 categories exercised, 4694 nodes, 34218 edges

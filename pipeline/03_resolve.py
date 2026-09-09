@@ -70,6 +70,9 @@ def main() -> int:
     payload = json.loads((KNOWLEDGE_DIR / "candidates.json").read_text(encoding="utf-8"))
     cands = payload["candidates"]
     confirmations = payload.get("confirmations", {})
+    # Precomputed once. Building this inside the per-node loop was O(n^2) over
+    # 3,500 instructors x 12,850 candidates and hung the pass.
+    ADMITTED = {norm_label(c["raw"]) for c in cands if c.get("admitted_by")}
     alias_to_canon, people_meta = load_people()
 
     print("=" * 78)
@@ -190,6 +193,8 @@ def main() -> int:
         files = {s.get("file") for s in node["sources"] if s.get("file")}
         node["file_count"] = len(files)
         if node["type"] == T_INSTRUCTOR:
+            if norm_label(node["label"]) in ADMITTED:
+                node["admitted_by"] = "confirmation_id"
             conf = confirmations.get(norm_label(node["label"]))
             if conf:
                 # Availability, not performance. A high decline rate means this
