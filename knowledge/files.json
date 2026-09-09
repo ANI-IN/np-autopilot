@@ -1,11 +1,11 @@
 {
- "built_at": "2026-09-09T20:41:59+00:00",
+ "built_at": "2026-09-09T20:45:16+00:00",
  "source": "local-folder",
  "root": "/Users/animesh/Desktop/NP-Autopilot-Corpus",
  "counts": {
-  "found": 76,
+  "found": 75,
   "skipped": 1,
-  "extracted": 74,
+  "extracted": 73,
   "failed": 1
  },
  "files": [
@@ -1213,17 +1213,6 @@
     "Ratings Weekly",
     "Response% Weekly"
    ]
-  },
-  {
-   "path": "NEXT.md",
-   "sha256": "e7ecd5a6eb69d5322e48ad0fa70c49c8cd6666add0ec79dc16934f551dfdfe6a",
-   "bytes": 6096,
-   "mtime": "2026-09-09T20:41:21+00:00",
-   "sniffed": "text",
-   "suffix": ".md",
-   "parsed": true,
-   "chars": 6049,
-   "lines": 134
   }
  ],
  "failures": [

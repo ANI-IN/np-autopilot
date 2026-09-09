@@ -1,7 +1,7 @@
 # NEXT
 
 Handover, ordered by value. Baseline to regress against is at the bottom of
-`BUILD_LOG.md`: graph hash `a53462823ca26466`, plugin `0.1.2`, taxonomy `2`,
+`BUILD_LOG.md`: graph hash `a53462823ca26466`, plugin `0.1.4`, taxonomy `2`,
 eval **25/27 with 0 fabrications**.
 
 **Read `README.md` first — its limitations section is not boilerplate.**
