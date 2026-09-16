@@ -470,8 +470,11 @@ def main() -> int:
     GRAPH.write_text(json.dumps({
         "meta": {"built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                  "taxonomy_version": taxonomy.version(),
-                 "source": "local-folder",
-                 "drive_deferred": True,
+                 # Reported from the manifest, never asserted. These were
+                 # hardcoded to local-folder / deferred, so the graph went on
+                 # claiming Drive had never been read after pass 0 went live.
+                 "source": manifest.get("source", "unknown"),
+                 "drive_deferred": manifest.get("source") != "drive-cache",
                  "as_of": TODAY,
                  "nodes": len(all_nodes), "edges": len(edges),
                  # Counted from all_nodes, NOT by_type. by_type is built from

@@ -265,6 +265,61 @@ Not in our scope to fix. Flagging it because it is your company's data and it in
 
 ---
 
+## R17 — The excluded payroll file is now reachable by a cloud identity
+
+**Likelihood: certain (it is already true) · Impact: high**
+
+Added 2026-09-17, after pass 0 went live.
+
+`03-instructors/US Instructor Cost Analysis.xlsx` — the Paycor export with
+employee file numbers, work and personal emails, employment status including
+`Exited (Resigned)` and `Exited (Terminated)`, and per-labour-code hourly rates
+for **5,387 distinct names** — is excluded from the graph by
+`taxonomy.yaml -> excluded.files`.
+
+**That exclusion is an APPLICATION RULE, not an access control.** Drive lists 9
+files in `03-instructors` against the manifest's 8; the difference is this file.
+The service account can read it, and pass 0 downloads it into `.drive-cache/`
+before pass 1 ever consults the exclusion list. It is on disk right now.
+
+### What would have to be true for the exclusion to fail open
+
+Each of these is a single edit or a single mistake, and none of them trips a
+test today:
+
+1. **The path changes.** The exclusion matches an exact relative path. Someone
+   renaming the file in Drive — or fixing the misleading name, which is a
+   reasonable thing to do — silently un-excludes it. There is no content-based
+   guard.
+2. **A new extractor is added to `sources.py` naming a sheet in it.** Adding a
+   source is a deliberate act, but nothing cross-checks the new entry against
+   `excluded.files`.
+3. **The exclusion is read but the fields are not.** `excluded.fields` drops 17
+   contact patterns by header match. This workbook's headers are not the same
+   strings, so a generic scan over it would keep what the field rule is meant to
+   remove.
+4. **Someone runs a query directly against `.drive-cache/`.** Nothing stops
+   this. The cache is the whole corpus including the excluded file, sitting in
+   the repo working tree, gitignored but present.
+5. **Unattended operation on a worker** — the case this risk exists for. A
+   scheduled pass 0 pulls the payroll file onto a shared machine on a timer, with
+   no human looking at the file list. The exposure moves from one laptop to
+   whatever the worker is, and its backups.
+
+### Mitigations not yet built
+
+- Pass 0 should refuse to fetch an excluded file at all, rather than downloading
+  it and relying on pass 1 to ignore it. That is the one change that makes the
+  exclusion hold at the boundary instead of two passes later.
+- The exclusion should be keyed on something more stable than a path — a sha256,
+  or a rule about the file's header shape — so a rename cannot un-exclude it.
+- `validate.py` asserts excluded files are absent from `files.json`. It should
+  also assert they are absent from the **cache**.
+
+**Not fixed in this phase. Recorded so the decision to leave it is visible.**
+
+---
+
 ## Summary
 
 | # | Risk | Likelihood | Impact |
@@ -286,3 +341,4 @@ Not in our scope to fix. Flagging it because it is your company's data and it in
 | R14 | Silent plugin component drop | low | medium |
 | R15 | Forgotten version bump | med-high | medium |
 | R16 | Reference impl is public | certain | your call |
+| R17 | **Excluded payroll file is reachable by the cloud identity** — exclusion is an application rule, not an access control | certain | high |

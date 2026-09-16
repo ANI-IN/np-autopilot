@@ -3,16 +3,33 @@
 Read this before touching the pipeline. Three rules that have already cost time.
 
 
-## ⚠ Built from a local folder, not Drive
+## Built from Drive — pass 0 is live as of 2026-09-16
 
-`pipeline/00_fetch_drive.py` **has never been run.** The graph is built from a
-**hand-exported local folder**. Drive ingestion is **deferred to v2, not
-cancelled**.
+`pipeline/00_fetch_drive.py` runs against the real folder with a **service
+account**, scope `drive.readonly`, no domain-wide delegation. The key lives
+outside the repo and is named by path through `NP_DRIVE_SA_KEY`; pass 0 refuses
+to read one from inside the repo. Pass 1 prefers `.drive-cache/` and falls back
+to `NP_CORPUS_PATH` with a loud banner.
 
-**The three-tab "NP Autopilot" master spreadsheet has never been located.** If it
-turns out to exist in Drive, `Owner` and `Automation` may return as node types
-and doc 05 is redone. Until pass 0 runs, nothing here supports any claim about
-what Drive contains.
+**The three-tab "NP Autopilot" master spreadsheet is NOT in that folder.**
+Established by listing all 374 worksheets across 18 workbooks and searching for
+`Automations`, `All Tasks` and `To-Do & Working Notes` — no match, and none on a
+fuzzy search. So `Owner` and `Automation` are not imminent node types.
+
+**That is a statement about this folder**, which is the corpus scope we have
+defined and all the service account can see. It is not a statement about all of
+Drive. If the workbook turns up elsewhere, doc 05 is still redone.
+
+**Pass 0's stated rationale was not what mattered.** It was written to export
+native Google files, which sync as unreadable URL stubs — and there are none in
+this folder. All 75 files are already binaries, the export map has never fired,
+and that is why the hand-export matched byte for byte. The real value is that
+**the laptop is out of the loop**: the corpus is now reproducible by anyone with
+the key, and staleness is detectable.
+
+**Coverage did not improve.** 127 of 374 worksheets have been read by an entity
+scan. Fetching from Drive fixed reproducibility, not coverage — every count is
+still a floor (§2).
 
 ---
 

@@ -13,12 +13,17 @@ fine.
    silently becomes wrong.
 3. **Always print this, verbatim, before any counts:**
 
-   > ⚠ This graph was built from a hand-exported local folder, not Google Drive.
-   > `00_fetch_drive.py` has never been run; Drive ingestion is deferred to v2.
-   > The three-tab "NP Autopilot" master spreadsheet has never been located — if
-   > it exists in Drive, `Owner` and `Automation` may return as node types and
-   > the taxonomy is redone. Counts for `person`, `instructor` and `module` are
-   > floors, not totals.
+   > This graph is built from Google Drive, fetched read-only by a service
+   > account. The three-tab "NP Autopilot" master spreadsheet is **not in that
+   > folder** — checked across all 374 worksheets — so `Owner` and `Automation`
+   > are not returning as node types. Counts for `person`, `instructor` and
+   > `module` remain **floors, not totals**: 127 of 374 worksheets have been read
+   > by an entity scan, and fetching from Drive fixed reproducibility, not
+   > coverage.
+
+   If `meta.drive_deferred` is true, say the opposite: the graph came from a
+   hand-export, pass 0 did not run, and nothing about Drive's contents is
+   supported.
 
 4. Distinguish the two failure modes explicitly: **graph missing** is a
    packaging problem; **corpus missing** is expected and not an error.

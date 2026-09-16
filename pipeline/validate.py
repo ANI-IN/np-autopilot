@@ -84,7 +84,9 @@ def _run(graph_path: Path | None = None):
     print("=" * 78)
     print(f"graph      : {len(nodes)} nodes, {len(edges)} edges")
     print(f"taxonomy   : v{taxonomy.version()}")
-    print(f"source     : {g['meta']['source']}  (Drive deferred to v2)")
+    deferred = g["meta"].get("drive_deferred")
+    print(f"source     : {g['meta']['source']}"
+          + ("  (pass 0 has not run — this is a hand-export)" if deferred else ""))
     print()
 
     # --- version-bump enforcement. The documented failure mode is a forgotten

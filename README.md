@@ -147,7 +147,7 @@ Automatic-and-trusted is how a graph nobody can receive gets shipped.
 Pass 0 is the only one that touches the network; pass 1 only reads local files.
 **Do not fuse them** — re-parsing must never re-download.
 
-| 0 | `00_fetch_drive.py` | **never run** — deferred to v2 |
+| 0 | `00_fetch_drive.py` | **live** — service account, `drive.readonly` |
 | 1 | `01_walk_corpus.py` | discovery, integrity, manifest |
 | 2 | `02_extract.py` | candidates + rejection log |
 | 3 | `03_resolve.py` | identity; fuzzy **proposes only** |
@@ -163,18 +163,28 @@ records it in BUILD_LOG — never use it to make an unexplained diff go away.
 
 # Deferred and decided
 
-## Drive ingestion — v2
+## Drive ingestion — LIVE since 2026-09-16
 
-`00_fetch_drive.py` exists and **has never run**. The graph is built from a
-hand-exported local folder. Consequences: the master spreadsheet question stays
-open, and **click-to-open a source file cannot work** — browsers block `file://`
-links from HTML, so `file.drive_url` stays null and paths render as unlinked
-text.
+`00_fetch_drive.py` runs against the real folder with a **service account**,
+scope `drive.readonly`, no domain-wide delegation. The key lives outside the
+repo, named by path through `NP_DRIVE_SA_KEY`; pass 0 refuses to read one from
+inside the repo. First run: 75 files, 0 failures, all 75 sha256-identical to the
+hand-export.
 
-Setup, when you do it: enable the Drive API, **OAuth consent screen user type
-Internal** (External + Testing expires the refresh token after 7 days and the
-pipeline dies with `invalid_grant`), Desktop app credentials, scope
-`drive.readonly` and nothing wider.
+**Pass 0's stated rationale turned out not to be the thing that mattered.** It
+was written because native Google files sync to disk as unreadable URL stubs and
+must be exported — and **there are no native Google files in this folder**. All
+75 are already binaries, the export map has never fired, and that is precisely
+why the hand-export matched byte for byte: it was a download, not a conversion.
+
+The real value is different and larger: **the laptop is no longer in the loop.**
+The corpus is reproducible by anyone with the key, a scheduled refresh becomes
+possible, staleness is detectable, and the master-spreadsheet question became
+answerable — it is **not** in this folder, established by listing all 374
+worksheets across 18 workbooks rather than by assuming.
+
+`file.drive_url` is still null, so click-to-open a source file still does not
+work. Populating it is now unblocked.
 
 ## Distribution — single-owner, deliberately
 

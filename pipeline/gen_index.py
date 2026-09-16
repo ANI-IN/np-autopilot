@@ -21,21 +21,22 @@ README = REPO_ROOT / "README.md"
 PLUGIN = REPO_ROOT / ".claude-plugin" / "plugin.json"
 OPEN_MARK, CLOSE_MARK = "<!-- generated:counts -->", "<!-- /generated:counts -->"
 
-DEFERRAL = """> ## ⚠ This graph was NOT built from Google Drive
+DEFERRAL = """> ## Built from Google Drive, via a service account
 >
-> It is built from a **hand-exported local folder**. `pipeline/00_fetch_drive.py`
-> exists and has **never been run**. Drive ingestion is **deferred to v2**, not
-> cancelled.
+> `pipeline/00_fetch_drive.py` is live. The cache is fetched read-only from the
+> configured folder and pass 1 reads it from disk.
 >
-> **The three-tab "NP Autopilot" master spreadsheet has never been located.** It
-> is the file the original brief's taxonomy was derived from. If it exists in
-> Drive, then:
+> **The three-tab "NP Autopilot" master spreadsheet is NOT in that folder.**
+> Established by listing all 374 worksheets across 18 workbooks and searching for
+> `Automations`, `All Tasks` and `To-Do & Working Notes` — no match, and none for
+> a fuzzy search either. So `Owner` and `Automation` are not imminent node types.
 >
-> - `Owner` and `Automation` may return as node types, and
-> - doc 05 (the taxonomy proposal) is redone.
+> That is a statement about **this folder**, which is the corpus scope we have
+> defined. It is not a statement about all of Drive.
 >
-> Until pass 0 runs, every count below is over what one person happened to
-> export by hand, and no statement about what Drive contains is supported."""
+> The counts below remain FLOORS: 127 of 374 worksheets have been read by an
+> entity scan. Fetching the corpus from Drive fixed reproducibility, not
+> coverage."""
 
 
 def readme_block(meta: dict, version: str) -> str:
