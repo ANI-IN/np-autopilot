@@ -15,6 +15,12 @@ np-autopilot-*.json
 *-sa-key*.json
 gcp-*.json
 
+# Environment files. Supabase connection strings and the service-role key are
+# secrets; they belong in a file outside the repo (mode 600), named by path.
+.env
+.env.*
+!.env.example
+
 # Local corpus cache, fetched by pipeline/00_fetch_drive.py
 .drive-cache/
 
