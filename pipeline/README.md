@@ -23,6 +23,28 @@ ownership stub; every suggestion lands `confirmed: false`.
 `refresh.py` runs 1–5 plus `gen_index` and `validate`, prints a delta, bumps
 `plugin.json`, and **stops without committing**.
 
+## Migration verification
+
+`verify_migration.py` checks a graph against the frozen reference in
+`config/migration-baseline.yaml`: node counts by type, edge counts by rel, the
+1,687 legitimate duplicate triples, provenance coverage on both origin shapes,
+and connected-component structure excluding provenance.
+
+```
+python3 pipeline/verify_migration.py            # verify knowledge/graph.json
+python3 pipeline/verify_migration.py --freeze   # re-record the reference
+```
+
+Expected values live in config, never in the script — three alias decisions are
+still open and resolving them will legitimately move several of these figures.
+Re-freeze deliberately, in a commit that says why; never edit the baseline to
+make a diff go away.
+
+It runs file-against-file today so it is known-good before the Supabase
+projection exists. A verification script first exercised during a migration gets
+debugged during the migration, which is when nobody can tell whether the script
+or the migration is wrong.
+
 ## Query layer
 
 `query.py` is not a pass. It is what the plugin commands call — `/staffing` and

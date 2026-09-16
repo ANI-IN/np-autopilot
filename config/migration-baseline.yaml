@@ -1,0 +1,51 @@
+version: 1
+note: "Frozen migration reference. Every migration-verification run asserts against THIS,\
+  \ never against a live rebuild \u2014 a live rebuild would move with the corpus and prove\
+  \ nothing. Re-freeze only in a commit that says why."
+frozen_at: '2026-09-16T19:09:42+00:00'
+built_as_of: '2026-09-09'
+plugin_version: 0.1.8
+taxonomy_version: 2
+open_questions_that_will_move_these:
+- "Q7 aliases ML / Agentic AI / Product Management \u2014 272 expert_in edges currently unjoined.\
+  \ Resolving any of them moves edge_counts and component structure."
+content_hash: d2857371789b65430f051f2c2ce9a7b4a3dda0f6df9c20880bc539c43987ee64
+totals:
+  nodes: 5048
+  edges: 36677
+node_counts:
+  domain: 42
+  file: 74
+  instructor: 3817
+  module: 922
+  person: 43
+  program: 42
+  theme: 16
+  workflow: 92
+edge_counts:
+  belongs_to: 92
+  contains: 351
+  covers: 28
+  delivered_by: 43
+  expert_in: 1155
+  owned_by: 55
+  sourced_from: 32656
+  supported_by: 58
+  teaches: 2239
+duplicates:
+  distinct_colliding_triples: 1687
+  extra_rows: 26448
+  by_rel:
+    expert_in: 22
+    sourced_from: 1665
+provenance:
+  entries_by_origin:
+    corpus: 32730
+    hand: 15
+  nodes_total: 5048
+  nodes_with_sources: 5048
+  nodes_with_hand_provenance: 15
+components:
+  excluding_provenance: 42
+  largest: 1881
+  isolated: 2878
