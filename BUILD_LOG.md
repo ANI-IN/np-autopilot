@@ -2360,3 +2360,12 @@ document of ours. Final hash `a53462823ca26466fc5e6b3bf18615ec51bb96ed003249a866
 ## 2026-09-09 20:46:00Z — 03_resolve
 
 - Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-16 18:31:16Z — 00_fetch_drive (ok)
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Folder id: `1eBu4P3DtjazCS50dmvViuWsJxEMGiaQL`
+- Location: `my_drive`
+- Scope: `https://www.googleapis.com/auth/drive.readonly`
+- Cache: `.drive-cache`
+- Files seen: 75 | fetched: 75 | exported: 0 | skipped current: 0 | failed: 0
