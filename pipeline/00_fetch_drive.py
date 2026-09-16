@@ -452,7 +452,14 @@ def main() -> int:
         return 0
 
     cache.mkdir(parents=True, exist_ok=True)
-    (cache / "_manifest.json").write_text(
+    # DOT-PREFIXED on purpose. 01_walk_corpus skips any dot-prefixed path
+    # segment ("the corpus has no dotfiles"), and this is pass 0's own
+    # bookkeeping, not corpus material. Named `_manifest.json` it was discovered
+    # as a 76th corpus file the moment a cache existed — and the file-count check
+    # would NOT have caught it, because 75 file nodes sits inside expect 74 ± 2.
+    # That is the same class of bug as `commands/` and NEXT.md being swept in,
+    # except silent.
+    (cache / ".manifest.json").write_text(
         json.dumps({"account": account, "folder_id": folder_id,
                     "fetched_at": datetime.now(timezone.utc).isoformat(),
                     "files": manifest}, indent=1),
