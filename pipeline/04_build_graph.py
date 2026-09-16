@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 import unicodedata
@@ -26,6 +27,26 @@ AGENTIC = "03-instructors/AgenticAI Instructors Training Plan.xlsx"
 def norm(s: str) -> str:
     s = unicodedata.normalize("NFKD", str(s))
     return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", " ", s).lower()).strip()
+
+
+def as_of_date() -> str:
+    """The date the build treats as "now", ISO. From NP_AS_OF, else today UTC.
+
+    `teaches` edges split recorded class dates into past and future, so
+    last_taught / sessions_past / sessions_scheduled are all functions of the
+    calendar. The build is therefore deterministic WITHIN a day and not across
+    days: rebuilding the 2026-09-09 graph on 2026-09-16 moved 44 edges' sessions
+    from scheduled to past, with every node and every edge key untouched.
+
+    That is correct behaviour — the data really does age — but it makes
+    "rebuild and compare" useless as a verification tool, because a diff caused
+    by the calendar is indistinguishable from a diff caused by a code or corpus
+    change. NP_AS_OF pins the date so a historical build can be reproduced
+    exactly and any remaining difference is real.
+
+    Default is today, so a normal run behaves exactly as it did before.
+    """
+    return os.environ.get("NP_AS_OF") or datetime.now(timezone.utc).date().isoformat()
 
 
 def main() -> int:
@@ -230,7 +251,7 @@ def main() -> int:
     seen_pair = set()
     # Aggregate every recorded class date per (instructor, module) first, so the
     # edge can say when it was last taught and how often, not just that it was.
-    TODAY = datetime.now(timezone.utc).date().isoformat()
+    TODAY = as_of_date()
     dates_for = defaultdict(list)
     for pr in cand.get("teaches_pairs", []):
         if pr.get("date"):
