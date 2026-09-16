@@ -9,6 +9,26 @@ amendment the collision check forced.
 
 ---
 
+## Status — updated 2026-09-17, after Phase C
+
+| Item | State |
+|---|---|
+| §A.4 assertion-id collisions | **FIXED.** Grid column recorded, ordinal carried. 32,745 of 32,745 keys unique, 0 collisions. |
+| §A.5 property-level provenance | **FIXED (minimal + `establishes`).** Hand sources reach the node and name which properties they justify. `hand-provenance` is now a falsifiable validate category. |
+| §B.4 calendar-derived fields | **FIXED.** Edges store `class_dates`; the five derived values are computed at read time. Proven day-independent across three `NP_AS_OF` probes. |
+| §F.2 sensitive split | **DONE**, and it covered three files, not one — `resolved.json` and `candidates.json` carried the same funnel and were committed. |
+| §F.2 history rewrite | **PLANNED, NOT RUN.** `docs/HISTORY-REWRITE-PLAN.md`, awaiting four answers. |
+| §G workflow management | **CLOSED — out of scope.** |
+| Migration baseline | **FROZEN** at `0165f164e104d6ad`, `config/migration-baseline.yaml`. Verifier passes 32/32 file-against-file and fails on four injected migration mistakes. |
+| Track 1 — Supabase connection | **STILL BLOCKED.** See §C.0. |
+
+Two figures in this document were corrected by measurement and are noted where
+they appear: components excluding provenance is **42** for the full graph (the
+36 was the rendered subset), and the duplicate count is **1,687 distinct
+colliding triples / 26,448 extra rows**.
+
+---
+
 ## 0 · Decisions already taken
 
 Recorded so the rest of this document can lean on them. **If any row misstates
@@ -363,15 +383,21 @@ on its own.
 
 ### C.0 Not yet verified — I cannot connect
 
-`SUPABASE_DB_URL_SESSION` and the rest are **not visible to my shell**. I checked
-the environment, a login shell (`zsh -lc`), an interactive shell (`zsh -ic`),
-`~/.zshenv`, `~/.zprofile`, `~/.zshrc`, `~/.profile`, and looked for a dotenv
-file. Nothing. No Postgres driver is installed either (`psycopg`, `psycopg2` and
-`asyncpg` are all absent; only `sqlalchemy` is present).
+**Re-checked 2026-09-17, after the env file was said to exist. It does not.**
 
-This is the same failure as `NP_DRIVE_SA_KEY` — exporting a variable in your
-interactive session does not reach my tool, which starts a fresh shell each time.
-Fix in the report at the end.
+`~/.config/np-autopilot/` contains exactly one file, `drive-sa.json` (mode 600).
+There is no `env` beside it. I also re-checked the process environment, a login
+shell (`zsh -lc`), an interactive shell (`zsh -ic`), `~/.zshenv`, `~/.zprofile`,
+`~/.zshrc`, `~/.profile`, and looked for a dotenv file anywhere obvious. Nothing.
+
+No Postgres client is installed either: `psql` is absent, and so are `psycopg`,
+`psycopg2` and `asyncpg` (only `sqlalchemy` is present, which cannot connect on
+its own).
+
+So **AGE and pgvector availability remain unverified**, and the recommendation to
+reject AGE for v1 still rests on the size argument alone — which is sufficient on
+its own, but I would rather confirm than infer. The first thing I will run once
+connected is `pg_available_extensions`.
 
 **Consequently the following are reasoned, not measured**, and I have flagged
 what I would verify first.
@@ -609,9 +635,10 @@ growing while you decide about the past.
 
 ---
 
-## G · Q6 — workflow management is still unanswered
+## G · Q6 — workflow management: CLOSED, out of scope
 
-Flagging rather than designing, because the gap is data, not schema.
+**Decided 2026-09-17: out of scope.** Recorded here rather than deleted, because
+the reasoning is what makes the decision re-checkable if it is ever reopened.
 
 The 92 workflows are inert lookup records: `steps`, `effort`, `alerts`, `tools`,
 one `belongs_to` edge each. No owner (correctly — ownership is domain-level and
