@@ -6,8 +6,20 @@ folder_id: ""
 # Local, gitignored. 01_walk_corpus.py reads from here and never touches Drive.
 cache_dir: ".drive-cache"
 
-# OAuth client secret downloaded from Google Cloud Console. Gitignored.
-credentials_file: "config/credentials.json"
-
-# Written on first successful auth. Gitignored.
-token_file: "config/token.json"
+# ---------------------------------------------------------------------------
+# Service-account key — a PATH, never the key itself.
+#
+# Auth is a service account with the Drive folder SHARED TO ITS ADDRESS. Not
+# user OAuth: a headless job cannot complete a browser consent, and a token tied
+# to one person's account dies when they leave.
+#
+# There is no domain-wide delegation. Access comes from the folder share, which
+# whoever owns the folder can revoke in one click. Delegation would let this key
+# impersonate any user in the workspace.
+#
+# The key must live OUTSIDE the repo, mode 600. 00_fetch_drive.py refuses to
+# read one from inside the repo — .gitignore stops a commit, but not a copy into
+# a Docker build context or a backup sweep.
+#
+# NP_DRIVE_SA_KEY overrides this, and is the right way to supply it in CI.
+service_account_key: "~/.config/np-autopilot/drive-sa.json"

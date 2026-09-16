@@ -10,9 +10,10 @@ Separation of passes is deliberate (same rule as B4): this script only fetches.
 01_walk_corpus.py reads the cache from disk and never calls the network, so
 parsing can be re-run without re-downloading. Do not fuse them.
 
-Auth: user OAuth, scope drive.readonly. The pipeline must never hold write
-access to Drive. See README "Google Drive access" for why the consent screen
-must be user type Internal.
+Auth: a SERVICE ACCOUNT, scope drive.readonly, with the Drive folder shared to
+its address. No domain-wide delegation. The pipeline must never hold write
+access to Drive. The key is named by path through NP_DRIVE_SA_KEY and is never
+read from inside the repo.
 
 Usage:
     python3 pipeline/00_fetch_drive.py                 # incremental
@@ -31,16 +32,14 @@ from pathlib import Path
 
 try:
     import yaml
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
+    from google.oauth2 import service_account
     from googleapiclient.discovery import build
     from googleapiclient.errors import HttpError
     from googleapiclient.http import MediaIoBaseDownload
 except ImportError as exc:                                    # pragma: no cover
     sys.exit(
         f"missing dependency: {exc.name}\n"
-        "  pip install google-api-python-client google-auth-oauthlib pyyaml"
+        "  pip install google-api-python-client google-auth pyyaml"
     )
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -91,70 +90,122 @@ def load_config() -> dict:
     if not cfg.get("folder_id"):
         sys.exit(f"{CONFIG.name}: folder_id is required")
     cfg.setdefault("cache_dir", ".drive-cache")
-    cfg.setdefault("credentials_file", "config/credentials.json")
-    cfg.setdefault("token_file", "config/token.json")
     return cfg
 
 
-def authenticate(cfg: dict):
-    """User OAuth. Returns (service, account_email).
+def key_path(cfg: dict) -> Path:
+    """Where the service-account key lives. NP_DRIVE_SA_KEY wins over config.
 
-    B10 v2 note: the nightly job should use a SERVICE ACCOUNT with the folder
-    shared to its address, not this flow — a headless job cannot complete a
-    browser consent. Nothing below blocks that: swap this function for
-    google.oauth2.service_account.Credentials.from_service_account_file(...)
-    and the rest of the script is unchanged, because everything downstream
-    takes `service` and an account label.
+    The key is a credential, so it is named by PATH and never copied into the
+    repo. `.gitignore` refuses to stage one at the repo root, but an ignore rule
+    stops a commit, not a `cp` into a build context — so this also refuses to
+    read a key from inside the repo at all.
     """
-    token_path = ROOT / cfg["token_file"]
-    creds_path = ROOT / cfg["credentials_file"]
-    creds = None
+    raw = os.environ.get("NP_DRIVE_SA_KEY") or cfg.get("service_account_key")
+    if not raw:
+        sys.exit(
+            "no service-account key configured.\n"
+            "  export NP_DRIVE_SA_KEY=/path/to/key.json\n"
+            f"  or set service_account_key in {CONFIG.name} (a PATH, never the key)"
+        )
+    path = Path(raw).expanduser()
+    if not path.is_absolute():
+        path = (ROOT / path).resolve()
+    if not path.exists():
+        sys.exit(f"service-account key not found at {path}")
+    try:
+        path.relative_to(ROOT)
+    except ValueError:
+        pass                                   # outside the repo — correct
+    else:
+        sys.exit(
+            f"refusing to read a service-account key from inside the repo:\n"
+            f"  {path}\n"
+            "Move it out (e.g. ~/.config/np-autopilot/) and chmod 600."
+        )
+    mode = path.stat().st_mode & 0o777
+    if mode & 0o077:
+        print(f"  WARNING: key is mode {mode:o}; tighten it with chmod 600 {path}",
+              file=sys.stderr)
+    return path
 
-    if token_path.exists():
-        creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
 
-    if creds and creds.expired and creds.refresh_token:
-        try:
-            creds.refresh(Request())
-        except Exception as exc:
-            print(f"  token refresh failed ({exc}); re-authenticating", file=sys.stderr)
-            creds = None
+def authenticate(cfg: dict):
+    """Service-account auth. Returns (service, account_email).
 
-    if not creds or not creds.valid:
-        if not creds_path.exists():
-            sys.exit(
-                f"missing {creds_path.relative_to(ROOT)}\n"
-                "See README, 'Google Drive access'. The OAuth consent screen must be\n"
-                "user type INTERNAL. External + Testing issues a refresh token that\n"
-                "expires after 7 days and the pipeline then dies with invalid_grant."
-            )
-        flow = InstalledAppFlow.from_client_secrets_file(str(creds_path), SCOPES)
-        creds = flow.run_local_server(port=0)
-        token_path.parent.mkdir(parents=True, exist_ok=True)
-        token_path.write_text(creds.to_json(), encoding="utf-8")
-        token_path.chmod(0o600)
+    Replaces the installed-app OAuth flow. A headless job cannot complete a
+    browser consent, and a token tied to one person's account dies when they
+    leave — both of which made the old flow unusable for a scheduled refresh.
 
+    NO DOMAIN-WIDE DELEGATION. There is deliberately no `with_subject()` call
+    here: access comes from the Drive folder being shared to the service
+    account's address, which is revocable in one click by whoever owns the
+    folder. Delegation would let this key impersonate any user in the
+    workspace, which is a far larger blast radius than reading one folder.
+
+    Scope stays drive.readonly and nothing wider. A write scope would let a
+    pipeline bug modify the team's Drive. If a future pass needs to write, it
+    gets its own credential.
+    """
+    creds = service_account.Credentials.from_service_account_file(
+        str(key_path(cfg)), scopes=SCOPES)
     service = build("drive", "v3", credentials=creds, cache_discovery=False)
+    account = getattr(creds, "service_account_email", None) or "unknown"
     try:
         about = service.about().get(fields="user(emailAddress)").execute()
         account = about["user"]["emailAddress"]
     except HttpError:
-        account = "unknown"
+        pass
     return service, account
 
 
-def list_folder(service, folder_id: str):
-    """Yield non-trashed children of one folder."""
+def drive_kind(service, folder_id: str) -> tuple[str, str | None, str]:
+    """Is the folder in a Shared Drive or in My Drive? Returns (kind, drive_id, name).
+
+    Determined BEFORE any listing, because the answer changes what a correct
+    listing call looks like — and gets it wrong silently. Without
+    supportsAllDrives/includeItemsFromAllDrives, a Shared Drive folder returns
+    an empty file list with HTTP 200: no error, no warning, just a successful
+    build over nothing. That is the worst failure shape available here, and it
+    is why the empty-enumeration guard below is fatal rather than a warning.
+    """
+    f = service.files().get(
+        fileId=folder_id,
+        fields="id, name, mimeType, driveId, trashed",
+        supportsAllDrives=True,
+    ).execute()
+    if f.get("mimeType") != FOLDER_MIME:
+        sys.exit(f"folder id resolves to a {f.get('mimeType')}, not a folder")
+    if f.get("trashed"):
+        sys.exit("the configured folder is in the trash")
+    drive_id = f.get("driveId")
+    return ("shared_drive" if drive_id else "my_drive"), drive_id, f.get("name", "")
+
+
+def list_folder(service, folder_id: str, drive_id: str | None = None):
+    """Yield non-trashed children of one folder.
+
+    supportsAllDrives and includeItemsFromAllDrives are mandatory on EVERY call,
+    not only when we believe we are on a Shared Drive — a shortcut can point
+    into one from a My Drive tree. tests/test_drive_all_drives_flags.py asserts
+    both are present on every listing call in this file.
+    """
     page = None
     while True:
-        resp = service.files().list(
+        params = dict(
             q=f"'{folder_id}' in parents and trashed = false",
             fields=FIELDS,
             pageSize=1000,
             pageToken=page,
             supportsAllDrives=True,
             includeItemsFromAllDrives=True,
-        ).execute()
+        )
+        if drive_id:
+            # Scope the query to the Shared Drive explicitly. Not strictly
+            # required alongside includeItemsFromAllDrives, but it makes a
+            # permission problem surface as an error instead of an empty page.
+            params.update(corpora="drive", driveId=drive_id)
+        resp = service.files().list(**params).execute()
         for f in resp.get("files", []):
             yield f
         page = resp.get("nextPageToken")
@@ -162,7 +213,8 @@ def list_folder(service, folder_id: str):
             return
 
 
-def walk(service, folder_id: str, prefix: Path, seen: set) -> list:
+def walk(service, folder_id: str, prefix: Path, seen: set,
+         drive_id: str | None = None) -> list:
     """Recursively enumerate the folder tree. Returns a flat list of entries."""
     if folder_id in seen:                       # Drive allows folder cycles
         print(f"  ! cycle at {prefix}, skipping", file=sys.stderr)
@@ -170,7 +222,7 @@ def walk(service, folder_id: str, prefix: Path, seen: set) -> list:
     seen.add(folder_id)
 
     out = []
-    for f in list_folder(service, folder_id):
+    for f in list_folder(service, folder_id, drive_id):
         name = f["name"].replace("/", "_")
         mime = f["mimeType"]
 
@@ -180,13 +232,13 @@ def walk(service, folder_id: str, prefix: Path, seen: set) -> list:
             if not target:
                 continue
             if tmime == FOLDER_MIME:
-                out += walk(service, target, prefix / name, seen)
+                out += walk(service, target, prefix / name, seen, drive_id)
                 continue
             f = {**f, "id": target, "mimeType": tmime}
             mime = tmime
 
         if mime == FOLDER_MIME:
-            out += walk(service, f["id"], prefix / name, seen)
+            out += walk(service, f["id"], prefix / name, seen, drive_id)
         else:
             out.append({**f, "rel_dir": prefix, "safe_name": name})
     return out
@@ -307,12 +359,15 @@ def main() -> int:
     service, account = authenticate(cfg)
     folder_id = cfg["folder_id"]
 
+    kind, drive_id, folder_name = drive_kind(service, folder_id)
+
     print(f"account : {account}")
-    print(f"folder  : {folder_id}")
+    print(f"folder  : {folder_id}  ({folder_name!r})")
+    print(f"location: {kind}" + (f", driveId {drive_id}" if drive_id else ""))
     print(f"cache   : {cache.relative_to(ROOT)}")
     print(f"scope   : {SCOPES[0]}\n")
 
-    entries = walk(service, folder_id, Path("."), set())
+    entries = walk(service, folder_id, Path("."), set(), drive_id)
     entries.sort(key=lambda e: str(e["rel_dir"] / e["safe_name"]))
 
     # An empty tree is a FAILURE, never a success. The most common cause is a
