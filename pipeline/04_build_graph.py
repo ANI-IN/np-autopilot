@@ -7,7 +7,7 @@ import os
 import re
 import sys
 import unicodedata
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -465,7 +465,13 @@ def main() -> int:
                  "source": "local-folder",
                  "drive_deferred": True,
                  "nodes": len(all_nodes), "edges": len(edges),
-                 "node_counts": {t: len(v) for t, v in by_type.items()},
+                 # Counted from all_nodes, NOT by_type. by_type is built from
+                 # resolved.json, which has no file nodes — they are created
+                 # below it — so counting from it published `file: 0` against an
+                 # expect of 74 in an auto-generated INDEX.md. A generated count
+                 # that disagrees with its own artefact is worse than a
+                 # hand-written one: it looks trustworthy.
+                 "node_counts": dict(Counter(n["type"] for n in all_nodes)),
                  "render": {"default_roster_only": len(render_default),
                             "with_hired_toggle": len(renderable),
                             "excluded_instructors": len(excluded_from_render)},
