@@ -1,0 +1,41 @@
+# np-autopilot — pinned dependencies.
+#
+# requirements.txt rather than pyproject.toml, deliberately:
+#   1. Nothing here is installable or importable as a package. The pipeline runs
+#      from a checkout, and `pipeline/` is reached via sys.path, not an entry
+#      point. pyproject.toml would declare a build backend nobody builds.
+#   2. The only job is reproducing an environment, and `pip install -r` does
+#      exactly that with no extra machinery. AUDIT §6.8 was "a teammate cannot
+#      reproduce the environment from the repo" — this is the smallest thing
+#      that fixes it.
+#   3. If the plugin ever ships as a package, or tool config (ruff, pytest)
+#      needs a home, pyproject.toml becomes the right answer. It is not yet.
+#
+# Exact pins, not ranges. This is an application environment, not a library:
+# a silent minor bump in openpyxl changes how the corpus parses, which is a data
+# correctness question, not a dependency-resolution one.
+#
+# Verify:  python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+#          .venv/bin/python -m pytest tests -q
+
+# --- corpus parsing (passes 1-4) ---
+openpyxl==3.1.5              # every .xlsx read; read_only=True everywhere
+python-docx==1.2.0           # 01_walk_corpus probes .docx shape
+PyYAML==6.0.2                # taxonomy, people, aliases, the migration baseline
+
+# --- pass 0: Google Drive, service account, drive.readonly ---
+google-api-python-client==2.200.0
+google-auth==2.49.2
+
+# --- Supabase / Postgres (D3 projection) ---
+# [binary] ships the libpq wheel; no local Postgres install required.
+psycopg[binary]==3.3.5
+
+# --- tests ---
+pytest==8.3.4
+
+# NOT included, and deliberately:
+#   google-auth-oauthlib — the installed-app OAuth flow, removed in B1 when pass
+#     0 moved to a service account. Installed on this machine as a leftover;
+#     nothing imports it.
+#   sqlalchemy — present in the ambient environment, unused here.

@@ -256,6 +256,31 @@ constraints, keep the rest running against the built artefact where it can go on
 printing sentences a human will read. CLAUDE.md §5 is about exactly this: the
 report has to stay readable or it stops being read.
 
+### A.7a What else here is two checks sharing one source of truth?
+
+The `refresh.py` bug was not "a check was missing". Two independent-looking
+guards — refresh's bump decision and `validate.py`'s version-bump assertion —
+both resolved through `.version-lock.json`, and a single write to that file
+satisfied both at once. The report said 0 FAIL while the graph had moved.
+
+**The question generalises, and the answer is not "nothing".** Candidates found
+by looking for it deliberately:
+
+| Apparent pair | Shared source | Still true? |
+|---|---|---|
+| refresh's bump decision · validate's version-bump check | `.version-lock.json` | **Yes, inherently.** The lock *is* the record of what was released, so both must read it. What changed is that only a release may WRITE it — `--no-bump` no longer does. The invariant moved from "two checks" to "one writer". |
+| `verify_migration` · the frozen baseline | `config/migration-baseline.yaml` | **Yes, unmitigated.** A wrongly re-frozen baseline makes the verifier agree with the damage. The only defence is that re-freezing is a deliberate commit that has to say why. There is no second opinion. |
+| `validate`'s `count-vs-expect` · the taxonomy `expect` values | `config/taxonomy.yaml` | **Yes, by design** — and why `person`/`instructor`/`module` carry `expect: null` rather than a guessed number. A wrong `expect` would be asserted confidently. |
+| refresh · validate · verify_migration hashing the graph | `graphio.content_hash` | **Yes, and deliberately.** One implementation prevents three-way drift about what the lock covers; the cost is that a bug in it defeats all three. `test_the_hash_is_order_independent` and `test_the_content_hash_covers_both_halves` exist for exactly this reason. |
+
+**The pattern worth naming:** a guard is only independent of another if it can
+fail while the other passes. "Two layers" that read the same file are one layer
+wearing two hats. Applied to D2 below — the fetch-time exclusion and the pass-1
+exclusion both read `taxonomy.yaml -> excluded.files`, so they are NOT two
+independent layers against a wrong entry in that list; they are two independent
+layers against a *bug in one of the two passes*, which is a narrower and honest
+claim.
+
 ### A.8 Concurrent writes and locking
 
 Two populations with genuinely different needs:
@@ -381,26 +406,40 @@ on its own.
 
 ## C · Vercel + Supabase runtime constraints
 
-### C.0 Not yet verified — I cannot connect
+### C.0 Verified — connected 2026-09-17
 
-**Re-checked 2026-09-17, after the env file was said to exist. It does not.**
+Session pooler, `ap-northeast-2`, port 5432. **PostgreSQL 17.6**
+(`server_version_num` 170006), database `postgres`, 0 tables in `public`.
 
-`~/.config/np-autopilot/` contains exactly one file, `drive-sa.json` (mode 600).
-There is no `env` beside it. I also re-checked the process environment, a login
-shell (`zsh -lc`), an interactive shell (`zsh -ic`), `~/.zshenv`, `~/.zprofile`,
-`~/.zshrc`, `~/.profile`, and looked for a dotenv file anywhere obvious. Nothing.
+Two env-file defects had to be fixed before anything would connect, both paste
+artefacts and both worth knowing because they will recur wherever these strings
+get copied: the values were wrapped in **smart quotes** (U+2018/U+2019) so the
+file would not `source`, and the password contains a literal `@` that was not
+percent-encoded, so `psycopg` split the host at the wrong point and tried to
+resolve `2026@aws-0-…`. Normalised in place, backup at mode 600.
 
-No Postgres client is installed either: `psql` is absent, and so are `psycopg`,
-`psycopg2` and `asyncpg` (only `sqlalchemy` is present, which cannot connect on
-its own).
+**Extension availability — confirmed rather than inferred:**
 
-So **AGE and pgvector availability remain unverified**, and the recommendation to
-reject AGE for v1 still rests on the size argument alone — which is sufficient on
-its own, but I would rather confirm than infer. The first thing I will run once
-connected is `pg_available_extensions`.
+| Extension | State |
+|---|---|
+| **`age`** | **NOT AVAILABLE** |
+| `vector` | available 0.8.2, not installed |
+| `ltree` | available 1.3, not installed |
+| `pg_trgm` | available 1.6, not installed |
+| `pgrouting` | available 3.4.1, not installed |
+| `pgcrypto` | available 1.3, **installed** |
+| `uuid-ossp` | available 1.1, **installed** |
 
-**Consequently the following are reasoned, not measured**, and I have flagged
-what I would verify first.
+78 extensions available in total.
+
+**So §A.1's rejection of Apache AGE is now settled on fact, not caution.** It is
+not offered on this platform at all, and the size argument — 4,021 traversable
+edges, 3 hops, fan-out 42 — was never going to justify it regardless. pgRouting
+*is* available and is equally unnecessary for the same reason.
+
+**pgvector is available**, which keeps §A.1's "defer, and keep the door open"
+honest: adding semantic retrieval later is `CREATE EXTENSION` plus a column,
+exactly the kind of additive change §A.6 is built for.
 
 ### C.1 Transaction-mode pooling: what it actually forbids
 
@@ -516,6 +555,58 @@ Stated plainly, because the requirement is not fully satisfiable as written:
 | Token acquisition + keychain storage | Every write |
 | The `/staffing` tiering rules as *presentation* instruction | The tiering *computation* |
 | **No secrets. No privileged logic.** | Every authorisation decision |
+
+### E.1a What doc 03 changes about the thin client
+
+Read 2026-09-17. Four findings that would otherwise have been baked into the
+schema and API shape. **Nothing built for these yet.**
+
+**1 · `${CLAUDE_PLUGIN_ROOT}` is EPHEMERAL.** Doc 03 §5, quoting the reference:
+*"Changes when plugin updates. The previous version's directory remains briefly
+(grace period ~14 days). Treat it as ephemeral and don't write persistent state
+there."*
+
+`knowledge/graph.json` is read-only bundled data, so shipping it there is
+correct. But **the cached auth token from §E.2 must NOT live beside it**, nor
+must a query cache. `${CLAUDE_PLUGIN_DATA}` (`~/.claude/plugins/data/{id}/`) is
+the documented home for state across updates. Had this been missed, the first
+plugin update would have silently logged everyone out — and the symptom would
+have looked like a token-expiry bug, not a storage-location bug.
+
+**2 · A path that escapes the plugin root fails SILENTLY.** Doc 03 §6: the error
+is `"path escapes plugin directory"` and the *"Result: Plugin loads without that
+component."* No hard failure.
+
+For a thin client that is a nasty failure mode: the plugin loads, the command is
+missing or a data file is unreachable, and every query answers "not in the
+graph" — which reads as a **data** problem and would be debugged against the
+corpus or the database. `claude plugin validate --strict` checks path-traversal
+violations and belongs in CI alongside the `validate.py` run from §F.1.
+
+**3 · Private-repo auto-update falls back to a full re-clone.** Doc 03 §8:
+background auto-update disables git credential helpers for private repos and
+re-clones, which the docs say *"may timeout on large repos."*
+
+**This is a second, independent reason the §F.2 split was worth doing.** It was
+undertaken for the hiring-funnel exposure; it also took the repo from 27 MB to
+**5.27 MiB**, which moves plugin updates out of that failure mode. Recorded so
+nobody later "optimises" by re-committing the intermediates and reintroduces a
+timeout whose cause is three steps away from its symptom.
+
+**Size budget, so it does not creep back: the packed repo stays under 15 MiB,
+and `knowledge/` under 8 MB.** Currently 5.27 MiB and 4.2 MB. The two things
+that would blow it are re-committing `candidates.json`/`resolved.json` (~20 MB)
+and letting `graph.html` grow unbounded. Worth a CI check once CI exists.
+
+**4 · Plugin dependencies ARE supported.** Doc 03 §11 corrects the brief: a
+`dependencies` block bundles installs, so a second plugin no longer costs every
+teammate a separate install step.
+
+Does not change one-plugin-for-now — we are at five commands, well under the
+10–15 tool-rotation threshold. It changes what a **later** split costs, and it
+adds a cheap trigger: a second plugin that does not need `knowledge/` is nearly
+free, because same-marketplace symlinks are dereferenced at install. The
+thin-client API wrapper is plausibly exactly that plugin.
 
 ### E.2 Authentication from the plugin
 
