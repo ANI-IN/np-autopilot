@@ -222,6 +222,28 @@ def main() -> int:
                 # granularities — the evidence is recorded, not merged away.
                 node.setdefault("granularity", []).append(c["granularity"])
 
+    # ---- assertion ordinals -------------------------------------------------
+    # AUDIT §A.4, the belt-and-braces half. Every source entry gets an `ordinal`
+    # naming its position among the entries on this node that share identical
+    # coordinates. Unique entries get 0.
+    #
+    # The column fix in 02_extract removes the six known collisions at source.
+    # This makes the key structurally unique regardless: a content hash that is
+    # 99.98% unique is one that fails once a year, at 3am, on a row nobody is
+    # looking at. It also means a future extractor that forgets a coordinate
+    # degrades to a duplicate ordinal rather than to a silently merged assertion.
+    #
+    # Emitted on every entry rather than only on duplicates, so the assertion key
+    # is uniform and needs no "missing means zero" special case downstream.
+    ASSERTION_COORDS = ("origin", "file", "sheet", "row", "column",
+                        "page", "within_cell")
+    for node in resolved_nodes.values():
+        seen_coords: dict[tuple, int] = {}
+        for src in node["sources"]:
+            key = tuple(src.get(k) for k in ASSERTION_COORDS)
+            src["ordinal"] = seen_coords.get(key, 0)
+            seen_coords[key] = src["ordinal"] + 1
+
     for node in resolved_nodes.values():
         if isinstance(node.get("granularity"), list):
             node["granularity"] = sorted(set(node["granularity"]))

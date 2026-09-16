@@ -438,7 +438,13 @@ def extract_pairings(root: Path, out: list, rejected: list, pairs: list) -> None
                 current = c(mcol)
             if not current or reject_reason(current, T_MODULE):
                 continue
-            prov = {"origin": ORIGIN_CORPUS, "file": rel, "sheet": sheet, "row": rownum}
+            # AUDIT §A.4. This row's provenance was shared by the module AND every
+            # instructor on it, with no column — so the same person listed in two
+            # of the ranked columns produced two source entries with identical
+            # coordinates, and a content-addressed assertion id collided. The
+            # column is known here; it was simply being discarded.
+            prov = {"origin": ORIGIN_CORPUS, "file": rel, "sheet": sheet,
+                    "row": rownum, "column": mcol + 1}
             out.append({"type": T_MODULE, "raw": current, "norm": norm(current),
                         "sheet": sheet, "domain": dom,
                         "granularity": "module",   # Module<>SME grids name modules
@@ -448,16 +454,23 @@ def extract_pairings(root: Path, out: list, rejected: list, pairs: list) -> None
                 if not name:
                     continue
                 # cells like "Robert/Shelby/" or "Ashish Kaila / JD Kelby"
-                for piece in [x.strip() for x in name.split("/") if x.strip()]:
+                pieces = [x.strip() for x in name.split("/") if x.strip()]
+                for within, piece in enumerate(pieces):
+                    # The column alone is not enough: one cell can hold several
+                    # people, so two of them would still share coordinates.
+                    iprov = {"origin": ORIGIN_CORPUS, "file": rel, "sheet": sheet,
+                             "row": rownum, "column": ic + 1}
+                    if len(pieces) > 1:
+                        iprov["within_cell"] = within
                     why = reject_reason(piece, T_INSTRUCTOR)
                     if why:
                         rejected.append({"type": T_INSTRUCTOR, "raw": piece,
-                                         "reason": why, "source": prov})
+                                         "reason": why, "source": iprov})
                         continue
                     out.append({"type": T_INSTRUCTOR, "raw": piece, "norm": norm(piece),
-                                "pipeline_status": "roster", "sources": [prov]})
+                                "pipeline_status": "roster", "sources": [iprov]})
                     pair = {"module": norm(current), "instructor": norm(piece),
-                            "rank": rank, "domain": dom, "source": prov}
+                            "rank": rank, "domain": dom, "source": iprov}
                     rc = SRC.TEACHES_RATINGS.get((rel, sheet, mcol))
                     if rc:
                         if c(rc[0]):

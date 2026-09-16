@@ -316,7 +316,12 @@ def main() -> int:
                          "relative_path": f, "sensitive": False,
                          "parsed": rec.get("parsed", False),
                          "sheet_count": rec.get("sheet_count", 0),
-                         "sources": [{"origin": taxonomy.origin_corpus(), "file": f}]}
+                         "sources": [{"origin": taxonomy.origin_corpus(), "file": f,
+                                      # file nodes are created here, after
+                                      # 03_resolve's ordinal pass, so they
+                                      # carry it explicitly. One entry per
+                                      # file node, so it is always 0.
+                                      "ordinal": 0}]}
     for n in nodes:
         for s in n.get("sources", []):
             f = s.get("file")

@@ -86,3 +86,19 @@ def test_no_hand_written_version_outside_the_generated_block():
         f"hand-written version string(s) in README prose: {stray}. "
         "Versions belong in the generated block."
     )
+
+
+def test_gen_index_runs_after_the_version_bump():
+    """README names the version, so generating it before the bump is always stale.
+
+    Caught by the README test failing immediately after a release: plugin.json
+    said 0.1.6 while the generated block still said v0.1.5.
+    """
+    src = (REPO / "pipeline" / "refresh.py").read_text(encoding="utf-8")
+    body = src.split("def main(", 1)[1]
+    bump_at = body.index("version bumped")
+    regen_at = body.index('run_pass("gen_index.py"')
+    assert regen_at > bump_at, (
+        "gen_index runs before the version bump, so the generated counts block "
+        "ships one version behind on every release"
+    )

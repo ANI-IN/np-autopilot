@@ -198,6 +198,12 @@ def main() -> int:
              "written_at": datetime.now(timezone.utc).isoformat(timespec="seconds")},
             indent=1), encoding="utf-8")
 
+    # gen_index regenerates INDEX.md and README's counts block, both of which
+    # name the plugin version — so it has to run AFTER the bump, not as one of
+    # the PASSES above. Running it before left README one version stale on every
+    # release, which is the drift the generated block was added to end.
+    run_pass("gen_index.py", [])
+
     code, out, err = run_pass("validate.py", [])
     tail = [l for l in out.splitlines() if l.startswith("RESULT") or "validate:" in l]
     print()
