@@ -20,11 +20,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import yaml                                                            # noqa: E402
 
-from pipeline.lib import taxonomy, teaching                            # noqa: E402
+from pipeline.lib import graphio, taxonomy, teaching                   # noqa: E402
 from pipeline.lib.resolve import Ambiguous, resolve as resolve_name     # noqa: E402
 from pipeline.lib.paths import CONFIG_DIR, KNOWLEDGE_DIR               # noqa: E402
 
-G = json.loads((KNOWLEDGE_DIR / "graph.json").read_text(encoding="utf-8"))
+G = graphio.load_graph()   # both halves when present; public alone otherwise
 NODES, EDGES = G["nodes"], G["edges"]
 BY = {n["id"]: n for n in NODES}
 OUT = defaultdict(list)

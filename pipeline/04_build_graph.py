@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import openpyxl                                                        # noqa: E402
 import yaml                                                            # noqa: E402
 
-from pipeline.lib import taxonomy, teaching                            # noqa: E402
+from pipeline.lib import graphio, taxonomy, teaching                   # noqa: E402
 from pipeline.lib.paths import (KNOWLEDGE_DIR, WORKFLOW_OWNERS_FILE,  # noqa: E402
                                 build_log, corpus_root)
 
@@ -467,29 +467,78 @@ def main() -> int:
     print("  must not be browsable by everyone at IK.")
     print()
 
+    # ---- SPLIT. DECISIONS §F.2 ---------------------------------------------
+    # graph.json is committed and ships with the plugin, and a personal repo has
+    # no read-only tier — so adding a collaborator grants them everything in its
+    # history. The 277 hiring rejections and 1,625 in-pipeline candidates are
+    # `recruiting` data under Q3, and the collaborators are not cleared for it.
+    #
+    # Cheap because all 1,902 sensitive nodes carry ONLY provenance edges: zero
+    # teaches, zero expert_in. Withholding them costs no teaching or expertise
+    # evidence, so /staffing answers identically. Asserted below rather than
+    # assumed, because a future change that gives a rejected candidate a teaching
+    # edge makes it expensive again and must not do so silently.
+    public, sensitive = graphio.split_graph(all_nodes, edges)
+    withheld_rels = Counter(e["rel"] for e in sensitive["edges"])
+    evidence_rels = {R("instructor_module"), R("instructor_domain")}
+    leaked = evidence_rels & set(withheld_rels)
+    if leaked:
+        print("  WARNING — the split would now withhold EVIDENCE edges: "
+              f"{sorted(leaked)}. /staffing answers will differ between someone "
+              "holding both halves and someone holding only the public file.")
+
+    common_meta = {
+        "built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "taxonomy_version": taxonomy.version(),
+        # Reported from the manifest, never asserted. These were hardcoded to
+        # local-folder / deferred, so the graph went on claiming Drive had never
+        # been read after pass 0 went live.
+        "source": manifest.get("source", "unknown"),
+        "drive_deferred": manifest.get("source") != "drive-cache",
+        "as_of": TODAY,
+    }
+
     GRAPH.write_text(json.dumps({
-        "meta": {"built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                 "taxonomy_version": taxonomy.version(),
-                 # Reported from the manifest, never asserted. These were
-                 # hardcoded to local-folder / deferred, so the graph went on
-                 # claiming Drive had never been read after pass 0 went live.
-                 "source": manifest.get("source", "unknown"),
-                 "drive_deferred": manifest.get("source") != "drive-cache",
-                 "as_of": TODAY,
-                 "nodes": len(all_nodes), "edges": len(edges),
-                 # Counted from all_nodes, NOT by_type. by_type is built from
-                 # resolved.json, which has no file nodes — they are created
-                 # below it — so counting from it published `file: 0` against an
-                 # expect of 74 in an auto-generated INDEX.md. A generated count
-                 # that disagrees with its own artefact is worse than a
-                 # hand-written one: it looks trustworthy.
-                 "node_counts": dict(Counter(n["type"] for n in all_nodes)),
+        "meta": {**common_meta,
+                 "nodes": len(public["nodes"]), "edges": len(public["edges"]),
+                 # Counted from the nodes actually in THIS file. by_type is built
+                 # from resolved.json, which has no file nodes, so counting from
+                 # it published `file: 0` against an expect of 74 in an
+                 # auto-generated INDEX.md. A generated count that disagrees with
+                 # its own artefact is worse than a hand-written one.
+                 "node_counts": dict(Counter(n["type"] for n in public["nodes"])),
+                 "edge_counts": dict(Counter(e["rel"] for e in public["edges"])),
                  "render": {"default_roster_only": len(render_default),
                             "with_hired_toggle": len(renderable),
                             "excluded_instructors": len(excluded_from_render)},
-                 "edge_counts": dict(counts)},
-        "nodes": all_nodes, "edges": edges}, indent=1, sort_keys=True), encoding="utf-8")
-    print(f"wrote {GRAPH.name}: {len(all_nodes)} nodes, {len(edges)} edges")
+                 "withheld": {
+                     "file": graphio.SENSITIVE.name,
+                     "nodes": len(sensitive["nodes"]),
+                     "edges": len(sensitive["edges"]),
+                     "edge_rels": dict(sorted(withheld_rels.items())),
+                     "reason": ("sensitive: true — hiring rejections and "
+                                "in-pipeline candidates, named external people. "
+                                "Gitignored; projected behind the recruiting RLS "
+                                "policy. See DECISIONS §F.2."),
+                 }},
+        "nodes": public["nodes"], "edges": public["edges"]},
+        indent=1, sort_keys=True), encoding="utf-8")
+
+    graphio.SENSITIVE.write_text(json.dumps({
+        "meta": {**common_meta,
+                 "nodes": len(sensitive["nodes"]), "edges": len(sensitive["edges"]),
+                 "node_counts": dict(Counter(n["type"] for n in sensitive["nodes"])),
+                 "edge_counts": dict(sorted(withheld_rels.items())),
+                 "warning": ("NOT COMMITTED and never to be. Named external people "
+                             "who were rejected or are mid-pipeline.")},
+        "nodes": sensitive["nodes"], "edges": sensitive["edges"]},
+        indent=1, sort_keys=True), encoding="utf-8")
+
+    print(f"wrote {GRAPH.name}: {len(public['nodes'])} nodes, "
+          f"{len(public['edges'])} edges  (public)")
+    print(f"wrote {graphio.SENSITIVE.name}: {len(sensitive['nodes'])} nodes, "
+          f"{len(sensitive['edges'])} edges  (GITIGNORED — "
+          f"{dict(sorted(withheld_rels.items()))})")
 
     with build_log().open("a", encoding="utf-8") as fh:
         fh.write(f"\n## {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%SZ')} — 04_build_graph\n\n")

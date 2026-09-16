@@ -18,6 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from pipeline.lib import graphio                                       # noqa: E402
 from pipeline.lib.paths import KNOWLEDGE_DIR, REPO_ROOT                # noqa: E402
 
 PLUGIN = REPO_ROOT / ".claude-plugin" / "plugin.json"
@@ -37,10 +38,9 @@ PASSES = [
 def content_hash(path: Path = GRAPH) -> str:
     """Hash of nodes+edges ONLY. Excludes meta, which carries a timestamp — so
     an unchanged corpus produces an identical hash on every run."""
-    g = json.loads(path.read_text(encoding="utf-8"))
-    payload = json.dumps({"nodes": g["nodes"], "edges": g["edges"]},
-                         sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(payload.encode()).hexdigest()
+    # Hash BOTH halves. A change confined to the withheld half is still a
+    # change the plugin build depends on, and must still force a version bump.
+    return graphio.content_hash(graphio.load_graph(path))
 
 
 def read_version() -> str:
@@ -83,11 +83,12 @@ def bump(version: str) -> str:
 def snapshot():
     if not GRAPH.exists():
         return None
-    g = json.loads(GRAPH.read_text(encoding="utf-8"))
-    return {"hash": content_hash(), "nodes": g["meta"]["nodes"],
-            "edges": g["meta"]["edges"],
-            "node_counts": dict(g["meta"].get("node_counts", {})),
-            "edge_counts": dict(g["meta"].get("edge_counts", {}))}
+    import collections
+    g = graphio.load_graph()
+    return {"hash": graphio.content_hash(g),
+            "nodes": len(g["nodes"]), "edges": len(g["edges"]),
+            "node_counts": dict(collections.Counter(n["type"] for n in g["nodes"])),
+            "edge_counts": dict(collections.Counter(e["rel"] for e in g["edges"]))}
 
 
 def run_pass(script, args):

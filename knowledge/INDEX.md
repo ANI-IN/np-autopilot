@@ -20,7 +20,7 @@ count here comes from `graph.json`.**
 > entity scan. Fetching the corpus from Drive fixed reproducibility, not
 > coverage.
 
-- Built: `2026-09-16T19:14:14+00:00`
+- Built: `2026-09-16T19:18:37+00:00`
 - Taxonomy version: `2`
 - Source: `drive-cache`
 
@@ -34,9 +34,9 @@ count here comes from `graph.json`.**
 | `domain` | 42 | 42 |
 | `program` | 42 | 42 |
 | `module` | 922 | —  (floor; coverage incomplete) |
-| `instructor` | 3817 | —  (floor; coverage incomplete) |
+| `instructor` | 1915 | —  (floor; coverage incomplete) |
 | `file` | 74 | 74 |
-| **total** | **5048** | |
+| **total** | **3146** | |
 
 ## Edges
 
@@ -52,8 +52,8 @@ count here comes from `graph.json`.**
 | `contains` | 351 |
 | `expert_in` | 1155 |
 | `teaches` | 2239 |
-| `sourced_from` | 32656 |
-| **total** | **36677** |
+| `sourced_from` | 30554 |
+| **total** | **34575** |
 
 ## Coverage caveat
 

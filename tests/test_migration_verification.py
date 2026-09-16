@@ -51,7 +51,10 @@ def baseline():
 
 @pytest.fixture(scope="module")
 def graph():
-    return json.loads(GRAPH.read_text(encoding="utf-8"))
+    """The UNION. The baseline pins the whole graph; RLS separates the halves
+    in Postgres, not the filesystem."""
+    from pipeline.lib import graphio
+    return graphio.load_graph()
 
 
 def _checked(baseline):
@@ -95,7 +98,8 @@ def test_the_baseline_records_what_will_move_it(baseline):
 # --------------------------------------------------------------------------
 
 def _mismatches(verify, baseline, mutate):
-    g = json.loads(GRAPH.read_text(encoding="utf-8"))
+    from pipeline.lib import graphio
+    g = graphio.load_graph()
     mutate(g)
     rows = verify.compare(_checked(baseline), verify.measure(g))
     return [p for ok, p, _ in rows if not ok]

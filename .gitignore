@@ -21,6 +21,13 @@ gcp-*.json
 .env.*
 !.env.example
 
+# The sensitive half of the graph. NEVER COMMITTED.
+# 277 hiring rejections and 1,625 in-pipeline candidates — named external people.
+# Under the Q3 two-role decision this is `recruiting` data, and a personal repo
+# has no read-only tier, so committing it grants every collaborator access to it
+# permanently, including through history. DECISIONS §F.2.
+knowledge/graph-sensitive.json
+
 # Local corpus cache, fetched by pipeline/00_fetch_drive.py
 .drive-cache/
 

@@ -23,7 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from pipeline.lib import taxonomy                                      # noqa: E402
+from pipeline.lib import graphio, taxonomy                             # noqa: E402
 from pipeline.lib.paths import KNOWLEDGE_DIR, build_log                # noqa: E402
 from pipeline.lib.render_logic import LOGIC, VIEW                       # noqa: E402
 
@@ -35,7 +35,7 @@ COLORS = {"theme": "#7c5cff", "workflow": "#4c8dff", "person": "#00b389",
 
 
 def main() -> int:
-    g = json.loads((KNOWLEDGE_DIR / "graph.json").read_text(encoding="utf-8"))
+    g = graphio.load_graph()
     nodes, edges = g["nodes"], g["edges"]
     prov = taxonomy.edge_for_role("provenance")
     expert = taxonomy.edge_for_role("instructor_domain")

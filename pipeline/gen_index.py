@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from pipeline.lib import taxonomy                                      # noqa: E402
+from pipeline.lib import graphio, taxonomy                             # noqa: E402
 from pipeline.lib.paths import KNOWLEDGE_DIR, REPO_ROOT                # noqa: E402
 
 README = REPO_ROOT / "README.md"
@@ -49,13 +49,24 @@ def readme_block(meta: dict, version: str) -> str:
     """
     nodes = meta["node_counts"]
     edges = meta["edge_counts"]
+    w = meta.get("withheld") or {}
     lines = [
         f"`{meta['nodes']:,} nodes · {meta['edges']:,} edges` at plugin "
         f"**v{version}**, built `{meta['built_at'][:10]}`.",
         "",
-        "| node type | count |",
-        "|---|---:|",
     ]
+    if w.get("nodes"):
+        lines += [
+            f"**Plus {w['nodes']:,} nodes and {w['edges']:,} edges withheld from "
+            f"this repo** — `sensitive: true`, hiring rejections and in-pipeline "
+            f"candidates about named external people. They live in "
+            f"`{w['file']}`, which is gitignored, and are projected behind the "
+            f"`recruiting` access policy. Full graph is "
+            f"{meta['nodes'] + w['nodes']:,} nodes / "
+            f"{meta['edges'] + w['edges']:,} edges. See `docs/DECISIONS.md` §F.2.",
+            "",
+        ]
+    lines += ["| node type | count |", "|---|---:|"]
     lines += [f"| {t} | {n:,} |" for t, n in sorted(nodes.items(), key=lambda kv: -kv[1])]
     lines += ["", "| edge type | count |", "|---|---:|"]
     lines += [f"| {t} | {n:,} |" for t, n in sorted(edges.items(), key=lambda kv: -kv[1])]
@@ -85,6 +96,9 @@ def write_readme(meta: dict) -> bool:
 
 
 def main() -> int:
+    # The PUBLIC file only. INDEX.md and README ship to collaborators who hold
+    # nothing else, so reporting the union would describe a graph they do not
+    # have. meta.withheld names the difference explicitly instead.
     g = json.loads((KNOWLEDGE_DIR / "graph.json").read_text(encoding="utf-8"))
     meta = g["meta"]
     lines = [

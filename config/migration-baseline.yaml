@@ -2,14 +2,14 @@ version: 1
 note: "Frozen migration reference. Every migration-verification run asserts against THIS,\
   \ never against a live rebuild \u2014 a live rebuild would move with the corpus and prove\
   \ nothing. Re-freeze only in a commit that says why."
-frozen_at: '2026-09-16T19:09:42+00:00'
+frozen_at: '2026-09-16T19:17:47+00:00'
 built_as_of: '2026-09-09'
 plugin_version: 0.1.8
 taxonomy_version: 2
 open_questions_that_will_move_these:
 - "Q7 aliases ML / Agentic AI / Product Management \u2014 272 expert_in edges currently unjoined.\
   \ Resolving any of them moves edge_counts and component structure."
-content_hash: d2857371789b65430f051f2c2ce9a7b4a3dda0f6df9c20880bc539c43987ee64
+content_hash: 0165f164e104d6add2b54a014a839692a8c1bab1a88de1f95c889e46c5c14250
 totals:
   nodes: 5048
   edges: 36677

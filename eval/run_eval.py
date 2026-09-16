@@ -19,12 +19,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from pipeline.lib import taxonomy, teaching                            # noqa: E402
+from pipeline.lib import graphio, taxonomy, teaching                   # noqa: E402
 from pipeline.lib.paths import KNOWLEDGE_DIR                           # noqa: E402
 
 TEACHES = taxonomy.edge_for_role("instructor_module")
 
-G = json.loads((KNOWLEDGE_DIR / "graph.json").read_text(encoding="utf-8"))
+G = graphio.load_graph()
 NODES, EDGES = G["nodes"], G["edges"]
 BY_ID = {n["id"]: n for n in NODES}
 BY_TYPE = defaultdict(list)

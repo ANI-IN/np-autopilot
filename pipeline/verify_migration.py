@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import argparse
 import collections
-import hashlib
 import json
 import sys
 from datetime import datetime, timezone
@@ -35,18 +34,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import yaml                                                            # noqa: E402
 
-from pipeline.lib import taxonomy                                      # noqa: E402
+from pipeline.lib import graphio, taxonomy                             # noqa: E402
 from pipeline.lib.paths import CONFIG_DIR, KNOWLEDGE_DIR, REPO_ROOT    # noqa: E402
 
 BASELINE = CONFIG_DIR / "migration-baseline.yaml"
 PLUGIN = REPO_ROOT / ".claude-plugin" / "plugin.json"
-
-
-def content_hash(g: dict) -> str:
-    """Hash of nodes+edges only. Excludes meta, which carries a timestamp."""
-    return hashlib.sha256(json.dumps(
-        {"nodes": g["nodes"], "edges": g["edges"]},
-        sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 def measure(g: dict) -> dict:
@@ -91,7 +83,7 @@ def measure(g: dict) -> dict:
     sizes.sort(reverse=True)
 
     return {
-        "content_hash": content_hash(g),
+        "content_hash": graphio.content_hash(g),
         "totals": {"nodes": len(nodes), "edges": len(edges)},
         "node_counts": dict(sorted(collections.Counter(n["type"] for n in nodes).items())),
         "edge_counts": dict(sorted(collections.Counter(e["rel"] for e in edges).items())),
@@ -142,7 +134,10 @@ def main() -> int:
                     help="reserved — 'supabase' lands with the projection")
     args = ap.parse_args()
 
-    g = json.loads(Path(args.graph).read_text(encoding="utf-8"))
+    # The UNION: both halves are projected into Postgres, separated there by
+    # RLS rather than by which file they live in. The baseline pins the whole
+    # graph, so verification has to see the whole graph.
+    g = graphio.load_graph(Path(args.graph))
     actual = measure(g)
 
     if args.freeze:

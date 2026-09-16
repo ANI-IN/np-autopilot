@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from pipeline.lib import taxonomy                                      # noqa: E402
+from pipeline.lib import graphio, taxonomy                             # noqa: E402
 from pipeline.lib.paths import KNOWLEDGE_DIR, build_log                # noqa: E402
 
 FAIL, WARN, INFO = "FAIL", "WARN", "INFO"
@@ -70,7 +70,10 @@ def failures(graph_path: Path, category: str | None = None) -> list[tuple[str, s
 
 
 def _run(graph_path: Path | None = None):
-    g = json.loads((graph_path or (KNOWLEDGE_DIR / "graph.json")).read_text(encoding="utf-8"))
+    # Validation reads BOTH halves. A rule that only ever sees the public file
+    # cannot catch a defect in the withheld one, and the withheld one is the
+    # half carrying judgements about named external people.
+    g = graphio.load_graph(graph_path)
     nodes, edges = g["nodes"], g["edges"]
     by_id = {n["id"]: n for n in nodes}
     by_type = defaultdict(list)
@@ -95,12 +98,12 @@ def _run(graph_path: Path | None = None):
     lock_path = KNOWLEDGE_DIR / ".version-lock.json"
     plugin_path = KNOWLEDGE_DIR.parent / ".claude-plugin" / "plugin.json"
     if lock_path.exists() and plugin_path.exists():
-        import hashlib as _h
         lock = json.loads(lock_path.read_text(encoding="utf-8"))
         cur_ver = json.loads(plugin_path.read_text(encoding="utf-8"))["version"]
-        payload = json.dumps({"nodes": g["nodes"], "edges": g["edges"]},
-                             sort_keys=True, separators=(",", ":"))
-        cur_hash = _h.sha256(payload.encode()).hexdigest()
+        # One hash implementation, shared with refresh.py and the migration
+        # verifier. Three copies of "hash the graph" is three chances to disagree
+        # about what the version lock covers.
+        cur_hash = graphio.content_hash(g)
         if cur_hash != lock.get("content_hash") and cur_ver == lock.get("plugin_version"):
             r.add(FAIL, "version-bump",
                   f"graph.json content changed but plugin.json is still {cur_ver}. "
