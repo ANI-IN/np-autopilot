@@ -3,6 +3,18 @@ config/credentials.json
 config/token.json
 config/drive.yaml
 
+# Service-account keys. The key belongs OUTSIDE the repo, referenced by path
+# through $NP_DRIVE_SA_KEY and chmod 600 — never copied in here. These patterns
+# exist because one was found at the repo root, mode 0644 and unignored, where
+# `git add -A` would have committed it. A key that cannot be staged cannot be
+# leaked by a careless commit; that is the whole job of this block.
+/*.json
+np-autopilot-*.json
+*service-account*.json
+*service_account*.json
+*-sa-key*.json
+gcp-*.json
+
 # Local corpus cache, fetched by pipeline/00_fetch_drive.py
 .drive-cache/
 
