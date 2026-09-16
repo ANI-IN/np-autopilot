@@ -30,18 +30,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-try:
-    import yaml
-    from google.oauth2 import service_account
-    from googleapiclient.discovery import build
-    from googleapiclient.errors import HttpError
-    from googleapiclient.http import MediaIoBaseDownload
-except ImportError as exc:                                    # pragma: no cover
-    sys.exit(
-        f"missing dependency: {exc.name}\n"
-        "  pip install google-api-python-client google-auth pyyaml"
-    )
-
+# The repo imports come FIRST, before the third-party ones, so that a missing
+# dependency can still be recorded in the build log. Ordered the other way, the
+# one failure most likely to hit a freshly provisioned scheduler — the libraries
+# are not installed — was the one failure that left no trace.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib.paths import DRIVE_CONFIG, REPO_ROOT, build_log      # noqa: E402
@@ -51,6 +43,55 @@ from pipeline.lib.paths import DRIVE_CONFIG, REPO_ROOT, build_log      # noqa: E
 # pipeline/lib/paths.py like every other pass.
 ROOT = REPO_ROOT
 CONFIG = DRIVE_CONFIG
+
+
+def write_log(outcome: str, detail: str, **context) -> None:
+    """Append one record for a terminal outcome. Never raises.
+
+    Called on EVERY path that ends the run, success or failure. A logging bug
+    must not become the reason a real failure goes unreported, so this swallows
+    its own errors and says so on stderr.
+    """
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
+    lines = [f"\n## {ts} — 00_fetch_drive ({outcome})\n\n"]
+    for key, value in context.items():
+        if value not in (None, ""):
+            lines.append(f"- {key.replace('_', ' ').capitalize()}: `{value}`\n")
+    for line in str(detail).strip().splitlines():
+        lines.append(f"- {line.strip()}\n")
+    try:
+        log = build_log()
+        log.parent.mkdir(parents=True, exist_ok=True)
+        if not log.exists():
+            log.write_text("# BUILD_LOG\n", encoding="utf-8")
+        with log.open("a", encoding="utf-8") as fh:
+            fh.write("".join(lines))
+    except OSError as exc:                                    # pragma: no cover
+        print(f"  WARNING: could not write the build log: {exc}", file=sys.stderr)
+
+
+def abort(detail: str, **context):
+    """Record the failure, then exit non-zero. The ONLY way this pass fails.
+
+    Pass 0 is the pass most likely to run unattended, and every one of its
+    terminal failures used to sys.exit() straight past append_build_log. The
+    empty-enumeration guard — the single most important check in the file —
+    left no trace at all, so a nightly job that fetched nothing looked exactly
+    like a nightly job that never ran.
+    """
+    write_log("FAILED", detail, **context)
+    sys.exit(detail)
+
+
+try:
+    import yaml
+    from google.oauth2 import service_account
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+    from googleapiclient.http import MediaIoBaseDownload
+except ImportError as exc:                                    # pragma: no cover
+    abort(f"missing dependency: {exc.name}\n"
+          "pip install google-api-python-client google-auth pyyaml")
 
 # Read-only. Never widen this — a write scope would let a pipeline bug modify
 # the team's Drive. If a future pass needs to write, it gets its own credential.
@@ -81,14 +122,12 @@ FIELDS = (
 
 def load_config() -> dict:
     if not CONFIG.exists():
-        sys.exit(
-            f"missing {CONFIG.relative_to(ROOT)}\n"
-            f"  cp {CONFIG.relative_to(ROOT)}.example {CONFIG.relative_to(ROOT)}\n"
-            "  then set folder_id — never hardcode it in this script."
-        )
+        abort(f"missing {CONFIG.relative_to(ROOT)}\n"
+              f"cp {CONFIG.relative_to(ROOT)}.example {CONFIG.relative_to(ROOT)}, "
+              "then set folder_id — never hardcode it in this script.")
     cfg = yaml.safe_load(CONFIG.read_text(encoding="utf-8")) or {}
     if not cfg.get("folder_id"):
-        sys.exit(f"{CONFIG.name}: folder_id is required")
+        abort(f"{CONFIG.name}: folder_id is required")
     cfg.setdefault("cache_dir", ".drive-cache")
     return cfg
 
@@ -103,26 +142,21 @@ def key_path(cfg: dict) -> Path:
     """
     raw = os.environ.get("NP_DRIVE_SA_KEY") or cfg.get("service_account_key")
     if not raw:
-        sys.exit(
-            "no service-account key configured.\n"
-            "  export NP_DRIVE_SA_KEY=/path/to/key.json\n"
-            f"  or set service_account_key in {CONFIG.name} (a PATH, never the key)"
-        )
+        abort("no service-account key configured. "
+              "export NP_DRIVE_SA_KEY=/path/to/key.json, or set "
+              f"service_account_key in {CONFIG.name} (a PATH, never the key)")
     path = Path(raw).expanduser()
     if not path.is_absolute():
         path = (ROOT / path).resolve()
     if not path.exists():
-        sys.exit(f"service-account key not found at {path}")
+        abort(f"service-account key not found at {path}")
     try:
         path.relative_to(ROOT)
     except ValueError:
         pass                                   # outside the repo — correct
     else:
-        sys.exit(
-            f"refusing to read a service-account key from inside the repo:\n"
-            f"  {path}\n"
-            "Move it out (e.g. ~/.config/np-autopilot/) and chmod 600."
-        )
+        abort("refusing to read a service-account key from inside the repo: "
+              f"{path}. Move it out (e.g. ~/.config/np-autopilot/) and chmod 600.")
     mode = path.stat().st_mode & 0o777
     if mode & 0o077:
         print(f"  WARNING: key is mode {mode:o}; tighten it with chmod 600 {path}",
@@ -175,9 +209,10 @@ def drive_kind(service, folder_id: str) -> tuple[str, str | None, str]:
         supportsAllDrives=True,
     ).execute()
     if f.get("mimeType") != FOLDER_MIME:
-        sys.exit(f"folder id resolves to a {f.get('mimeType')}, not a folder")
+        abort(f"folder id resolves to a {f.get('mimeType')}, not a folder",
+              folder_id=folder_id)
     if f.get("trashed"):
-        sys.exit("the configured folder is in the trash")
+        abort("the configured folder is in the trash", folder_id=folder_id)
     drive_id = f.get("driveId")
     return ("shared_drive" if drive_id else "my_drive"), drive_id, f.get("name", "")
 
@@ -295,32 +330,24 @@ def is_current(entry: dict, dest: Path) -> bool:
     return True if size is None else dest.stat().st_size > 0
 
 
-def append_build_log(account: str, folder_id: str, stats: dict, cache: Path) -> None:
-    """Every build records who ran it and against which folder.
+def append_build_log(account: str, folder_id: str, stats: dict, cache: Path,
+                     location: str = "", drive_id: str | None = None) -> None:
+    """The SUCCESS record. Routed through write_log so there is one writer.
 
-    Different people have different Drive visibility. A corpus delta explained
-    by "someone else ran it" must be visible here rather than mysterious.
+    Every build records who ran it and against which folder. Different people
+    have different Drive visibility, so a corpus delta explained by "someone
+    else ran it" must be visible here rather than mysterious.
     """
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
-    line = (
-        f"\n## {ts} — 00_fetch_drive\n\n"
-        f"- Authenticated account: `{account}`\n"
-        f"- Drive folder id: `{folder_id}`\n"
-        f"- Scope: `{SCOPES[0]}`\n"
-        f"- Cache: `{cache}`\n"
-        f"- Files seen: {stats['seen']} | fetched: {stats['fetched']} "
+    detail = [
+        f"Files seen: {stats['seen']} | fetched: {stats['fetched']} "
         f"| exported: {stats['exported']} | skipped current: {stats['skipped']} "
-        f"| failed: {stats['failed']}\n"
-    )
-    if stats["failures"]:
-        line += "- Failures:\n"
-        for name, why in stats["failures"]:
-            line += f"    - `{name}` — {why}\n"
-    log = build_log()
-    if not log.exists():
-        log.write_text("# BUILD_LOG\n", encoding="utf-8")
-    with log.open("a", encoding="utf-8") as fh:
-        fh.write(line)
+        f"| failed: {stats['failed']}"
+    ]
+    for name, why in stats["failures"]:
+        detail.append(f"  FAILED `{name}` — {why}")
+    write_log("partial" if stats["failed"] else "ok", "\n".join(detail),
+              account=account, folder_id=folder_id, location=location,
+              drive_id=drive_id, scope=SCOPES[0], cache=cache)
 
 
 def probe_folder(service, folder_id: str) -> str:
@@ -376,14 +403,11 @@ def main() -> int:
     # successful build over an empty corpus.
     if not entries:
         meta = probe_folder(service, folder_id)
-        sys.exit(
-            "\nFATAL: enumerated 0 files.\n"
-            f"  folder id   : {folder_id}\n"
-            f"  folder probe: {meta}\n"
-            f"  account     : {account}\n"
-            "This is never a valid result. See README, 'If the folder returns "
-            "nothing or 404s'."
-        )
+        abort("FATAL: enumerated 0 files. This is never a valid result.\n"
+              f"folder probe: {meta}\n"
+              "See README, 'If the folder returns nothing or 404s'.",
+              account=account, folder_id=folder_id, location=kind,
+              drive_id=drive_id, scope=SCOPES[0])
 
     print(f"{len(entries)} files in the Drive tree\n")
 
@@ -419,6 +443,12 @@ def main() -> int:
             print(f"  {'FAILED':>10}  {rel} — {note}", file=sys.stderr)
 
     if args.dry_run:
+        # A dry run is still a run, and its enumeration is the useful half. A
+        # scheduled job that silently switched to --dry-run would otherwise be
+        # indistinguishable from one that never ran.
+        write_log("dry-run", f"enumerated {len(entries)} files, fetched nothing",
+                  account=account, folder_id=folder_id, location=kind,
+                  drive_id=drive_id, scope=SCOPES[0])
         return 0
 
     cache.mkdir(parents=True, exist_ok=True)
@@ -428,7 +458,8 @@ def main() -> int:
                     "files": manifest}, indent=1),
         encoding="utf-8")
 
-    append_build_log(account, folder_id, stats, cache.relative_to(ROOT))
+    append_build_log(account, folder_id, stats, cache.relative_to(ROOT),
+                     location=kind, drive_id=drive_id)
     print(f"\nseen {stats['seen']} | fetched {stats['fetched']} "
           f"(exported {stats['exported']}) | current {stats['skipped']} "
           f"| failed {stats['failed']}")
