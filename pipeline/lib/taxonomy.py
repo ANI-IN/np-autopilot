@@ -176,6 +176,25 @@ def seniorities() -> list[str]:
     return vocabulary("seniority")
 
 
+def origins() -> list[str]:
+    return vocabulary("origin")
+
+
+def origin_corpus() -> str:
+    """A row in a corpus file. Emits a sourced_from edge."""
+    return origins()[0]
+
+
+def origin_hand() -> str:
+    """Out-of-corpus, entered by a person. Emits NO edge; requires `evidence`.
+
+    Kept distinct from origin_corpus by ORDER in taxonomy.yaml rather than by a
+    literal here, so the two shapes cannot drift apart in the way that let
+    `hand` be documented everywhere and present nowhere.
+    """
+    return origins()[1]
+
+
 # --------------------------------------------------------------------------
 # Exclusions and assertions
 # --------------------------------------------------------------------------

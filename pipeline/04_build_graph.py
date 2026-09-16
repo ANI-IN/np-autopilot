@@ -316,7 +316,7 @@ def main() -> int:
                          "relative_path": f, "sensitive": False,
                          "parsed": rec.get("parsed", False),
                          "sheet_count": rec.get("sheet_count", 0),
-                         "sources": [{"origin": "corpus", "file": f}]}
+                         "sources": [{"origin": taxonomy.origin_corpus(), "file": f}]}
     for n in nodes:
         for s in n.get("sources", []):
             f = s.get("file")

@@ -46,7 +46,7 @@ people:
     work_email: shashi
     employee_ids: [IK-013]
     aliases: [Shashi, Shashi Bhushan Kumar]
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — Director, Product Management"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — Director, Product Management", establishes: [title, seniority]}]
 
   - canonical: Deval Mahesh Purohit
     team: np
@@ -56,7 +56,7 @@ people:
     employee_ids: [IK-446]
     aliases: [Deval, Deval Purohit, Deval Mahesh Purohit]
     merge_confirmed: 2026-09-09      # group (a) merge, confirmed against directory
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09", establishes: [title, seniority]}]
 
   - canonical: Karthika S
     team: np
@@ -68,7 +68,7 @@ people:
     aliases: [Karthika, "Karthika ", "KARTHIKA .", Karthika S]
     not_same_as: [Karthika Pai, Karthika Saran]   # D3 + corpus scan. Pinned so no
                                                   # fuzzy pass ever merges them.
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — Product Manager 2"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — Product Manager 2", establishes: [title, seniority]}]
 
   - canonical: Adil Panwar
     team: np
@@ -77,7 +77,7 @@ people:
     work_email: adil.panwar
     employee_ids: [IK-254]
     aliases: [Adil, Adil Panwar]
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09", establishes: [title, seniority]}]
 
   - canonical: "Kalindi ."
     team: np
@@ -87,7 +87,7 @@ people:
     employee_ids: [IK-113]
     aliases: [Kalindi, "Kalindi ."]
     label_raw: "Kalindi ."
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09", establishes: [title, seniority]}]
     note: >
       The trailing " ." is her actual HR record, NOT a normalisation defect.
       Do not strip it and do not flag it. Doc 07 R3 previously listed
@@ -100,7 +100,7 @@ people:
     work_email: navdeep
     employee_ids: [IK-271, IK-272]   # two ids — evidence only, never the key
     aliases: [Navdeep, Navdeep Singh]
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09", establishes: [title, seniority]}]
 
   - canonical: Utkarsh Raj
     team: np
@@ -109,7 +109,7 @@ people:
     work_email: utkarsh.raj
     employee_ids: [IK-250]
     aliases: [Utkarsh, Utkarsh Raj]
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09", establishes: [title, seniority]}]
 
   - canonical: Animesh Kumar
     team: np
@@ -119,7 +119,7 @@ people:
     employee_ids: [IK-398, IK-INT16]  # two ids for one person — the reason
                                       # people.yaml is keyed on a slug, not an id
     aliases: [Animesh, Animesh Kumar]
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09", establishes: [title, seniority]}]
 
   - canonical: Donthoju Srushith Kumar
     team: np
@@ -130,7 +130,7 @@ people:
     aliases: [Srushith, Srushit, Srusith, Srushith Kumar Donthoju, Donthoju Srushith Kumar]
     merge_confirmed: 2026-09-09
     name_order: surname-first          # confirmed by donthoju.srushith@
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — email confirms surname-first order"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — email confirms surname-first order", establishes: [title, seniority]}]
 
   - canonical: Tanmaya Kharyal
     team: np
@@ -140,7 +140,7 @@ people:
     employee_ids: [IK-621]
     aliases: [Tanmaya, Tanmaaya, Tanmaya Kharyal]
     merge_confirmed: 2026-09-09
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09", establishes: [title, seniority]}]
 
   - canonical: Prithika K
     team: np
@@ -150,7 +150,7 @@ people:
     employee_ids: [IK-915]           # IK-915..IK-922 fill-down artefact
     aliases: [Prithika, Prithika K]
     merge_confirmed: 2026-09-09
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09", establishes: [title, seniority]}]
 
   - canonical: Uday Mehtani
     team: np
@@ -160,7 +160,7 @@ people:
     employee_ids: [IK-614, IK-INT23]
     aliases: [Uday, Uday Mehtani]
     merge_confirmed: 2026-09-09
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09", establishes: [title, seniority]}]
 
   - canonical: Vineet Patel
     team: np
@@ -170,7 +170,7 @@ people:
     employee_ids: [IK-1037, IK-INT42]
     aliases: [Vineet, Vineet Patel]
     not_same_as: [Vineet Paliwal]     # an instructor in Instructors Directory
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — moved out of doc 08 Q4 group (c)"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — moved out of doc 08 Q4 group (c)", establishes: [title, seniority]}]
 
   - canonical: Yash Mathur
     team: np
@@ -179,7 +179,7 @@ people:
     work_email: yash.mathur
     employee_ids: []                  # NONE. His ENo column is blank.
     aliases: [Yash Mathur, "Yash Mathur "]
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09", establishes: [title, seniority]}]
     note: >
       Appears in NO list in doc 08 Q4, resolved or unresolved, despite having
       ELEVEN I-Aim rows in IAims!Q226 (rows 104-114) — a file that WAS scanned.
@@ -195,7 +195,7 @@ people:
     work_email: bishal.roy
     employee_ids: [IK-INT51]
     aliases: [Bishal Roy, Bishal Biprodas Roy]
-    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — moved out of doc 08 Q4 group (c)"}]
+    sources: [{origin: hand, entered_at: 2026-09-09, evidence: "NP HR directory screenshot, 2026-09-09 — moved out of doc 08 Q4 group (c)", establishes: [title, seniority]}]
 
   # ================= team: other — in the corpus, not on the NP directory ====
   # These four were in the "resolved 13" but are absent from the current NP

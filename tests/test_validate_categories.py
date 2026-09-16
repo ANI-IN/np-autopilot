@@ -17,7 +17,7 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
 from pipeline.lib import taxonomy                                      # noqa: E402
-from pipeline.validate import categories_fired                         # noqa: E402
+from pipeline.validate import categories_fired, failures                         # noqa: E402
 
 GRAPH = REPO / "knowledge" / "graph.json"
 
@@ -33,6 +33,26 @@ def _mutate(tmp_path: Path, fn) -> Path:
 
 def _first(g, node_type):
     return next(n for n in g["nodes"] if n["type"] == node_type)
+
+
+def _hand_person(g):
+    """A person whose title rests on out-of-corpus evidence (AUDIT §A.5)."""
+    hand = taxonomy.origin_hand()
+    return next(n for n in g["nodes"]
+                if n["type"] == "person"
+                and any(s.get("origin") == hand for s in n.get("sources", [])))
+
+
+def _strip_hand_sources(g):
+    """Exactly the pre-fix behaviour: copy the title, drop the provenance.
+
+    This is what 03_resolve.py did for the entire life of the project, and what
+    nothing could detect. If this mutation stops firing hand-provenance, the
+    rule has gone vacuous again.
+    """
+    hand = taxonomy.origin_hand()
+    n = _hand_person(g)
+    n["sources"] = [s for s in n["sources"] if s.get("origin") != hand]
 
 
 def test_baseline_is_clean_for_injected_categories():
@@ -87,6 +107,70 @@ def test_all_categories_are_exercised_across_the_suite(tmp_path):
     ]
     for i, fn in enumerate(injections):
         fired |= set(categories_fired(_mutate(tmp_path / str(i), fn)))
-    _, _, _, _, _, categories = __import__("pipeline.validate", fromlist=["_run"])._run(GRAPH)
+    # index rather than unpack: _run's arity changed once already, and a
+    # positional unpack turns that into a confusing ValueError in an unrelated test
+    categories = __import__("pipeline.validate", fromlist=["_run"])._run(GRAPH)[5]
     missing = sorted(set(categories) - fired)
     assert not missing, f"never exercised, even under injection: {missing}"
+
+
+# --------------------------------------------------------------------------
+# AUDIT §A.5 — hand provenance. Asserted at FAIL level, deliberately.
+#
+# This category emits an unconditional INFO line, so it is ALWAYS present in
+# categories_fired(). Adding it to the parametrised list above produced three
+# tests that passed against the clean graph — coverage-shaped and worth nothing.
+# Caught by checking rather than trusting the green tick.
+# --------------------------------------------------------------------------
+
+def test_clean_graph_has_no_hand_provenance_failures():
+    """The baseline. Without this the injections below prove nothing."""
+    assert failures(GRAPH, "hand-provenance") == []
+
+
+def test_dropping_hand_sources_is_caught(tmp_path):
+    """Exactly the pre-fix behaviour: copy the title, drop the provenance.
+
+    03_resolve.py did this for the life of the project and nothing could see it.
+    """
+    out = _mutate(tmp_path, _strip_hand_sources)
+    found = failures(out, "hand-provenance")
+    assert found, "stripping hand provenance from a person went undetected"
+    assert any("must never be presentable" in m for _, m in found)
+
+
+def test_hand_source_without_evidence_is_caught(tmp_path):
+    def mutate(g):
+        for s in _hand_person(g)["sources"]:
+            if s.get("origin") == taxonomy.origin_hand():
+                s.pop("evidence", None)
+    assert failures(_mutate(tmp_path, mutate), "hand-provenance"), \
+        "a hand source with no evidence is unfalsifiable and must fail"
+
+
+def test_hand_source_naming_a_file_is_caught(tmp_path):
+    """A hand source that names a file would emit a sourced_from edge.
+
+    That is precisely the disguise the rule exists to prevent: out-of-corpus
+    evidence presented with a citation to a corpus file.
+    """
+    def mutate(g):
+        for s in _hand_person(g)["sources"]:
+            if s.get("origin") == taxonomy.origin_hand():
+                s["file"] = "00-master/made-up.xlsx"
+    found = failures(_mutate(tmp_path, mutate), "hand-provenance")
+    prov = taxonomy.edge_for_role("provenance")
+    assert found and any(prov in m for _, m in found)
+
+
+def test_the_rule_is_not_vacuous_on_the_real_graph():
+    """Something must actually carry hand provenance, or the check is theatre."""
+    import json
+    g = json.loads(GRAPH.read_text(encoding="utf-8"))
+    hand = taxonomy.origin_hand()
+    carriers = [n for n in g["nodes"]
+                if any(s.get("origin") == hand for s in n.get("sources", []))]
+    assert carriers, (
+        "no node carries hand provenance, so hand-provenance can never fail. "
+        "This is the state the graph was in before AUDIT §A.5 was fixed."
+    )

@@ -33,6 +33,11 @@ T_WORKFLOW, T_THEME = "workflow", "theme"
 T_PERSON, T_DOMAIN = "person", "domain"
 T_PROGRAM, T_MODULE, T_INSTRUCTOR = "program", "module", "instructor"
 
+#: Source-entry origins, from the single source. Never written as a literal:
+#: `hand` was documented in taxonomy.yaml and present in zero nodes for the
+#: entire life of the project, which is what an unguarded string buys you.
+ORIGIN_CORPUS = taxonomy.origins()[0]
+
 #: Domain labels from Sheet1, populated at run time. The For Slack grid uses
 #: them as column headers and they must not become people.
 DOMAIN_LABELS: set = set()
@@ -197,7 +202,7 @@ def scan_column(root: Path, rel: str, sheet: str, column: str, node_type: str,
                 if v is None or not str(v).strip():
                     continue
                 raw = str(v).strip()
-                prov = {"origin": "corpus", "file": rel, "sheet": sn,
+                prov = {"origin": ORIGIN_CORPUS, "file": rel, "sheet": sn,
                         "row": rownum, "column": column}
                 why = reject_reason(raw, node_type)
                 if why:
@@ -232,7 +237,7 @@ def extract_workflows(root: Path, out: list, rejected: list) -> None:
             current_wf = None
             out.append({"type": T_THEME, "raw": m.group(2).strip(),
                         "norm": norm(m.group(2)), "theme_id": theme[0],
-                        "sources": [{"origin": "corpus", "file": rel, "row": lineno}]})
+                        "sources": [{"origin": ORIGIN_CORPUS, "file": rel, "row": lineno}]})
             continue
         m = re.match(r"^###\s+(\d+)\.(\d+)\s+(.+?)\s*$", line)
         if m and theme:
@@ -240,7 +245,7 @@ def extract_workflows(root: Path, out: list, rejected: list) -> None:
                         "norm": norm(m.group(3)),
                         "workflow_id": f"{m.group(1)}.{m.group(2)}",
                         "theme_id": theme[0],
-                        "sources": [{"origin": "corpus", "file": rel, "row": lineno}]})
+                        "sources": [{"origin": ORIGIN_CORPUS, "file": rel, "row": lineno}]})
             current_wf = out[-1]
             continue
         # Workflow BODY properties. The first build extracted only id/name/theme
@@ -292,7 +297,7 @@ def extract_domains(root: Path, out: list, rejected: list, blanks: list) -> None
         dom = cell(0)
         if not dom:
             continue
-        prov = {"origin": "corpus", "file": rel, "sheet": "Sheet1", "row": rownum}
+        prov = {"origin": ORIGIN_CORPUS, "file": rel, "sheet": "Sheet1", "row": rownum}
         out.append({"type": T_DOMAIN, "raw": dom, "norm": norm(dom),
                     "cadence": cell(4), "stage": cell(5), "sources": [prov]})
         # Owner columns: split on , and / — owner columns ONLY, never the domain
@@ -358,7 +363,7 @@ def extract_slack_grid(root: Path, out: list, rejected: list) -> None:
             raw = str(v).strip()
             if raw.strip() in DOMAIN_LABELS:
                 continue
-            prov = {"origin": "corpus", "file": rel, "sheet": "For Slack",
+            prov = {"origin": ORIGIN_CORPUS, "file": rel, "sheet": "For Slack",
                     "row": rownum, "column": col}
             why = reject_reason(raw, T_PERSON)
             if why and why != "single-token name — review, not accepted silently":
@@ -388,7 +393,7 @@ def extract_people(root: Path, out: list, rejected: list, blanks: list) -> None:
                 continue
             raw = str(row[hcol]).strip()
             ident = str(row[eno]).strip() if eno is not None and eno < len(row) and row[eno] else ""
-            prov = {"origin": "corpus", "file": rel, "sheet": sn, "row": rownum}
+            prov = {"origin": ORIGIN_CORPUS, "file": rel, "sheet": sn, "row": rownum}
             if not ident:
                 # RETAINED, never dropped. Normal HR lag for a recent joiner.
                 blanks.append({"file": rel, "sheet": sn, "row": rownum,
@@ -433,7 +438,7 @@ def extract_pairings(root: Path, out: list, rejected: list, pairs: list) -> None
                 current = c(mcol)
             if not current or reject_reason(current, T_MODULE):
                 continue
-            prov = {"origin": "corpus", "file": rel, "sheet": sheet, "row": rownum}
+            prov = {"origin": ORIGIN_CORPUS, "file": rel, "sheet": sheet, "row": rownum}
             out.append({"type": T_MODULE, "raw": current, "norm": norm(current),
                         "sheet": sheet, "domain": dom,
                         "granularity": "module",   # Module<>SME grids name modules
@@ -484,7 +489,7 @@ def extract_pairings(root: Path, out: list, rejected: list, pairs: list) -> None
             name, mods = c(ni), c(mi)
             if not name or not mods or reject_reason(name, T_INSTRUCTOR):
                 continue
-            prov = {"origin": "corpus", "file": rel, "sheet": sheet, "row": rownum}
+            prov = {"origin": ORIGIN_CORPUS, "file": rel, "sheet": sheet, "row": rownum}
             for m in [x.strip() for x in mods.replace("\n", sep).split(sep) if x.strip()]:
                 if reject_reason(m, T_MODULE):
                     continue
@@ -532,7 +537,7 @@ def extract_pairings(root: Path, out: list, rejected: list, pairs: list) -> None
                             "granularity": "topic",   # coarser than a declared
                                                       # Module Name; see below
                             "resource_type": rtype,
-                            "sources": [{"origin": "corpus",
+                            "sources": [{"origin": ORIGIN_CORPUS,
                                          "file": "01-workflows/UpLevel Schedule Structure.xlsx",
                                          "sheet": sheet, "row": rownum}]})
         wb.close()
@@ -561,7 +566,7 @@ def extract_expertise(root: Path, out: list, rejected: list, claims: list) -> No
             name, subj = c(ni), c(si)
             if not name or not subj or reject_reason(name, T_INSTRUCTOR):
                 continue
-            prov = {"origin": "corpus", "file": rel, "sheet": sheet, "row": rownum}
+            prov = {"origin": ORIGIN_CORPUS, "file": rel, "sheet": sheet, "row": rownum}
             for piece in [x.strip() for x in subj.split(sep) if x.strip()]:
                 raw = piece
                 stripped = re.sub(SRC.ROLE_SUFFIX_RE, "", piece, flags=re.I).strip(" -")
@@ -606,7 +611,7 @@ def extract_schedule(root: Path, out: list, rejected: list, pairs: list) -> list
             name, topic = c(icol), c(tcol)
             if not name or not topic:
                 continue
-            prov = {"origin": "corpus", "file": SRC.SCHEDULE_FILE,
+            prov = {"origin": ORIGIN_CORPUS, "file": SRC.SCHEDULE_FILE,
                     "sheet": sheet, "row": rownum}
             if reject_reason(name, T_INSTRUCTOR):
                 continue
@@ -671,7 +676,7 @@ def extract_confirmations(root: Path, out: list) -> dict:
         # admitted. The override is EVIDENCE-BASED, not a relaxed threshold.
         out.append({"type": T_INSTRUCTOR, "raw": name, "norm": norm(name),
                     "pipeline_status": "roster", "admitted_by": "confirmation_id",
-                    "sources": [{"origin": "corpus", "file": SRC.SCHEDULE_FILE,
+                    "sources": [{"origin": ORIGIN_CORPUS, "file": SRC.SCHEDULE_FILE,
                                  "sheet": SRC.CONFIRMATION_SHEET, "row": rownum}]})
     wb.close()
     return acc
@@ -694,7 +699,7 @@ def extract_programs(root: Path, out: list) -> None:
             fam = standalone
         out.append({"type": T_PROGRAM, "raw": n, "norm": norm(n),
                     "doctype": doctype, "family": fam,
-                    "sources": [{"origin": "corpus", "file": rel}]})
+                    "sources": [{"origin": ORIGIN_CORPUS, "file": rel}]})
 
 
 def main() -> int:

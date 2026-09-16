@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import yaml                                                            # noqa: E402
 
+from pipeline.lib import taxonomy                                      # noqa: E402
 from pipeline.lib.paths import CONFIG_DIR, KNOWLEDGE_DIR, build_log    # noqa: E402
 
 RESOLVED = KNOWLEDGE_DIR / "resolved.json"
@@ -41,6 +42,24 @@ def norm_label(s: str) -> str:
     import unicodedata as _u
     s = _u.normalize("NFKD", str(s))
     return _re.sub(r"\s+", " ", _re.sub(r"[^\w\s]", " ", s).lower()).strip()
+
+
+def json_safe(value):
+    """Coerce YAML scalars that json cannot encode.
+
+    `entered_at: 2026-09-09` parses to a datetime.date, and graph.json must stay
+    plain JSON so every consumer — the plugin, the render, a future projection —
+    reads it without a custom decoder. Dates become ISO strings, which is what
+    every other date in the graph already is.
+    """
+    import datetime as _dt
+    if isinstance(value, dict):
+        return {k: json_safe(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [json_safe(v) for v in value]
+    if isinstance(value, (_dt.date, _dt.datetime)):
+        return value.isoformat()
+    return value
 
 
 def node_id(node_type: str, canonical: str) -> str:
@@ -129,6 +148,22 @@ def main() -> int:
         for key in ("title", "seniority", "status", "corpus_disagrees"):
             if meta.get(key) is not None:
                 node[key] = meta[key]
+        # Carry the HAND provenance that justifies those properties.
+        #
+        # This line is the whole of AUDIT §A.5. Without it the loop above copied
+        # `title` and `seniority` off an HR screenshot and left the node's
+        # sources list saying `corpus` and nothing else — so a count of origins
+        # across the built graph read corpus 32,730 / hand 0, and Shashi Bhushan
+        # Kumar's title was presented exactly as CLAUDE.md forbids: as though a
+        # scan had produced it.
+        #
+        # Emits no sourced_from edge: 04_build_graph only emits for entries that
+        # name a file, and a hand entry names evidence instead.
+        for src in meta.get("sources") or []:
+            if src.get("origin") == taxonomy.origin_hand():
+                entry = json_safe(src)
+                if entry not in node["sources"]:
+                    node["sources"].append(entry)
 
     # ---------------- fuzzy: PROPOSE ONLY -----------------------------------
     canon_names = sorted({n["label"] for n in resolved_nodes.values()})

@@ -527,6 +527,19 @@ expert_in_basis_vocabulary:   # edge property `basis` on expert_in
   - self_declared     # a Google Form signup. Interest, not verified capability.
   - hr_record         # an HR roster assignment.
 
+origin_vocabulary:    # source entry `origin`. REQUIRED, no default.
+  # Added 2026-09-17. The two shapes were documented under common_properties
+  # below and enforced nowhere: a count of origins across the built graph
+  # returned corpus 32,730 / hand 0, while people.yaml declared hand sources for
+  # all 15 NP staff. 03_resolve copied their title and seniority onto the node
+  # and dropped the provenance that justified them, so a hand-entered fact was
+  # presented exactly as CLAUDE.md forbids — as though a scan produced it.
+  # Naming the values here makes the rule checkable instead of narrative.
+  - corpus            # a row in a corpus file. Emits a sourced_from edge.
+  - hand              # out-of-corpus, entered by a person. Emits NO edge, and
+                      # requires a non-empty `evidence` string. Accepted only
+                      # from the files in person.out_of_corpus_sources.
+
 stage_vocabulary:     # owners sheet column 6
   - IP
   - SU
@@ -563,12 +576,23 @@ common_properties:
     #   corpus     {origin: corpus, file: <relative_path>, sheet:, row:, page:}
     #              -> emits sourced_from to that file node.
     #
-    #   hand       {origin: hand, entered_by:, entered_at:, evidence: <free text>}
+    #   hand       {origin: hand, entered_by:, entered_at:, evidence: <free text>,
+    #                establishes: [<property>, ...]}
     #              -> emits NO sourced_from edge. Used for the HR directory and
     #                 for facts carried over from the excluded payroll file.
     #                 validate.py requires a non-empty `evidence` string and
     #                 accepts this shape ONLY from config/people.yaml and
     #                 config/workflow-owners.yaml.
+    #
+    #                 `establishes` names the PROPERTIES this entry justifies.
+    #                 Corpus entries do not carry it: a corpus row establishes
+    #                 that the entity exists and what it is called, which is a
+    #                 claim about the node. A hand entry is different — the HR
+    #                 screenshot establishes `title` and `seniority` and nothing
+    #                 else, and without naming them there is no way to tell which
+    #                 of a node's properties rest on out-of-corpus evidence.
+    #                 This is the property-grained half of provenance, added only
+    #                 where properties genuinely come from different places.
     #
     # A hand-sourced fact must never be presentable as though a scan produced
     # it: `origin` is required, has no default, and answers must surface it.

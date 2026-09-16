@@ -2369,3 +2369,273 @@ document of ours. Final hash `a53462823ca26466fc5e6b3bf18615ec51bb96ed003249a866
 - Scope: `https://www.googleapis.com/auth/drive.readonly`
 - Cache: `.drive-cache`
 - Files seen: 75 | fetched: 75 | exported: 0 | skipped current: 0 | failed: 0
+
+## 2026-09-16 18:49:23Z — 01_walk_corpus
+
+- Source: `drive-cache`
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +0 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-16 18:49:54Z — 02_extract
+
+- Candidates 32656 | rejected 185 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 15617 raw, 3817 distinct
+    - module: 15195 raw, 922 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-16 18:49:55Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-16 18:49:55Z — 04_build_graph
+
+- Nodes 5048 | edges 36677
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 1155
+    - teaches: 2239
+    - sourced_from: 32656
+
+## 2026-09-16 18:49:56Z — 05_render_html
+
+- graph.html 3363 KB | rendered 2998 nodes (2096 connected, 902 isolated) and 4021 edges
+
+## 2026-09-16 18:49:56Z — validate
+
+- validate: 0 FAIL, 6 WARN, 10/18 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-16 18:51:43Z — 01_walk_corpus
+
+- Source: `drive-cache`
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +0 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-16 18:52:14Z — 02_extract
+
+- Candidates 32656 | rejected 185 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 15617 raw, 3817 distinct
+    - module: 15195 raw, 922 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-16 18:52:14Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-16 18:52:15Z — 04_build_graph
+
+- Nodes 5048 | edges 36677
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 1155
+    - teaches: 2239
+    - sourced_from: 32656
+
+## 2026-09-16 18:52:15Z — 05_render_html
+
+- graph.html 3363 KB | rendered 2998 nodes (2096 connected, 902 isolated) and 4021 edges
+
+## 2026-09-16 18:52:16Z — validate
+
+- validate: 0 FAIL, 6 WARN, 10/18 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-16 18:52:39Z — 01_walk_corpus
+
+- Source: `drive-cache`
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +0 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-16 18:53:10Z — 02_extract
+
+- Candidates 32656 | rejected 185 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 15617 raw, 3817 distinct
+    - module: 15195 raw, 922 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-16 18:53:10Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-16 18:53:11Z — 04_build_graph
+
+- Nodes 5048 | edges 36677
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 1155
+    - teaches: 2239
+    - sourced_from: 32656
+
+## 2026-09-16 18:53:11Z — 05_render_html
+
+- graph.html 3363 KB | rendered 2998 nodes (2096 connected, 902 isolated) and 4021 edges
+
+## 2026-09-16 18:53:12Z — validate
+
+- validate: 0 FAIL, 6 WARN, 10/18 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-16 18:53:44Z — 01_walk_corpus
+
+- Source: `drive-cache`
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +0 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-16 18:54:14Z — 02_extract
+
+- Candidates 32656 | rejected 185 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 15617 raw, 3817 distinct
+    - module: 15195 raw, 922 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-16 18:54:15Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-16 18:54:15Z — 04_build_graph
+
+- Nodes 5048 | edges 36677
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 1155
+    - teaches: 2239
+    - sourced_from: 32656
+
+## 2026-09-16 18:54:16Z — 05_render_html
+
+- graph.html 3363 KB | rendered 2998 nodes (2096 connected, 902 isolated) and 4021 edges
+
+## 2026-09-16 18:54:16Z — validate
+
+- validate: 0 FAIL, 6 WARN, 10/18 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-16 18:55:40Z — 01_walk_corpus
+
+- Source: `drive-cache`
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +0 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-16 18:56:12Z — 02_extract
+
+- Candidates 32656 | rejected 185 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 15617 raw, 3817 distinct
+    - module: 15195 raw, 922 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-16 18:56:12Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-16 18:56:13Z — 04_build_graph
+
+- Nodes 5048 | edges 36677
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 1155
+    - teaches: 2239
+    - sourced_from: 32656
+
+## 2026-09-16 18:56:13Z — 05_render_html
+
+- graph.html 3363 KB | rendered 2998 nodes (2096 connected, 902 isolated) and 4021 edges
+
+## 2026-09-16 18:56:14Z — validate
+
+- validate: 1 FAIL, 6 WARN, 10/18 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-16 18:56:48Z — 01_walk_corpus
+
+- Source: `drive-cache`
+- Found 75 | skipped 1 | extracted 73 | failed 1
+- Manifest diff: +0 added, ~0 changed, -0 removed
+    - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-16 18:57:23Z — 02_extract
+
+- Candidates 32656 | rejected 185 | blank identifiers retained 15
+    - domain: 42 raw, 42 distinct
+    - instructor: 15617 raw, 3817 distinct
+    - module: 15195 raw, 922 distinct
+    - person: 1652 raw, 63 distinct
+    - program: 42 raw, 42 distinct
+    - theme: 16 raw, 16 distinct
+    - workflow: 92 raw, 92 distinct
+
+## 2026-09-16 18:57:23Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-16 18:57:24Z — 04_build_graph
+
+- Nodes 5048 | edges 36677
+    - belongs_to: 92
+    - depends_on: 0
+    - workflow_owned_by: 0
+    - owned_by: 55
+    - supported_by: 58
+    - delivered_by: 43
+    - covers: 28
+    - contains: 351
+    - expert_in: 1155
+    - teaches: 2239
+    - sourced_from: 32656
+
+## 2026-09-16 18:57:25Z — 05_render_html
+
+- graph.html 3363 KB | rendered 2998 nodes (2096 connected, 902 isolated) and 4021 edges
+
+## 2026-09-16 18:57:25Z — validate
+
+- validate: 0 FAIL, 6 WARN, 10/18 categories exercised, 5048 nodes, 36677 edges

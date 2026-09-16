@@ -41,11 +41,32 @@ def categories_fired(graph_path: Path) -> list[str]:
 
     Used by tests/test_validate_categories.py to prove each check actually works
     by deliberately corrupting a graph. A check that never fires is untested.
+
+    CAUTION: "fired" means the category produced ANY finding, including an
+    unconditional INFO. Several categories always emit one, so membership here
+    cannot distinguish a clean graph from a corrupted one. For those, assert
+    against `failures()` instead — an injection test that would pass without the
+    injection is worse than no test, because it reads as coverage.
     """
     import contextlib
     import io
     with contextlib.redirect_stdout(io.StringIO()):
         return _run(graph_path)[0]
+
+
+def failures(graph_path: Path, category: str | None = None) -> list[tuple[str, str]]:
+    """FAIL-level findings, optionally for one category. Returns (category, message).
+
+    The level-aware counterpart to categories_fired(). Added when a new category
+    emitted an unconditional INFO and silently made its own injection tests
+    vacuous — they passed against the clean graph.
+    """
+    import contextlib
+    import io
+    with contextlib.redirect_stdout(io.StringIO()):
+        rows = _run(graph_path)[6]
+    return [(c, m) for lv, c, m in rows
+            if lv == FAIL and (category is None or c == category)]
 
 
 def _run(graph_path: Path | None = None):
@@ -91,7 +112,7 @@ def _run(graph_path: Path | None = None):
               "endpoint-type", "wildcard-edge", "count-vs-expect", "empty-edge-type",
               "orphan-node", "components", "absolute-path", "excluded-file",
               "excluded-field", "duplicate-id", "blank-identifier", "quarter-map",
-              "version-bump"]:
+              "version-bump", "hand-provenance"]:
         r.category(c)
 
     # provenance
@@ -228,6 +249,64 @@ def _run(graph_path: Path | None = None):
         names = sorted({b.get("name", b.get("raw", "?")) for b in blanks})
         r.add(WARN, "blank-identifier",
               f"{len(blanks)} rows retained with a blank/empty identifier: {names}")
+    # ---- hand provenance --------------------------------------------------
+    # AUDIT §A.5. taxonomy.yaml has described two source shapes since v2 and
+    # restricted the `hand` shape to two config files. A count of origins across
+    # the built graph returned corpus 32,730 / hand 0: people.yaml declared hand
+    # sources for all 15 NP staff, 03_resolve copied their `title` and
+    # `seniority` onto the node and dropped the provenance behind them, and both
+    # the taxonomy rule and this report were silent about it for the whole life
+    # of the project.
+    #
+    # A rule nothing can fail is not a rule. This category makes it falsifiable
+    # in both directions: a hand-declared property must arrive WITH its hand
+    # source, and a hand source must never masquerade as a scan.
+    import yaml as _yaml
+    hand = taxonomy.origin_hand()
+    people_cfg = _yaml.safe_load(
+        (KNOWLEDGE_DIR.parent / "config" / "people.yaml").read_text(encoding="utf-8"))
+    declared: dict[str, set[str]] = {}
+    for entry in people_cfg.get("people", []):
+        props = {p for s in (entry.get("sources") or []) if s.get("origin") == hand
+                 for p in (s.get("establishes") or [])}
+        if props:
+            declared[entry["canonical"]] = props
+
+    by_label = {n["label"]: n for n in by_type["person"]}
+    for name, props in sorted(declared.items()):
+        node = by_label.get(name)
+        if node is None:
+            continue                       # not every configured person is in the graph
+        established = {p for s in node.get("sources", [])
+                       if s.get("origin") == hand for p in (s.get("establishes") or [])}
+        for prop in sorted(props):
+            if node.get(prop) is None:
+                continue                   # the property did not reach the node
+            if prop not in established:
+                r.add(FAIL, "hand-provenance",
+                      f"person {name!r} carries {prop!r} from an out-of-corpus "
+                      f"source, but no {hand} source on the node establishes it. "
+                      "A hand-entered fact must never be presentable as though a "
+                      "scan produced it.")
+
+    hand_nodes = [n for n in nodes
+                  if any(s.get("origin") == hand for s in n.get("sources", []))]
+    for n in hand_nodes:
+        for s in n.get("sources", []):
+            if s.get("origin") != hand:
+                continue
+            if not str(s.get("evidence", "")).strip():
+                r.add(FAIL, "hand-provenance",
+                      f"{n['type']} {n['label']!r} has a {hand} source with no evidence")
+            if s.get("file"):
+                r.add(FAIL, "hand-provenance",
+                      f"{n['type']} {n['label']!r} has a {hand} source naming a file "
+                      f"({s['file']!r}); that would emit a sourced_from edge and "
+                      "present it as corpus-scanned")
+    r.add(INFO, "hand-provenance",
+          f"{len(hand_nodes)} nodes carry out-of-corpus provenance; "
+          f"{len(declared)} people declare hand-established properties")
+
     # quarter map
     qs = {q["sheet"] for q in taxonomy._raw()["quarter_vocabulary"]}
     seen_sheets = {s.get("sheet") for n in by_type["person"] for s in n.get("sources", [])
@@ -279,11 +358,12 @@ def _run(graph_path: Path | None = None):
           f"{'GRAPH REJECTED' if fails else 'graph accepted with warnings'}")
     print("=" * 78)
 
-    return sorted(r.exercised), fails, warns, len(nodes), len(edges), r.categories
+    return (sorted(r.exercised), fails, warns, len(nodes), len(edges),
+            r.categories, list(r.findings))
 
 
 def main() -> int:
-    exercised, fails, warns, nnodes, nedges, cats = _run()
+    exercised, fails, warns, nnodes, nedges, cats, _ = _run()
     delta = (f"- validate: {fails} FAIL, {warns} WARN, "
              f"{len(exercised)}/{len(cats)} categories exercised, "
              f"{nnodes} nodes, {nedges} edges")
