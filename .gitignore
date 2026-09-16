@@ -40,6 +40,17 @@ knowledge/graph-sensitive.json
 knowledge/candidates.json
 knowledge/resolved.json
 
+# The extraction rejection log. Same reasoning, found during the history rewrite:
+# historical versions named 140 withheld people and cited
+# `SME Tracker - Bullseye_IK.xlsx!Tracker - All roles` WITH A ROW NUMBER, which
+# discloses that a named external person sits in the SME hiring funnel. The
+# current version happens to carry none — the six name-shape filters that
+# rejected them were converted to flags — but "happens to carry none today" is
+# not a property worth committing against.
+#
+# Nothing reads it: 02_extract.py writes it and no consumer opens it.
+knowledge/rejections.json
+
 # Local corpus cache, fetched by pipeline/00_fetch_drive.py
 .drive-cache/
 
