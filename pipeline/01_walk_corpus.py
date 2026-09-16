@@ -23,7 +23,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import taxonomy                                    # noqa: E402
-from pipeline.lib.paths import BUILD_LOG, KNOWLEDGE_DIR, REPO_ROOT, corpus_root  # noqa: E402
+from pipeline.lib.paths import (KNOWLEDGE_DIR, REPO_ROOT, build_log,  # noqa: E402
+                                corpus_root)
 
 MANIFEST = KNOWLEDGE_DIR / "files.json"
 
@@ -302,7 +303,7 @@ def main() -> int:
     }, indent=1), encoding="utf-8")
     print(f"wrote {MANIFEST.relative_to(REPO_ROOT)}")
 
-    with BUILD_LOG.open("a", encoding="utf-8") as fh:
+    with build_log().open("a", encoding="utf-8") as fh:
         fh.write(f"\n## {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%SZ')} — 01_walk_corpus\n\n")
         fh.write(f"- Source: `{source}`{'  **NOT DRIVE — pass 0 has never run**' if source == 'local-folder' else ''}\n")
         fh.write(f"- Found {len(files)} | skipped {len(skipped)} | extracted {len(records)} | failed {len(failures)}\n")
@@ -315,7 +316,7 @@ def main() -> int:
             print("\nREBASELINED — the change above was accepted explicitly via "
                   "--rebaseline and recorded in BUILD_LOG. This flag must never "
                   "be used to make an unexplained diff go away.")
-            with BUILD_LOG.open("a", encoding="utf-8") as fh:
+            with build_log().open("a", encoding="utf-8") as fh:
                 fh.write(f"    - REBASELINE accepted: {len(changed)} changed, "
                          f"{len(removed)} removed\n")
                 for x in changed + removed:

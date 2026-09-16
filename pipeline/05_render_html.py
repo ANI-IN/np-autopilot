@@ -24,7 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import taxonomy                                      # noqa: E402
-from pipeline.lib.paths import BUILD_LOG, KNOWLEDGE_DIR                # noqa: E402
+from pipeline.lib.paths import KNOWLEDGE_DIR, build_log                # noqa: E402
 from pipeline.lib.render_logic import LOGIC, VIEW                       # noqa: E402
 
 OUT = KNOWLEDGE_DIR / "graph.html"
@@ -271,7 +271,7 @@ window.__NP={{data:{payload},files:{file_payload},colors:{colors},expert:{expert
           f"(in_pipeline / rejected / lapsed)")
     print(f"  file              : {OUT.relative_to(KNOWLEDGE_DIR.parent)}  {kb:.0f} KB, self-contained")
     print()
-    with BUILD_LOG.open("a", encoding="utf-8") as fh:
+    with build_log().open("a", encoding="utf-8") as fh:
         fh.write(f"\n## {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%SZ')} — 05_render_html\n\n")
         fh.write(f"- graph.html {kb:.0f} KB | rendered {len(renderable)} nodes "
                  f"({len(connected)} connected, {len(isolated)} isolated) "

@@ -13,7 +13,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 CONFIG_DIR = REPO_ROOT / "config"
 KNOWLEDGE_DIR = REPO_ROOT / "knowledge"
 PIPELINE_DIR = REPO_ROOT / "pipeline"
-BUILD_LOG = REPO_ROOT / "BUILD_LOG.md"
+
+#: Default build log. Overridden by NP_BUILD_LOG.
+DEFAULT_BUILD_LOG = REPO_ROOT / "BUILD_LOG.md"
 
 TAXONOMY_FILE = CONFIG_DIR / "taxonomy.yaml"
 PEOPLE_FILE = CONFIG_DIR / "people.yaml"
@@ -30,6 +32,22 @@ def corpus_root() -> Path:
     Read-only by contract. Nothing in the pipeline may write beneath it.
     """
     return Path(os.environ.get("NP_CORPUS_PATH", DEFAULT_CORPUS_PATH)).resolve()
+
+
+def build_log() -> Path:
+    """The build log, from NP_BUILD_LOG or the documented default.
+
+    A function, not a constant, for the same reason `corpus_root()` is one:
+    exactly one place decides the path, and it is injectable.
+
+    Every pass APPENDS a record of its run here, and that append is correct
+    behaviour — the log is how a corpus delta gets explained months later.
+    It is also a write into the working tree, so a test that shells out to a
+    pass used to dirty `BUILD_LOG.md` and make `git status` an unreliable
+    signal. Tests point this at a temp file (see tests/conftest.py) instead of
+    suppressing the write, so what runs under test is what runs in production.
+    """
+    return Path(os.environ.get("NP_BUILD_LOG", DEFAULT_BUILD_LOG))
 
 
 def relative_to_corpus(path: Path) -> str:

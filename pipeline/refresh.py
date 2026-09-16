@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from pipeline.lib.paths import BUILD_LOG, KNOWLEDGE_DIR, REPO_ROOT     # noqa: E402
+from pipeline.lib.paths import KNOWLEDGE_DIR, REPO_ROOT                # noqa: E402
 
 PLUGIN = REPO_ROOT / ".claude-plugin" / "plugin.json"
 GRAPH = KNOWLEDGE_DIR / "graph.json"

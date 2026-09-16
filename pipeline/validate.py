@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import taxonomy                                      # noqa: E402
-from pipeline.lib.paths import BUILD_LOG, KNOWLEDGE_DIR                # noqa: E402
+from pipeline.lib.paths import KNOWLEDGE_DIR, build_log                # noqa: E402
 
 FAIL, WARN, INFO = "FAIL", "WARN", "INFO"
 
@@ -287,7 +287,7 @@ def main() -> int:
     delta = (f"- validate: {fails} FAIL, {warns} WARN, "
              f"{len(exercised)}/{len(cats)} categories exercised, "
              f"{nnodes} nodes, {nedges} edges")
-    with BUILD_LOG.open("a", encoding="utf-8") as fh:
+    with build_log().open("a", encoding="utf-8") as fh:
         fh.write(f"\n## {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%SZ')} — validate\n\n")
         fh.write(delta + "\n")
     print(f"\nBUILD_LOG delta line:\n  {delta}")

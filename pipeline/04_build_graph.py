@@ -16,8 +16,8 @@ import openpyxl                                                        # noqa: E
 import yaml                                                            # noqa: E402
 
 from pipeline.lib import taxonomy                                      # noqa: E402
-from pipeline.lib.paths import (BUILD_LOG, KNOWLEDGE_DIR, WORKFLOW_OWNERS_FILE,  # noqa: E402
-                                corpus_root)
+from pipeline.lib.paths import (KNOWLEDGE_DIR, WORKFLOW_OWNERS_FILE,  # noqa: E402
+                                build_log, corpus_root)
 
 GRAPH = KNOWLEDGE_DIR / "graph.json"
 AGENTIC = "03-instructors/AgenticAI Instructors Training Plan.xlsx"
@@ -452,7 +452,7 @@ def main() -> int:
         "nodes": all_nodes, "edges": edges}, indent=1, sort_keys=True), encoding="utf-8")
     print(f"wrote {GRAPH.name}: {len(all_nodes)} nodes, {len(edges)} edges")
 
-    with BUILD_LOG.open("a", encoding="utf-8") as fh:
+    with build_log().open("a", encoding="utf-8") as fh:
         fh.write(f"\n## {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%SZ')} — 04_build_graph\n\n")
         fh.write(f"- Nodes {len(all_nodes)} | edges {len(edges)}\n")
         for name in taxonomy.edge_type_names():

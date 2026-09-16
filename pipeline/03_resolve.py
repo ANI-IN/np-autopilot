@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import yaml                                                            # noqa: E402
 
-from pipeline.lib.paths import BUILD_LOG, CONFIG_DIR, KNOWLEDGE_DIR    # noqa: E402
+from pipeline.lib.paths import CONFIG_DIR, KNOWLEDGE_DIR, build_log    # noqa: E402
 
 RESOLVED = KNOWLEDGE_DIR / "resolved.json"
 REVIEW = CONFIG_DIR / "people-review.yaml"
@@ -305,7 +305,7 @@ def main() -> int:
     print(f"  {'TOTAL':<12} {len(nodes):>6}")
     print()
 
-    with BUILD_LOG.open("a", encoding="utf-8") as fh:
+    with build_log().open("a", encoding="utf-8") as fh:
         from datetime import datetime
         fh.write(f"\n## {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%SZ')} — 03_resolve\n\n")
         fh.write(f"- Nodes {len(nodes)} | alias merges applied {len(seen)} | "

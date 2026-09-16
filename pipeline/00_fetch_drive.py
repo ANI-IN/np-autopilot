@@ -43,9 +43,15 @@ except ImportError as exc:                                    # pragma: no cover
         "  pip install google-api-python-client google-auth-oauthlib pyyaml"
     )
 
-ROOT = Path(__file__).resolve().parent.parent
-CONFIG = ROOT / "config" / "drive.yaml"
-BUILD_LOG = ROOT / "BUILD_LOG.md"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from pipeline.lib.paths import DRIVE_CONFIG, REPO_ROOT, build_log      # noqa: E402
+
+# Pass 0 must not become a second place where a repo path is decided. ROOT,
+# CONFIG and BUILD_LOG were all re-derived here; they now come from
+# pipeline/lib/paths.py like every other pass.
+ROOT = REPO_ROOT
+CONFIG = DRIVE_CONFIG
 
 # Read-only. Never widen this — a write scope would let a pipeline bug modify
 # the team's Drive. If a future pass needs to write, it gets its own credential.
@@ -258,9 +264,10 @@ def append_build_log(account: str, folder_id: str, stats: dict, cache: Path) -> 
         line += "- Failures:\n"
         for name, why in stats["failures"]:
             line += f"    - `{name}` — {why}\n"
-    if not BUILD_LOG.exists():
-        BUILD_LOG.write_text("# BUILD_LOG\n", encoding="utf-8")
-    with BUILD_LOG.open("a", encoding="utf-8") as fh:
+    log = build_log()
+    if not log.exists():
+        log.write_text("# BUILD_LOG\n", encoding="utf-8")
+    with log.open("a", encoding="utf-8") as fh:
         fh.write(line)
 
 

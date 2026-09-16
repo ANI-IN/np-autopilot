@@ -24,7 +24,7 @@ import openpyxl                                                       # noqa: E4
 
 from pipeline.lib import sources as SRC                                # noqa: E402
 from pipeline.lib import taxonomy                                      # noqa: E402
-from pipeline.lib.paths import BUILD_LOG, KNOWLEDGE_DIR, corpus_root   # noqa: E402
+from pipeline.lib.paths import KNOWLEDGE_DIR, build_log, corpus_root   # noqa: E402
 
 CANDIDATES = KNOWLEDGE_DIR / "candidates.json"
 REJECTIONS = KNOWLEDGE_DIR / "rejections.json"
@@ -937,7 +937,7 @@ def main() -> int:
     print(f"wrote {CANDIDATES.name} ({len(cands)} candidates)")
     print(f"wrote {REJECTIONS.name} ({len(rejected)} rejections)")
 
-    with BUILD_LOG.open("a", encoding="utf-8") as fh:
+    with build_log().open("a", encoding="utf-8") as fh:
         fh.write(f"\n## {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%SZ')} — 02_extract\n\n")
         fh.write(f"- Candidates {len(cands)} | rejected {len(rejected)} | "
                  f"blank identifiers retained {len(blanks)}\n")
