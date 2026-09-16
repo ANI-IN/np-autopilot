@@ -160,3 +160,55 @@ def test_the_hash_is_order_independent():
     shuffled = {"nodes": list(reversed(g["nodes"])),
                 "edges": list(reversed(g["edges"]))}
     assert graphio.content_hash(g) == graphio.content_hash(shuffled)
+
+
+# --------------------------------------------------------------------------
+# the split must cover every committed artefact, not just graph.json
+# --------------------------------------------------------------------------
+
+def test_no_committed_artefact_carries_the_hiring_funnel():
+    """Splitting graph.json while committing resolved.json is security theatre.
+
+    resolved.json held all 1,625 in-pipeline and 277 rejected instructor nodes;
+    candidates.json held 1,895 and 369 unresolved rows of the same. Both were
+    tracked. Found while costing the history rewrite — the forward-looking split
+    had been done on one file out of three.
+    """
+    tracked = subprocess.run(["git", "ls-files", "knowledge/"],
+                             cwd=REPO, capture_output=True, text=True).stdout.split()
+    offenders = []
+    for rel in tracked:
+        path = REPO / rel
+        if not path.exists() or path.suffix != ".json":
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            continue
+        # _graph_data.json is a bare list; the rest are objects.
+        if isinstance(data, list):
+            records = data
+        elif isinstance(data, dict):
+            records = data.get("nodes") or data.get("candidates") or []
+        else:
+            continue
+        if not isinstance(records, list):
+            continue
+        funnel = [r for r in records if isinstance(r, dict)
+                  and r.get("pipeline_status") in ("rejected", "in_pipeline")]
+        if funnel:
+            offenders.append(f"{rel}: {len(funnel)} funnel records")
+    assert not offenders, (
+        "committed artefacts still carry hiring-funnel records:\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def test_the_rendered_html_carries_no_sensitive_name():
+    """The render filter already excluded them; this pins it."""
+    if not SENSITIVE.exists():
+        pytest.skip("no sensitive half on this machine")
+    html = (REPO / "knowledge" / "graph.html").read_text(encoding="utf-8")
+    names = [n["label"] for n in json.loads(SENSITIVE.read_text(encoding="utf-8"))["nodes"]]
+    hits = [n for n in names if f'"{n}"' in html]
+    assert not hits, f"{len(hits)} withheld names appear in graph.html, e.g. {hits[:3]}"
