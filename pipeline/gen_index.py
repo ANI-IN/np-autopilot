@@ -15,7 +15,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import taxonomy                                      # noqa: E402
-from pipeline.lib.paths import KNOWLEDGE_DIR                           # noqa: E402
+from pipeline.lib.paths import KNOWLEDGE_DIR, REPO_ROOT                # noqa: E402
+
+README = REPO_ROOT / "README.md"
+PLUGIN = REPO_ROOT / ".claude-plugin" / "plugin.json"
+OPEN_MARK, CLOSE_MARK = "<!-- generated:counts -->", "<!-- /generated:counts -->"
 
 DEFERRAL = """> ## ⚠ This graph was NOT built from Google Drive
 >
@@ -32,6 +36,51 @@ DEFERRAL = """> ## ⚠ This graph was NOT built from Google Drive
 >
 > Until pass 0 runs, every count below is over what one person happened to
 > export by hand, and no statement about what Drive contains is supported."""
+
+
+def readme_block(meta: dict, version: str) -> str:
+    """The counts README publishes, rendered from graph.json and plugin.json.
+
+    README used to hand-write these. The counts were right; the version was two
+    bumps stale (`v0.1.2` against a 0.1.4 manifest), and the node table omitted
+    `file` entirely, so it summed to 4,974 against a stated 5,048 — the same
+    defect as AUDIT 6.1, in prose.
+    """
+    nodes = meta["node_counts"]
+    edges = meta["edge_counts"]
+    lines = [
+        f"`{meta['nodes']:,} nodes · {meta['edges']:,} edges` at plugin "
+        f"**v{version}**, built `{meta['built_at'][:10]}`.",
+        "",
+        "| node type | count |",
+        "|---|---:|",
+    ]
+    lines += [f"| {t} | {n:,} |" for t, n in sorted(nodes.items(), key=lambda kv: -kv[1])]
+    lines += ["", "| edge type | count |", "|---|---:|"]
+    lines += [f"| {t} | {n:,} |" for t, n in sorted(edges.items(), key=lambda kv: -kv[1])]
+    zero = [t for t in taxonomy.edge_type_names() if edges.get(t, 0) == 0]
+    if zero:
+        lines += ["", "Declared but at zero, deliberately: "
+                  + ", ".join(f"`{t}`" for t in zero) + ". No evidence in the corpus."]
+    return "\n".join(lines)
+
+
+def write_readme(meta: dict) -> bool:
+    """Splice the generated block into README.md. Returns True if it changed."""
+    if not README.exists():
+        return False
+    text = README.read_text(encoding="utf-8")
+    if OPEN_MARK not in text or CLOSE_MARK not in text:
+        print(f"  README.md has no {OPEN_MARK} block — skipped")
+        return False
+    version = json.loads(PLUGIN.read_text(encoding="utf-8"))["version"]
+    head, rest = text.split(OPEN_MARK, 1)
+    _, tail = rest.split(CLOSE_MARK, 1)
+    new = f"{head}{OPEN_MARK}\n{readme_block(meta, version)}\n{CLOSE_MARK}{tail}"
+    if new == text:
+        return False
+    README.write_text(new, encoding="utf-8")
+    return True
 
 
 def main() -> int:
@@ -69,6 +118,8 @@ def main() -> int:
               "above are floors, not totals. Never quote one as a total.", ""]
     (KNOWLEDGE_DIR / "INDEX.md").write_text("\n".join(lines), encoding="utf-8")
     print(f"wrote INDEX.md — {meta['nodes']} nodes, {meta['edges']} edges")
+    if write_readme(meta):
+        print("wrote README.md counts block")
     return 0
 
 
