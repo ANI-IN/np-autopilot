@@ -420,8 +420,20 @@ edge_types:
 
   - name: teaches
     role: instructor_module
-    edge_properties: [role, rank, avg_rating, classes, first_taught, last_taught,
-                      sessions_recorded, sessions_past, sessions_scheduled]       # stable semantic key — code resolves edges by role,
+    edge_properties: [role, rank, avg_rating, classes, class_dates]
+    # class_dates is the RAW EVIDENCE: every recorded class date for this pair,
+    # sorted and deduplicated. first_taught / last_taught / sessions_past /
+    # sessions_scheduled / sessions_recorded were STORED here until 2026-09-17
+    # and are now derived at read time by pipeline/lib/teaching.py.
+    #
+    # They were computed by partitioning these dates against "today" at BUILD
+    # time, which made the graph deterministic within a day and not across days:
+    # rebuilding the 2026-09-09 graph a week later moved 44 edges with every node
+    # and edge key untouched. That put ~44 spurious UPDATEs into every nightly
+    # projection, made "rebuild and compare" useless as verification, and left a
+    # cached plugin snapshot describing a July class as still "scheduled".
+    #
+    # Storing evidence and deriving the rest fixes all three. See AUDIT §B.4.       # stable semantic key — code resolves edges by role,
                        # never by writing the edge name as a literal
     from: instructor
     to: module

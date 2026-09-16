@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import yaml                                                            # noqa: E402
 
-from pipeline.lib import taxonomy                                      # noqa: E402
+from pipeline.lib import taxonomy, teaching                            # noqa: E402
 from pipeline.lib.resolve import Ambiguous, resolve as resolve_name     # noqa: E402
 from pipeline.lib.paths import CONFIG_DIR, KNOWLEDGE_DIR               # noqa: E402
 
@@ -91,12 +91,16 @@ def staffing(query):
     tier1 = []
     for iid, es in taught.items():
         n = BY[iid]
-        last = max((e.get("last_taught") or "" for e in es), default="")
+        # Derived at READ time from the recorded class dates, so an answer is
+        # current rather than as-of-whenever-the-graph-was-built. A cached
+        # snapshot used to report a July class as still "scheduled" (§B.4).
+        counts = [teaching.edge_sessions(e) for e in es]
+        last = max((c["last_taught"] or "" for c in counts), default="")
         tier1.append({
             "name": n["label"], "modules": sorted({BY[e["target"]]["label"] for e in es}),
             "last_taught": last or None,
-            "sessions_past": sum(e.get("sessions_past") or 0 for e in es),
-            "sessions_scheduled": sum(e.get("sessions_scheduled") or 0 for e in es),
+            "sessions_past": sum(c["past"] for c in counts),
+            "sessions_scheduled": sum(c["scheduled"] for c in counts),
             "declined": n.get("declined_count"), "confirmed": n.get("confirmed_count"),
             "decline_rate": n.get("decline_rate"),
             # Declines from eight months ago must not read like declines from

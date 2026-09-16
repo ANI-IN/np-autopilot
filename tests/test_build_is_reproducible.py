@@ -38,9 +38,10 @@ sys.path.insert(0, str(REPO))
 GRAPH = REPO / "knowledge" / "graph.json"
 BUILDER = REPO / "pipeline" / "04_build_graph.py"
 
-#: Edge fields computed against the build date. Anything added here is a new
-#: source of calendar drift and must be pinned by NP_AS_OF too.
-TIME_DERIVED_EDGE_FIELDS = {"last_taught", "sessions_past", "sessions_scheduled"}
+#: Fields that USED to be stored on the edge and are now derived at read time.
+#: None of these may reappear in graph.json — see AUDIT §B.4.
+CALENDAR_DERIVED = {"last_taught", "sessions_past", "sessions_scheduled",
+                    "sessions_recorded", "first_taught"}
 
 
 @pytest.fixture(scope="module")
@@ -82,22 +83,68 @@ def test_builder_takes_its_date_only_from_as_of_date():
     )
 
 
-def test_time_derived_fields_are_documented_and_unchanged():
-    """A new calendar-dependent edge field must be added to the pinned set.
+def test_no_calendar_derived_field_is_stored_on_an_edge():
+    """AUDIT §B.4 — the fix. These were STORED and drifted; now they are derived.
 
-    Guards the reconciliation gate: if a future change adds, say, `days_since`,
-    this fails and forces a decision about whether NP_AS_OF covers it.
+    Storing them made the graph deterministic within a day and not across days.
+    If any reappears, the nightly projection starts emitting ~44 spurious
+    UPDATEs again and "rebuild and compare" stops working as verification.
     """
     g = json.loads(GRAPH.read_text(encoding="utf-8"))
-    dated = set()
-    for e in g["edges"]:
-        for f in e:
-            if f in TIME_DERIVED_EDGE_FIELDS:
-                dated.add(f)
-    assert dated == TIME_DERIVED_EDGE_FIELDS, (
-        f"expected exactly {sorted(TIME_DERIVED_EDGE_FIELDS)} in the graph, "
-        f"found {sorted(dated)}"
+    stored = {f for e in g["edges"] for f in e if f in CALENDAR_DERIVED}
+    assert not stored, (
+        f"calendar-derived fields are stored on edges again: {sorted(stored)}. "
+        "They belong in pipeline/lib/teaching.py, computed at read time."
     )
-    # first_taught is derived from the data alone, never from the clock, so it
-    # must NOT be in the pinned set — if it drifts, that is a real change.
-    assert "first_taught" not in TIME_DERIVED_EDGE_FIELDS
+
+
+def test_the_raw_evidence_is_stored_instead():
+    """Deriving is only safe if the evidence survives. Prove it did."""
+    from pipeline.lib import teaching
+    g = json.loads(GRAPH.read_text(encoding="utf-8"))
+    with_dates = [e for e in g["edges"] if e.get(teaching.CLASS_DATES)]
+    assert len(with_dates) > 1000, (
+        f"only {len(with_dates)} edges carry class_dates; the evidence that the "
+        "derived values were computed from has been lost, not moved"
+    )
+    for e in with_dates[:50]:
+        ds = e[teaching.CLASS_DATES]
+        assert ds == sorted(set(ds)), "class_dates must be sorted and deduplicated"
+
+
+def test_a_rebuild_on_a_different_day_is_identical():
+    """The whole point of §B.4, asserted directly.
+
+    Before the fix, two builds a week apart differed on 44 edges with every node
+    and edge key untouched. Now the graph carries no clock-dependent value, so
+    the derivation date cannot reach it.
+    """
+    from pipeline.lib import teaching
+    g = json.loads(GRAPH.read_text(encoding="utf-8"))
+    edges = json.dumps(g["edges"], sort_keys=True)
+    for probe in ("2020-01-01", "2030-12-31"):
+        counts = [teaching.edge_sessions(e, probe) for e in g["edges"]
+                  if e.get(teaching.CLASS_DATES)]
+        assert counts, "no edge to probe"
+        # The stored bytes cannot change with the probe date; only the derivation does.
+        assert json.dumps(g["edges"], sort_keys=True) == edges
+    far_past = [teaching.edge_sessions(e, "2020-01-01")
+                for e in g["edges"] if e.get(teaching.CLASS_DATES)]
+    far_future = [teaching.edge_sessions(e, "2030-12-31")
+                  for e in g["edges"] if e.get(teaching.CLASS_DATES)]
+    assert sum(c["past"] for c in far_past) == 0, "nothing is past in 2020"
+    assert sum(c["scheduled"] for c in far_future) == 0, "nothing is scheduled in 2030"
+    assert (sum(c["recorded"] for c in far_past)
+            == sum(c["recorded"] for c in far_future)), "the evidence itself must not move"
+
+
+def test_last_taught_never_reports_a_future_booking():
+    """commands/staffing.md: "sessions_scheduled is a FUTURE booking — never
+    present it as history." The derivation has to honour that."""
+    from pipeline.lib import teaching
+    s = teaching.sessions(["2026-01-01", "2030-12-31"], "2026-06-01")
+    assert s["last_taught"] == "2026-01-01"
+    assert s["past"] == 1 and s["scheduled"] == 1 and s["recorded"] == 2
+    none_yet = teaching.sessions(["2030-12-31"], "2026-06-01")
+    assert none_yet["last_taught"] is None, "a future-only pair has not been taught"
+    assert none_yet["first_taught"] == "2030-12-31"

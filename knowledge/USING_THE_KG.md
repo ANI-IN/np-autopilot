@@ -312,11 +312,22 @@ classes, nothing to log. That was wrong. `Video Only` is a real value in rows 16
 and 17, but it is a separate observation, not the cause. One explanation implies
 these domains are staffed but undocumented; the other says they are not staffed.
 
-**Class dates are on the edge.** `teaches` carries `first_taught`, `last_taught`,
-`sessions_past` and `sessions_scheduled`. 1,294 of 1,889 edges have dates,
-`last_taught` running to 2026-09-09, and **13 edges are future-only — scheduled
-but never yet delivered**. A staffing answer should prefer recent delivery and
-must not present a scheduled class as teaching history.
+**Class dates are on the edge, as RAW EVIDENCE.** `teaches` carries
+`class_dates`: every recorded date for that instructor/module pair, sorted and
+deduplicated. 1,499 of 2,239 edges have dates, and some are future-only —
+scheduled but never yet delivered.
+
+`first_taught`, `last_taught`, `sessions_past`, `sessions_scheduled` and
+`sessions_recorded` are **derived at read time** by `pipeline/lib/teaching.py`,
+not stored. They used to be stored, computed against "today" at build time,
+which made the graph deterministic within a day and not across days — and left a
+cached plugin snapshot describing a July class as still "scheduled". Deriving
+them means an answer is current whenever it is asked, and the graph itself
+carries no clock-dependent value. See AUDIT §B.4.
+
+A staffing answer should prefer recent delivery and must not present a scheduled
+class as teaching history: `last_taught` is the latest date NOT in the future,
+and is `null` for a pair that is only booked.
 
 **A staffing answer must still lead with what is absent.** For a domain with no
 `teaches` edges, say so first, before offering any `expert_in` name — those are

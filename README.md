@@ -77,7 +77,7 @@ the `file` type entirely, so it summed to 4,974 against its own stated 5,048.
 `refresh.py` regenerates this on every build.
 
 <!-- generated:counts -->
-`5,048 nodes · 36,677 edges` at plugin **v0.1.7**, built `2026-09-16`.
+`5,048 nodes · 36,677 edges` at plugin **v0.1.8**, built `2026-09-16`.
 
 | node type | count |
 |---|---:|

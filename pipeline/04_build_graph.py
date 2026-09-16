@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import openpyxl                                                        # noqa: E402
 import yaml                                                            # noqa: E402
 
-from pipeline.lib import taxonomy                                      # noqa: E402
+from pipeline.lib import taxonomy, teaching                            # noqa: E402
 from pipeline.lib.paths import (KNOWLEDGE_DIR, WORKFLOW_OWNERS_FILE,  # noqa: E402
                                 build_log, corpus_root)
 
@@ -251,6 +251,8 @@ def main() -> int:
     seen_pair = set()
     # Aggregate every recorded class date per (instructor, module) first, so the
     # edge can say when it was last taught and how often, not just that it was.
+    # Recorded in meta so a build states the date it was made against,
+    # even though no edge property depends on it any more.
     TODAY = as_of_date()
     dates_for = defaultdict(list)
     for pr in cand.get("teaches_pairs", []):
@@ -279,15 +281,16 @@ def main() -> int:
         for k in ("avg_rating", "classes"):
             if pr.get(k):
                 e[k] = pr[k]
-        ds = sorted(dates_for.get((pr["instructor"], pr["module"]), []))
+        # AUDIT §B.4 — store the EVIDENCE, derive the rest at read time.
+        #
+        # This block used to write last_taught / sessions_past /
+        # sessions_scheduled by partitioning these dates against "today", which
+        # made the graph deterministic within a day and not across days: 44
+        # edges moved when the same build was repeated a week later, with every
+        # node and edge key untouched. See pipeline/lib/teaching.py.
+        ds = sorted(set(dates_for.get((pr["instructor"], pr["module"]), [])))
         if ds:
-            past = [d for d in ds if d <= TODAY]
-            future = [d for d in ds if d > TODAY]
-            e["first_taught"] = ds[0]
-            e["last_taught"] = past[-1] if past else None
-            e["sessions_recorded"] = len(ds)
-            e["sessions_past"] = len(past)
-            e["sessions_scheduled"] = len(future)
+            e[teaching.CLASS_DATES] = ds
         edges.append(e)
         taught += 1
 
@@ -469,6 +472,7 @@ def main() -> int:
                  "taxonomy_version": taxonomy.version(),
                  "source": "local-folder",
                  "drive_deferred": True,
+                 "as_of": TODAY,
                  "nodes": len(all_nodes), "edges": len(edges),
                  # Counted from all_nodes, NOT by_type. by_type is built from
                  # resolved.json, which has no file nodes — they are created

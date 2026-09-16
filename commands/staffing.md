@@ -32,6 +32,9 @@ a box on a form is the worst failure this system can produce. So:
 
 **3 · Within Taught, rank by `last_taught` then `sessions_past`.**
 `sessions_scheduled` is a **future** booking — never present it as history.
+These are computed when you ask, from the class dates on the edge, so they are
+current rather than as-of the build. `last_taught` is `null` for someone who is
+booked but has not yet taught.
 
 **4 · Availability, if present — and phrase it carefully.**
 `declined_count` / `confirmed_count` / `decline_rate` come from the class

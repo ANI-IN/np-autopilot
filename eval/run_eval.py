@@ -19,7 +19,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from pipeline.lib import taxonomy, teaching                            # noqa: E402
 from pipeline.lib.paths import KNOWLEDGE_DIR                           # noqa: E402
+
+TEACHES = taxonomy.edge_for_role("instructor_module")
 
 G = json.loads((KNOWLEDGE_DIR / "graph.json").read_text(encoding="utf-8"))
 NODES, EDGES = G["nodes"], G["edges"]
@@ -366,17 +369,21 @@ def q26():
 
 def q27():
     """What is the most recently taught class in the whole corpus, and by whom?"""
-    best = None
+    # last_taught is derived from class_dates at read time (AUDIT §B.4), through
+    # the same helper query.py uses — the eval must not reimplement the
+    # partition, or the two answers can drift apart silently.
+    best, best_date = None, ""
     for e in EDGES:
-        if e["rel"] != "teaches" or not e.get("last_taught"):
+        if e["rel"] != TEACHES:
             continue
-        if best is None or e["last_taught"] > best["last_taught"]:
-            best = e
+        last = teaching.edge_sessions(e)["last_taught"]
+        if last and last > best_date:
+            best, best_date = e, last
     if not best:
         return NOT_IN_CORPUS
     return {"instructor": BY_ID[best["source"]]["label"],
             "module": BY_ID[best["target"]]["label"],
-            "last_taught": best["last_taught"],
+            "last_taught": best_date,
             "source": (best.get("provenance") or {}).get("sheet")}
 
 
