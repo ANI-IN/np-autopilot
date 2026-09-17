@@ -79,3 +79,9 @@ venv/
 
 # Local corpus cache from pass 0
 .drive-cache/
+
+# Curation exports are REGENERATED output, not source. config/*.yaml is what a
+# human edits and what the pipeline reads; an exported file sitting beside it in
+# the tree is an invitation to edit the wrong one.
+config/*.exported.yaml
+config/*.rt-check.yaml
