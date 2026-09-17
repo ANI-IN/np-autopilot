@@ -593,10 +593,19 @@ undertaken for the hiring-funnel exposure; it also took the repo from 27 MB to
 nobody later "optimises" by re-committing the intermediates and reintroduces a
 timeout whose cause is three steps away from its symptom.
 
-**Size budget, so it does not creep back: the packed repo stays under 15 MiB,
-and `knowledge/` under 8 MB.** Currently 5.27 MiB and 4.2 MB. The two things
-that would blow it are re-committing `candidates.json`/`resolved.json` (~20 MB)
-and letting `graph.html` grow unbounded. Worth a CI check once CI exists.
+**Size budget, so it does not creep back: the PACKED repo stays under 15 MiB.**
+Currently **1.49 MiB** after the history rewrite.
+
+*(Correcting myself: I first wrote this budget as "packed under 15 MiB and
+`knowledge/` under 8 MB", citing 4.2 MB. The tracked bytes under `knowledge/`
+are **17.9 MB uncompressed** — I had measured a subset. The uncompressed figure
+was the wrong thing to budget on anyway: the failure mode is a re-clone timeout,
+which is driven by the packed size, and this JSON compresses roughly 12:1. One
+budget, on the number tied to the failure.)*
+
+The two things that would blow it are re-committing
+`candidates.json`/`resolved.json` (~20 MB uncompressed) and letting `graph.html`
+grow unbounded. Worth a CI check once CI exists.
 
 **4 · Plugin dependencies ARE supported.** Doc 03 §11 corrects the brief: a
 `dependencies` block bundles installs, so a second plugin no longer costs every
