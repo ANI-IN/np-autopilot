@@ -194,8 +194,23 @@ def main() -> int:
         print("  version lock NOT updated — --no-bump leaves the released hash "
               "alone, so validate.py still sees the mismatch it warned about")
     else:
+        # curation_version travels in the SAME lock file as content_hash, and
+        # that is worth being explicit about (DECISIONS §A.7a): validate.py's
+        # curation check reads this file, and so does refresh. They are NOT two
+        # independent guards — they are one guard wearing two hats, exactly the
+        # shape that let a content change ship under an unchanged version until
+        # refresh.py was fixed.
+        #
+        # What makes it non-vacuous is the same thing that fixed that: only ONE
+        # writer updates the lock, and it is this line, on a real release.
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location(
+            "np_curation", REPO_ROOT / "pipeline" / "curation.py")
+        _cur = _ilu.module_from_spec(_spec)
+        _spec.loader.exec_module(_cur)
         LOCK.write_text(json.dumps(
             {"content_hash": after["hash"], "plugin_version": new_version,
+             "curation_version": _cur.curation_hash(),
              "written_at": datetime.now(timezone.utc).isoformat(timespec="seconds")},
             indent=1), encoding="utf-8")
 

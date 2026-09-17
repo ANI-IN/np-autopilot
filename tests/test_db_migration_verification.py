@@ -246,17 +246,35 @@ def test_replace_all_switch_conditions_are_still_false():
     """
     with db.connect(db.SESSION) as conn, conn.cursor() as cur:
         # (1) no audit table watching graph mutations
+        # The condition is "GRAPH mutations become audited", not "any audit table
+        # exists". curation_audit watches the three curation tables, which the
+        # projection never touches — it is an argument FOR replace-all, not
+        # against it, because curation is exactly the state a rebuild must not
+        # disturb.
+        #
+        # So the test looks for an audit trail attached to the PROJECTED tables:
+        # a trigger on nodes/edges/node_sources, or a table whose rows reference
+        # them. That is what replace-all would render meaningless.
+        cur.execute("""
+            select c.relname, t.tgname
+            from pg_trigger t
+            join pg_class c on c.oid = t.tgrelid
+            join pg_namespace n on n.oid = c.relnamespace
+            where n.nspname = 'public' and not t.tgisinternal
+              and c.relname in ('nodes', 'edges', 'node_sources')""")
+        graph_triggers = cur.fetchall()
+        assert not graph_triggers, (
+            f"triggers on the projected tables ({graph_triggers}): if these audit "
+            "mutations, replace-all rewrites every row on every build and the log "
+            "cannot distinguish a real change from a rebuild. Switch "
+            "project_graph.py to the content-addressed set-diff."
+        )
         cur.execute("""
             select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace
             where n.nspname='public' and c.relkind='r'
-              and (c.relname like '%audit%' or c.relname like '%mutation%'
-                   or c.relname like '%history%')""")
-        audit = [r[0] for r in cur.fetchall()]
-        assert not audit, (
-            f"audit tables exist ({audit}): replace-all now rewrites every row on "
-            "every build, so the audit log cannot distinguish a real change from "
-            "a rebuild. Switch project_graph.py to the set-diff."
-        )
+              and c.relname like '%audit%' and c.relname <> 'curation_audit'""")
+        other = [r[0] for r in cur.fetchall()]
+        assert not other, f"a new audit table exists ({other}); check what it watches"
         # (2) nothing schedules the projection
         cur.execute("select count(*) from pg_available_extensions "
                     "where name='pg_cron' and installed_version is not null")

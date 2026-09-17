@@ -117,7 +117,8 @@ def _run(graph_path: Path | None = None):
               "endpoint-type", "wildcard-edge", "count-vs-expect", "empty-edge-type",
               "orphan-node", "components", "absolute-path", "excluded-file",
               "excluded-field", "duplicate-id", "blank-identifier", "quarter-map",
-              "version-bump", "hand-provenance", "excluded-file-cache"]:
+              "version-bump", "hand-provenance", "excluded-file-cache",
+              "curation-version"]:
         r.category(c)
 
     # provenance
@@ -277,6 +278,42 @@ def _run(graph_path: Path | None = None):
         names = sorted({b.get("name", b.get("raw", "?")) for b in blanks})
         r.add(WARN, "blank-identifier",
               f"{len(blanks)} rows retained with a blank/empty identifier: {names}")
+    # ---- curation version -------------------------------------------------
+    # F2. Enforced exactly as version-bump is, and sharing its file — which is
+    # worth naming rather than presenting as defence in depth.
+    #
+    # DECISIONS §A.7a: refresh.py and validate.py both resolve through
+    # .version-lock.json, so one write to that file satisfies both. That is not
+    # two guards; it is one guard wearing two hats, and it is the precise shape
+    # that let a content change ship under an unchanged version until refresh
+    # was fixed to baseline on the lock and to leave it alone on --no-bump.
+    #
+    # The property that makes it work is not redundancy. It is that exactly ONE
+    # writer updates the lock, on a real release. This check is the reader.
+    if lock_path.exists():
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location(
+            "np_curation", KNOWLEDGE_DIR.parent / "pipeline" / "curation.py")
+        _cur_mod = _ilu.module_from_spec(_spec)
+        _spec.loader.exec_module(_cur_mod)
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        recorded = lock.get("curation_version")
+        actual = _cur_mod.curation_hash()
+        if recorded is None:
+            r.add(WARN, "curation-version",
+                  "the lock records no curation_version. Run pipeline/refresh.py "
+                  "once to establish it; until then a curation edit cannot be "
+                  "distinguished from none.")
+        elif recorded != actual:
+            r.add(FAIL, "curation-version",
+                  f"curation content changed ({recorded[:12]} -> {actual[:12]}) "
+                  "but the version lock was not updated. people.yaml, "
+                  "domain-aliases.yaml or workflow-owners.yaml was edited without "
+                  "a rebuild, so the graph does not reflect the decision.")
+        else:
+            r.add(INFO, "curation-version",
+                  f"curation hash {actual[:12]} — consistent with the lock")
+
     # ---- hand provenance --------------------------------------------------
     # AUDIT §A.5. taxonomy.yaml has described two source shapes since v2 and
     # restricted the `hand` shape to two config files. A count of origins across

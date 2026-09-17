@@ -77,7 +77,7 @@ the `file` type entirely, so it summed to 4,974 against its own stated 5,048.
 `refresh.py` regenerates this on every build.
 
 <!-- generated:counts -->
-`3,146 nodes · 34,575 edges` at plugin **v0.1.9**, built `2026-09-16`.
+`3,146 nodes · 34,575 edges` at plugin **v0.1.9**, built `2026-09-17`.
 
 **Plus 1,902 nodes and 2,102 edges withheld from this repo** — `sensitive: true`, hiring rejections and in-pipeline candidates about named external people. They live in `graph-sensitive.json`, which is gitignored, and are projected behind the `recruiting` access policy. Full graph is 5,048 nodes / 36,677 edges. See `docs/DECISIONS.md` §F.2.
 

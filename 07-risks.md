@@ -353,6 +353,27 @@ The assumption was written down five times and verified zero times.
 
 **Set to private immediately on discovery.** Exposure window ≈ 8 days.
 
+### The repository that was exposed no longer exists
+
+The cleanest single piece of evidence for the remediation, because a repository
+id is immutable and GitHub never reuses one:
+
+| | Exposed repository | Replacement |
+|---|---|---|
+| `id` | **1363038448** | **1374030791** |
+| `node_id` | `R_kgDOUT5Q8A` | `R_kgDOUeYLxw` |
+| `created_at` | 2026-09-09T17:54:03Z | 2026-09-17T06:27:47Z |
+| `private` | **false** | **true** |
+
+Different id, different node_id, created seven hours after the deletion. The
+exposed repository was not made private and was not rewritten in place — it was
+deleted, and what carries the name now is a different object.
+
+**Traffic over the window: 0 clones, 0 views, 0 referrers, 0 popular paths**,
+captured before the deletion and preserved with the archive. Its calibration
+caveat is in `~/np-autopilot-archive/traffic-capture/CAPTURE-NOTE.md` and must
+travel with the figures.
+
 **Publicly readable during that window:** 3,817 instructor names, of whom **277
 hiring rejections** and 1,625 mid-pipeline candidates; 39 per-instructor ratings;
 136 decline rates; 140 `rejections.json` entries naming a person against an SME

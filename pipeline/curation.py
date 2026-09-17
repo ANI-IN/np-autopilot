@@ -69,9 +69,43 @@ def _jsonable(value):
     return value
 
 
+def curation_hash() -> str:
+    """Deterministic hash of the curation CONTENT the pipeline actually reads.
+
+    Hashes the PARSED yaml, not the file bytes, so reformatting or a comment
+    edit does not look like a decision change — and a decision change cannot
+    hide behind identical formatting.
+
+    Computed from the FILES rather than the database on purpose: the files are
+    what passes 2-4 consume, validate.py runs with no database, and a lock that
+    could only be checked with a connection would go unchecked wherever it
+    mattered most.
+    """
+    import hashlib
+    payload = {}
+    for fname, list_key, *_ in SPECS:
+        data = yaml.safe_load((CONFIG_DIR / fname).read_text(encoding="utf-8"))
+        payload[fname] = _jsonable(data.get(list_key) or [])
+    canon = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canon.encode()).hexdigest()
+
+
 def cmd_import() -> int:
     with db.connect(db.SESSION) as conn:
         with conn.cursor() as cur:
+            # This IS the service layer, in its import direction, so it declares
+            # itself rather than being exempted from the trigger.
+            #
+            # The trigger exists to stop ad-hoc single-row edits that skip
+            # optimistic locking and clobber a concurrent decision. A full
+            # reload from the canonical YAML is a different operation: it has no
+            # concurrent counterpart to lose, because it replaces everything
+            # from the file the pipeline already treats as authoritative.
+            #
+            # It is deliberately NOT a general escape hatch — the flag is set
+            # here and in web/lib/curation_service.py, and a test asserts no
+            # third place sets it.
+            cur.execute("select set_config('np.writing_through_service','on',true)")
             # Order matters: people_aliases and workflow_owners reference people.
             cur.execute("truncate workflow_owners, people_aliases, "
                         "domain_aliases, people")
@@ -106,6 +140,20 @@ def cmd_import() -> int:
                     cur.execute(
                         f"insert into {table} ({', '.join(names)}) values ({ph})",
                         list(values.values()) + [json.dumps(props, sort_keys=True)])
+                # The UNRESOLVED aliases live under a different key and have no
+                # target. They are the decisions this system exists to surface,
+                # so they are imported rather than left in a YAML comment where
+                # nothing can query them.
+                if table == "domain_aliases":
+                    for row in (data.get("ambiguous") or []):
+                        cur.execute(
+                            "insert into domain_aliases(alias, domain, claims, "
+                            "sibling_test, confirmed, note, props) values "
+                            "(%s, null, %s, 'failed', false, %s, %s) "
+                            "on conflict (alias) do nothing",
+                            (row["alias"], row.get("claims"), row.get("why"),
+                             json.dumps({"candidates": row.get("candidates") or [],
+                                         "unresolved": True}, sort_keys=True)))
                 if table == "people":
                     for row in rows:
                         for alias in (row.get("aliases") or []):

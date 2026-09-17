@@ -20,7 +20,7 @@ count here comes from `graph.json`.**
 > entity scan. Fetching the corpus from Drive fixed reproducibility, not
 > coverage.
 
-- Built: `2026-09-16T19:55:46+00:00`
+- Built: `2026-09-17T07:28:53+00:00`
 - Taxonomy version: `2`
 - Source: `drive-cache`
 

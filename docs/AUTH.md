@@ -104,13 +104,27 @@ so a reader can tell which records are attributable to a person and which are
 not. It is a **configured list**, not detection — Google does not tell us, and
 an unlisted shared mailbox is indistinguishable from a personal one.
 
-**Recommendation, yours to accept or override:** do not grant `recruiting` to a
-shared account. The `member` tier reads a graph with no personal hiring data,
-where "which account" is adequate. The `recruiting` tier reads named hiring
-outcomes about external people, and that is exactly where an unattributable
-access log stops being acceptable. Enforcing this is one `CHECK` constraint away
-if you want it; it is not written yet, because whether it holds is your call and
-a constraint that gets dropped in an emergency is worse than a documented rule.
+**ENFORCED, as of migration 0008.** A listed shared account cannot hold
+`recruiting` or `admin`:
+
+```sql
+alter table profiles add constraint shared_accounts_stay_member
+    check (not (is_shared_account and role in ('recruiting', 'admin')));
+```
+
+A constraint someone has to consciously drop is a better record than a rule
+someone has to remember. `member` reads a graph with no personal hiring data,
+where "which account" is adequate; `recruiting` reads named hiring outcomes about
+external people, which is exactly where an unattributable access log stops being
+acceptable. The curation service refuses a shared actor as well, so the rule
+holds at both layers.
+
+**Its limit, and it must not be over-claimed: this defends against the
+CONFIGURED list only.** Shared-account *detection* does not exist — Google does
+not tell us which mailboxes are shared — so an unlisted shared account is
+indistinguishable from a personal one and passes the check. Keeping
+`NP_SHARED_ACCOUNTS` current is an operational task, not something the database
+can do for you.
 
 ---
 
@@ -141,10 +155,13 @@ and an access log that records only endpoint names cannot answer it.
 
 **Not yet built, and named so it is not mistaken for done:**
 
-- The log goes to stdout, which Vercel captures. It is **not** in a table with
-  RLS keeping it out of reach of the people it describes. §E.4 wants that.
-- There is no retention policy.
-- Reads are logged. Writes are not, because there are none.
+- **READS** go to stdout, which Vercel captures. Not yet a table.
+- **WRITES are now a real table** — `curation_audit`, with RLS and *no policy*,
+  so it is unreachable by `authenticated` entirely. Every curation write records
+  actor, before-value, after-value and a mandatory reason. Writes were the point
+  at which stdout stopped being adequate: a lost read log is a missing answer, a
+  lost write log is an unattributable change.
+- There is still no retention policy.
 
 ---
 

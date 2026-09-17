@@ -25,7 +25,10 @@ forks 0 · stars 0 · watchers 0 · collaborators: ANI-IN only
 implementation* being public as a risk **while contrasting it against this repo
 being private**. The assumption was never checked against the API until now.
 
-**Set to private immediately on discovery.** Exposure window ≈ 8 days.
+**Set to private immediately on discovery.** Exposure window ≈ 8 days, and the
+repository was subsequently **deleted and recreated** — different immutable id
+(1363038448 → 1374030791), different node_id, `private: true`. See `07-risks.md`
+R18 for the full pair.
 
 ### What was publicly readable during that window
 

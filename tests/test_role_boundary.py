@@ -280,9 +280,20 @@ def test_anon_holds_no_grants_at_all():
             from information_schema.role_table_grants
             where table_schema = 'public' and grantee = 'authenticated'
             group by table_name order by table_name""")
+        # Curation tables gained write grants in 0008, gated by admin-only RLS
+        # policies AND a trigger that refuses writes outside the service layer.
+        # Everything else stays SELECT: the graph projection is read-only and a
+        # write grant on it would have no policy to justify it.
+        CURATION = {"people", "people_aliases", "domain_aliases", "workflow_owners"}
         for table, privs in cur.fetchall():
-            assert privs == "SELECT", (
-                f"authenticated holds {privs} on {table}; read-only means SELECT"
+            got = set(privs.split(","))
+            if table in CURATION:
+                assert got <= {"SELECT", "INSERT", "UPDATE", "DELETE"}, (
+                    f"authenticated holds {sorted(got)} on curation table {table}")
+                continue
+            assert got == {"SELECT"}, (
+                f"authenticated holds {sorted(got)} on {table}; the projected "
+                "graph is read-only and a write grant has no policy behind it"
             )
 
 
