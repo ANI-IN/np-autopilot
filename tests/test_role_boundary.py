@@ -280,21 +280,63 @@ def test_anon_holds_no_grants_at_all():
             from information_schema.role_table_grants
             where table_schema = 'public' and grantee = 'authenticated'
             group by table_name order by table_name""")
-        # Curation tables gained write grants in 0008, gated by admin-only RLS
-        # policies AND a trigger that refuses writes outside the service layer.
-        # Everything else stays SELECT: the graph projection is read-only and a
-        # write grant on it would have no policy to justify it.
-        CURATION = {"people", "people_aliases", "domain_aliases", "workflow_owners"}
-        for table, privs in cur.fetchall():
+        cur_grants = cur.fetchall()
+        # A write grant is permitted only where BOTH of the things that make
+        # it safe are present: admin-only RLS, and the trigger that refuses a
+        # write arriving outside the service layer.
+        #
+        # DERIVED, not a hardcoded list of table names. The first version named
+        # the four curation tables; migration 0011 then added curation_notes
+        # with the same grants and the test failed as an unknown table rather
+        # than telling anyone what was actually missing. A list is a thing
+        # someone has to remember to update, and the next table added by
+        # someone in a hurry is exactly when nobody does.
+        cur.execute("""
+            select c.relname, c.relrowsecurity,
+                   count(*) filter (where p.proname = 'require_version_predicate')
+            from pg_class c
+            join pg_namespace n on n.oid = c.relnamespace and n.nspname = 'public'
+            left join pg_trigger tg on tg.tgrelid = c.oid and not tg.tgisinternal
+            left join pg_proc p on p.oid = tg.tgfoid
+            where c.relkind = 'r'
+            group by 1, 2""")
+        guarded = {r[0]: (r[1], r[2] > 0) for r in cur.fetchall()}
+
+        writable = []
+        for table, privs in cur_grants:
             got = set(privs.split(","))
-            if table in CURATION:
-                assert got <= {"SELECT", "INSERT", "UPDATE", "DELETE"}, (
-                    f"authenticated holds {sorted(got)} on curation table {table}")
+            if got == {"SELECT"}:
                 continue
-            assert got == {"SELECT"}, (
-                f"authenticated holds {sorted(got)} on {table}; the projected "
-                "graph is read-only and a write grant has no policy behind it"
-            )
+            rls, service_only = guarded.get(table, (False, False))
+            assert got <= {"SELECT", "INSERT", "UPDATE", "DELETE"}, (
+                f"authenticated holds {sorted(got)} on {table}")
+            assert rls, (
+                f"{table} grants writes to authenticated with RLS DISABLED — "
+                "the grant is the only thing standing between a member and the "
+                "row")
+            assert service_only, (
+                f"{table} grants writes to authenticated but has no "
+                "require_version_predicate trigger, so a direct UPDATE can "
+                "clobber a concurrent decision with no optimistic-locking "
+                "predicate and no audit row")
+            writable.append(table)
+
+        # And the projected graph is not among them. Stated positively so that
+        # a future grant on `nodes` fails here rather than passing because the
+        # loop above simply found no violation to report.
+        assert not ({"nodes", "edges", "node_sources", "files"} & set(writable)), (
+            f"the projected graph is writable by authenticated: {writable}")
+        # The invariant, both directions at once: a table is writable by
+        # `authenticated` if and only if the service-layer trigger guards it.
+        #
+        # A grant without the trigger is an unaudited write route (that is
+        # people_aliases, closed in 0012). A trigger without the grant is a
+        # service that cannot write — and that failure arrives as rowcount 0,
+        # which reads exactly like "the row was not there".
+        guarded_tables = {t for t, (_, svc) in guarded.items() if svc}
+        assert set(writable) == guarded_tables, (
+            f"write grants {sorted(writable)} do not match the tables the "
+            f"service-layer trigger guards {sorted(guarded_tables)}")
 
 
 def test_a_newly_created_table_grants_nothing_to_anon_or_authenticated():
