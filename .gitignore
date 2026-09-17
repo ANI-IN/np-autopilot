@@ -15,6 +15,18 @@ np-autopilot-*.json
 *-sa-key*.json
 gcp-*.json
 
+# THE ONE EXCEPTION to `/*.json`, and it needs stating because the rule above is
+# there for a real reason: a live service-account key was once sitting at the
+# repo root, mode 0644, unignored.
+#
+# But Vercel reads its configuration from the REPOSITORY. An ignored vercel.json
+# does not fail to deploy — it deploys WITHOUT the security headers: no CSP, no
+# HSTS, no frame-options, and the page's inline scripts run because nothing is
+# there to refuse them. The site comes up, looks correct, and is unprotected.
+# That is the A.7b shape in a config file, so it gets a test as well as a
+# comment: tests/test_login_flow.py::test_vercel_config_is_actually_tracked.
+!/vercel.json
+
 # Environment files. Supabase connection strings and the service-role key are
 # secrets; they belong in a file outside the repo (mode 600), named by path.
 .env

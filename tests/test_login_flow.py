@@ -372,3 +372,24 @@ def test_the_explorer_never_asks_for_the_whole_graph():
     for banned in ("/api/graph", "/api/all", "__NP.data =", "nodes.json"):
         assert banned not in html, f"the client references {banned!r}"
     assert "nodeBudget" in html, "no ceiling on what the client will hold"
+
+
+def test_vercel_config_is_actually_tracked_by_git():
+    """`/*.json` in .gitignore caught vercel.json, and nothing would have said so.
+
+    The rule exists because a live service-account key once sat at the repo
+    root. But Vercel reads its configuration from the repository: an ignored
+    vercel.json deploys WITHOUT the CSP, HSTS and frame-options headers. The
+    site comes up and looks right. The headers this repo carefully configures
+    simply are not there.
+
+    Checked against git itself rather than the filesystem, because the file is
+    present locally either way — which is exactly why it went unnoticed.
+    """
+    import subprocess
+    out = subprocess.run(["git", "ls-files", "--error-unmatch", "vercel.json"],
+                         cwd=REPO, capture_output=True, text=True)
+    assert out.returncode == 0, (
+        "vercel.json is not tracked by git. Vercel reads config from the repo, "
+        "so the deployment would have no security headers at all. Check "
+        ".gitignore for a rule matching it.")

@@ -1,188 +1,800 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NP Autopilot — graph explorer</title>
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NP Autopilot — knowledge graph</title>
 <style>
-  :root {
-    --bg:#0d1117; --panel:#161b22; --line:#30363d; --fg:#e6edf3; --dim:#8b949e;
-    --accent:#4c8dff; --warn:#f0c674; --hand:#d29922;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--fg);
-       font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-  header{padding:14px 18px;border-bottom:1px solid var(--line);
-         display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-  h1{font-size:15px;margin:0;font-weight:600}
-  .caveat{font-size:11.5px;color:var(--warn);background:#2d1e00;
-          border:1px solid #6b4b00;border-radius:6px;padding:6px 10px;margin:0}
-  main{display:grid;grid-template-columns:330px 1fr;gap:0;height:calc(100vh - 62px)}
-  @media (max-width:860px){main{grid-template-columns:1fr;height:auto}}
-  aside{border-right:1px solid var(--line);padding:14px 16px;overflow-y:auto}
-  section{padding:14px 18px;overflow-y:auto}
-  label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
-        color:var(--dim);margin:14px 0 5px}
-  input,select,button{background:var(--bg);border:1px solid var(--line);
-       color:var(--fg);border-radius:6px;padding:7px 9px;font:inherit;font-size:13px;width:100%}
-  button{cursor:pointer;background:var(--panel)}
-  button:hover{border-color:var(--accent)}
-  .row{display:flex;gap:7px}
-  .hit{padding:6px 8px;border-radius:6px;cursor:pointer;display:flex;gap:8px;align-items:center}
-  .hit:hover{background:var(--panel)}
-  .t{font-size:10px;color:var(--dim);margin-left:auto;flex:none}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;
-        padding:12px 14px;margin-bottom:12px}
-  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;
-           color:var(--dim);margin:0 0 8px}
-  table{width:100%;border-collapse:collapse;font-size:12.5px}
-  td,th{padding:3px 6px;text-align:left;border-bottom:1px solid #21262d;vertical-align:top}
-  th{color:var(--dim);font-weight:500}
-  .hand{border-left:3px solid var(--hand);padding-left:10px}
-  .hand h2{color:var(--hand)}
-  .pill{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:99px;
-        border:1px solid var(--line);color:var(--dim)}
-  .err{color:#ff7b72}
-  code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--dim)}
-</style>
-</head>
-<body>
-<header>
-  <h1>NP Autopilot — graph explorer</h1>
-  <span class="pill" id="who">not signed in</span>
-  <p class="caveat">Read-only. <b>person, instructor and module counts are floors</b>
-     over 127 of 374 worksheets — never totals. Hiring-funnel records are not in
-     this database at all.</p>
-</header>
+*{box-sizing:border-box}
+body{margin:0;font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+background:#0d1117;color:#e6edf3;overflow:hidden}
+#c{position:fixed;inset:0;cursor:grab}
+.pane{position:fixed;top:0;bottom:0;overflow-y:auto;padding:14px;
+background:rgba(13,17,23,.96);border-color:#21262d;z-index:5}
+#left{left:0;width:300px;border-right:1px solid #21262d}
+#right{right:0;width:330px;border-left:1px solid #21262d;display:none}
+h1{font-size:15px;margin:0 0 2px}
+.sub{color:#8b949e;font-size:11px;margin-bottom:10px}
+.warn{background:#2d1e00;border:1px solid #6b4b00;border-radius:6px;padding:8px;
+margin:8px 0;font-size:10.5px;color:#f0c674;line-height:1.45}
+.err{background:#2d0f0f;border:1px solid #6b2020;color:#ff9a9a}
+h2{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;
+margin:14px 0 6px}
+h2 span{text-transform:none;letter-spacing:0;color:#6e7681}
+input[type=search],select{width:100%;background:#0d1117;border:1px solid #30363d;
+color:#e6edf3;border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit}
+input[type=search]:focus,select:focus{outline:none;border-color:#4c8dff}
+.tf{display:flex;align-items:center;gap:6px;font-size:11px;padding:2px 0;cursor:pointer}
+.tf i{width:9px;height:9px;border-radius:2px}
+label.ck{display:flex;gap:7px;align-items:center;font-size:11px;cursor:pointer;padding:4px 0}
+#res{margin-top:6px;max-height:260px;overflow-y:auto}
+.hit{padding:4px 6px;border-radius:5px;cursor:pointer;font-size:11.5px;
+display:flex;gap:6px;align-items:center}
+.hit:hover{background:#161b22} .hit i{width:7px;height:7px;border-radius:2px;flex:none}
+.hit span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hit em{color:#8b949e;font-style:normal;margin-left:auto;font-size:10px;flex:none}
+#tip{position:fixed;pointer-events:none;background:#161b22;border:1px solid #30363d;
+border-radius:5px;padding:6px 9px;font-size:11px;display:none;max-width:290px;z-index:9}
+.nb{font-size:11px;padding:3px 0;border-bottom:1px solid #161b22;cursor:pointer}
+.nb:hover{color:#4c8dff}
+.rel{color:#8b949e;font-size:10px} .dash{color:#00c2d1}
+.src{font-size:10px;color:#8b949e;word-break:break-all;padding:2px 0}
+button{background:#21262d;border:1px solid #30363d;color:#e6edf3;border-radius:6px;
+padding:5px 9px;font-size:11px;cursor:pointer;font-family:inherit;margin:4px 4px 0 0}
+button:hover{border-color:#4c8dff}
+#tools{position:fixed;left:312px;top:12px;z-index:6}
+#diag{position:fixed;right:342px;top:14px;font-size:10px;color:#6e7681;z-index:6}
+/* ---- provenance. corpus and hand are VISUALLY different, not flagged ---- */
+.prov-corpus{border-left:2px solid #3fb950;padding-left:7px;margin:3px 0}
+.prov-hand{border-left:2px solid #d29922;padding-left:7px;margin:3px 0;
+background:#221a05;border-radius:0 4px 4px 0;padding:4px 7px}
+.prov-hand .tagline{color:#d29922;font-size:9.5px;text-transform:uppercase;
+letter-spacing:.06em;font-weight:600}
+.prov-corpus .tagline{color:#3fb950;font-size:9.5px;text-transform:uppercase;
+letter-spacing:.06em;font-weight:600}
+/* ---- the auth gate ---- */
+#gate{position:fixed;inset:0;z-index:50;background:#0d1117;display:flex;
+align-items:center;justify-content:center}
+#gatebox{max-width:460px;padding:26px 28px;border:1px solid #21262d;border-radius:10px;
+background:#0f141a}
+#gatebox h1{font-size:17px}
+#gatemsg{margin-top:12px;font-size:11.5px;line-height:1.55;color:#8b949e}
+#gsi{margin-top:16px;min-height:44px}
+</style></head><body>
 
-<main>
-<aside>
-  <label for="token">ID token (Bearer)</label>
-  <input id="token" type="password" placeholder="Google ID token" autocomplete="off">
-  <p style="font-size:11.5px;color:var(--dim);margin:6px 0 0">
-    Verified server-side: signature against Google's JWKS, audience, and the
-    <code>hd</code> claim. An <code>@interviewkickstart.com</code> address alone
-    is not accepted.</p>
+<canvas id="c"></canvas>
+<div id="tip"></div>
+<div id="diag"></div>
 
-  <label for="q">Search</label>
-  <div class="row">
-    <input id="q" placeholder="backend, 8.2, Animesh" autocomplete="off">
-    <button id="go" style="width:auto">Go</button>
+<div id="tools">
+  <button type="button" id="fit">fit</button>
+  <button type="button" id="zin">+</button>
+  <button type="button" id="zout">&minus;</button>
+</div>
+
+<div class="pane" id="left">
+  <h1>NP Autopilot</h1>
+  <div class="sub" id="who">&nbsp;</div>
+  <div id="banner"></div>
+
+  <h2>Search <span>the graph</span></h2>
+  <input type="search" id="q" placeholder="person, domain, module, workflow&hellip;" autocomplete="off">
+  <div id="res"></div>
+
+  <h2>Expansion</h2>
+  <label class="ck"><span>depth</span>
+    <select id="depth"><option value="1" selected>1</option><option value="2">2</option>
+    <option value="3">3</option></select></label>
+  <label class="ck"><input type="checkbox" id="iso"> show unconnected</label>
+  <label class="ck"><input type="checkbox" id="dash" checked> show declared expertise</label>
+  <label class="ck"><input type="checkbox" id="drift" checked> decorative drift</label>
+  <label class="ck"><input type="checkbox" id="sep"> separate components</label>
+
+  <h2>Types</h2>
+  <div id="types"></div>
+
+  <h2>Loaded <span>&mdash; not the whole graph</span></h2>
+  <div id="stat" class="src"></div>
+  <div class="warn" id="scopewarn">
+    This explorer fetches <b>neighbourhoods</b>, never the whole graph. What you
+    see is what you have expanded to. A gap here is a gap in what you asked for,
+    not evidence that the corpus lacks it.
   </div>
+  <div class="warn" id="notported">
+    <b>Not carried over from the offline build:</b> file search, and the theme
+    filter. Both read whole-graph attributes that no endpoint returns. Said here
+    rather than quietly dropped.
+  </div>
+  <button type="button" id="signout">sign out</button>
+</div>
 
-  <label for="types">Node type</label>
-  <select id="types">
-    <option value="">any</option>
-    <option>domain</option><option>program</option><option>module</option>
-    <option>instructor</option><option>person</option><option>workflow</option>
-    <option>theme</option><option>file</option>
-  </select>
+<div class="pane" id="right">
+  <button type="button" id="close" style="float:right">close</button>
+  <h1 id="nl"></h1>
+  <div class="sub" id="nt"></div>
+  <div id="nprops"></div>
+  <h2>Relationships <span>(<b id="ncount">0</b>)</span></h2>
+  <div id="nbrs"></div>
+  <div id="more"></div>
+  <h2>Provenance <span>&mdash; where this came from</span></h2>
+  <div id="files"></div>
+</div>
 
-  <label for="rels">Expand along</label>
-  <select id="rels">
-    <option value="">any relationship</option>
-    <option>teaches</option><option>expert_in</option><option>contains</option>
-    <option>covers</option><option>belongs_to</option><option>owned_by</option>
-  </select>
-
-  <label for="depth">Depth</label>
-  <select id="depth"><option>1</option><option>2</option><option>3</option></select>
-
-  <label>Whole-graph</label>
-  <button id="cov">Coverage gaps</button>
-
-  <div id="results" style="margin-top:12px"></div>
-</aside>
-
-<section id="detail">
-  <p style="color:var(--dim)">Paste a token, search, then pick a result.</p>
-</section>
-</main>
+<div id="gate"><div id="gatebox">
+  <h1>NP Autopilot</h1>
+  <div class="sub">Interview Kickstart &mdash; New Programs knowledge graph</div>
+  <div id="gatemsg">Sign in with your Interview Kickstart Workspace account.</div>
+  <div id="gsi"></div>
+</div></div>
 
 <script>
-const $ = s => document.querySelector(s);
-const esc = s => String(s ?? "").replace(/[&<>"]/g, c =>
-  ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+// Bootstrap. The renderer below is PORTED from knowledge/graph.html; the one
+// structural difference is here: `data` starts EMPTY. Offline the whole graph
+// was inlined (3.3 MB on a single line). Online it is fetched a neighbourhood
+// at a time, so nothing below may assume it holds the graph.
+window.__NP = {
+  data: {nodes: [], edges: []},
+  colors: {domain:'#4c8dff', program:'#3fb950', module:'#a371f7', person:'#f0883e',
+           instructor:'#00c2d1', workflow:'#db61a2', theme:'#d29922', file:'#8a94a6'},
+  expert: 'expert_in',
+  api: '/api',
+  // Hard ceiling on what the client will hold. The traversable subgraph is
+  // 1.2 MB, so shipping all 5,048 nodes is technically possible — which is
+  // exactly why a client that expects the whole graph must not exist. Hitting
+  // this is REPORTED, never silently trimmed.
+  nodeBudget: 1200
+};
+</script>
+<script>
 
-async function api(path, params = {}) {
-  const token = $("#token").value.trim();
-  const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v));
-  const res = await fetch(`/api/${path}?${qs}`, {
-    headers: token ? { authorization: `Bearer ${token}` } : {}
+// ---- pure logic. No DOM, no canvas. Exercised directly by eval/drive_dom.mjs ----
+// PORTED VERBATIM from knowledge/graph.html. Each of these carries a solved
+// problem, and a rewrite reintroduces it. Copied, not reimplemented.
+function buildIndex(D){
+  const byId=new Map(D.nodes.map(n=>[n.id,n]));
+  const adj=new Map();
+  for(const n of D.nodes) adj.set(n.id,[]);
+  for(const e of D.edges){
+    if(adj.has(e.s)) adj.get(e.s).push({o:e.t,r:e.r,b:e.b,dir:'out'});
+    if(adj.has(e.t)) adj.get(e.t).push({o:e.s,r:e.r,b:e.b,dir:'in'});
+  }
+  const idx=D.nodes.map(n=>({id:n.id,
+    k:(n.l+' '+n.t+' '+(n.wid||'')+' '+(n.st||'')).toLowerCase()}));
+  return {byId,adj,idx};
+}
+
+function components(D,visibleIds){
+  const adj=new Map();
+  for(const id of visibleIds) adj.set(id,[]);
+  for(const e of D.edges){
+    if(adj.has(e.s)&&adj.has(e.t)){adj.get(e.s).push(e.t);adj.get(e.t).push(e.s);}
+  }
+  const seen=new Set(),comps=[];
+  for(const id of visibleIds){
+    if(seen.has(id))continue;
+    const st=[id],c=[];
+    while(st.length){const x=st.pop();if(seen.has(x))continue;seen.add(x);c.push(x);
+      for(const y of adj.get(x)||[])if(!seen.has(y))st.push(y);}
+    comps.push(c);
+  }
+  comps.sort((a,b)=>b.length-a.length);
+  return comps;
+}
+
+function visible(D,f){
+  return D.nodes.filter(n=>{
+    if(!f.types.has(n.t))return false;
+    if(!f.showIso&&(f.degree.get(n.id)||0)===0)return false;
+    return true;
   });
-  const body = await res.json().catch(() => ({ error: "bad response" }));
-  if (!res.ok) throw new Error(body.reason || body.error || res.status);
+}
+
+function degreeMap(D,ids){
+  const d=new Map(); for(const id of ids) d.set(id,0);
+  for(const e of D.edges){
+    if(d.has(e.s)&&d.has(e.t)){d.set(e.s,d.get(e.s)+1);d.set(e.t,d.get(e.t)+1);}
+  }
+  return d;
+}
+
+// Edge cap: a node with more than CAP neighbours shows CAP, rest behind a click.
+function neighboursOf(index,id,cap,expanded){
+  const all=index.adj.get(id)||[];
+  const shown=(expanded)?all:all.slice(0,cap);
+  return {shown,hidden:Math.max(0,all.length-shown.length),total:all.length};
+}
+
+// ---- MERGE. The one genuinely new piece of logic in the port. -------------
+// Offline the graph arrived whole and never changed. Online it accumulates, so
+// merging must be IDEMPOTENT: fetching the same neighbourhood twice must not
+// duplicate a node, double a degree, or move anything that has settled.
+const EDGE_SEP=String.fromCharCode(1);
+function mergeGraph(D,incoming,budget){
+  const have=new Set(D.nodes.map(n=>n.id));
+  const edgeKey=e=>e.s+EDGE_SEP+e.r+EDGE_SEP+e.t;
+  const haveEdges=new Set(D.edges.map(edgeKey));
+  let added=0, refused=0;
+  for(const n of (incoming.nodes||[])){
+    if(have.has(n.id))continue;
+    if(budget && D.nodes.length>=budget){refused++;continue}
+    D.nodes.push(n); have.add(n.id); added++;
+  }
+  let addedEdges=0;
+  for(const e of (incoming.edges||[])){
+    if(!have.has(e.s)||!have.has(e.t))continue;   // never a dangling edge
+    const k=edgeKey(e);
+    if(haveEdges.has(k))continue;
+    D.edges.push(e); haveEdges.add(k); addedEdges++;
+  }
+  return {added,addedEdges,refused,total:D.nodes.length};
+}
+
+// API shapes -> renderer shapes. Named functions rather than inlined, so a
+// change to the API surface has ONE place to land.
+function adaptNode(r){
+  const p=r.props||{};
+  return {id:r.id, l:r.label, t:r.type, d:0, iso:false,
+          st:p.status||'', th:(p.theme_id!==undefined?p.theme_id:null),
+          wid:p.workflow_id||null, eff:p.effort||null, al:p.alerts||0,
+          raw:r.label_raw||null, loaded:false};
+}
+function adaptEdge(r){ return {s:r.source_id, t:r.target_id, r:r.rel, b:(r.props||{}).b}; }
+
+// ---- RESTART DIAGNOSTIC (ported) ---------------------------------------
+// Distinguishes a real page navigation from a layout reset. Those need
+// opposite fixes, and telling them apart is what ended the "graph restarts" bug.
+(function(){
+  let n=0;
+  try{ n=(parseInt(sessionStorage.getItem('np_loads')||'0',10)||0)+1;
+       sessionStorage.setItem('np_loads',String(n)); }catch(e){ n=-1; }
+  window.__NP_LOADS=n;
+  console.log('[np] script load #'+n+' at '+new Date().toISOString());
+  addEventListener('beforeunload',()=>{
+    console.warn('[np] BEFOREUNLOAD — the page is navigating away. '+
+      'This is a real reload, not a layout reset.');
+  });
+  addEventListener('error',e=>console.error('[np] window error:',e.message));
+  addEventListener('unhandledrejection',e=>console.error('[np] promise:',e.reason));
+})();
+window.__NP_RECOMPUTES=0;
+
+const D=window.__NP.data, C=window.__NP.colors;
+const EXPERT=window.__NP.expert, LEFT=300, RIGHT=330, CAP=8;
+const API=window.__NP.api, BUDGET=window.__NP.nodeBudget;
+const TYPES=['domain','program','module','person','instructor','workflow','theme'];
+let idx=buildIndex(D);
+
+// ---- ESCAPING. New in the port, and not cosmetic. ------------------------
+// graph.html interpolated labels straight into innerHTML. In a local file that
+// was harmless. This page holds a session token, so a corpus label containing
+// markup would run script with that token in reach — and labels come from
+// spreadsheets edited by people outside this repo. Every interpolation goes
+// through esc().
+function esc(s){return String(s===null||s===undefined?'':s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),tip=document.getElementById('tip');
+let W,H;function size(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+size();
+// Debounced, and it never restarts the simulation. (Ported: opening the detail
+// panel changes page layout and can add or remove a scrollbar, which fires
+// resize; undebounced that cleared the canvas and jumped the camera on a click.)
+let _rt=null;
+addEventListener('resize',()=>{
+  clearTimeout(_rt);
+  _rt=setTimeout(()=>{
+    const before={k:cam.k,tx:cam.tx,ty:cam.ty};
+    size();                       // canvas backing store only
+    cam.k=before.k;cam.tx=before.tx;cam.ty=before.ty;
+    console.log('[np] resize: viewport kept, simulation untouched (frozen='+frozen+')');
+  },150);
+});
+
+// ---- camera (ported verbatim) --------------------------------------------
+const cam={k:1,tx:0,ty:0};
+const toScreen=(x,y)=>[x*cam.k+cam.tx, y*cam.k+cam.ty];
+const toWorld=(sx,sy)=>[(sx-cam.tx)/cam.k, (sy-cam.ty)/cam.k];
+function usable(){
+  const rightOpen=document.getElementById('right').style.display==='block';
+  return {x0:LEFT+20, x1:W-(rightOpen?RIGHT:0)-20, y0:20, y1:H-20};
+}
+function fit(pad){
+  const P=usable(), nodes=A.filter(n=>n.x!==undefined);
+  if(!nodes.length)return;
+  let a=1e9,b=1e9,c=-1e9,d=-1e9;
+  for(const n of nodes){a=Math.min(a,n.x);b=Math.min(b,n.y);c=Math.max(c,n.x);d=Math.max(d,n.y)}
+  const gw=Math.max(c-a,1), gh=Math.max(d-b,1);
+  const vw=P.x1-P.x0, vh=P.y1-P.y0;
+  cam.k=Math.min(vw/gw, vh/gh)*(pad||0.92);
+  cam.k=Math.max(0.05,Math.min(cam.k,4));
+  cam.tx=P.x0+vw/2-((a+c)/2)*cam.k;
+  cam.ty=P.y0+vh/2-((b+d)/2)*cam.k;
+}
+function centreOn(n,k){
+  if(n.x===undefined)return;
+  const P=usable();
+  cam.k=k||Math.max(cam.k,1.1);
+  cam.tx=P.x0+(P.x1-P.x0)/2-n.x*cam.k;
+  cam.ty=P.y0+(P.y1-P.y0)/2-n.y*cam.k;
+}
+
+const state={types:new Set(TYPES),showIso:false,showDash:true,separate:false,
+  sel:null,expanded:new Set(),depth:1};
+let allDeg=new Map();
+let A=[],E=[],anchors=new Map();
+// Declared BEFORE recompute(), which assigns them. (Ported: declaring these
+// AFTER the top-level recompute() call put them in `let`'s temporal dead zone,
+// the assignment threw ReferenceError, the script died before the render loop
+// started, and the canvas stayed empty while the stat line still appeared.)
+let settle=0, alpha=1, frozen=false;
+
+// ---- DECORATIVE DRIFT (ported) -------------------------------------------
+// Paint-time ONLY. It never writes to n.x/n.y, never touches the simulation,
+// and hit-testing uses the true settled coordinates. Raising the force floor
+// instead would re-introduce the never-settling bug.
+let drift=true;
+const DRIFT_AMP=1.6, DRIFT_SPEED=0.0007;
+function driftPhase(id){            // deterministic, so it is stable per node
+  let h=0; for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))|0;
+  return (h%628)/100;
+}
+function paintPos(n,now){
+  if(!drift) return [n.x,n.y];
+  const ph=n._ph!==undefined?n._ph:(n._ph=driftPhase(n.id));
+  return [n.x+DRIFT_AMP*Math.sin(now*DRIFT_SPEED+ph),
+          n.y+DRIFT_AMP*Math.cos(now*DRIFT_SPEED*0.87+ph)];
+}
+// Cooling schedule. `alpha` decays to zero and the simulation FREEZES.
+// (Ported: K used to floor at 0.35, so forces applied on every frame forever
+// and the layout never stopped drifting — most of what "the graph restarts"
+// actually was.)
+const ALPHA_DECAY=0.985, ALPHA_MIN=0.004;
+
+function recompute(refit, why){
+  // Preserved across every recompute: camera, selection, and the open panel.
+  const keepCam={k:cam.k,tx:cam.tx,ty:cam.ty};
+  const keepSel=state.sel;
+  const keepPanel=document.getElementById('right').style.display;
+  window.__NP_RECOMPUTES++;
+  console.log('[np] recompute #'+window.__NP_RECOMPUTES+' reason='+(why||'unspecified')+
+              ' (a recompute re-scatters the layout; it is NOT a page reload)');
+  idx=buildIndex(D);
+  allDeg=degreeMap(D,D.nodes.map(n=>n.id));
+  for(const n of D.nodes){n.d=allDeg.get(n.id)||0;n.iso=(n.d===0)}
+  A=visible(D,{types:state.types,showIso:state.showIso,degree:allDeg});
+  const ids=new Set(A.map(n=>n.id));
+  E=D.edges.filter(e=>ids.has(e.s)&&ids.has(e.t)&&(state.showDash||e.r!==EXPERT));
+  anchors=new Map();
+  const comps=components({nodes:A,edges:E},A.map(n=>n.id));
+  if(state.separate){
+    // Shelf-pack by component size. Equal grid cells wasted most of the canvas.
+    const sorted=comps.slice().sort((a,b)=>b.length-a.length);
+    const R=sorted.map(c=>Math.max(28,Math.sqrt(c.length)*13));
+    const targetW=Math.sqrt(R.reduce((s,r)=>s+r*r*4,0))*1.25;
+    let cx=0,cy=0,rowH=0;
+    sorted.forEach((c,i)=>{
+      const r=R[i];
+      if(cx+r*2>targetW && cx>0){cx=0;cy+=rowH+30;rowH=0}
+      for(const id of c) anchors.set(id,[cx+r,cy+r,c.length]);
+      cx+=r*2+30; rowH=Math.max(rowH,r*2);
+    });
+  } else {
+    for(const n of A) anchors.set(n.id,[0,0,A.length]);
+  }
+  for(const n of A){ if(n.x===undefined){const a=anchors.get(n.id)||[0,0];
+    const s=state.separate?a[2]:A.length;
+    const rad=Math.max(30,Math.sqrt(s)*10);
+    n.x=a[0]+(Math.random()-.5)*rad;n.y=a[1]+(Math.random()-.5)*rad;n.vx=0;n.vy=0} }
+  const dg=document.getElementById('diag');
+  if(dg)dg.textContent='load #'+window.__NP_LOADS+' · '+window.__NP_RECOMPUTES+
+    ' recomputes'+(window.__NP_LOADS>1?'  ← THE PAGE HAS RELOADED':'');
+  document.getElementById('stat').innerHTML=
+    '<b>'+A.length+'</b> of <b>'+D.nodes.length+'</b> fetched nodes / <b>'+
+    E.length+'</b> edges / '+comps.length+' components';
+  // A legitimate recompute restarts the simulation — and ONLY a recompute may.
+  if(refit!==false){settle=0;alpha=1;frozen=false}
+  cam.k=keepCam.k;cam.tx=keepCam.tx;cam.ty=keepCam.ty;
+  state.sel=keepSel;
+  document.getElementById('right').style.display=keepPanel;
+}
+
+function step(){
+  if(frozen)return;                     // no forces, no drift, no motion
+  const K=alpha;
+  for(const n of A){n.vx*=.85;n.vy*=.85;
+    const a=anchors.get(n.id);
+    if(a){n.vx+=(a[0]-n.x)*.006*K;n.vy+=(a[1]-n.y)*.006*K}}
+  for(let i=0;i<A.length;i++){const a=A[i];
+    for(let j=i+1;j<Math.min(A.length,i+12);j++){const b=A[j];
+      const dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy||1;
+      if(d2<5000){const f=110/d2*K;a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f}}}
+  for(const e of E){const a=idx.byId.get(e.s),b=idx.byId.get(e.t);
+    if(!a||!b||a.x===undefined||b.x===undefined)continue;
+    const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,f=(d-58)*.006*K;
+    a.vx+=dx/d*f;a.vy+=dy/d*f;b.vx-=dx/d*f;b.vy-=dy/d*f}
+  for(const n of A){n.x+=n.vx;n.y+=n.vy}
+  settle++;
+  alpha*=ALPHA_DECAY;
+  if(settle===90)fit();
+  if(alpha<ALPHA_MIN && !frozen){
+    frozen=true;
+    console.log('[np] layout FROZEN after '+settle+' frames. '+
+      'Nothing moves again until a filter or a FETCH calls recompute().');
+  }
+  // Published AFTER frozen is set, so the reported state is the real one.
+  window.__NP_STATE={settle:settle,alpha:alpha,frozen:frozen,
+                     recomputes:window.__NP_RECOMPUTES,nodes:D.nodes.length};
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  const now=performance.now();
+  for(const e of E){const a=idx.byId.get(e.s),b=idx.byId.get(e.t);
+    if(!a||!b||a.x===undefined)continue;
+    const [awx,awy]=paintPos(a,now),[bwx,bwy]=paintPos(b,now);
+    const [ax,ay]=toScreen(awx,awy),[bx,by]=toScreen(bwx,bwy);
+    if(Math.max(ax,bx)<LEFT-40)continue;
+    const hot=state.sel&&(e.s===state.sel||e.t===state.sel);
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
+    if(e.r===EXPERT){ctx.setLineDash([3,4]);
+      ctx.strokeStyle=hot?'rgba(0,194,209,.9)':'rgba(0,194,209,.22)'}
+    else{ctx.setLineDash([]);
+      ctx.strokeStyle=hot?'rgba(230,237,243,.85)':'rgba(139,148,158,.17)'}
+    ctx.lineWidth=hot?1.8:1;ctx.stroke()}
+  ctx.setLineDash([]);
+  for(const n of A){if(n.x===undefined)continue;
+    const [wx,wy]=paintPos(n,now);
+    const [sx,sy]=toScreen(wx,wy);
+    if(sx<-20||sx>W+20||sy<-20||sy>H+20)continue;
+    const r=(n.iso?2:Math.min(3+Math.sqrt(n.d)*1.1,11))*Math.max(.55,Math.min(cam.k,1.6));
+    ctx.beginPath();ctx.arc(sx,sy,r,0,7);
+    ctx.fillStyle=C[n.t]||'#888';ctx.globalAlpha=n.iso?.4:1;ctx.fill();
+    if(state.sel===n.id){ctx.globalAlpha=1;ctx.lineWidth=2.5;ctx.strokeStyle='#fff';ctx.stroke()}
+    // A node whose neighbourhood has never been fetched is drawn hollow, so
+    // "nothing connects here" is visibly different from "not expanded yet".
+    else if(!n.loaded){ctx.globalAlpha=.9;ctx.lineWidth=1;
+      ctx.strokeStyle='#30363d';ctx.stroke()}
+    ctx.globalAlpha=1}
+}
+// The loop keeps PAINTING after the simulation freezes — step() returns
+// immediately once frozen, so this animates the drift without any physics.
+(function loop(){step();draw();requestAnimationFrame(loop)})();
+
+// ---- interaction (ported) ------------------------------------------------
+// Hit-testing uses the TRUE settled coordinates, never the drifted paint
+// position, so a click is never off-target while a node is displaced.
+function hit(sx,sy){const [wx,wy]=toWorld(sx,sy);let best=null,bd=1e9;
+  for(const n of A){if(n.x===undefined)continue;
+    const d=Math.hypot(n.x-wx,n.y-wy);if(d<bd){bd=d;best=n}}
+  return bd<16/cam.k?best:null}
+cv.addEventListener('wheel',ev=>{ev.preventDefault();
+  const [wx,wy]=toWorld(ev.clientX,ev.clientY);
+  cam.k=Math.max(0.05,Math.min(4,cam.k*(ev.deltaY<0?1.12:1/1.12)));
+  cam.tx=ev.clientX-wx*cam.k;cam.ty=ev.clientY-wy*cam.k},{passive:false});
+let drag=null;
+cv.addEventListener('mousedown',ev=>{ev.preventDefault();drag={x:ev.clientX,y:ev.clientY,
+  tx:cam.tx,ty:cam.ty,moved:false}});
+addEventListener('mouseup',()=>{drag=null});
+cv.addEventListener('mousemove',ev=>{
+  if(drag){const dx=ev.clientX-drag.x,dy=ev.clientY-drag.y;
+    if(Math.abs(dx)+Math.abs(dy)>3)drag.moved=true;
+    cam.tx=drag.tx+dx;cam.ty=drag.ty+dy;tip.style.display='none';return}
+  const n=hit(ev.clientX,ev.clientY);
+  cv.style.cursor=n?'pointer':'grab';
+  if(n){tip.style.display='block';tip.style.left=(ev.clientX+12)+'px';
+    tip.style.top=(ev.clientY+12)+'px';
+    tip.innerHTML='<b>'+esc(n.l)+'</b><br>'+esc(n.t)+
+      '<br>'+n.d+' loaded relationships'+
+      (n.loaded?'':' &middot; <b>not expanded</b>')+
+      '<br>click to open, double-click to expand'}
+  else tip.style.display='none'});
+cv.addEventListener('click',ev=>{ev.preventDefault();if(drag&&drag.moved)return;
+  const n=hit(ev.clientX,ev.clientY);if(n)openNode(n.id);else closePanel()});
+cv.addEventListener('dblclick',ev=>{ev.preventDefault();const n=hit(ev.clientX,ev.clientY);
+  if(n){centreOn(n,1.6);openNode(n.id);expand(n.id)}});
+document.getElementById('fit').onclick=()=>fit();
+document.getElementById('zin').onclick=()=>{cam.k=Math.min(4,cam.k*1.3)};
+document.getElementById('zout').onclick=()=>{cam.k=Math.max(0.05,cam.k/1.3)};
+
+// ---- SELECTION. Touches state.sel and the panel ONLY. (ported) -----------
+// It must never call recompute(), fit(), size() or touch node coordinates.
+// eval/drive_dom.mjs asserts that after a click, `settle` and every coordinate
+// are byte-identical.
+function select(id){
+  state.sel=id;                          // repaint happens on the next frame
+}
+
+// ---- the network layer — the genuinely new part of the port --------------
+let SESSION=null;
+function banner(html,cls){
+  const b=document.getElementById('banner');
+  if(b)b.innerHTML=html?('<div class="warn '+(cls||'')+'">'+html+'</div>'):'';
+}
+async function api(path,opts){
+  const o=opts||{};
+  o.headers=Object.assign({},o.headers,
+    SESSION?{authorization:'Bearer '+SESSION.access_token}:{});
+  const r=await fetch(API+path,o);
+  if(r.status===401){
+    // One silent refresh before sending anyone back to a login screen.
+    if(SESSION&&SESSION.refresh_token&&!o._retried){
+      const ok=await refreshSession();
+      if(ok){o._retried=true;return api(path,o)}
+    }
+    showGate('Your session expired. Sign in again.');
+    throw new Error('unauthorised');
+  }
+  const body=await r.json().catch(()=>({}));
+  if(!r.ok){
+    // LOUD. A depth cap or a row cap is a TOOLING limit, and this project's
+    // recurring failure is reading a tooling limit as an absent fact.
+    banner('<b>'+esc(body.error||r.status)+'</b> &mdash; '+esc(body.reason||''),'err');
+    throw new Error(body.reason||('HTTP '+r.status));
+  }
   return body;
 }
 
-function show(html) { $("#detail").innerHTML = html; }
-function fail(e) { show(`<p class="err">${esc(e.message)}</p>`); }
-
-async function search() {
-  try {
-    const out = await api("search", { q: $("#q").value, types: $("#types").value });
-    $("#who").textContent = "signed in";
-    $("#results").innerHTML = out.results.length
-      ? out.results.map(r =>
-          `<div class="hit" data-id="${esc(r.id)}">
-             <span>${esc(r.label)}</span><span class="t">${esc(r.type)}</span></div>`).join("")
-      : `<p style="color:var(--dim);font-size:12px">${esc(out.note || "no matches")}</p>`;
-    $("#results").querySelectorAll(".hit").forEach(el =>
-      el.onclick = () => open(el.dataset.id));
-  } catch (e) { fail(e); }
+async function expand(id,depth){
+  const d=depth||state.depth;
+  const n=idx.byId.get(id);
+  try{
+    const out=await api('/neighbourhood?id='+encodeURIComponent(id)+
+                        '&depth='+d+'&limit=300');
+    const res=mergeGraph(D,{nodes:(out.nodes||[]).map(adaptNode),
+                            edges:(out.edges||[]).map(adaptEdge)},BUDGET);
+    if(n)n.loaded=true;
+    let msg='';
+    if(out.truncated) msg+='<b>Result hit the row cap.</b> '+esc(out.note||'')+' ';
+    if(res.refused) msg+='<b>'+res.refused+' nodes were not loaded</b> — this '+
+      'client holds at most '+BUDGET+'. Narrow by type, or start from a '+
+      'different node. A limit of this explorer, not of the graph.';
+    banner(msg,msg?'err':'');
+    recompute(true,'fetched neighbourhood of '+id);
+    return res;
+  }catch(e){ return null; }
 }
 
-function provTable(rows, cols) {
-  return `<table><tr>${cols.map(c => `<th>${c}</th>`).join("")}</tr>` +
-    rows.map(r => `<tr>${cols.map(c => `<td>${esc(r[c])}</td>`).join("")}</tr>`).join("") +
-    `</table>`;
+async function openNode(id){
+  const before=settle;
+  select(id);
+  const n=idx.byId.get(id);
+  document.getElementById('right').style.display='block';
+  document.getElementById('nl').textContent=n?n.l:id;
+  document.getElementById('nt').textContent=n?n.t:'';
+  const pr=[];
+  pr.push('<button type="button" id="goto">centre</button>');
+  pr.push('<button type="button" id="exp2">expand from here</button>');
+  document.getElementById('nprops').innerHTML=pr.join('');
+  const g=document.getElementById('goto'); if(g&&n)g.onclick=()=>centreOn(n,1.6);
+  const x2=document.getElementById('exp2'); if(x2)x2.onclick=()=>expand(id);
+
+  const nb=neighboursOf(idx,id,CAP,state.expanded.has(id));
+  document.getElementById('ncount').textContent=nb.total;
+  document.getElementById('nbrs').innerHTML=nb.shown.map(x=>{
+    const o=idx.byId.get(x.o);if(!o)return '';
+    const dash=x.r===EXPERT?' <span class="dash">(declared)</span>':'';
+    return '<div class="nb" data-id="'+esc(x.o)+'">'+esc(o.l)+
+      '<div class="rel">'+esc(x.r)+' · '+esc(o.t)+dash+'</div></div>'}).join('')
+    ||'<div class="src">no relationships loaded — use “expand from here”</div>';
+  document.getElementById('more').innerHTML=nb.hidden>0
+    ? '<button type="button" id="exp">show '+nb.hidden+' more</button>' : '';
+  const ex=document.getElementById('exp');
+  if(ex)ex.onclick=()=>{state.expanded.add(id);openNode(id)};
+  for(const el of document.querySelectorAll('.nb'))
+    el.onclick=()=>{const o=idx.byId.get(el.dataset.id);openNode(el.dataset.id);
+      if(o&&o.x!==undefined)centreOn(o,Math.max(cam.k,1.2))};
+
+  if(settle!==before)
+    console.error('[np] BUG: opening a node changed the simulation clock '+
+                  before+' -> '+settle+'. Selection must not touch layout.');
+  renderProvenance(id);
 }
 
-async function open(id) {
-  try {
-    const [n, nb] = await Promise.all([
-      api("node", { id }),
-      api("neighbourhood", { id, depth: $("#depth").value, rels: $("#rels").value })
-    ]);
-    const p = n.provenance;
-    let html = `<div class="card"><h2>${esc(n.node.type)}</h2>
-      <div style="font-size:17px">${esc(n.node.label)}</div>
-      <code>${esc(n.node.id)}</code></div>`;
-
-    // Corpus provenance and hand provenance are rendered SEPARATELY and look
-    // different. A hand-entered fact must be visibly hand-entered — that is the
-    // entire point of the property-level provenance fix.
-    html += `<div class="card"><h2>Provenance — corpus (${p.corpus.length})</h2>` +
-      (p.corpus.length
-        ? provTable(p.corpus.slice(0, 25), ["file", "sheet", "row_num", "col_name"])
-        : `<p style="color:var(--dim)">none</p>`) + `</div>`;
-
-    if (p.hand.length) {
-      html += `<div class="card hand"><h2>Provenance — HAND-ENTERED (${p.hand.length})</h2>
-        <p style="font-size:12px;color:var(--hand)">${esc(p.hand_note)}</p>` +
-        provTable(p.hand, ["prop", "evidence", "entered_at"]) + `</div>`;
-    }
-
-    html += `<div class="card"><h2>Neighbourhood — depth ${nb.depth}
-      (${nb.nodes.length} nodes, ${nb.edges.length} edges)</h2>` +
-      (nb.note ? `<p class="err">${esc(nb.note)}</p>` : "") +
-      provTable(nb.nodes.slice(0, 60), ["depth", "type", "label"]) + `</div>`;
-    show(html);
-  } catch (e) { fail(e); }
+// ---- THE PROVENANCE PANEL ------------------------------------------------
+// The distinction between a SCANNED fact and a HAND-ENTERED one was invisible
+// for the whole project until the collision check surfaced it, and it must not
+// become invisible again in a UI. So the two are rendered as different things —
+// different border, different ground, their own heading — rather than one list
+// with a flag. A flag is something a renderer can forget.
+async function renderProvenance(id){
+  const box=document.getElementById('files');
+  box.innerHTML='<div class="src">loading provenance…</div>';
+  let out;
+  try{ out=await api('/node?id='+encodeURIComponent(id)); }
+  catch(e){ box.innerHTML='<div class="src">provenance unavailable</div>'; return; }
+  if(out.error){ box.innerHTML='<div class="src">'+esc(out.error)+'</div>'; return; }
+  const n=idx.byId.get(id);
+  if(n&&out.node){ n.st=(out.node.props||{}).status||n.st;
+                   n.raw=out.node.label_raw||n.raw; }
+  const p=out.provenance||{corpus:[],hand:[]};
+  const cite=r=>[r.file,r.sheet?'!'+r.sheet:'',r.row_num?' r'+r.row_num:'',
+                 r.col_name?' '+r.col_name:(r.col_num?' c'+r.col_num:''),
+                 r.page?' p'+r.page:''].join('');
+  let html='';
+  // The load-bearing typo rule: label_raw is the citation key back to source.
+  if(n&&n.raw&&n.raw!==n.l)
+    html+='<div class="src">as written in the corpus: <b>'+esc(n.raw)+'</b></div>';
+  html+='<div class="tagline prov-corpus" style="border:0;padding:0;margin-top:6px">'+
+        'From a scan of the corpus ('+p.corpus.length+')</div>';
+  html+=(p.corpus.map(r=>'<div class="prov-corpus"><div class="src">'+
+        esc(cite(r))+(r.prop?' <b>'+esc(r.prop)+'</b>':'')+'</div></div>').join('')
+    ||'<div class="src">none recorded</div>');
+  if(p.hand.length){
+    html+='<div class="tagline prov-hand" style="border:0;background:none;'+
+          'padding:0;margin-top:10px">Entered by a person ('+p.hand.length+')</div>';
+    html+='<div class="src" style="color:#d29922">'+esc(p.hand_note||'')+'</div>';
+    html+=p.hand.map(r=>'<div class="prov-hand"><div class="tagline">hand-entered'+
+      (r.prop?' · '+esc(r.prop):'')+'</div><div class="src">'+
+      esc(r.evidence||'no evidence recorded')+'</div>'+
+      (r.entered_at?'<div class="src">'+esc(String(r.entered_at).slice(0,10))+
+       '</div>':'')+'</div>').join('');
+  }
+  box.innerHTML=html;
 }
 
-$("#go").onclick = search;
-$("#q").addEventListener("keydown", e => { if (e.key === "Enter") search(); });
-$("#cov").onclick = async () => {
-  try {
-    const c = await api("coverage");
-    show(`<div class="card"><h2>Coverage gaps</h2>` +
-      provTable(Object.entries(c).filter(([, v]) => typeof v === "number")
-        .map(([k, v]) => ({ gap: k.replace(/_/g, " "), count: v })), ["gap", "count"]) +
-      `<p style="font-size:12px;color:var(--warn);margin-top:10px">${esc(c.workflow_ownership)}</p>
-       <p style="font-size:12px;color:var(--warn)">${esc(c.counts_are_floors)}</p></div>`);
-  } catch (e) { fail(e); }
+function closePanel(){state.sel=null;document.getElementById('right').style.display='none'}
+document.getElementById('close').onclick=closePanel;
+
+// ---- search --------------------------------------------------------------
+const res=document.getElementById('res');
+let tq=null;
+document.getElementById('q').addEventListener('input',ev=>{
+  clearTimeout(tq);
+  const v=ev.target.value;
+  tq=setTimeout(async ()=>{
+    if(!v||v.trim().length<2){res.innerHTML='';return}
+    let out;
+    try{ out=await api('/search?q='+encodeURIComponent(v)+'&limit=40'); }
+    catch(e){ return; }
+    const rows=out.results||[];
+    res.innerHTML=rows.map(r=>
+      '<div class="hit" data-id="'+esc(r.id)+'"><i style="background:'+
+      (C[r.type]||'#888')+'"></i><span>'+esc(r.label)+'</span><em>'+
+      esc(r.type)+'</em></div>').join('')
+      ||'<div class="src">no match. This is a LABEL match over the projected '+
+        'graph — a miss is not evidence the corpus lacks it.</div>';
+    for(const el of res.querySelectorAll('.hit'))
+      el.onclick=async ()=>{
+        const id=el.dataset.id;
+        if(!idx.byId.get(id)){
+          // Seed the node itself, so a hit is openable even when its
+          // neighbourhood turns out to be empty.
+          const r=rows.find(x=>x.id===id);
+          if(r){mergeGraph(D,{nodes:[adaptNode(r)],edges:[]},BUDGET);
+                recompute(true,'search seed')}
+        }
+        await expand(id);
+        openNode(id);
+        const m=idx.byId.get(id); if(m&&m.x!==undefined)centreOn(m,1.6);
+      };
+  },160);
+});
+
+// ---- controls ------------------------------------------------------------
+const tbox=document.getElementById('types');
+if(tbox) tbox.innerHTML=TYPES.map(t=>
+  '<label class="tf"><input type="checkbox" class="ty" value="'+t+'" checked>'+
+  '<i style="background:'+(C[t]||'#888')+'"></i>'+t+'</label>').join('');
+for(const el of document.querySelectorAll('.ty'))
+  el.onchange=()=>{state.types=new Set([...document.querySelectorAll('.ty')]
+    .filter(x=>x.checked).map(x=>x.value));recompute(true,'type-filter')};
+document.getElementById('iso').onchange=e=>{state.showIso=e.target.checked;
+  recompute(true,'iso-toggle')};
+document.getElementById('dash').onchange=e=>{state.showDash=e.target.checked;
+  recompute(false,'dash-toggle')};
+const _dr=document.getElementById('drift');
+if(_dr)_dr.onchange=e=>{drift=e.target.checked;
+  console.log('[np] decorative drift '+(drift?'on':'off')+
+              ' — paint-time only, layout untouched')};
+document.getElementById('sep').onchange=e=>{state.separate=e.target.checked;
+  for(const n of D.nodes)delete n.x;recompute(true,'separate-toggle')};
+const _dp=document.getElementById('depth');
+if(_dp)_dp.onchange=e=>{state.depth=parseInt(e.target.value,10)||1};
+
+// ---- the auth gate -------------------------------------------------------
+const STORE='np_session';
+function saveSession(s){SESSION=s;
+  try{localStorage.setItem(STORE,JSON.stringify(s))}catch(e){}}
+function loadSession(){
+  try{return JSON.parse(localStorage.getItem(STORE)||'null')}catch(e){return null}}
+function clearSession(){SESSION=null;try{localStorage.removeItem(STORE)}catch(e){}}
+
+function showGate(msg){
+  const g=document.getElementById('gate');
+  if(g)g.style.display='flex';
+  const m=document.getElementById('gatemsg');
+  if(m&&msg)m.innerHTML=esc(msg);
+}
+function hideGate(){const g=document.getElementById('gate');if(g)g.style.display='none'}
+
+async function postSession(body){
+  const r=await fetch(API+'/session',{method:'POST',
+    headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  const out=await r.json().catch(()=>({}));
+  return {ok:r.ok,status:r.status,body:out};
+}
+
+async function refreshSession(){
+  if(!SESSION||!SESSION.refresh_token)return false;
+  const r=await postSession({action:'refresh',refresh_token:SESSION.refresh_token});
+  if(!r.ok){clearSession();return false}
+  saveSession(r.body);
+  scheduleRefresh();
+  return true;
+}
+// Refresh BEFORE expiry rather than reacting to a 401, so a long look at one
+// graph does not end in a bounce to the login screen mid-thought.
+let _refreshTimer=null;
+function scheduleRefresh(){
+  clearTimeout(_refreshTimer);
+  const secs=(SESSION&&SESSION.expires_in)?SESSION.expires_in:3600;
+  const lead=Math.max(60,Math.min(secs-120,secs*0.8));
+  _refreshTimer=setTimeout(()=>{refreshSession()},lead*1000);
+}
+
+async function onGoogleCredential(resp){
+  const r=await postSession({action:'signin',id_token:resp.credential});
+  if(!r.ok){
+    // The `hd` refusal lands here, and it says which check failed. An IK
+    // address on a consumer Google account reaches exactly this line.
+    showGate(r.body.reason||'Sign-in refused.');
+    return;
+  }
+  saveSession(r.body);
+  scheduleRefresh();
+  await afterSignIn();
+}
+
+async function afterSignIn(){
+  let me;
+  try{ me=await api('/me'); }catch(e){ return; }
+  document.getElementById('who').textContent=me.email+' · '+me.role;
+  if(me.role==='none'){
+    // NOT an empty canvas with no explanation: "signed in and permitted
+    // nothing" is otherwise indistinguishable from "the explorer is broken".
+    showGate(me.note||'You are signed in and have no profile, so you read nothing.');
+    return;
+  }
+  hideGate();
+  banner('');
+  recompute(true,'signed in');
+}
+
+document.getElementById('signout').onclick=async ()=>{
+  if(SESSION) await postSession({action:'signout',access_token:SESSION.access_token});
+  clearSession();
+  showGate('Signed out. Refresh tokens were revoked server-side.');
 };
+
+async function boot(){
+  SESSION=loadSession();
+  if(SESSION){
+    scheduleRefresh();
+    try{ await afterSignIn(); return; }catch(e){ clearSession(); }
+  }
+  let cfg={};
+  try{ cfg=await (await fetch(API+'/config')).json(); }catch(e){}
+  if(cfg.error){ showGate('Login is not configured: '+cfg.error); return; }
+  showGate();
+  const s=document.createElement('script');
+  s.src='https://accounts.google.com/gsi/client';
+  s.async=true;
+  s.onload=()=>{
+    if(!window.google||!window.google.accounts){
+      showGate('Google sign-in failed to load.');return}
+    window.google.accounts.id.initialize({client_id:cfg.google_client_id,
+      callback:onGoogleCredential,
+      // A HINT only. It is not the check — the check is the `hd` claim verified
+      // server-side, because this parameter is a client-side convenience that
+      // anyone can change before the request leaves the browser.
+      hd:cfg.allowed_hd, auto_select:false, cancel_on_tap_outside:false});
+    window.google.accounts.id.renderButton(document.getElementById('gsi'),
+      {theme:'filled_blue',size:'large',text:'signin_with',width:300});
+  };
+  s.onerror=()=>showGate('Could not load Google sign-in.');
+  document.head.appendChild(s);
+}
+
+recompute(true,'initial');
+// The harness drives the renderer without a network. Booting is skipped only
+// when a test has explicitly said so.
+if(!window.__NP_NO_BOOT) boot();
 </script>
-</body>
-</html>
+</body></html>
