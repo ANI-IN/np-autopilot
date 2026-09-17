@@ -19,7 +19,7 @@ key **bypasses RLS entirely**. `AUTH.md` names it as layer 1's only leak path:
 > leaks only via the service-role key, which is why nothing in the web app has
 > it."*
 
-Nothing in `web/` reads it (`tests/test_login_flow.py::test_no_api_route_connects_
+Nothing in `api/` or `web/lib/` reads it (`tests/test_login_flow.py::test_no_api_route_connects_
 as_owner_or_service_role` asserts that, matching the environment READ rather than
 the string, so the check survives someone deleting the comment). But the Supabase
 integration sets the variable in a linked Vercel project by default, and a
@@ -48,7 +48,7 @@ organisational, not technical:
 
 ## Environment variables
 
-**Server-side only.** These are read by functions under `web/api/` and never
+**Server-side only.** These are read by functions under `api/` and never
 reach the browser:
 
 | Variable | What it is |
@@ -196,7 +196,7 @@ vercel env add ...                # the server-side variables above
 vercel --prod
 ```
 
-`vercel.json` already pins: `public` as the static root, `web/api/*.py` on
+`vercel.json` already pins: `public` as the static root, `api/*.py` on
 the Python 3.12 runtime with a 15-second cap, and a CSP with **no
 `unsafe-inline` on `script-src`** — the page's two inline blocks are pinned by
 SHA-256 hash, and `test_csp_pins_the_inline_scripts_by_hash` recomputes them, so

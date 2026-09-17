@@ -196,7 +196,7 @@ class _Refused(Exception):
 def _signin(make, jwks, monkeypatch, **token_overrides):
     """Run /api/session's signin decision path without an HTTP server.
 
-    Mirrors web/api/session.py::_signin exactly: verify OURSELVES first, and
+    Mirrors api/session.py::handle('signin') exactly: verify OURSELVES first, and
     only then contact GoTrue. `contacted` records whether GoTrue was reached,
     which is the ordering assertion below.
     """
@@ -314,7 +314,7 @@ def test_no_api_route_connects_as_owner_or_service_role():
     """USES, not MENTIONS.
 
     The first version banned the string `SERVICE_ROLE` and failed on
-    web/api/config.py, whose docstring says the key is never read there. A check
+    api/config.py, whose docstring says the key is never read there. A check
     that cannot tell a prohibition from its own description is a check that gets
     silenced by deleting the comment.
     """

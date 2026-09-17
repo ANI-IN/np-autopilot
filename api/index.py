@@ -19,7 +19,7 @@ were bypassed entirely, `web/lib/data.py` would still connect as
 `authenticated` with no identity, `auth.uid()` would be null, `np_role()` would
 return 'none', and RLS would return zero rows.
 
-ROUTING. Static files are served by Vercel from `web/public` and never reach
+ROUTING. Static files are served by Vercel from `public/` and never reach
 this module. Only `/api/*` does.
 """
 from __future__ import annotations

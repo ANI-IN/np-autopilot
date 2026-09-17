@@ -126,8 +126,8 @@ no curation UI, no sensitive data.
 | `web/lib/auth.py` | Google ID token verification — JWKS, `aud`, `iss`, `exp`, and the `hd` claim |
 | `web/lib/data.py` | request-scoped reads. ALWAYS runs as `authenticated` with the caller's claims |
 | `web/lib/guard.py` | route guard and the audit line |
-| `web/api/*.py` | search, node, neighbourhood, coverage, staffing |
-| `web/public/index.html` | the explorer |
+| `api/*.py` | search, node, neighbourhood, coverage, staffing |
+| `public/index.html` | the explorer |
 
 **`web/lib/data.py` never connects as the owner.** That is what makes the route
 guard safe to be the last layer: an unguarded route arrives with no identity and
