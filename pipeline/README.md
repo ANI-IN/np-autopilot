@@ -33,7 +33,8 @@ for everything derived; Postgres is the source of truth for CURATION only
 |---|---|
 | `migrate.py` | numbered SQL migrations with an explicit `.down.sql` for each. `status` / `up` / `down`. |
 | `project_graph.py` | replace-all in one transaction. **Public half only** — `--scope full` is refused until the recruiting RLS path exists. |
-| `curation.py` | `import` / `export` / `roundtrip` for people, domain aliases and workflow owners. |
+| `curation.py` | `import` / `export` / `roundtrip` / `check` for people, domain aliases and workflow owners. `roundtrip` proves the mechanism by reloading from YAML; `check` compares the database **as it is**, which is the only one that can see drift. |
+| `grant_access.py` | `list` / `grant` / `revoke` a profile. **The deliberate act that a session is not** — signing in proves a Workspace identity, a profile is what grants data, and there is no self-service path between the two. Runs as the owner because `profiles` has no INSERT policy, so this cannot be done over the web app. |
 
 ```
 set -a && . ~/.config/np-autopilot/env && set +a
@@ -106,6 +107,8 @@ returns; it does not decide it. `/staffing` never merges its evidence tiers, and
 | `NP_BUILD_LOG` | `BUILD_LOG.md` | where a pass appends its run record. Tests redirect it so `pytest` cannot dirty the working tree. |
 | `NP_AS_OF` | today, UTC | the date pass 4 treats as "now". `teaches` splits class dates into past and future, so the graph is deterministic within a day and not across days. Pin this to reproduce a historical build. |
 | `NP_DRIVE_SA_KEY` | `service_account_key` in `config/drive.yaml` | path to the pass-0 service-account key. **A path, never the key.** Pass 0 refuses to read a key from inside the repo: `.gitignore` stops a commit, not a copy into a build context. |
+| `NP_ALLOWED_HD` | `interviewkickstart.com` | the Google Workspace hosted domain a token must carry. **Deployment-level, never per request** — it is the domain rule, not a preference. Read by `web/lib/auth.py` and by `grant_access.py`, which refuses to provision an account whose provider `hd` disagrees. |
+| `NP_SHARED_ACCOUNTS` | empty | comma-separated local-parts of known shared mailboxes. Flags them on every audit line and stops them being granted `recruiting` or `admin` — a shared account resolves several humans to one identity, so its access log names an account, not a person. A **configured list, not detection**: Google does not tell us, and an unlisted shared mailbox is indistinguishable from a personal one. |
 
 ## Dependencies
 

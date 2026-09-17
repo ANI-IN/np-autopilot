@@ -28,7 +28,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from lib import data                                                   # noqa: E402
-from lib.auth import AuthError, verify_google_token                    # noqa: E402
+from lib.auth import AuthError, verify_supabase_token                  # noqa: E402
 
 
 def bearer(headers) -> str | None:
@@ -40,11 +40,24 @@ def bearer(headers) -> str | None:
 
 
 def identify(headers):
-    """Verified identity, or raise AuthError. Never trusts a header field."""
+    """Verified identity, or raise AuthError. Never trusts a header field.
+
+    A DATA request carries a SUPABASE access token, not a Google one. The two
+    are not interchangeable and swapping them is not a style choice:
+    `auth.uid()` casts `sub` to uuid, and a Google subject is a decimal string,
+    so a Google token here makes every RLS policy RAISE — every request 500s
+    with `invalid input syntax for type uuid`, which reads as a database fault
+    rather than as the wrong credential.
+
+    The Google token has exactly one destination, /api/session, where
+    web/lib/auth.py verifies its `hd` and trades it for a session. Both
+    verifications live in that one module; this layer only decides which is
+    appropriate where.
+    """
     token = bearer(headers)
     if not token:
         raise AuthError("no bearer token")
-    return verify_google_token(token)
+    return verify_supabase_token(token)
 
 
 def audit(identity, endpoint: str, params: dict, rows: int,
