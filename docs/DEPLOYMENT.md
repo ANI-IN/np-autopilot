@@ -196,7 +196,7 @@ vercel env add ...                # the server-side variables above
 vercel --prod
 ```
 
-`vercel.json` already pins: `web/public` as the static root, `web/api/*.py` on
+`vercel.json` already pins: `public` as the static root, `web/api/*.py` on
 the Python 3.12 runtime with a 15-second cap, and a CSP with **no
 `unsafe-inline` on `script-src`** — the page's two inline blocks are pinned by
 SHA-256 hash, and `test_csp_pins_the_inline_scripts_by_hash` recomputes them, so

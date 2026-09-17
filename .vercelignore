@@ -1,0 +1,32 @@
+# What the FUNCTION does not need. Bundle size is a hard 225 MB limit and
+# exceeding it fails the deployment, so this is correctness, not tidiness.
+#
+# Kept, because the function imports them: api/, web/, pipeline/lib/, config/
+# (pipeline/lib/taxonomy.py reads config/taxonomy.yaml, reached from
+# api/staffing.py), and public/ for the static explorer.
+tests/
+eval/
+docs/
+knowledge/
+db/
+commands/
+.claude-plugin/
+.drive-cache/
+.github/
+00-master/
+01-workflows/
+02-curriculum/
+03-instructors/
+04-programs/
+05-operations/
+06-analysis/
+*.md
+!README.md
+pipeline/0*.py
+pipeline/validate.py
+pipeline/refresh.py
+pipeline/curation.py
+pipeline/migrate.py
+pipeline/project_graph.py
+pipeline/verify_migration.py
+pipeline/grant_access.py

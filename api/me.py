@@ -14,8 +14,9 @@ standing rule against states that present as absence.
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from lib.guard import serve                                            # noqa: E402
+# Vercel discovers Python functions at /api in the project root, so this
+# file sits one level above web/. The shared modules stay in web/lib.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 
 
 def _me(conn, identity, params):
@@ -37,4 +38,6 @@ def _me(conn, identity, params):
     }, 1
 
 
-handler = serve("me", _me)
+#: (endpoint name, read function). The HTTP shell lives in api/index.py:
+#: one entry point, so there is no route that can forget the guard.
+ENDPOINT = ("me", _me)

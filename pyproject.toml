@@ -1,0 +1,32 @@
+# DEPLOYMENT MANIFEST ONLY. This does not supersede requirements.txt.
+#
+# requirements.txt remains the environment manifest for the pipeline, and its
+# header's argument still holds: nothing here is installable or importable as a
+# package, and declaring a build backend nobody builds would be noise.
+#
+# Vercel forces two things that requirements.txt cannot express:
+#
+#   1. AN ENTRYPOINT. The supported Python runtime takes one WSGI/ASGI callable,
+#      not a handler per file. `api.index:app` is that callable.
+#
+#   2. A DEPENDENCY SET SCOPED TO THE FUNCTION. Installing requirements.txt into
+#      the function produced a 232.95 MB bundle against a 225 MB limit — and
+#      failed, which is how this was found. The web app reaches exactly three
+#      third-party packages; the rest is corpus parsing and Drive access that no
+#      HTTP request touches. grpcio alone is most of the overage.
+#
+# Versions are pinned to the same values as requirements.txt. If they ever
+# disagree, the pipeline and the deployment are running different code against
+# the same database — so a test asserts they match.
+[project]
+name = "np-autopilot-web"
+version = "0"
+requires-python = ">=3.12"
+dependencies = [
+    "psycopg[binary]==3.3.5",   # web/lib/data.py, via pipeline/lib/db.py
+    "PyJWT[crypto]==2.10.1",    # web/lib/auth.py — [crypto] is what verifies RS256
+    "PyYAML==6.0.2",            # pipeline/lib/taxonomy.py, reached from api/staffing.py
+]
+
+[tool.vercel]
+entrypoint = "api.index:app"

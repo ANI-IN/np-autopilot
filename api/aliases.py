@@ -10,9 +10,10 @@ curation tables at all.
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Vercel discovers Python functions at /api in the project root, so this
+# file sits one level above web/. The shared modules stay in web/lib.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 from lib import curation_service as cs                                 # noqa: E402
-from lib.guard import serve                                            # noqa: E402
 
 
 def _aliases(conn, identity, params):
@@ -27,4 +28,6 @@ def _aliases(conn, identity, params):
     }, len(rows)
 
 
-handler = serve("aliases", _aliases)
+#: (endpoint name, read function). The HTTP shell lives in api/index.py:
+#: one entry point, so there is no route that can forget the guard.
+ENDPOINT = ("aliases", _aliases)

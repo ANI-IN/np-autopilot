@@ -7,9 +7,10 @@ can produce". The database returns raw rows; the partition happens here.
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Vercel discovers Python functions at /api in the project root, so this
+# file sits one level above web/. The shared modules stay in web/lib.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 from lib import data                                                   # noqa: E402
-from lib.guard import serve                                            # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from pipeline.lib import teaching                                      # noqa: E402
@@ -73,4 +74,6 @@ def _staffing(conn, identity, params):
     }, len(tier1)
 
 
-handler = serve("staffing", _staffing)
+#: (endpoint name, read function). The HTTP shell lives in api/index.py:
+#: one entry point, so there is no route that can forget the guard.
+ENDPOINT = ("staffing", _staffing)

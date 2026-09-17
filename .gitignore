@@ -97,3 +97,10 @@ venv/
 # the tree is an invitation to edit the wrong one.
 config/*.exported.yaml
 config/*.rt-check.yaml
+.vercel
+.env*
+
+# uv materialises these while resolving the deployment lockfile. Build
+# intermediates, not configuration.
+_uv/
+.python-version

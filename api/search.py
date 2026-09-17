@@ -1,9 +1,10 @@
 """GET /api/search?q=&types=&limit= — bounded label search."""
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Vercel discovers Python functions at /api in the project root, so this
+# file sits one level above web/. The shared modules stay in web/lib.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 from lib import data                                                   # noqa: E402
-from lib.guard import serve                                            # noqa: E402
 
 
 def _search(conn, identity, params):
@@ -15,4 +16,6 @@ def _search(conn, identity, params):
     return {"results": rows, "count": len(rows)}, len(rows)
 
 
-handler = serve("search", _search)
+#: (endpoint name, read function). The HTTP shell lives in api/index.py:
+#: one entry point, so there is no route that can forget the guard.
+ENDPOINT = ("search", _search)

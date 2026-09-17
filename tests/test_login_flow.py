@@ -329,7 +329,7 @@ def test_no_api_route_connects_as_owner_or_service_role():
 
 
 def test_nothing_the_browser_can_fetch_mentions_a_secret():
-    for path in sorted((REPO / "web" / "public").rglob("*")):
+    for path in sorted((REPO / "public").rglob("*")):
         if not path.is_file() or path.name.startswith("."):
             continue
         src = path.read_text(encoding="utf-8", errors="replace")
@@ -346,7 +346,7 @@ def test_csp_pins_the_inline_scripts_by_hash():
 
     So the hashes are recomputed here and compared.
     """
-    html = (REPO / "web" / "public" / "index.html").read_text(encoding="utf-8")
+    html = (REPO / "public" / "index.html").read_text(encoding="utf-8")
     blocks = re.findall(r"<script>([\s\S]*?)</script>", html)
     assert len(blocks) == 2, f"expected 2 inline blocks, found {len(blocks)}"
     want = {"'sha256-" + base64.b64encode(
@@ -362,13 +362,13 @@ def test_csp_pins_the_inline_scripts_by_hash():
         "script-src must not allow unsafe-inline: the page holds a session token"
     missing = [h for h in want if h not in csp]
     assert not missing, (
-        "vercel.json's CSP does not match web/public/index.html. Recompute:\n"
+        "vercel.json's CSP does not match public/index.html. Recompute:\n"
         + "\n".join(sorted(want)))
 
 
 def test_the_explorer_never_asks_for_the_whole_graph():
     """1.2 MB is small enough to ship, which is exactly why it must not be."""
-    html = (REPO / "web" / "public" / "index.html").read_text(encoding="utf-8")
+    html = (REPO / "public" / "index.html").read_text(encoding="utf-8")
     for banned in ("/api/graph", "/api/all", "__NP.data =", "nodes.json"):
         assert banned not in html, f"the client references {banned!r}"
     assert "nodeBudget" in html, "no ceiling on what the client will hold"

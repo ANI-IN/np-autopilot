@@ -5,9 +5,10 @@ edges table at all, so the degree-18,134 file hubs cannot be walked through.
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Vercel discovers Python functions at /api in the project root, so this
+# file sits one level above web/. The shared modules stay in web/lib.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 from lib import data                                                   # noqa: E402
-from lib.guard import serve                                            # noqa: E402
 
 
 def _neighbourhood(conn, identity, params):
@@ -22,4 +23,6 @@ def _neighbourhood(conn, identity, params):
     return out, len(out["nodes"])
 
 
-handler = serve("neighbourhood", _neighbourhood)
+#: (endpoint name, read function). The HTTP shell lives in api/index.py:
+#: one entry point, so there is no route that can forget the guard.
+ENDPOINT = ("neighbourhood", _neighbourhood)

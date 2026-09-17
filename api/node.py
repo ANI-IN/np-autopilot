@@ -1,9 +1,10 @@
 """GET /api/node?id= — one node, with its provenance in both shapes."""
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Vercel discovers Python functions at /api in the project root, so this
+# file sits one level above web/. The shared modules stay in web/lib.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 from lib import data                                                   # noqa: E402
-from lib.guard import serve                                            # noqa: E402
 
 
 def _node(conn, identity, params):
@@ -17,4 +18,6 @@ def _node(conn, identity, params):
     return {"node": n, "provenance": data.provenance(conn, node_id)}, 1
 
 
-handler = serve("node", _node)
+#: (endpoint name, read function). The HTTP shell lives in api/index.py:
+#: one entry point, so there is no route that can forget the guard.
+ENDPOINT = ("node", _node)

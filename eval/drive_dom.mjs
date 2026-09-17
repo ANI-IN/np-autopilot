@@ -7,7 +7,7 @@
 // PORTED alongside the renderer (G2). Two things changed and neither is
 // cosmetic:
 //
-//   * TARGET. Defaults to web/public/index.html — the hosted explorer. Pass a
+//   * TARGET. Defaults to public/index.html — the hosted explorer. Pass a
 //     path to run the offline build instead:
 //         node eval/drive_dom.mjs knowledge/graph.html
 //     Both are exercised in CI. The offline build is still shipped, so a
@@ -20,7 +20,7 @@
 //     for the whole graph, and that a hostile label cannot reach innerHTML.
 import {readFileSync} from 'node:fs';
 
-const TARGET = process.argv[2] || 'web/public/index.html';
+const TARGET = process.argv[2] || 'public/index.html';
 const PORTED = !TARGET.includes('graph.html');
 
 const errors=[];

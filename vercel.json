@@ -1,19 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": null,
-  "outputDirectory": "web/public",
+  "outputDirectory": "public",
   "functions": {
-    "web/api/*.py": {
-      "runtime": "python@3.12",
-      "maxDuration": 15
+    "api/**": {
+      "maxDuration": 15,
+      "excludeFiles": "{.drive-cache,knowledge,00-master,01-workflows,02-curriculum,03-instructors,04-programs,05-operations,06-analysis,tests,eval,docs,db,commands,.claude-plugin,.github,.vercel,.git}/**"
     }
   },
-  "rewrites": [
-    {
-      "source": "/api/:fn",
-      "destination": "/web/api/:fn"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -40,7 +34,7 @@
         },
         {
           "key": "content-security-policy",
-          "value": "default-src 'self'; script-src 'self' https://accounts.google.com 'sha256-GeDNHAFaIBrrrtfquAw99WM/RhmEq1UX65qoKKUsBso=' 'sha256-sqwmN27Lg/Hdmg6W5aTPts8kSP2lF+zAq6CgdH5uKBM='; connect-src 'self' https://accounts.google.com; frame-src https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'"
+          "value": "default-src 'self'; script-src 'self' https://accounts.google.com 'sha256-GeDNHAFaIBrrrtfquAw99WM/RhmEq1UX65qoKKUsBso=' 'sha256-uD0s7xYKvrdFUvzEU+3Co5cC3MlzyZwK7A/Vpcd7whw='; connect-src 'self' https://accounts.google.com; frame-src https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'"
         }
       ]
     }

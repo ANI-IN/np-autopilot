@@ -21,7 +21,7 @@ jobs:
       # BOTH renderers. The offline build is still shipped, so a harness that
       # only covered the hosted port would quietly stop covering it — and an
       # assertion that stops running is the A.7b shape in test form.
-      - name: hosted explorer (web/public/index.html)
+      - name: hosted explorer (public/index.html)
         run: node eval/drive_dom.mjs
       - name: offline build (knowledge/graph.html)
         run: node eval/drive_dom.mjs knowledge/graph.html
@@ -61,7 +61,7 @@ jobs:
       # catches a service-role JWT sitting in any client-reachable file.
       - name: no secrets in anything the browser fetches
         run: |
-          if grep -rInE '(service_role|SUPABASE_JWT_SECRET|eyJhbGciOi)' web/public/; then
+          if grep -rInE '(service_role|SUPABASE_JWT_SECRET|eyJhbGciOi)' public/; then
             echo "::error::a secret appears in a browser-reachable file"; exit 1
           fi
 
