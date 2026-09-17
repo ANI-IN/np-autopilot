@@ -387,3 +387,37 @@ def test_migrations_run_as_the_role_whose_defaults_were_revoked():
         assert role not in acl, (
             f"default privileges for {who} still grant to {role.rstrip('=')}: {acl}"
         )
+
+
+def test_every_policy_evaluates_np_role_once_per_query():
+    """A policy written `np_role()` costs one lookup PER ROW.
+
+    Measured during G4: search over 3,146 nodes spent 40.7ms of its 40.9ms in
+    the RLS predicate, calling np_role() 3,146 times. Wrapped as `(select
+    np_role())` with no correlated reference it becomes an InitPlan, evaluated
+    once per statement — 4.6ms, and the whole endpoint set went 67ms -> 12ms.
+
+    The two forms MEAN EXACTLY THE SAME THING, which is why this needs a test
+    rather than a code review: the next policy someone adds will be written the
+    natural way, it will be correct, every access test will pass, and it will
+    cost a table scan's worth of function calls. Nothing else would notice.
+    """
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        cur.execute("""
+            select tablename, policyname, coalesce(qual,'') || ' ' ||
+                   coalesce(with_check,'') as expr
+            from pg_policies where schemaname = 'public'
+        """)
+        rows = cur.fetchall()
+
+    unwrapped = []
+    for table, policy, expr in rows:
+        for fn in ("np_role", "np_can_see_sensitive"):
+            # Postgres renders the wrapped form as "( SELECT np_role() ...".
+            bare = expr.count(fn + "()") - expr.count("( SELECT " + fn + "()")
+            if bare > 0:
+                unwrapped.append(f"{table}.{policy} calls {fn}() per row")
+    assert not unwrapped, (
+        "these policies evaluate a session function once per row; wrap the "
+        "call as (select f()):\n  " + "\n  ".join(unwrapped))
+    assert rows, "no policies found at all — this test would pass vacuously"
