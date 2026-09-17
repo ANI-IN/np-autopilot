@@ -1,0 +1,5 @@
+-- 0001 down — also empty, and correct.
+--
+-- Rolling back "create nothing" is "drop nothing". The runner still executes
+-- this file and still deletes the tracking row, so the full down path is
+-- exercised end to end.

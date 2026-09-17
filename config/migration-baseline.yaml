@@ -2,13 +2,96 @@ version: 1
 note: "Frozen migration reference. Every migration-verification run asserts against THIS,\
   \ never against a live rebuild \u2014 a live rebuild would move with the corpus and prove\
   \ nothing. Re-freeze only in a commit that says why."
-frozen_at: '2026-09-16T19:17:47+00:00'
+frozen_at: '2026-09-17T05:58:38+00:00'
 built_as_of: '2026-09-09'
-plugin_version: 0.1.8
+plugin_version: 0.1.9
 taxonomy_version: 2
 open_questions_that_will_move_these:
 - "Q7 aliases ML / Agentic AI / Product Management \u2014 272 expert_in edges currently unjoined.\
   \ Resolving any of them moves edge_counts and component structure."
+scopes:
+  full:
+    content_hash: 0165f164e104d6add2b54a014a839692a8c1bab1a88de1f95c889e46c5c14250
+    totals:
+      nodes: 5048
+      edges: 36677
+    node_counts:
+      domain: 42
+      file: 74
+      instructor: 3817
+      module: 922
+      person: 43
+      program: 42
+      theme: 16
+      workflow: 92
+    edge_counts:
+      belongs_to: 92
+      contains: 351
+      covers: 28
+      delivered_by: 43
+      expert_in: 1155
+      owned_by: 55
+      sourced_from: 32656
+      supported_by: 58
+      teaches: 2239
+    duplicates:
+      distinct_colliding_triples: 1687
+      extra_rows: 26448
+      by_rel:
+        expert_in: 22
+        sourced_from: 1665
+    provenance:
+      entries_by_origin:
+        corpus: 32730
+        hand: 15
+      nodes_total: 5048
+      nodes_with_sources: 5048
+      nodes_with_hand_provenance: 15
+    components:
+      excluding_provenance: 42
+      largest: 1881
+      isolated: 2878
+  public:
+    content_hash: eba7c479301879907de4524f835c48350444df8980ea5dd6f3ce929234172082
+    totals:
+      nodes: 3146
+      edges: 34575
+    node_counts:
+      domain: 42
+      file: 74
+      instructor: 1915
+      module: 922
+      person: 43
+      program: 42
+      theme: 16
+      workflow: 92
+    edge_counts:
+      belongs_to: 92
+      contains: 351
+      covers: 28
+      delivered_by: 43
+      expert_in: 1155
+      owned_by: 55
+      sourced_from: 30554
+      supported_by: 58
+      teaches: 2239
+    duplicates:
+      distinct_colliding_triples: 1579
+      extra_rows: 26331
+      by_rel:
+        expert_in: 22
+        sourced_from: 1557
+    provenance:
+      entries_by_origin:
+        corpus: 30628
+        hand: 15
+      nodes_total: 3146
+      nodes_with_sources: 3146
+      nodes_with_hand_provenance: 15
+    components:
+      excluding_provenance: 42
+      largest: 1881
+      isolated: 976
 content_hash: 0165f164e104d6add2b54a014a839692a8c1bab1a88de1f95c889e46c5c14250
 totals:
   nodes: 5048

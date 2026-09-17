@@ -23,6 +23,37 @@ ownership stub; every suggestion lands `confirmed: false`.
 `refresh.py` runs 1–5 plus `gen_index` and `validate`, prints a delta, bumps
 `plugin.json`, and **stops without committing**.
 
+## Database (D3)
+
+The graph is projected into Postgres. The pipeline remains the source of truth
+for everything derived; Postgres is the source of truth for CURATION only
+(DECISIONS §B.1).
+
+| Script | |
+|---|---|
+| `migrate.py` | numbered SQL migrations with an explicit `.down.sql` for each. `status` / `up` / `down`. |
+| `project_graph.py` | replace-all in one transaction. **Public half only** — `--scope full` is refused until the recruiting RLS path exists. |
+| `curation.py` | `import` / `export` / `roundtrip` for people, domain aliases and workflow owners. |
+
+```
+set -a && . ~/.config/np-autopilot/env && set +a
+python3 pipeline/migrate.py up
+python3 pipeline/project_graph.py
+python3 pipeline/verify_migration.py --source supabase
+```
+
+**Connections go through `lib/db.py`, never a literal.** The session pooler
+(5432) for migrations and the projection; the transaction pooler (6543) for
+anything request-scoped, with `prepare_threshold=None` because transaction-mode
+pooling cannot hold prepared statements. The direct
+`db.<ref>.supabase.co:5432` connection is **refused** — it is IPv6-only on this
+project, so it works on a laptop and fails on Vercel.
+
+**Every migration ships its rollback.** `migrate.py` refuses to run a `.up.sql`
+with no matching `.down.sql`: an irreversible migration is a decision, and it has
+to be written down as one. Migration 0001 is deliberately empty so the rollback
+path is exercised before there is anything to lose.
+
 ## Migration verification
 
 `verify_migration.py` checks a graph against the frozen reference in

@@ -107,6 +107,93 @@ def measure(g: dict) -> dict:
     }
 
 
+def graph_from_db() -> dict:
+    """Rebuild the graph dict from Postgres, in the shape measure() expects.
+
+    Deliberately reconstructive rather than a set of SQL COUNT queries. Counting
+    in SQL would answer "are the totals the same"; rebuilding answers "is it the
+    same graph", and it is the same measure() running on both sides — so a bug
+    in the measurement cannot pass on one side and fail on the other.
+    """
+    from pipeline.lib import db
+
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        cur.execute("select id, type, label, label_raw, sensitive, props "
+                    "from nodes")
+        nodes = {}
+        for nid, ntype, label, label_raw, sensitive, props in cur.fetchall():
+            n = {"id": nid, "type": ntype, "label": label,
+                 "sensitive": sensitive, "sources": []}
+            if label_raw is not None:
+                n["label_raw"] = label_raw
+            n.update(props or {})
+            nodes[nid] = n
+
+        # Group assertion rows back into source entries. One row per established
+        # property, so rows sharing coordinates are one entry whose
+        # `establishes` list is rebuilt in prop_ordinal order.
+        cur.execute("""
+            select node_id, origin, file, sheet, row_num, col_num, col_name,
+                   page, within_cell, ordinal, evidence, entered_at,
+                   prop, prop_ordinal
+            from node_sources
+            order by node_id, ordinal, prop_ordinal
+        """)
+        grouped: dict[tuple, dict] = {}
+        order: list[tuple] = []
+        for (node_id, origin, file, sheet, row_num, col_num, col_name, page,
+             within_cell, ordinal, evidence, entered_at, prop,
+             prop_ordinal) in cur.fetchall():
+            key = (node_id, origin, file, sheet, row_num, col_num, col_name,
+                   page, within_cell, ordinal)
+            if key not in grouped:
+                entry = {"origin": origin, "ordinal": ordinal}
+                if file is not None:
+                    entry["file"] = file
+                if sheet is not None:
+                    entry["sheet"] = sheet
+                if row_num is not None:
+                    entry["row"] = row_num
+                if col_num is not None:
+                    entry["column"] = col_num
+                elif col_name is not None:
+                    entry["column"] = col_name
+                if page is not None:
+                    entry["page"] = page
+                if within_cell is not None:
+                    entry["within_cell"] = within_cell
+                if evidence is not None:
+                    entry["evidence"] = evidence
+                if entered_at is not None:
+                    entry["entered_at"] = entered_at.isoformat()
+                grouped[key] = entry
+                order.append(key)
+            if prop is not None:
+                grouped[key].setdefault("_props", []).append((prop_ordinal, prop))
+        for key in order:
+            entry = grouped[key]
+            props = entry.pop("_props", None)
+            if props:
+                entry["establishes"] = [p for _, p in sorted(props)]
+            nodes[key[0]]["sources"].append(entry)
+
+        cur.execute("select rel, source_id, target_id, props from edges")
+        edges = []
+        for rel, src, tgt, props in cur.fetchall():
+            e = {"rel": rel, "source": src, "target": tgt}
+            e.update(props or {})
+            edges.append(e)
+
+        cur.execute("select scope, content_hash, node_count, edge_count, "
+                    "source_count, projected_at from projection_meta where id=1")
+        row = cur.fetchone()
+        meta = {}
+        if row:
+            meta = {"scope": row[0], "projected_content_hash": row[1],
+                    "projected_at": row[5].isoformat()}
+    return {"meta": meta, "nodes": list(nodes.values()), "edges": edges}
+
+
 def compare(expected: dict, actual: dict) -> list[tuple[bool, str, str]]:
     """Walk both dicts and return (ok, path, detail) per leaf."""
     out: list[tuple[bool, str, str]] = []
@@ -130,14 +217,22 @@ def main() -> int:
                     help="re-record the baseline from the current graph. Use only "
                          "in a commit that explains why the reference moved.")
     ap.add_argument("--graph", default=str(KNOWLEDGE_DIR / "graph.json"))
-    ap.add_argument("--source", default="file", choices=["file"],
-                    help="reserved — 'supabase' lands with the projection")
+    ap.add_argument("--source", default="file", choices=["file", "supabase"],
+                    help="where to measure: the built files, or the projection")
+    ap.add_argument("--scope", default=None, choices=["full", "public"],
+                    help="which baseline to assert against. Defaults to full for "
+                         "--source file and public for --source supabase, which "
+                         "is what each actually holds in this phase.")
     args = ap.parse_args()
 
-    # The UNION: both halves are projected into Postgres, separated there by
-    # RLS rather than by which file they live in. The baseline pins the whole
-    # graph, so verification has to see the whole graph.
-    g = graphio.load_graph(Path(args.graph))
+    scope = args.scope or ("public" if args.source == "supabase" else "full")
+    if args.source == "supabase":
+        g = graph_from_db()
+    else:
+        # `full` is the union of both halves; `public` is the committed file
+        # alone, which is what this phase projects.
+        g = graphio.load_graph(Path(args.graph),
+                               include_sensitive=(scope == "full"))
     actual = measure(g)
 
     if args.freeze:
@@ -156,6 +251,15 @@ def main() -> int:
                 "edges currently unjoined. Resolving any of them moves edge_counts "
                 "and component structure.",
             ],
+            "scopes": {
+                # TWO scopes, because the database deliberately holds only the
+                # public half in this phase. Verifying it against the full
+                # baseline would fail on every count and prove nothing.
+                "full": measure(graphio.load_graph(Path(args.graph),
+                                                   include_sensitive=True)),
+                "public": measure(graphio.load_graph(Path(args.graph),
+                                                     include_sensitive=False)),
+            },
             **actual,
         }
         BASELINE.write_text(yaml.safe_dump(payload, sort_keys=False, width=88),
@@ -169,9 +273,10 @@ def main() -> int:
         print(f"no baseline at {BASELINE}. Run with --freeze to create one.")
         return 2
     expected = yaml.safe_load(BASELINE.read_text(encoding="utf-8"))
-    checked = {k: expected[k] for k in
+    section = (expected.get("scopes") or {}).get(scope, expected)
+    checked = {k: section[k] for k in
                ("content_hash", "totals", "node_counts", "edge_counts",
-                "duplicates", "provenance", "components") if k in expected}
+                "duplicates", "provenance", "components") if k in section}
 
     rows = compare(checked, actual)
     failed = [r for r in rows if not r[0]]
@@ -181,7 +286,9 @@ def main() -> int:
     print("=" * 78)
     print(f"  baseline : {BASELINE.relative_to(REPO_ROOT)}  "
           f"(frozen {expected.get('frozen_at', '?')})")
-    print(f"  target   : {args.source}  {args.graph}")
+    print(f"  target   : {args.source}  "
+          f"{'postgres' if args.source == 'supabase' else args.graph}")
+    print(f"  scope    : {scope}")
     print()
     for ok, path, detail in rows:
         print(f"  {'PASS' if ok else 'FAIL'}  {path:<46} {detail}")

@@ -1,0 +1,8 @@
+-- 0001 — deliberately empty.
+--
+-- The first migration creates nothing. Its only job is to exercise the rollback
+-- path while there is nothing to lose: apply it, roll it back, apply it again,
+-- and confirm the tracking table agrees with reality each time.
+--
+-- A rollback first attempted on the migration that created the schema is a
+-- rollback first attempted under pressure, on the day it has to work.
