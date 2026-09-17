@@ -11,7 +11,26 @@ DECISIONS §B.2 argued for a content-addressed set-diff so `updated_at` stays
 meaningful. That is right for a graph Postgres OWNS. This phase projects a
 read-only mirror of a file the pipeline owns, nothing consumes `updated_at` yet,
 and replace-all is the version whose failure mode is "the old graph is still
-there". The diff lands with the web app, when there is a reader who cares.
+there".
+
+SWITCH TO THE SET-DIFF WHEN EITHER OF THESE BECOMES TRUE. They are conditions,
+not a vague "later", so nobody has to reconstruct why replace-all was acceptable:
+
+  1. GRAPH MUTATIONS BECOME AUDITED. The §E.4 audit trail answers "who changed
+     what, when". Replace-all rewrites every row on every build, so every row
+     looks modified every time and the audit log stops distinguishing a real
+     change from a rebuild. The log is then worse than absent, because it looks
+     like a record.
+
+  2. THE PROJECTION RUNS ON A SCHEDULE rather than on demand. A nightly rebuild
+     under replace-all truncates and reloads 68,379 rows whether or not the
+     corpus moved — a window where the graph is empty, on a timer, unattended.
+     On demand, a human is watching and the window is seconds.
+
+Neither is true today: nothing reads `updated_at`, and this runs when someone
+runs it. `test_replace_all_switch_conditions` in tests/test_db_migration_
+verification.py asserts both are still false, so the day one becomes true the
+suite says so rather than the behaviour quietly degrading.
 
 SCOPE: this phase projects the PUBLIC half only. `graph-sensitive.json` — 277
 hiring rejections and 1,625 in-pipeline candidates — is not projected at all,

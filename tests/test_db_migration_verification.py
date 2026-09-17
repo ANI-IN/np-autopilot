@@ -221,3 +221,33 @@ def test_adding_a_type_requires_no_schema_change_at_all():
         cur.execute("delete from node_types where name = 'probe_type'")
         conn.commit()
     assert before == after, "adding a node type rewrote the nodes table"
+
+
+def test_replace_all_switch_conditions_are_still_false():
+    """The loader uses replace-all. That is conditional, and these are the conditions.
+
+    DECISIONS §B.2 wants a content-addressed set-diff. Replace-all is acceptable
+    only while (1) nothing audits graph mutations and (2) the projection runs on
+    demand. When either becomes true this test fails, which is the point: the
+    trigger is asserted rather than remembered.
+    """
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        # (1) no audit table watching graph mutations
+        cur.execute("""
+            select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace
+            where n.nspname='public' and c.relkind='r'
+              and (c.relname like '%audit%' or c.relname like '%mutation%'
+                   or c.relname like '%history%')""")
+        audit = [r[0] for r in cur.fetchall()]
+        assert not audit, (
+            f"audit tables exist ({audit}): replace-all now rewrites every row on "
+            "every build, so the audit log cannot distinguish a real change from "
+            "a rebuild. Switch project_graph.py to the set-diff."
+        )
+        # (2) nothing schedules the projection
+        cur.execute("select count(*) from pg_available_extensions "
+                    "where name='pg_cron' and installed_version is not null")
+        assert cur.fetchone()[0] == 0, (
+            "pg_cron is installed: if it schedules the projection, replace-all "
+            "truncates 68,379 rows unattended on a timer. Switch to the set-diff."
+        )
