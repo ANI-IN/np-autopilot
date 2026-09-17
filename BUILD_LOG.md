@@ -2954,3 +2954,14 @@ document of ours. Final hash `a53462823ca26466fc5e6b3bf18615ec51bb96ed003249a866
 ## 2026-09-16 19:55:47Z — validate
 
 - validate: 0 FAIL, 6 WARN, 10/18 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-16 21:00:10Z — 00_fetch_drive (ok)
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Folder id: `1eBu4P3DtjazCS50dmvViuWsJxEMGiaQL`
+- Location: `my_drive`
+- Scope: `https://www.googleapis.com/auth/drive.readonly`
+- Cache: `.drive-cache`
+- Files seen: 74 | fetched: 0 | exported: 0 | skipped current: 74 | failed: 0
+- EXCLUDED at fetch time, never downloaded: `03-instructors/US Instructor Cost Analysis.xlsx`
+- PURGED an excluded file from the existing cache: `03-instructors/US Instructor Cost Analysis.xlsx`

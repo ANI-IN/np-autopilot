@@ -117,7 +117,7 @@ def _run(graph_path: Path | None = None):
               "endpoint-type", "wildcard-edge", "count-vs-expect", "empty-edge-type",
               "orphan-node", "components", "absolute-path", "excluded-file",
               "excluded-field", "duplicate-id", "blank-identifier", "quarter-map",
-              "version-bump", "hand-provenance"]:
+              "version-bump", "hand-provenance", "excluded-file-cache"]:
         r.category(c)
 
     # provenance
@@ -235,6 +235,29 @@ def _run(graph_path: Path | None = None):
                 r.add(FAIL, "absolute-path", f"absolute path in provenance: {s['file']}")
     # excluded file / field
     excluded = set(taxonomy.excluded_files())
+    # R17 — assert absence from the CACHE, not merely from the manifest.
+    # The old check proved an excluded file never became a node. It could not
+    # see that pass 0 had downloaded it anyway and left it on disk, which is
+    # where it matters once the pipeline runs unattended on shared
+    # infrastructure with its own backups and snapshots.
+    cache_dir = KNOWLEDGE_DIR.parent / ".drive-cache"
+    if cache_dir.is_dir():
+        present = [p for p in sorted(excluded) if (cache_dir / p).exists()]
+        if present:
+            for p_ in present:
+                r.add(FAIL, "excluded-file-cache",
+                      f"excluded file is PRESENT IN THE CACHE: {p_} — pass 0 "
+                      "fetched it despite the exclusion list")
+        else:
+            # Its OWN category, not `excluded-file`. This check emits a finding
+            # on every run, and folding it into `excluded-file` made that
+            # category always-exercised — which silently voided the injection
+            # test proving `excluded-file` can still catch an excluded file
+            # reaching the GRAPH. Same trap as hand-provenance; caught by the
+            # baseline test rather than by review, which is why that test exists.
+            r.add(INFO, "excluded-file-cache",
+                  f"{len(excluded)} excluded file(s) absent from .drive-cache/ "
+                  "— never fetched")
     for n in nodes:
         for s in n.get("sources", []):
             if s.get("file") in excluded:

@@ -36,6 +36,7 @@ from pathlib import Path
 # are not installed — was the one failure that left no trace.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from pipeline.lib import taxonomy                                      # noqa: E402
 from pipeline.lib.paths import DRIVE_CONFIG, REPO_ROOT, build_log      # noqa: E402
 
 # Pass 0 must not become a second place where a repo path is decided. ROOT,
@@ -345,6 +346,10 @@ def append_build_log(account: str, folder_id: str, stats: dict, cache: Path,
     ]
     for name, why in stats["failures"]:
         detail.append(f"  FAILED `{name}` — {why}")
+    for path in stats.get("excluded_at_fetch", []):
+        detail.append(f"  EXCLUDED at fetch time, never downloaded: `{path}`")
+    for path in stats.get("purged_from_cache", []):
+        detail.append(f"  PURGED an excluded file from the existing cache: `{path}`")
     write_log("partial" if stats["failed"] else "ok", "\n".join(detail),
               account=account, folder_id=folder_id, location=location,
               drive_id=drive_id, scope=SCOPES[0], cache=cache)
@@ -411,6 +416,48 @@ def main() -> int:
 
     print(f"{len(entries)} files in the Drive tree\n")
 
+    # ---- FETCH-TIME EXCLUSION. R17. --------------------------------------
+    # The exclusion list was an application rule enforced by pass 1, two passes
+    # after the bytes had already landed in .drive-cache/. A service account
+    # that can read US Instructor Cost Analysis.xlsx — 5,387 names, employment
+    # status including "Exited (Terminated)", per-labour-code rates — downloaded
+    # it on every run and relied on a later pass to ignore it.
+    #
+    # The fix is to not fetch it. Skipping here means the bytes never exist
+    # locally, which is the only version of this that survives the pipeline
+    # running unattended on shared infrastructure with its own backups.
+    #
+    # NOT two independent layers: this and pass 1 both read
+    # taxonomy.yaml -> excluded.files, so a wrong entry in that list defeats
+    # both (DECISIONS §A.7a). They are two layers against a BUG IN ONE PASS,
+    # which is the narrower and honest claim.
+    excluded = set(taxonomy.excluded_files())
+    def rel_of(entry):
+        return str(entry["rel_dir"] / entry["safe_name"]).lstrip("./")
+    skipped_excluded = [e for e in entries if rel_of(e) in excluded]
+    entries = [e for e in entries if rel_of(e) not in excluded]
+
+    print("-" * 70)
+    print(f"EXCLUDED AT FETCH TIME: {len(skipped_excluded)} of "
+          f"{len(excluded)} configured")
+    for e in skipped_excluded:
+        print(f"  never fetched: {rel_of(e)}")
+    for path in sorted(excluded):
+        if path not in {rel_of(e) for e in skipped_excluded}:
+            print(f"  configured but NOT PRESENT in Drive: {path}")
+    # An excluded file already sitting in the cache from an earlier run is
+    # removed. The cache is ours, not the corpus, so deleting from it is
+    # permitted — and leaving it would mean the fix only helps a fresh machine.
+    purged = []
+    for path in excluded:
+        stale = cache / path
+        if stale.exists():
+            stale.unlink()
+            purged.append(path)
+            print(f"  PURGED from the existing cache: {path}")
+    print("-" * 70)
+    print()
+
     stats = {"seen": len(entries), "fetched": 0, "exported": 0,
              "skipped": 0, "failed": 0, "failures": []}
     manifest = []
@@ -465,6 +512,8 @@ def main() -> int:
                     "files": manifest}, indent=1),
         encoding="utf-8")
 
+    stats["excluded_at_fetch"] = [rel_of(e) for e in skipped_excluded]
+    stats["purged_from_cache"] = purged
     append_build_log(account, folder_id, stats, cache.relative_to(ROOT),
                      location=kind, drive_id=drive_id)
     print(f"\nseen {stats['seen']} | fetched {stats['fetched']} "

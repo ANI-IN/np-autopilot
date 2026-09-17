@@ -306,17 +306,72 @@ test today:
    no human looking at the file list. The exposure moves from one laptop to
    whatever the worker is, and its backups.
 
-### Mitigations not yet built
+### FIXED 2026-09-17 — at the boundary
 
-- Pass 0 should refuse to fetch an excluded file at all, rather than downloading
-  it and relying on pass 1 to ignore it. That is the one change that makes the
-  exclusion hold at the boundary instead of two passes later.
-- The exclusion should be keyed on something more stable than a path — a sha256,
-  or a rule about the file's header shape — so a rename cannot un-exclude it.
-- `validate.py` asserts excluded files are absent from `files.json`. It should
-  also assert they are absent from the **cache**.
+- **Pass 0 now reads the exclusion list before fetching** and skips those files,
+  so the bytes never land. It also **purges** an excluded file left in the cache
+  by an earlier run. Verified live: the 23 MB payroll file was present, was
+  purged on the next run, and was not re-fetched.
+- **`validate.py` now asserts absence from the CACHE**, not merely from
+  `files.json`, under its own category `excluded-file-cache`. Verified by firing
+  on the real cache before the fix.
 
-**Not fixed in this phase. Recorded so the decision to leave it is visible.**
+**The two layers are NOT independent, and the tests say so.** Pass 0 and pass 1
+both read `taxonomy.yaml -> excluded.files`, so a wrong entry defeats both. They
+are two layers against a bug in *one pass* — see DECISIONS §A.7a.
+
+### What remains, and must not be claimed as solved
+
+- **The service account can still read the file on demand.** The exclusion is a
+  client-side decision made by code we control, not a permission. Anyone who can
+  run the pipeline, or who holds the key, fetches it by editing one line of YAML.
+  **Only narrowing the Drive share changes this.**
+- **The exclusion is still path-keyed.** A rename un-excludes silently. A test
+  pins this so closing it cannot happen unnoticed.
+- **The exclusion list has one entry.** Every other corpus file is still fetched
+  in full, including `Operational Metrics.xlsx` with its 12,986 named learners.
+  See `docs/CACHE-EXPOSURE.md`, which is the document for that decision.
+
+---
+
+## R18 — The repository was PUBLIC for eight days
+
+**Likelihood: n/a, it happened · Impact: high**
+
+Found 2026-09-17 by querying the GitHub API before the planned deletion, rather
+than by reading our own documentation.
+
+```
+gh api repos/ANI-IN/np-autopilot  ->  "private": false, "visibility": "PUBLIC"
+created 2026-09-09T17:54:03Z · forks 0 · stars 0 · watchers 0
+```
+
+**Every document in this project stated the repo was private** — README, NEXT.md,
+docs/AUDIT.md, docs/DECISIONS.md §F, and **R16 above**, which flags the reference
+implementation being public *while contrasting it with this repo being private*.
+The assumption was written down five times and verified zero times.
+
+**Set to private immediately on discovery.** Exposure window ≈ 8 days.
+
+**Publicly readable during that window:** 3,817 instructor names, of whom **277
+hiring rejections** and 1,625 mid-pipeline candidates; 39 per-instructor ratings;
+136 decline rates; 140 `rejections.json` entries naming a person against an SME
+hiring-tracker sheet **and row number**; 43 internal staff with titles; and every
+analysis document, including doc 01 §Tier 0 and R16 itself.
+
+**NOT exposed:** the corpus. All seven directories are gitignored and the git
+history scan confirms no corpus file was ever committed, so the 8,001 emails,
+8,074 phone numbers and 4,524 LinkedIn URLs were not in the public repo.
+
+**Consequences:** the history rewrite becomes remediation rather than hygiene;
+deleting the repository is clearly right rather than merely tidier; zero forks
+and zero stars is **not** evidence of zero copies, since public repos are crawled
+and `git clone` needs no permission; and whether this requires disclosure is a
+question for legal, not for me.
+
+**The generalisable lesson is R16's, turned inward:** we recorded another team's
+repo as wrongly public while never checking our own. Full detail in
+`docs/CACHE-EXPOSURE.md` §0.
 
 ---
 
@@ -341,4 +396,5 @@ test today:
 | R14 | Silent plugin component drop | low | medium |
 | R15 | Forgotten version bump | med-high | medium |
 | R16 | Reference impl is public | certain | your call |
-| R17 | **Excluded payroll file is reachable by the cloud identity** — exclusion is an application rule, not an access control | certain | high |
+| R17 | Excluded payroll file reachable by the cloud identity — **fixed at fetch time 2026-09-17**; the account can still read it on demand | certain | high |
+| R18 | **The repository was PUBLIC for 8 days** — 277 named hiring rejections and 1,625 candidates readable by anyone. Set private on discovery | happened | high |
