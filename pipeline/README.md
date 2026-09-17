@@ -112,3 +112,26 @@ returns; it does not decide it. `/staffing` never merges its evidence tiers, and
 `openpyxl`, `PyYAML`, `python-docx`, `pytest`. Pass 0 additionally needs
 `google-api-python-client` and `google-auth`. There is no manifest yet — see
 `docs/AUDIT.md` §6.8.
+
+## Web app (E2/E3)
+
+`web/` is a read-only explorer deployed on Vercel. `member` role only; no writes,
+no curation UI, no sensitive data.
+
+| Path | |
+|---|---|
+| `web/lib/auth.py` | Google ID token verification — JWKS, `aud`, `iss`, `exp`, and the `hd` claim |
+| `web/lib/data.py` | request-scoped reads. ALWAYS runs as `authenticated` with the caller's claims |
+| `web/lib/guard.py` | route guard and the audit line |
+| `web/api/*.py` | search, node, neighbourhood, coverage, staffing |
+| `web/public/index.html` | the explorer |
+
+**`web/lib/data.py` never connects as the owner.** That is what makes the route
+guard safe to be the last layer: an unguarded route arrives with no identity and
+RLS returns zero rows, so it answers "nothing found" rather than leaking.
+
+`coverage` is SQL. `staffing` tiering and name resolution stay in Python, because
+an `ORDER BY` expresses ranking but cannot express "these are different kinds of
+evidence and merging them is the worst failure this system can produce".
+
+See `docs/AUTH.md`.

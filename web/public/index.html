@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NP Autopilot — graph explorer</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --line:#30363d; --fg:#e6edf3; --dim:#8b949e;
+    --accent:#4c8dff; --warn:#f0c674; --hand:#d29922;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  header{padding:14px 18px;border-bottom:1px solid var(--line);
+         display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  h1{font-size:15px;margin:0;font-weight:600}
+  .caveat{font-size:11.5px;color:var(--warn);background:#2d1e00;
+          border:1px solid #6b4b00;border-radius:6px;padding:6px 10px;margin:0}
+  main{display:grid;grid-template-columns:330px 1fr;gap:0;height:calc(100vh - 62px)}
+  @media (max-width:860px){main{grid-template-columns:1fr;height:auto}}
+  aside{border-right:1px solid var(--line);padding:14px 16px;overflow-y:auto}
+  section{padding:14px 18px;overflow-y:auto}
+  label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+        color:var(--dim);margin:14px 0 5px}
+  input,select,button{background:var(--bg);border:1px solid var(--line);
+       color:var(--fg);border-radius:6px;padding:7px 9px;font:inherit;font-size:13px;width:100%}
+  button{cursor:pointer;background:var(--panel)}
+  button:hover{border-color:var(--accent)}
+  .row{display:flex;gap:7px}
+  .hit{padding:6px 8px;border-radius:6px;cursor:pointer;display:flex;gap:8px;align-items:center}
+  .hit:hover{background:var(--panel)}
+  .t{font-size:10px;color:var(--dim);margin-left:auto;flex:none}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+        padding:12px 14px;margin-bottom:12px}
+  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;
+           color:var(--dim);margin:0 0 8px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  td,th{padding:3px 6px;text-align:left;border-bottom:1px solid #21262d;vertical-align:top}
+  th{color:var(--dim);font-weight:500}
+  .hand{border-left:3px solid var(--hand);padding-left:10px}
+  .hand h2{color:var(--hand)}
+  .pill{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:99px;
+        border:1px solid var(--line);color:var(--dim)}
+  .err{color:#ff7b72}
+  code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--dim)}
+</style>
+</head>
+<body>
+<header>
+  <h1>NP Autopilot — graph explorer</h1>
+  <span class="pill" id="who">not signed in</span>
+  <p class="caveat">Read-only. <b>person, instructor and module counts are floors</b>
+     over 127 of 374 worksheets — never totals. Hiring-funnel records are not in
+     this database at all.</p>
+</header>
+
+<main>
+<aside>
+  <label for="token">ID token (Bearer)</label>
+  <input id="token" type="password" placeholder="Google ID token" autocomplete="off">
+  <p style="font-size:11.5px;color:var(--dim);margin:6px 0 0">
+    Verified server-side: signature against Google's JWKS, audience, and the
+    <code>hd</code> claim. An <code>@interviewkickstart.com</code> address alone
+    is not accepted.</p>
+
+  <label for="q">Search</label>
+  <div class="row">
+    <input id="q" placeholder="backend, 8.2, Animesh" autocomplete="off">
+    <button id="go" style="width:auto">Go</button>
+  </div>
+
+  <label for="types">Node type</label>
+  <select id="types">
+    <option value="">any</option>
+    <option>domain</option><option>program</option><option>module</option>
+    <option>instructor</option><option>person</option><option>workflow</option>
+    <option>theme</option><option>file</option>
+  </select>
+
+  <label for="rels">Expand along</label>
+  <select id="rels">
+    <option value="">any relationship</option>
+    <option>teaches</option><option>expert_in</option><option>contains</option>
+    <option>covers</option><option>belongs_to</option><option>owned_by</option>
+  </select>
+
+  <label for="depth">Depth</label>
+  <select id="depth"><option>1</option><option>2</option><option>3</option></select>
+
+  <label>Whole-graph</label>
+  <button id="cov">Coverage gaps</button>
+
+  <div id="results" style="margin-top:12px"></div>
+</aside>
+
+<section id="detail">
+  <p style="color:var(--dim)">Paste a token, search, then pick a result.</p>
+</section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c =>
+  ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+
+async function api(path, params = {}) {
+  const token = $("#token").value.trim();
+  const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v));
+  const res = await fetch(`/api/${path}?${qs}`, {
+    headers: token ? { authorization: `Bearer ${token}` } : {}
+  });
+  const body = await res.json().catch(() => ({ error: "bad response" }));
+  if (!res.ok) throw new Error(body.reason || body.error || res.status);
+  return body;
+}
+
+function show(html) { $("#detail").innerHTML = html; }
+function fail(e) { show(`<p class="err">${esc(e.message)}</p>`); }
+
+async function search() {
+  try {
+    const out = await api("search", { q: $("#q").value, types: $("#types").value });
+    $("#who").textContent = "signed in";
+    $("#results").innerHTML = out.results.length
+      ? out.results.map(r =>
+          `<div class="hit" data-id="${esc(r.id)}">
+             <span>${esc(r.label)}</span><span class="t">${esc(r.type)}</span></div>`).join("")
+      : `<p style="color:var(--dim);font-size:12px">${esc(out.note || "no matches")}</p>`;
+    $("#results").querySelectorAll(".hit").forEach(el =>
+      el.onclick = () => open(el.dataset.id));
+  } catch (e) { fail(e); }
+}
+
+function provTable(rows, cols) {
+  return `<table><tr>${cols.map(c => `<th>${c}</th>`).join("")}</tr>` +
+    rows.map(r => `<tr>${cols.map(c => `<td>${esc(r[c])}</td>`).join("")}</tr>`).join("") +
+    `</table>`;
+}
+
+async function open(id) {
+  try {
+    const [n, nb] = await Promise.all([
+      api("node", { id }),
+      api("neighbourhood", { id, depth: $("#depth").value, rels: $("#rels").value })
+    ]);
+    const p = n.provenance;
+    let html = `<div class="card"><h2>${esc(n.node.type)}</h2>
+      <div style="font-size:17px">${esc(n.node.label)}</div>
+      <code>${esc(n.node.id)}</code></div>`;
+
+    // Corpus provenance and hand provenance are rendered SEPARATELY and look
+    // different. A hand-entered fact must be visibly hand-entered — that is the
+    // entire point of the property-level provenance fix.
+    html += `<div class="card"><h2>Provenance — corpus (${p.corpus.length})</h2>` +
+      (p.corpus.length
+        ? provTable(p.corpus.slice(0, 25), ["file", "sheet", "row_num", "col_name"])
+        : `<p style="color:var(--dim)">none</p>`) + `</div>`;
+
+    if (p.hand.length) {
+      html += `<div class="card hand"><h2>Provenance — HAND-ENTERED (${p.hand.length})</h2>
+        <p style="font-size:12px;color:var(--hand)">${esc(p.hand_note)}</p>` +
+        provTable(p.hand, ["prop", "evidence", "entered_at"]) + `</div>`;
+    }
+
+    html += `<div class="card"><h2>Neighbourhood — depth ${nb.depth}
+      (${nb.nodes.length} nodes, ${nb.edges.length} edges)</h2>` +
+      (nb.note ? `<p class="err">${esc(nb.note)}</p>` : "") +
+      provTable(nb.nodes.slice(0, 60), ["depth", "type", "label"]) + `</div>`;
+    show(html);
+  } catch (e) { fail(e); }
+}
+
+$("#go").onclick = search;
+$("#q").addEventListener("keydown", e => { if (e.key === "Enter") search(); });
+$("#cov").onclick = async () => {
+  try {
+    const c = await api("coverage");
+    show(`<div class="card"><h2>Coverage gaps</h2>` +
+      provTable(Object.entries(c).filter(([, v]) => typeof v === "number")
+        .map(([k, v]) => ({ gap: k.replace(/_/g, " "), count: v })), ["gap", "count"]) +
+      `<p style="font-size:12px;color:var(--warn);margin-top:10px">${esc(c.workflow_ownership)}</p>
+       <p style="font-size:12px;color:var(--warn)">${esc(c.counts_are_floors)}</p></div>`);
+  } catch (e) { fail(e); }
+};
+</script>
+</body>
+</html>

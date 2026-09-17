@@ -31,6 +31,11 @@ google-auth==2.49.2
 # [binary] ships the libpq wheel; no local Postgres install required.
 psycopg[binary]==3.3.5
 
+# --- web app: Google ID token verification (E2 layer 2) ---
+# [crypto] pulls `cryptography`, which is what actually verifies RS256. Without
+# the extra, PyJWT accepts the token shape and cannot check the signature.
+PyJWT[crypto]==2.10.1
+
 # --- tests ---
 pytest==8.3.4
 

@@ -65,13 +65,26 @@ def test_the_clean_projection_verifies():
 
 
 @pytest.mark.parametrize("name,sql,expect_in_output", [
-    # The relational instinct that (source,target,rel) is the primary key. It is
-    # not: 1,557 sourced_from duplicates in the public half carry no properties
-    # at all, so they are byte-identical rows that a content-addressed id would
-    # have collapsed.
-    ("collapse duplicate triples",
-     "delete from edges where id not in "
-     "(select min(id) from edges group by rel, source_id, target_id, props)",
+    # The relational instinct that provenance is one row per (node, file). It is
+    # not: a node cited from 40 rows of one file is 40 assertions, and the
+    # sourced_from edge multiplicity mirrors that count.
+    #
+    # This injection MOVED when provenance left the `edges` table. Collapsing
+    # duplicate edge triples is now a no-op — the 1,557 sourced_from duplicates
+    # are not edges any more, and the 22 expert_in ones differ in `basis`, so a
+    # group-by including props cannot merge them. The design made that mistake
+    # structurally impossible, and the test follows the data rather than
+    # continuing to assert against a hazard that no longer exists.
+    ("collapse provenance to one row per node and file",
+     "delete from node_sources where id not in "
+     "(select min(id) from node_sources group by node_id, file, prop)",
+     "provenance"),
+    # Merging the evidence classes /staffing exists to keep apart: the same
+    # instructor/domain pair asserted by a Google Form AND by an HR roster.
+    ("merge expert_in evidence classes",
+     "delete from edges where rel = (select name from edge_rels "
+     "where from_type='instructor' and to_type='domain') and id not in "
+     "(select min(id) from edges group by rel, source_id, target_id)",
      "duplicates"),
     # A projection that keeps only corpus provenance, silently undoing C1.
     ("drop hand provenance",

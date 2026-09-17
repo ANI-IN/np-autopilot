@@ -184,6 +184,28 @@ def graph_from_db() -> dict:
             e.update(props or {})
             edges.append(e)
 
+        # Provenance edges are DERIVED, not stored: one per node_sources row that
+        # names a file. The database holds provenance once, in node_sources, and
+        # the graph shape is reconstructed here — which is why this comparison
+        # proves equivalence rather than confirming a copy.
+        prov = taxonomy.edge_for_role("provenance")
+        # A FILE node carries a source entry naming its own path, and
+        # 04_build_graph emits provenance edges for the resolved nodes only —
+        # never for the file nodes themselves. Reconstructing without that
+        # exclusion produced exactly 74 extra edges, one per file node, which is
+        # how the discrepancy identified itself.
+        cur.execute("""
+            select s.node_id, f.id
+            from node_sources s
+            join nodes src on src.id = s.node_id and src.type <> 'file'
+            join nodes f on f.type = 'file'
+                        and f.props->>'relative_path' = s.file
+            where s.file is not null
+            order by s.node_id, s.ordinal
+        """)
+        for node_id, file_id in cur.fetchall():
+            edges.append({"rel": prov, "source": node_id, "target": file_id})
+
         cur.execute("select scope, content_hash, node_count, edge_count, "
                     "source_count, projected_at from projection_meta where id=1")
         row = cur.fetchone()

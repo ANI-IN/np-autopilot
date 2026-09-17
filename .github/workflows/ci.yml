@@ -1,0 +1,70 @@
+name: ci
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: pip install -r requirements.txt
+      # Database and corpus are unavailable here; those tests skip themselves.
+      - run: python -m pytest tests -q
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The service role key must never leave server-side code. Greps the whole
+      # tree including the built web output, per the security requirements.
+      - name: no service-role key anywhere
+        run: |
+          if grep -rInE '(service_role|SUPABASE_SERVICE_ROLE_KEY)\s*[:=]\s*["'\'']?ey' . \
+               --exclude-dir=.git --exclude=ci.yml; then
+            echo "::error::a service-role key literal is present"; exit 1
+          fi
+
+      # A JWT literal anywhere is a leaked key until proven otherwise.
+      - name: no JWT literals
+        run: |
+          if grep -rIn 'eyJhbGciOi' . --exclude-dir=.git --exclude=ci.yml; then
+            echo "::error::a JWT literal is committed"; exit 1
+          fi
+
+      # The IPv6-only direct connection. Works on a laptop, fails on Vercel.
+      - name: no direct supabase connection
+        run: |
+          if grep -rInE 'db\.[a-z0-9]+\.supabase\.co' . \
+               --exclude-dir=.git --exclude=ci.yml \
+               --exclude=.env.example --exclude-dir=docs; then
+            echo "::error::direct db.<ref>.supabase.co connection referenced"; exit 1
+          fi
+
+      # NEXT_PUBLIC_* must never carry a secret-shaped value.
+      - name: no secrets in NEXT_PUBLIC
+        run: |
+          if grep -rInE 'NEXT_PUBLIC_[A-Z_]*(SERVICE|SECRET|PRIVATE|ROLE)' . \
+               --exclude-dir=.git --exclude=ci.yml; then
+            echo "::error::a secret-shaped NEXT_PUBLIC_ variable exists"; exit 1
+          fi
+
+      # The funnel must never come back into a committed artefact.
+      - name: no hiring-funnel records in tracked files
+        run: |
+          if git grep -In '"pipeline_status": *"\(rejected\|in_pipeline\)"' -- \
+               ':!*.md' ':!.github/*'; then
+            echo "::error::hiring-funnel records are committed"; exit 1
+          fi
+
+      # Packed repo size, per DECISIONS §E.1a. A re-clone that times out breaks
+      # private-repo plugin auto-update.
+      - name: repo size budget
+        run: |
+          git gc --quiet --prune=now
+          BYTES=$(git count-objects -v | awk '/size-pack/ {print $2 * 1024}')
+          echo "packed: $((BYTES/1024/1024)) MiB (budget 15 MiB)"
+          if [ "$BYTES" -gt $((15*1024*1024)) ]; then
+            echo "::error::packed repo exceeds 15 MiB"; exit 1
+          fi

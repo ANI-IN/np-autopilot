@@ -107,7 +107,23 @@ def rows_for(graph: dict):
                     src.get("ordinal", 0), src.get("evidence"),
                     src.get("entered_at"), prop_ordinal,
                 ))
+    # PROVENANCE IS NOT AN EDGE HERE. DECISIONS §A.3: moving it to its own table
+    # is what makes the dangerous join impossible to write by accident, and
+    # `edges` becomes 4,021 rows instead of 36,677.
+    #
+    # Projecting sourced_from into BOTH tables — which the first version of this
+    # loader did — stored provenance twice and handed every traversal back the
+    # degree-18,134 file hubs it was supposed to be unable to reach. Caught by a
+    # test asserting the property the design claims.
+    #
+    # Nothing is lost: each sourced_from edge corresponds one-to-one with a
+    # node_sources row that names a file, so the graph shape is DERIVED on read
+    # rather than stored. That makes the verifier's round trip a proof of
+    # equivalence instead of a copy.
+    prov = taxonomy.edge_for_role("provenance")
     for e in graph["edges"]:
+        if e["rel"] == prov:
+            continue
         props = {k: v for k, v in e.items() if k not in EDGE_COLUMNS}
         edges.append((e["rel"], e["source"], e["target"],
                       json.dumps(props, sort_keys=True)))
@@ -145,7 +161,8 @@ def main() -> int:
     print("=" * 74)
     print(f"  scope        : {args.scope} (sensitive half NOT projected)")
     print(f"  nodes        : {len(nodes):,}")
-    print(f"  edges        : {len(edges):,}")
+    print(f"  edges        : {len(edges):,}  (traversable only — "
+          f"provenance lives in node_sources)")
     print(f"  node_sources : {len(sources):,}")
     print(f"  content hash : {content[:16]}")
     if args.dry_run:
