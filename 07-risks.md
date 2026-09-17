@@ -374,6 +374,28 @@ captured before the deletion and preserved with the archive. Its calibration
 caveat is in `~/np-autopilot-archive/traffic-capture/CAPTURE-NOTE.md` and must
 travel with the figures.
 
+**CALIBRATION: STILL UNSETTLED (asked twice, 2026-09-17).** The question is
+whether the corpus owner ever opened the repository page in a browser during the
+14-day window. It decides what the zero means, and the two readings are not
+close together:
+
+- **If the page WAS opened in a browser:** the instrument recorded **zero views
+  for a session that certainly occurred**. The zero is then evidence that the
+  counter does not register what we assumed it registers — it is
+  **unreliable, not reassuring**, and it cannot be cited as evidence that nobody
+  else fetched the repository either.
+- **If all work went through the CLI:** a clone by the owner would normally
+  register, so zero across both counters is weak positive evidence, still
+  bounded by everything below.
+
+**Either way the ceiling is unchanged:** GitHub's traffic API reports a 14-day
+window at daily granularity and does not count every automated fetch. Public
+repositories are crawled by code-search indexes and mirrors, and `git clone`
+needs no permission and leaves no entry a repository owner can read. **Zero
+recorded traffic is not evidence of zero copies**, under either answer. The
+calibration question changes how much weight the figure can carry; it does not
+change that the figure is a floor.
+
 **Publicly readable during that window:** 3,817 instructor names, of whom **277
 hiring rejections** and 1,625 mid-pipeline candidates; 39 per-instructor ratings;
 136 decline rates; 140 `rejections.json` entries naming a person against an SME

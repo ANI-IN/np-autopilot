@@ -165,14 +165,74 @@ and an access log that records only endpoint names cannot answer it.
 
 ---
 
+## The login flow (G1), and the seam it exposed
+
+**Two tokens, with different jobs.** This was not a design preference; it was
+forced by a defect that only appeared when the layers were joined:
+
+`profiles.user_id` is `uuid`, `np_role()` resolves through `auth.uid()`, and
+`auth.uid()` casts `request.jwt.claims ->> 'sub'` to `uuid`. A **Google subject
+is a decimal string** — `117609876543210987654`. Setting it as `sub` does not
+deny; it **raises**, inside every policy:
+
+```
+invalid input syntax for type uuid: "117609876543210987654"
+```
+
+So every authenticated request would have returned **500**. Each of the four
+layers was tested and green. Nothing had ever exercised the join between layer 2
+and layer 1.
+
+| Token | Proves | Verified by | Presented |
+|---|---|---|---|
+| **Google ID token** | Workspace membership, via `hd` | `verify_google_token` | Once, at `/api/session` |
+| **Supabase access token** | An established session, with a **uuid** `sub` | `verify_supabase_token` | Every data request |
+
+Both verifications live in `web/lib/auth.py`. There is exactly one place that
+turns a string into an identity, and `guard.py` only chooses which is
+appropriate where. A Google token on a data route is refused with a message
+naming `/api/session`, rather than 500ing inside a policy.
+
+**Order: we verify before GoTrue is contacted.** The migration-0007 hook
+enforces the same `hd` rule, so the reverse order would also refuse — but only
+if the hook is configured in the dashboard, which no test in this repo can
+assert. Verifying first means the refusal holds with the hook unwired, and the
+hook is then genuinely what this document calls it: defence in depth.
+`test_a_refused_signin_never_reaches_gotrue` measures that directly.
+
+**`user_metadata` is never trusted.** GoTrue copies the provider's claims there
+at signup, and `user_metadata` is writable by the user through the auth API — so
+an `hd` read from a Supabase token is an attacker-controlled string.
+`verify_supabase_token` therefore returns **no hosted domain at all** rather than
+one that could have been set. The domain guarantee comes from the two places
+that are not user-writable: the 0007 hook, and `profiles.email_domain` with its
+CHECK constraint, written only from a Google token this code verified.
+
+**Session lifetime.** Refresh happens *before* expiry rather than in reaction to
+a 401, so a long look at one graph does not end in a bounce to the login screen.
+Sign-out calls GoTrue's `logout?scope=global`, which **revokes** refresh tokens
+server-side — clearing browser storage, which is what "log out" usually means in
+a single-page app, would leave a copied refresh token working. The current access
+token stays valid until it expires; that is a property of stateless JWTs and is
+stated rather than papered over.
+
+**A session is not access.** An IK Workspace member who signs in successfully
+gets `np_role() = 'none'` and reads nothing. `/api/me` says so in words, because
+"signed in and permitted nothing" is otherwise indistinguishable from "the
+explorer is broken". Provisioning stays a deliberate act:
+`pipeline/grant_access.py`, run by an operator against the session pooler —
+`profiles` has no INSERT policy, so it cannot be done over the web app at all.
+
+---
+
 ## What is NOT built
 
-- **No web login flow.** The app takes a Bearer token; obtaining one is
-  Google's standard flow and is not wired up. Every verification path behind it
-  is built and tested.
-- **No Supabase Auth session exchange.** Layer 3's hook is installed and
-  exercised directly; GoTrue is not yet configured to call it.
-- **No `recruiting` data.** Zero sensitive rows are projected (D3 scope), and
-  the real projection stays out until R18 is resolved.
-- **No curation writes.** `people`, `domain_aliases` and `workflow_owners` have
-  no policy at all, so `authenticated` reaches none of them.
+- **`recruiting` data.** Zero sensitive rows are projected (D3 scope), and the
+  real projection stays out until R18 is resolved.
+- **A table for READ audit.** Reads go to stdout, which Vercel captures. Writes
+  are a real table (`curation_audit`). There is still no retention policy.
+- **The GoTrue dashboard configuration.** The Google provider and the
+  before-user-created hook are dashboard settings, not SQL, and migration 0007's
+  hook **has still never been invoked**. `docs/DEPLOYMENT.md` lists the three
+  steps. The domain rule does not depend on them.
+- **Any deployment.** Nothing is live; `vercel login` is interactive.

@@ -77,6 +77,47 @@ That distinction is the whole reason this document separates the two.
 
 ---
 
+## 0a · The Drive folder's General access
+
+**Current state: Restricted.** Confirmed by the corpus owner, 2026-09-17, in the
+form *"and if it was domain-wide, I have now set it to Restricted."* So whichever
+it was, the folder is Restricted now and only explicitly-named people can open
+it. That is what gated the frontend work, and it is closed.
+
+**What is NOT closed: whether it was ever domain-wide.** The answer arrived
+carrying both branches, and it matters, because the two describe different
+histories of the same corpus.
+
+I could not settle it myself. The service account gets **HTTP 403 on
+`permissions.get('me')`**, and `permissionIds` is not returned to an identity
+holding only `drive.readonly` — a reader can read the files and cannot read who
+else can. That is a correct permission design and it is also why this line needed
+a person.
+
+### If it WAS domain-wide, this is the record to complete
+
+Framed as R18 is framed, because it is the same shape of finding — an access
+assumption never checked against the system that enforces it:
+
+| | |
+|---|---|
+| **What was reachable** | All 75 corpus files, 374 worksheets. Including `Employee Payroll Data.xlsx` — **8,001 email addresses, 8,074 phone numbers, 4,524 LinkedIn URLs** — and the SME hiring trackers behind the 277 named rejections |
+| **By how many people** | Everyone with an `@interviewkickstart.com` Workspace account. Not the public; not a small named set either |
+| **For how long** | **Unknown at the start, known at the end.** The end is 2026-09-17. Drive does not expose when a sharing setting changed to a `drive.readonly` identity, and there is no local record of it |
+| **What it does NOT change** | The exclusion of the payroll file from ingestion (R17) is a decision in our pipeline. It never governed who could open the file in Drive |
+
+**The asymmetry is the point, and it is the same one as R18: the window END is
+known and the START is not.** A window whose start is unknown cannot be
+described as short, and "probably always restricted" is an assumption of exactly
+the kind that produced the public-repository finding. If this branch turns out
+to be the real one, it should be written up as R19 with that stated plainly
+rather than estimated.
+
+**If it was already Restricted,** there is nothing to record beyond this section
+and the line is simply closed.
+
+---
+
 ## 1 · What is in `.drive-cache/` today
 
 74 files, ~80 MB, fetched read-only by the service account. This is the **whole
