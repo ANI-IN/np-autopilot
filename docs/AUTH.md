@@ -15,6 +15,39 @@ shared accounts that has no technical answer.
 | 3 | **Signup hook** | `db/migrations/0007` | A non-IK identity never becomes a row | Signup path only; cannot retro-reject an existing account |
 | 4 | **Route guard** | `web/lib/guard.py` | A clear 401 and the audit record | A matcher that silently stops matching — which is why it is last |
 
+### Layer 0 — the Internal consent screen, in front of all of it
+
+The Google Cloud OAuth consent screen is set to **Internal**, so Google itself
+refuses any account outside `interviewkickstart.com` **before a token is ever
+issued** — nothing reaches `web/lib/auth.py` to be checked. It is the earliest
+and cheapest refusal in the system.
+
+**It is not a replacement for the `hd` check, and must not be described as one.**
+Two reasons, and the second is the one that matters:
+
+1. It is a setting in a console, changeable by anyone with project access,
+   with no signal in this repository when it changes. The `hd` check is code
+   with tests.
+2. **Internal bounds WHICH accounts can obtain a token. It does not verify what
+   the token then claims.** `hd` still catches a Workspace account whose `email`
+   claim disagrees with its hosted domain — that is
+   `test_hd_ours_but_email_elsewhere`, and no consent-screen setting addresses
+   it.
+
+Read it as narrowing the population that can reach layer 2, not as doing layer
+2's job.
+
+**Recorded: the OAuth client secret was rotated on 17 September 2026** after
+being exposed in a screenshot. **The Internal audience is what bounded the
+impact** — a leaked client secret is exploitable by anyone who can complete the
+consent flow, and Internal means that set is IK Workspace accounts rather than
+the internet.
+
+Same instinct as R18, and the same reason for writing it down: the exposure is
+much smaller, and the record is the point. An exposure that was bounded by a
+setting is only bounded for as long as the setting holds, and a rotation nobody
+recorded is a rotation nobody can date if the question comes up later.
+
 **Built in that order deliberately.** Layer 1 went in before anything could
 reach the database over HTTP, so there was never a window where the application
 was the only thing protecting the data.
