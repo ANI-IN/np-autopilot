@@ -281,6 +281,66 @@ independent layers against a wrong entry in that list; they are two independent
 layers against a *bug in one of the two passes*, which is a narrower and honest
 claim.
 
+### A.7b The named pattern: silence that looks like success
+
+> **A guard that fails by returning "nothing happened" is indistinguishable
+> from the absence it was written to detect.**
+
+Five instances now, and they are not five bugs — they are one bug wearing five
+costumes. Naming it is worth more than the individual fixes, because every one
+of them was caught by a test that existed for another reason entirely. None was
+caught by the guard itself, by review, or by reading the code.
+
+| # | The guard | How it failed | Why nobody saw it |
+|---|---|---|---|
+| 1 | `refresh.py`'s version-bump decision | `--no-bump` WROTE the lock, so the next run compared the graph against a lock that already described it | "No bump needed" and "a bump was silently swallowed" print the same line |
+| 2 | The `origin: hand` provenance test | An unconditional INFO made the category always "exercised" | A green category and a category that ran zero assertions are the same green |
+| 3 | The excluded-file check | Same shape, same unconditional INFO | Same |
+| 4 | The `BEFORE DELETE` trigger | Returned `NEW`, which is NULL on DELETE, cancelling every delete | `rowcount 0` for "cancelled" and for "the row was not there" |
+| 5 | `people_aliases` write grants (§A.7a, closed in 0012) | Grant with no service trigger: a member's write returned rowcount 0 | RLS "held" — but silently, and one permissive policy away from real |
+
+Instance 4 was found because a *teardown* could not clean up. Instance 5 was
+found because a test was rewritten to derive its rule rather than list names.
+Neither was found by looking for this pattern.
+
+**What would catch the sixth.** Three rules, in decreasing order of how much
+they actually buy:
+
+1. **Every guard needs a negative control.** A test that breaks the thing the
+   guard watches and asserts the guard turns RED. Not once, informally, during
+   development — committed, beside the positive case. Instances 2 and 3 had
+   passing tests the whole time. `tests/test_curation_notes.py` is written this
+   way deliberately: delete a note, corrupt a note, drop a row, change a field,
+   add a stray row — five mutations, five assertions that the check fails.
+   Migration 0012 was verified the same way, by rolling it back and watching the
+   test go red.
+
+2. **A guard must not take its evidence from the thing it is checking.** This
+   caught a sixth today, before it shipped. The comment round-trip asks "did the
+   reasoning survive?" and answers it by comparing `extract_notes(file)` against
+   the rendered export — but both sides run `extract_notes`. Version 1 of that
+   function handled only comment blocks *before* a row, so it never saw the
+   Karthika merge guard, and the check would have reported **PRESERVED**: it
+   compared what it extracted to what it rendered, and agreed with itself about
+   a note neither side had. The closed loop is broken by
+   `test_every_comment_line_in_the_sources_is_accounted_for`, which counts `#`
+   lines in the raw file — evidence from outside the function — and fails if any
+   is unaccounted for.
+
+3. **Make absence and success textually distinguishable at the point they
+   occur.** `rowcount 0` is the recurring culprit because it is the same value
+   for "refused", "cancelled", "not found" and "already in that state". Where
+   the distinction matters, raise instead of returning: `curation_service` reads
+   the row back and says *"is at version 7, not 5 — YOUR WRITE DID NOT HAPPEN"*,
+   and migration 0006 revoked the grants so that an unauthorised write raises
+   rather than quietly affecting nothing.
+
+**What none of this closes.** Rule 1 is only as good as the mutations someone
+thought to write; a guard can still be blind to a failure mode nobody imagined.
+The honest position is that this pattern is now *cheaper to find* — it has a
+name, a table of precedents, and a test-writing habit attached — not that it
+has been eliminated.
+
 ### A.8 Concurrent writes and locking
 
 Two populations with genuinely different needs:
@@ -405,6 +465,12 @@ on its own.
 ---
 
 ## C · Vercel + Supabase runtime constraints
+
+> **Deployment shape (G3): ONE Vercel project, not two.** The explorer and the
+> plugin call the same handlers so the role boundary is single-sourced rather
+> than merely coordinated. Full argument, including the three conditions that
+> would reverse it, in [ONE-APP-OR-TWO.md](ONE-APP-OR-TWO.md).
+
 
 ### C.0 Verified — connected 2026-09-17
 
