@@ -36,6 +36,23 @@ def _shared_accounts() -> set[str]:
             for s in os.environ.get("NP_SHARED_ACCOUNTS", "").split(",") if s.strip()}
 
 
+#: Where GoTrue actually puts a non-standard OIDC claim. Established by reading
+#: a real row, not from documentation:
+#:
+#:   identity_data -> 'custom_claims' ->> 'hd'   <-- where it IS
+#:   identity_data ->> 'hd'                      <-- where this script looked
+#:
+#: The first version read only the second and found NULL for every account,
+#: which it reported as "provider hd=None, not 'interviewkickstart.com'" — a
+#: refusal that reads as "this account is not a Workspace identity" when it
+#: actually meant "I looked in the wrong place". It would have refused every
+#: legitimate user, and no test caught it because no test has a real GoTrue row.
+HD_PATHS = (
+    ("identity_data -> 'custom_claims' ->> 'hd'", "identities.custom_claims.hd"),
+    ("identity_data ->> 'hd'", "identities.hd"),
+)
+
+
 def _lookup(cur, email: str):
     """Find the auth.users row, and the hd the PROVIDER supplied at signup.
 
@@ -44,14 +61,19 @@ def _lookup(cur, email: str):
     from it is an attacker-controlled string. identity_data is what GoTrue
     recorded from Google and is not user-writable.
 
-    Even so, this is corroboration, not the proof. The proof is that the row
+    Even so, this is CORROBORATION, not the proof. The proof is that the row
     exists at all: /api/session verified the `hd` on a signed Google token
     before GoTrue was ever contacted, and the migration-0007 hook refuses to
-    create a user without it.
+    create a user without it. That distinction matters for how a missing value
+    is reported — see cmd_grant.
     """
-    cur.execute("""
-        select u.id, u.email, i.identity_data ->> 'hd' as hd,
-               u.created_at, u.last_sign_in_at
+    # Each path is qualified with the identities alias; coalesce takes the
+    # first that is present, so a shape change is survivable by adding a path.
+    hd_expr = "coalesce(" + ", ".join(f"i.{sql}" for sql, _ in HD_PATHS) + ")"
+    cur.execute(f"""
+        select u.id, u.email, {hd_expr} as hd,
+               u.created_at, u.last_sign_in_at,
+               (i.user_id is not null) as has_google_identity
         from auth.users u
         left join auth.identities i
                on i.user_id = u.id and i.provider = 'google'
@@ -121,9 +143,33 @@ def cmd_grant(args) -> int:
                   "`grant_access.py list` shows who has signed in and is "
                   "waiting.", file=sys.stderr)
             return 1
-        user_id, actual_email, hd, _created, _last = found
+        user_id, actual_email, hd, _created, _last, has_identity = found
 
-        if (hd or "").lower() != ALLOWED_HD:
+        # THREE STATES, and they are not the same refusal.
+        if not has_identity:
+            print(f"REFUSED: {actual_email} has no Google identity row. The "
+                  "account exists but did not arrive through the Google "
+                  "provider, so there is nothing to corroborate.",
+                  file=sys.stderr)
+            return 1
+        if hd is None:
+            # NOT "the account is not a Workspace identity". The claim was
+            # verified at /api/session before GoTrue was contacted, and the
+            # 0007 hook refuses to create a user without it — so an account
+            # that exists has already passed the domain rule twice. A null here
+            # means the value is not where this script looked, which is a
+            # storage-shape question, not an identity one.
+            print(f"REFUSED: no hd recorded for {actual_email} in any known "
+                  "location.\n"
+                  "  Looked in: " + ", ".join(name for _, name in HD_PATHS) + "\n"
+                  "  This does NOT mean the account failed the domain check — "
+                  "it passed twice to exist at all (/api/session before GoTrue, "
+                  "and the migration-0007 hook).\n"
+                  "  It means GoTrue's storage shape has changed. Inspect "
+                  "auth.identities.identity_data and add the new path to "
+                  "HD_PATHS before granting.", file=sys.stderr)
+            return 1
+        if hd.lower() != ALLOWED_HD:
             print(f"REFUSED: {actual_email} has provider hd={hd!r}, not "
                   f"{ALLOWED_HD!r}.\n"
                   "  An account with an IK address but no Workspace membership "

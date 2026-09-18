@@ -249,6 +249,14 @@ a single-page app, would leave a copied refresh token working. The current acces
 token stays valid until it expires; that is a property of stateless JWTs and is
 stated rather than papered over.
 
+**The `hd` GoTrue stores is under `custom_claims`, and it is corroboration —
+not the proof.** The proof that an account passed the domain rule is that it
+exists: `/api/session` verified the claim before GoTrue was contacted, and the
+0007 hook refuses to create a user without it. `grant_access.py` reads
+`identity_data -> 'custom_claims' ->> 'hd'` as a second opinion, and reports a
+missing value as a storage-shape question rather than as a failed identity —
+because a guard that refuses on absent corroboration refuses everyone.
+
 **A session is not access.** An IK Workspace member who signs in successfully
 gets `np_role() = 'none'` and reads nothing. `/api/me` says so in words, because
 "signed in and permitted nothing" is otherwise indistinguishable from "the

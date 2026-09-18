@@ -120,7 +120,32 @@ python3 pipeline/grant_access.py revoke name@interviewkickstart.com
 ```
 
 `grant` requires the person to have signed in once — that is what creates the
-`auth.users` row and proves the Workspace identity. Revocation takes effect on
+`auth.users` row and proves the Workspace identity.
+
+**Where the `hd` corroboration actually lives.** GoTrue nests non-standard OIDC
+claims under `custom_claims`:
+
+```
+identity_data -> 'custom_claims' ->> 'hd'   <- where it IS
+identity_data ->> 'hd'                      <- where the script first looked
+```
+
+The first version read only the second, found NULL, and refused with *"provider
+hd=None, not 'interviewkickstart.com'"* — which reads as *this is not a Workspace
+identity* when it meant *I looked in the wrong place*. It would have refused
+every legitimate account.
+
+**The refusal now distinguishes three states**, because they need different
+responses: no Google identity row at all; an identity whose `hd` is in none of
+the known locations (a storage-shape change — the account has already passed the
+domain rule twice to exist); and an `hd` that is genuinely the wrong domain.
+Only the third is an identity problem.
+
+`tests/test_grant_access_reads_real_rows.py` reads the REAL `auth.identities`
+rows rather than fixtures. That is the gap that let this through: every existing
+auth test built its own tokens and its own rows, so GoTrue's schema was an
+assumption shared by the code and its tests — §A.7a's "two checks sharing one
+source of truth", where the source is a belief about someone else's schema. Revocation takes effect on
 their next query, with no re-projection and no deploy; suspending the Workspace
 account is what stops new tokens being issued.
 
