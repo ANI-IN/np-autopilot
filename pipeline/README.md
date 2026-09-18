@@ -108,7 +108,20 @@ returns; it does not decide it. `/staffing` never merges its evidence tiers, and
 | `NP_AS_OF` | today, UTC | the date pass 4 treats as "now". `teaches` splits class dates into past and future, so the graph is deterministic within a day and not across days. Pin this to reproduce a historical build. |
 | `NP_DRIVE_SA_KEY` | `service_account_key` in `config/drive.yaml` | path to the pass-0 service-account key. **A path, never the key.** Pass 0 refuses to read a key from inside the repo: `.gitignore` stops a commit, not a copy into a build context. |
 | `NP_ALLOWED_HD` | `interviewkickstart.com` | the Google Workspace hosted domain a token must carry. **Deployment-level, never per request** — it is the domain rule, not a preference. Read by `web/lib/auth.py` and by `grant_access.py`, which refuses to provision an account whose provider `hd` disagrees. |
-| `NP_SHARED_ACCOUNTS` | empty | comma-separated local-parts of known shared mailboxes. Flags them on every audit line and stops them being granted `recruiting` or `admin` — a shared account resolves several humans to one identity, so its access log names an account, not a person. A **configured list, not detection**: Google does not tell us, and an unlisted shared mailbox is indistinguishable from a personal one. |
+
+**`NP_SHARED_ACCOUNTS` is no longer read here.** The list of shared mailboxes
+lives in the `shared_accounts` TABLE (migration 0014) and
+`profiles.is_shared_account` is derived from it by a trigger.
+
+It used to be an environment variable, and that is what made migration 0008's
+CHECK inert: the variable was set in Vercel and never in the environment
+`grant_access.py` runs in, so the list was empty, so the script wrote
+`is_shared_account = false`, and a constraint keyed on that column held
+perfectly over a value that was already wrong. A shared account was granted
+`recruiting`. An unset variable must not read as "there are none".
+
+`web/lib/auth.py` still reads the variable to flag audit lines, where it is
+informational; the control is the derived column.
 
 ## Dependencies
 
