@@ -190,9 +190,9 @@ can do for you.
 
 ## Granting and revoking access
 
-**Grant:** insert a row in `profiles` with the verified `email_domain` and a
-role. There is no self-service signup path into a role — layer 3 permits an
-account to exist; a profile is what gives it data.
+**Grant:** `member` is now granted **automatically** at signup, by migration
+0015. `recruiting` and `admin` are granted by inserting or updating a row in
+`profiles`, via `pipeline/grant_access.py`, by an administrator.
 
 **Revoke:** delete the profile row. Effective on the next query, with no
 re-projection and no deploy, which E1 proves in both directions.
@@ -201,6 +201,77 @@ re-projection and no deploy, which E1 proves in both directions.
 An already-issued ID token stays valid until it expires (typically one hour), so
 profile deletion is the immediate control and Workspace suspension is the
 durable one. Do both.
+
+### REVERSAL — 2026-09-18, migration 0015
+
+This document said, and `pipeline/grant_access.py` still says in its own words:
+
+> *"There is no self-service signup path into a role — layer 3 permits an
+> account to exist; a profile is what gives it data."*
+
+**The second half of that sentence is no longer true for `member`, and the
+first half was never quite the reason it was kept.** Recorded as a reversal,
+with the reasoning, because it changes what a profile means.
+
+**What changed.** An `after insert` trigger on `auth.users` writes a `member`
+profile for any identity whose email domain is `interviewkickstart.com`. An IK
+employee now signs in and reads the graph. Nobody runs a command.
+
+**Why the old behaviour was wrong.** A colleague signed in, reached `/api/me`,
+and was told they had no profile and therefore read nothing — until an
+administrator noticed. The manual step read as a security control and was not
+one: **layer 3 (migration 0007) had already refused every identity that is not
+an IK Workspace account, before the user row existed at all.** What the manual
+step actually gated was *membership of the company*, which layer 0 and layer 3
+decide between them. It added a person to the loop without adding a decision.
+
+**What it never gated, and still does not.** `recruiting` is the role that
+reads the hiring funnel — 277 named rejections and 1,625 mid-pipeline
+candidates. That was always manual and stays manual. `admin`, which can write
+curation, likewise. The trigger writes the literal string `'member'`; there is
+no expression in it that could evaluate to anything else and no input that
+reaches the statement, so the auto path cannot be widened by data.
+
+**This is not a self-service path.** Nothing the user calls grants anything.
+The row appears as a consequence of GoTrue creating an account that layer 3 has
+already vetted. There is no parameter, no request, and no role to ask for. The
+distinction matters because a self-service path would be one an attacker could
+*invoke*; this one can only be *triggered by succeeding at layer 3*.
+
+**Why the schema and not `/api/session`.** Writing a profile from the session
+route needs privileges the web app deliberately does not have. This document
+names the service-role key as layer 1's only leak path, and the reason nothing
+in the web app holds it. Granting the web app write access to `profiles` to
+save an administrator a command would undo precisely that, in exchange for a
+convenience. The database provisions its own row instead — the same argument as
+migration 0014, where the database derives the value its own constraint depends
+on rather than trusting a caller.
+
+**What still holds, unchanged.**
+
+- Layer 3 still refuses a non-Workspace identity at signup. The trigger checks
+  the domain again anyway and skips rather than raising, because raising would
+  abort GoTrue's signup transaction and turn a correctly-refused account into a
+  500 — the wrong failure for the right reason.
+- `profiles.domain_is_ik` still refuses a non-IK row outright.
+- 0014 still derives `is_shared_account`, and 0008's
+  `shared_accounts_stay_member` still caps a shared mailbox at `member` — which
+  is what this grants, so the two agree by construction rather than by luck.
+- **Revocation is unchanged and still immediate.** Deleting the profile is still
+  the control. Note the asymmetry this introduces: a deleted profile is
+  re-created only if the user is created again, which does not happen on a
+  re-login — `auth.users` already holds the row. Deletion therefore still
+  revokes durably. **If that ever stops being true, this reversal must be
+  revisited**, because a grant that reinstates itself is not revocable.
+- Rolling back 0015 stops future grants and **revokes nothing**, deliberately.
+
+**Tested, not asserted.** `tests/test_auto_member_grant.py` covers the three
+things the auto path must be incapable of — granting anything but `member`,
+granting anything to a non-IK identity, and demoting an existing profile.
+Verified by mutation: `on conflict do update` reddens exactly the demotion test,
+and removing the domain guard reddens exactly the non-IK test. `on conflict do
+nothing` and `do update` are one word apart, and "a new user gets member" passes
+either way.
 
 ---
 

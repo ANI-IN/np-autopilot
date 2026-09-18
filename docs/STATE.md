@@ -20,7 +20,7 @@ rather than assumed, it says so.
 | **API** | `/api/config` 200; `/api/{search,node,neighbourhood,overview,coverage,staffing,aliases,me}` all **401 unauthenticated**; `/api/session` 401/400/403 on bad input |
 | **Sign-in** | Works end to end. Google Workspace → `/api/session` → GoTrue → Supabase session → RLS |
 | **Security headers** | All six present on the deployed response: CSP (no `unsafe-inline` on `script-src`, inline blocks pinned by SHA-256), HSTS, `x-frame-options: DENY`, nosniff, no-referrer, permissions-policy. Plus `Cross-Origin-Opener-Policy: same-origin-allow-popups` |
-| **Service-role key** | **Zero occurrences** in the shipped bundle, and the variable is not set in the Vercel project at all |
+| **Service-role key** | **Zero occurrences** in the shipped bundle, and the variable is not set in the Vercel project at all. That bundle scan is the evidence — not the unit test, which until 2026-09-18 scanned `web/` while the routes live in `api/` and so proved nothing. Now covers both; see `DEPLOYMENT.md` and `DECISIONS.md` §A.7b instance 8 |
 
 ### Verified locally only — do NOT describe these as production-verified
 
@@ -38,7 +38,7 @@ rather than assumed, it says so.
 | Provenance | 30,658 `node_sources` rows over **74 files** |
 | Curation | 20 people, 15 confirmed aliases + 6 unresolved, 92 workflow owners, **45 `curation_notes`** |
 | Sensitive | **Zero rows projected.** `project_graph.py --scope full` is refused while R18 is open |
-| Migrations | **0001–0014 applied.** `python3 pipeline/migrate.py status` |
+| Migrations | **0001–0015 applied.** `python3 pipeline/migrate.py status` |
 | Profiles | `animesh.kumar@…` = `member`; `b2c-courses-new-programs@…` = `member`, `is_shared_account=true` (correctly capped — it cannot hold `recruiting` or `admin`) |
 
 ### TWO GRAPHS, DIFFERENT COUNTS — this confusion has already cost three numbers
@@ -143,7 +143,7 @@ python3 -m pytest tests -q                  # 260 tests, ~7 minutes
 node eval/drive_dom.mjs                     # hosted explorer harness
 node eval/drive_dom.mjs knowledge/graph.html  # offline build harness
 
-python3 pipeline/migrate.py status          # migrations 0001-0014
+python3 pipeline/migrate.py status          # migrations 0001-0015
 python3 pipeline/verify_migration.py --source supabase --scope public   # 32 checks
 python3 pipeline/curation.py roundtrip      # determinism + losslessness + comments
 python3 pipeline/curation.py check          # DRIFT: database vs YAML, no import
@@ -398,20 +398,35 @@ setup statements before the query. Right about the region, wrong about what the
 region multiplied. Hobby permits a single region, any region — multi-region is
 Pro and above.
 
-### 4. Auto-grant `member` on first sign-in
+### 4. Auto-grant `member` on first sign-in — DONE 2026-09-18 (migration 0015)
 
-**This reverses part of Q3's default and must be recorded as a reversal in
-`AUTH.md` with the reasoning**, because it changes what "a profile grants
-access" means. Today `AUTH.md` says *"layer 3 permits an account to exist; a
-profile is what gives it data"*, and `/api/me` tells a signed-in user with no
-profile exactly that.
+An `after insert` trigger on `auth.users` writes a `member` profile for any
+identity whose email domain is `interviewkickstart.com`. All three conditions
+are met and tested, not argued: `recruiting`/`admin` stay manual (the trigger
+writes the literal `'member'`), 0014's derivation and 0008's cap still apply,
+and a non-IK identity gets nothing.
 
-New rule: any verified `@interviewkickstart.com` Workspace account gets `member`
-automatically, with no administrator step. **Conditions, all mandatory:**
+**Recorded as a reversal in `AUTH.md`**, because it changes what "a profile
+grants access" means. The short version: the manual step read as a security
+control and was not one — layer 3 had already refused every non-Workspace
+identity before the user row existed. What it gated was membership of the
+company, which layers 0 and 3 decide. It never gated `recruiting`, and that
+stays manual.
 
-- `recruiting` and `admin` stay **manual** and stay off the auto path.
-- The shared-account rule from migration 0014 still applies.
-- **A test proves a non-IK identity still gets nothing.**
+**In the schema, not `/api/session`**, because writing a profile from the
+session route needs privileges the web app deliberately does not have — and
+`AUTH.md` names the service-role key as layer 1's only leak path.
+
+**Verified by mutation**, the way 0012 and 0014 were: rolling 0015 back reddens
+the three grant tests; `on conflict do update` reddens exactly the demotion
+test; removing the domain guard reddens exactly the non-IK test. `do nothing`
+and `do update` are one word apart and "a new user gets member" passes either
+way.
+
+**One asymmetry to keep in view.** Revocation is still immediate and still
+durable: deleting a profile does not re-create it, because a re-login does not
+re-create the `auth.users` row. **If that ever stops being true, this reversal
+must be revisited** — a grant that reinstates itself is not revocable.
 
 ### 5. The sign-in page and the explorer UI
 

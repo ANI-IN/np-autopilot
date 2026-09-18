@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """Grant, list and revoke access. The deliberate act that a session is not.
 
-docs/AUTH.md: *"layer 3 permits an account to exist; a profile is what gives it
-data."* This is that step, and it is a script run by an operator rather than an
-HTTP route, because there is no self-service path into a role — an IK employee
-who signs in successfully still reads nothing until someone runs this.
+SCOPE CHANGED 2026-09-18, migration 0015. `member` is no longer granted here:
+a verified IK Workspace identity gets it automatically at signup, because the
+manual step gated membership of the company — which layers 0 and 3 already
+decide — rather than gating anything this script could refuse. docs/AUTH.md
+records that as a reversal, with the reasoning and what it does NOT change.
+
+This remains the only way to grant `recruiting` or `admin`, which are the roles
+that actually gate something: the hiring funnel, and curation writes. It is a
+script run by an operator rather than an HTTP route, and it is still the only
+way to REVOKE anything, including a profile the trigger created.
 
 It connects as the OWNER over the session pooler. `profiles` has a self-select
 policy and no insert policy at all, so this cannot be done over the web app even
