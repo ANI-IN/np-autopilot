@@ -46,23 +46,60 @@ def test_the_pins_are_loaded_at_all():
 
 
 def test_a_pinned_pair_is_suppressed_not_proposed():
-    """NEGATIVE CONTROL, by construction, because it fires on nothing today.
+    """INJECTION PROOF, not a reading of the code path.
 
-    Asserts the suppression predicate the pass uses, with a pair that IS pinned
-    and a pair that is not, so a change that stops honouring pins turns this red
-    rather than quietly reopening a settled question.
+    The previous version of this test asserted that `load_pins` returned the
+    pin — which proves the pin is LOADED and nothing about whether it does
+    anything. That is exactly the claim `excluded-field` carried for months
+    while matching two namespaces that never meet.
+
+    So this calls the real `fuzzy_proposals` twice with the same inputs and
+    asserts BOTH directions:
+
+        without the pin  -> the pair IS proposed   (so the test is not vacuous)
+        with the pin     -> the pair is suppressed (so the pin does the work)
+
+    The first assertion is the one that matters. Without it, a change that broke
+    fuzzy matching entirely would make this pass.
+    """
+    mod = _resolve_module()
+
+    # A real pinned pair from people.yaml, close enough to be fuzzy-matched.
+    canon, other = "Karthika S", "Karthika Saran"
+    meta = {p["canonical"]: p for p in _people()}
+    assert frozenset({canon.lower(), other.lower()}) in mod.load_pins(meta), \
+        "the pair used by this test is no longer pinned in people.yaml"
+
+    unpinned_run, suppressed = mod.fuzzy_proposals([other], [canon], set())
+    pairs = {(p["candidate"], p["possible_match"]) for p in unpinned_run}
+    assert (other, canon) in pairs, (
+        f"WITHOUT the pin, {other!r} was not proposed against {canon!r} at all — "
+        "this test would pass for the wrong reason, proving nothing about "
+        "suppression. Has FUZZY_THRESHOLD changed?")
+    assert not suppressed
+
+    pinned_run, suppressed = mod.fuzzy_proposals(
+        [other], [canon], {frozenset({canon.lower(), other.lower()})})
+    pairs = {(p["candidate"], p["possible_match"]) for p in pinned_run}
+    assert (other, canon) not in pairs, (
+        "a pinned pair was proposed anyway — the recorded decision is inert")
+    assert (other, canon) in suppressed, (
+        "the pair was dropped but not REPORTED as suppressed; a silent "
+        "suppression is indistinguishable from a pair the matcher never found")
+
+
+def test_an_unpinned_near_match_is_still_proposed():
+    """The suppression must not swallow real proposals.
+
+    A pin list that quietly hid everything would also pass the test above.
     """
     mod = _resolve_module()
     meta = {p["canonical"]: p for p in _people()}
-    pins = mod.load_pins(meta)
-
-    pinned = frozenset({"Karthika S".lower(), "Karthika Pai".lower()})
-    assert pinned in pins, "the Karthika pin is gone"
-
-    not_pinned = frozenset({"Harsh Arora".lower(), "Harsha".lower()})
-    assert not_pinned not in pins, (
-        "an unrelated near-match is being treated as pinned; the suppression "
-        "would hide real proposals")
+    proposed, suppressed = mod.fuzzy_proposals(
+        ["Harsha"], ["Harsh Arora"], mod.load_pins(meta))
+    assert any(p["possible_match"] == "Harsh Arora" for p in proposed), \
+        "an unpinned near-match stopped being proposed"
+    assert not suppressed
 
 
 def test_no_alias_string_is_claimed_by_two_people():

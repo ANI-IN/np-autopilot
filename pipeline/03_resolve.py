@@ -105,6 +105,57 @@ def load_pins(people_meta: dict) -> set[frozenset]:
     return pins
 
 
+def middle_name_variant(a: str, b: str) -> bool:
+    """True when one name is the other plus a middle name.
+
+    A systematic pattern, not a fuzzy near-match: "Dharmendra Mishra" vs
+    "Dharmendra Kripashankar Mishra". Proposed at ANY threshold, because
+    similarity scoring under-rates it exactly when the middle name is long.
+    """
+    ta, tb = a.lower().split(), b.lower().split()
+    if len(ta) == len(tb) or not ta or not tb:
+        return False
+    short, long_ = (ta, tb) if len(ta) < len(tb) else (tb, ta)
+    return (len(short) >= 2 and len(long_) == len(short) + 1
+            and short[0] == long_[0] and short[-1] == long_[-1])
+
+
+def fuzzy_proposals(unresolved_names, canon_names, pins):
+    """(proposed, suppressed). AT MODULE LEVEL SO IT CAN BE TESTED DIRECTLY.
+
+    This loop lived inside main(), where the only way to check that a pin
+    actually suppressed anything was to read the code and believe it. That is
+    precisely the claim `excluded-field` carried for months before it turned out
+    to be matching two namespaces that never meet (§A.7b, "the control that
+    never worked"). A test can now inject a pair that WOULD be proposed and
+    assert both directions — proposed without the pin, absent with it — which is
+    a proof rather than a reading.
+    """
+    proposed, suppressed = [], []
+    for name in unresolved_names:
+        close = difflib.get_close_matches(name, canon_names, n=3, cutoff=FUZZY_THRESHOLD)
+        close = [m for m in close if m.lower() != name.lower()]
+        for m in canon_names:
+            if m.lower() != name.lower() and middle_name_variant(name, m) and m not in close:
+                close.append(m)
+        for m in close:
+            # A RECORDED DECISION OUTRANKS A SIMILARITY SCORE. These pairs were
+            # settled by a human against the corpus; proposing them again is how
+            # a settled question gets reopened by someone with less context, and
+            # `Abhinav Rawat` alone is pinned apart from eight other Abhinavs.
+            if frozenset({name.lower(), m.lower()}) in pins:
+                suppressed.append((name, m))
+                continue
+            ratio = difflib.SequenceMatcher(None, name.lower(), m.lower()).ratio()
+            proposed.append({"candidate": name, "possible_match": m,
+                             "similarity": round(ratio, 3), "applied": False,
+                             "basis": ("middle-name variant" if middle_name_variant(name, m)
+                                       else "string similarity"),
+                             "reason_not_applied":
+                                 "fuzzy matching proposes only; a human confirms in people.yaml"})
+    return proposed, suppressed
+
+
 def main() -> int:
     payload = json.loads((KNOWLEDGE_DIR / "candidates.json").read_text(encoding="utf-8"))
     cands = payload["candidates"]
@@ -188,43 +239,9 @@ def main() -> int:
     # ---------------- fuzzy: PROPOSE ONLY -----------------------------------
     canon_names = sorted({n["label"] for n in resolved_nodes.values()})
     unresolved_names = sorted({c["raw"].strip() for c in unmatched})
-    def middle_name_variant(a: str, b: str) -> bool:
-        """True when one name is the other plus a middle name.
-
-        A systematic pattern, not a fuzzy near-match: "Dharmendra Mishra" vs
-        "Dharmendra Kripashankar Mishra". Proposed at ANY threshold, because
-        similarity scoring under-rates it exactly when the middle name is long.
-        """
-        ta, tb = a.lower().split(), b.lower().split()
-        if len(ta) == len(tb) or not ta or not tb:
-            return False
-        short, long_ = (ta, tb) if len(ta) < len(tb) else (tb, ta)
-        return (len(short) >= 2 and len(long_) == len(short) + 1
-                and short[0] == long_[0] and short[-1] == long_[-1])
-
     pins = load_pins(people_meta)
-    suppressed = []
-    for name in unresolved_names:
-        close = difflib.get_close_matches(name, canon_names, n=3, cutoff=FUZZY_THRESHOLD)
-        close = [m for m in close if m.lower() != name.lower()]
-        for m in canon_names:
-            if m.lower() != name.lower() and middle_name_variant(name, m) and m not in close:
-                close.append(m)
-        for m in close:
-            # A RECORDED DECISION OUTRANKS A SIMILARITY SCORE. These pairs were
-            # settled by a human against the corpus; proposing them again is how
-            # a settled question gets reopened by someone with less context, and
-            # `Abhinav Rawat` alone is pinned apart from eight other Abhinavs.
-            if frozenset({name.lower(), m.lower()}) in pins:
-                suppressed.append((name, m))
-                continue
-            ratio = difflib.SequenceMatcher(None, name.lower(), m.lower()).ratio()
-            proposed.append({"candidate": name, "possible_match": m,
-                             "similarity": round(ratio, 3), "applied": False,
-                             "basis": ("middle-name variant" if middle_name_variant(name, m)
-                                       else "string similarity"),
-                             "reason_not_applied":
-                                 "fuzzy matching proposes only; a human confirms in people.yaml"})
+    fresh, suppressed = fuzzy_proposals(unresolved_names, canon_names, pins)
+    proposed.extend(fresh)
 
     # ---------------- other types -------------------------------------------
     for t, items in by_type.items():

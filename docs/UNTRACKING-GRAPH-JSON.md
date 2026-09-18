@@ -108,7 +108,7 @@ hash.
 The Drive reconciliation gate — *"rebuild from `.drive-cache` and compare to the
 committed graph"* — is the same shape and has the same loss.
 
-**Mitigation, and it is cheap:** track a **digest manifest** instead of the graph —
+**CONDITION, not a mitigation** — see §6. Track a **digest manifest** instead of the graph —
 one line per node and edge, `id` plus a hash of its content, sorted. A rebuild
 diff then names the rows that moved without carrying their values. Estimated a
 few hundred KB against 10 MB, so roughly **5% of the size for most of the
@@ -130,6 +130,21 @@ the plugin keeps a tracked roster-only snapshot rather than the full graph. The
 week-long piece is the Q5 hybrid, which untracking does not force and which
 should be decided on its own merits.
 
-**What I would not do:** untrack the file without the digest manifest. That trades
-three unblocked decisions for the loss of the only tool that has ever diagnosed a
-reproducibility failure, and the loss would not be noticed until the next one.
+## 6 · Conditions
+
+**The digest manifest is a CONDITION of untracking, not a mitigation offered
+alongside it.** Recorded as such because the distinction is the whole lesson of
+this session: diffability is how *"did the corpus change or did I change?"*
+stays answerable, and it is currently doing that work without credit. Losing it
+silently would be the third time a control turned out to be holding something
+nobody had attributed to it — after `sources.py`'s narrow inclusion and the
+`not_same_as` pins.
+
+A hash answers *whether*. Only the artefact answers *what*, and *what* is the
+question that produced `NP_AS_OF`.
+
+**Sequencing: not yet.** The type views and session extraction both change what
+the graph holds, and the diff should not be missing while that is in flight.
+Untracking is a thing to do when the graph is stable, not during a period of
+change — which is exactly when a reproducibility question is most likely to be
+asked and least likely to be answerable from a hash.
