@@ -137,8 +137,28 @@ so a reader can tell which records are attributable to a person and which are
 not. It is a **configured list**, not detection — Google does not tell us, and
 an unlisted shared mailbox is indistinguishable from a personal one.
 
-**ENFORCED, as of migration 0008.** A listed shared account cannot hold
-`recruiting` or `admin`:
+**ENFORCED, as of migration 0008 — and that enforcement was inert until 0014.**
+
+The CHECK below is keyed on `is_shared_account`, a column the APPLICATION
+supplied. `grant_access.py` computed it from `NP_SHARED_ACCOUNTS`, which was set
+in Vercel and never in the laptop environment the script runs in. An empty list
+means no account is shared, so the script refused nothing and wrote `false` —
+and the constraint then held perfectly over a value that was already wrong.
+
+Found by running the guard against the real shared mailbox after it signed in:
+`grant --role recruiting` **succeeded**. Both layers were inert at once, for the
+same reason.
+
+**A CHECK constraint keyed on a value the caller controls is not a constraint.**
+It is the caller's opinion, stored, with a constraint's reputation. And the
+trigger for it is A.7b in a security control: an unset variable made *"no shared
+accounts exist"* indistinguishable from *"I was never told which accounts are
+shared"*, and the permissive reading won.
+
+**Migration 0014 moves the list into the database** (`shared_accounts`) and
+DERIVES the flag with a `before insert or update` trigger, overwriting whatever
+the caller passes. The list is no longer something an environment can fail to
+carry, and the constraint now depends on a value the database computes:
 
 ```sql
 alter table profiles add constraint shared_accounts_stay_member
@@ -151,6 +171,13 @@ where "which account" is adequate; `recruiting` reads named hiring outcomes abou
 external people, which is exactly where an unattributable access log stops being
 acceptable. The curation service refuses a shared actor as well, so the rule
 holds at both layers.
+
+**One residual env-var dependency, stated rather than left implicit.**
+`Identity.is_shared_account` in `web/lib/auth.py` still reads
+`NP_SHARED_ACCOUNTS` to flag the audit line. That variable IS set in Vercel, and
+the flag there is informational — the control is the database-derived column,
+which no missing variable can disable. If the audit flag ever becomes
+load-bearing it should read `profiles.is_shared_account` instead.
 
 **Its limit, and it must not be over-claimed: this defends against the
 CONFIGURED list only.** Shared-account *detection* does not exist — Google does

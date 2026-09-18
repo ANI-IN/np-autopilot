@@ -147,3 +147,98 @@ def test_a_granted_profile_carries_the_verified_domain():
             assert domain == grant_access.ALLOWED_HD, \
                 f"{email} has email_domain={domain!r}"
             assert role in grant_access.ROLES
+
+
+# ---------------------------------------------------------------------------
+# The shared-account rule, against the real shared account
+# ---------------------------------------------------------------------------
+
+SHARED = "b2c-courses-new-programs@interviewkickstart.com"
+
+
+@needs_db
+def test_the_shared_account_flag_is_derived_not_supplied(monkeypatch):
+    """A CHECK keyed on a value the caller supplies is not a constraint.
+
+    THE FAILURE THIS EXISTS FOR, found by running the guard against a real
+    account: `grant --role recruiting` on the shared team mailbox SUCCEEDED.
+    Both layers were inert.
+
+      * The script consulted NP_SHARED_ACCOUNTS, which was set in Vercel and
+        never in the environment the script runs in. An empty list means no
+        account is shared, so there was nothing to refuse.
+      * Migration 0008's CHECK is keyed on `is_shared_account`. The script had
+        just written `false`. The constraint held perfectly, over a value that
+        was already wrong.
+
+    An unset variable made "no shared accounts exist" indistinguishable from "I
+    was never told which accounts are shared" — A.7b, in a security control.
+
+    Migration 0014 derives the flag with a trigger, so this asserts the
+    derivation happens with the variable explicitly UNSET: the condition that
+    produced the failure.
+    """
+    monkeypatch.delenv("NP_SHARED_ACCOUNTS", raising=False)
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        cur.execute("select count(*) from shared_accounts")
+        assert cur.fetchone()[0] > 0, "the shared_accounts table is empty"
+
+        cur.execute("select id from auth.users where lower(email) = %s", (SHARED,))
+        row = cur.fetchone()
+        if not row:
+            pytest.skip("the shared account has not signed in")
+        uid = row[0]
+
+        # The flag must be derived even when the caller claims otherwise.
+        for claimed in (False, True):
+            cur.execute("""
+                insert into profiles (user_id, email, email_domain, role,
+                                      is_shared_account)
+                values (%s, %s, 'interviewkickstart.com', 'member', %s)
+                on conflict (user_id) do update set is_shared_account = excluded.is_shared_account
+                returning is_shared_account
+            """, (uid, SHARED, claimed))
+            assert cur.fetchone()[0] is True, (
+                f"caller claimed is_shared_account={claimed} and the database "
+                "accepted it; the 0014 trigger is not deriving the flag")
+        conn.rollback()
+
+
+@needs_db
+def test_a_shared_account_cannot_be_granted_recruiting_or_admin(monkeypatch):
+    """The end-to-end refusal, with the variable unset."""
+    monkeypatch.delenv("NP_SHARED_ACCOUNTS", raising=False)
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        cur.execute("select id from auth.users where lower(email) = %s", (SHARED,))
+        row = cur.fetchone()
+        if not row:
+            pytest.skip("the shared account has not signed in")
+        uid = row[0]
+        for role in ("recruiting", "admin"):
+            with pytest.raises(Exception) as exc:
+                cur.execute("""
+                    insert into profiles (user_id, email, email_domain, role,
+                                          is_shared_account)
+                    values (%s, %s, 'interviewkickstart.com', %s, false)
+                """, (uid, SHARED, role))
+            assert "shared_accounts_stay_member" in str(exc.value), (
+                f"a shared account was granted {role!r}: {exc.value}")
+            conn.rollback()
+
+
+@needs_db
+def test_a_normal_account_is_not_flagged(monkeypatch):
+    """The positive control: the rule must not catch everyone.
+
+    Without this, a trigger that flagged every account would pass the two tests
+    above while making `recruiting` ungrantable to anyone.
+    """
+    monkeypatch.delenv("NP_SHARED_ACCOUNTS", raising=False)
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        cur.execute("""select email, is_shared_account from profiles
+                       where lower(email) <> %s""", (SHARED,))
+        rows = cur.fetchall()
+        if not rows:
+            pytest.skip("no non-shared profiles to check")
+        for email, flagged in rows:
+            assert flagged is False, f"{email} was wrongly flagged as shared"

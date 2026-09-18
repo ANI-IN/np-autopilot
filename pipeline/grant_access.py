@@ -31,9 +31,24 @@ ALLOWED_HD = os.environ.get("NP_ALLOWED_HD", "interviewkickstart.com")
 ROLES = ("member", "recruiting", "admin")
 
 
-def _shared_accounts() -> set[str]:
-    return {s.strip().lower()
-            for s in os.environ.get("NP_SHARED_ACCOUNTS", "").split(",") if s.strip()}
+def _shared_accounts(cur) -> set[str]:
+    """The list, FROM THE DATABASE, not from the environment.
+
+    It used to read NP_SHARED_ACCOUNTS. That variable was set in Vercel and
+    never in the laptop environment this script runs in, so the list was empty,
+    so no account was shared, so `grant --role recruiting` on the shared team
+    mailbox succeeded — and migration 0008's CHECK did not fire either, because
+    it is keyed on `is_shared_account`, which this script had just written as
+    false.
+
+    An unset variable made "no shared accounts exist" indistinguishable from "I
+    was never told which accounts are shared", and the permissive reading won.
+    Migration 0014 moved the list into the database and derives the flag with a
+    trigger, so the caller can no longer supply it. This function reads the same
+    table, so the script's message and the database's refusal agree.
+    """
+    cur.execute("select local_part from shared_accounts")
+    return {r[0].lower() for r in cur.fetchall()}
 
 
 #: Where GoTrue actually puts a non-standard OIDC claim. Established by reading
@@ -123,17 +138,18 @@ def cmd_grant(args) -> int:
         print(f"role must be one of {ROLES}", file=sys.stderr)
         return 2
 
-    shared = email.split("@", 1)[0] in _shared_accounts()
-    if shared and role != "member":
-        # The database CHECK from 0008 would refuse this anyway. Saying it here
-        # means the operator learns WHY rather than reading a constraint name.
-        print(f"REFUSED: {email} is a configured shared account. A shared "
-              f"account cannot hold {role!r} — the audit log would name an "
-              "account, not a person, and `recruiting` reads named hiring "
-              "outcomes about external people.", file=sys.stderr)
-        return 1
-
     with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        shared = email.split("@", 1)[0].lower() in _shared_accounts(cur)
+        if shared and role != "member":
+            # The 0014 trigger and the 0008 CHECK would refuse this anyway.
+            # Saying it here means the operator learns WHY rather than reading a
+            # constraint name out of a traceback.
+            print(f"REFUSED: {email} is a shared account. It cannot hold "
+                  f"{role!r} — the audit log would name an ACCOUNT, not a "
+                  "person, and `recruiting` reads named hiring outcomes about "
+                  "external people, which is exactly where an unattributable "
+                  "access log stops being acceptable.", file=sys.stderr)
+            return 1
         found = _lookup(cur, email)
         if not found:
             print(f"No auth.users row for {email}.\n"
@@ -177,7 +193,11 @@ def cmd_grant(args) -> int:
                   file=sys.stderr)
             return 1
 
-        cur.execute("""
+        # `is_shared_account` is passed for readability only — the 0014 trigger
+        # overwrites it from the shared_accounts table, so a wrong value here
+        # cannot disable the constraint that depends on it.
+        try:
+            cur.execute("""
             insert into profiles (user_id, email, email_domain, role,
                                   is_shared_account)
             values (%s, %s, %s, %s, %s)
@@ -188,10 +208,20 @@ def cmd_grant(args) -> int:
                    updated_at = now()
             returning role
         """, (user_id, actual_email, ALLOWED_HD, role, shared))
-        new_role = cur.fetchone()[0]
-        conn.commit()
+            new_role = cur.fetchone()[0]
+            conn.commit()
+        except Exception as exc:                                   # noqa: BLE001
+            conn.rollback()
+            name = getattr(getattr(exc, "diag", None), "constraint_name", "") or ""
+            if "shared_accounts_stay_member" in name:
+                print(f"REFUSED by the database: {actual_email} is a shared "
+                      f"account and cannot hold {role!r}. The trigger from "
+                      "migration 0014 derived that from the shared_accounts "
+                      "table, whatever this script believed.", file=sys.stderr)
+                return 1
+            raise
     print(f"  {actual_email} -> {new_role}"
-          f"{'  (shared account)' if shared else ''}")
+          f"{'  (shared account — capped at member)' if shared else ''}")
     print("  Effective on their next query. No re-projection, no deploy.")
     return 0
 
