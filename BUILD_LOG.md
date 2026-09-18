@@ -2734,3 +2734,7 @@ document of ours. Final hash `a53462823ca26466fc5e6b3bf18615ec51bb96ed003249a866
 - Found 74 | skipped 0 | extracted 73 | failed 1
 - Manifest diff: +0 added, ~0 changed, -0 removed
     - FAILED `01-workflows/Taking Class Confirmation Template.png` — image with no text layer — nothing to extract
+
+## 2026-09-18 17:05:59Z — validate
+
+- validate: 0 FAIL, 6 WARN, 13/20 categories exercised, 5048 nodes, 36677 edges

@@ -70,6 +70,39 @@ Unread files that certainly contain entities: `SME Tracker - Bullseye_IK.xlsx`,
 Plan.xlsx` (18 sheets, and the source for eval Q15), `Operational Metrics.xlsx`,
 `UpLevel Schedule Structure.xlsx`.
 
+### ⚠ READ THIS BEFORE WIDENING COVERAGE
+
+**The narrowness of extraction is currently the only thing keeping contact data
+out of the graph.** Not D4's contact strip — that was inert until 2026-09-18
+(one caller, wrong namespace, equality matching; `validate.py` had been printing
+`NOT EXERCISED: excluded-field` the whole time). What holds is
+`pipeline/lib/sources.py`: extraction reads **20 declared columns, all name
+columns**, and the projected graph contains **zero** email addresses and zero
+LinkedIn URLs.
+
+So the roadmap item directly above — *read the remaining 25 of 75 files* — is
+the work that removes the protection. Every file added to `sources.py` is a
+chance to declare a column that carries an address, and the files still unread
+are the worst ones for it: `Operational Metrics.xlsx` alone holds 12,985 rows of
+`learner_email`, and the poll workbooks' `T.A Ratings` and `TA RAW` sheets carry
+`Student Name` and `Student Email`.
+
+**Improving coverage is progress and it is also the risk. Those are the same
+action.** Nothing in the system said so, because the control everybody cited was
+not the control doing the work.
+
+When you widen coverage:
+
+- **Declare columns, never whole sheets.** `sources.py` is an allow-list and it
+  is the control; keep it one.
+- **Never declare a contact column.**
+  `tests/test_exclusion_is_deny_by_default.py` fails if you do, and
+  `validate.py` now checks the raw `column` recorded in provenance.
+- **Expect `excluded-column` to stay at zero.** If it ever reports a hit, the
+  extraction is wrong, not the check.
+
+`DECISIONS.md` §A.7b, "the control that never worked", is the full account.
+
 ---
 
 ## 2a · The three ways a person disappears

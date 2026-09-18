@@ -263,10 +263,31 @@ def _run(graph_path: Path | None = None):
         for s in n.get("sources", []):
             if s.get("file") in excluded:
                 r.add(FAIL, "excluded-file", f"excluded file reached the graph: {s['file']}")
+    # TWO NAMESPACES, AND THE ONE THAT MATTERED WAS NOT BEING CHECKED.
+    #
+    # `n` keys are DERIVED property names — `pipeline_status`, `decline_rate` —
+    # produced by an extractor. A contact column never arrives under a name like
+    # that, so checking only these could catch a property somebody literally
+    # called `email`, and nothing else. The patterns in taxonomy.yaml are
+    # spreadsheet HEADERS (`Personal email`, `LinkedIn Profile URL`), so they
+    # were being matched against a namespace they cannot occur in.
+    #
+    # `source["column"]` is the raw header actually read — 9,556 records carry
+    # one. That is where contact data would appear, and it is now checked.
     for n in nodes:
         for k in n:
             if taxonomy.is_excluded_field(k):
                 r.add(FAIL, "excluded-field", f"{n['type']} carries excluded field {k!r}")
+    seen_cols = {s["column"] for n in nodes for s in n.get("sources", [])
+                 if s.get("column")}
+    bad_cols = sorted(c for c in seen_cols if taxonomy.is_excluded_field(c))
+    if bad_cols:
+        r.add(FAIL, "excluded-column",
+              f"{len(bad_cols)} contact column(s) were READ into the graph: "
+              + ", ".join(repr(c) for c in bad_cols[:6]))
+    else:
+        r.add(INFO, "excluded-column",
+              f"{len(seen_cols)} distinct source column(s) read, none contact-shaped")
     # duplicate ids
     dupes = [i for i, c in Counter(n["id"] for n in nodes).items() if c > 1]
     if dupes:

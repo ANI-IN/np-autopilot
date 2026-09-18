@@ -47,6 +47,41 @@ below, and each change is marked in place in the target document.
 | D2 | **No `workflow-owners.yaml` for v1.** Domain-level ownership only. The command is named **`domain-owner`**, not `owner`, so it does not promise what it cannot deliver. `USING_THE_KG.md` must state that workflow-level ownership is out of scope for v1. |
 | D3 | **`Karthika S` and `Karthika Pai` are two different people** — confirmed. Both go into `people.yaml` as separate canonical entries, each carrying a comment recording that this was confirmed, so no future fuzzy-match pass merges them. |
 | D4 | **Ingest everything sensitive.** `US Instructor Cost Analysis.xlsx` in. Free-text judgement sheets in. Tag those nodes `sensitive: true`. **Strip instructor contact fields** (email/phone/LinkedIn/Discord) at extraction. |
+
+> ### ⚠ CORRECTION, 2026-09-18 — D4's contact strip is not the control
+>
+> **Every document in this project describes D4's contact-field strip as the
+> thing keeping email, phone, LinkedIn and Discord out of the graph. It is not,
+> and it never was.**
+>
+> - `taxonomy.is_excluded_field` had **exactly one caller** —
+>   `pipeline/validate.py` — and no extractor called it at all. Nothing stripped
+>   anything "at extraction".
+> - At that one call site it was matched against **derived property names**
+>   (`pipeline_status`, `decline_rate`), while the 18 patterns describe
+>   **spreadsheet headers** (`Personal email`, `LinkedIn Profile URL`). Two
+>   namespaces that never meet, so the check could not fire. `validate.py`'s own
+>   output has been printing `NOT EXERCISED: excluded-field` the whole time.
+> - It matched by **equality**, so even in the right namespace `Student Email`,
+>   `Phone Number`, `personal_email` and `Email (personal)` would all have
+>   passed. Measured: 15 of 35 contact-shaped headers caught, **20 missed**.
+>
+> **What has actually kept contact data out is `pipeline/lib/sources.py`.**
+> Extraction reads only declared `(file, sheet, column)` triples — **20 distinct
+> columns, all name columns**, verified against the projected graph, which
+> contains zero email addresses and zero LinkedIn URLs. That is an allow-list,
+> it holds, and **it was chosen for coverage rather than for safety**.
+>
+> **The stated control fails open. The real one holds by accident.**
+>
+> Hardened 2026-09-18: matching is now normalised and substring-based rather
+> than equality, and `validate.py` checks the raw `column` recorded in
+> provenance — the namespace where a contact header would actually appear.
+> The allow-list is now named as the control in
+> `tests/test_exclusion_is_deny_by_default.py`. Full reasoning:
+> `DECISIONS.md` §A.7b, "the control that never worked".
+
+
 | D5 | **KYP is a document type, not an entity.** EdgeUP is the product. Every program has its own KYP doc → model `KYP` as a **doctype**, joined to each program by a per-program edge. |
 | D6 | **Scan every row of every file.** No sampling, no certification by header. Report what is found. |
 | D7 | **Cloudflare Access: one rule** — email domain `@interviewkickstart.com`. Everyone in the company sees the full graph. **No per-node filtering in the HTML render.** |

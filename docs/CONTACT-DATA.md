@@ -9,6 +9,47 @@ corpus-wide, in `Instructors Directory.xlsx`, `Data and Management.xlsx` and
 `Resource Collection Mastersheet`. Nothing is in the graph because **D4 strips
 contact fields (email / phone / LinkedIn / Discord) at extraction**.
 
+> ### ⚠ CORRECTION, 2026-09-18 — D4's contact strip is not the control
+>
+> **Every document in this project describes D4's contact-field strip as the
+> thing keeping email, phone, LinkedIn and Discord out of the graph. It is not,
+> and it never was.**
+>
+> - `taxonomy.is_excluded_field` had **exactly one caller** —
+>   `pipeline/validate.py` — and no extractor called it at all. Nothing stripped
+>   anything "at extraction".
+> - At that one call site it was matched against **derived property names**
+>   (`pipeline_status`, `decline_rate`), while the 18 patterns describe
+>   **spreadsheet headers** (`Personal email`, `LinkedIn Profile URL`). Two
+>   namespaces that never meet, so the check could not fire. `validate.py`'s own
+>   output has been printing `NOT EXERCISED: excluded-field` the whole time.
+> - It matched by **equality**, so even in the right namespace `Student Email`,
+>   `Phone Number`, `personal_email` and `Email (personal)` would all have
+>   passed. Measured: 15 of 35 contact-shaped headers caught, **20 missed**.
+>
+> **What has actually kept contact data out is `pipeline/lib/sources.py`.**
+> Extraction reads only declared `(file, sheet, column)` triples — **20 distinct
+> columns, all name columns**, verified against the projected graph, which
+> contains zero email addresses and zero LinkedIn URLs. That is an allow-list,
+> it holds, and **it was chosen for coverage rather than for safety**.
+>
+> **The stated control fails open. The real one holds by accident.**
+>
+> Hardened 2026-09-18: matching is now normalised and substring-based rather
+> than equality, and `validate.py` checks the raw `column` recorded in
+> provenance — the namespace where a contact header would actually appear.
+> The allow-list is now named as the control in
+> `tests/test_exclusion_is_deny_by_default.py`. Full reasoning:
+> `DECISIONS.md` §A.7b, "the control that never worked".
+
+
+**This does not change the recommendation below** — it strengthens it. The
+argument was never "a control already keeps this out"; it was that projecting
+contact data for ~1,400 external people is a bad trade. Learning the control
+was inert means the graph has been clean by the narrowness of extraction, not
+by design, and widening extraction is exactly what was being proposed.
+
+
 Adding the link reverses D4. This is what that reversal would actually mean.
 
 ---

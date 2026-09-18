@@ -226,10 +226,42 @@ def excluded_field_patterns() -> list[str]:
     return list(_raw().get("excluded", {}).get("fields", {}).get("patterns", []))
 
 
+def _normalise_header(header: str) -> str:
+    """Lowercase, and collapse every run of non-alphanumerics to one space.
+
+    So `Personal email`, `personal_email`, `Personal-Email` and
+    `  PERSONAL   EMAIL ` all become `personal email`. Equality on the raw
+    string treated those as four different columns.
+    """
+    import re as _re
+    return " ".join(_re.sub(r"[^a-z0-9]+", " ", str(header).lower()).split())
+
+
 def is_excluded_field(header: str) -> bool:
-    """Case-insensitive match on a normalised column header."""
-    h = " ".join(str(header).strip().lower().split())
-    return any(h == p.strip().lower() for p in excluded_field_patterns())
+    """Does this column header name contact data?
+
+    WAS EQUALITY, AND EQUALITY LET TWO CLASSES THROUGH. Measured across every
+    first-row header in the corpus: 15 contact-shaped headers matched and 20 did
+    not, including `Student Email`, `Phone Number`, `Email (personal)`,
+    `person.linkedInUrl`, and two that missed only because the real header
+    carries a suffix — `Alternate Email ID (for instructor/interviewer account)`
+    and `Discord ID (please create one if you don't have it)`. Underscores broke
+    it too: `personal_email` never equalled `personal email`.
+
+    So it now matches a pattern appearing ANYWHERE in the normalised header.
+
+    THIS DELIBERATELY OVER-EXCLUDES, and that is the opposite trade from
+    CLAUDE.md §4. There, a name-shape filter that excluded a real person was
+    catastrophic and the rule is rank-or-warn, never exclude. Here the costs are
+    reversed: over-excluding drops a column like `Email Sent?` — a timestamp
+    nobody wants — while under-excluding puts a personal email address in a
+    queryable graph. §4's rule is about not losing TRUTH; this is about not
+    gaining EXPOSURE, and the asymmetry points the other way.
+    """
+    h = _normalise_header(header)
+    if not h:
+        return False
+    return any(_normalise_header(p) in h for p in excluded_field_patterns())
 
 
 def validate_rules() -> list[str]:

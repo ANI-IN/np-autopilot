@@ -641,6 +641,70 @@ failed immediately, because five scripts added since it was written were being
 uploaded to Vercel. That list was hand-written, so a new file was included by
 default: instance 8 again, in a third place.
 
+#### The control that never worked, and the substitute that worked by coincidence
+
+The sharpest case in this catalogue, because all three parts failed in different
+ways and the sum reported success.
+
+**The stated control did not exist.** D4 says *"strip instructor contact fields
+(email/phone/LinkedIn/Discord) at extraction"*. Every document repeats it.
+`taxonomy.is_excluded_field` had **exactly one caller** — `validate.py` — and no
+extractor called it at all. Nothing stripped anything at extraction, ever.
+
+**At its one call site it could not fire.** It matched the 18 patterns, which are
+spreadsheet HEADERS (`Personal email`, `LinkedIn Profile URL`), against node
+**property keys**, which are derived names (`pipeline_status`, `decline_rate`).
+Two namespaces that never meet. And it compared by equality, so even in the right
+namespace `Student Email`, `Phone Number`, `personal_email` and
+`Email (personal)` all passed. Measured across every first-row header in the
+corpus: **15 of 35 contact-shaped headers caught, 20 missed.**
+
+**The machine had been saying so.** `validate.py` prints a NOT EXERCISED list —
+built for exactly this, after instances 2 and 3 — and it has been naming
+`excluded-field` on every run. The output was correct and nobody read it. A
+report that says a check never ran is only a control if somebody looks.
+
+**Something else was holding.** `pipeline/lib/sources.py` declares extraction as
+`(file, sheet, column)` triples. Only **20 distinct columns have ever been read**,
+all of them name columns, and the projected graph contains **zero** email
+addresses and zero LinkedIn URLs. That is a real allow-list and it is the reason
+the graph is clean — **and it was written for coverage, not for safety.** Nobody
+chose it as a privacy control; it is one by side effect.
+
+> **A stated control that fails open, a real control that holds by accident, and
+> nothing in the system relating the two.**
+
+**And the part that should stop a reader.** `CLAUDE.md` §2 treats narrow coverage
+as a defect: 25 of 75 files unread, counts are floors, and reading the rest is on
+the roadmap as progress. **That work removes the only thing that has been
+holding.** The files still unread are the worst ones for it —
+`Operational Metrics.xlsx` holds 12,985 rows of `learner_email`; the poll
+workbooks queued for session extraction carry `Student Name` and `Student Email`.
+
+So the next planned improvement would have been the first real test of the
+contact strip, and the strip would have failed — while the coverage metric went
+up and validate.py reported the same green it always had. **A success metric that
+moves in the same direction as the risk, with no control between them.**
+
+**What this adds to the list.** Instance 8 asks whether a guard's scope matches
+its rule. Instance 9 asks what would fail if a documented constraint stopped
+being true. This asks a third thing:
+
+> **When a guarantee holds, do we know WHICH mechanism is holding it — and is
+> that the one we think?**
+
+A guarantee can be true for a reason nobody wrote down, and then a change that
+looks like progress removes it. The tell here was available and ignored: the
+guard's own category tracker said it had never run, while the property it
+allegedly enforced was observably true.
+
+**Closed 2026-09-18.** Matching is normalised and substring-based; `validate.py`
+checks the raw `column` recorded in provenance, which is the namespace that
+carries the risk; the allow-list is named as the control and asserted in
+`tests/test_exclusion_is_deny_by_default.py`; and `CLAUDE.md` §2 now carries the
+warning at the point where somebody proposes widening coverage, rather than in a
+risk register they have no reason to open.
+
 ### A.8 Concurrent writes and locking
 
 Two populations with genuinely different needs:

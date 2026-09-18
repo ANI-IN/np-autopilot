@@ -297,6 +297,12 @@ candidates reintroduces the picking one layer up.
   must remain **visibly distinct in any UI** from scanned facts.
 - **Sensitive nodes are not projected at all.** `member` role only while R18 is
   open.
+- **D4's contact strip is NOT what keeps contact data out of the graph.** It was
+  inert — one caller, wrong namespace, equality matching. What holds is
+  `sources.py`'s allow-list: extraction reads 20 declared columns, all name
+  columns. **The stated control fails open; the real one holds by accident**,
+  and it was chosen for coverage rather than safety. Hardened 2026-09-18;
+  `DECISIONS.md` §A.7b, "the control that never worked".
 - **Never the direct `db.<ref>.supabase.co` connection.** IPv6-only on this
   project: works on a laptop, fails on Vercel. Refused at runtime and greped in
   CI.
