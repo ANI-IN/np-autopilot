@@ -11,6 +11,19 @@ background:#0d1117;color:#e6edf3;overflow:hidden}
 background:rgba(13,17,23,.96);border-color:#21262d;z-index:5}
 #left{left:0;width:300px;border-right:1px solid #21262d}
 #right{right:0;width:330px;border-left:1px solid #21262d;display:none}
+/* A LABEL WITH NO SPACES HAS NO WRAP POINT, so it sets the container's minimum
+   width and pushes the whole fixed panel left until content runs off-screen.
+   The longest in this graph is a 69-character file path
+   (01-workflows/Instructor_Best_Practice___Zoom___Initial_Check_Template) in a
+   330px column. `anywhere` rather than `break-word`: break-word only breaks a
+   word that cannot fit ON ITS OWN LINE, which is not the same as one that
+   cannot fit in the box.
+   min-width:0 is the other half — a flex/grid child defaults to min-content
+   width, so it refuses to shrink below its longest token no matter what
+   overflow-wrap says. */
+#right,#right *{min-width:0}
+#nl,#right .src,#right h1,#right h2,.pfname,.prov-corpus,.prov-hand{
+  overflow-wrap:anywhere;word-break:normal}
 h1{font-size:15px;margin:0 0 2px}
 .sub{color:#8b949e;font-size:11px;margin-bottom:10px}
 .warn{background:#2d1e00;border:1px solid #6b4b00;border-radius:6px;padding:8px;
@@ -655,6 +668,7 @@ function recompute(refit, why){
   allDeg=degreeMap(D,D.nodes.map(n=>n.id));
   for(const n of D.nodes){n.d=allDeg.get(n.id)||0;n.iso=(n.d===0)}
   A=visible(D,{types:state.types,showIso:state.showIso,degree:allDeg});
+  const hiddenFiles=D.nodes.filter(x=>x.t==='file').length;
   const ids=new Set(A.map(n=>n.id));
   E=D.edges.filter(e=>ids.has(e.s)&&ids.has(e.t)&&(state.showDash||e.r!==EXPERT));
   anchors=new Map();
@@ -685,6 +699,14 @@ function recompute(refit, why){
     // THE COUNT CARRIES ITS QUALIFIER, inline. This was a permanent sidebar
     // panel saying the same thing, costing a third of the column on every visit
     // to warn about a number two lines below it.
+    // FILE NODES ARE FETCHED AND NEVER DRAWN. `file` is not in TYPES, so
+    // visible() filters them out and the two counts disagree with no
+    // explanation. That is correct by §A.3 — provenance lives in node_sources
+    // and a file is cited, never traversed — but an unexplained discrepancy
+    // reads as a silent drop, which is the one thing this project will not do.
+    (hiddenFiles?'<span class="qual"> \u2014 '+hiddenFiles+' file node'+
+      (hiddenFiles>1?'s':'')+' fetched and not drawn: files are cited, never '+
+      'traversed</span>':'')+
     '<span class="qual"> \u2014 what you have expanded to, not the whole graph</span>';
   // A legitimate recompute restarts the simulation — and ONLY a recompute may.
   if(refit!==false){settle=0;alpha=1;frozen=false}
@@ -870,6 +892,19 @@ async function openNode(id){
     return '<div class="nb" data-id="'+esc(x.o)+'">'+esc(o.l)+
       '<div class="rel">'+esc(x.r)+' · '+esc(o.t)+dash+'</div></div>'}).join('')
     ||'<div class="src">no relationships loaded — use “expand from here”</div>';
+  // A FILE NODE HAS NO TRAVERSABLE EDGES BY CONSTRUCTION. Provenance is in
+  // node_sources, not in `edges` (§A.3), so the file hubs are unreachable —
+  // measured: 0 edges touch any of the 74 file nodes. "expand from here" would
+  // fetch a neighbourhood of exactly one node and add nothing, which looks like
+  // a broken button rather than a deliberate design.
+  if(n&&n.t==='file'){
+    const rel=document.getElementById('nbrs');
+    if(rel) rel.innerHTML='<div class="src">A file has no traversable '+
+      'relationships, by design. Provenance is held separately so that a file '+
+      'cited by thousands of rows cannot be walked through as if it connected '+
+      'them. Expanding from here would return nothing. What cites this file is '+
+      'below.</div>';
+  }
   document.getElementById('more').innerHTML=nb.hidden>0
     ? '<button type="button" id="exp">show '+nb.hidden+' more</button>' : '';
   const ex=document.getElementById('exp');

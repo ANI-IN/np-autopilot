@@ -80,7 +80,9 @@ const FIX = (() => {
   const types=['domain','program','module','person','instructor','workflow','theme'];
   for(let i=0;i<60;i++)
     nodes.push({id:'n'+i, type:types[i%types.length],
-                label: i===7 ? HOSTILE : ('node '+i),
+                label: i===7 ? HOSTILE
+                     : i===11 ? '01-workflows/Instructor_Best_Practice___Zoom___Initial_Check_Template'
+                     : ('node '+i),
                 label_raw: i===7 ? HOSTILE : null, props:{}});
   for(let i=1;i<60;i++)
     edges.push({source_id:'n'+(i-1), target_id:'n'+i,
@@ -550,6 +552,47 @@ console.log('\n=== CURATION SURFACE ===');
   console.log('  and says why on the surface         :', saysWhy);
   if(!noForm) errors.push('AN UNANSWERABLE ALIAS WAS PRESENTED AS A PENDING DECISION');
   if(!saysWhy) errors.push('THE SURFACE DOES NOT SAY WHY THE ALIAS IS UNANSWERABLE');
+}
+
+// ---- A LABEL WITH NO WRAP POINT MUST NOT WIDEN THE PANEL -----------------
+// A 69-character unbroken file path in a 330px column had no wrap point, so it
+// set the container's min-content width and pushed the whole fixed panel left
+// until content ran off-screen.
+//
+// THE SHIM HAS NO LAYOUT ENGINE, so pixel width cannot be asserted here and
+// pretending otherwise would be worse than not testing it. What IS checkable is
+// that the label reaches the panel intact and that the stylesheet carries a
+// rule able to break it. The label is chosen BY MEASUREMENT — longest unbroken
+// token — so a longer one arriving later is covered without editing this.
+if(PORTED){
+  console.log('\n=== LONG LABEL vs PANEL WIDTH ===');
+  const longest = FIX.nodes
+    .map(nd => ({id:nd.id, tok:String(nd.label||'').split(/\s+/)
+                                .reduce((a,b)=>a.length>=b.length?a:b,'')}))
+    .reduce((a,b)=>a.tok.length>=b.tok.length?a:b);
+  console.log('  longest unbroken token             :', longest.tok.length,
+              'chars ('+longest.id+')');
+
+  await (0,eval)(`openNode(${JSON.stringify(longest.id)})`);
+  const title = store.get('nl').textContent || '';
+  const intact = title.includes(longest.tok);
+  console.log('  reaches the panel title intact     :', intact);
+  if(!intact) errors.push('THE LONGEST LABEL DID NOT REACH THE PANEL TITLE');
+
+  // The rule that lets it break. break-word is NOT enough: it only breaks a
+  // word that cannot fit on its own line, not one that cannot fit in the box.
+  // Read explicitly: `html` is shadowed by a later const in this block.
+  const pageSrc = readFileSync(TARGET,'utf8');
+  const css = pageSrc.slice(pageSrc.indexOf('<style>'), pageSrc.indexOf('</style>'));
+  const wraps = /#nl[^{]*\{[^}]*overflow-wrap:\s*anywhere/.test(css)
+             || /(^|,)\s*#nl\b[^{]*\{[^}]*overflow-wrap:\s*anywhere/m.test(css);
+  const shrinks = /#right\s*\*?\s*,?\s*[^{]*\{[^}]*min-width:\s*0/.test(css);
+  console.log('  title can break mid-token          :', wraps);
+  console.log('  panel children may shrink (min-w:0):', shrinks);
+  if(!wraps) errors.push('NO overflow-wrap:anywhere COVERING THE PANEL TITLE — '
+    + 'an unbreakable label will widen the panel again');
+  if(!shrinks) errors.push('NO min-width:0 ON PANEL CHILDREN — a flex child '
+    + 'defaults to min-content width and ignores overflow-wrap');
 }
 
 console.log('\nstat line:', (store.get('stat')||{}).innerHTML || '(never set)');
