@@ -59,6 +59,12 @@ types — but per your instruction the design requirement stands regardless, and
 
 ## The measurements everything below rests on
 
+> **THESE ARE THE PIPELINE GRAPH, NOT THE PROJECTION.** 5,048 nodes / 36,677
+> edges is what the build produces, provenance and sensitive rows included. The
+> web app talks to the *projected public* graph: **3,146 nodes / 4,021 edges,
+> 526 KiB**. Carrying a number from this table into a statement about the
+> explorer has already produced three wrong figures — see `STATE.md` §1.
+
 | | |
 |---|---|
 | Nodes | 5,048 |
@@ -73,9 +79,11 @@ types — but per your instruction the design requirement stands regardless, and
 | Distinct node property keys | 41 — only 5 on every node |
 | Distinct edge property keys | 19 |
 
-**The traversable graph is tiny.** 4,021 edges and 1.2 MB. Almost everything
-that makes `graph.json` an 11 MB file is provenance. That single fact decides
-more of this document than any preference about Postgres features.
+**The traversable graph is tiny.** 4,021 edges and 1.2 MB in the pipeline's
+own node shape (526 KiB in the shape the API actually returns). Almost
+everything that makes `graph.json` an 11 MB file is provenance. That single
+fact decides more of this document than any preference about Postgres
+features.
 
 ---
 
@@ -129,6 +137,47 @@ unforgettable.**
 
 It also shrinks the hot table by an order of magnitude: `edges` becomes 4,021
 rows instead of 36,677.
+
+### A.3a What A.3 did NOT buy, and why "never ship the whole graph" still stands
+
+Reviewed 2026-09-18, when a default view for the explorer was specified and the
+old rule read as though it had expired. It has not, but **its stated reason
+has**, and a rule defended by an argument that no longer applies is a rule the
+next person deletes.
+
+**Claim 1 — provenance would poison traversal. RETIRED, because the schema now
+handles it.** That was A.3's argument and it was correct: 89% of edges,
+`file` hubs at degree 18,134, and one forgotten `WHERE rel <> 'sourced_from'`
+away from catastrophe. Provenance now lives in `node_sources`. The join is not
+discouraged, it is **unwriteable** — `data.neighbourhood` cannot express it, and
+no endpoint emits a `sourced_from` edge. A client holding every edge the API can
+produce would hold 4,021 traversable edges and zero provenance edges. Nothing
+about payload size ever mattered here: the whole public graph is 526 KiB.
+
+**Claim 2 — a client that expects the whole graph must not exist. STANDS, and
+is now the whole of the argument.** The guarantee in claim 1 lives in the
+**query layer**. A client that downloads a graph in bulk walks what it holds
+instead of asking SQL, and so routes around that guarantee entirely. The first
+bulk payload that carries provenance — added innocently, to make some
+provenance feature work client-side — puts the file hubs back into the client's
+own edge list, where no SQL prevents walking them. A.3 made the *server* unable
+to make the mistake. It did nothing to make a *client* unable to.
+
+**And one thing neither claim covered.** 1,902 sensitive nodes and 2,102 edges
+are absent from the projection today only because `project_graph.py --scope
+full` is refused while R18 is open. A whole-graph endpoint's safety would then
+rest on RLS being right for every row type, forever. RLS would in fact hold —
+but §A.7b is a catalogue of guards that were correct right up until they
+silently stopped applying, and "one policy is all that stands between a landing
+page and the hiring funnel" is not a position to design into.
+
+**What this licenses in practice.** Bounded queries, whose shape is fixed in the
+server and not chosen by the caller. `web/lib/data.py::overview()` is the worked
+example: the node type and the two relations are module constants, it takes no
+parameters, and
+`tests/test_web_data_layer.py::test_the_default_view_cannot_be_widened_by_a_caller`
+fails if that stops being true. The danger was never a big response. It is an
+endpoint whose response the caller gets to choose.
 
 ### A.4 Content-addressed assertion ids — I agree, with a correction the data forced
 
@@ -647,7 +696,7 @@ matters.
 | Aggregate coverage counts | **Postgres** | Set operations over the whole graph. |
 | Neighbourhood expansion, path finding | **Postgres**, recursive CTE, depth-capped | 4,021 edges; depth cap because a forgotten `sourced_from` exclusion is catastrophic, and the cap fails loudly instead. |
 | Tiering, name resolution | **Vercel function, in Python/TS** | Return shape carries meaning SQL cannot. |
-| Rendering the graph view | Browser, paginated | Never ship 5,048 nodes to the client. |
+| Rendering the graph view | Browser, paginated | Never ship the whole graph to the client — **for the reason in §A.3a, which is not payload size.** The client cannot receive 5,048 nodes in any case; it sees the 3,146-node projection. |
 
 ### C.4 Cold starts and the service layer
 

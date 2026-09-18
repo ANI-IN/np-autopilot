@@ -83,10 +83,11 @@ background:#0f141a}
   <label class="ck"><span>depth</span>
     <select id="depth"><option value="1" selected>1</option><option value="2">2</option>
     <option value="3">3</option></select></label>
-  <label class="ck"><input type="checkbox" id="iso"> show unconnected</label>
+  <label class="ck"><input type="checkbox" id="iso" checked> show unconnected</label>
   <label class="ck"><input type="checkbox" id="dash" checked> show declared expertise</label>
   <label class="ck"><input type="checkbox" id="drift" checked> decorative drift</label>
   <label class="ck"><input type="checkbox" id="sep"> separate components</label>
+  <label class="ck"><input type="checkbox" id="diagck"> restart diagnostic</label>
 
   <h2>Types</h2>
   <div id="types"></div>
@@ -139,10 +140,30 @@ window.__NP = {
   // ONE source of truth for the storage key. The pre-paint gate check below
   // and loadSession() further down must never disagree about it.
   sessionKey: 'np_session',
-  // Hard ceiling on what the client will hold. The traversable subgraph is
-  // 1.2 MB, so shipping all 5,048 nodes is technically possible — which is
-  // exactly why a client that expects the whole graph must not exist. Hitting
-  // this is REPORTED, never silently trimmed.
+  // Hard ceiling on what the client will hold. Hitting it is REPORTED, never
+  // silently trimmed.
+  //
+  // THE OLD NUMBERS HERE WERE FROM THE WRONG GRAPH. This said "1.2 MB" and
+  // "all 5,048 nodes"; both describe the PIPELINE graph (5,048 nodes, 36,677
+  // edges, provenance included). The client talks to the PROJECTION: 3,146
+  // nodes, 4,021 edges, 526 KiB. Measured 2026-09-18. See STATE 1.
+  //
+  // WHY THE RULE STILL STANDS, since its original reason no longer applies.
+  // Claim 1 was that provenance would poison traversal -- 89% of edges, file
+  // hubs at degree 18,134. That is now handled by the SCHEMA, not by restraint:
+  // provenance lives in node_sources, and no endpoint can emit a sourced_from
+  // edge. Claim 1 is retired.
+  // Claim 2 is why the rule survives: the guarantee in claim 1 lives in the
+  // QUERY LAYER, and a client that downloads a graph in bulk walks what it
+  // holds instead of asking SQL -- so it routes around that guarantee entirely.
+  // The first bulk payload that carries provenance puts the file hubs back in
+  // the client's own edge list, where no SQL prevents walking them. Payload
+  // size was never the argument; 526 KiB would be fine.
+  // And 1,902 sensitive nodes are withheld today only because
+  // `project_graph.py --scope full` is refused while R18 is open. A whole-graph
+  // shape's safety would then rest on RLS being right for every row type,
+  // forever -- and DECISIONS A.7b is a catalogue of guards that silently
+  // stopped applying.
   nodeBudget: 1200
 };
 
@@ -354,7 +375,14 @@ function centreOn(n,k){
   cam.ty=P.y0+(P.y1-P.y0)/2-n.y*cam.k;
 }
 
-const state={types:new Set(TYPES),showIso:false,showDash:true,separate:false,
+// showIso DEFAULTS ON, deliberately (STATE 8.2 asked for this to be decided,
+// not left). The default view is every domain, and a domain that nothing points
+// at must not vanish from the landing page -- "no domains are missing" and "some
+// domains were filtered out of the view" look identical on a canvas. Today
+// nothing in that view is isolated (all 42 have a deliverer, which is why the
+// unowned three are reported by name instead; see data.overview), so this costs
+// nothing now and prevents a silent drop later.
+const state={types:new Set(TYPES),showIso:true,showDash:true,separate:false,
   sel:null,expanded:new Set(),depth:1};
 let allDeg=new Map();
 let A=[],E=[],anchors=new Map();
@@ -385,6 +413,23 @@ function paintPos(n,now){
 // and the layout never stopped drifting — most of what "the graph restarts"
 // actually was.)
 const ALPHA_DECAY=0.985, ALPHA_MIN=0.004;
+
+// The on-screen half of the restart diagnostic is OFF by default. The console
+// half above is not, and that asymmetry is the point: the logs cost a user
+// nothing and are what actually ended the "graph restarts" bug by telling a real
+// reload apart from a layout reset. The overlay is developer shorthand pinned to
+// the top of the viewport -- "<- THE PAGE HAS RELOADED" reads as an error to
+// someone who came here to look up a domain owner. It shipped in the G4 deploy
+// commit without a decision; this is the decision.
+let showDiag=false;
+function renderDiag(){
+  const dg=document.getElementById('diag');
+  if(!dg)return;
+  dg.textContent=showDiag
+    ?('load #'+window.__NP_LOADS+' · '+window.__NP_RECOMPUTES+' recomputes'+
+      (window.__NP_LOADS>1?'  ← THE PAGE HAS RELOADED':''))
+    :'';
+}
 
 function recompute(refit, why){
   // Preserved across every recompute: camera, selection, and the open panel.
@@ -421,9 +466,7 @@ function recompute(refit, why){
     const s=state.separate?a[2]:A.length;
     const rad=Math.max(30,Math.sqrt(s)*10);
     n.x=a[0]+(Math.random()-.5)*rad;n.y=a[1]+(Math.random()-.5)*rad;n.vx=0;n.vy=0} }
-  const dg=document.getElementById('diag');
-  if(dg)dg.textContent='load #'+window.__NP_LOADS+' · '+window.__NP_RECOMPUTES+
-    ' recomputes'+(window.__NP_LOADS>1?'  ← THE PAGE HAS RELOADED':'');
+  renderDiag();
   document.getElementById('stat').innerHTML=
     '<b>'+A.length+'</b> of <b>'+D.nodes.length+'</b> fetched nodes / <b>'+
     E.length+'</b> edges / '+comps.length+' components';
@@ -723,6 +766,10 @@ if(_dr)_dr.onchange=e=>{drift=e.target.checked;
               ' — paint-time only, layout untouched')};
 document.getElementById('sep').onchange=e=>{state.separate=e.target.checked;
   for(const n of D.nodes)delete n.x;recompute(true,'separate-toggle')};
+// Display only -- it must never recompute. Showing a counter is not a reason to
+// re-run the force layout.
+const _dk=document.getElementById('diagck');
+if(_dk)_dk.onchange=e=>{showDiag=e.target.checked;renderDiag()};
 const _dp=document.getElementById('depth');
 if(_dp)_dp.onchange=e=>{state.depth=parseInt(e.target.value,10)||1};
 
@@ -780,6 +827,46 @@ async function onGoogleCredential(resp){
   await afterSignIn();
 }
 
+// ---- THE DEFAULT VIEW ----------------------------------------------------
+// STATE 8.2: the canvas used to show nothing until you searched.
+//
+// THE CHOICE AND THE REASON, because 8.2 asked for both. Every domain, plus the
+// people who own or deliver it: 65 nodes, 98 edges, ~34 KiB.
+//
+// NOT the largest connected component. Measured on the projection: 1,881 nodes,
+// or 1,317 with declared-expertise edges off. Both exceed nodeBudget 1,200, so
+// it would trip the refusal banner on load. (AUDIT.md's 1,144 is the pipeline
+// graph, a different graph -- see STATE 1.)
+// NOT the full traversable graph -- see the nodeBudget comment at the top.
+//
+// Domains win on legibility, not merely on size. 42 labelled areas is a map you
+// can read; 2,096 connected nodes is a hairball that is 61% instructors. It is
+// the taxonomy's own top level, so expanding from it is the natural traversal
+// and every affordance below works unchanged -- and at 65 nodes it satisfies
+// every G2-preserved constraint without renegotiating one: 5% of the node
+// budget, CAP=8 is natural for one or two owners, and the cooling schedule
+// settles it immediately.
+async function loadOverview(){
+  let out;
+  try{ out=await api('/overview'); }
+  catch(e){ return false; }          // api() has already said what failed
+  const res=mergeGraph(D,{nodes:(out.nodes||[]).map(adaptNode),
+                          edges:(out.edges||[]).map(adaptEdge)},BUDGET);
+  const bad=out.truncated||res.refused;
+  let msg='';
+  if(out.truncated) msg+='<b>Default view hit the row cap.</b> '+esc(out.note||'')+' ';
+  if(res.refused) msg+='<b>'+res.refused+' nodes were not loaded</b> \u2014 this '+
+    'client holds at most '+BUDGET+'.';
+  // A FINDING, not a fault: reported only when nothing actually went wrong, so
+  // it can never mask a real error.
+  if(!bad && out.unowned && out.unowned.length)
+    msg='<b>'+out.unowned.length+' of 42 domains have no owner recorded</b> \u2014 '+
+        esc(out.unowned.join(', '))+'. '+esc(out.unowned_note||'');
+  banner(msg, bad?'err':'');
+  recompute(true,'default view');
+  return true;
+}
+
 async function afterSignIn(){
   let me;
   try{ me=await api('/me'); }catch(e){ return; }
@@ -792,7 +879,16 @@ async function afterSignIn(){
   }
   hideGate();
   banner('');
-  recompute(true,'signed in');
+  // THE FETCH TRIGGERS THE LAYOUT. This used to be an unconditional
+  // recompute(true,'signed in'), which re-ran the whole pipeline and restarted
+  // a 366-frame cooling schedule for zero visible change -- a fresh load did
+  // two recomputes, BOTH over an empty graph, because recompute(true,'initial')
+  // at the bottom of this file had already initialised the renderer. That was
+  // free only while there was nothing to lay out; the default view is exactly
+  // the change that stops it being free. A recompute must follow a CHANGE, not
+  // an event. If the fetch fails there is no recompute at all -- 'initial' has
+  // already rendered the empty canvas, and api() has already said what broke.
+  await loadOverview();
 }
 
 document.getElementById('signout').onclick=async ()=>{

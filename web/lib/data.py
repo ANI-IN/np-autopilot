@@ -30,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from pipeline.lib import db as _db                                    # noqa: E402
+from pipeline.lib import taxonomy as _tax                              # noqa: E402
 
 #: Depth cap for neighbourhood expansion. Fails LOUDLY rather than truncating:
 #: a silently truncated neighbourhood looks like a sparse graph, and this
@@ -147,6 +148,116 @@ def neighbourhood(conn, node_id: str, depth: int = 1,
         edges = _rows(cur)
     return {"nodes": nodes, "edges": edges,
             "truncated": len(nodes) >= limit, "depth": depth}
+
+
+#: The default view, resolved from the taxonomy BY ROLE rather than by name.
+#: `taxonomy.yaml` is the single source of truth and a type string written as a
+#: literal here would quietly become a second one — CLAUDE.md, and the grep test
+#: in tests/test_taxonomy_single_source.py, which caught exactly that in the
+#: first draft of this code.
+#:
+#: The node type is DERIVED from the edges' own endpoints rather than asserted,
+#: so renaming the type in taxonomy.yaml moves this view with it instead of
+#: silently emptying it.
+OVERVIEW_ROLES = ("domain_primary", "domain_delivery")
+
+
+def _overview_spec() -> tuple[str, tuple[str, ...]]:
+    rels = tuple(_tax.edge_for_role(r) for r in OVERVIEW_ROLES)
+    sources = {_tax.edge_endpoints(r)[0] for r in rels}
+    if len(sources) != 1:
+        raise RuntimeError(
+            f"the default view's roles {OVERVIEW_ROLES} now hang off "
+            f"{sorted(sources)} rather than one node type. The landing view "
+            "cannot be 'every X' when there is no single X — decide what it "
+            "should be rather than letting it pick one.")
+    return sources.pop(), rels
+
+
+#: Deliberately module constants and NOT parameters — see overview().
+OVERVIEW_TYPE, OVERVIEW_RELS = _overview_spec()
+
+#: Which of those roles means "owns". Named, not indexed, so the unowned
+#: calculation cannot silently follow a reordering of OVERVIEW_ROLES.
+OWNER_ROLE = "domain_primary"
+
+#: Cap on the default view. It returns 65 nodes today; this exists so that a
+#: projection which unexpectedly grows cannot quietly turn the landing page
+#: into a bulk download. Hitting it is REPORTED, never silently trimmed.
+OVERVIEW_CAP = 400
+
+
+def overview(conn) -> dict:
+    """The landing view: every domain, and the people who own or deliver it.
+
+    BOUNDED BY CONSTRUCTION, AND THAT IS THE ENTIRE POINT. It takes no
+    parameters. The node type and the two relations are literals in this
+    module, not values a caller supplies, so there is no query string that
+    turns this into "give me an arbitrary subgraph".
+
+    WHY THAT MATTERS, since the usual reason no longer applies. §A.3 moved
+    provenance into `node_sources`, so the catastrophic join -- walking a
+    degree-18,134 file hub -- is now unwriteable in this module rather than
+    merely discouraged. That protects every query here. It does NOT protect a
+    client that assembles its own graph from bulk downloads, because such a
+    client walks whatever it happens to hold instead of asking SQL for it. The
+    guarantee lives in the query layer; a bulk client routes around the query
+    layer. So "never ship the whole graph" stands on that, not on payload size
+    -- the whole public graph is 526 KiB, which would be fine -- and this
+    endpoint is deliberately the shape that cannot grow into one.
+
+    ISOLATED DOMAINS ARE RETURNED, not filtered. A domain with nobody against
+    it is a finding -- 3 of 42 today -- and the landing view is exactly where it
+    should be visible. The client ships with "show unconnected" ON for the same
+    reason; see public/index.html.
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            "select rel, source_id, target_id, props from edges "
+            "where rel = any(%s) and (source_id in "
+            "  (select id from nodes where type = %s) or target_id in "
+            "  (select id from nodes where type = %s))",
+            (list(OVERVIEW_RELS), OVERVIEW_TYPE, OVERVIEW_TYPE))
+        edges = _rows(cur)
+        touched = ({e["source_id"] for e in edges}
+                   | {e["target_id"] for e in edges})
+        cur.execute(
+            "select id, type, label, label_raw, props from nodes "
+            "where type = %s or id = any(%s) "
+            "order by type, label limit %s",
+            (OVERVIEW_TYPE, list(touched), OVERVIEW_CAP + 1))
+        nodes = _rows(cur)
+
+    truncated = len(nodes) > OVERVIEW_CAP
+    if truncated:
+        nodes = nodes[:OVERVIEW_CAP]
+    # An edge whose endpoint fell outside the cap would render as a line to
+    # nowhere. Drop it here rather than letting the client hold a dangling ref.
+    keep = {n["id"] for n in nodes}
+    edges = [e for e in edges
+             if e["source_id"] in keep and e["target_id"] in keep]
+
+    # A DOMAIN WITH NO OWNER IS REPORTED EXPLICITLY, not left to be noticed.
+    #
+    # The original plan was to let these show up as isolated nodes. Measuring
+    # the view killed that: 39 of 42 domains have an owner, but all 42 have a
+    # deliverer, so once `delivered_by` is included NOTHING is isolated and the
+    # gap becomes invisible -- three domains that look exactly like the other
+    # 39 unless you count edges by relation. A finding that depends on a node
+    # happening to have degree 0 is a finding waiting to disappear, which is
+    # the §A.7b shape: the absence and the healthy case render identically.
+    owner_rel = _tax.edge_for_role(OWNER_ROLE)
+    owned = {e["source_id"] for e in edges if e["rel"] == owner_rel} | \
+            {e["target_id"] for e in edges if e["rel"] == owner_rel}
+    unowned = sorted(n["label"] for n in nodes
+                     if n["type"] == OVERVIEW_TYPE and n["id"] not in owned)
+    return {"nodes": nodes, "edges": edges, "truncated": truncated,
+            "unowned": unowned,
+            "unowned_note": (
+                "domains with no owner recorded. Not an error and not an empty "
+                "result: ownership is domain-level and blank is a real state. "
+                "Surfaced because the default view is where it is cheapest to "
+                "notice." ) if unowned else None}
 
 
 def provenance(conn, node_id: str) -> dict:

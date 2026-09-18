@@ -17,7 +17,7 @@ rather than assumed, it says so.
 | | |
 |---|---|
 | **Explorer** | <https://np-autopilot.vercel.app> — 200, serves the graph UI |
-| **API** | `/api/config` 200; `/api/{search,node,neighbourhood,coverage,staffing,aliases,me}` all **401 unauthenticated**; `/api/session` 401/400/403 on bad input |
+| **API** | `/api/config` 200; `/api/{search,node,neighbourhood,overview,coverage,staffing,aliases,me}` all **401 unauthenticated**; `/api/session` 401/400/403 on bad input |
 | **Sign-in** | Works end to end. Google Workspace → `/api/session` → GoTrue → Supabase session → RLS |
 | **Security headers** | All six present on the deployed response: CSP (no `unsafe-inline` on `script-src`, inline blocks pinned by SHA-256), HSTS, `x-frame-options: DENY`, nosniff, no-referrer, permissions-policy. Plus `Cross-Origin-Opener-Policy: same-origin-allow-popups` |
 | **Service-role key** | **Zero occurrences** in the shipped bundle, and the variable is not set in the Vercel project at all |
@@ -40,6 +40,36 @@ rather than assumed, it says so.
 | Sensitive | **Zero rows projected.** `project_graph.py --scope full` is refused while R18 is open |
 | Migrations | **0001–0014 applied.** `python3 pipeline/migrate.py status` |
 | Profiles | `animesh.kumar@…` = `member`; `b2c-courses-new-programs@…` = `member`, `is_shared_account=true` (correctly capped — it cannot hold `recruiting` or `admin`) |
+
+### TWO GRAPHS, DIFFERENT COUNTS — this confusion has already cost three numbers
+
+The most common mistake in this project's own documents is carrying a figure
+from the **pipeline graph** into a statement about the **projection**. They are
+not the same graph and never were.
+
+| | Pipeline graph | Projection (what the web app sees) |
+|---|---|---|
+| Nodes | **5,048** | **3,146** |
+| Edges | **36,677** (89% provenance) | **4,021** (no provenance at all) |
+| As JSON | 11.0 MB (`graph.json`) | **526 KiB** in the shape the API returns |
+| Includes | `file` nodes, `sourced_from` edges, 1,902 sensitive nodes | none of those |
+| Described by | `AUDIT.md`, `DECISIONS.md` §"The measurements…", `README.md` | `STATE.md` §1, `LATENCY-MEASUREMENT.md`, `web/lib/data.py` |
+
+**Three figures were wrong for exactly this reason**, found 2026-09-18 while
+specifying the default view:
+
+- **"largest connected component = 1,144"** — that is `AUDIT.md` §247, measured
+  on the pipeline graph with provenance excluded. Measured on the projection it
+  is **1,881** with declared-expertise edges, **1,317** without. Both exceed the
+  client's `nodeBudget` of 1,200, which is what ruled it out as a default view.
+- **"the traversable subgraph is 1.2 MB"** — pipeline node shape. The API's
+  shape is **526 KiB**.
+- **"shipping all 5,048 nodes"** (was in `public/index.html`) — the client can
+  never receive 5,048. Sensitive rows are not projected at all.
+
+**Before quoting any count, say which graph it is about.** If a number comes
+from a document in the left column and the sentence is about the explorer, it is
+probably wrong.
 
 ---
 
@@ -298,20 +328,53 @@ candidates reintroduces the picking one layer up.
 
 **In this order.** Recorded 2026-09-18; not started.
 
-### 1. The sign-in flash
+### 1. The sign-in flash — DONE 2026-09-18
 
-Reloading shows the sign-in page for about a second before redirecting to the
-graph. The session exists; the page renders before it is checked. **Resolve the
-session before first paint rather than after.** In `public/index.html`, `boot()`
-runs after `recompute(true,'initial')` and the gate is visible in the initial
-HTML.
+Block 0 of `public/index.html` now resolves the session **synchronously before
+first paint**: a `localStorage` read and an `expires_at` comparison. The check
+may only ever HIDE the gate, and only on positive evidence of an unexpired
+token — missing, corrupt, no `access_token`, throwing storage, expired all fall
+through to the sign-in card. It grants nothing; `boot()` still verifies against
+`/api/me`.
 
-### 2. The empty default view
+Six states are asserted in `eval/drive_dom.mjs`, not just the signed-in one:
+"hide whenever a value is present" and "hide unconditionally" both pass the
+positive case, so only the expired/expiring/no-token/corrupt cases distinguish a
+correct check. Verified by mutation in both directions.
 
-The graph shows nothing until you search. Decide what a useful default is — the
-42 domains, the largest connected component, or a chosen starting node — and
-load it without a query. **State the choice and the reason**; "show everything"
-is not available at 3,146 nodes, and `nodeBudget` caps the client at 1,200.
+### 2. The empty default view — DONE 2026-09-18
+
+**The choice: every domain, plus the people who own or deliver it.** 65 nodes,
+98 edges, ~34 KiB, served by `/api/overview`.
+
+**The reason.** It is the taxonomy's own top level, so expanding from it is the
+natural traversal and every existing affordance works unchanged; it answers
+"what are the areas and who runs them" in one screen; and at 65 nodes it
+satisfies every §G2-preserved constraint without renegotiating one — 5% of
+`nodeBudget`, `CAP = 8` is natural for one or two owners, and the cooling
+schedule settles it immediately.
+
+**Not the largest connected component**: measured at **1,881** nodes (1,317
+without declared-expertise edges), both over the 1,200 budget. The 1,144 figure
+that made it look viable was from the pipeline graph — see §1.
+
+**`showIso` now defaults ON**, deliberately. Nothing in the default view is
+isolated today, so it costs nothing; it exists so a domain that nothing points
+at can never silently vanish from the landing page.
+
+**Three domains have no owner** — Coding Pathway, India Masterclass, System
+Design Pathway — and `/api/overview` **names them**. The original plan was to
+let them appear as isolated nodes; measuring killed that, because every domain
+has a *deliverer*, so once `delivered_by` is included nothing is isolated and
+the gap renders identically to a healthy domain. That is the §A.7b shape, so
+the count is derived from the edges instead.
+
+**The endpoint is bounded and cannot be widened by a caller** — node type and
+relations are module constants, it takes no parameters, and two tests fail if
+that changes. `DECISIONS.md` §A.3a is the reasoning: A.3 made the provenance
+join unwriteable *server-side*, but a bulk-download client routes around the
+query layer entirely, so that is what "never ship the whole graph" now rests
+on.
 
 ### 3. Speed — DONE for the server half, 2026-09-18
 

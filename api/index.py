@@ -40,12 +40,13 @@ from lib.auth import AuthError                                         # noqa: E
 from lib.guard import audit, identify                                  # noqa: E402
 
 import aliases, config, coverage, me, neighbourhood, node              # noqa: E402,E401
-import search, session, staffing                                       # noqa: E402,E401
+import overview, search, session, staffing                             # noqa: E402,E401
 
 #: path -> (endpoint name, read function). Every one of these is served by
 #: _serve_read, which is the only place a request meets a connection.
 READS = {f"/api/{mod.ENDPOINT[0]}": mod.ENDPOINT
-         for mod in (aliases, coverage, me, neighbourhood, node, search, staffing)}
+         for mod in (aliases, coverage, me, neighbourhood, node, overview,
+                     search, staffing)}
 
 MAX_BODY = 16 * 1024
 

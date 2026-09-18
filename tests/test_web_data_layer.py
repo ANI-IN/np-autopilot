@@ -179,3 +179,111 @@ def test_staffing_subgraph_returns_tiers_unmerged(member_profile):
     # The caller must be able to tell them apart; overlap is fine in the raw
     # fetch, and query.py is what removes a taught name from the declared tier.
     assert isinstance(taught_names, set) and isinstance(declared_names, set)
+
+
+# ---------------------------------------------------------------------------
+# The default view (STATE §8.2). These guard a DESIGN decision, not a number.
+# ---------------------------------------------------------------------------
+
+def test_the_default_view_cannot_be_widened_by_a_caller():
+    """The whole reason /api/overview is safe, asserted rather than trusted.
+
+    §A.3 moved provenance out of `edges`, so the catastrophic join is now
+    unwriteable server-side. That protects every query in data.py. It does NOT
+    protect a client that downloads a graph in bulk, because such a client walks
+    what it holds instead of asking SQL — it routes around the query layer
+    entirely. So the rule "never ship the whole graph" survives on THAT, and the
+    property that keeps this endpoint on the right side of it is that **it takes
+    no parameters**: the node type and the relations are module constants.
+
+    A future edit that reads a type or a rel off the query string turns the
+    landing page into a general subgraph endpoint, which is the exact shape the
+    rule forbids — and it would do so while every other test still passed.
+    """
+    import inspect
+
+    params = list(inspect.signature(data.overview).parameters)
+    assert params == ["conn"], (
+        f"data.overview now takes {params}. If a caller can choose what it "
+        "returns, it is a general subgraph endpoint wearing a landing page's "
+        "name. Keep the type and relations as module constants."
+    )
+    assert isinstance(data.OVERVIEW_RELS, tuple), \
+        "OVERVIEW_RELS must be an immutable module constant"
+    assert data.OVERVIEW_TYPE == "domain"
+
+
+def test_the_default_view_route_ignores_the_query_string(member_profile):
+    """Same rule, at the route rather than the function.
+
+    Passing a hostile query string must change nothing. A route that quietly
+    honoured `?type=` or `?rels=` would widen the endpoint without touching
+    data.py, so the constant-signature test above would still be green.
+    """
+    sys.path.insert(0, str(REPO / "api"))
+    import overview as overview_route
+
+    with data.request_connection(str(MEMBER)) as conn:
+        plain, n_plain = overview_route._overview(conn, None, {})
+        hostile, n_hostile = overview_route._overview(conn, None, {
+            "type": "instructor", "rels": "teaches,expert_in,sourced_from",
+            "limit": "99999", "depth": "3", "id": "dom_e2c96c28c6208a0e",
+        })
+    assert n_plain == n_hostile
+    assert [n["id"] for n in plain["nodes"]] == [n["id"] for n in hostile["nodes"]]
+    assert {e["rel"] for e in hostile["edges"]} <= set(data.OVERVIEW_RELS), \
+        "the query string widened the relation set"
+
+
+def test_the_default_view_returns_every_domain_and_stays_small(member_profile):
+    """Positive control, and the size claim the choice rests on."""
+    with data.request_connection(str(MEMBER)) as conn:
+        out = data.overview(conn)
+        with conn.cursor() as cur:
+            cur.execute("select count(*) from nodes where type = 'domain'")
+            total = cur.fetchone()[0]
+
+    domains = [n for n in out["nodes"] if n["type"] == "domain"]
+    assert len(domains) == total, "the landing view is missing domains"
+    assert out["truncated"] is False
+    # Well inside the client's nodeBudget of 1,200 — the constraint the largest
+    # connected component (1,881 nodes) fails.
+    assert len(out["nodes"]) <= 200, (
+        f"the default view grew to {len(out['nodes'])} nodes. It is the landing "
+        "page; if the projection changed shape, decide that deliberately."
+    )
+
+
+def test_the_default_view_reports_domains_with_no_owner(member_profile):
+    """A domain with no owner is a FINDING and must be named, not inferred.
+
+    It was going to be left to show up as an isolated node. Measuring killed
+    that: every domain has a deliverer, so once `delivered_by` is included
+    nothing is isolated and the gap renders identically to a healthy domain.
+    That is the §A.7b shape — absence and success looking the same — so the
+    count is derived from the edges here instead.
+    """
+    with data.request_connection(str(MEMBER)) as conn:
+        out = data.overview(conn)
+
+    from pipeline.lib import taxonomy
+    owner_rel = taxonomy.edge_for_role("domain_primary")
+    owned = {e["source_id"] for e in out["edges"] if e["rel"] == owner_rel} | \
+            {e["target_id"] for e in out["edges"] if e["rel"] == owner_rel}
+    expected = sorted(n["label"] for n in out["nodes"]
+                      if n["type"] == "domain" and n["id"] not in owned)
+    assert out["unowned"] == expected, \
+        "`unowned` disagrees with the edges it is supposed to be derived from"
+    # Negative control: derived, not hardcoded. If every domain had an owner the
+    # note must be absent rather than a stale string.
+    assert (out["unowned_note"] is None) == (not out["unowned"])
+
+
+def test_the_default_view_carries_no_provenance(member_profile):
+    """Claim 1, asserted at the endpoint a bulk client would grow out of."""
+    from pipeline.lib import taxonomy
+    prov = taxonomy.edge_for_role("provenance")
+    with data.request_connection(str(MEMBER)) as conn:
+        out = data.overview(conn)
+    assert all(e["rel"] != prov for e in out["edges"])
+    assert all(e["rel"] in data.OVERVIEW_RELS for e in out["edges"])
