@@ -398,6 +398,58 @@ if(PORTED){
   if(leaked.length) errors.push('A TOKEN APPEARED IN A URL: '+leaked[0]);
 }
 
+// ---- THE GATE MUST BE SHOWABLE, NOT ONLY HIDEABLE (port only) ------------
+// Sign-out cleared the token and showed the card, and the card had no button:
+// the Google client is loaded once, from boot()'s signed-OUT tail, which a
+// signed-in load never reaches. So every later route to the gate -- sign-out,
+// expired session, no profile, failed /api/me -- produced a dead page.
+//
+// The assertion is on the INVARIANT, not on the four callers: showGate() must
+// restore the means to act. Testing each caller separately would pass a fifth
+// caller that forgot, which is how this one got here.
+if(PORTED){
+  console.log('\n=== SIGN-OUT AND THE OTHER WAYS BACK TO THE GATE ===');
+  const gate = () => document.getElementById('gate');
+  const configCalls = () => REQUESTS.filter(r=>r.url.startsWith('/api/config')).length;
+
+  // Start from the signed-in state the bug needed: gate hidden, no button yet.
+  (0,eval)("hideGate()");
+  const before = configCalls();
+  (0,eval)("showGate('test')");
+  await new Promise(r=>setTimeout(r,0));          // let the async fetch settle
+  const shown = gate().style.display === 'flex';
+  const refetched = configCalls() > before;
+  console.log('  showGate -> gate visible               :', shown);
+  console.log('  showGate -> re-fetched sign-in config  :', refetched);
+  if(!shown) errors.push('showGate() DID NOT SHOW THE GATE');
+  if(!refetched) errors.push(
+    'showGate() DID NOT RESTORE THE MEANS TO SIGN IN — the card appears with '
+    + 'no button, which is the dead page sign-out produced');
+
+  // Idempotent: five trips to the gate must not load Google five times.
+  const afterFirst = configCalls();
+  (0,eval)("showGate('again')"); (0,eval)("showGate('and again')");
+  await new Promise(r=>setTimeout(r,0));
+  const once = configCalls() === afterFirst;
+  console.log('  repeated showGate -> loads config once :', once);
+  if(!once) errors.push('showGate() RE-FETCHES CONFIG ON EVERY CALL');
+
+  // The real handler, end to end.
+  (0,eval)("hideGate()");
+  const beforeOut = configCalls();
+  await document.getElementById('signout').onclick();
+  await new Promise(r=>setTimeout(r,0));
+  const outShown = gate().style.display === 'flex';
+  console.log('  sign-out -> back at the gate           :', outShown);
+  if(!outShown) errors.push('SIGN-OUT LEFT THE USER ON A PAGE WITH NO GATE');
+  // It may reuse an already-loaded client, but it must never end up idle.
+  const armed = globalThis.window.__NP_GATE && globalThis.window.__NP_GATE !== 'idle';
+  console.log('  sign-out -> sign-in path armed         :', !!armed,
+              '(__NP_GATE=' + globalThis.window.__NP_GATE + ')');
+  if(!armed) errors.push('AFTER SIGN-OUT THE SIGN-IN PATH WAS NEVER ARMED');
+  void beforeOut;
+}
+
 console.log('\nstat line:', (store.get('stat')||{}).innerHTML || '(never set)');
 console.log('\n=== RESULT ===');
 if(errors.length){ console.log('  FAILURES:'); errors.forEach(e=>console.log('   - '+e)); }

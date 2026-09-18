@@ -781,11 +781,91 @@ function loadSession(){
   try{return JSON.parse(localStorage.getItem(STORE)||'null')}catch(e){return null}}
 function clearSession(){SESSION=null;try{localStorage.removeItem(STORE)}catch(e){}}
 
+// Idempotent, and that is what makes it safe to call from every showGate():
+// after the first call it returns immediately, so a page that shows the gate
+// five times still loads Google's client once and renders one button.
+let _gsiState='idle';            // idle | loading | ready | failed
+// Published the way the layout publishes __NP_STATE: so a harness can assert
+// the sign-in path was armed without reaching into this scope.
+function _gsi(s){ _gsiState=s; try{ window.__NP_GATE=s; }catch(e){} }
+async function ensureSignIn(){
+  if(_gsiState==='loading'||_gsiState==='ready')return;
+  _gsi('loading');
+  // THREE DIFFERENT FAILURES, three different messages. The first version
+  // printed cfg.error whatever it was, so a 404 from a broken rewrite rendered
+  // as "Login is not configured: not_found" — which reads as a missing
+  // environment variable and sent debugging at the Supabase provider settings
+  // when the actual fault was that /api/* never reached the function.
+  let cfg=null, httpErr=null;
+  try{
+    const r=await fetch(API+'/config');
+    if(!r.ok){ httpErr=r.status; } else { cfg=await r.json(); }
+  }catch(e){ httpErr=e.message||'network error'; }
+  if(httpErr!==null){
+    _gsi('failed');
+    gateMsg('The API is not reachable: /api/config returned '+httpErr+
+            '. This is a ROUTING or deployment fault, not a configuration '+
+            'one — the login settings have not been read yet.');
+    return;
+  }
+  if(cfg&&cfg.error){
+    _gsi('failed');
+    gateMsg('Login is not configured: '+cfg.error+
+            '. The API answered; these values are missing from its '+
+            'environment.');
+    return;
+  }
+  if(!cfg||!cfg.google_client_id){
+    _gsi('failed');
+    gateMsg('Login is not configured: no Google client id.');
+    return;
+  }
+  const render=()=>{
+    if(!window.google||!window.google.accounts){
+      _gsi('failed'); gateMsg('Google sign-in failed to load.'); return; }
+    window.google.accounts.id.initialize({client_id:cfg.google_client_id,
+      callback:onGoogleCredential,
+      // A HINT only. It is not the check — the check is the `hd` claim verified
+      // server-side, because this parameter is a client-side convenience that
+      // anyone can change before the request leaves the browser.
+      hd:cfg.allowed_hd, auto_select:false, cancel_on_tap_outside:false});
+    window.google.accounts.id.renderButton(document.getElementById('gsi'),
+      {theme:'filled_blue',size:'large',text:'signin_with',width:300});
+    _gsi('ready');
+  };
+  if(window.google&&window.google.accounts){ render(); return; }
+  const s=document.createElement('script');
+  s.src='https://accounts.google.com/gsi/client';
+  s.async=true;
+  s.onload=render;
+  s.onerror=()=>{_gsi('failed'); gateMsg('Could not load Google sign-in.')};
+  document.head.appendChild(s);
+}
+
+function gateMsg(msg){
+  const m=document.getElementById('gatemsg');
+  if(m&&msg)m.innerHTML=esc(msg);
+}
+
+// SHOWING THE GATE MUST ALSO RESTORE THE MEANS TO ACT ON IT.
+//
+// The sign-in button was rendered from exactly one place: the tail of boot(),
+// which only runs when the page loads signed OUT. On a signed-in load boot()
+// returns at `await afterSignIn(); return;` and never reaches it, so #gsi stays
+// empty for the life of the page. Every later route to the gate -- sign-out, an
+// expired session, a profile that grants nothing, a failed /api/me -- then
+// showed a card with an empty space where the button belongs. Sign-out was how
+// most people met it: signed out, and no way back in short of a manual reload.
+//
+// Same shape as the first-paint bug and the opposite direction: state was made
+// hideable but not showable. So the invariant lives HERE, at the one function
+// all four routes funnel through, rather than being re-established at each
+// caller -- a caller is a thing that can be forgotten.
 function showGate(msg){
   const g=document.getElementById('gate');
   if(g)g.style.display='flex';
-  const m=document.getElementById('gatemsg');
-  if(m&&msg)m.innerHTML=esc(msg);
+  gateMsg(msg);
+  ensureSignIn();          // idempotent; never overwrites `msg` on success
 }
 function hideGate(){const g=document.getElementById('gate');if(g)g.style.display='none'}
 
@@ -869,7 +949,19 @@ async function loadOverview(){
 
 async function afterSignIn(){
   let me;
-  try{ me=await api('/me'); }catch(e){ return; }
+  try{ me=await api('/me'); }
+  catch(e){
+    // api() already shows the gate for a 401 it could not refresh, and its
+    // message is the better one. Anything else -- a 500, a dropped connection --
+    // used to `return` silently, which after the first-paint fix leaves a page
+    // that looks signed in, holds no data, and offers nothing to do. Never
+    // leave the user on a dead page.
+    const g=document.getElementById('gate');
+    if(!g||g.style.display!=='flex')
+      showGate('Could not load your profile: '+(e.message||'network error')+
+               '. Your session may still be valid — try again.');
+    return;
+  }
   document.getElementById('who').textContent=me.email+' · '+me.role;
   if(me.role==='none'){
     // NOT an empty canvas with no explanation: "signed in and permitted
@@ -903,51 +995,7 @@ async function boot(){
     scheduleRefresh();
     try{ await afterSignIn(); return; }catch(e){ clearSession(); }
   }
-  // THREE DIFFERENT FAILURES, three different messages. The first version
-  // printed cfg.error whatever it was, so a 404 from a broken rewrite rendered
-  // as "Login is not configured: not_found" — which reads as a missing
-  // environment variable and sent debugging at the Supabase provider settings
-  // when the actual fault was that /api/* never reached the function.
-  let cfg=null, httpErr=null;
-  try{
-    const r=await fetch(API+'/config');
-    if(!r.ok){ httpErr=r.status; }
-    else { cfg=await r.json(); }
-  }catch(e){ httpErr=e.message||'network error'; }
-  if(httpErr!==null){
-    showGate('The API is not reachable: /api/config returned '+httpErr+
-             '. This is a ROUTING or deployment fault, not a configuration '+
-             'one — the login settings have not been read yet.');
-    return;
-  }
-  if(cfg && cfg.error){
-    showGate('Login is not configured: '+cfg.error+
-             '. The API answered; these values are missing from its '+
-             'environment.');
-    return;
-  }
-  if(!cfg || !cfg.google_client_id){
-    showGate('Login is not configured: no Google client id.');
-    return;
-  }
   showGate();
-  const s=document.createElement('script');
-  s.src='https://accounts.google.com/gsi/client';
-  s.async=true;
-  s.onload=()=>{
-    if(!window.google||!window.google.accounts){
-      showGate('Google sign-in failed to load.');return}
-    window.google.accounts.id.initialize({client_id:cfg.google_client_id,
-      callback:onGoogleCredential,
-      // A HINT only. It is not the check — the check is the `hd` claim verified
-      // server-side, because this parameter is a client-side convenience that
-      // anyone can change before the request leaves the browser.
-      hd:cfg.allowed_hd, auto_select:false, cancel_on_tap_outside:false});
-    window.google.accounts.id.renderButton(document.getElementById('gsi'),
-      {theme:'filled_blue',size:'large',text:'signin_with',width:300});
-  };
-  s.onerror=()=>showGate('Could not load Google sign-in.');
-  document.head.appendChild(s);
 }
 
 recompute(true,'initial');
