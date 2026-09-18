@@ -181,6 +181,10 @@ OVERVIEW_TYPE, OVERVIEW_RELS = _overview_spec()
 #: calculation cannot silently follow a reordering of OVERVIEW_ROLES.
 OWNER_ROLE = "domain_primary"
 
+#: Every relation that attaches a person to a domain. Resolved by role: these
+#: names were SQL literals until the taxonomy scan was widened to web/.
+DOMAIN_ATTACHMENT_ROLES = ("domain_primary", "domain_secondary", "domain_delivery")
+
 #: Cap on the default view. It returns 65 nodes today; this exists so that a
 #: projection which unexpectedly grows cannot quietly turn the landing page
 #: into a bulk download. Hitting it is REPORTED, never silently trimmed.
@@ -319,10 +323,10 @@ def coverage(conn) -> dict:
                 as modules_without_instructor,
               (select count(*) from nodes d where d.type='domain' and not exists
                  (select 1 from edges e where e.source_id=d.id
-                    and e.rel in ('owned_by','supported_by','delivered_by')))
+                    and e.rel = any(%s)))
                 as domains_without_owner,
               (select count(*) from isolated) as isolated_records
-        """)
+        """, ([_tax.edge_for_role(r) for r in DOMAIN_ATTACHMENT_ROLES],))
         row = _rows(cur)[0]
     row["workflow_ownership"] = (
         "OUT OF SCOPE — ownership in New Programs attaches to domains, not "
@@ -362,7 +366,7 @@ def domain_subgraph(conn, domain_label: str) -> dict:
         cur.execute("""
             select i.id, i.label, e.props as edge_props
             from edges e join nodes i on i.id = e.source_id
-            where e.rel = 'expert_in' and e.target_id = %s
-        """, (dom["id"],))
+            where e.rel = %s and e.target_id = %s
+        """, (_tax.edge_for_role("instructor_domain"), dom["id"]))
         declared = _rows(cur)
     return {"domain": dom, "taught": taught, "declared": declared}

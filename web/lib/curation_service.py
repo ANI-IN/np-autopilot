@@ -24,6 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from lib import data                                                   # noqa: E402
+from pipeline.lib import taxonomy as _tax                              # noqa: E402
 
 #: table -> (primary key column, columns a caller may set)
 WRITABLE = {
@@ -220,8 +221,8 @@ def _candidate_evidence(cur, alias: str, candidate: str) -> dict:
     # look". Measured offline, the real answer is uneven — roughly half the ML
     # claimants also wrote "Machine Learning", and for Agentic AI the figure is
     # zero out of 64. Projecting the claims is a small, separate change.
-    cur.execute("select count(*) from edges where rel='expert_in' and target_id=%s",
-                (dom_id,))
+    cur.execute("select count(*) from edges where rel = %s and target_id = %s",
+                (_tax.edge_for_role("instructor_domain"), dom_id))
     existing = cur.fetchone()[0]
 
     cur.execute("""

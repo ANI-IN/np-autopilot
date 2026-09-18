@@ -319,7 +319,18 @@ def test_no_api_route_connects_as_owner_or_service_role():
     silenced by deleting the comment.
     """
     read_key = re.compile(r"environ(\.get\(|\[)\s*[\"']\w*SERVICE_ROLE")
-    for path in sorted((REPO / "web").rglob("*.py")):
+    # BOTH TREES. This scanned only `web/` while every HTTP route lives in
+    # `api/` — eleven files, none of them ever opened by the check that STATE.md
+    # cites as proof no API route holds the key. It passed because it was
+    # looking in the wrong place, not because the key was absent.
+    # DECISIONS §A.7b instance 8.
+    scanned = sorted(list((REPO / "web").rglob("*.py"))
+                     + list((REPO / "api").rglob("*.py")))
+    assert any(p.parent.name == "api" for p in scanned), \
+        "the service-role scan no longer reaches api/"
+    for path in scanned:
+        if "__pycache__" in path.parts:
+            continue
         src = path.read_text(encoding="utf-8")
         assert not read_key.search(src), (
             f"{path.name} READS a service-role key from the environment")

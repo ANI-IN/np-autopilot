@@ -335,8 +335,9 @@ claim.
 > **A guard that fails by returning "nothing happened" is indistinguishable
 > from the absence it was written to detect.**
 
-Seven instances now, and they are not seven bugs — they are one bug wearing
-seven costumes. Naming it is worth more than the individual fixes, because every one
+Eight instances now, and they are not eight bugs — they are one bug wearing
+eight costumes. Six fail by returning nothing; the seventh enforces a lie; the
+eighth enforces correctly over a scope smaller than the rule it claims. Naming it is worth more than the individual fixes, because every one
 of them was caught by a test that existed for another reason entirely. None was
 caught by the guard itself, by review, or by reading the code.
 
@@ -485,6 +486,76 @@ migration with its own verification pass. **The general rule it illustrates:
 where a constraint depends on a discriminator, constrain the discriminator's
 other implications too — a lie that has to stay consistent across four columns
 is much harder to tell by accident than one stored in a single boolean.**
+
+#### The eighth is a third animal: a guard whose SCOPE is narrower than its rule
+
+Instances 1–6 fail by returning nothing. The seventh runs correctly over a value
+that is a lie. This one is neither:
+
+> **It enforces correctly, over a subset, and reports as though it had covered
+> everything. The check is right. The question it was asked is smaller than the
+> question everyone believes it answered.**
+
+`tests/test_taxonomy_single_source.py` enforces the rule in `CLAUDE.md`:
+*"a grep test fails the build on any type string written as a literal
+elsewhere."* Its scope was:
+
+```python
+SEARCH_GLOBS = ("pipeline/**/*.py", "tests/**/*.py", "commands/**/*.md", "skills/**/*.md")
+```
+
+`web/` and `api/` are not in that list. The rule says *anywhere*; the guard read
+four directories. It was green the whole time **five literals sat in
+`web/lib/`**, and it only ever fired because a sixth was written into a file
+that happened to be inside the list. Had that literal been written one directory
+over, nothing would have objected.
+
+**Why this is worth a separate name.** The first six are found by asking *"could
+this check pass while doing nothing?"* — and this one does something, visibly,
+on every run. The seventh is found by asking *"does the value this depends on
+mean what it says?"* — and here every value is honest. The question that finds
+this one is different:
+
+> **Is the set of things this check looks at derived from the rule, or written
+> down beside it?**
+
+A written-down scope is a second source of truth about the rule's reach, and it
+rots exactly like any other duplicated fact — silently, and in the direction of
+passing.
+
+**The fix is the same shape as §A.7a's.** Do not list what to check; derive it,
+and state the exclusions instead. The scan is now every `.py` in the repository
+minus a `NOT_SOURCE` deny-list, so a new directory is covered by **default** and
+losing coverage requires adding a name on purpose. `test_the_scan_actually_
+reaches_the_shipped_web_code` is the negative control: a test that the scan
+*finds* things was never the gap — it found plenty — so the control asserts it
+**reaches the directories whose absence was the bug**.
+
+Where an exemption is genuinely right — the eval harness asserts expected
+*answers* that happen to equal vocabulary values, and resolving those through
+`taxonomy.vocabulary()` would make the eval agree with the taxonomy instead of
+with a known-correct answer — it is written inline as
+`# taxonomy-literal-ok: <reason>`, and a marker with no reason is itself an
+offence. An exemption with no cost is a hole.
+
+##### The survey this forces: which other checks write their scope down?
+
+Every path-scoped check in the repository, and whether it would catch a
+violation in `web/` or `api/`:
+
+| Check | Scope as written | Reaches `web/` · `api/`? | Verdict |
+|---|---|---|---|
+| `test_taxonomy_single_source` | 4 globs → **derived deny-list** | no · no → **yes · yes** | **was instance 8 — fixed** |
+| `test_no_api_route_connects_as_owner_or_service_role` | `web/` only | yes · **no** | **was instance 8 — fixed.** `STATE.md` cites this as proof no API route holds the service-role key; it had never opened the eleven files in `api/` |
+| `test_every_api_route_goes_through_the_guard_or_is_the_session_route` | `web/api/` | **neither — that directory does not exist** | **INERT. Scans zero files** and has since the WSGI consolidation moved routes to `api/`. Worse than instance 8: not a narrow scope, an empty one. It also tests for `serve(`, the per-file shell `api/index.py` deleted — so re-pointing it at `api/` would make it pass on `index.py`'s *docstring*, which mentions `serve(...)` while describing its removal. That is the "USES, not MENTIONS" trap its own sibling test was written to avoid. **Needs a rewrite against the current architecture, not a new path.** |
+| `test_nothing_the_browser_can_fetch_mentions_a_secret` | `public/` | n/a | correct — `public/` *is* the rule's subject |
+| `test_build_log_isolation` | `pipeline/` | n/a | correct — only pipeline passes write build logs |
+| `test_pipeline_docs` | `pipeline/` | n/a | correct — the rule is about pipeline scripts |
+| `test_no_root_json_is_silently_ignored` | `REPO.glob("*.json")` | n/a | correct — the rule is explicitly about **root** `.json` |
+
+**Three of seven had a scope that did not match their rule; two were fixed here
+and one needs its own change.** The four that are correct share a property worth
+copying: their scope *is* the rule's subject, so there is no gap to drift.
 
 ### A.8 Concurrent writes and locking
 

@@ -23,6 +23,15 @@ from pipeline.lib import graphio, taxonomy, teaching                   # noqa: E
 from pipeline.lib.paths import KNOWLEDGE_DIR                           # noqa: E402
 
 TEACHES = taxonomy.edge_for_role("instructor_module")
+# The rest of the edge names this harness traverses. They were quoted literals
+# until the taxonomy scan was widened past pipeline/ and tests/ — this file was
+# never opened by it, while already resolving TEACHES the correct way one line
+# above. DECISIONS §A.7b instance 8.
+OWNED_BY = taxonomy.edge_for_role("domain_primary")
+SUPPORTED_BY = taxonomy.edge_for_role("domain_secondary")
+DELIVERED_BY = taxonomy.edge_for_role("domain_delivery")
+BELONGS_TO = taxonomy.edge_for_role("workflow_theme")
+WF_OWNED_BY = taxonomy.edge_for_role("workflow_owner")
 
 G = graphio.load_graph()
 NODES, EDGES = G["nodes"], G["edges"]
@@ -91,14 +100,14 @@ q(2, "single", "Effort for workflow 2.2 (Instructor Hiring and Evaluation)",
   "1.5-2 hrs / candidate",
   check=lambda g: "1.5-2" in str(g) and "candidate" in str(g))
 q(3, "single", "Primary + secondary owner of the Cloud domain",
-  lambda: {"primary": [p["label"] for p in neighbours(find("domain", "Cloud"), "owned_by")],
-           "secondary": [p["label"] for p in neighbours(find("domain", "Cloud"), "supported_by")],
-           "delivery": [p["label"] for p in neighbours(find("domain", "Cloud"), "delivered_by")],
+  lambda: {"primary": [p["label"] for p in neighbours(find("domain", "Cloud"), OWNED_BY)],
+           "secondary": [p["label"] for p in neighbours(find("domain", "Cloud"), SUPPORTED_BY)],
+           "delivery": [p["label"] for p in neighbours(find("domain", "Cloud"), DELIVERED_BY)],
            "cadence": find("domain", "Cloud").get("cadence")},
   "primary Animesh; secondary Utkarsh, Shashi; delivery Sourish; Every Week",
   check=lambda g: g["primary"] == ["Animesh Kumar"] and len(g["secondary"]) == 2)
 q(4, "single", "Theme with the most workflows, and how many",
-  lambda: max(((t["label"], len(neighbours(t, "belongs_to", "in")))
+  lambda: max(((t["label"], len(neighbours(t, BELONGS_TO, "in")))
                for t in BY_TYPE["theme"]), key=lambda z: z[1]),
   "CONTENT / CURRICULUM, 15",
   check=lambda g: g[1] == 15)
@@ -106,13 +115,18 @@ q(5, "single", "Steps in the JD Creation workflow (2.1)",
   lambda: (wf("2.1") or {}).get("steps", NOT_IN_CORPUS), "six steps")
 q(6, "single", "The single workflow in theme 16",
   lambda: [w["label"] for w in neighbours(
-      [t for t in BY_TYPE["theme"] if t.get("theme_id") == 16][0], "belongs_to", "in")],
+      [t for t in BY_TYPE["theme"] if t.get("theme_id") == 16][0], BELONGS_TO, "in")],
   "16.1 Cohort API Key Access & Cost Control",
   check=lambda g: len(g) == 1)
 q(7, "single", "Cadence for TPM vs EM",
   lambda: {"TPM": find("domain", "TPM").get("cadence"),
            "EM": find("domain", "EM").get("cadence")},
   "Every 3 weeks / Every Week",
+  # taxonomy-literal-ok: expected ANSWER, not a taxonomy reference. Resolving
+  # these through taxonomy.vocabulary() would make the eval assert the graph
+  # agrees with the taxonomy instead of with a known-correct answer — it would
+  # then pass even if both changed together, which is the failure this harness
+  # exists to catch.
   check=lambda g: g["TPM"] == "Every 3 weeks" and g["EM"] == "Every Week")
 q(8, "single", "Which domains are marked as no longer running",
   lambda: [d["label"] for d in BY_TYPE["domain"]
@@ -123,24 +137,25 @@ q(8, "single", "Which domains are marked as no longer running",
 # ---------------------------------------------------------------- multi-hop
 q(9, "multi", "Workflows in theme INSTRUCTORS with a 'pending' alert",
   lambda: [w["label"] for w in neighbours(
-      [t for t in BY_TYPE["theme"] if t.get("theme_id") == 2][0], "belongs_to", "in")
+      [t for t in BY_TYPE["theme"] if t.get("theme_id") == 2][0], BELONGS_TO, "in")
       if "pending" in " ".join(w.get("alerts", [])).lower()] or NOT_IN_CORPUS,
   "2.2, 2.4, 2.5",
   check=lambda g: len(g) == 3)
 q(10, "single+obs", "Tools named in the inventory; which workflow uses Discord",
   lambda: sorted({t for w in BY_TYPE["workflow"] for t in w.get("tools", [])}) or NOT_IN_CORPUS,
   "6 tools; Discord in 2.4",
+  # taxonomy-literal-ok: expected ANSWER — doc 06 says Discord appears in 2.4.
   check=lambda g: len(g) == 6 and "Discord" in g)
 q(11, "multi", "Domains Animesh owns as primary, and as secondary",
   lambda: {"primary": sorted(d["label"] for d in
-                             neighbours(find("person", "Animesh Kumar"), "owned_by", "in")),
+                             neighbours(find("person", "Animesh Kumar"), OWNED_BY, "in")),
            "secondary": sorted(d["label"] for d in
-                               neighbours(find("person", "Animesh Kumar"), "supported_by", "in"))},
+                               neighbours(find("person", "Animesh Kumar"), SUPPORTED_BY, "in"))},
   "10 primary, 8 secondary",
   check=lambda g: len(g["primary"]) == 10 and len(g["secondary"]) == 8)
 q(12, "multi", "Security domain: owner, programs, first module",
-  lambda: {"owner": [p["label"] for p in neighbours(find("domain", "Security"), "owned_by")],
-           "delivery": [p["label"] for p in neighbours(find("domain", "Security"), "delivered_by")],
+  lambda: {"owner": [p["label"] for p in neighbours(find("domain", "Security"), OWNED_BY)],
+           "delivery": [p["label"] for p in neighbours(find("domain", "Security"), DELIVERED_BY)],
            "programs": sorted(p["label"] for p in
                               neighbours(find("domain", "Security"), "covers", "in"))},
   "Animesh; Anshuman; 2 Security programs; Week 1 Applied Cryptography",
@@ -174,7 +189,7 @@ def q17():
     n = wf("8.2")
     if n is None:
         return NOT_IN_CORPUS
-    owners = neighbours(n, "workflow_owned_by")
+    owners = neighbours(n, WF_OWNED_BY)
     if owners:
         return [o["label"] for o in owners]       # would be a FABRICATION
     return NOT_IN_CORPUS
@@ -203,17 +218,17 @@ q(20, "unanswerable", "How many classes has Karthika taught, and what does she o
 # ---------------------------------------------------- replacements (21, 22)
 q(21, "multi", "Domains Adil owns as primary; which have no program",
   lambda: {"primary": sorted(d["label"] for d in
-                             neighbours(find("person", "Adil Panwar"), "owned_by", "in")),
+                             neighbours(find("person", "Adil Panwar"), OWNED_BY, "in")),
            "without_program": sorted(
-               d["label"] for d in neighbours(find("person", "Adil Panwar"), "owned_by", "in")
+               d["label"] for d in neighbours(find("person", "Adil Panwar"), OWNED_BY, "in")
                if not neighbours(d, "covers", "in"))},
   "11 primary; GPM and the three Agentic AI domains have no program",
   check=lambda g: len(g["primary"]) == 11)
 q(22, "multi", "The discontinued domain: owner, delivery, curriculum",
   lambda: (lambda d: {"domain": d["label"],
-                      "primary": [p["label"] for p in neighbours(d, "owned_by")],
-                      "secondary": [p["label"] for p in neighbours(d, "supported_by")],
-                      "delivery": [p["label"] for p in neighbours(d, "delivered_by")],
+                      "primary": [p["label"] for p in neighbours(d, OWNED_BY)],
+                      "secondary": [p["label"] for p in neighbours(d, SUPPORTED_BY)],
+                      "delivery": [p["label"] for p in neighbours(d, DELIVERED_BY)],
                       "programs": [p["label"] for p in neighbours(d, "covers", "in")]
                       or NOT_IN_CORPUS})(find("domain", "Advanced ML Ops")),
   "Kalindi + Karthika; M Prasad; Abhishek; NO program document",
