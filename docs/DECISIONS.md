@@ -41,7 +41,7 @@ what we agreed, that is my error — say so and I will correct it.**
 | Q3 | Access tiers | **Two roles from day one.** `viewer` sees the roster graph; `recruiting` additionally sees the hiring funnel, ratings and decline rates. |
 | Q4 | GitHub | **Stays `ANI-IN/np-autopilot`, personal, no org, 3–4 collaborators.** Consequences in §F. |
 | Q5 | Plugin model | **Cached snapshot + authenticated API** for anything sensitive or write-shaped. |
-| Q6 | Workflow management | **Still open.** Not designed for here — see §G. |
+| Q6 | Workflow management | **CLOSED — out of scope.** See §G for the argument. (This row said "still open" until 2026-09-18; §G had already closed it, and the two disagreed.) |
 
 **Master spreadsheet: answered, negatively, with evidence.** I listed
 `00-master` (5 files) and searched all **374 worksheets across 18 workbooks** in
@@ -286,8 +286,8 @@ claim.
 > **A guard that fails by returning "nothing happened" is indistinguishable
 > from the absence it was written to detect.**
 
-Five instances now, and they are not five bugs — they are one bug wearing five
-costumes. Naming it is worth more than the individual fixes, because every one
+Seven instances now, and they are not seven bugs — they are one bug wearing
+seven costumes. Naming it is worth more than the individual fixes, because every one
 of them was caught by a test that existed for another reason entirely. None was
 caught by the guard itself, by review, or by reading the code.
 
@@ -298,10 +298,14 @@ caught by the guard itself, by review, or by reading the code.
 | 3 | The excluded-file check | Same shape, same unconditional INFO | Same |
 | 4 | The `BEFORE DELETE` trigger | Returned `NEW`, which is NULL on DELETE, cancelling every delete | `rowcount 0` for "cancelled" and for "the row was not there" |
 | 5 | `people_aliases` write grants (§A.7a, closed in 0012) | Grant with no service trigger: a member's write returned rowcount 0 | RLS "held" — but silently, and one permissive policy away from real |
+| 6 | `grant_access.py`'s `hd` corroboration | Read `identity_data ->> 'hd'`; GoTrue nests non-standard claims under `custom_claims`, so it was always NULL | "This account is not a Workspace identity" and "I looked in the wrong place" printed the same refusal |
 
 Instance 4 was found because a *teardown* could not clean up. Instance 5 was
 found because a test was rewritten to derive its rule rather than list names.
-Neither was found by looking for this pattern.
+Instance 6 was found because a **real person was refused** — it would have
+refused every legitimate account, and no test caught it because every auth test
+built its own rows and none had ever seen one GoTrue wrote. Not one of the three
+was found by looking for this pattern.
 
 **What would catch the sixth.** Three rules, in decreasing order of how much
 they actually buy:
@@ -340,6 +344,98 @@ thought to write; a guard can still be blind to a failure mode nobody imagined.
 The honest position is that this pattern is now *cheaper to find* — it has a
 name, a table of precedents, and a test-writing habit attached — not that it
 has been eliminated.
+
+---
+
+#### The seventh is a different animal: a constraint that enforced a lie
+
+The six above all fail by **returning nothing**. This one did not. It ran, it
+was correct, and it was worthless:
+
+> **A CHECK keyed on a value the caller controls is not a constraint; it's the
+> caller's opinion, stored, with a constraint's reputation.**
+
+Migration 0008 added:
+
+```sql
+check (not (is_shared_account and role in ('recruiting', 'admin')))
+```
+
+The shared team mailbox signed in, and
+`grant_access.py grant … --role recruiting` **succeeded**. Both layers were
+inert at once, for a single reason:
+
+- The script consulted `NP_SHARED_ACCOUNTS`. That variable was set in Vercel and
+  never in the laptop environment the script runs in. An empty list means no
+  account is shared, so there was nothing to refuse.
+- The CHECK is keyed on `is_shared_account` — and the script had just written
+  `false`. **The constraint evaluated perfectly over a value that was already a
+  lie.**
+
+The A.7b trigger is in the first bullet: an unset variable made *"no shared
+accounts exist"* indistinguishable from *"I was never told which accounts are
+shared"*, and the permissive reading won. But the second bullet is the new part
+and the more dangerous one, because a passing constraint is *evidence* — it is
+the thing you point at when asked whether the rule is enforced.
+
+**Migration 0014** moves the list into a `shared_accounts` table and DERIVES the
+flag with a `before insert or update` trigger that overwrites whatever the
+caller passes. The database now computes the value its own constraint depends
+on. Tests run with `NP_SHARED_ACCOUNTS` explicitly unset — the condition that
+produced the failure — and include the positive control that a normal account is
+*not* flagged, so a trigger that flagged everyone could not pass.
+
+#### The question this forces, and a first pass at answering it
+
+**Which other constraints in this schema validate a value the application
+supplies, rather than one the database derives?**
+
+Surveyed across all 29 CHECK constraints in `public`. Most are **shape** checks
+— `id_is_sha256`, `label_nonempty`, `local_part_has_no_domain` — and those are
+fine: they constrain the value itself, and there is nothing else they could
+check. The exposed class is **conditional** checks of the form *"if X then Y"*,
+where `X` is a discriminator the application supplies. Get `X` wrong and the
+rule silently does not apply.
+
+| Table | Constraint(s) | Discriminator the app supplies |
+|---|---|---|
+| `node_sources` | `corpus_names_a_file`, `hand_has_evidence`, `hand_names_no_file` | **`origin`** |
+| `domain_aliases` | `confirmed_names_a_confirmer`, `confirmed_needs_a_domain` | `confirmed` |
+| `workflow_owners` | `confirmed_has_an_owner` | `confirmed` |
+| `people` | `np_has_title_and_seniority`, `non_np_has_neither` | `team` |
+| `curation_audit` | `delete_has_before`, `insert_has_after`, `update_has_both` | `action` |
+| `profiles` | `shared_accounts_stay_member` | `is_shared_account` — **closed by 0014** |
+
+**`node_sources.origin` is the one that matters**, because it guards this
+project's most load-bearing prohibition: *a hand-entered fact must never be
+presentable as though a scan produced it* (§A.5, `CLAUDE.md`). And `origin` is
+not derivable — only the producer knows how a row was made.
+
+What IS available is to constrain the pairing in **both** directions, so a
+mislabel contradicts itself. Three of the four implications exist:
+
+```
+corpus -> file IS NOT NULL        ✓ corpus_names_a_file
+hand   -> file IS NULL            ✓ hand_names_no_file
+hand   -> evidence IS NOT NULL    ✓ hand_has_evidence
+corpus -> evidence IS NULL        ✗ MISSING
+```
+
+So a hand-entered fact mislabelled `origin: corpus`, carrying its evidence
+string, passes every constraint today. Measured: **0 of 30,628 corpus rows carry
+evidence**, so the invariant holds in the data — it is simply not enforced. The
+missing half is one line:
+
+```sql
+alter table node_sources add constraint corpus_carries_no_evidence
+    check (origin <> 'corpus' or evidence is null);
+```
+
+Recorded rather than applied, because it is a schema change and belongs in a
+migration with its own verification pass. **The general rule it illustrates:
+where a constraint depends on a discriminator, constrain the discriminator's
+other implications too — a lie that has to stay consistent across four columns
+is much harder to tell by accident than one stored in a single boolean.**
 
 ### A.8 Concurrent writes and locking
 
