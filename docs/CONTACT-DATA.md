@@ -185,3 +185,107 @@ meet, a population limited to people with a working relationship with IK
 (`hired`, not `roster`), R18 closed, `graph.json` no longer tracked, and the
 field API-only with `recruiting` gating. That is five conditions, and the fact
 that it takes five is itself the finding.
+
+---
+
+## Revisited 2026-09-18 — LinkedIn approved in principle, scoped before building
+
+The approval arrived as "LinkedIn", and that word covers three populations with
+different answers. **Measured, not estimated:**
+
+| | population | size | relationship to IK |
+|---|---|---|---|
+| **(1)** | NP staff in `people.yaml` | **20** | employees |
+| **(2)** | instructors with ≥1 `teaches` edge | **497** (26% of 1,915) | have actually taught |
+| **(3)** | all instructor nodes | **3,817** | includes 277 rejections, 1,625 mid-pipeline |
+
+Of (2), **264 are also `cross_validated`** — cited in more than one file.
+
+### (3) — No. Unchanged and not close.
+
+277 named hiring rejections and 1,625 mid-pipeline candidates have no
+relationship with IK and did not consent to a queryable profile. Nothing in the
+original analysis moves.
+
+### (1) — No, and the reason is not risk.
+
+Twenty employees is the lowest-risk population here, and that is not an argument
+for doing it. **No question has been stated that LinkedIn answers.** The graph
+already carries `team`, `title` and `seniority` for these people, and they are
+twenty colleagues the team can name. "Find their profile" is a directory lookup,
+answered faster by Slack, and a knowledge graph that starts absorbing directory
+lookups has stopped having a shape.
+
+This is the Alert test applied to a property rather than a node type: data added
+because it exists and is easy, not because a traversal needs it.
+
+### (2) — The only arguable one, and my answer is still *not yet*. Here is the bind.
+
+This is the population with a real question — *who is this instructor,
+professionally* — and a real relationship. It is also, exactly,
+**acceler's population**. `04-reference-review.md` §0 records them publishing
+**123 instructor LinkedIn URLs** in a repository that turned out public, and our
+own audit called it third-party PII exposure. **Population (2) is 497 — four
+times acceler's, and the same kind.**
+
+The bind is structural, not a matter of care:
+
+- **Gate it safely** — `sensitive` scope, `recruiting`-only, never in the
+  snapshot — and the people with the use case cannot see it. Staffing decisions
+  are made by `member`. The gate that makes it defensible removes the reason for
+  doing it.
+- **Gate it usefully** — visible to `member` — and it lands in the **public half,
+  which is `knowledge/graph.json`, a tracked file**. That is acceler's shape
+  precisely, and R18 is the proof that "the repo is private" can stop being true
+  without anyone noticing for eight days.
+
+**D11 closes the third door.** Whatever reaches the plugin snapshot cannot be
+withdrawn from a laptop later, so the snapshot is out regardless — which removes
+the surface where the link would have been most convenient.
+
+> **The blocker is not the data and not the population. It is that the public
+> half of the graph is a tracked file.**
+
+That single fact has now decided this question, the contact-fields question and
+half of the payroll scoping. **Untracking `knowledge/graph.json` is the change
+that would move all three**, and it is worth costing properly: what reads it
+(tests, `gen_index.py`, the plugin snapshot), and what would have to change. If
+that landed, (2) becomes an ordinary business-data question rather than a
+structural one, and I would likely support it.
+
+### What I would do instead, today
+
+**LinkedIn as an extraction-time identity key that is never emitted.** It serves
+the one need the URL genuinely meets — telling three people called Karthika
+apart — reverses nothing, projects nothing, and is compatible with all three
+populations because no row ever carries it. Small, contained, and I would support
+it now.
+
+### If (2) is approved anyway — how the reversal must be shaped
+
+`tests/test_exclusion_is_deny_by_default.py::test_no_declared_extraction_column_is_a_contact_field`
+asserts that **no column declared in `sources.py` may be a contact field**.
+Declaring a LinkedIn column reverses that assertion by definition. It must
+reverse **explicitly and by narrowing the rule**, never by exception:
+
+1. **Not by deleting the test, and not by an exemption list.** An exemption list
+   is the fail-open pattern the whole sweep was about — a new entry lands on the
+   permissive side because somebody added it.
+2. **The rule narrows to:** a contact column may be declared only if it appears
+   in an explicit `contact_columns_approved` block naming **the approved
+   population, the approver and the date**, and the property it produces is
+   classified `sensitive` in `property_scopes`.
+3. **The population restriction must be ENFORCED, not documented.** This is the
+   part that would otherwise rot: a test asserting the emitted property appears
+   on **no node outside the 497**. Without it, "instructors who have taught"
+   becomes "all instructors" the first time somebody changes a join, and nothing
+   would say so — which is how a 497-person decision silently becomes a
+   3,817-person one.
+4. **The two controls will contradict each other, and that is useful.**
+   `excluded.field_patterns` denies `LinkedIn`; `sources.py` would declare it.
+   `validate.py`'s `excluded-column` check fires on exactly that disagreement.
+   **Resolve it deliberately** — do not let the allow-list silently win, because
+   "the extractor declared it so it must be fine" is how the inert deny-list
+   came to be trusted for months in the first place.
+
+**Nothing extracted. Awaiting the population.**
