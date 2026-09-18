@@ -47,8 +47,13 @@ def test_stats_json_matches_the_projection():
         fresh = collect(conn)
     on_disk = json.loads(STATS.read_text(encoding="utf-8"))
 
+    # projected_at is excluded on purpose: it changes on every re-projection,
+    # including the one tests/test_db_migration_verification.py performs, so
+    # comparing it would fail on identical content. What must not drift is the
+    # COUNTS and the corpus date — the things the page actually asserts.
+    volatile = {"_comment", "projected_at"}
     drifted = {k: (on_disk.get(k), v) for k, v in fresh.items()
-               if k != "_comment" and on_disk.get(k) != v}
+               if k not in volatile and on_disk.get(k) != v}
     assert not drifted, (
         "public/stats.json disagrees with the projection — the landing page is "
         "publishing stale numbers. Run pipeline/gen_landing_stats.py.\n"
@@ -89,3 +94,32 @@ def test_no_count_on_the_landing_page_is_hand_written():
     assert not stray, (
         f"hand-written counts in the landing markup: {stray}. Every number "
         "there must come from public/stats.json, which is generated.")
+
+
+def test_a_test_run_cannot_rewrite_the_committed_stats_file():
+    """The isolation, asserted rather than assumed.
+
+    project_graph.py regenerates stats.json on every successful public
+    projection, and tests/test_db_migration_verification.py re-projects against
+    the real database. Without the NP_LANDING_STATS override a test run
+    rewrites a tracked file — which is exactly the fault
+    tests/test_build_log_isolation.py was written for, reintroduced by a new
+    generator the day it was added.
+
+    Asserts both halves, the way that file does: the override is in force, AND
+    it points somewhere other than the committed file.
+    """
+    import importlib
+    import os
+
+    from pipeline import gen_landing_stats
+
+    redirected = os.environ.get("NP_LANDING_STATS")
+    assert redirected, (
+        "NP_LANDING_STATS is not set — conftest's isolation fixture is not "
+        "running, so a re-projection during tests would rewrite public/stats.json")
+
+    importlib.reload(gen_landing_stats)
+    assert gen_landing_stats.OUT == Path(redirected)
+    assert gen_landing_stats.OUT.resolve() != STATS.resolve(), (
+        "the generator still writes the committed file during a test run")

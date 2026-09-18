@@ -25,6 +25,28 @@ import pytest
 
 
 @pytest.fixture(scope="session", autouse=True)
+def isolate_landing_stats():
+    """Same isolation as the build log, for the same reason.
+
+    tests/test_db_migration_verification.py re-projects against the real
+    database, and project_graph.py regenerates public/stats.json on a
+    successful public projection. Without this, running the suite rewrites a
+    tracked file — a test that dirties the tree it is testing.
+    """
+    tmpdir = tempfile.mkdtemp(prefix="np-landing-stats-")
+    out = Path(tmpdir) / "stats.json"
+    previous = os.environ.get("NP_LANDING_STATS")
+    os.environ["NP_LANDING_STATS"] = str(out)
+    try:
+        yield out
+    finally:
+        if previous is None:
+            os.environ.pop("NP_LANDING_STATS", None)
+        else:
+            os.environ["NP_LANDING_STATS"] = previous
+
+
+@pytest.fixture(scope="session", autouse=True)
 def isolate_build_log():
     tmpdir = tempfile.mkdtemp(prefix="np-build-log-")
     log = Path(tmpdir) / "BUILD_LOG.md"

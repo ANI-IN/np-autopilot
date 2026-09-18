@@ -22,6 +22,7 @@ the exact thing this script exists to prevent.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,7 +32,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pipeline.lib import db                                            # noqa: E402
 from pipeline.lib.paths import REPO_ROOT                               # noqa: E402
 
-OUT = REPO_ROOT / "public" / "stats.json"
+#: Redirectable, for the same reason NP_BUILD_LOG is. `project_graph.py` calls
+#: this on every successful public projection, and the test suite RE-PROJECTS
+#: against the real database — so without an override a test run would rewrite
+#: a tracked file in the working tree. That is the exact fault
+#: tests/test_build_log_isolation.py exists to prevent, and this file
+#: reintroduced it the day it was written.
+OUT = Path(os.environ.get("NP_LANDING_STATS")
+           or REPO_ROOT / "public" / "stats.json")
 
 
 def collect(conn) -> dict:

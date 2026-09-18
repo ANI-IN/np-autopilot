@@ -176,7 +176,7 @@ background:#0f141a}
       <b id="st-nodes">&mdash;</b> nodes &middot;
       <b id="st-edges">&mdash;</b> edges &middot;
       <b id="st-files">&mdash;</b> corpus files &middot;
-      projected <b id="st-date">&mdash;</b>
+      corpus as of <b id="st-date">&mdash;</b>
     </div>
   </div>
 </div></div>
@@ -1073,7 +1073,10 @@ async function loadStats(){
   if(s.nodes!==undefined) put('st-nodes',num(s.nodes));
   if(s.edges!==undefined) put('st-edges',num(s.edges));
   if(s.files!==undefined) put('st-files',num(s.files));
-  if(s.projected_at) put('st-date', new Date(s.projected_at)
+  // built_as_of, NOT projected_at: the corpus date is what tells a reader how
+  // fresh the DATA is. projected_at only says when it was last loaded, changes
+  // on a re-projection of identical content, and is churned by the test suite.
+  if(s.built_as_of) put('st-date', new Date(s.built_as_of + 'T00:00:00Z')
     .toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));
 }
 

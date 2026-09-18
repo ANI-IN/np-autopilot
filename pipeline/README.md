@@ -114,6 +114,7 @@ returns; it does not decide it. `/staffing` never merges its evidence tiers, and
 |---|---|---|
 | `NP_CORPUS_PATH` | repo root | corpus root. The one override; never hardcode a path. |
 | `NP_BUILD_LOG` | `BUILD_LOG.md` | where a pass appends its run record. Tests redirect it so `pytest` cannot dirty the working tree. |
+| `NP_LANDING_STATS` | `public/stats.json` | where `gen_landing_stats.py` writes the landing page's counts. Redirected by tests for the same reason as `NP_BUILD_LOG`: `project_graph.py` regenerates it on every public projection and the suite re-projects, so without the override a test run rewrites a tracked file. |
 | `NP_AS_OF` | today, UTC | the date pass 4 treats as "now". `teaches` splits class dates into past and future, so the graph is deterministic within a day and not across days. Pin this to reproduce a historical build. |
 | `NP_DRIVE_SA_KEY` | `service_account_key` in `config/drive.yaml` | path to the pass-0 service-account key. **A path, never the key.** Pass 0 refuses to read a key from inside the repo: `.gitignore` stops a commit, not a copy into a build context. |
 | `NP_ALLOWED_HD` | `interviewkickstart.com` | the Google Workspace hosted domain a token must carry. **Deployment-level, never per request** — it is the domain rule, not a preference. Read by `web/lib/auth.py` and by `grant_access.py`, which refuses to provision an account whose provider `hd` disagrees. |
