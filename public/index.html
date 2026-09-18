@@ -136,12 +136,49 @@ window.__NP = {
            instructor:'#00c2d1', workflow:'#db61a2', theme:'#d29922', file:'#8a94a6'},
   expert: 'expert_in',
   api: '/api',
+  // ONE source of truth for the storage key. The pre-paint gate check below
+  // and loadSession() further down must never disagree about it.
+  sessionKey: 'np_session',
   // Hard ceiling on what the client will hold. The traversable subgraph is
   // 1.2 MB, so shipping all 5,048 nodes is technically possible — which is
   // exactly why a client that expects the whole graph must not exist. Hitting
   // this is REPORTED, never silently trimmed.
   nodeBudget: 1200
 };
+
+// ---- FIRST PAINT MUST REFLECT THE REAL STATE ----------------------------
+// #gate is display:flex in the stylesheet, so a signed-in reload used to paint
+// the sign-in card and swap it out only once /api/me answered. That was a
+// round trip of showing the wrong thing -- about a second before the region
+// pin, ~160 ms after it, and wrong at any speed. Deciding it is synchronous:
+// a localStorage read and an expiry comparison. Do it before the paint.
+//
+// THIS MAY ONLY EVER HIDE THE GATE, and only on positive evidence of an
+// unexpired token. A missing or corrupt value, a localStorage that throws
+// (Safari private mode), or an expired token all fall through to the gate.
+// That asymmetry is deliberate: showing the sign-in card to someone signed in
+// is a flash, showing the explorer shell to someone signed out is worse.
+//
+// IT IS A PAINT DECISION AND NOTHING ELSE. It grants no access and reads no
+// data. boot() still verifies the session against /api/me, and still calls
+// showGate() when that fails -- including for a token this check accepted.
+// A forged localStorage entry buys a painted shell and zero rows, because
+// every endpoint is 401 without a token the server verifies.
+(function(){
+  var live = false;
+  try{
+    var s = JSON.parse(localStorage.getItem(window.__NP.sessionKey) || 'null');
+    // expires_at is unix SECONDS (api/session.py::_session_payload). The 5 s
+    // margin keeps a token that expires mid-boot from painting the graph and
+    // then bouncing back to the gate.
+    live = !!(s && s.access_token) &&
+           (typeof s.expires_at !== 'number' || s.expires_at * 1000 > Date.now() + 5000);
+  }catch(e){ live = false; }
+  if(live){
+    var g = document.getElementById('gate');
+    if(g) g.style.display = 'none';
+  }
+})();
 </script>
 <script>
 
@@ -690,7 +727,7 @@ const _dp=document.getElementById('depth');
 if(_dp)_dp.onchange=e=>{state.depth=parseInt(e.target.value,10)||1};
 
 // ---- the auth gate -------------------------------------------------------
-const STORE='np_session';
+const STORE=window.__NP.sessionKey;
 function saveSession(s){SESSION=s;
   try{localStorage.setItem(STORE,JSON.stringify(s))}catch(e){}}
 function loadSession(){

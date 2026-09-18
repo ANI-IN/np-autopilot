@@ -127,6 +127,46 @@ const blocks=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
 console.log(`target: ${TARGET}`);
 console.log(`extracted ${blocks.length} inline script blocks`);
 
+// ---- FIRST PAINT vs THE SIGN-IN GATE (port only) -------------------------
+// The pre-paint check in block 0 decides, synchronously, whether the sign-in
+// card is painted. It may ONLY hide the gate, and only for an unexpired token.
+//
+// A NEGATIVE CONTROL, per DECISIONS A.7b rule 1: "hide it whenever a value is
+// present" and "hide it unconditionally" both pass the signed-in case. Only
+// the expired and garbage cases can tell a correct check from those two, so
+// they are asserted here beside the positive case rather than left implied.
+if(PORTED){
+  const gate = () => { const g = document.getElementById('gate');
+                       g.style.display = ''; return g; };
+  const sec = (d) => Math.floor(Date.now()/1000) + d;
+  const cases = [
+    ['no session at all',        null,                                              false],
+    ['live token',               {access_token:'t', expires_at:sec(3600)},           true],
+    ['EXPIRED token',            {access_token:'t', expires_at:sec(-3600)},          false],
+    ['token expiring in 1s',     {access_token:'t', expires_at:sec(1)},              false],
+    ['no access_token',          {expires_at:sec(3600)},                             false],
+    ['corrupt JSON',             '!!not json!!',                                     false],
+  ];
+  for(const [name, val, wantHidden] of cases){
+    localStorage.removeItem('np_session');
+    if(val!==null) localStorage.setItem('np_session',
+      typeof val==='string' ? val : JSON.stringify(val));
+    const g = gate();
+    try{ (0,eval)(blocks[0]); }catch(e){ errors.push('PRE-PAINT THREW ('+name+'): '+e.message); }
+    const hidden = g.style.display==='none';
+    const ok = hidden===wantHidden;
+    console.log('  '+(ok?'ok  ':'FAIL')+'  '+name.padEnd(22)+
+                ' gate '+(hidden?'hidden':'shown')+
+                ' (want '+(wantHidden?'hidden':'shown')+')');
+    if(!ok) errors.push('PRE-PAINT GATE: '+name+' -> gate '+
+      (hidden?'hidden':'shown')+', expected '+(wantHidden?'hidden':'shown'));
+  }
+  // Leave no state behind: the real load below must start signed out.
+  localStorage.removeItem('np_session');
+  document.getElementById('gate').style.display='';
+}
+
+
 try{ (0,eval)(blocks[0]); console.log('  data block: OK'); }
 catch(e){ errors.push('DATA BLOCK: '+e.message); }
 
