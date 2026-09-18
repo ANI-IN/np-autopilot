@@ -36,9 +36,21 @@ def test_no_script_is_described_as_not_built():
 
 
 def test_documented_env_vars_are_the_ones_the_pipeline_reads():
-    """Drift either way is a bug: an undocumented knob, or a phantom one."""
-    documented = set(re.findall(r"`(NP_[A-Z_]+)`",
-                                PIPELINE_README.read_text(encoding="utf-8")))
+    """Drift either way is a bug: an undocumented knob, or a phantom one.
+
+    Extracted from the TABLE ROWS, not from every mention. The first version
+    matched any backticked NP_* anywhere in the file, so a note explaining why
+    NP_SHARED_ACCOUNTS was REMOVED — that an unset variable made a security
+    CHECK inert — counted as declaring it, and the test demanded the code read
+    a variable the note exists to say nothing reads.
+
+    A table row is a declaration; prose is commentary. Conflating them punishes
+    writing down why something was removed, which is the documentation most
+    worth keeping.
+    """
+    readme = PIPELINE_README.read_text(encoding="utf-8")
+    documented = set(re.findall(r"^\|\s*`(NP_[A-Z_]+)`\s*\|", readme, re.M))
+    assert documented, "no env-var table rows found; has the table moved?"
     used = set()
     for py in sorted((REPO / "pipeline").rglob("*.py")):
         used |= set(re.findall(r"environ(?:\.get)?[(\[]\s*[\"'](NP_[A-Z_]+)[\"']",
