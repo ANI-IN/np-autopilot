@@ -20,6 +20,15 @@ Helpers: `gen_index.py` regenerates `knowledge/INDEX.md` from `graph.json` —
 never hand-write a count there. `gen_workflow_owners.py` regenerates the 92-row
 ownership stub; every suggestion lands `confirmed: false`.
 
+`gen_landing_stats.py` regenerates `public/stats.json`, the counts and build
+date the explorer's landing page shows. It reads `projection_meta` and the
+projected tables — **the projection, not `graph.json`** — because the pipeline
+graph and the graph the web app serves are different sizes, and a landing page
+describing the wrong one is how that confusion gets published. It is run by
+`project_graph.py` on a successful public projection rather than by `refresh.py`,
+so the file that describes the projection is written by the thing that creates
+it. `tests/test_landing_stats.py` fails on drift against the database.
+
 `refresh.py` runs 1–5 plus `gen_index` and `validate`, prints a delta, bumps
 `plugin.json`, and **stops without committing**.
 
