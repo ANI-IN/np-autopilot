@@ -39,7 +39,7 @@ from lib import data                                                   # noqa: E
 from lib.auth import AuthError                                         # noqa: E402
 from lib.guard import audit, identify                                  # noqa: E402
 
-import aliases, config, coverage, me, neighbourhood, node              # noqa: E402,E401
+import aliases, config, coverage, curate, me, neighbourhood, node      # noqa: E402,E401
 import overview, search, session, staffing                             # noqa: E402,E401
 
 #: path -> (endpoint name, read function). Every one of these is served by
@@ -47,6 +47,11 @@ import overview, search, session, staffing                             # noqa: E
 READS = {f"/api/{mod.ENDPOINT[0]}": mod.ENDPOINT
          for mod in (aliases, coverage, me, neighbourhood, node, overview,
                      search, staffing)}
+
+#: path -> write function. Served by _serve_write, which identifies the caller
+#: exactly as _serve_read does. A write route cannot bring its own front door
+#: either — and the role check lives further in still, in curation_service.
+WRITES = {f"/api/{curate.ENDPOINT[0]}": curate.ENDPOINT[1]}
 
 MAX_BODY = 16 * 1024
 
@@ -94,6 +99,57 @@ def _serve_read(path: str, params: dict, environ, start_response):
     return _respond(start_response, 200, payload)
 
 
+def _serve_write(path: str, environ, start_response):
+    """The only path from an HTTP request to a curation write.
+
+    Mirrors _serve_read deliberately: identify() first, unconditionally, then a
+    connection scoped to that identity. What it does NOT do is decide whether
+    the caller may write — `curation_service` does that, because the role check,
+    the optimistic lock and the audit row belong together and a route that
+    pre-checked the role would be a second place that has to stay correct.
+    """
+    fn = WRITES[path]
+    started = time.time()
+    try:
+        identity = identify(_Headers(environ))
+    except AuthError as exc:
+        return _respond(start_response, 401,
+                        {"error": "unauthorised", "reason": str(exc)})
+    try:
+        length = int(environ.get("CONTENT_LENGTH") or 0)
+    except ValueError:
+        length = 0
+    if length <= 0 or length > MAX_BODY:
+        return _respond(start_response, 400,
+                        {"error": "bad_request",
+                         "reason": "missing or oversized body"})
+    try:
+        body = json.loads(environ["wsgi.input"].read(length) or b"{}")
+    except Exception:                                                  # noqa: BLE001
+        return _respond(start_response, 400,
+                        {"error": "bad_request", "reason": "body is not JSON"})
+
+    try:
+        with data.request_connection(identity.subject) as conn:
+            status, payload = fn(conn, identity, body)
+            # The service raises on every refusal, so reaching here with a 200
+            # means the row and its audit entry are both written. Commit only
+            # then: request_connection rolls back on the way out.
+            if status == 200:
+                conn.commit()
+    except Exception:                                                  # noqa: BLE001
+        print(traceback.format_exc(), file=sys.stderr)
+        return _respond(start_response, 500, {"error": "internal"})
+
+    # Audited on the HTTP side as well as in curation_audit: that table records
+    # WHAT changed and why, this line records that the request happened at all,
+    # including the refusals, which never reach the table.
+    audit(identity, "curate", {"table": body.get("table"),
+                               "key": body.get("key"), "status": status},
+          1 if status == 200 else 0, started)
+    return _respond(start_response, status, payload, no_store=True)
+
+
 class _Headers:
     """Adapts a WSGI environ to the .get() interface guard.bearer expects."""
 
@@ -138,6 +194,13 @@ def app(environ, start_response):
             status, out = 500, {"error": "internal"}
         return _respond(start_response, status, out, no_store=True)
 
+    if path in WRITES:
+        if method != "POST":
+            return _respond(start_response, 405,
+                            {"error": "method_not_allowed",
+                             "reason": "POST a curation change to this path"})
+        return _serve_write(path, environ, start_response)
+
     if path in READS:
         if method != "GET":
             return _respond(start_response, 405, {"error": "method_not_allowed"})
@@ -148,4 +211,5 @@ def app(environ, start_response):
     return _respond(start_response, 404,
                     {"error": "not_found",
                      "reason": f"no endpoint at {path}",
-                     "endpoints": sorted(READS) + ["/api/config", "/api/session"]})
+                     "endpoints": sorted(READS) + sorted(WRITES)
+                                  + ["/api/config", "/api/session"]})

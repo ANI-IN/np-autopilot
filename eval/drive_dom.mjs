@@ -117,6 +117,17 @@ globalThis.fetch=async(url,opts)=>{
                          entered_at:'2026-09-10'}],
                   hand_note:'Out-of-corpus evidence, entered by a person.'}});
   if(u.startsWith('/api/me')) return jsonResponse({email:'x@interviewkickstart.com', role:'member'});
+  if(u.startsWith('/api/aliases')) return jsonResponse({note:'unresolved on purpose', unresolved:[
+    {alias:'ML', claims:153, sibling_test:'failed', version:1, note:'five domains could be meant',
+     answerable_from_data:true, no_candidates_note:null,
+     candidates:[{domain:'Machine Learning (IP course)', exists:true, existing_expert_in_edges:12,
+                  taught_modules:3, corroboration:{available:false, why:'not projected'}},
+                 {domain:'Advanced ML Ops', exists:true, existing_expert_in_edges:0,
+                  taught_modules:0, corroboration:{available:false, why:'not projected'}}]},
+    {alias:'Agentic AI', claims:64, sibling_test:'failed', version:1,
+     note:'differ only by audience', answerable_from_data:false, no_candidates_note:null,
+     candidates:[{domain:'Agentic AI - EM', exists:true, existing_expert_in_edges:4,
+                  taught_modules:1, corroboration:{available:false, why:'0 of 64'}}]}]});
   if(u.startsWith('/api/config')) return jsonResponse({google_client_id:'test', allowed_hd:'x'});
   return jsonResponse({}, false, 404);
 };
@@ -448,6 +459,54 @@ if(PORTED){
               '(__NP_GATE=' + globalThis.window.__NP_GATE + ')');
   if(!armed) errors.push('AFTER SIGN-OUT THE SIGN-IN PATH WAS NEVER ARMED');
   void beforeOut;
+}
+
+// ---- THE CURATION SURFACE (port only) ------------------------------------
+// Two properties the spec is explicit about, asserted rather than eyeballed:
+// the reasoning is REQUIRED, and an alias the data cannot settle is not
+// presented as a decision waiting on a person.
+if(PORTED){
+  console.log('\n=== CURATION SURFACE ===');
+  await (0,eval)('openCuration()');
+  const html = document.getElementById('curbody').innerHTML;
+
+  // 1. NOTHING RANKS. resolve.py returns Ambiguous rather than picking; a UI
+  //    that ranked would reintroduce the picking one layer up.
+  const ranking = /recommend|best match|\\bscore\\b|top candidate|most likely/i.test(html);
+  console.log('  renders any ranking language        :', ranking);
+  if(ranking) errors.push('THE CURATION SURFACE RANKS CANDIDATES');
+
+  // 2. Blast radius is visible BEFORE the decision.
+  const blast = html.includes('expert_in edges') && html.includes('taught modules');
+  console.log('  shows blast radius per candidate    :', blast);
+  if(!blast) errors.push('CANDIDATES DO NOT SHOW existing_expert_in_edges / taught_modules');
+
+  // 3. The reasoning gates the button. A field the server rejects after a
+  //    click teaches people to type "x" into it.
+  const btn = document.getElementById('b-ML');
+  const sel = document.getElementById('d-ML');
+  const txt = document.getElementById('r-ML');
+  console.log('  decision button starts disabled     :', btn.disabled===true);
+  if(btn.disabled!==true) errors.push('A DECISION COULD BE RECORDED WITH NO REASONING');
+  sel.value='Advanced ML Ops'; sel.onchange();
+  console.log('  still disabled with target, no why  :', btn.disabled===true);
+  if(btn.disabled!==true) errors.push('REASONING IS NOT REQUIRED — a target alone enabled the write');
+  txt.value='Ops is the only one with delivery evidence; the others are names on a sheet.';
+  txt.oninput();
+  console.log('  enabled once reasoning is given     :', btn.disabled===false);
+  if(btn.disabled!==false) errors.push('A COMPLETE DECISION COULD NOT BE RECORDED');
+
+  // 4. An alias the data cannot settle offers NO decision form at all.
+  //    Checked against the RENDERED HTML, not getElementById: the DOM shim
+  //    auto-creates any element asked for, so a lookup would answer "yes it
+  //    exists" for a button that was never drawn — a check that cannot observe
+  //    the thing it names.
+  const noForm = !html.includes('id="b-Agentic AI"');
+  const saysWhy = html.includes('not a decision waiting on someone');
+  console.log('  unanswerable alias has no form      :', noForm);
+  console.log('  and says why on the surface         :', saysWhy);
+  if(!noForm) errors.push('AN UNANSWERABLE ALIAS WAS PRESENTED AS A PENDING DECISION');
+  if(!saysWhy) errors.push('THE SURFACE DOES NOT SAY WHY THE ALIAS IS UNANSWERABLE');
 }
 
 console.log('\nstat line:', (store.get('stat')||{}).innerHTML || '(never set)');

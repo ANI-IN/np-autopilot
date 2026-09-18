@@ -266,10 +266,26 @@ def cmd_import() -> int:
                 # so they are imported rather than left in a YAML comment where
                 # nothing can query them.
                 if table == "domain_aliases":
-                    amb = [(row["alias"], row.get("claims"), row.get("why"),
-                            json.dumps({"candidates": row.get("candidates") or [],
-                                        "unresolved": True}, sort_keys=True))
-                           for row in (data.get("ambiguous") or [])]
+                    # EXTRA FIELDS SURVIVE HERE TOO. This built `props` as a
+                    # literal {candidates, unresolved}, so any other field on an
+                    # ambiguous row was silently dropped — contradicting the
+                    # promise at the top of this file that a field added to the
+                    # YAML survives a round trip without a migration. It was
+                    # invisible because `roundtrip` compares two DATABASE-derived
+                    # files with each other: a field the import never stored is
+                    # absent from both sides, and the check agrees with itself.
+                    # DECISIONS §A.7b rule 2 — a guard must not take its
+                    # evidence from the thing it is checking.
+                    amb_cols = {"alias", "claims", "why", "candidates"}
+                    amb = []
+                    for row in (data.get("ambiguous") or []):
+                        extra = {k: _jsonable(v) for k, v in row.items()
+                                 if k not in amb_cols}
+                        extra["candidates"] = row.get("candidates") or []
+                        extra["unresolved"] = True
+                        amb.append((row["alias"], row.get("claims"),
+                                    row.get("why"),
+                                    json.dumps(extra, sort_keys=True)))
                     if amb:
                         cur.executemany(
                             "insert into domain_aliases(alias, domain, claims, "

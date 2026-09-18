@@ -374,27 +374,34 @@ captured before the deletion and preserved with the archive. Its calibration
 caveat is in `~/np-autopilot-archive/traffic-capture/CAPTURE-NOTE.md` and must
 travel with the figures.
 
-**CALIBRATION: STILL UNSETTLED (asked twice, 2026-09-17).** The question is
-whether the corpus owner ever opened the repository page in a browser during the
-14-day window. It decides what the zero means, and the two readings are not
-close together:
+**CALIBRATION: ANSWERED 2026-09-18.** The question was whether the corpus owner
+ever opened the repository page in a browser during the 14-day window, because
+that decides what the zero means. **The answer is no** — all work on the
+repository went through the CLI; `github.com/ANI-IN/np-autopilot` was not opened
+in a browser between 9 and 17 September.
 
-- **If the page WAS opened in a browser:** the instrument recorded **zero views
-  for a session that certainly occurred**. The zero is then evidence that the
-  counter does not register what we assumed it registers — it is
-  **unreliable, not reassuring**, and it cannot be cited as evidence that nobody
-  else fetched the repository either.
-- **If all work went through the CLI:** a clone by the owner would normally
-  register, so zero across both counters is weak positive evidence, still
-  bounded by everything below.
+**So the zero is coherent with the recorded working method rather than in
+tension with it.** The reading this closes out is the damaging one: had the page
+been opened, the counter would have reported zero views for a session that
+certainly occurred, and the figure would have been evidence the instrument does
+not register what we assumed — **unreliable rather than reassuring**, and
+unusable as evidence about anyone else. That reading no longer applies and is
+withdrawn. An instrument reporting zero for a period in which no browser session
+took place is **consistent, not suspect**.
 
-**Either way the ceiling is unchanged:** GitHub's traffic API reports a 14-day
-window at daily granularity and does not count every automated fetch. Public
-repositories are crawled by code-search indexes and mirrors, and `git clone`
-needs no permission and leaves no entry a repository owner can read. **Zero
-recorded traffic is not evidence of zero copies**, under either answer. The
-calibration question changes how much weight the figure can carry; it does not
-change that the figure is a floor.
+The clone counter is coherent on the same terms: a `git push` is not a clone, so
+a workflow that never re-cloned the remote produces no clone event either. Zero
+across both counters is what this working method should produce.
+
+**The ceiling is unchanged, and this is the part that must not be read as
+closed.** GitHub's traffic API reports a 14-day window at daily granularity and
+does not count every automated fetch. Public repositories are crawled by
+code-search indexes and mirrors, and `git clone` needs no permission and leaves
+no entry a repository owner can read. **Zero recorded traffic is not evidence of
+zero copies.** Answering the calibration question restored how much weight the
+figure can carry — it did not turn a floor into a total. The exposure must still
+be treated as "unknown but not demonstrably exploited", never as "nobody
+accessed it".
 
 **Publicly readable during that window:** 3,817 instructor names, of whom **277
 hiring rejections** and 1,625 mid-pipeline candidates; 39 per-instructor ratings;

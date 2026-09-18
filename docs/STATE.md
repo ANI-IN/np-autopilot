@@ -163,17 +163,21 @@ see §6.
 
 ### R18 — the repository was public for eight days
 
-**Status: remediated, one field unanswered.** Found 2026-09-17; set private,
-then deleted and recreated (old id `1363038448` → new `1374030791`). History
-rewritten. What was readable: 3,817 instructor names including **277 named
-hiring rejections** and 1,625 mid-pipeline candidates.
+**Status: remediated. The GitHub package is closed; one Drive question
+remains.** Found 2026-09-17; set private, then deleted and recreated (old id
+`1363038448` → new `1374030791`). History rewritten. What was readable: 3,817
+instructor names including **277 named hiring rejections** and 1,625
+mid-pipeline candidates.
 
-**Unanswered: the traffic calibration field.** GitHub reported 0 clones/views
-over the window. Whether the repo page was ever opened in a browser during it
-decides what that zero means — if it was, the instrument recorded zero views for
-a session that certainly occurred, making the zero **unreliable rather than
-reassuring**. Both readings are written out in `07-risks.md` R18. Either way,
-zero recorded traffic is not evidence of zero copies.
+**Traffic calibration: ANSWERED 2026-09-18.** The repository page was never
+opened in a browser during the window — all work went through the CLI. So the
+0 clones / 0 views figure is **consistent with the recorded working method
+rather than in tension with it**, and the damaging reading (an instrument
+reporting zero for a session that certainly occurred, and therefore unreliable)
+is withdrawn. **The ceiling is unchanged:** zero recorded traffic is still not
+evidence of zero copies — the API misses automated fetches, and `git clone`
+leaves no entry an owner can read. Treat the exposure as *unknown but not
+demonstrably exploited*, never as *nobody accessed it*. `07-risks.md` R18.
 
 **Also unanswered: whether the Drive folder was ever domain-wide.** It is
 `Restricted` now. If it was previously domain-wide there is an exposure to

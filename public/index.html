@@ -59,6 +59,48 @@ background:#0f141a}
 #gatebox h1{font-size:17px}
 #gatemsg{margin-top:12px;font-size:11.5px;line-height:1.55;color:#8b949e}
 #gsi{margin-top:16px;min-height:44px}
+
+/* ---- the curation surface (admin only) --------------------------------
+   Deliberately NOT styled to suggest a ranking. No candidate is emphasised
+   over another, the order is the corpus owner's recorded order, and there is
+   no score, badge or "recommended" anywhere: lib/resolve.py returns Ambiguous
+   rather than picking, and a UI that ranked would reintroduce the picking one
+   layer up. */
+#cur{position:fixed;inset:0;z-index:40;background:rgba(1,4,9,.86);
+  display:none;overflow:auto;padding:28px}
+#curbox{max-width:840px;margin:0 auto;background:#0f141a;
+  border:1px solid #21262d;border-radius:10px;padding:20px 22px}
+#curhead{display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid #21262d;padding-bottom:10px;margin-bottom:12px}
+#curnote{font-size:11px;line-height:1.6;color:#8b949e;margin-bottom:16px}
+.al{border:1px solid #21262d;border-radius:8px;padding:14px 16px;margin-bottom:14px}
+.al h3{font-size:13px;margin:0 0 2px}
+.al .meta{font-size:10.5px;color:#6e7681;margin-bottom:8px}
+.al .why{font-size:11px;line-height:1.6;color:#8b949e;
+  border-left:2px solid #30363d;padding-left:10px;margin-bottom:12px}
+.cand{display:flex;justify-content:space-between;gap:12px;align-items:baseline;
+  padding:7px 10px;border:1px solid #21262d;border-radius:6px;margin-bottom:6px;
+  font-size:11.5px}
+.cand .ev{font-size:10.5px;color:#6e7681;white-space:nowrap}
+.cand.gone{opacity:.55}
+.blast{color:#d29922}
+.corr{font-size:10.5px;color:#6e7681;line-height:1.55;margin:8px 0 12px;
+  border-left:2px solid #30363d;padding-left:10px}
+.unans{border:1px solid #6e3b1f;background:#1b1008;border-radius:6px;
+  padding:10px 12px;font-size:11px;line-height:1.6;color:#d29922}
+.dec{border-top:1px solid #21262d;margin-top:10px;padding-top:10px}
+.dec label{display:block;font-size:10.5px;color:#8b949e;margin-bottom:4px}
+.dec select,.dec textarea{width:100%;background:#0d1117;color:#c9d1d9;
+  border:1px solid #30363d;border-radius:5px;padding:6px 8px;font:inherit;
+  font-size:11.5px;margin-bottom:8px}
+.dec textarea{min-height:64px;resize:vertical}
+.dec .req{color:#d29922}
+.dec .hint{font-size:10.5px;color:#6e7681;line-height:1.55;margin-bottom:8px}
+.dec button{font-size:11.5px}
+.dec button[disabled]{opacity:.45;cursor:not-allowed}
+.decmsg{font-size:11px;line-height:1.55;margin-top:8px}
+.decmsg.err{color:#f85149}
+.decmsg.ok{color:#3fb950}
 /* The landing copy. Its job is to set the terms on which an ABSENCE should be
    read, before someone meets one as a surprise: every failure mode of this
    graph is a miss that looks like a fact. It sits BELOW the sign-in button on
@@ -80,7 +122,17 @@ background:#0f141a}
 <div id="tip"></div>
 <div id="diag"></div>
 
+<div id="cur"><div id="curbox">
+  <div id="curhead">
+    <b>Curation &mdash; aliases awaiting a decision</b>
+    <button type="button" id="curclose">close</button>
+  </div>
+  <div id="curnote"></div>
+  <div id="curbody"></div>
+</div></div>
+
 <div id="tools">
+  <button type="button" id="curbtn" hidden>curation</button>
   <button type="button" id="fit">fit</button>
   <button type="button" id="zin">+</button>
   <button type="button" id="zout">&minus;</button>
@@ -962,6 +1014,128 @@ async function onGoogleCredential(resp){
   await afterSignIn();
 }
 
+// ---- THE CURATION SURFACE (admin only) ---------------------------------
+// F3 read, F1 write. It shows everything needed to decide and NOTHING that
+// decides: no recommended field, no best, no score, and the candidates render
+// in the order the corpus owner recorded them. lib/resolve.py returns Ambiguous
+// rather than picking because three shipped bugs came from picking with no
+// signal, and a UI that ranked would reintroduce that one layer up.
+let CURATION=[];
+
+function curEvidence(c){
+  if(c.exists===false)
+    return '<span class="ev">no domain carries this name</span>';
+  // Blast radius BEFORE the decision, not after: how many edges already hang
+  // off this candidate, and whether it is a domain we actually deliver.
+  return '<span class="ev"><b class="blast">'+c.existing_expert_in_edges+
+         '</b> expert_in edges &middot; <b>'+c.taught_modules+
+         '</b> taught modules</span>';
+}
+
+function curAlias(a){
+  const cands=(a.candidates||[]).map(c=>
+    '<div class="cand'+(c.exists===false?' gone':'')+'">'+
+      '<span>'+esc(c.domain)+'</span>'+curEvidence(c)+'</div>').join('')
+    || '<div class="cand gone"><span>'+esc(a.no_candidates_note||'no candidates recorded')+'</span></div>';
+
+  const corr=(a.candidates||[]).length
+    ? '<div class="corr"><b>Corroboration is not computable here.</b> '+
+      esc(((a.candidates[0]||{}).corroboration||{}).why||'')+'</div>' : '';
+
+  // NOT EVERY UNRESOLVED ALIAS IS A PENDING DECISION.
+  const body = a.answerable_from_data===false
+    ? '<div class="unans"><b>This is not a decision waiting on someone.</b> '+
+      'It cannot be answered from this corpus: the thing that would tell the '+
+      'candidates apart is absent from the data, not merely unclear. Recording '+
+      'a choice here would be picking, which is the failure this surface exists '+
+      'to avoid. It needs a rule from a program owner, or a source that carries '+
+      'the missing field.</div>'
+    : '<div class="dec">'+
+        '<label for="d-'+esc(a.alias)+'">Resolve to</label>'+
+        '<select id="d-'+esc(a.alias)+'"><option value="">— choose —</option>'+
+        (a.candidates||[]).filter(c=>c.exists!==false)
+          .map(c=>'<option>'+esc(c.domain)+'</option>').join('')+'</select>'+
+        '<label for="r-'+esc(a.alias)+'">Reasoning <span class="req">— required</span></label>'+
+        '<div class="hint">This is not metadata. It is exported back into '+
+        'config/domain-aliases.yaml and is what stops a future pass quietly '+
+        'undoing the decision — the way a fuzzy match re-merges two different '+
+        'people who happen to share a first name.</div>'+
+        '<textarea id="r-'+esc(a.alias)+'" placeholder="Why this target, and what rules the others out."></textarea>'+
+        '<button type="button" id="b-'+esc(a.alias)+'" disabled>Record decision</button>'+
+        '<div class="decmsg" id="m-'+esc(a.alias)+'"></div>'+
+      '</div>';
+
+  return '<div class="al"><h3>'+esc(a.alias)+'</h3>'+
+    '<div class="meta">'+a.claims+' claims &middot; sibling test '+
+      esc(a.sibling_test||'?')+' &middot; version '+a.version+'</div>'+
+    (a.note?'<div class="why">'+esc(a.note)+'</div>':'')+
+    cands+corr+body+'</div>';
+}
+
+async function openCuration(){
+  const box=document.getElementById('cur');
+  const body=document.getElementById('curbody');
+  box.style.display='block';
+  body.innerHTML='<div class="src">loading…</div>';
+  let out;
+  try{ out=await api('/aliases'); }
+  catch(e){ body.innerHTML='<div class="src">could not load</div>'; return; }
+  CURATION=out.unresolved||[];
+  document.getElementById('curnote').innerHTML=esc(out.note||'');
+  body.innerHTML=CURATION.map(curAlias).join('');
+  for(const a of CURATION){
+    if(a.answerable_from_data===false) continue;
+    const sel=document.getElementById('d-'+a.alias);
+    const txt=document.getElementById('r-'+a.alias);
+    const btn=document.getElementById('b-'+a.alias);
+    if(!sel||!txt||!btn) continue;
+    // THE REASONING GATES THE BUTTON. Treating it as required in the UI, not
+    // just server-side, is the point: a field the server rejects after a click
+    // teaches people to type "x" into it.
+    const sync=()=>{btn.disabled=!(sel.value&&txt.value.trim().length>=10)};
+    sel.onchange=sync; txt.oninput=sync; sync();
+    btn.onclick=()=>recordDecision(a,sel.value,txt.value,btn);
+  }
+}
+
+async function recordDecision(a, domain, reason, btn){
+  const msg=document.getElementById('m-'+a.alias);
+  btn.disabled=true; msg.className='decmsg'; msg.textContent='recording…';
+  let r;
+  try{
+    r=await fetch(API+'/curate',{method:'POST',
+      headers:Object.assign({'content-type':'application/json'},
+        SESSION?{authorization:'Bearer '+SESSION.access_token}:{}),
+      body:JSON.stringify({table:'domain_aliases', key:a.alias,
+        changes:{domain:domain, confirmed:true},
+        expected_version:a.version, reason:reason})});
+  }catch(e){ msg.className='decmsg err'; msg.textContent='network error'; btn.disabled=false; return; }
+  const body=await r.json().catch(()=>({}));
+  if(r.status===409){
+    // The one that matters. Someone else decided first and THIS WRITE DID NOT
+    // HAPPEN. Never retried automatically: the whole point is that the second
+    // person re-reads and decides again.
+    msg.className='decmsg err';
+    msg.textContent=(body.reason||'someone changed this first')+
+      ' — reloading the surface so you can re-read it.';
+    setTimeout(openCuration,2500);
+    return;
+  }
+  if(!r.ok){
+    msg.className='decmsg err';
+    msg.textContent=body.reason||('HTTP '+r.status);
+    btn.disabled=false; return;
+  }
+  msg.className='decmsg ok';
+  msg.textContent='recorded by '+(body.recorded_by||'you')+'. The reasoning is '
+    +'now part of the row and will export with it.';
+  setTimeout(openCuration,1200);
+}
+
+document.getElementById('curclose').onclick=()=>{
+  document.getElementById('cur').style.display='none'};
+document.getElementById('curbtn').onclick=openCuration;
+
 // ---- THE DEFAULT VIEW ----------------------------------------------------
 // STATE 8.2: the canvas used to show nothing until you searched.
 //
@@ -1026,6 +1200,10 @@ async function afterSignIn(){
   }
   hideGate();
   banner('');
+  // Admin only, and hidden rather than disabled: a control you cannot use is
+  // an invitation to ask why.
+  const cb=document.getElementById('curbtn');
+  if(cb) cb.hidden = (me.role!=='admin');
   // THE FETCH TRIGGERS THE LAYOUT. This used to be an unconditional
   // recompute(true,'signed in'), which re-ran the whole pipeline and restarted
   // a 366-frame cooling schedule for zero visible change -- a fresh load did

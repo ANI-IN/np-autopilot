@@ -425,7 +425,12 @@ def test_every_endpoint_module_is_registered():
     _sys.path.insert(0, str(REPO / "web"))
     import index                                                  # noqa: E402
 
+    # BOTH registries. WRITES was added for /api/curate, and a guard that knew
+    # only about READS would report a registered write route as dead code —
+    # or, worse, stay quiet about a genuinely unregistered one because the
+    # author "fixed" the test by widening the exception list.
     registered = {fn.__module__ for _name, fn in index.READS.values()}
+    registered |= {fn.__module__ for fn in index.WRITES.values()}
     declared = set()
     for path in _api_modules():
         src = path.read_text(encoding="utf-8")

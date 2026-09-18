@@ -184,6 +184,14 @@ def ambiguous_aliases(conn) -> list[dict]:
                 "No domain carries this name. It may be a product that predates "
                 "or postdates the owner sheet — a decision about the TAXONOMY, "
                 "not about this alias." if not cands else None)
+            # NOT EVERY UNRESOLVED ALIAS IS A PENDING DECISION. Some cannot be
+            # answered from this corpus at all, and presenting those as "waiting
+            # on someone" is a quiet lie: it implies a person is the blocker
+            # when the discriminator is simply absent from the data. Recorded in
+            # the YAML per alias and surfaced here, so the UI renders a recorded
+            # judgement rather than asserting one in JavaScript.
+            row["answerable_from_data"] = (row.get("props") or {}).get(
+                "answerable_from_data", True)
     return rows
 
 

@@ -137,9 +137,13 @@ ambiguous:
   - Agentic AI - SWE
   - Agentic AI - TPM/Pm
   - India Agentic AI Bootcamp
-  why: 'Four domains carry the name. A bare "Agentic AI" does not say which, and 64 instructors would
-    land on the wrong one. Options: map to all four (over-connects), leave unjoined (current), or add
-    a rule using the instructor''s other columns.'
+  why: 'Four domains carry the name and they differ ONLY BY AUDIENCE - EM, SWE, TPM/Pm, and an India
+    bootcamp. Nothing in the instructor''s row records an audience, so the discriminator is ABSENT
+    FROM THE DATA rather than merely unclear: corroboration is 0 of 64, not weak. This is therefore
+    NOT a decision waiting on someone to make it. It cannot be answered from this corpus at all.
+    Resolving it needs a rule from a program owner about what a bare "Agentic AI" claim means, or a
+    source that records audience. Waiting for better data from the existing corpus will not help.'
+  answerable_from_data: false
 - alias: Applied Gen AI
   claims: 42
   candidates: []
