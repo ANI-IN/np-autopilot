@@ -24,8 +24,8 @@ rather than assumed, it says so.
 
 ### Verified locally only — do NOT describe these as production-verified
 
-- **In-region latency.** `DEPLOYMENT.md` carries a **projection**, not a
-  measurement. See §4.
+- **Render and layout cost.** Never measured, in any region. §4.
+  (In-region *latency* is now measured — `LATENCY-MEASUREMENT.md`.)
 - **The full test suite** (260 passing, ~7 min) runs against the real Supabase
   but from a laptop, not from Vercel.
 - **Everything in `pipeline/`.** It has never run on Vercel and is not meant to.
@@ -164,7 +164,7 @@ That is a stronger outcome, not a substitute — layer 0 is a console setting wi
 no signal in this repo, and `hd` still catches a Workspace account whose email
 claim disagrees.
 
-### In-region latency — still a projection
+### In-region latency — MEASURED 2026-09-18; render cost is not
 
 Measured from a laptop, as `authenticated` with a `member` profile so RLS is
 included:
@@ -176,10 +176,15 @@ included:
 | `provenance` | 150.5 ms | 0.53 ms |
 | `neighbourhood` d1 / d2 / d3 | 151 / 154 / 182 ms | 0.67 / 0.99 / 4.87 ms |
 
-~148 ms of each is geography. **The in-region figures in `DEPLOYMENT.md` are a
-projection and must be replaced with measurements.** The audit line from
-`guard.audit()` records `ms` per request, so `vercel logs --since 1h` on a
-signed-in session yields real numbers with no new instrumentation.
+~148 ms of each is geography. **That is now closed.** `vercel.json` is pinned
+to `icn1`; warm server-side median went **2,252 ms → 44.3 ms** (~51x). Full
+record, with measured/inferred separated line by line, in
+`LATENCY-MEASUREMENT.md`.
+
+**What is still unmeasured is render and layout**, and it is now the largest
+unknown in user-visible latency. The browser harness that would have measured it
+never ran — Chrome refused to expose a debugging port. **Do not read the server
+number as "the app is fast."**
 
 ### One unenforced schema invariant — recorded, not applied
 
@@ -308,24 +313,27 @@ The graph shows nothing until you search. Decide what a useful default is — th
 load it without a query. **State the choice and the reason**; "show everything"
 is not available at 3,146 nodes, and `nodeBudget` caps the client at 1,200.
 
-### 3. Speed — measure before changing anything
+### 3. Speed — DONE for the server half, 2026-09-18
 
-It is slow in a way the 4.62 ms server-side numbers say it should not be.
-**Measure first:** per-endpoint in-region timings from the audit log
-(`vercel logs --since 1h`, which carries `ms`), then the browser's own timings.
-The cause could be the round trip, the payload, the render, or cold starts.
+**Measured, then fixed, in that order.** The cost was flat with respect to rows
+returned, which is what identified it as per-request overhead rather than query
+cost. `vercel.json` is pinned to `icn1`: **2,252 ms → 44.3 ms** warm median.
+`LATENCY-MEASUREMENT.md` is the record.
+
+**The render half is untouched and unmeasured.** That is the remaining work on
+this item, and it needs a browser.
 
 > **The precedent that makes this rule non-negotiable:** `coverage` once
 > measured 1,610 ms. That was cold buffers, not the plan. Warm it was 18.8 ms.
 > Optimising the first number would have chased the wrong thing.
 
-**Leading hypothesis, recorded but NOT acted on:** `vercel.json` has **no
-`regions` key**, so the function runs in Vercel's default region (`iad1`,
-Washington DC) while the database is in **ap-northeast-2 (Seoul)**. That is a
-trans-Pacific round trip on every statement. A region pin (`"regions": ["icn1"]`)
-was present briefly and was removed during deploy debugging on a wrong
-hypothesis. **Confirm by measurement before restoring it** — that is the whole
-point of this item.
+**The hypothesis held, and the arithmetic behind it did not.** The function did
+run in `iad1` against a Seoul database. But the projection that a region pin
+would yield ~2 ms was wrong about the mechanism: a request is ~11 round trips,
+not one, because `request_connection` opens a fresh connection and issues two
+setup statements before the query. Right about the region, wrong about what the
+region multiplied. Hobby permits a single region, any region — multi-region is
+Pro and above.
 
 ### 4. Auto-grant `member` on first sign-in
 

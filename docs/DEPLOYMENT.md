@@ -151,7 +151,7 @@ account is what stops new tokens being issued.
 
 ---
 
-## Latency — measured, and what is still a projection
+## Latency — measured in region, 2026-09-18
 
 Measured 2026-09-17 from a laptop against `ap-northeast-2`, as `authenticated`
 with a `member` profile, so every number includes RLS policy evaluation.
@@ -169,12 +169,34 @@ with a `member` profile, so every number includes RLS policy evaluation.
 **About 148 ms of every one of those is geography** and nothing in the code
 changes it. E3's earlier figure of ~146 ms per statement was the same distance.
 
-**In-region is a PROJECTION, not a measurement, and is labelled as such here
-because the deployment has not happened.** With a Vercel function in the same
-region as the database the round trip falls to roughly 1–3 ms, so the numbers
-above become the server-side column plus that — roughly 2 ms for a node or a
-depth-1 neighbourhood, and 5–7 ms for search or a depth-3 expansion. **This must
-be re-measured against the real deployment before anyone quotes it.**
+### In region — no longer a projection
+
+The function ran in `iad1` while the database sat in Seoul, because
+`vercel.json` had no `regions` key. It is now pinned to `icn1`. Measured from
+`guard.audit()` against the real deployment, warm, first-request cold starts
+excluded:
+
+| Endpoint | iad1 | **icn1 (warm)** |
+|---|---|---|
+| `search` | 1,931.6 ms | **40.1 ms** |
+| `node` (= provenance) | 2,362.8 ms | **49.8 ms** |
+| `neighbourhood` depth 1 | 2,240.3 ms | **79.9 ms** |
+| `me` | 2,274.4 ms | **40.8 ms** |
+| all warm requests | 2,252 ms (n=23) | **44.3 ms (n=18)** |
+
+**The projection this replaces said ~2 ms, and it was wrong about the
+mechanism.** It counted the query plus one round trip. A request is about
+eleven: `request_connection` opens a fresh connection and issues two setup
+statements before the query, and connection setup — TLS, and SCRAM, which is
+deliberately CPU-expensive — has a floor that geography never touched. The
+projection was right that the region dominated and wrong about what the region
+was multiplying.
+
+**These are server-side numbers.** `ms` is recorded before the response is
+written, so it excludes the network and the response write. It is not what a
+user waits, and **render and layout cost remains unmeasured** — see
+`LATENCY-MEASUREMENT.md` §0, which separates measurement from inference
+line by line.
 
 ### What the measurement found
 
@@ -299,4 +321,6 @@ from the HTML so a new dependency cannot be added silently, and
 3. A sign-in with a personal Google account **carrying an IK address** is
    refused, and the message names the `hd` claim. This is the case
    `email.endsWith()` accepts.
-4. Re-measure the table above in-region and replace the projection.
+4. ~~Re-measure the table above in-region and replace the projection.~~
+   **Done 2026-09-18** — see the latency section above and
+   `LATENCY-MEASUREMENT.md`. Render cost is still unmeasured.
