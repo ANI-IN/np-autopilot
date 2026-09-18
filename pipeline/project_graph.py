@@ -170,8 +170,16 @@ def main() -> int:
         return 0
 
     manifest = json.loads((KNOWLEDGE_DIR / "files.json").read_text(encoding="utf-8"))
+    # DRIVE_URL IS DERIVED HERE, not stored by pass 1, so the shape of the link
+    # is one decision in one place. `open?id=` rather than `/file/d/<id>/view`
+    # because the corpus holds several Drive types and only the generic form
+    # resolves all of them.
+    def _drive_url(fid):
+        return f"https://drive.google.com/open?id={fid}" if fid else None
+
     files = [(r["path"], r.get("sha256"), r.get("bytes"), r.get("sheet_count"),
-              bool(r.get("parsed")))
+              bool(r.get("parsed")), r.get("drive_file_id"),
+              _drive_url(r.get("drive_file_id")))
              for r in manifest["files"] + manifest["failures"]]
     node_types = [(n["name"], (n.get("description") or "").strip()[:400])
                   for n in taxonomy.node_types()]
@@ -193,8 +201,8 @@ def main() -> int:
                 "insert into edge_rels(name,from_type,to_type,description) "
                 "values (%s,%s,%s,%s)", edge_rels)
             cur.executemany(
-                "insert into files(relative_path,sha256,bytes,sheet_count,parsed) "
-                "values (%s,%s,%s,%s,%s)", files)
+                "insert into files(relative_path,sha256,bytes,sheet_count,parsed,"
+                "drive_file_id,drive_url) values (%s,%s,%s,%s,%s,%s,%s)", files)
 
             with cur.copy("copy nodes (id,type,label,label_raw,sensitive,props) "
                           "from stdin") as cp:

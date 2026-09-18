@@ -60,6 +60,23 @@ background:#0f141a}
 #gatemsg{margin-top:12px;font-size:11.5px;line-height:1.55;color:#8b949e}
 #gsi{margin-top:16px;min-height:44px}
 
+/* ---- provenance, grouped by file --------------------------------------
+   The file COUNT leads because that is the cross_validated signal; the rows
+   are behind a per-file disclosure. Grouping is presentational only — see
+   renderProvenance(). */
+.provsum{font-size:11px;color:#c9d1d9;margin:4px 0 8px}
+.provsum .dim,.pf .dim{color:#6e7681;font-weight:400}
+.pf{border:1px solid #21262d;border-radius:6px;margin-bottom:5px;overflow:hidden}
+.pfhead{display:flex;align-items:baseline;gap:8px;padding:6px 9px;cursor:pointer;
+  font-size:10.5px;background:#0f141a}
+.pfhead:hover{background:#12191f}
+.pfcount{min-width:34px;text-align:right;color:#c9d1d9;font-weight:600}
+.pfname{flex:1;color:#8b949e;word-break:break-all}
+.pflink{color:#4c8dff;text-decoration:none;white-space:nowrap}
+.pflink:hover{text-decoration:underline}
+.pfrows{padding:2px 9px 7px 51px;border-top:1px solid #21262d;background:#0d1117}
+.pfrows .src{padding:1px 0}
+
 /* ---- the curation surface (admin only) --------------------------------
    Deliberately NOT styled to suggest a ranking. No candidate is emphasised
    over another, the order is the corpus owner's recorded order, and there is
@@ -781,6 +798,35 @@ async function openNode(id){
 // become invisible again in a UI. So the two are rendered as different things —
 // different border, different ground, their own heading — rather than one list
 // with a flag. A flag is something a renderer can forget.
+// ---- THE PROVENANCE PANEL, GROUPED BY FILE -------------------------------
+// 152 provenance rows on one instructor is CORRECT DATA. §A.4 established that
+// one assertion per source row is legitimate evidence, not duplication: the
+// same fact read from 147 schedule rows is 147 separate observations, and the
+// worst case in the corpus is a module cited 1,014 times across 2 files.
+//
+// THE GROUPING IS PRESENTATIONAL ONLY. Nothing is collapsed in the data, the
+// API returns every row, and the counts below are computed from those rows.
+// DO NOT DEDUPE AT SOURCE. The next person to see 147 near-identical lines
+// will want to, and §A.4 is why they must not: the duplicates are the evidence
+// that the claim is cross-file rather than a single sheet repeated.
+//
+// A flat list buried the thing that decides trust — how many DISTINCT FILES
+// cite this — which is the cross_validated signal. So the file count leads and
+// the rows are behind a disclosure.
+function groupByFile(rows){
+  const by=new Map();
+  for(const r of rows){
+    const k=r.file||'(no file)';
+    if(!by.has(k)) by.set(k,{file:k, drive_url:r.drive_url||null,
+                             sheet_count:r.sheet_count||null, rows:[]});
+    by.get(k).rows.push(r);
+  }
+  // Most-cited first. This is an ORDERING of evidence, not a ranking of
+  // candidates — the thing §F3 forbids is choosing FOR someone, and a reader
+  // needs the bulk of the evidence first.
+  return [...by.values()].sort((a,b)=>b.rows.length-a.rows.length);
+}
+
 async function renderProvenance(id){
   const box=document.getElementById('files');
   box.innerHTML='<div class="src">loading provenance…</div>';
@@ -792,18 +838,38 @@ async function renderProvenance(id){
   if(n&&out.node){ n.st=(out.node.props||{}).status||n.st;
                    n.raw=out.node.label_raw||n.raw; }
   const p=out.provenance||{corpus:[],hand:[]};
-  const cite=r=>[r.file,r.sheet?'!'+r.sheet:'',r.row_num?' r'+r.row_num:'',
+  const cite=r=>[r.sheet?'!'+r.sheet:'', r.row_num?' r'+r.row_num:'',
                  r.col_name?' '+r.col_name:(r.col_num?' c'+r.col_num:''),
-                 r.page?' p'+r.page:''].join('');
+                 r.page?' p'+r.page:''].join('').trim() || 'whole file';
+
   let html='';
-  // The load-bearing typo rule: label_raw is the citation key back to source.
   if(n&&n.raw&&n.raw!==n.l)
     html+='<div class="src">as written in the corpus: <b>'+esc(n.raw)+'</b></div>';
+
+  const groups=groupByFile(p.corpus);
   html+='<div class="tagline prov-corpus" style="border:0;padding:0;margin-top:6px">'+
-        'From a scan of the corpus ('+p.corpus.length+')</div>';
-  html+=(p.corpus.map(r=>'<div class="prov-corpus"><div class="src">'+
-        esc(cite(r))+(r.prop?' <b>'+esc(r.prop)+'</b>':'')+'</div></div>').join('')
-    ||'<div class="src">none recorded</div>');
+        'From a scan of the corpus</div>';
+  if(!groups.length){
+    html+='<div class="src">none recorded</div>';
+  }else{
+    // THE JUDGEMENT A READER NEEDS IS THE FILE COUNT, not the row count.
+    html+='<div class="provsum">cited in <b>'+groups.length+'</b> '+
+          (groups.length===1?'file':'files')+
+          ' <span class="dim">· '+p.corpus.length+' source rows</span></div>';
+    html+=groups.map((g,i)=>
+      '<div class="pf"><div class="pfhead" data-g="'+i+'">'+
+        '<span class="pfcount">'+g.rows.length+'</span>'+
+        '<span class="pfname">'+esc(g.file)+'</span>'+
+        (g.sheet_count?'<span class="dim">'+g.sheet_count+' sheets</span>':'')+
+        (g.drive_url?'<a class="pflink" target="_blank" rel="noopener noreferrer" '+
+          'href="'+esc(g.drive_url)+'" title="Opens the FILE in Drive, not this row">'+
+          'open file ↗</a>':'')+
+      '</div><div class="pfrows" id="pfr-'+i+'" hidden>'+
+        g.rows.map(r=>'<div class="src">'+esc(cite(r))+
+          (r.prop?' <b>'+esc(r.prop)+'</b>':'')+'</div>').join('')+
+      '</div></div>').join('');
+  }
+
   if(p.hand.length){
     html+='<div class="tagline prov-hand" style="border:0;background:none;'+
           'padding:0;margin-top:10px">Entered by a person ('+p.hand.length+')</div>';
@@ -815,6 +881,15 @@ async function renderProvenance(id){
        '</div>':'')+'</div>').join('');
   }
   box.innerHTML=html;
+
+  // Collapsed by default; the disclosure is per file.
+  for(const h of box.querySelectorAll('.pfhead')){
+    h.onclick=(ev)=>{
+      if(ev&&ev.target&&ev.target.className==='pflink') return;  // the link is not the toggle
+      const r=document.getElementById('pfr-'+h.dataset.g);
+      if(r) r.hidden=!r.hidden;
+    };
+  }
 }
 
 function closePanel(){state.sel=null;document.getElementById('right').style.display='none'}

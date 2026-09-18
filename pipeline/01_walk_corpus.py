@@ -160,6 +160,25 @@ def main() -> int:
     else:
         root, source = corpus_root(), "local-folder"
 
+    # Pass 0 already knows every file's Drive id; nothing downstream did, so a
+    # provenance citation could name a file and not reach it. Carried here
+    # rather than re-fetched: this is a read of pass 0's own manifest, so it
+    # adds no Drive call and no new scope.
+    #
+    # ABSENT ON THE FALLBACK PATH, deliberately. A local hand-exported folder
+    # has no Drive identity, and inventing one would make a link that either
+    # 404s or, worse, points at a DIFFERENT file with the same name.
+    drive_ids: dict[str, str] = {}
+    if source == "drive-cache":
+        man = cache / ".manifest.json"
+        if man.is_file():
+            try:
+                drive_ids = {e["path"]: e["id"]
+                             for e in json.loads(man.read_text(encoding="utf-8"))
+                             .get("files", []) if e.get("id")}
+            except Exception as exc:                          # noqa: BLE001
+                print(f"! could not read pass-0 manifest ids: {exc}")
+
     print("=" * 78)
     print("PASS 1 — walk corpus")
     print("=" * 78)
@@ -203,6 +222,8 @@ def main() -> int:
         rec = {"path": rel, "sha256": digest, "bytes": path.stat().st_size,
                "mtime": datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat(timespec="seconds"),
                "sniffed": kind, "suffix": path.suffix.lower(), "parsed": ok, **shape}
+        if rel in drive_ids:
+            rec["drive_file_id"] = drive_ids[rel]
         if ok:
             records.append(rec)
         else:

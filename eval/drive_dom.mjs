@@ -112,7 +112,21 @@ globalThis.fetch=async(url,opts)=>{
     return jsonResponse({node:{id:'n7', type:'person', label:HOSTILE,
                                label_raw:HOSTILE, props:{}},
       provenance:{corpus:[{origin:'corpus', file:HOSTILE, sheet:'Sheet1',
-                           row_num:12, prop:'title'}],
+                           row_num:12, prop:'title'},
+                          // Three rows in ONE other file, so grouping is
+                          // observable: 4 rows across 2 files.
+                          {origin:'corpus', file:'05-operations/Schedule.xlsx',
+                           sheet:'Q1', row_num:7, prop:'teaches',
+                           drive_url:'https://drive.google.com/open?id=TESTID',
+                           sheet_count:9},
+                          {origin:'corpus', file:'05-operations/Schedule.xlsx',
+                           sheet:'Q1', row_num:8, prop:'teaches',
+                           drive_url:'https://drive.google.com/open?id=TESTID',
+                           sheet_count:9},
+                          {origin:'corpus', file:'05-operations/Schedule.xlsx',
+                           sheet:'Q2', row_num:9, prop:'teaches',
+                           drive_url:'https://drive.google.com/open?id=TESTID',
+                           sheet_count:9}],
                   hand:[{origin:'hand', prop:'title', evidence:HOSTILE,
                          entered_at:'2026-09-10'}],
                   hand_note:'Out-of-corpus evidence, entered by a person.'}});
@@ -466,7 +480,36 @@ if(PORTED){
 // the reasoning is REQUIRED, and an alias the data cannot settle is not
 // presented as a decision waiting on a person.
 if(PORTED){
-  console.log('\n=== CURATION SURFACE ===');
+  console.log('\n=== PROVENANCE, GROUPED BY FILE ===');
+  {
+    const ph = store.get('files').innerHTML;
+    // 1. The FILE COUNT leads. 152 rows is not the judgement a reader needs;
+    //    "cited in N files" is, because that is the cross_validated signal.
+    const leads = /cited in <b>2<\/b> files/.test(ph);
+    console.log('  leads with the file count           :', leads);
+    if(!leads) errors.push('THE PANEL DOES NOT LEAD WITH THE DISTINCT-FILE COUNT');
+
+    // 2. Every row is still present — grouping is PRESENTATIONAL, and nothing
+    //    may be collapsed in the data. §A.4: the duplicates are the evidence.
+    const allRows = (ph.match(/ r\d+/g)||[]).length;
+    console.log('  every source row still rendered     :', allRows===4, '('+allRows+' of 4)');
+    if(allRows!==4) errors.push('PROVENANCE ROWS WERE DROPPED BY THE GROUPING — §A.4');
+
+    // 3. Collapsed by default: 152 open rows is the thing being fixed.
+    const collapsed = (ph.match(/class="pfrows"[^>]*hidden/g)||[]).length===2;
+    console.log('  file groups collapsed by default    :', collapsed);
+    if(!collapsed) errors.push('PROVENANCE GROUPS ARE NOT COLLAPSED BY DEFAULT');
+
+    // 4. The Drive link opens the FILE, and says so.
+    const link = ph.includes('drive.google.com/open?id=TESTID');
+    const saysFile = /Opens the FILE in Drive, not this row/.test(ph);
+    console.log('  drive link present                  :', link);
+    console.log('  and says it opens the file          :', saysFile);
+    if(!link) errors.push('NO DRIVE LINK ON A FILE THAT HAS ONE');
+    if(!saysFile) errors.push('THE DRIVE LINK DOES NOT SAY IT OPENS THE FILE, NOT THE ROW');
+  }
+
+console.log('\n=== CURATION SURFACE ===');
   await (0,eval)('openCuration()');
   const html = document.getElementById('curbody').innerHTML;
 

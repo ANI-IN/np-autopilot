@@ -272,11 +272,19 @@ def provenance(conn, node_id: str) -> dict:
     a flag, because a flag is something a UI can forget to render.
     """
     with conn.cursor() as cur:
+        # LEFT JOIN, not a join: a hand-entered fact names no file, and an
+        # inner join would silently drop exactly the rows §A.5 exists to keep
+        # visible. drive_url comes from `files` rather than being denormalised
+        # into every one of the 30,658 provenance rows.
         cur.execute("""
-            select origin, file, sheet, row_num, col_num, col_name, page,
-                   within_cell, ordinal, prop, evidence, entered_at
-            from node_sources where node_id = %s
-            order by origin, file nulls last, row_num nulls last, ordinal
+            select ns.origin, ns.file, ns.sheet, ns.row_num, ns.col_num,
+                   ns.col_name, ns.page, ns.within_cell, ns.ordinal, ns.prop,
+                   ns.evidence, ns.entered_at, f.drive_url, f.sheet_count
+            from node_sources ns
+            left join files f on f.relative_path = ns.file
+            where ns.node_id = %s
+            order by ns.origin, ns.file nulls last, ns.row_num nulls last,
+                     ns.ordinal
         """, (node_id,))
         rows = _rows(cur)
     corpus = [r for r in rows if r["origin"] == "corpus"]
