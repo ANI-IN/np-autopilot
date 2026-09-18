@@ -19,9 +19,21 @@ key **bypasses RLS entirely**. `AUTH.md` names it as layer 1's only leak path:
 > leaks only via the service-role key, which is why nothing in the web app has
 > it."*
 
-Nothing in `api/` or `web/lib/` reads it (`tests/test_login_flow.py::test_no_api_route_connects_
-as_owner_or_service_role` asserts that, matching the environment READ rather than
-the string, so the check survives someone deleting the comment). But the Supabase
+Nothing in `api/` or `web/lib/` reads it. `tests/test_login_flow.py::test_no_api_
+route_connects_as_owner_or_service_role` asserts that, matching the environment
+READ rather than the string, so the check survives someone deleting the comment.
+
+> **Corrected 2026-09-18 — the claim was true; the evidence cited for it was
+> not.** Until that date this test scanned `web/` only, while every HTTP route
+> lives in `api/` — eleven files it had never opened. So it was passing over the
+> directory it was named for. The *claim* survives on independent evidence: a
+> scan of the shipped bundle found **zero** service-role occurrences, and the
+> variable is not set in the Vercel project at all. What did not survive is the
+> test being the reason to believe it. The scan now covers both trees, and
+> `DECISIONS.md` §A.7b instance 8 records the pattern — a guard whose scope is
+> narrower than the rule it enforces, passing because it is looking in the wrong
+> place. **A green test over the wrong directory is not weaker evidence than a
+> green test over the right one; it is no evidence at all.** But the Supabase
 integration sets the variable in a linked Vercel project by default, and a
 variable nothing reads is still a variable anyone with the account can copy.
 

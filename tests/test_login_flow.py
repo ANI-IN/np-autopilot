@@ -285,29 +285,156 @@ def test_a_refused_signin_never_reaches_gotrue(signing, monkeypatch):
 # the shape of the deployed application
 # ---------------------------------------------------------------------------
 
-def test_every_api_route_goes_through_the_guard_or_is_the_session_route():
-    """No path reaches data without web/lib/auth.py.
+def _api_modules():
+    """Every route module actually shipped, found where they actually live."""
+    mods = sorted(p for p in (REPO / "api").glob("*.py")
+                  if p.name != "__init__.py")
+    assert mods, "no route modules found — this scan is looking in the wrong place"
+    return mods
 
-    Two shapes are permitted: a read route built with `serve(...)`, which calls
-    identify() and therefore auth.py; and the session route, which verifies
-    explicitly because it is the unauthenticated entry point. Anything else is
-    a route that could answer without an identity.
+
+def test_only_the_one_entrypoint_opens_a_database_connection():
+    """THERE IS NO SECOND FRONT DOOR.
+
+    Rewritten 2026-09-18. The previous version of this test scanned
+    `web/api/` — a directory that has not existed since the WSGI consolidation
+    moved every route to `api/` — so it ran over ZERO files and passed. Not a
+    narrow scope: an empty one, reading as present. DECISIONS §A.7b instance 8.
+
+    It also grepped for `serve(`, the per-file shell `api/index.py` deleted. So
+    simply re-pointing it at `api/` would have made it pass on `index.py`'s
+    docstring, which mentions `serve(...)` while describing its removal — the
+    USES-not-MENTIONS trap that
+    test_no_api_route_connects_as_owner_or_service_role was written to avoid.
+
+    Hence AST, not substrings: this sees calls, not prose. The property it
+    asserts is the one `api/index.py` actually provides — `_serve_read` is the
+    only code path to a connection, and it calls identify() unconditionally, so
+    a route cannot bring its own front door.
     """
+    import ast
+
+    openers = set()
+    for path in _api_modules():
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute) and node.attr == "request_connection":
+                openers.add(path.name)
+            if isinstance(node, ast.Name) and node.id == "request_connection":
+                openers.add(path.name)
+
+    assert openers, (
+        "no module opens a connection at all. Either the data layer was renamed "
+        "or this scan is again looking somewhere the routes are not — which is "
+        "the exact way this test spent months passing over an empty directory.")
+    # session.py is the ONE permitted exception and it is not a waiver: it is
+    # the unauthenticated entry point, so it cannot be served by _serve_read
+    # (there is no bearer token yet), and it must look up the profile of the
+    # identity it has just verified. Its compensating control is asserted
+    # below rather than assumed here.
+    assert openers == {"index.py", "session.py"}, (
+        f"{sorted(openers - {'index.py', 'session.py'})} open a database "
+        "connection outside the single entrypoint. Every read route must be "
+        "served by _serve_read, which calls identify() unconditionally.")
+
+
+def test_the_session_route_verifies_google_before_it_connects():
+    """The compensating control for the one module allowed its own connection.
+
+    session.py is exempt from _serve_read because it runs before a session
+    exists. That exemption is only safe while it verifies the Google token
+    FIRST — connecting on an unverified subject would hand `auth.uid()` a value
+    nobody checked.
+    """
+    import ast
+
+    src = (REPO / "api" / "session.py").read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    handle = next(n for n in ast.walk(tree)
+                  if isinstance(n, ast.FunctionDef) and n.name == "handle")
+    # Order WITHIN handle(), by line number. Comparing raw source offsets would
+    # match `def _profile(...)` — the definition, which necessarily precedes the
+    # call — and pass regardless of what handle() actually does.
+    seen = []
+    for node in ast.walk(handle):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            if node.func.id in {"verify_google_token", "_profile", "_session_payload"}:
+                seen.append((node.lineno, node.func.id))
+    order = [name for _ln, name in sorted(seen)]
+    assert "verify_google_token" in order, \
+        "handle() no longer verifies the Google token at all"
+    first_db = next((i for i, n in enumerate(order)
+                     if n in {"_profile", "_session_payload"}), None)
+    assert first_db is None or order.index("verify_google_token") < first_db, \
+        ("the session route reaches the database before it verifies the Google "
+         "token — it would be connecting on a subject nobody checked")
+
+
+def test_the_entrypoint_identifies_before_it_connects():
+    """The guard is not merely present in the file; it runs first.
+
+    A test that only checked identify() appears somewhere in index.py would
+    pass if it were called after the connection was opened, or in dead code.
+    """
+    import ast
+
+    src = (REPO / "api" / "index.py").read_text(encoding="utf-8")
+    fn = next(n for n in ast.walk(ast.parse(src))
+              if isinstance(n, ast.FunctionDef) and n.name == "_serve_read")
+    calls = [c.func.id for c in ast.walk(fn)
+             if isinstance(c, ast.Call) and isinstance(c.func, ast.Name)]
+    attrs = [f"{c.func.value.id}.{c.func.attr}" for c in ast.walk(fn)
+             if isinstance(c, ast.Call) and isinstance(c.func, ast.Attribute)
+             and isinstance(c.func.value, ast.Name)]
+    assert "identify" in calls, "_serve_read no longer identifies the caller"
+    assert "data.request_connection" in attrs, \
+        "_serve_read no longer opens the connection — the shape changed"
+    # Source order is the readable check, and it is the one that matters.
+    assert src.index("identify(_Headers(environ))") < \
+        src.index("data.request_connection("), \
+        "identify() no longer runs before the connection is opened"
+
+
+def test_no_route_module_builds_its_own_http_shell():
+    """A module that answers HTTP itself would bypass _serve_read entirely."""
+    import ast
+
     offenders = []
-    for path in sorted((REPO / "web" / "api").glob("*.py")):
-        src = path.read_text(encoding="utf-8")
-        if "serve(" in src:
+    for path in _api_modules():
+        if path.name == "index.py":
             continue
-        if path.name == "session.py":
-            assert "verify_google_token" in src
-            continue
-        if path.name == "config.py":
-            # Serves three public values and touches no database.
-            assert "request_connection" not in src and "psycopg" not in src
-            continue
-        offenders.append(path.name)
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name in {"do_GET", "do_POST", "app"}:
+                offenders.append(f"{path.name}::{node.name}")
+            if isinstance(node, ast.Attribute) and node.attr == "BaseHTTPRequestHandler":
+                offenders.append(f"{path.name}::BaseHTTPRequestHandler")
     assert not offenders, (
-        f"{offenders} reach the application without going through the guard")
+        f"{offenders} answer HTTP directly. There is one entrypoint so that no "
+        "route can forget the guard; a second one reintroduces exactly that.")
+
+
+def test_every_endpoint_module_is_registered():
+    """A route module nobody registered is dead code that looks live.
+
+    The inverse of the guard question: not "can a registered route skip the
+    guard" but "is there a module that believes it is a route and is not one".
+    """
+    import sys as _sys
+    _sys.path.insert(0, str(REPO / "api"))
+    _sys.path.insert(0, str(REPO / "web"))
+    import index                                                  # noqa: E402
+
+    registered = {fn.__module__ for _name, fn in index.READS.values()}
+    declared = set()
+    for path in _api_modules():
+        src = path.read_text(encoding="utf-8")
+        if "ENDPOINT = (" in src and path.name != "index.py":
+            declared.add(path.stem)
+    assert declared, "no module declares an ENDPOINT — the scan found nothing"
+    assert declared <= registered | {"config", "session"}, (
+        f"{sorted(declared - registered)} declare an ENDPOINT but are not in "
+        "api/index.py's READS table — dead code shaped like a live route.")
 
 
 def test_no_api_route_connects_as_owner_or_service_role():
