@@ -52,13 +52,62 @@ letter-spacing:.06em;font-weight:600}
 letter-spacing:.06em;font-weight:600}
 /* ---- the auth gate ---- */
 #gate{position:fixed;inset:0;z-index:50;background:#0d1117;display:flex;
-align-items:center;justify-content:center;overflow:auto;padding:24px}
-@media (max-height:720px){#gate{align-items:flex-start}}
-#gatebox{max-width:540px;padding:26px 28px;border:1px solid #21262d;border-radius:10px;
-background:#0f141a}
-#gatebox h1{font-size:17px}
-#gatemsg{margin-top:12px;font-size:11.5px;line-height:1.55;color:#8b949e}
-#gsi{margin-top:16px;min-height:44px}
+align-items:flex-start;justify-content:center;overflow:auto}
+#gatebox{width:100%;max-width:1180px;min-height:100%;background:#0d1117}
+
+/* ---- LANDING (direction A, "the instrument") ---------------------------
+   HIERARCHY COMES FROM SCALE, WEIGHT AND SPACE, not from a typeface. The CSP
+   permits no external font and no icon set -- style-src names no font host and
+   there is no font-src, so it falls back to 'self'. That is a real constraint
+   and this is the honest way to work inside it.
+   The hero graphic is inline SVG in the explorer's OWN node-type colours, so
+   the landing page and the graph speak one language. It is static and
+   decorative: it touches no simulation state and no node coordinate. */
+.lp-hero{position:relative;padding:56px 44px 0;overflow:hidden}
+.lp-web{position:absolute;inset:0;width:100%;height:100%;opacity:.5;pointer-events:none}
+.lp-heroinner{position:relative}
+.lp-mark{font:600 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.2em;text-transform:uppercase;color:#6e7681;margin-bottom:16px}
+#gatebox h1{font-size:42px;line-height:1.02;letter-spacing:-.03em;margin:0 0 16px;
+  font-weight:650;text-wrap:balance;color:#e6edf3}
+#gatebox .sub{font-size:15.5px;line-height:1.55;color:#8b949e;max-width:46ch;margin:0 0 30px}
+.lp-signin{display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding-bottom:52px}
+#gsi{min-height:44px}
+#gatemsg{font-size:11.5px;line-height:1.55;color:#6e7681;max-width:34ch}
+
+/* THE TWO SECTIONS ARE NOT EQUAL. "What it will not tell you" is the section
+   that earns the page, so it gets the wider column and the larger type rather
+   than being the longer list in smaller grey. */
+.lp-cols{display:grid;grid-template-columns:1fr 1.45fr;border-top:1px solid #21262d}
+.lp-col{padding:30px 44px 34px}
+.lp-col+.lp-col{border-left:1px solid #21262d}
+.lp-limits{background:linear-gradient(180deg,#1a1206,transparent 62%)}
+#gatebox h2{font:600 10.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.16em;text-transform:uppercase;margin:0 0 18px;color:#6e7681}
+.lp-limits h2{color:#d29922}
+.lp-item{margin-bottom:17px}
+.lp-item:last-child{margin-bottom:0}
+.lp-item .k{display:block;font-size:13px;font-weight:600;margin-bottom:3px;color:#c9d1d9}
+.lp-limits .lp-item .k{font-size:14.5px}
+.lp-item .v{font-size:12px;line-height:1.6;color:#8b949e}
+.lp-limits .lp-item .v{font-size:12.5px;line-height:1.65}
+
+/* Deliberate, not a footer: an instrument readout. Every figure is generated
+   from the projection by pipeline/gen_landing_stats.py. */
+.lp-readout{display:flex;flex-wrap:wrap;border-top:1px solid #21262d;background:#0c1116}
+.lp-cell{flex:1 1 auto;min-width:118px;padding:14px 18px;border-right:1px solid #21262d}
+.lp-cell:last-child{border-right:0}
+.lp-cell .n{font:600 16px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-variant-numeric:tabular-nums;color:#c9d1d9}
+.lp-cell .l{font:10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.11em;
+  text-transform:uppercase;color:#6e7681;margin-top:7px;display:block}
+
+@media (max-width:760px){
+  .lp-hero,.lp-col{padding-left:22px;padding-right:22px}
+  .lp-cols{grid-template-columns:1fr}
+  .lp-col+.lp-col{border-left:0;border-top:1px solid #21262d}
+  #gatebox h1{font-size:32px}
+}
 
 /* ---- provenance, grouped by file --------------------------------------
    The file COUNT leads because that is the cross_validated signal; the rows
@@ -205,49 +254,82 @@ background:#0f141a}
 </div>
 
 <div id="gate"><div id="gatebox">
-  <h1>NP Autopilot</h1>
-  <div class="sub">A knowledge graph over Interview Kickstart&rsquo;s New Programs
-    corpus &mdash; domains, programs, modules, instructors, and the workflows
-    that run them.</div>
 
-  <div id="gatemsg">Sign in with your Interview Kickstart Workspace account.</div>
-  <div id="gsi"></div>
-
-  <div class="lp">
-    <h2>What it answers well</h2>
-    <ul>
-      <li><b>Who staffs a domain.</b> Owners and delivery, and the instructors
-        who teach its modules.</li>
-      <li><b>What a workflow involves.</b> Its steps, effort, tools and alert
-        conditions.</li>
-      <li><b>Where a fact came from.</b> Every node cites the file, sheet and
-        row it was read from &mdash; and says when a person entered it by hand
-        instead.</li>
-    </ul>
-
-    <h2>What it will not tell you</h2>
-    <ul>
-      <li><b>A miss is not evidence of absence.</b> Search matches labels in
-        this graph. Not finding something means this graph does not hold it,
-        which is not the same as the corpus not holding it.</li>
-      <li><b>Counts are floors, not totals.</b> Not every worksheet in the
-        corpus has been read by an extraction scan, so people, instructors and
-        modules are lower bounds. Treat them as &ldquo;at least&rdquo;.</li>
-      <li><b>Some emptiness is the right answer.</b> Workflows have no owners
-        because ownership at New Programs attaches to domains, not workflows.
-        Android and iOS have no instructors. Both are correct, not gaps.</li>
-      <li><b>It refuses rather than guesses.</b> Where the evidence is genuinely
-        ambiguous &mdash; three different people called Karthika, an alias that
-        could mean two domains &mdash; it says so instead of picking one.</li>
-    </ul>
-
-    <div id="fresh">
-      <b id="st-nodes">&mdash;</b> nodes &middot;
-      <b id="st-edges">&mdash;</b> edges &middot;
-      <b id="st-files">&mdash;</b> corpus files &middot;
-      corpus as of <b id="st-date">&mdash;</b>
+  <div class="lp-hero">
+    <svg class="lp-web" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <g stroke="#2b3742" stroke-width="1" fill="none">
+        <line x1="120" y1="300" x2="305" y2="208"/><line x1="305" y1="208" x2="470" y2="276"/>
+        <line x1="470" y1="276" x2="648" y2="196"/><line x1="648" y1="196" x2="812" y2="268"/>
+        <line x1="812" y1="268" x2="980" y2="188"/><line x1="980" y1="188" x2="1104" y2="286"/>
+        <line x1="305" y1="208" x2="352" y2="92"/><line x1="470" y1="276" x2="404" y2="380"/>
+        <line x1="648" y1="196" x2="700" y2="86"/><line x1="648" y1="196" x2="592" y2="352"/>
+        <line x1="812" y1="268" x2="884" y2="368"/><line x1="980" y1="188" x2="1042" y2="80"/>
+        <line x1="120" y1="300" x2="186" y2="128"/><line x1="352" y1="92" x2="700" y2="86"/>
+        <line x1="404" y1="380" x2="592" y2="352"/><line x1="884" y1="368" x2="1104" y2="286"/>
+        <line x1="186" y1="128" x2="352" y2="92"/><line x1="1042" y1="80" x2="1104" y2="286"/>
+      </g>
+      <g>
+        <circle cx="120" cy="300" r="7" fill="#4c8dff"/><circle cx="305" cy="208" r="10" fill="#4c8dff"/>
+        <circle cx="470" cy="276" r="6" fill="#00c2d1"/><circle cx="648" cy="196" r="11" fill="#a371f7"/>
+        <circle cx="812" cy="268" r="6" fill="#00c2d1"/><circle cx="980" cy="188" r="9" fill="#3fb950"/>
+        <circle cx="1104" cy="286" r="5" fill="#f0883e"/><circle cx="352" cy="92" r="5" fill="#db61a2"/>
+        <circle cx="404" cy="380" r="5" fill="#f0883e"/><circle cx="700" cy="86" r="6" fill="#d29922"/>
+        <circle cx="592" cy="352" r="5" fill="#00c2d1"/><circle cx="884" cy="368" r="5" fill="#a371f7"/>
+        <circle cx="1042" cy="80" r="6" fill="#3fb950"/><circle cx="186" cy="128" r="5" fill="#db61a2"/>
+      </g>
+    </svg>
+    <div class="lp-heroinner">
+      <div class="lp-mark">Interview Kickstart &middot; New Programs</div>
+      <h1>NP Autopilot</h1>
+      <p class="sub">A knowledge graph over Interview Kickstart&rsquo;s New Programs
+        corpus &mdash; domains, programs, modules, instructors, and the workflows
+        that run them.</p>
+      <div class="lp-signin">
+        <div id="gsi"></div>
+        <div id="gatemsg">Sign in with your Interview Kickstart Workspace account.</div>
+      </div>
     </div>
   </div>
+
+  <div class="lp-cols">
+    <div class="lp-col">
+      <h2>What it answers well</h2>
+      <div class="lp-item"><span class="k">Who staffs a domain.</span>
+        <span class="v">Owners and delivery, and the instructors who teach its modules.</span></div>
+      <div class="lp-item"><span class="k">What a workflow involves.</span>
+        <span class="v">Its steps, effort, tools and alert conditions.</span></div>
+      <div class="lp-item"><span class="k">Where a fact came from.</span>
+        <span class="v">Every node cites the file, sheet and row it was read from &mdash;
+          and says when a person entered it by hand instead.</span></div>
+    </div>
+    <div class="lp-col lp-limits">
+      <h2>What it will not tell you</h2>
+      <div class="lp-item"><span class="k">A miss is not evidence of absence.</span>
+        <span class="v">Search matches labels in this graph. Not finding something means
+          this graph does not hold it, which is not the same as the corpus not
+          holding it.</span></div>
+      <div class="lp-item"><span class="k">Counts are floors, not totals.</span>
+        <span class="v">Not every worksheet in the corpus has been read by an extraction
+          scan, so people, instructors and modules are lower bounds. Treat them as
+          &ldquo;at least&rdquo;.</span></div>
+      <div class="lp-item"><span class="k">Some emptiness is the right answer.</span>
+        <span class="v">Workflows have no owners because ownership at New Programs
+          attaches to domains, not workflows. Android and iOS have no instructors.
+          Both are correct, not gaps.</span></div>
+      <div class="lp-item"><span class="k">It refuses rather than guesses.</span>
+        <span class="v">Where the evidence is genuinely ambiguous &mdash; three different
+          people called Karthika, an alias that could mean two domains &mdash; it says
+          so instead of picking one.</span></div>
+    </div>
+  </div>
+
+  <div class="lp-readout">
+    <div class="lp-cell"><span class="n" id="st-nodes">&mdash;</span><span class="l">nodes</span></div>
+    <div class="lp-cell"><span class="n" id="st-edges">&mdash;</span><span class="l">edges</span></div>
+    <div class="lp-cell"><span class="n" id="st-files">&mdash;</span><span class="l">corpus files</span></div>
+    <div class="lp-cell"><span class="n" id="st-date">&mdash;</span><span class="l">corpus as of</span></div>
+  </div>
+
 </div></div>
 
 <script>

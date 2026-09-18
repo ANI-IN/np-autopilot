@@ -67,6 +67,20 @@ specifying the default view:
 - **"shipping all 5,048 nodes"** (was in `public/index.html`) — the client can
   never receive 5,048. Sensitive rows are not projected at all.
 
+### A fourth stale number, different cause, same lesson
+
+**`05-taxonomy-proposal.md` §92 says the Uplevel/Drive resource links are "158
+mentions across 30 curriculum sheets".** Measured 2026-09-18: **226 distinct
+Drive/Docs URLs across 2 workbooks** — `Data and Management.xlsx` (150) and
+`Resource Collection Mastersheet (Software + System).xlsx` (76). By kind:
+presentation 59, document 59, spreadsheets 54, drive 50, file 4.
+
+Not the two-graphs confusion — just a number written once and never
+re-measured. It matters because that line is the **Tool promotion trigger**: it
+is the evidence for whether `Resource` earns a node type, and the decision was
+resting on a figure that was wrong by 43% and wrong about the shape (2
+workbooks, not 30 sheets).
+
 **Before quoting any count, say which graph it is about.** If a number comes
 from a document in the left column and the sentence is about the explorer, it is
 probably wrong.

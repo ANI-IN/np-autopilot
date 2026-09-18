@@ -90,6 +90,11 @@ def test_no_count_on_the_landing_page_is_hand_written():
     box = html[html.index('<div id="gate">'):html.index('</div></div>', html.index('<div id="gate">'))]
     # Strip the placeholders the script fills from stats.json.
     prose = re.sub(r'id="st-[a-z]+"[^>]*>[^<]*<', ">/<", box)
+    # ...and the hero SVG. Its coordinates are GEOMETRY, not counts: a viewBox
+    # and a cx are not claims about the graph and cannot go stale. Narrowed
+    # rather than relaxed — the rule is "no count typed into the copy", and the
+    # mutation test below still proves a number in the prose is caught.
+    prose = re.sub(r"<svg[\s\S]*?</svg>", "", prose)
     stray = [m for m in re.findall(r"\b\d[\d,]{2,}\b", prose)]
     assert not stray, (
         f"hand-written counts in the landing markup: {stray}. Every number "
