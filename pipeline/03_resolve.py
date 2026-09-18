@@ -85,6 +85,26 @@ def load_people() -> tuple[dict, dict]:
     return alias_to_canon, meta
 
 
+def load_pins(people_meta: dict) -> set[frozenset]:
+    """Pairs a human has recorded as NOT the same person.
+
+    `not_same_as` has been in people.yaml since the Karthika work — 16 pins
+    across 6 people — and until now NOTHING READ IT. It carried a stated
+    guarantee ("pinned so no fuzzy pass ever merges them") that no code
+    implemented: DECISIONS §A.7b instance 9, in a config file.
+
+    It is cheap to honour and it is the right mechanism for this. A pin is a
+    decision a person already made with the corpus in front of them; re-showing
+    the same pair as a fresh proposal invites a second, worse decision from
+    somebody with less context.
+    """
+    pins: set[frozenset] = set()
+    for canon, p in people_meta.items():
+        for other in (p.get("not_same_as") or []):
+            pins.add(frozenset({canon.strip().lower(), str(other).strip().lower()}))
+    return pins
+
+
 def main() -> int:
     payload = json.loads((KNOWLEDGE_DIR / "candidates.json").read_text(encoding="utf-8"))
     cands = payload["candidates"]
@@ -182,6 +202,8 @@ def main() -> int:
         return (len(short) >= 2 and len(long_) == len(short) + 1
                 and short[0] == long_[0] and short[-1] == long_[-1])
 
+    pins = load_pins(people_meta)
+    suppressed = []
     for name in unresolved_names:
         close = difflib.get_close_matches(name, canon_names, n=3, cutoff=FUZZY_THRESHOLD)
         close = [m for m in close if m.lower() != name.lower()]
@@ -189,6 +211,13 @@ def main() -> int:
             if m.lower() != name.lower() and middle_name_variant(name, m) and m not in close:
                 close.append(m)
         for m in close:
+            # A RECORDED DECISION OUTRANKS A SIMILARITY SCORE. These pairs were
+            # settled by a human against the corpus; proposing them again is how
+            # a settled question gets reopened by someone with less context, and
+            # `Abhinav Rawat` alone is pinned apart from eight other Abhinavs.
+            if frozenset({name.lower(), m.lower()}) in pins:
+                suppressed.append((name, m))
+                continue
             ratio = difflib.SequenceMatcher(None, name.lower(), m.lower()).ratio()
             proposed.append({"candidate": name, "possible_match": m,
                              "similarity": round(ratio, 3), "applied": False,
@@ -300,6 +329,13 @@ def main() -> int:
         print(f"  {p['candidate']!r:<30} ~ {p['possible_match']!r:<26} "
               f"sim={p['similarity']}  applied={p['applied']}")
     print(f"  {len(proposed)} proposed, 0 applied")
+    # Reported, not silent. A suppression nobody sees is indistinguishable from
+    # a pair the matcher never found — and that difference is the whole point.
+    if suppressed:
+        print()
+        print(f"  {len(suppressed)} suppressed by a recorded not_same_as pin:")
+        for a, b in suppressed:
+            print(f"    {a}  /  {b}")
     print()
 
     inst_names = sorted({n["label"] for n in resolved_nodes.values()

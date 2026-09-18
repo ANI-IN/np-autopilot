@@ -2738,3 +2738,7 @@ document of ours. Final hash `a53462823ca26466fc5e6b3bf18615ec51bb96ed003249a866
 ## 2026-09-18 17:05:59Z — validate
 
 - validate: 0 FAIL, 6 WARN, 13/20 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-18 17:53:43Z — 03_resolve
+
+- Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
