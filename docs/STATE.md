@@ -37,7 +37,7 @@ rather than assumed, it says so.
 | Graph in Postgres | **3,146 nodes / 4,021 edges** (public half only) |
 | Provenance | 30,658 `node_sources` rows over **74 files** |
 | Curation | 20 people, 15 confirmed aliases + 6 unresolved, 92 workflow owners, **45 `curation_notes`** |
-| Sensitive | **Zero rows projected.** `project_graph.py --scope full` is refused while R18 is open |
+| Sensitive | **Zero rows projected.** `--scope full` refuses — but **not for the reason this table used to give.** R18 appears nowhere in `project_graph.py`; the program's own blocker was a hardcoded claim that the `recruiting` RLS path was missing, and that path **exists** (`nodes_recruiting_select`, `np_can_see_sensitive()`). Both claims outlived their conditions. The refusal is now derived, and refuses on the real ground: the **decision** is unrecorded — `docs/INGEST-SCOPE-REVERSAL.md`, approval block blank. `DECISIONS.md` §A.7b instance 9 |
 | Migrations | **0001–0015 applied.** `python3 pipeline/migrate.py status` |
 | Profiles | `animesh.kumar@…` = `member`; `b2c-courses-new-programs@…` = `member`, `is_shared_account=true` (correctly capped — it cannot hold `recruiting` or `admin`) |
 

@@ -199,6 +199,25 @@ def origin_hand() -> str:
 # Exclusions and assertions
 # --------------------------------------------------------------------------
 
+def property_scopes() -> dict[str, str]:
+    """property name -> 'public' | 'sensitive'. The ONLY reader of the config.
+
+    An unclassified property is not defaulted; callers are expected to refuse.
+    See config/taxonomy.yaml for why the default is nothing.
+    """
+    raw = _raw().get("property_scopes") or {}
+    out: dict[str, str] = {}
+    for scope in ("public", "sensitive"):
+        for name in (raw.get(scope) or []):
+            out[str(name)] = scope
+    return out
+
+
+def property_scope(name: str) -> str | None:
+    """None means UNCLASSIFIED — the caller must treat that as a failure."""
+    return property_scopes().get(name)
+
+
 def excluded_files() -> list[str]:
     return [f["path"] for f in _raw().get("excluded", {}).get("files", [])]
 

@@ -335,8 +335,8 @@ claim.
 > **A guard that fails by returning "nothing happened" is indistinguishable
 > from the absence it was written to detect.**
 
-Eight instances now, and they are not eight bugs — they are one bug wearing
-eight costumes. Six fail by returning nothing; the seventh enforces a lie; the
+Nine instances now, and they are not nine bugs — they are one bug wearing
+nine costumes. Six fail by returning nothing; the seventh enforces a lie; the
 eighth enforces correctly over a scope smaller than the rule it claims. Naming it is worth more than the individual fixes, because every one
 of them was caught by a test that existed for another reason entirely. None was
 caught by the guard itself, by review, or by reading the code.
@@ -556,6 +556,48 @@ violation in `web/` or `api/`:
 **Three of seven had a scope that did not match their rule; two were fixed here
 and one needs its own change.** The four that are correct share a property worth
 copying: their scope *is* the rule's subject, so there is no gap to drift.
+
+#### The ninth: a constraint that lives in the prose and not in the program
+
+Found 2026-09-18, re-checking whether `--scope full` was still blocked.
+
+`STATE.md` said the blocker was **R18**. The program said the blocker was a
+missing **`recruiting` RLS path**. Measured, both were false:
+
+| claim | where | truth |
+|---|---|---|
+| "blocked while R18 is open" | `STATE.md`, prose | R18 appears nowhere in `project_graph.py`. The program never implemented it |
+| "the recruiting RLS path does not exist yet" | `project_graph.py`, a hardcoded `sys.exit` | `nodes_recruiting_select` and `np_can_see_sensitive()` both exist, and `edges` / `node_sources` gate on node visibility. The path is complete |
+
+Two different failures that arrive at the same place:
+
+> **A constraint stated in documentation that the program does not implement,
+> and a constraint hardcoded in the program that nobody re-checked. In both, the
+> claim outlived the condition that made it true — and in both, the claim is
+> what a reader trusts.**
+
+**Why this is not instance 7.** Seven is a check that RUNS, correctly, over a
+value that is a lie. This is a check that never existed (the prose), and one that
+exists but evaluates nothing (the hardcode). Nothing is computed in either case,
+so there is nothing that could notice the world had changed.
+
+**And why it is worse than being merely stale.** A hardcoded refusal is wrong in
+whichever direction the world moves. It blocked correct work here. Had the policy
+been **dropped** instead of added, the same line would have waved the projection
+through — because it asserts a conclusion rather than checking one, it cannot be
+wrong in a safe direction.
+
+**The fix is the rule already established in A.7a and instance 8: derive, do not
+assert.** `_missing_recruiting_path()` now queries `pg_policies` and `pg_proc`
+and refuses on what is actually absent, so it stops refusing when the path is
+built and starts again if someone drops it. The remaining refusal is honest about
+what it is — a **decision** that has not been taken, pointing at
+`docs/INGEST-SCOPE-REVERSAL.md`, whose approval block is blank.
+
+**The question this adds to the list:** for any constraint a document asserts,
+*what in the program would fail if it stopped being true?* If the answer is
+nothing, the document is describing an intention, not a control — and it should
+say so, or the control should be built.
 
 ### A.8 Concurrent writes and locking
 

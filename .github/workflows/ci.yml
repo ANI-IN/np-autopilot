@@ -26,6 +26,21 @@ jobs:
       - name: offline build (knowledge/graph.html)
         run: node eval/drive_dom.mjs knowledge/graph.html
 
+  payroll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      # SECOND LAYER, keyed on CONTENT. .gitignore and taxonomy.yaml ->
+      # excluded.files are both keyed on the PATH, and pass 0 and pass 1 read
+      # the same list, so together they are one layer wearing two hats. This one
+      # fires on a payroll workbook that has been renamed, moved, or pasted into
+      # a new file, which is precisely what a path rule cannot see.
+      - name: no HR/payroll content in tracked files
+        run: python pipeline/check_no_payroll_committed.py
+
   secrets:
     runs-on: ubuntu-latest
     steps:

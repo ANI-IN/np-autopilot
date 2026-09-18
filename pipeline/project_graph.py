@@ -130,6 +130,84 @@ def rows_for(graph: dict):
     return nodes, edges, sources
 
 
+#: What the sensitive half needs before it may be projected. Checked, not
+#: assumed — see the refusal in main().
+RECRUITING_POLICY = "nodes_recruiting_select"
+RECRUITING_FUNC = "np_can_see_sensitive"
+
+
+def _missing_recruiting_path() -> list[str]:
+    """Which pieces of the recruiting RLS path are absent. Empty means ready."""
+    missing = []
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        cur.execute("select 1 from pg_policies where schemaname='public' "
+                    "and tablename='nodes' and policyname=%s", (RECRUITING_POLICY,))
+        if cur.fetchone() is None:
+            missing.append(f"policy {RECRUITING_POLICY} on nodes")
+        cur.execute("select 1 from pg_proc where proname=%s", (RECRUITING_FUNC,))
+        if cur.fetchone() is None:
+            missing.append(f"function {RECRUITING_FUNC}()")
+        # A sensitive row is only protected if the tables that REACH it are too.
+        # edges and node_sources gate on node visibility, so a missing policy
+        # there would expose sensitive rows by association rather than directly.
+        for table in ("edges", "node_sources"):
+            cur.execute("select 1 from pg_policies where schemaname='public' "
+                        "and tablename=%s", (table,))
+            if cur.fetchone() is None:
+                missing.append(f"any policy on {table}")
+    return missing
+
+
+def _refuse_unclassified_properties(graph: dict) -> None:
+    """EVERY projected property must be classified. Absence stops the build.
+
+    The default used to be "goes into the public half", which is how three
+    widening requests moved the same boundary without any one of them looking
+    wrong. There is no default now.
+    """
+    reserved = {"id", "type", "label", "label_raw", "sensitive", "sources",
+                "source", "target", "rel"}
+    scopes = taxonomy.property_scopes()
+    unclassified: dict[str, int] = {}
+    misplaced: dict[str, int] = {}
+
+    for node in graph.get("nodes", []):
+        for key in node:
+            if key in reserved:
+                continue
+            scope = scopes.get(key)
+            if scope is None:
+                unclassified[key] = unclassified.get(key, 0) + 1
+            elif scope == "sensitive" and not node.get("sensitive"):
+                misplaced[key] = misplaced.get(key, 0) + 1
+    for edge in graph.get("edges", []):
+        for key in edge:
+            if key not in reserved and scopes.get(key) is None:
+                unclassified[key] = unclassified.get(key, 0) + 1
+
+    if unclassified:
+        listed = "\n".join(f"    {k}  ({c:,} rows)"
+                            for k, c in sorted(unclassified.items()))
+        sys.exit(
+            "REFUSING TO PROJECT: unclassified properties.\n"
+            f"{listed}\n\n"
+            "Every property must declare a scope in config/taxonomy.yaml ->\n"
+            "property_scopes before it can be projected. This is deliberate: the\n"
+            "old default put a new field in the PUBLIC half — a tracked file —\n"
+            "unless somebody remembered otherwise, so widening defaulted toward\n"
+            "exposure. Classify each as `public` or `sensitive` and re-run.")
+
+    if misplaced:
+        listed = "\n".join(f"    {k}  ({c:,} public rows)"
+                            for k, c in sorted(misplaced.items()))
+        sys.exit(
+            "REFUSING TO PROJECT: sensitive properties on public rows.\n"
+            f"{listed}\n\n"
+            "These are classified `sensitive` in config/taxonomy.yaml but appear\n"
+            "on rows without sensitive: true. Either the row is misclassified or\n"
+            "the extractor is attaching the field too widely.")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--scope", default="public", choices=["public", "full"])
@@ -137,21 +215,53 @@ def main() -> int:
     args = ap.parse_args()
 
     if args.scope == "full":
+        # WAS A HARDCODED REFUSAL SAYING THE RECRUITING RLS PATH "DOES NOT EXIST
+        # YET". It does — `nodes_recruiting_select` and `np_can_see_sensitive()`
+        # both landed, and the refusal was never revisited. A guard that asserts
+        # a conclusion instead of checking one is wrong in whichever direction
+        # the world moves: it blocked correct work here, and had the policy been
+        # DROPPED it would have waved the projection through.
+        #
+        # So it now checks. It refuses again, automatically, if either piece
+        # disappears — and a table with no policy denies everyone, which looks
+        # exactly like it worked.
+        missing = _missing_recruiting_path()
+        if missing:
+            sys.exit(
+                "--scope full is refused: the recruiting RLS path is incomplete.\n"
+                f"  missing: {', '.join(missing)}\n"
+                "The sensitive half is 277 hiring rejections and 1,625 in-pipeline "
+                "candidates about named external people. Without the policy they "
+                "would be projected into a table that denies everyone — which "
+                "looks identical to having worked.")
+        # The path is READY and that is not the same as APPROVED. Projecting
+        # 1,902 rows about named external people is a recorded decision, not a
+        # flag someone passes — docs/INGEST-SCOPE-REVERSAL.md carries the
+        # approval block and it is deliberately blank.
         sys.exit(
-            "--scope full is refused in this phase.\n"
-            "The sensitive half is 277 hiring rejections and 1,625 in-pipeline "
-            "candidates about named external people. Projecting it needs the "
-            "`recruiting` RLS path, which does not exist yet — and a table with "
-            "no policy denies everyone, which would look like it worked."
-        )
+            "--scope full is refused: the RLS path is ready, the DECISION is not.\n"
+            "  recruiting policy : present\n"
+            "  np_can_see_sensitive() : present\n"
+            "\nProjecting the sensitive half is 277 hiring rejections and 1,625\n"
+            "in-pipeline candidates about named external people. That is a\n"
+            "recorded decision under R6 — see docs/INGEST-SCOPE-REVERSAL.md,\n"
+            "whose approval block is blank. Fill it in, then remove this refusal\n"
+            "in the same commit so the record and the capability arrive together.")
 
     # PUBLIC HALF ONLY. include_sensitive=False is the whole scope decision, in
     # one argument, rather than a filter applied later that someone can forget.
-    graph = graphio.load_graph(include_sensitive=False)
-    assert graph["meta"]["sensitive_loaded"] is False
-    leaked = [n["id"] for n in graph["nodes"] if n.get("sensitive")]
-    if leaked:
-        sys.exit(f"{len(leaked)} sensitive nodes in the public half — refusing")
+    graph = graphio.load_graph(include_sensitive=(args.scope == "full"))
+    _refuse_unclassified_properties(graph)
+    # SCOPE-AWARE, and it used to be a bare `assert`. An AssertionError names
+    # nothing: it said "False is not False" where it meant "you asked for the
+    # sensitive half on a code path that only handles the public one".
+    if args.scope == "public":
+        if graph["meta"]["sensitive_loaded"] is not False:
+            sys.exit("the loader returned the sensitive half for --scope public "
+                     "— refusing before anything is written")
+        leaked = [n["id"] for n in graph["nodes"] if n.get("sensitive")]
+        if leaked:
+            sys.exit(f"{len(leaked)} sensitive nodes in the public half — refusing")
 
     nodes, edges, sources = rows_for(graph)
     content = graphio.content_hash(graph)

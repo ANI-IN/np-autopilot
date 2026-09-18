@@ -621,6 +621,85 @@ common_properties:
 # decision rather than a silent omission.
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# property_scopes — EVERY projected property must be classified. Absence is a
+# BUILD FAILURE, never a default.
+#
+# WHY THIS EXISTS. Three widening requests in a row moved the same boundary
+# without any one of them looking wrong, and the mechanism was the default:
+# a new field landed in the PUBLIC half — `knowledge/graph.json`, a tracked
+# file — unless somebody actively remembered to mark it otherwise. Widening
+# therefore defaulted toward exposure and required an act of memory not to.
+# That is DECISIONS §A.7b's permissive-reading failure applied to policy.
+#
+# So the default is now nothing: an unclassified property stops the projection.
+# Widening stays possible and stops being automatic.
+#
+#   public    — may appear on a row any profile can read.
+#   sensitive — may appear ONLY on a row in the sensitive half. Projecting one
+#               onto a public row is refused.
+#
+# NOTE, stated because it is easy to misread the empty list below as an
+# oversight: today's split is by ROW, not by property. The sensitive half uses
+# exactly the same vocabulary as the public half — 0 properties appear only in
+# it. `sensitive` is empty because nothing has needed it YET, and it is the slot
+# the next reversal has to fill before its fields can project.
+#
+# UNDER REVIEW, not reclassified unilaterally: admitted_by, confirmed_count,
+# decline_rate, declined_count, requests_from, requests_to. All six are
+# hiring-funnel-adjacent, all six are currently public on instructor rows, and
+# moving them is a data decision rather than a mechanism decision.
+property_scopes:
+  public:
+    - admitted_by
+    - alerts
+    - avg_rating
+    - basis
+    - cadence
+    - class_dates
+    - classes
+    - confirmed_count
+    - corpus_disagrees
+    - cross_validated
+    - decline_rate
+    - declined_count
+    - doctype
+    - effort
+    - employee_ids
+    - family
+    - file_count
+    - first_seen_quarter
+    - granularity
+    - inferred
+    - join_basis
+    - join_key
+    - last_seen_quarter
+    - parsed
+    - pipeline_status
+    - provenance
+    - rank
+    - relative_path
+    - renderable
+    - requests_from
+    - requests_to
+    - review
+    - role
+    - roster_count
+    - seen_in_sheets
+    - seniority
+    - sheet_count
+    - stage
+    - status
+    - steps
+    - subject_raw
+    - team
+    - theme_id
+    - title
+    - tools
+    - via_alias
+    - workflow_id
+  sensitive: []
+
 excluded:
 
   files:
