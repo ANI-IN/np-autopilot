@@ -599,6 +599,48 @@ what it is — a **decision** that has not been taken, pointing at
 nothing, the document is describing an intention, not a control — and it should
 say so, or the control should be built.
 
+#### The story is not the test
+
+Instance 9 asked: *for every constraint these documents assert, what in the
+program would fail if it stopped being true?* Run as a sweep over `STATE.md`,
+`DECISIONS.md`, `AUTH.md` and `07-risks.md` — 113 constraint-shaped statements,
+54 naming a concrete artefact, **24 distinct system constraints, of which five
+had no test**.
+
+The five are not a random five, and that is the observation:
+
+| unenforced constraint | where | had a story |
+|---|---|---|
+| workbooks open `read_only=True` | `CLAUDE.md` §1 | the corpus is a live Drive mirror |
+| no pipeline script shadows a stdlib module | `CLAUDE.md` §3 | **`inspect.py` cost a full run** |
+| employee ids are evidence, never the key | `CLAUDE.md` §2a | **`IK-294` maps to two people** |
+| `profiles.domain_is_ik` still exists | `AUTH.md` | the domain rule lives in the database |
+| `pipeline/` never runs on Vercel | `STATE.md` | — |
+
+> **The constraints with the best stories behind them were the least likely to
+> have a test, because the story feels like the safeguard.**
+
+Four of the five sit in `CLAUDE.md` or `STATE.md` — the documents most read and
+least executable — and three of those four encode a bug that **already
+happened**. A rule that arrived with a war story gets written down vividly,
+retold, and cited; and the vividness is what stands in for enforcement. Nobody
+writes a test for the thing everybody remembers.
+
+**Why this is not instance 9 restated.** Nine is about a single claim outliving
+its condition. This is about *which* claims that happens to: it predicts where to
+look. The rule with no story — a dull invariant nobody has a bug to attach to —
+is the one somebody bothered to assert in code, because nothing else would have
+held it. The memorable rule is load-bearing in prose and unsupported in fact.
+
+**The corollary, and it is uncomfortable:** `CLAUDE.md` is the most-read document
+in this project and the least connected to anything that runs. Every rule in it
+should be read as *"this has a test"* or *"this is a hope"*, and until this sweep
+nobody had asked which. The five are now in
+`tests/test_documented_constraints_are_enforced.py` — and the vercelignore one
+failed immediately, because five scripts added since it was written were being
+uploaded to Vercel. That list was hand-written, so a new file was included by
+default: instance 8 again, in a third place.
+
 ### A.8 Concurrent writes and locking
 
 Two populations with genuinely different needs:

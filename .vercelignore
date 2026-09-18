@@ -22,11 +22,20 @@ commands/
 06-analysis/
 *.md
 !README.md
-pipeline/0*.py
-pipeline/validate.py
-pipeline/refresh.py
-pipeline/curation.py
-pipeline/migrate.py
-pipeline/project_graph.py
-pipeline/verify_migration.py
-pipeline/grant_access.py
+# EVERY top-level pipeline script, by glob rather than by name. This was eight
+# hand-written entries and five scripts added since were simply not in it —
+# gen_index, gen_landing_stats, gen_workflow_owners, query and
+# check_no_payroll_committed were all being uploaded. A hand-written list of
+# what to exclude means a new file is INCLUDED by default, which is the same
+# permissive-default shape as property_scopes and §A.7b instance 8.
+#
+# pipeline/lib/ is deliberately NOT matched: api/staffing.py reaches
+# config/taxonomy.yaml through pipeline/lib/taxonomy.py, and `pipeline/*.py`
+# does not match `pipeline/lib/*.py`.
+# tests/test_documented_constraints_are_enforced.py fails if one slips back in.
+pipeline/*.py
+# ...but keep the package marker explicitly. `pipeline/*.py` matches
+# __init__.py too. The deploy works without it because namespace packages
+# carry `from pipeline.lib import taxonomy` — but "it happens to work" is not
+# how the import path that reads taxonomy.yaml should be held together.
+!pipeline/__init__.py

@@ -113,9 +113,12 @@ once.
 
 ### Conditions I would require before extraction
 
-1. **`scope: sensitive` only.** Never projected into the public half. Today
-   `project_graph.py --scope full` is refused while R18 is open, so this is
-   blocked in any case until R18 closes.
+1. **`scope: sensitive` only.** Never projected into the public half. ~~Today
+   `project_graph.py --scope full` is refused while R18 is open.~~ **That
+   sentence was wrong** — R18 appears nowhere in `project_graph.py`, and it is
+   the same stale claim later named as §A.7b instance 9. Corrected below under
+   "Condition 1 is not a fifth condition": this is the mechanism the other four
+   rest on, and it is now enforced by `property_scopes` rather than promised.
 2. **`recruiting` role only, never `member`.** Migration 0008/0014 already
    prevents a shared account holding `recruiting`, so it can never be read from
    the team mailbox.
@@ -147,6 +150,76 @@ to. That is the §A.7b permissive-reading failure, applied to policy.
 newly projected field require an explicit `scope` classification before it
 projects, the way a taxonomy type already requires a declaration. Widening stays
 possible; it stops being the default.
+
+---
+
+## On record before approval, regardless of what comes back
+
+Added 2026-09-18 after enumerating the file's actual columns. Both are the kind
+of thing that only looks obvious afterwards.
+
+### (1) contains a slice of (2)
+
+**`US Instructor Cost Analysis.xlsx` carries 4,697 email occurrences**, across
+`Email`, `Personal email`, `Work email` and `Email id` columns. Contact data for
+the same 5,387 people is *inside the file being approved*.
+
+So **approving (1) without field-level minimisation partially reverses (2)** —
+the decision explicitly declined on the grounds that an email is an identifier,
+not an analytic attribute, and that no question had been named for it. Nothing
+about approving a payroll file announces that it also carries the thing you just
+refused. Minimisation is not an optimisation here; it is what keeps the two
+decisions from collapsing into one.
+
+The request was made as *"instructor pay rates"*. The file is payroll disputes
+against named people (`Amount Overpaid`, `Amount should have been paid`,
+`Overpaid Hours`), sick leave, legal names, legal entity, compensation grade job
+code, Rippling identifiers from a second HR system, and those 4,697 emails.
+**Nobody approved that description, because nobody had it** — which is precisely
+the condition R6 exists to prevent, and the reason this section is here rather
+than in a commit message.
+
+### Condition 1 is not a fifth condition
+
+`nodes_recruiting_select` keys on `sensitive`. A row that is not marked sensitive
+is readable by every `member`, whatever anyone intended. So **"sensitive scope
+only" is the mechanism that makes "recruiting only" true** — declining it does
+not leave four conditions standing, it silently voids one of the four.
+
+Two corrections to how condition 1 was originally written, for the record: it
+said *"blocked in any case until R18 closes"*, which was the same stale R18 claim
+later named as §A.7b instance 9 — **in this document**. And it is no longer a
+promise: `config/taxonomy.yaml -> property_scopes` refuses a `sensitive`
+property on a public row at projection time.
+
+### Accepted scope and conditions, pending the approval block
+
+- **Scope: (1) only.** (2) declined; reasoning kept in `CONTACT-DATA.md` and above.
+- **All five conditions accepted**, condition 1 included.
+- **Field-level minimisation, as agreed.** KEEP: the 18 labour codes, `Base Rate`,
+  `Hourly Rate`, `Hours Amount`, and a person key. DROP: `LWD`,
+  `Employement Status`, every email column, `Amount Overpaid` /
+  `Amount should have been paid` / `Overpaid Hours`, `SICK`, `Legal last name`,
+  `Legal entity name`, `Compensation grade job code`, `Badge Number`,
+  `Rippling profile number`. If someone later needs `LWD` or employment status,
+  they name the question.
+
+### What replaces R17
+
+R17's rule was *"an excluded file must never reach the disk, not merely never
+reach the graph"*. This reversal retires it: the file reaches the cache. What
+stops it reaching git is no longer one layer.
+
+- **Before:** `.gitignore:87 03-instructors/` and `taxonomy.yaml ->
+  excluded.files`. Both keyed on the PATH, and pass 0 and pass 1 read the same
+  list — **one layer wearing two hats** (§A.7a). A rename, a move, a `git add -f`
+  or a copy into another directory walks past all of it.
+- **Now, additionally:** `pipeline/check_no_payroll_committed.py`, keyed on
+  **content**. It reads neither `.gitignore` nor `taxonomy.yaml` and does not
+  know the file's name, so it fires on the workbook renamed, moved, or pasted
+  into a new file. Run in CI as its own job; usable as a pre-commit hook.
+- **That is two layers, and they fail independently** — which is the property the
+  previous pair did not have.
 
 ---
 
