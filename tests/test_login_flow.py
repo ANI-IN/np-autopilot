@@ -338,32 +338,142 @@ def test_nothing_the_browser_can_fetch_mentions_a_secret():
             assert banned not in src, f"{path.name} contains {banned!r}"
 
 
+#: What Google Identity Services needs, by directive. SPECIFIC PATHS, not the
+#: bare origin — accounts.google.com also serves the whole Google account UI and
+#: there is no reason to permit that.
+#:
+#: Every one of these was found by the page failing in a browser console, not by
+#: reading the policy: the stylesheet at /gsi/style was blocked while the page
+#: rendered perfectly, because a blocked stylesheet is invisible unless you are
+#: looking for it.
+GSI_REQUIREMENTS = {
+    "script-src": "https://accounts.google.com/gsi/client",
+    "style-src": "https://accounts.google.com/gsi/style",
+    "connect-src": "https://accounts.google.com/gsi/",
+    "frame-src": "https://accounts.google.com/gsi/",
+}
+
+
+def _headers() -> dict:
+    vj = json.loads((REPO / "vercel.json").read_text())
+    return {h["key"]: h["value"] for h in vj["headers"][0]["headers"]}
+
+
+def _csp() -> dict:
+    csp = _headers().get("content-security-policy", "")
+    assert csp, "no content-security-policy header configured"
+    out = {}
+    for part in csp.split(";"):
+        bits = part.split()
+        if bits:
+            out[bits[0]] = bits[1:]
+    return out
+
+
 def test_csp_pins_the_inline_scripts_by_hash():
-    """The page is built from two inline blocks and the CSP has no
+    """The page is built from two inline blocks and script-src has no
     'unsafe-inline'. Editing the HTML without recomputing the hashes would make
     the deployed page silently refuse to run its own scripts — a blank explorer
-    with a console error nobody sees until someone opens devtools.
-
-    So the hashes are recomputed here and compared.
-    """
+    with a console error nobody sees until someone opens devtools."""
     html = (REPO / "public" / "index.html").read_text(encoding="utf-8")
     blocks = re.findall(r"<script>([\s\S]*?)</script>", html)
     assert len(blocks) == 2, f"expected 2 inline blocks, found {len(blocks)}"
     want = {"'sha256-" + base64.b64encode(
         hashlib.sha256(b.encode()).digest()).decode() + "'" for b in blocks}
 
-    csp = ""
-    vj = json.loads((REPO / "vercel.json").read_text())
-    for hdr in vj["headers"][0]["headers"]:
-        if hdr["key"] == "content-security-policy":
-            csp = hdr["value"]
-    assert csp, "no content-security-policy header configured"
-    assert "unsafe-inline" not in csp.split("style-src")[0], \
+    directives = _csp()
+    script_src = directives.get("script-src", [])
+    assert "'unsafe-inline'" not in script_src, \
         "script-src must not allow unsafe-inline: the page holds a session token"
-    missing = [h for h in want if h not in csp]
+    missing = [h for h in want if h not in script_src]
     assert not missing, (
         "vercel.json's CSP does not match public/index.html. Recompute:\n"
         + "\n".join(sorted(want)))
+
+
+def test_csp_permits_everything_google_sign_in_actually_loads():
+    """A CSP THAT BLOCKS A DEPENDENCY FAILS BY PRODUCING A PAGE THAT LOOKS FINE.
+
+    That is the whole reason this test exists. The explorer rendered, the layout
+    was correct, the console said
+
+        Loading the stylesheet 'https://accounts.google.com/gsi/style' violates
+        the following Content Security Policy directive: style-src 'self'
+        'unsafe-inline'
+
+    and the only visible symptom was a sign-in button that did not appear.
+    Nothing failed loudly; the page simply omitted the thing it was blocked from
+    loading. Same shape as A.7b, in a header.
+    """
+    directives = _csp()
+    missing = []
+    for directive, source in GSI_REQUIREMENTS.items():
+        allowed = directives.get(directive, [])
+        # A source is covered by an exact match or by a permitted prefix, since
+        # 'https://accounts.google.com/gsi/' covers '/gsi/client'.
+        ok = any(source == a or source.startswith(a.rstrip("/") + "/")
+                 or a.startswith(source) for a in allowed)
+        if not ok:
+            missing.append(f"{directive} does not permit {source} "
+                           f"(has: {allowed or 'nothing'})")
+    assert not missing, "Google sign-in will be blocked:\n  " + "\n  ".join(missing)
+
+
+def test_every_external_url_in_the_page_is_permitted_by_the_csp():
+    """Derived, so a NEW dependency cannot be added without a policy for it.
+
+    GSI_REQUIREMENTS above is a hand-written list and therefore goes stale. This
+    reads the page instead: any absolute URL it references must appear somewhere
+    in the policy. It will not tell you WHICH directive is right — that is the
+    test above — but it will refuse to let a new origin in silently.
+    """
+    html = (REPO / "public" / "index.html").read_text(encoding="utf-8")
+    csp = _headers().get("content-security-policy", "")
+    referenced = set(re.findall(r"https://[a-zA-Z0-9.\-]+(?:/[a-zA-Z0-9./_\-]*)?",
+                                html))
+    # Comments and prose mention URLs that nothing loads; only count those that
+    # are actually assigned to src/href. Looking at the ~30 characters before
+    # each occurrence is enough and avoids a quoting-sensitive regex.
+    def is_loaded(u: str) -> bool:
+        for m in re.finditer(re.escape(u), html):
+            before = html[max(0, m.start() - 30):m.start()]
+            if re.search(r"(?:\.src|\bsrc|\bhref)\s*=\s*[\"']?\s*$", before):
+                return True
+        return False
+
+    loaded = {u for u in referenced if is_loaded(u)}
+    unpermitted = [u for u in loaded
+                   if u not in csp and not any(
+                       u.startswith(tok) for tok in csp.split() if tok.startswith("http"))]
+    assert not unpermitted, (
+        f"the page loads {unpermitted} but the CSP does not permit it; a blocked "
+        "resource does not raise, it is simply absent")
+
+
+def test_coop_allows_the_google_popup_to_talk_back():
+    """GSI's popup flow calls window.postMessage on its opener.
+
+    The default `same-origin` COOP severs that reference, so the popup completes
+    the sign-in and the result never reaches the page. The console shows a COOP
+    warning; the page shows a button that does nothing.
+    """
+    coop = _headers().get("cross-origin-opener-policy")
+    assert coop == "same-origin-allow-popups", (
+        f"cross-origin-opener-policy is {coop!r}; GSI's popup needs "
+        "'same-origin-allow-popups' to postMessage back to the opener")
+
+
+def test_the_security_headers_that_must_not_be_relaxed():
+    """The rest of the set, so fixing GSI cannot quietly loosen them."""
+    h = _headers()
+    assert h.get("x-frame-options") == "DENY"
+    assert h.get("x-content-type-options") == "nosniff"
+    assert h.get("referrer-policy") == "no-referrer"
+    assert "max-age=" in h.get("strict-transport-security", "")
+    d = _csp()
+    assert d.get("default-src") == ["'self'"]
+    assert d.get("object-src") == ["'none'"]
+    assert d.get("base-uri") == ["'none'"]
 
 
 def test_the_explorer_never_asks_for_the_whole_graph():

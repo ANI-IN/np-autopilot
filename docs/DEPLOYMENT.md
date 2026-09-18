@@ -205,6 +205,68 @@ explorer whose scripts the browser silently refuses to run.
 
 ---
 
+## Two things that only failed in production
+
+### The connection URL was parsed twice, by two different parsers
+
+```
+psycopg.OperationalError: failed to resolve host
+  '2026@aws-0-ap-northeast-2.pooler.supabase.com'
+```
+
+Every authenticated request 500'd, and only on Vercel. The password contains a
+literal `@`, correctly written `%40` in the URL. Local psycopg decodes it once
+and connects. The psycopg vendored into the Vercel bundle decodes the netloc and
+then re-splits it, so `...%402026@aws-0-...` became `...@2026@aws-0-...`, it took
+the **first** `@`, and the host came out as `2026@aws-0-...`.
+
+`pipeline/lib/db.py::params()` now splits the URL **once** and hands psycopg
+discrete keywords — host, port, user, password, dbname. There is no string left
+for a second parser to disagree about.
+
+**This is the shape §C names about the IPv6-only direct connection, arriving by
+a completely different route**, which is the part worth keeping: the lesson was
+recorded about one hostname, and the failure mode is broader than that hostname.
+`tests/test_db_connection_params.py` covers it, including the real configured
+URL as a positive control.
+
+### The CSP blocked Google's own assets
+
+The page rendered correctly and the sign-in button simply did not appear:
+
+```
+Loading the stylesheet 'https://accounts.google.com/gsi/style' violates the
+following Content Security Policy directive: style-src 'self' 'unsafe-inline'
+```
+
+**A CSP that blocks a dependency fails by producing a page that looks correct.**
+Nothing throws; the browser omits what it was told not to load. Same shape as
+A.7b, in a header.
+
+Google Identity Services needs four directives, and they are **specific paths**
+rather than the bare origin, since `accounts.google.com` also serves the whole
+Google account UI:
+
+| Directive | Source |
+|---|---|
+| `script-src` | `https://accounts.google.com/gsi/client` |
+| `style-src` | `https://accounts.google.com/gsi/style` |
+| `connect-src` | `https://accounts.google.com/gsi/` |
+| `frame-src` | `https://accounts.google.com/gsi/` |
+| `img-src` | `https://lh3.googleusercontent.com` (the account avatar) |
+
+**And `Cross-Origin-Opener-Policy: same-origin-allow-popups`.** GSI's popup flow
+calls `window.postMessage` on its opener; the default `same-origin` severs that
+reference, so the popup completes the sign-in and the result never arrives.
+
+Three tests cover this now, each with a negative control:
+`test_csp_permits_everything_google_sign_in_actually_loads` against the list
+above, `test_every_external_url_in_the_page_is_permitted_by_the_csp` derived
+from the HTML so a new dependency cannot be added silently, and
+`test_coop_allows_the_google_popup_to_talk_back`.
+
+---
+
 ## After deploying, check these four
 
 1. `/api/config` returns three non-empty values and no `error`.

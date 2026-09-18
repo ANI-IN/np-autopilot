@@ -11,7 +11,7 @@ refuses it rather than letting it work locally.
 from __future__ import annotations
 
 import os
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 #: Session pooler — migrations and the projection loader. Long-lived, DDL,
 #: session state available.
@@ -44,6 +44,47 @@ def url(var: str = SESSION) -> str:
     return u
 
 
+def params(var: str = SESSION) -> dict:
+    """Split the URL into connection PARAMETERS, once, here.
+
+    WHY NOT JUST PASS THE URL. The password is percent-encoded — it contains a
+    literal `@`, correctly written as `%40`. Local psycopg decodes that once and
+    connects. The psycopg vendored into the Vercel bundle decodes the netloc and
+    then re-splits it, so `...%402026@aws-0-...` becomes `...@2026@aws-0-...`,
+    it takes the FIRST `@`, and the host comes out as
+
+        2026@aws-0-ap-northeast-2.pooler.supabase.com
+
+    which does not resolve. Every authenticated request 500s, and only on
+    Vercel — the exact works-on-my-laptop-fails-in-production shape §C warns
+    about for the direct connection, arriving by a different route.
+
+    Passing host, port, user, password and dbname as separate keywords removes
+    the ambiguity rather than working around it: there is no string left for a
+    parser to disagree about.
+    """
+    u = urlparse(url(var))
+    out = {
+        "host": u.hostname,
+        "port": u.port,
+        "user": unquote(u.username or ""),
+        "password": unquote(u.password or ""),
+        "dbname": (u.path or "/postgres").lstrip("/") or "postgres",
+    }
+    if not out["host"]:
+        raise RuntimeError(f"{var} has no host: {u.netloc!r}")
+    # Belt and braces. `urlparse` splits at the LAST '@' per RFC 3986, so it
+    # cannot currently produce a host containing one — this guards a future
+    # parser change, not a reachable state today. Said plainly so nobody reads
+    # a passing suite as evidence that this branch was exercised.
+    if "@" in out["host"]:
+        raise RuntimeError(
+            f"{var} parsed a host containing '@' ({out['host']!r}). The "
+            "credentials and the host have run together — percent-encode the "
+            "password, or check for a stray '@'.")
+    return out
+
+
 def connect(var: str = SESSION, **kw):
     """A psycopg connection. Import is local so the pipeline runs without it."""
     import psycopg
@@ -54,7 +95,7 @@ def connect(var: str = SESSION, **kw):
         # fails with "prepared statement already exists" under the pooler — the
         # single most common works-locally-fails-on-Vercel cause.
         kw.setdefault("prepare_threshold", None)
-    return psycopg.connect(url(var), **kw)
+    return psycopg.connect(**params(var), **kw)
 
 
 def available() -> bool:
