@@ -53,7 +53,16 @@ letter-spacing:.06em;font-weight:600}
 /* ---- the auth gate ---- */
 #gate{position:fixed;inset:0;z-index:50;background:#0d1117;display:flex;
 align-items:flex-start;justify-content:center;overflow:auto}
-#gatebox{width:100%;max-width:1180px;min-height:100%;background:#0d1117}
+/* FULL-BLEED BANDS, CENTRED CONTENT. The previous version capped #gatebox at
+   1180px, which centred the slab symmetrically — that was never the bug. The
+   bug was that .lp-heroinner was ONE column holding copy capped at 46ch, so
+   ~690px of the hero sat empty at every width past ~900px while .lp-cols below
+   filled the width. A constant internal gap under a growing outer band is what
+   reads as stranded, and it was already wrong at 1280.
+   Now each band runs edge to edge and the gutter centres the content inside it,
+   so there is no slab edge to orphan and nothing to reflow wrongly. */
+#gatebox{width:100%;max-width:none;min-height:100%;background:#0d1117;
+  --gut:max(44px,calc((100% - 1320px) / 2))}
 
 /* ---- LANDING (direction A, "the instrument") ---------------------------
    HIERARCHY COMES FROM SCALE, WEIGHT AND SPACE, not from a typeface. The CSP
@@ -63,23 +72,37 @@ align-items:flex-start;justify-content:center;overflow:auto}
    The hero graphic is inline SVG in the explorer's OWN node-type colours, so
    the landing page and the graph speak one language. It is static and
    decorative: it touches no simulation state and no node coordinate. */
-.lp-hero{position:relative;padding:56px 44px 0;overflow:hidden}
+.lp-hero{position:relative;padding:56px var(--gut) 0;overflow:hidden}
 .lp-web{position:absolute;inset:0;width:100%;height:100%;opacity:.5;pointer-events:none}
-.lp-heroinner{position:relative}
+/* TWO COLUMNS AT WIDTH: copy left, sign-in right. This fills a wide viewport
+   without stretching the copy past a readable measure, and it makes sign-in
+   MORE prominent rather than less — it stops being a row under the prose and
+   becomes the only thing in its own column. */
+.lp-heroinner{position:relative;display:grid;grid-template-columns:minmax(0,1fr);
+  gap:34px;align-items:start}
+@media (min-width:1000px){
+  .lp-heroinner{grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:64px}
+}
 .lp-mark{font:600 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
   letter-spacing:.2em;text-transform:uppercase;color:#6e7681;margin-bottom:16px}
 #gatebox h1{font-size:42px;line-height:1.02;letter-spacing:-.03em;margin:0 0 16px;
   font-weight:650;text-wrap:balance;color:#e6edf3}
 #gatebox .sub{font-size:15.5px;line-height:1.55;color:#8b949e;max-width:46ch;margin:0 0 30px}
-.lp-signin{display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding-bottom:52px}
+.lp-signin{display:flex;flex-direction:column;align-items:flex-start;gap:14px;
+  padding:20px 22px 22px;margin-bottom:52px;border:1px solid #21262d;border-radius:10px;
+  background:rgba(13,17,23,.72);backdrop-filter:blur(2px)}
 #gsi{min-height:44px}
-#gatemsg{font-size:11.5px;line-height:1.55;color:#6e7681;max-width:34ch}
+#gatemsg{font-size:11.5px;line-height:1.55;color:#8b949e;max-width:34ch}
+@media (max-width:999px){.lp-signin{margin-bottom:44px}}
 
 /* THE TWO SECTIONS ARE NOT EQUAL. "What it will not tell you" is the section
    that earns the page, so it gets the wider column and the larger type rather
    than being the longer list in smaller grey. */
-.lp-cols{display:grid;grid-template-columns:1fr 1.45fr;border-top:1px solid #21262d}
-.lp-col{padding:30px 44px 34px}
+.lp-cols{display:grid;grid-template-columns:1fr 1.45fr;border-top:1px solid #21262d;
+  padding-inline:var(--gut)}
+.lp-col{padding:30px 36px 34px}
+.lp-col:first-child{padding-left:0}
+.lp-col:last-child{padding-right:0}
 .lp-col+.lp-col{border-left:1px solid #21262d}
 .lp-limits{background:linear-gradient(180deg,#1a1206,transparent 62%)}
 #gatebox h2{font:600 10.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -94,8 +117,10 @@ align-items:flex-start;justify-content:center;overflow:auto}
 
 /* Deliberate, not a footer: an instrument readout. Every figure is generated
    from the projection by pipeline/gen_landing_stats.py. */
-.lp-readout{display:flex;flex-wrap:wrap;border-top:1px solid #21262d;background:#0c1116}
+.lp-readout{display:flex;flex-wrap:wrap;border-top:1px solid #21262d;background:#0c1116;
+  padding-inline:var(--gut)}
 .lp-cell{flex:1 1 auto;min-width:118px;padding:14px 18px;border-right:1px solid #21262d}
+.lp-cell:first-child{padding-left:0}
 .lp-cell:last-child{border-right:0}
 .lp-cell .n{font:600 16px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
   font-variant-numeric:tabular-nums;color:#c9d1d9}
@@ -103,7 +128,8 @@ align-items:flex-start;justify-content:center;overflow:auto}
   text-transform:uppercase;color:#6e7681;margin-top:7px;display:block}
 
 @media (max-width:760px){
-  .lp-hero,.lp-col{padding-left:22px;padding-right:22px}
+  #gatebox{--gut:22px}
+  .lp-col{padding-left:0;padding-right:0}
   .lp-cols{grid-template-columns:1fr}
   .lp-col+.lp-col{border-left:0;border-top:1px solid #21262d}
   #gatebox h1{font-size:32px}
@@ -120,7 +146,9 @@ align-items:flex-start;justify-content:center;overflow:auto}
   font-size:10.5px;background:#0f141a}
 .pfhead:hover{background:#12191f}
 .pfcount{min-width:34px;text-align:right;color:#c9d1d9;font-weight:600}
-.pfname{flex:1;color:#8b949e;word-break:break-all}
+/* break-word, NOT break-all: break-all split "New Combined Schedule.xlsx"
+   into "New Co / mbined" mid-word, in the most-read part of the panel. */
+.pfname{flex:1;color:#8b949e;word-break:normal;overflow-wrap:break-word}
 .pflink{color:#4c8dff;text-decoration:none;white-space:nowrap}
 .pflink:hover{text-decoration:underline}
 .pfrows{padding:2px 9px 7px 51px;border-top:1px solid #21262d;background:#0d1117}
