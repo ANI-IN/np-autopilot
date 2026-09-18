@@ -705,6 +705,60 @@ carries the risk; the allow-list is named as the control and asserted in
 warning at the point where somebody proposes widening coverage, rather than in a
 risk register they have no reason to open.
 
+#### OPEN QUESTION — which of our outputs does nobody read?
+
+Not a tenth instance. A question the catalogue has not asked, recorded because
+the next instance is more likely to be found in something we print and skip than
+in something we never wrote.
+
+**The tracker worked.** `validate.py` has printed
+
+```
+NOT EXERCISED: [... 'excluded-field' ...]
+```
+
+on every run since the tracker was built — which was built *because of* instances
+2 and 3, where an unconditional INFO made a category always look exercised. It
+did exactly its job, in plain language, for months. **The guard reported its own
+uselessness continuously and nobody read the line.**
+
+So the failure was not in the check, the tracker, or the wording. It was
+downstream of the output entirely, and no amount of making the check better
+would have caught it.
+
+**And the uncomfortable part.** §5 of `CLAUDE.md` says validation must stay
+scannable — count, do not enumerate — because converting six filters to flags
+took the report from 19 warnings to 212 and buried the two findings that
+mattered. *"A buried finding gets ignored until someone reverts the fix that
+buried it."* That discipline is correct and this project would be worse without
+it.
+
+It is also what let one NOT EXERCISED line sit unread inside an aggregate. **Both
+are true.** Aggregation is what makes a report readable and what makes one line
+inside it invisible, and "aggregate less" is not the answer — that is just the
+212-warning report again.
+
+**One observation that might be a thread, offered without confidence.** There may
+be a difference between two things §5 currently treats alike:
+
+- aggregating **instances of a known category** — *"199 nodes retained with a
+  shape flag: 99x single-token, 71x comma or semicolon"* — where the count IS the
+  information and the reader already knows what it means;
+- aggregating a **status** — *"these categories did not run"* — which is not a
+  measurement of the data but a statement about the instrument, and which reads
+  as furniture precisely because it is identical on every run.
+
+Which suggests a cheap thing to look for: **the lines in our output that have not
+changed in months.** A line that says the same thing every run is, by
+construction, one nobody is reading — and it is either a passing check (fine) or
+a standing failure nobody has noticed (this). `BUILD_LOG.md` keeps the history to
+answer that, and nobody has looked.
+
+**What we do not know**, and should not pretend to: whether the fix is a
+different report, a different channel for status-vs-measurement, a diff against
+the previous run, or an alert that fires only on change. All four have the same
+failure mode as the thing they would replace. Left open deliberately.
+
 ### A.8 Concurrent writes and locking
 
 Two populations with genuinely different needs:

@@ -93,6 +93,11 @@ align-items:flex-start;justify-content:center;overflow:auto}
   background:rgba(13,17,23,.72);backdrop-filter:blur(2px)}
 #gsi{min-height:44px}
 #gatemsg{font-size:11.5px;line-height:1.55;color:#8b949e;max-width:34ch}
+/* One line, above the fold at every width, in the hero's left column. Not the
+   section — the section stays below, because the bite happens in the explorer
+   and taxing every visit to pre-empt it is the wrong trade. */
+.lp-caution{font-size:12px;line-height:1.55;color:#d29922;max-width:44ch;margin:0 0 26px}
+.qual{color:#6e7681}
 @media (max-width:999px){.lp-signin{margin-bottom:44px}}
 
 /* THE TWO SECTIONS ARE NOT EQUAL. "What it will not tell you" is the section
@@ -254,18 +259,8 @@ align-items:flex-start;justify-content:center;overflow:auto}
   <h2>Types</h2>
   <div id="types"></div>
 
-  <h2>Loaded <span>&mdash; not the whole graph</span></h2>
+  <h2>Loaded</h2>
   <div id="stat" class="src"></div>
-  <div class="warn" id="scopewarn">
-    This explorer fetches <b>neighbourhoods</b>, never the whole graph. What you
-    see is what you have expanded to. A gap here is a gap in what you asked for,
-    not evidence that the corpus lacks it.
-  </div>
-  <div class="warn" id="notported">
-    <b>Not carried over from the offline build:</b> file search, and the theme
-    filter. Both read whole-graph attributes that no endpoint returns. Said here
-    rather than quietly dropped.
-  </div>
   <button type="button" id="signout">sign out</button>
 </div>
 
@@ -285,26 +280,7 @@ align-items:flex-start;justify-content:center;overflow:auto}
 
   <div class="lp-hero">
     <svg class="lp-web" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-      <g stroke="#2b3742" stroke-width="1" fill="none">
-        <line x1="120" y1="300" x2="305" y2="208"/><line x1="305" y1="208" x2="470" y2="276"/>
-        <line x1="470" y1="276" x2="648" y2="196"/><line x1="648" y1="196" x2="812" y2="268"/>
-        <line x1="812" y1="268" x2="980" y2="188"/><line x1="980" y1="188" x2="1104" y2="286"/>
-        <line x1="305" y1="208" x2="352" y2="92"/><line x1="470" y1="276" x2="404" y2="380"/>
-        <line x1="648" y1="196" x2="700" y2="86"/><line x1="648" y1="196" x2="592" y2="352"/>
-        <line x1="812" y1="268" x2="884" y2="368"/><line x1="980" y1="188" x2="1042" y2="80"/>
-        <line x1="120" y1="300" x2="186" y2="128"/><line x1="352" y1="92" x2="700" y2="86"/>
-        <line x1="404" y1="380" x2="592" y2="352"/><line x1="884" y1="368" x2="1104" y2="286"/>
-        <line x1="186" y1="128" x2="352" y2="92"/><line x1="1042" y1="80" x2="1104" y2="286"/>
-      </g>
-      <g>
-        <circle cx="120" cy="300" r="7" fill="#4c8dff"/><circle cx="305" cy="208" r="10" fill="#4c8dff"/>
-        <circle cx="470" cy="276" r="6" fill="#00c2d1"/><circle cx="648" cy="196" r="11" fill="#a371f7"/>
-        <circle cx="812" cy="268" r="6" fill="#00c2d1"/><circle cx="980" cy="188" r="9" fill="#3fb950"/>
-        <circle cx="1104" cy="286" r="5" fill="#f0883e"/><circle cx="352" cy="92" r="5" fill="#db61a2"/>
-        <circle cx="404" cy="380" r="5" fill="#f0883e"/><circle cx="700" cy="86" r="6" fill="#d29922"/>
-        <circle cx="592" cy="352" r="5" fill="#00c2d1"/><circle cx="884" cy="368" r="5" fill="#a371f7"/>
-        <circle cx="1042" cy="80" r="6" fill="#3fb950"/><circle cx="186" cy="128" r="5" fill="#db61a2"/>
-      </g>
+      <g stroke="#2b3742" stroke-width="1" fill="none"><line x1="1019" y1="332" x2="1075" y2="366"/><line x1="1019" y1="332" x2="940" y2="314"/><line x1="1019" y1="332" x2="1050" y2="262"/><line x1="730" y1="374" x2="651" y2="373"/><line x1="730" y1="374" x2="771" y2="307"/><line x1="1057" y1="161" x2="985" y2="100"/><line x1="1057" y1="161" x2="1146" y2="134"/><line x1="1057" y1="161" x2="1077" y2="69"/><line x1="934" y1="152" x2="881" y2="90"/><line x1="934" y1="152" x2="985" y2="100"/><line x1="934" y1="152" x2="967" y2="218"/><line x1="222" y1="318" x2="171" y2="240"/><line x1="222" y1="318" x2="184" y2="374"/><line x1="171" y1="240" x2="99" y2="210"/><line x1="171" y1="240" x2="227" y2="190"/><line x1="187" y1="117" x2="121" y2="97"/><line x1="187" y1="117" x2="231" y2="57"/><line x1="368" y1="123" x2="423" y2="55"/><line x1="368" y1="123" x2="295" y2="154"/><line x1="741" y1="209" x2="818" y2="166"/><line x1="741" y1="209" x2="715" y2="147"/><line x1="741" y1="209" x2="714" y2="273"/><line x1="651" y1="373" x2="652" y2="306"/><line x1="121" y1="97" x2="50" y2="123"/><line x1="121" y1="97" x2="68" y2="50"/><line x1="511" y1="65" x2="607" y2="64"/><line x1="511" y1="65" x2="423" y2="55"/><line x1="511" y1="65" x2="503" y2="157"/><line x1="352" y1="226" x2="276" y2="234"/><line x1="352" y1="226" x2="317" y2="288"/><line x1="231" y1="57" x2="296" y2="70"/><line x1="664" y1="222" x2="602" y2="261"/><line x1="664" y1="222" x2="714" y2="273"/><line x1="881" y1="90" x2="818" y2="166"/><line x1="607" y1="64" x2="653" y2="118"/><line x1="507" y1="250" x2="562" y2="193"/><line x1="507" y1="250" x2="550" y2="303"/><line x1="507" y1="250" x2="447" y2="207"/><line x1="507" y1="250" x2="438" y2="275"/><line x1="320" y1="374" x2="317" y2="288"/><line x1="320" y1="374" x2="383" y2="335"/><line x1="450" y1="344" x2="520" y2="370"/><line x1="450" y1="344" x2="383" y2="335"/><line x1="450" y1="344" x2="438" y2="275"/><line x1="602" y1="261" x2="550" y2="303"/><line x1="602" y1="261" x2="652" y2="306"/><line x1="562" y1="193" x2="503" y2="157"/><line x1="715" y1="147" x2="754" y2="52"/><line x1="715" y1="147" x2="653" y2="118"/><line x1="550" y1="303" x2="520" y2="370"/><line x1="771" y1="307" x2="831" y2="275"/><line x1="771" y1="307" x2="714" y2="273"/><line x1="1075" y1="366" x2="1130" y2="318"/><line x1="296" y1="70" x2="295" y2="154"/><line x1="120" y1="326" x2="69" y2="368"/><line x1="120" y1="326" x2="63" y2="278"/><line x1="120" y1="326" x2="184" y2="374"/><line x1="940" y1="314" x2="885" y2="358"/><line x1="99" y1="210" x2="63" y2="278"/><line x1="276" y1="234" x2="317" y2="288"/><line x1="276" y1="234" x2="227" y2="190"/><line x1="967" y1="218" x2="897" y2="232"/><line x1="447" y1="207" x2="438" y2="275"/><line x1="447" y1="207" x2="503" y2="157"/><line x1="831" y1="275" x2="885" y2="358"/><line x1="831" y1="275" x2="897" y2="232"/><line x1="1146" y1="134" x2="1077" y2="69"/><line x1="754" y1="52" x2="653" y2="118"/><line x1="227" y1="190" x2="295" y2="154"/><line x1="1135" y1="232" x2="1130" y2="318"/><line x1="1135" y1="232" x2="1050" y2="262"/><line x1="69" y1="368" x2="63" y2="278"/><line x1="50" y1="123" x2="68" y2="50"/></g><g><circle cx="1019" cy="332" r="5" fill="#00c2d1"/><circle cx="730" cy="374" r="5" fill="#00c2d1"/><circle cx="1057" cy="161" r="5" fill="#00c2d1"/><circle cx="934" cy="152" r="5" fill="#00c2d1"/><circle cx="222" cy="318" r="5" fill="#a371f7"/><circle cx="171" cy="240" r="5" fill="#00c2d1"/><circle cx="187" cy="117" r="5" fill="#00c2d1"/><circle cx="368" cy="123" r="7" fill="#4c8dff"/><circle cx="741" cy="209" r="5" fill="#a371f7"/><circle cx="651" cy="373" r="5" fill="#00c2d1"/><circle cx="121" cy="97" r="5" fill="#00c2d1"/><circle cx="511" cy="65" r="5" fill="#00c2d1"/><circle cx="352" cy="226" r="5" fill="#00c2d1"/><circle cx="231" cy="57" r="5" fill="#a371f7"/><circle cx="664" cy="222" r="5" fill="#00c2d1"/><circle cx="881" cy="90" r="5" fill="#00c2d1"/><circle cx="607" cy="64" r="5" fill="#a371f7"/><circle cx="507" cy="250" r="7" fill="#8a94a6"/><circle cx="320" cy="374" r="5" fill="#a371f7"/><circle cx="450" cy="344" r="5" fill="#a371f7"/><circle cx="818" cy="166" r="5" fill="#a371f7"/><circle cx="602" cy="261" r="5" fill="#a371f7"/><circle cx="562" cy="193" r="7" fill="#db61a2"/><circle cx="715" cy="147" r="5" fill="#00c2d1"/><circle cx="550" cy="303" r="5" fill="#00c2d1"/><circle cx="771" cy="307" r="5" fill="#00c2d1"/><circle cx="985" cy="100" r="5" fill="#a371f7"/><circle cx="1075" cy="366" r="5" fill="#00c2d1"/><circle cx="296" cy="70" r="7" fill="#3fb950"/><circle cx="120" cy="326" r="7" fill="#db61a2"/><circle cx="940" cy="314" r="5" fill="#a371f7"/><circle cx="99" cy="210" r="5" fill="#a371f7"/><circle cx="276" cy="234" r="5" fill="#00c2d1"/><circle cx="652" cy="306" r="5" fill="#a371f7"/><circle cx="967" cy="218" r="5" fill="#00c2d1"/><circle cx="447" cy="207" r="5" fill="#00c2d1"/><circle cx="831" cy="275" r="7" fill="#f0883e"/><circle cx="317" cy="288" r="5" fill="#00c2d1"/><circle cx="1146" cy="134" r="5" fill="#a371f7"/><circle cx="885" cy="358" r="5" fill="#00c2d1"/><circle cx="754" cy="52" r="5" fill="#00c2d1"/><circle cx="227" cy="190" r="5" fill="#00c2d1"/><circle cx="897" cy="232" r="5" fill="#00c2d1"/><circle cx="1077" cy="69" r="5" fill="#00c2d1"/><circle cx="1135" cy="232" r="5" fill="#a371f7"/><circle cx="520" cy="370" r="5" fill="#00c2d1"/><circle cx="1130" cy="318" r="5" fill="#00c2d1"/><circle cx="69" cy="368" r="5" fill="#00c2d1"/><circle cx="423" cy="55" r="5" fill="#00c2d1"/><circle cx="653" cy="118" r="5" fill="#a371f7"/><circle cx="1050" cy="262" r="5" fill="#a371f7"/><circle cx="50" cy="123" r="5" fill="#00c2d1"/><circle cx="383" cy="335" r="5" fill="#a371f7"/><circle cx="438" cy="275" r="5" fill="#00c2d1"/><circle cx="714" cy="273" r="5" fill="#00c2d1"/><circle cx="295" cy="154" r="5" fill="#00c2d1"/><circle cx="503" cy="157" r="5" fill="#a371f7"/><circle cx="63" cy="278" r="5" fill="#00c2d1"/><circle cx="68" cy="50" r="5" fill="#00c2d1"/><circle cx="184" cy="374" r="5" fill="#00c2d1"/></g>
     </svg>
     <div class="lp-heroinner">
       <div class="lp-mark">Interview Kickstart &middot; New Programs</div>
@@ -312,6 +288,8 @@ align-items:flex-start;justify-content:center;overflow:auto}
       <p class="sub">A knowledge graph over Interview Kickstart&rsquo;s New Programs
         corpus &mdash; domains, programs, modules, instructors, and the workflows
         that run them.</p>
+      <p class="lp-caution">Counts here are floors and a miss is not evidence of
+        absence &mdash; what that means is below.</p>
       <div class="lp-signin">
         <div id="gsi"></div>
         <div id="gatemsg">Sign in with your Interview Kickstart Workspace account.</div>
@@ -703,7 +681,11 @@ function recompute(refit, why){
   renderDiag();
   document.getElementById('stat').innerHTML=
     '<b>'+A.length+'</b> of <b>'+D.nodes.length+'</b> fetched nodes / <b>'+
-    E.length+'</b> edges / '+comps.length+' components';
+    E.length+'</b> edges / '+comps.length+' components'+
+    // THE COUNT CARRIES ITS QUALIFIER, inline. This was a permanent sidebar
+    // panel saying the same thing, costing a third of the column on every visit
+    // to warn about a number two lines below it.
+    '<span class="qual"> \u2014 what you have expanded to, not the whole graph</span>';
   // A legitimate recompute restarts the simulation — and ONLY a recompute may.
   if(refit!==false){settle=0;alpha=1;frozen=false}
   cam.k=keepCam.k;cam.tx=keepCam.tx;cam.ty=keepCam.ty;
@@ -1021,8 +1003,19 @@ document.getElementById('q').addEventListener('input',ev=>{
       '<div class="hit" data-id="'+esc(r.id)+'"><i style="background:'+
       (C[r.type]||'#888')+'"></i><span>'+esc(r.label)+'</span><em>'+
       esc(r.type)+'</em></div>').join('')
-      ||'<div class="src">no match. This is a LABEL match over the projected '+
-        'graph — a miss is not evidence the corpus lacks it.</div>';
+      ||'<div class="src"><b>No match.</b> This is a LABEL match over the '+
+        'projected graph \u2014 a miss is not evidence the corpus lacks it, only '+
+        'that this graph does not hold that label.</div>';
+    // FILE SEARCH WAS NOT CARRIED OVER, and this is where somebody finds that
+    // out — typing a filename into a box that matches labels. It was a
+    // permanent sidebar panel; now it appears at the moment it explains
+    // something, the same principle as the landing page's limits.
+    if(/\.(xlsx|xlsm|csv|pdf|docx|md)\b|\//i.test(v))
+      res.innerHTML='<div class="src" style="color:#d29922"><b>That looks like a '+
+        'file name.</b> File search and the theme filter were not carried over '+
+        'from the offline build \u2014 both read whole-graph attributes no endpoint '+
+        'returns. Search matches node labels only. A file still appears in the '+
+        'provenance panel of any node it sourced.</div>'+res.innerHTML;
     for(const el of res.querySelectorAll('.hit'))
       el.onclick=async ()=>{
         const id=el.dataset.id;
