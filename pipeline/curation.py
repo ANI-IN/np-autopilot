@@ -215,6 +215,7 @@ def cmd_import() -> int:
             # Order matters: people_aliases and workflow_owners reference people.
             cur.execute("truncate workflow_owners, people_aliases, "
                         "domain_aliases, people")
+            batch: dict[tuple, list] = {}
             for fname, list_key, table, pk, cols in SPECS:
                 data = yaml.safe_load((CONFIG_DIR / fname).read_text(encoding="utf-8"))
                 rows = data.get(list_key) or []
@@ -242,40 +243,57 @@ def cmd_import() -> int:
                         # unhelpful without saying which.
                         pass
                     names = list(values) + ["props"]
-                    ph = ", ".join(["%s"] * len(names))
-                    cur.execute(
-                        f"insert into {table} ({', '.join(names)}) values ({ph})",
+                    batch.setdefault(tuple(names), []).append(
                         list(values.values()) + [json.dumps(props, sort_keys=True)])
+                # ONE round trip per column-shape instead of one per row.
+                #
+                # WHY THIS IS NOT A MICRO-OPTIMISATION. At 148 ms to
+                # ap-northeast-2, 215 single-row inserts cost 36.5 seconds — and
+                # all of it inside the transaction that holds the TRUNCATE's
+                # ACCESS EXCLUSIVE lock on all four curation tables. Anything
+                # else touching them waits, and a blocked TRUNCATE presents as a
+                # hung process rather than an error, so a slow import turned
+                # into cascading test-suite hangs that looked like four
+                # different faults.
+                for names, rows_batch in batch.items():
+                    ph = ", ".join(["%s"] * len(names))
+                    cur.executemany(
+                        f"insert into {table} ({', '.join(names)}) values ({ph})",
+                        rows_batch)
+                batch = {}
                 # The UNRESOLVED aliases live under a different key and have no
                 # target. They are the decisions this system exists to surface,
                 # so they are imported rather than left in a YAML comment where
                 # nothing can query them.
                 if table == "domain_aliases":
-                    for row in (data.get("ambiguous") or []):
-                        cur.execute(
+                    amb = [(row["alias"], row.get("claims"), row.get("why"),
+                            json.dumps({"candidates": row.get("candidates") or [],
+                                        "unresolved": True}, sort_keys=True))
+                           for row in (data.get("ambiguous") or [])]
+                    if amb:
+                        cur.executemany(
                             "insert into domain_aliases(alias, domain, claims, "
                             "sibling_test, confirmed, note, props) values "
                             "(%s, null, %s, 'failed', false, %s, %s) "
-                            "on conflict (alias) do nothing",
-                            (row["alias"], row.get("claims"), row.get("why"),
-                             json.dumps({"candidates": row.get("candidates") or [],
-                                         "unresolved": True}, sort_keys=True)))
+                            "on conflict (alias) do nothing", amb)
                 # The REASONING, which no column holds. Option 2 from the F2
                 # proposal: a note keyed to (file, row_key), with __file__ for
                 # reasoning that belongs to the file rather than any row.
                 cur.execute("delete from curation_notes where scope = %s", (fname,))
-                for row_key, pos, note in extract_notes(fname):
-                    cur.execute(
+                notes = [(fname, row_key, pos, note)
+                         for row_key, pos, note in extract_notes(fname)]
+                if notes:
+                    cur.executemany(
                         "insert into curation_notes(scope,row_key,position,note) "
-                        "values (%s,%s,%s,%s)", (fname, row_key, pos, note))
+                        "values (%s,%s,%s,%s)", notes)
 
                 if table == "people":
-                    for row in rows:
-                        for alias in (row.get("aliases") or []):
-                            cur.execute(
-                                "insert into people_aliases(alias, canonical) "
-                                "values (%s,%s) on conflict (alias) do nothing",
-                                (alias, row["canonical"]))
+                    pairs = [(alias, row["canonical"]) for row in rows
+                             for alias in (row.get("aliases") or [])]
+                    if pairs:
+                        cur.executemany(
+                            "insert into people_aliases(alias, canonical) "
+                            "values (%s,%s) on conflict (alias) do nothing", pairs)
                 print(f"  {table:<16} {len(rows):>4} rows")
         conn.commit()
     return 0
