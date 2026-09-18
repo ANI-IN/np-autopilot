@@ -153,6 +153,24 @@ align-items:flex-start;justify-content:center;overflow:auto}
   #gatebox h1{font-size:32px}
 }
 
+.facts{margin-bottom:10px}
+.ft{display:flex;gap:8px;font-size:11px;line-height:1.5;padding:2px 0}
+.ft .k{flex:0 0 118px;color:#6e7681}
+.ft .v{flex:1;color:#c9d1d9}
+.ft .v.ok{color:#3fb950}
+.ft .v.warn2{color:#d29922}
+.flag{font-size:11px;line-height:1.5;color:#d29922;border-left:2px solid #d29922;
+  padding:5px 0 5px 9px;margin:8px 0}
+.tnote{font-size:11px;line-height:1.55;color:#8b949e;border-left:2px solid #30363d;
+  padding-left:9px;margin:8px 0}
+.acts{display:flex;gap:6px;margin-top:10px}
+.relgrp{margin-bottom:10px}
+.relhead{font:600 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.11em;text-transform:uppercase;color:#6e7681;margin:0 0 5px}
+.reld{font-size:10.5px;color:#6e7681;margin-top:2px}
+.reld .ok{color:#3fb950}
+.reld .warn2{color:#d29922}
+
 /* ---- provenance, grouped by file --------------------------------------
    The file COUNT leads because that is the cross_validated signal; the rows
    are behind a per-file disclosure. Grouping is presentational only — see
@@ -436,8 +454,8 @@ function buildIndex(D){
   const adj=new Map();
   for(const n of D.nodes) adj.set(n.id,[]);
   for(const e of D.edges){
-    if(adj.has(e.s)) adj.get(e.s).push({o:e.t,r:e.r,b:e.b,dir:'out'});
-    if(adj.has(e.t)) adj.get(e.t).push({o:e.s,r:e.r,b:e.b,dir:'in'});
+    if(adj.has(e.s)) adj.get(e.s).push({o:e.t,r:e.r,p:e.p||{},dir:'out'});
+    if(adj.has(e.t)) adj.get(e.t).push({o:e.s,r:e.r,p:e.p||{},dir:'in'});
   }
   const idx=D.nodes.map(n=>({id:n.id,
     k:(n.l+' '+n.t+' '+(n.wid||'')+' '+(n.st||'')).toLowerCase()}));
@@ -512,14 +530,35 @@ function mergeGraph(D,incoming,budget){
 
 // API shapes -> renderer shapes. Named functions rather than inlined, so a
 // change to the API surface has ONE place to land.
+// ---- THE ADAPTATION LAYER, AND WHAT IT USED TO LOSE ----------------------
+// These were written against the OFFLINE build's compact shape, where an edge is
+// {b, r, s, t} and `b` is basis. The API sends {source_id, target_id, rel,
+// props}, so `props.b` has never existed: measured, 0 edges carry one while
+// 3,929 carry props. adaptEdge was extracting a field that was a naming artefact
+// of a different serialisation, and discarding twelve real ones —
+// basis (1,155), inferred (351), class_dates (1,499), rank (2,239), via_alias,
+// avg_rating and the rest. Nothing failed. The panel rendered and the edges drew.
+//
+// CARRY `props` WHOLE; DO NOT PICK FROM IT. Cherry-picking is the bug: a
+// property added upstream is silently absent downstream, and there is no error
+// because the adapter did exactly what it was told. The convenience fields stay
+// for existing call sites, but `p` is the whole object and new readers use it.
+// tests/test_client_adapters_lose_nothing.py derives the expected keys from the
+// API's OWN response and fails if one stops arriving.
 function adaptNode(r){
+  // adapt-drop: depth — traversal bookkeeping from the neighbourhood query, not
+  // a property of the node. It is the DISTANCE FROM THE SEED of one particular
+  // request, so storing it on a merged node would mean whichever fetch happened
+  // to arrive last decides how far away it is.
   const p=r.props||{};
   return {id:r.id, l:r.label, t:r.type, d:0, iso:false,
           st:p.status||'', th:(p.theme_id!==undefined?p.theme_id:null),
           wid:p.workflow_id||null, eff:p.effort||null, al:p.alerts||0,
-          raw:r.label_raw||null, loaded:false};
+          raw:r.label_raw||null, sens:!!r.sensitive, p:p, loaded:false};
 }
-function adaptEdge(r){ return {s:r.source_id, t:r.target_id, r:r.rel, b:(r.props||{}).b}; }
+function adaptEdge(r){
+  return {s:r.source_id, t:r.target_id, r:r.rel, p:r.props||{}};
+}
 
 // ---- RESTART DIAGNOSTIC (ported) ---------------------------------------
 // Distinguishes a real page navigation from a layout reset. Those need
@@ -870,27 +909,140 @@ async function expand(id,depth){
   }catch(e){ return null; }
 }
 
+// ---- TYPE-SPECIFIC DETAIL VIEWS -----------------------------------------
+// One panel for six node types is why this felt flat. Each type now leads with
+// its own answer, and the four properties the coverage report identified SHAPE
+// the views rather than appearing in them:
+//
+//   basis            100% of expert_in (1,066 self_declared / 89 hr_record)
+//   inferred         100% of contains — every program→module edge is inferred
+//   cross_validated  100% of instructors (746 true / 1,169 false)
+//   review             3.4% — PRESENT-ONLY, never rendered as a clean bill
+//
+// The coverage numbers decide the rendering. The first three are complete, so
+// they can be stated unconditionally. `review` is not: 96.6% of nodes are
+// unflagged because nobody looked, not because they were checked and cleared,
+// so "no issues" would be a claim the data cannot support. Same trap as
+// avg_rating at 1.7% — a field rendered at low coverage reads as absence rather
+// than as not-extracted — which is why both are omitted when missing rather
+// than shown as a dash or a zero.
+function fact(k, v){ return v===undefined||v===null||v===''||(Array.isArray(v)&&!v.length)
+  ? '' : '<div class="ft"><span class="k">'+esc(k)+'</span><span class="v">'+
+         esc(Array.isArray(v)?v.join(', '):String(v))+'</span></div>'; }
+
+function reviewFlag(p){
+  // PRESENT-ONLY. Absence is never rendered — see above.
+  return p.review ? '<div class="flag">Flagged for review: '+esc(p.review)+
+    '<span class="dim"> — retained and shown, not excluded (§4)</span></div>' : '';
+}
+
+function crossVal(p){
+  if(p.cross_validated===undefined) return '';
+  return p.cross_validated===true||p.cross_validated==='true'
+    ? '<div class="ft"><span class="k">corroboration</span><span class="v ok">cited in more than one file</span></div>'
+    : '<div class="ft"><span class="k">corroboration</span><span class="v warn2">single source</span>'+
+      '<span class="dim"> — 61% of instructors are</span></div>';
+}
+
+//: type -> the facts that type leads with. Order is the answer's order.
+const TYPE_FACTS = {
+  instructor: p => crossVal(p) + fact('pipeline status', p.pipeline_status) +
+    fact('on rosters', p.roster_count) + fact('cited in files', p.file_count) +
+    // Availability, NOT performance. A decline rate is how often someone was
+    // unavailable; reading it as quality is the misuse this label exists to stop.
+    (p.decline_rate!==undefined ? fact('declined (availability, not performance)',
+       p.decline_rate+'% of '+(p.requests_to||'?')+' requests') : ''),
+  module: p => fact('granularity', p.granularity) + fact('cited in files', p.file_count),
+  program: p => fact('family', p.family) + fact('document type', p.doctype) +
+    fact('cited in files', p.file_count),
+  domain: p => fact('cadence', p.cadence) + fact('stage', p.stage) +
+    fact('cited in files', p.file_count),
+  workflow: p => fact('effort', p.effort) + fact('theme', p.theme_id) +
+    fact('tools', p.tools) + fact('steps', p.steps) + fact('alerts', p.alerts),
+  person: p => fact('team', p.team) + fact('title', p.title) +
+    fact('seniority', p.seniority) + fact('first seen', p.first_seen_quarter) +
+    fact('last seen', p.last_seen_quarter),
+  file: p => fact('sheets', p.sheet_count) + fact('parsed', p.parsed),
+};
+
+//: A standing note per type, where the ABSENCE of something is the answer.
+const TYPE_NOTE = {
+  workflow: 'Ownership is domain-level at New Programs, so a workflow has no '+
+            'owner. Ninety-two without one is the correct final state, not a gap.',
+  file: 'A file is cited, never traversed. Its provenance links are held '+
+        'separately so a file cited by thousands of rows cannot be walked '+
+        'through as if it connected them.',
+};
+
+// How one relationship reads, given the edge's own properties.
+function relDetail(x){
+  const p = x.p || {};
+  const bits = [];
+  // basis is on 100% of expert_in, so it is stated every time. Rendering a
+  // self-declared claim identically to an HR record is the single worst thing
+  // this panel used to do: 92% of expertise is a claim that looked like a finding.
+  if(p.basis) bits.push(p.basis==='hr_record'
+    ? '<span class="ok">HR record</span>' : '<span class="warn2">self-declared</span>');
+  if(p.via_alias) bits.push('<span class="warn2">via alias</span>');
+  // inferred is on 100% of contains. Displayed as fact, it was a fact it is not.
+  if(p.inferred) bits.push('<span class="warn2">inferred</span>');
+  if(p.rank) bits.push('rank '+esc(String(p.rank)));
+  const dates = p.class_dates;
+  if(Array.isArray(dates) && dates.length){
+    const sorted = dates.slice().sort();
+    bits.push(dates.length+' class'+(dates.length>1?'es':'')+
+      ' · latest '+esc(String(sorted[sorted.length-1]).slice(0,10)));
+  }
+  // avg_rating is on 1.7% of teaches edges. Shown where present, and ABSENT
+  // where absent — not dashed, not zeroed, because an empty rating field reads
+  // as "unrated" when it means "never extracted".
+  if(p.avg_rating!==undefined&&p.avg_rating!==null)
+    bits.push('rated '+esc(String(p.avg_rating))+
+      (p.classes?' over '+esc(String(p.classes)):''));
+  return bits.length ? '<div class="reld">'+bits.join(' · ')+'</div>' : '';
+}
+
 async function openNode(id){
   const before=settle;
   select(id);
+  routeTo(id);
   const n=idx.byId.get(id);
   document.getElementById('right').style.display='block';
   document.getElementById('nl').textContent=n?n.l:id;
   document.getElementById('nt').textContent=n?n.t:'';
+  const props=(n&&n.p)||{};
+  const facts=(TYPE_FACTS[n&&n.t]||(()=>''))(props);
+  const note=TYPE_NOTE[n&&n.t];
   const pr=[];
-  pr.push('<button type="button" id="goto">centre</button>');
-  pr.push('<button type="button" id="exp2">expand from here</button>');
+  if(facts) pr.push('<div class="facts">'+facts+'</div>');
+  pr.push(reviewFlag(props));
+  if(note) pr.push('<div class="tnote">'+esc(note)+'</div>');
+  pr.push('<div class="acts"><button type="button" id="goto">centre</button>');
+  // A file has nothing to expand to — see below. Offering the button anyway
+  // is a control that cannot work.
+  if(!n||n.t!=='file')
+    pr.push('<button type="button" id="exp2">expand from here</button>');
+  pr.push('</div>');
   document.getElementById('nprops').innerHTML=pr.join('');
   const g=document.getElementById('goto'); if(g&&n)g.onclick=()=>centreOn(n,1.6);
   const x2=document.getElementById('exp2'); if(x2)x2.onclick=()=>expand(id);
 
   const nb=neighboursOf(idx,id,CAP,state.expanded.has(id));
   document.getElementById('ncount').textContent=nb.total;
-  document.getElementById('nbrs').innerHTML=nb.shown.map(x=>{
-    const o=idx.byId.get(x.o);if(!o)return '';
-    const dash=x.r===EXPERT?' <span class="dash">(declared)</span>':'';
-    return '<div class="nb" data-id="'+esc(x.o)+'">'+esc(o.l)+
-      '<div class="rel">'+esc(x.r)+' · '+esc(o.t)+dash+'</div></div>'}).join('')
+  // GROUPED BY RELATION. A flat list of "teaches · module" six times says
+  // nothing about whether he taught it once or forty times; the edge properties
+  // that answer it were being dropped by adaptEdge entirely.
+  const byRel=new Map();
+  for(const x of nb.shown){ if(!byRel.has(x.r)) byRel.set(x.r,[]); byRel.get(x.r).push(x); }
+  document.getElementById('nbrs').innerHTML=
+    [...byRel.entries()].map(([rel,xs])=>
+      '<div class="relgrp"><div class="relhead">'+esc(rel)+
+        '<span class="dim"> · '+xs.length+'</span></div>'+
+      xs.map(x=>{
+        const o=idx.byId.get(x.o); if(!o) return '';
+        return '<div class="nb" data-id="'+esc(x.o)+'">'+esc(o.l)+
+          '<div class="rel">'+esc(o.t)+'</div>'+relDetail(x)+'</div>';
+      }).join('')+'</div>').join('')
     ||'<div class="src">no relationships loaded — use “expand from here”</div>';
   // A FILE NODE HAS NO TRAVERSABLE EDGES BY CONSTRUCTION. Provenance is in
   // node_sources, not in `edges` (§A.3), so the file hubs are unreachable —
@@ -1483,6 +1635,35 @@ async function boot(){
 recompute(true,'initial');
 // The harness drives the renderer without a network. Booting is skipped only
 // when a test has explicitly said so.
+// ---- HASH ROUTES, NODE ONLY ---------------------------------------------
+// A shareable link to a domain is the highest-value thing in a tool people send
+// each other, and it costs nothing: no server change, no CSP change, and the
+// app already does the right thing on arrival (openNode + expand).
+//
+// THE NODE ONLY. Not filters, not the camera, not the loaded subgraph. Putting
+// view state in the URL invites a "restore everything" expectation the app
+// cannot honour — the subgraph depends on what you expanded to, and a link that
+// silently restored a different one would be worse than a link that restored
+// nothing.
+let _routing=false;
+function routeTo(id){
+  if(_routing) return;
+  _routing=true;
+  try{ if(location.hash!=='#/node/'+id) location.hash='#/node/'+id; }
+  catch(e){}
+  _routing=false;
+}
+async function openRoute(){
+  const m=/^#\/node\/(.+)$/.exec(location.hash||'');
+  if(!m) return false;
+  const id=decodeURIComponent(m[1]);
+  if(!idx.byId.get(id)) await expand(id);   // arrive cold: fetch it first
+  openNode(id);
+  const o=idx.byId.get(id); if(o&&o.x!==undefined) centreOn(o,1.6);
+  return true;
+}
+addEventListener('hashchange',()=>{ if(!_routing) openRoute(); });
+
 if(!window.__NP_NO_BOOT){ loadStats(); boot(); }
 </script>
 </body></html>

@@ -86,9 +86,15 @@ const FIX = (() => {
                 label_raw: i===7 ? HOSTILE : null, props:{}});
   for(let i=1;i<60;i++)
     edges.push({source_id:'n'+(i-1), target_id:'n'+i,
-                rel:(i%9===0?'expert_in':'covers'), props:{}});
+                rel:(i%9===0?'expert_in':'covers'),
+                // basis is on 100% of expert_in in the real graph, so the
+                // fixture carries it too — a fixture that omits it would let
+                // the view stop rendering it without anything noticing.
+                props:(i%9===0?{basis:(i%18===0?'hr_record':'self_declared')}:{})});
   for(let i=0;i<12;i++)
-    edges.push({source_id:'n'+i, target_id:'n'+((i*7+3)%60), rel:'teaches', props:{}});
+    edges.push({source_id:'n'+i, target_id:'n'+((i*7+3)%60), rel:'teaches',
+                props:{rank:i%3, class_dates:['2026-01-0'+(i%9+1),'2026-02-0'+(i%9+1)]}});
+  edges.push({source_id:'n2', target_id:'n3', rel:'contains', props:{inferred:true}});
   return {nodes,edges};
 })();
 function jsonResponse(body, ok=true, status=200){
@@ -213,8 +219,13 @@ if(PORTED){
   d.nodes.push(...seed.map(n=>({id:n.id,l:n.label,t:n.type,d:0,iso:false,
     st:'',th:null,wid:null,eff:null,al:0,raw:n.label_raw,loaded:false})));
   const seedIds = new Set(seed.map(n=>n.id));
+  // SEED THROUGH THE REAL ADAPTER SHAPE, props included. Seeding {s,t,r} only
+  // meant the seeded copy of an edge had no properties, and mergeGraph is
+  // idempotent by design — so the fetched copy, which DOES carry them, was
+  // correctly deduped away and the panel rendered nothing. The fixture was
+  // under-specifying the thing under test.
   d.edges.push(...FIX.edges.filter(e=>seedIds.has(e.source_id)&&seedIds.has(e.target_id))
-    .map(e=>({s:e.source_id,t:e.target_id,r:e.rel})));
+    .map(e=>({s:e.source_id,t:e.target_id,r:e.rel,p:e.props||{}})));
 }
 
 try{ (0,eval)(blocks[1]); console.log('  code block: OK (no throw at load)'); }
@@ -565,7 +576,53 @@ console.log('\n=== CURATION SURFACE ===');
 // rule able to break it. The label is chosen BY MEASUREMENT — longest unbroken
 // token — so a longer one arriving later is covered without editing this.
 if(PORTED){
-  console.log('\n=== LONG LABEL vs PANEL WIDTH ===');
+  // ---- THE FOUR PROPERTIES MUST SHAPE THE VIEW, NOT DECORATE IT ------------
+// basis, inferred and cross_validated are on 100% of their rows, so they are
+// stated unconditionally. review (3.4%) and avg_rating (1.7%) are present-only:
+// a field rendered at low coverage reads as absence rather than as
+// not-extracted, which is the trap the landing page warns about.
+if(PORTED){
+  console.log('\n=== TYPE VIEWS ===');
+  // PICK THE NODE BY MEASUREMENT, not by name: whichever one actually has an
+  // expert_in edge carrying a basis. Hardcoding n0 asserted against a node that
+  // has no expert_in edge at all, which is a test passing or failing for a
+  // reason unrelated to the thing it names.
+  const basisEdge = FIX.edges.find(e => e.rel === 'expert_in' && (e.props||{}).basis);
+  const subject = basisEdge ? basisEdge.source_id : 'n0';
+  console.log('  subject with an expert_in basis    :', subject);
+  await (0,eval)(`expand(${JSON.stringify(subject)})`);
+  await (0,eval)(`openNode(${JSON.stringify(subject)})`);
+  const panel = store.get('nbrs').innerHTML + store.get('nprops').innerHTML;
+
+  const showsBasis = /self-declared|HR record/.test(panel);
+  console.log('  expert_in shows its basis           :', showsBasis);
+  if(!showsBasis) errors.push('expert_in RENDERS WITHOUT basis — a self-declared '
+    + 'claim is displayed identically to an HR record');
+
+  const showsDates = /class(es)? · latest/.test(panel);
+  console.log('  teaches shows class_dates           :', showsDates);
+  if(!showsDates) errors.push('teaches RENDERS WITHOUT class_dates — "taught once" '
+    + 'and "taught forty times" look the same');
+
+  const grouped = /class="relhead"/.test(panel);
+  console.log('  relationships grouped by relation   :', grouped);
+  if(!grouped) errors.push('RELATIONSHIPS ARE NOT GROUPED BY RELATION');
+
+  // review is absent on every fixture node. It must render NOTHING — not a
+  // clean bill, which would claim an assessment nobody made.
+  const cleanBill = /no issues|no review|passed review|✓/i.test(panel);
+  console.log('  absent review shown as a clean bill :', cleanBill);
+  if(cleanBill) errors.push('AN ABSENT review FLAG IS RENDERED AS A CLEAN BILL — '
+    + '96.6% are unflagged because nobody looked, not because they were cleared');
+
+  // avg_rating is absent on every fixture edge. It must be omitted, not dashed.
+  const dashedRating = /rated\s*(—|-|0\b|n\/a)/i.test(panel);
+  console.log('  absent avg_rating dashed or zeroed  :', dashedRating);
+  if(dashedRating) errors.push('AN ABSENT avg_rating IS RENDERED AS A DASH OR ZERO '
+    + '— that reads as "unrated" when it means "never extracted"');
+}
+
+console.log('\n=== LONG LABEL vs PANEL WIDTH ===');
   const longest = FIX.nodes
     .map(nd => ({id:nd.id, tok:String(nd.label||'').split(/\s+/)
                                 .reduce((a,b)=>a.length>=b.length?a:b,'')}))
