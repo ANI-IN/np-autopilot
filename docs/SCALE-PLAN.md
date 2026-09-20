@@ -7,6 +7,14 @@ Nothing here is built. Nothing here is decided. The point of writing it now is
 that the next session will be tempted to start building, and the honest first
 move is a measurement.
 
+> **That measurement has now been taken — [`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md),
+> 2026-09-20.** 37 folders of ≥187, 75 files, 5 decks. It does not answer Q1
+> (2,000 is still unverified), it makes **Q3 the urgent one**, and it adds a
+> constraint this document did not have: **people must not be extracted from
+> slide content at all**, because four decks carry four instructor-shaped
+> `Name, Role, Company` tuples and two of them are fictional. Read the
+> inventory's §7 and §8 before acting on the four questions below.
+
 ---
 
 ## The question
@@ -153,3 +161,19 @@ Not an extractor. Not a registry reader. Not a schema.
 counts, and a representative sample of what is actually inside — because doc 01
 exists in that form for a reason. Reading headers instead of rows gave the wrong
 answer at 75 files, and it will give a more confident wrong answer at 2,000.
+
+**DONE 2026-09-20 — [`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md).** Still do
+not write the extractor. What it says to measure next, in order: the 16
+`Live Class Content` module folders and the 17 under
+`Uplevel Shared(SWEs + Common modules)`, because that is where the decks are and
+the 8-of-75 deck ratio is the number most likely to be wrong; the five folders
+in C untouched since 2023-02-28, to learn whether a third of that folder is
+empty; and one `(File responses)` folder, to learn what learners uploaded.
+
+Two decisions it says to take **before** the first crawl, because both silently
+change what the corpus is and both are expensive to reverse at 2,000 files:
+**what a shortcut means** (~1 file in 10; its target may sit outside all three
+registry folders, so following widens the corpus past what the registry declares
+and skipping drops curriculum files), and **whether file-owner metadata is
+recorded** (it is contact data, it is collected by the act of citing a file, and
+`sources.py` has no jurisdiction over it).

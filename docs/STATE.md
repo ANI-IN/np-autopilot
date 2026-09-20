@@ -350,6 +350,7 @@ candidates reintroduces the picking one layer up.
 |---|---|
 | **About to write or change a guard?** | [**`A7B.md`**](A7B.md) first — moved out of `DECISIONS.md` 2026-09-20. **Ten** instances of one failure pattern, the three questions that find the eleventh, and why the best-told instances are the least useful. Read it *before*, not after |
 | **About to build for 2,000 files?** | [`SCALE-PLAN.md`](SCALE-PLAN.md). Four questions recorded unanswered, and the fork between a search index over a known subset and a graph that guesses |
+| **What is actually in the registry folders?** | [`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md) — measured 2026-09-20. The three folders are three different data contracts; five shapes of contact data, four of which `sources.py` cannot reach; and a measured demonstration that instructor names on decks cannot be told from template placeholders |
 | Why is the schema shaped this way? | `DECISIONS.md` §A |
 | How does curation sync with Postgres? | §B, and `pipeline/curation.py` |
 | What can run on Vercel, and why these poolers? | §C |
@@ -597,21 +598,67 @@ count without its floor.
 ## 11 · The opening brief for the next session
 
 **Read this document, then [`A7B.md`](A7B.md), then
-[`SCALE-PLAN.md`](SCALE-PLAN.md). In that order, before anything else.**
+[`SCALE-PLAN.md`](SCALE-PLAN.md), then
+[`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md). In that order, before anything
+else.**
 
-**First task: answer `SCALE-PLAN.md`'s four open questions with measurements,
-not proposals.**
+### The content inventory is DONE — 2026-09-20
 
-Start with a **content inventory of the three registry folders** — file types,
-counts, and a representative sample of what is actually in them.
-`01-corpus-inventory.md` is the shape to copy: measured, not guessed. It exists
-in that form because **reading headers instead of rows gave the wrong answer at
-75 files**, and it will give a more confident wrong answer at 2,000.
+[`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md). **The previous brief said the
+three registry folders are named nowhere in this repository and told you to ask.
+That instruction has outlived its condition** — the registry is a real artefact
+and it was found, not guessed:
 
-> **The three registry folders are not named anywhere in this repository.** Ask
-> which they are before inventorying, rather than guessing from directory names
-> — guessing which folders to measure is how a measurement becomes an assumption
-> with a number attached.
+A spreadsheet titled **`links`**, `1GNKvvv9LM36om6QJiDuyP01r-L3N19oJGBi1Yjcun5I`,
+owned by the B2C account. **It lives inside the corpus folder itself**
+(`parentId` = `config/drive.yaml`'s `folder_id`). Five rows — three folders and
+**two workbooks**, so "the registry is a list of folders" is wrong about 40% of
+it:
 
-**Do not write an extractor. Do not build the registry reader.** Report what is
-there, then decide.
+| | | id |
+|---|---|---|
+| A | Applied Agentic AI | `1yHZYpbJTjfxumTMU5qNvfSuLXLImJpad` |
+| B | Software+System Pod | `19MxiYsE8B3T-O0VqnOF7gtU_7oxlRFJo` |
+| C | Data + Mangement *(sic)* | `1aVg_UbUCsuDxv9XXICIxbmpMbjUz5ETm` |
+| P1 | Domain Classes Poll Feedback 2026 | `1CcifEPJzSxaqTCguM2e6iOXW9tnjRt75ZPoskN2M-LY` |
+| P2 | MLSU/Gen AI/Agentic AI Poll Feedback 2026 | `1zBDUysiidZFdfHVQcOmymv7ulYOz94t5q89rw6HrYDc` |
+
+**Measured: 37 folders opened of ≥187 discovered, 75 files, 5 decks read.
+Every count in that document is a floor over a fifth of what is known to
+exist, and "2,000+ files" remains unverified.**
+
+### Two things from it that change what you do next
+
+**1 · `CLAUDE.md` §0 is about to become false, and no test covers it.** It says
+every file in the corpus folder is already a binary and the export map has never
+fired. The `links` sheet is a **native Google Sheet in that folder**, and
+`00_fetch_drive.py:103` maps spreadsheets to `.xlsx`. The next pass 0 run
+exports it — first firing ever — and pass 1 ingests it as an added file
+(74 → 75, `file.expect` 74 ± 2 still holds, with one slot left). **A
+configuration file is about to become a `file` node** unless something excludes
+it. This is an instance-9 shape: the claim is true today and nothing in the
+program will notice when it stops being.
+
+**2 · The contact-data control has to move, not widen.** `REGISTRY-INVENTORY.md`
+§5 found **five** contact-data shapes and only the first is a spreadsheet
+column — the shape `sources.py` is an allow-list over. Form-response sheets
+generate an `Email Address` column automatically; a LinkedIn roster has no
+columns; a consent register carries per-person publishing restrictions nothing
+in the taxonomy can express; and **file-owner metadata is collected by the act
+of citing a file in someone else's Drive**. The single-owner corpus is why that
+last one has never mattered — an A7B question-3 guarantee held by a reason
+nobody wrote down.
+
+### Then: `SCALE-PLAN.md`'s four open questions
+
+Still open, but Q3 is now the urgent one and §8 of the inventory says why. **Q1's
+"2,000 files" is still unmeasured.**
+
+**Do not extract people from slide content.** §7 of the inventory is a measured
+demonstration, not an argument: four decks carry four instructor-shaped
+`Name, Role, Company` tuples, and two of them are a template placeholder and an
+icebreaker example persona. One of the fabricated names — `Hannah Chen` — is
+**also a real rated instructor in the registry's own P2 workbook.**
+
+**Do not write an extractor. Do not build the registry reader.** The inventory
+recommends fork A and names what to measure next.
