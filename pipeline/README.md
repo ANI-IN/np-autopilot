@@ -20,8 +20,24 @@ Helpers: `gen_index.py` regenerates `knowledge/INDEX.md` from `graph.json` —
 never hand-write a count there. `gen_workflow_owners.py` regenerates the 92-row
 ownership stub; every suggestion lands `confirmed: false`.
 
-`check_no_payroll_committed.py` refuses to let HR/payroll content into git, and
-it is the SECOND layer against that — keyed on **content**, not on the path.
+`count_registry.py` is **not a pass and never fetches anything.** It enumerates
+the scale-up registry's Drive folders and reports what is there — file and
+folder counts, depth, types, shortcuts, failures — so that the decision to
+build a crawler rests on a number rather than an estimate. It uses only
+`files.list` and `files.get` for metadata, and `tests/test_count_registry.py`
+asserts that statically: a counting tool that can fetch is one flag away from
+an ingester. It implements D3 (shortcuts resolved, never followed), D4 (owner
+recorded as a **domain**, never an address) and D6 (`(File responses)` folders
+skipped by name, and the skip reported). See `docs/PRE-CRAWL-DECISIONS.md`.
+
+Its report states **discovered, opened, and discovered-but-not-opened**
+separately, and says so explicitly when the third is zero — because
+"every discovered folder was opened" is what makes a count a count rather than
+a floor, and `REGISTRY-INVENTORY.md` was a floor.
+
+`check_no_payroll_committed.py` refuses to let HR/payroll **or contact** content
+into git, and it is the SECOND layer against that — keyed on **content**, not on
+the path.
 `.gitignore` and `taxonomy.yaml -> excluded.files` are both path rules, and pass
 0 and pass 1 read the same list, so together they are one layer wearing two hats
 (§A.7a): a rename, a move, a `git add -f` or a copy into another folder walks

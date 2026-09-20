@@ -250,8 +250,30 @@ def list_folder(service, folder_id: str, drive_id: str | None = None):
 
 
 def walk(service, folder_id: str, prefix: Path, seen: set,
-         drive_id: str | None = None) -> list:
-    """Recursively enumerate the folder tree. Returns a flat list of entries."""
+         drive_id: str | None = None, shortcuts: list | None = None) -> list:
+    """Recursively enumerate the folder tree. Returns a flat list of entries.
+
+    SHORTCUTS ARE RESOLVED AND RECORDED, NEVER FOLLOWED — decision D3,
+    `docs/PRE-CRAWL-DECISIONS.md`. This reverses what this function did until
+    2026-09-20, and the reversal is the point:
+
+    A shortcut's target may live anywhere in Drive. Following one means **the
+    corpus boundary is defined by whatever a third party happened to link to**,
+    which was harmless while the corpus was a single folder owned by the B2C
+    account and stops being harmless the moment it is other people's Drives.
+    Measured in the scale-up registry: ~1 file in 10 is a shortcut.
+
+    Skipping them outright is equally wrong — four of the seven in the registry
+    are named like the most important documents in their folder. So the
+    shortcut is recorded as a POINTER in `shortcuts`, and the caller decides,
+    with the whole tree in hand, whether the target was reachable anyway. A
+    target inside the declared tree needs no action; one outside it is
+    **reported by name** rather than silently included or silently dropped.
+
+    Measured before the change: the existing corpus contains ZERO shortcuts, so
+    this alters nothing that is already fetched. Like the export map, the branch
+    it replaces had never fired on real data.
+    """
     if folder_id in seen:                       # Drive allows folder cycles
         print(f"  ! cycle at {prefix}, skipping", file=sys.stderr)
         return []
@@ -265,19 +287,43 @@ def walk(service, folder_id: str, prefix: Path, seen: set,
         if mime == SHORTCUT_MIME:
             details = f.get("shortcutDetails") or {}
             target, tmime = details.get("targetId"), details.get("targetMimeType")
-            if not target:
-                continue
-            if tmime == FOLDER_MIME:
-                out += walk(service, target, prefix / name, seen, drive_id)
-                continue
-            f = {**f, "id": target, "mimeType": tmime}
-            mime = tmime
+            if shortcuts is not None:
+                shortcuts.append({
+                    "path": str(prefix / name),
+                    "shortcut_id": f.get("id"),
+                    "target_id": target,
+                    "target_mime": tmime,
+                })
+            continue                            # D3: recorded, never followed
 
         if mime == FOLDER_MIME:
-            out += walk(service, f["id"], prefix / name, seen, drive_id)
+            out += walk(service, f["id"], prefix / name, seen, drive_id, shortcuts)
         else:
             out.append({**f, "rel_dir": prefix, "safe_name": name})
     return out
+
+
+def report_shortcuts(shortcuts: list, entries: list, seen: set) -> list:
+    """Classify recorded shortcuts against the tree that was actually walked.
+
+    DERIVED, NOT LISTED (instance 8): "inside the declared tree" is decided by
+    membership of the ids this walk discovered, not by a path prefix somebody
+    maintains. A target reachable by its own parent needs no action — it is
+    already in `entries`. Everything else is named.
+    """
+    inside = {e.get("id") for e in entries} | set(seen)
+    outside = [s for s in shortcuts if s["target_id"] not in inside]
+
+    print("-" * 70)
+    print(f"SHORTCUTS: {len(shortcuts)} found, "
+          f"{len(shortcuts) - len(outside)} resolve inside the declared tree")
+    if outside:
+        print(f"  {len(outside)} point OUTSIDE it and were NOT fetched (D3):")
+        for s in outside:
+            print(f"    {s['path']}  ->  {s['target_mime']}")
+        print("  If one of these belongs in the corpus, add its folder to the "
+              "registry — that is where a scope decision belongs.")
+    return outside
 
 
 def target_path(entry: dict, cache: Path) -> Path:
@@ -399,7 +445,9 @@ def main() -> int:
     print(f"cache   : {cache.relative_to(ROOT)}")
     print(f"scope   : {SCOPES[0]}\n")
 
-    entries = walk(service, folder_id, Path("."), set(), drive_id)
+    shortcuts: list = []
+    walked: set = set()
+    entries = walk(service, folder_id, Path("."), walked, drive_id, shortcuts)
     entries.sort(key=lambda e: str(e["rel_dir"] / e["safe_name"]))
 
     # An empty tree is a FAILURE, never a success. The most common cause is a
@@ -415,6 +463,11 @@ def main() -> int:
               drive_id=drive_id, scope=SCOPES[0])
 
     print(f"{len(entries)} files in the Drive tree\n")
+
+    # D3: shortcuts are resolved and reported, never followed. Classified here
+    # rather than in walk() because "inside the declared tree" is only knowable
+    # once the whole tree is walked.
+    shortcuts_outside = report_shortcuts(shortcuts, entries, walked)
 
     # ---- FETCH-TIME EXCLUSION. R17. --------------------------------------
     # The exclusion list was an application rule enforced by pass 1, two passes

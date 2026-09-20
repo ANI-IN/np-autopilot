@@ -20,7 +20,7 @@ Evidence throughout is [`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md).
 |---|---|---|
 | **D1** | No person extraction from slide content, at any confidence | **decided — never** |
 | **D2** | Fork A: a search index with a graph over a known subset | **confirmed as the design** |
-| **D3** | Shortcuts: resolve and report, do not follow | **decided — reverses current behaviour** |
+| **D3** | Shortcuts: resolve and report, do not follow | **CLOSED IN CODE 2026-09-20** — `00_fetch_drive.py`, `tests/test_shortcuts_are_not_followed.py` |
 | **D4** | File-owner metadata: store the domain, never the address | **decided** |
 | **D5** | The `SMEs consent` folder: do not ingest | **decided — and it is a taxonomy limit, not a privacy preference** |
 | **D6** | `(File responses)` folders: declared skip, reported | **decided — added after measurement, see §D6** |
@@ -174,6 +174,17 @@ Neither obvious option is acceptable on its own:
   declares. The registry stops being the scope.
 - **Skip**: silently drops real curriculum files. `Sys3`'s shortcuts are named
   like the most important documents in that folder.
+
+> **CLOSED IN CODE 2026-09-20, before the crawler was written** — because a
+> crawler built on a reader that follows shortcuts inherits the behaviour this
+> reverses. `walk()` now records shortcuts and never follows them;
+> `report_shortcuts()` classifies them against the ids the walk actually
+> discovered (derived, not a path prefix somebody maintains — instance 8).
+>
+> **Measured first: the existing corpus contains ZERO shortcuts**, so the flip
+> removes nothing already fetched and cannot trip pass 1's removal hard-fail.
+> The branch that was replaced had never fired on real data — the same shape as
+> the export map, found the same way, one week apart.
 
 **Decision: resolve the shortcut's metadata, record it as a pointer, and fetch
 the target only if the target is independently inside a declared registry
@@ -362,7 +373,7 @@ document is a control.
 |---|---|---|
 | D1 no people from slides | — | **recorded only.** There is no extractor yet; the test belongs with the code that would violate it |
 | D2 fork A | — | **recorded only.** A design direction is not a constraint |
-| D3 shortcuts | — | **recorded only, and it contradicts running code.** `00_fetch_drive.py` follows shortcuts today |
+| D3 shortcuts | **`tests/test_shortcuts_are_not_followed.py`** — six tests, mutation-verified: restoring the follow branch reddens two | **closed** |
 | D4 owner domain | — | **recorded only.** The `@`-in-provenance assertion is specified above and not yet written |
 | D5 consent folder | `config/taxonomy.yaml -> excluded.files` — **but only once those paths are in the registry crawl's scope**, which does not exist yet | partly |
 | D6 `(File responses)` | — | **recorded only.** The skip belongs in the crawler, with the report line beside it |
