@@ -53,9 +53,9 @@ matter.
 | Provenance | 30,658 `node_sources` rows over **74 files** |
 | Curation | 20 people, 15 confirmed aliases + 6 unresolved, 92 workflow owners, **45 `curation_notes`** |
 | Sensitive | **Zero rows projected.** `--scope full` refuses — but **not for the reason this table used to give.** R18 appears nowhere in `project_graph.py`; the program's own blocker was a hardcoded claim that the `recruiting` RLS path was missing, and that path **exists** (`nodes_recruiting_select`, `np_can_see_sensitive()`). Both claims outlived their conditions. The refusal is now derived, and refuses on the real ground: the **decision** is unrecorded — `docs/INGEST-SCOPE-REVERSAL.md`, approval block blank. [`A7B.md`](A7B.md) instance 9 |
-| Migrations | **0001–0015 applied.** `python3 pipeline/migrate.py status` |
+| Migrations | **0001–0016 applied.** `python3 pipeline/migrate.py status` |
 | Drive links | **74 of 74** files resolve. The ids were in pass 0's manifest since the beginning and nothing carried them forward |
-| Profiles | 1 `admin`, 1 `member`. The shared account is `is_shared_account=true` and correctly capped — it cannot hold `recruiting` or `admin`. **`member` is now granted automatically** at signup (migration 0015); `recruiting` and `admin` stay manual |
+| Profiles | **4 rows, 3 of them ORPHANED** — the `auth` schema was emptied 2026-09-20 and the surviving profiles point at user_ids that no longer exist. One live `admin` (re-granted 2026-09-21). See §10 and `AUTH.md` §"The durability clause has fired". Previously 1 `admin`, 1 `member`. The shared account is `is_shared_account=true` and correctly capped — it cannot hold `recruiting` or `admin`. **`member` is now granted automatically** at signup (migration 0015); `recruiting` and `admin` stay manual |
 
 ### TWO GRAPHS, DIFFERENT COUNTS — this confusion has already cost three numbers
 
@@ -595,6 +595,73 @@ sheet-name parse.
 **Response count travels with every average.** A 4.9 from 3 responses and a 4.6
 from 200 are not comparable; an average without its N is the same failure as a
 count without its floor.
+
+### UNATTRIBUTED — the `auth` schema was emptied, 2026-09-20
+
+**Cause not established. Recorded rather than explained, because guessing at it
+would be worse than leaving it open.**
+
+Observed at 22:12Z: `auth.users`, `auth.identities`, `auth.sessions`,
+`auth.refresh_tokens` and `auth.audit_log_entries` **all zero**, while `public`
+was completely intact — 3,146 nodes, 4,021 edges, 30,658 provenance rows,
+`profiles` still holding its rows. `auth.schema_migrations` still had all 82
+GoTrue migrations.
+
+**What it caused**, which is established: the next Google sign-in created a new
+`auth.users` row with a new `user_id`, 0015's trigger granted it `member`, and
+the previous `admin` profile became an orphan that `np_role()` can never return.
+An administrator was reduced to `member` with no profile being edited. See
+`AUTH.md` §"The durability clause has fired" — this is the condition that
+section said must trigger a revisit of the auto-grant.
+
+**What is known about the writes from this session**, stated so it can be ruled
+in or out rather than assumed: every delete issued here was scoped — the GoTrue
+probes deleted `where email = <probe address>` and reported their row counts,
+and `tests/test_auto_member_grant.py` deletes only four synthetic UUIDs. No
+unscoped delete against `auth` was run from this machine. That is not proof of
+innocence; it is the evidence available.
+
+**Three orphaned profiles remain and were deliberately NOT deleted** — they are
+the only record of the prior state. `grant_access.py check` does not see them:
+it looks for users without profiles, not profiles without users.
+
+**Open questions for whoever knows the dashboard history:** was a user-delete,
+a project restore, or an auth reset performed around 2026-09-20 21:50–22:15Z?
+
+### The default view reads as truncated — wording, not the 65
+
+**Not a proposal to change the node count.** 65 is specced and the reasoning in
+§8 stands. This is about the sentence wrapped around it.
+
+`public/index.html:736` renders, on first load:
+
+```
+65 of 65 fetched nodes / 98 edges / N components
+  — what you have expanded to, not the whole graph
+```
+
+Three things work against it for a first-time visitor:
+
+- **"65 of 65"** is an X-of-Y construction, which universally signals *a subset
+  of a larger whole*. When the two numbers are equal the construction does no
+  work and actively implies a cap that happens to be met.
+- **"fetched"** is implementation vocabulary. To a reader it suggests a
+  transfer limit rather than a designed view.
+- **"what you have expanded to, not the whole graph"** describes a state the
+  visitor has not entered — on first load they have expanded to *nothing*. The
+  qualifier exists to stop the count being read as the whole graph, and on the
+  first screen it instead reads as *you are seeing a fragment*.
+
+> **The qualifier that prevents an overclaim is producing an underclaim.** The
+> default view is complete and deliberate, and the sentence tells a first-time
+> visitor it is neither. That is the same shape as §9's rule about low-coverage
+> fields: a truthful qualifier in one state is misleading in another.
+
+**Latent bug in the same line:** `comps.length + ' components'` has no
+pluralisation, so a single-component view reads *"1 components"*.
+
+**Not changed.** The wording is the owner's call; the analysis is the answer to
+the question asked.
 
 ### Still open
 

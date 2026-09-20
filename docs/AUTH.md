@@ -221,9 +221,18 @@ employee now signs in and reads the graph. Nobody runs a command.
 and was told they had no profile and therefore read nothing — until an
 administrator noticed. The manual step read as a security control and was not
 one: **layer 3 (migration 0007) had already refused every identity that is not
-an IK Workspace account, before the user row existed at all.** What the manual
-step actually gated was *membership of the company*, which layer 0 and layer 3
-decide between them. It added a person to the loop without adding a decision.
+an IK Workspace account, before the user row existed at all.**
+
+> **THAT SENTENCE WAS FALSE WHEN IT WAS WRITTEN.** The 0007 function existed in
+> the database and was never registered with GoTrue, so it refused nothing until
+> **2026-09-21**. The reasoning for the auto-grant still holds — layer 0's
+> Internal consent screen was, and is, refusing non-Workspace identities on the
+> Google path — but layer 3 was not the reason it held. See
+> §"Layer 3 is INERT".
+
+What the manual step actually gated was *membership of the company*, which
+layer 0 decides — and which layer 3 decides too, now that it runs. It added a
+person to the loop without adding a decision.
 
 **What it never gated, and still does not.** `recruiting` is the role that
 reads the hiring funnel — 277 named rejections and 1,625 mid-pipeline
@@ -249,7 +258,9 @@ on rather than trusting a caller.
 
 **What still holds, unchanged.**
 
-- Layer 3 still refuses a non-Workspace identity at signup. The trigger checks
+- Layer 3 refuses a non-Workspace identity at signup — **as of 2026-09-21,
+  when the hook was finally registered; it was inert before that.** The trigger
+  checks
   the domain again anyway and skips rather than raising, because raising would
   abort GoTrue's signup transaction and turn a correctly-refused account into a
   500 — the wrong failure for the right reason.
@@ -567,3 +578,131 @@ explorer is broken". Provisioning stays a deliberate act:
   hook **has still never been invoked**. `docs/DEPLOYMENT.md` lists the three
   steps. The domain rule does not depend on them.
 - **Any deployment.** Nothing is live; `vercel login` is interactive.
+
+---
+
+## WHY THE EMAIL PROVIDER IS OFF — read this before turning it back on
+
+**Disabled 2026-09-21.** Supabase Dashboard → Authentication → Sign In / Providers
+→ **Email: off**. `disable_signup` stays **false** on purpose, so Google sign-ins
+can still create new users.
+
+**Do not re-enable it without replacing what it removes.** Measured on
+2026-09-20, while it was on:
+
+```
+POST /auth/v1/signup  {"email":"anything@interviewkickstart.com", ...}
+  -> HTTP 200, auth.users row created, and since migration 0015
+     a `member` profile created with it
+```
+
+The anon key is served to anyone by `/api/config`, because the browser needs it.
+So that endpoint was reachable by the whole internet, and it **bypasses
+`/api/session` entirely** — `web/lib/auth.py`'s `hd` check only runs on our own
+route, never on GoTrue's. Nothing in this project uses email/password: sign-in
+is Google-only by design, so the provider was pure attack surface.
+
+**What stopped it, precisely.** After disabling, the same request returns
+`400 email_provider_disabled`, and a password grant returns
+`422 email_provider_disabled`. **The provider refused it — not the hook.** GoTrue
+rejects at the provider layer before the before-user-created hook is consulted.
+
+**Still untested, and must not drift into "closed":** whether an *unconfirmed*
+account could have obtained a session. The attempt to measure that was
+rate-limited (`HTTP 429`) and no conclusion was drawn from it in either
+direction. Turning the provider off makes the question unreachable; it does not
+answer it. If the provider is ever re-enabled, **that question is open again and
+is the first thing to test.**
+
+---
+
+## The `hd` claim was read from the wrong place — again
+
+**Migration 0016, 2026-09-21.** This is `A7B.md` instance 6 repeating in a second
+place, and it caused a live outage.
+
+`pipeline/grant_access.py` already carried the finding, established by reading a
+real GoTrue row:
+
+```
+identity_data -> 'custom_claims' ->> 'hd'   <- where it IS
+identity_data ->> 'hd'                      <- where the script looked
+```
+
+**GoTrue nests non-standard OIDC claims under `custom_claims`, and `hd` is
+non-standard.** Migration 0007's hook read `{claims,hd}` and `{user_metadata,hd}`
+— both unnested. It was written speculatively, and because the hook was never
+registered with GoTrue, **nothing could catch the repeat for weeks.** It was
+registered on 2026-09-21 and Google sign-in broke within the hour: the hook found
+no `hd`, refused with 403, and GoTrue never minted a session — so the app sat on
+the sign-in page with no error a user could act on.
+
+0016 searches every container GoTrue plausibly uses, each one **`custom_claims`
+first**, and records the payload's **key names** (never values) when it refuses,
+so the next failure diagnoses itself instead of presenting as a redirect that
+does nothing. `tests/test_auth_hook_reads_hd.py` runs all seven allow-shapes and
+four refuse-shapes; the widening is about where the hook LOOKS, never about what
+it accepts.
+
+> **A control nobody has wired up cannot be wrong, and cannot be right either.**
+> The hook was correct-looking, tested against its own assumption, and refused
+> every real user the moment it was given the chance.
+
+### Proven against a real Google identity — 2026-09-21
+
+Not a probe, and better than one. `auth.users` was empty; the first sign-in after
+0016 created a **new** user row, which means `before-user-created` **fired**:
+
+```
+0016 applied            22:17:16Z
+auth.users row created  22:17:42Z   (26 seconds later)
+profile created         22:17:42Z   role=member, by 0015's trigger
+auth_hook_refusals      0 rows
+```
+
+A real Google Workspace identity passed the hook, GoTrue minted the user, and the
+auto-grant gave it `member` — **the whole chain, end to end, on production**,
+with nothing refused. That closes the link the earlier GoTrue probe could not
+reach.
+
+---
+
+## The durability clause has fired — 2026-09-21
+
+The reversal section says, of revocation:
+
+> *"Deletion therefore still revokes durably. **If that ever stops being true,
+> this reversal must be revisited**, because a grant that reinstates itself is
+> not revocable."*
+
+**The premise was that a re-login does not re-create the `auth.users` row.** On
+2026-09-20 the entire `auth` schema was found empty — `users`, `identities`,
+`sessions`, `refresh_tokens` and `audit_log_entries` all at zero — while
+`public` was untouched. **The cause is not established and is recorded as
+unattributed** (see `docs/STATE.md`). What matters here is the consequence:
+
+- the next Google sign-in created a **new** `auth.users` row with a **new**
+  `user_id`;
+- 0015's trigger fired on it and granted **`member`**;
+- the previous `admin` profile still exists, still says `admin`, and is
+  **orphaned** — no `auth.users` row carries its id, so `np_role()` can never
+  return it.
+
+**The role did not change. The identity did.** An administrator was silently
+reduced to `member` without any profile being edited, and the app was correct to
+show `member`.
+
+**So revocation is durable against profile deletion, and NOT durable against
+`auth.users` deletion.** If a revoked person's `auth.users` row is ever removed,
+their next sign-in auto-grants `member` again. That is the reinstating grant the
+clause warned about, reached by a route the clause did not anticipate.
+
+**Two consequences to hold:**
+
+1. `profiles` has **no foreign key** to `auth.users`, which is why the profiles
+   survived — and why they became orphans rather than disappearing. Orphans are
+   invisible to `grant_access.py check`, which looks for users without profiles,
+   not profiles without users.
+2. **A role above `member` does not survive an identity change.** Anyone holding
+   `recruiting` or `admin` must be re-granted after one, and nothing currently
+   notices that it happened.
