@@ -88,6 +88,11 @@ and the arithmetic is an estimate, not a measurement. Do not put 2,000 in a
 document as though it were measured. What *is* measured: the tree is at least
 five levels deep, and the widest single listing seen was 27 entries.
 
+> **§11 now has the measurement, and the refusal to guess was right.**
+> Two of three rows hold **11,577 files across 3,519 folders, 15 levels deep** —
+> **5.8× the "2,000+" estimate**, with row C still uncounted. Every figure in
+> §§1–10 remains a floor over 37 folders; §11 is the count.
+
 ---
 
 ## 2 · The three folders are three different shapes
@@ -659,6 +664,13 @@ in folder A.
 folders and the 17 under `Uplevel Shared` to their leaves, which was not done.
 What is now known is the *direction* of the error and the reason for it.
 
+> **CORRECTED BY §11 — the direction above is wrong.** Measured exhaustively,
+> row A is **4.2%** decks (lower than 8-of-75's 10.7%) and row B is **18.6%**
+> (higher). There is no single deck ratio; it varies 4.4× between two folders in
+> the same registry. This paragraph is left standing because it is the third
+> instance of a number describing something other than the claim attached to it,
+> and the second one in this document.
+
 ### M2 · The dormant folders are empty — all of them
 
 The five folders in C untouched since 2023-02-28:
@@ -763,3 +775,147 @@ C (9): root, `TPM`, `Machine Learning`, `Engineering Management`,
 
 **150+ discovered folders remain unopened. Every count in this document is a
 floor over the fifth that was measured.**
+
+---
+
+## 11 · THE CRAWL — rows A and B counted exhaustively
+
+**2026-09-20.** `pipeline/count_registry.py`. Nothing fetched, nothing ingested,
+nothing projected. **Row C was deliberately not crawled** — see §12.
+
+> **Read every number below as two folders' worth, not two-thirds of the
+> registry.** C is absent. Extrapolating from A+B to "the registry" is the same
+> move that produced the wrong deck ratio in §10, one section earlier.
+
+| | A · Applied Agentic AI | B · Software+System Pod | A+B |
+|---|---:|---:|---:|
+| Files | 8,079 | 3,498 | **11,577** |
+| Size | 10.6 GiB | 31.5 GiB | **42.1 GiB** |
+| Folders discovered | 1,706 | 1,822 | 3,528 |
+| Folders **opened** | 1,697 | **1,822** | 3,519 |
+| Not opened | 9 (all D6) | **0** | 9 |
+| Max depth | 10 | **15** | — |
+| Pages / API calls | 1,700 / 1,710 | 1,822 / 1,843 | 3,522 / 3,553 |
+| Wall clock | 898 s | 867 s | 29.4 min |
+| Decks | 339 (**4.2%**) | 649 (**18.6%**) | 988 (8.5%) |
+| Shortcuts | 10 | 21 | 31 |
+| Failures | 1 | 18 | 19 |
+| Repeats | 0 | 0 | **0** |
+
+**Exhaustiveness, stated rather than assumed.** Every listing in both rows
+reached a terminal page. Row B's discovered and opened counts are **identical**,
+so for B the tool prints *"every discovered folder was opened — this is a count,
+not a floor."* Row A's nine unopened folders are all `(File responses)` skips,
+named individually. **No folder in either row was left unaccounted for**, and no
+folder was reachable by two paths.
+
+### The headline: "2,000+ files" was low by roughly 6×
+
+Two of three rows hold **11,577 files**. `SCALE-PLAN.md` carried "2,000+" as the
+stated target and this document was careful to call it *plausible and
+unverified*. Measured, it is **5.8× that** for two rows, and **156× the current
+74-file corpus**.
+
+### §10's deck-ratio correction was itself wrong, in the other direction
+
+§10 said the 8-of-75 ratio was measured at the wrong depth and that *"the true
+share is higher."* **Measured, that is false — and the real finding is better.**
+
+- **Row A: 4.2%** — *lower* than the inventory's 10.7%, because A's deep levels
+  are 4,004 `.wav` files, 774 Python sources and 379 JSON blobs.
+- **Row B: 18.6%** — *higher*.
+- Combined: 8.5%.
+
+> **There is no "deck ratio". It varies 4.4× between two folders in the same
+> registry.** Any design that assumes a uniform content mix across the registry
+> is assuming something measurably untrue — and both of the previous estimates,
+> including this document's own correction, were single numbers.
+
+This is the third time a figure in this project described something other than
+the claim it was attached to, and it was caught the same way as the other two:
+by measuring with the instrument the sentence was actually about. `A7B.md`,
+"the instrument at the wrong setting."
+
+### Shortcuts: 31, and most of them are tombstones
+
+**18 of B's 21 shortcut targets return HTTP 404 — the target is gone.** Among
+them are the four in `Sys3: Embedded Software Engineering` this document named
+in §3 as *"named like that folder's most important documents"*:
+`Embedded Software Engineering Curriculum`, `Embedded SW - Slides and
+Documents`, `Instruction_Overview`, `Embedded Software Engineering Plan`.
+
+**All four point at nothing.** So D3's stated cost — *skipping them silently
+drops real curriculum* — was overstated for exactly the examples used to argue
+it. Following those shortcuts would have fetched nothing at all. The decision is
+unchanged and better supported: a shortcut is a **pointer with its own
+lifetime**, and the tree it points into rots independently of the tree it sits
+in.
+
+The live ones that matter:
+
+- **3 in row A point at one `.pptx` owned at `gmail.com`** — a named
+  instructor's teaching deck, living in a personal Drive, reachable from the
+  registry only through a shortcut. This is D3's genuine hard case: skipping it
+  loses a real deck, following it reaches into a personal account.
+- **1 in row A** points at a folder of learner capstone work, also `gmail.com`.
+- **1 in row B** points at a file owned at **`interview-kickstart.com`** —
+  note the hyphen. That is **not** the company's primary domain and no other
+  file in 11,577 is owned there. Recorded as an observation, not a conclusion.
+
+### `(File responses)`: 9, all in row A, all skipped by name
+
+Row B has **zero** — it is older, pre-forms content. So D6's cost is entirely
+concentrated in one registry row, and the nine are listed by full path in the
+run output.
+
+### Failures: 19, every one named
+
+All 19 are `shortcut-target` HTTP 404s — dead pointers, listed above. **Zero
+folder-listing failures in 3,519 opened folders.** No folder was unreadable, and
+no listing ended without a terminal page.
+
+### What the sizes say about the cache question
+
+**42.1 GiB for two rows**, against 57.4 MiB for the current corpus. Row B is
+**3× smaller in file count and 3× larger on disk** than row A — 690
+`application/octet-stream`, 203 `.mp4`, 36 `.mov`, 75 `.zip`. `CACHE-EXPOSURE.md`
+§4 costed removing the cache as a rewrite; these numbers say the question is not
+mainly *re-fetching*, it is whether a local mirror of this corpus is something
+anyone wants on a laptop at all.
+
+---
+
+## 12 · Row C was not crawled, and why that matters more than the count
+
+C was left out at the owner's instruction. While verifying service-account
+access, the account could read C **although it had never been shared with it**.
+Cause, established directly from the permission list:
+
+> **`Data + Mangement` is shared `anyone` / `reader`. It is readable by anyone
+> with the link.**
+
+Every other registry row, and the NP corpus itself, is scoped `domain:
+interviewkickstart.com`. C is the only `anyone`, and folder-level `anyone`
+propagates to contents — so all 13 of its domain subfolders and everything
+beneath them are link-readable.
+
+**A bound on that claim:** the permission listing available here is incomplete.
+The NP corpus is known to be shared with the service account — that is how pass
+0 has worked since the beginning — and *that grant does not appear in its
+listing*. So the grants cannot be enumerated exhaustively. The `anyone` entry on
+C is affirmatively present, and is sufficient on its own to explain the access.
+
+### The consequence for the crawler's boundary logic
+
+The registry's premise is that **scope is declared**: a folder in the sheet is
+in scope, a folder merely shared is not. C shows the two have already diverged —
+and not in the direction of a stray share. **For C, readability is not evidence
+of any intentional grant at all.**
+
+> **The crawler must never use "can the account read it?" as a proxy for
+> "is it in scope?"** Today that proxy's answer includes the public internet.
+
+A permissions sweep over the registry would be a cheap pass and is **not** done
+here: reading an ACL requires writer access, so it cannot run as the
+`drive.readonly` service account. It needs a different identity and its own
+decision.

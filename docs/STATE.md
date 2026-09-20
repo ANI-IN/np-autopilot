@@ -620,21 +620,80 @@ narrow three of them.
 
 ---
 
-### Your task: build the fork A crawler. Start with D3.
+### The registry has been counted — rows A and B, 2026-09-20
 
-**D3 first, and not for sequencing reasons — because it contradicts code that
-runs today.** `00_fetch_drive.py:263-273` resolves shortcuts and recurses into
-folder targets. That was harmless when the corpus was one owned folder and is
-not harmless when it is other people's Drives: it means **the corpus boundary is
-defined by whatever a third party happened to link to.** Every other decision
-can be built alongside the crawler. This one is a change to a pass that already
-works, and leaving it until later means writing the crawler against behaviour
-that is about to be reversed.
+`pipeline/count_registry.py`, `REGISTRY-INVENTORY.md` §11. Nothing fetched.
 
-Then, roughly: the registry reader (five rows, **three folders and two
-workbooks** — see below), the crawl with D6's skip, the content index, and the
-join last. **The join is the part to design slowly**; `SCALE-PLAN.md` explains
-why it is the alias problem for the third time.
+| | A | B | A+B |
+|---|---:|---:|---:|
+| Files | 8,079 | 3,498 | **11,577** |
+| Size | 10.6 GiB | 31.5 GiB | **42.1 GiB** |
+| Folders opened / discovered | 1,697 / 1,706 | **1,822 / 1,822** | 3,519 / 3,528 |
+| Max depth | 10 | 15 | — |
+| Decks | 4.2% | 18.6% | 8.5% |
+| Shortcuts · failures · repeats | 10 · 1 · 0 | 21 · 18 · 0 | 31 · 19 · 0 |
+
+**Every listing reached a terminal page. Row B's discovered and opened counts
+are identical — "every discovered folder was opened". Row A's nine unopened are
+all `(File responses)` D6 skips, named.** All 19 failures are dead shortcut
+targets (HTTP 404), named individually. Zero folders reachable by two paths.
+
+**"2,000+ files" was low by ~6×, for two of three rows.** And there is no single
+deck ratio: it varies 4.4× between A and B, which falsifies the correction
+`REGISTRY-INVENTORY.md` §10 made to its own §3. Both wrong figures are left
+standing with pointers.
+
+**Row C was NOT crawled**, by instruction. While verifying access the service
+account could read C although it had never been shared with it. Cause,
+established from the permission list: **C is shared `anyone` / reader — readable
+by anyone with the link.** Every other registry row and the NP corpus is scoped
+to the `interviewkickstart.com` domain. `anyone` propagates to contents.
+`REGISTRY-INVENTORY.md` §12, including the bound on that claim (the ACL listing
+available to a reader is incomplete).
+
+> **The crawler must never use "can the account read it?" as a proxy for "is it
+> in scope?"** For C that proxy's answer includes the public internet.
+
+### Which branches have never run — `UNEXERCISED-BRANCHES.md`
+
+Three unexercised branches were found by accident, one per week. The deliberate
+pass — filtered `sys.settrace` over a real run of passes 01–05 plus `validate.py`,
+in a copy of the repo, no new dependency — found the rest.
+
+**One is unreachable rather than merely unexercised:** `01_walk_corpus.py:126`
+tests `suffix == ".docx" and kind == "text"`, but the `kind == "text"` branch
+above returns unconditionally. It implements a `CLAUDE.md` rule about a corpus
+file that really is plain text with a `.docx` extension. **The protection works
+anyway** — the earlier branch catches it — so the guarantee holds and the
+mechanism written down to hold it cannot run. A7B question 3, first instance
+found by looking.
+
+The rest cluster in one place: code that handles a renamed sheet, an unreadable
+file, a changed manifest, an unfamiliar label. **All four are normal traffic in
+a multi-owner Drive**, so the least-exercised code is what the crawl hits first.
+The manifest delta loops have printed zero lines ever, and pass 1's exclusion
+skip has never fired because pass 0 excludes at fetch time.
+
+### Your task: build the fork A crawler. D3 is already closed.
+
+**D3 was closed first, deliberately, before the counter was written** — a
+crawler built on a reader that follows shortcuts inherits the behaviour the
+decision reverses. `00_fetch_drive.py:walk()` now records shortcuts and never
+follows them; `report_shortcuts()` classifies them against the ids the walk
+actually discovered. Six tests, mutation-verified. **Measured before the flip:
+the existing corpus has zero shortcuts**, so it removed nothing already fetched.
+
+What remains, roughly: the registry reader (five rows, **three folders and two
+workbooks**), the crawl with D6's skip, the content index, and the join last.
+**The join is the part to design slowly**; `SCALE-PLAN.md` explains why it is
+the alias problem for the third time, and `lib/resolve.py` — which runs zero
+lines in a build today — would be its first build-time caller.
+
+**Two things the count changes about that plan.** At 11,577 files for two rows,
+a serial crawl is ~30 minutes of wall clock and 3,553 API calls; the full
+registry will be more. And **row B holds 31.5 GiB in 3,498 files** — the cache
+question is no longer mainly about re-fetching, it is whether a local mirror is
+something anyone wants at all.
 
 ---
 

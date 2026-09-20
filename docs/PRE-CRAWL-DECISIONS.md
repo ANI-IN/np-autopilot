@@ -202,6 +202,39 @@ lives outside the registry will not be fetched. **That is a gap the registry
 owner can close by adding the folder to the registry** — which is the right
 place for a scope decision, and the reason the registry exists.
 
+### Measured 2026-09-20: the stated cost was overstated, and the decision is better for it
+
+The exhaustive crawl found **31 shortcuts across rows A and B**, and
+**18 of them are dead** — the target returns HTTP 404.
+
+That includes **all four** of the `Sys3: Embedded Software Engineering`
+shortcuts this decision cited as its hardest case, the ones *"named like the
+most important documents in their folder"*:
+`Embedded Software Engineering Curriculum`, `Embedded SW - Slides and
+Documents`, `Instruction_Overview`, `Embedded Software Engineering Plan`.
+
+**All four point at nothing.** Following them would have fetched zero bytes;
+skipping them loses nothing. The argument for D3 was built on examples that turn
+out to be tombstones.
+
+> **A shortcut has its own lifetime, and the tree it points into rots
+> independently of the tree it sits in.** That is a better reason for
+> resolve-and-report than the one originally given: it is not only that a target
+> may be out of scope, it is that a target may not exist, and neither condition
+> is visible from the shortcut itself.
+
+The live ones are the real cases, and there are three:
+
+- **three shortcuts in row A point at one `.pptx` owned at `gmail.com`** — a
+  named instructor's teaching deck in a personal Drive, reachable from the
+  registry only through a shortcut. Skipping loses a real deck; following
+  reaches into a personal account. **This is the case D3 exists for**, and it is
+  a single file.
+- one in row A points at a folder of learner capstone work, also `gmail.com`.
+- one in row B points at a file owned at **`interview-kickstart.com`** — with a
+  hyphen, not the company's primary domain, and the only file so owned among
+  11,577.
+
 ---
 
 ## D4 · File-owner metadata: store the domain, never the address
