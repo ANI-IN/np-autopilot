@@ -4,11 +4,15 @@ You are continuing `np-autopilot`: a knowledge graph over Interview Kickstart's
 New Programs corpus, projected into Supabase Postgres, served by a Vercel web
 app behind Google Workspace sign-in.
 
-**Read this, then [`A7B.md`](A7B.md), then [`SCALE-PLAN.md`](SCALE-PLAN.md),
-then [`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md) and
+**Read this, then [`A7B.md`](A7B.md), then
+[`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md), then
 [`PRE-CRAWL-DECISIONS.md`](PRE-CRAWL-DECISIONS.md). In that order, before
-anything else.** Everything here is current as of 2026-09-20. Where a number is
-measured rather than assumed, it says so.
+anything else** — §11 repeats it with the reasoning.
+[`SCALE-PLAN.md`](SCALE-PLAN.md) is the framing document and its four questions
+are still open; the two above it are newer and narrow three of them.
+
+Everything here is current as of 2026-09-20. Where a number is measured rather
+than assumed, it says so.
 
 **This document has been wrong twice, both times in the same way — a claim that
 outlived its condition.** It said the graph had 5,048 nodes (the pipeline
@@ -566,7 +570,12 @@ a mitigation.** Deliberately not started: the type views and session extraction
 change what the graph holds, and the diff should not be missing while that is in
 flight.
 
-### Next — session metrics as an edge time series
+### Queued, not next — session metrics as an edge time series
+
+**Superseded as "next" by the fork A crawler (§11), not cancelled.** It is still
+the best-specified unbuilt thing in the project, and the poll workbooks it
+depends on are two of the registry's five rows — so the crawler and this item
+now share a source, and doing the crawler first is what makes this cheaper.
 
 4,046 sessions, 4,082 rated rows, 2023-10-01 → 2026-08-30. **Not a node type** —
 that is +129% nodes for a leaf nothing traverses to, which is the Alert mistake.
@@ -601,120 +610,152 @@ count without its floor.
 ## 11 · The opening brief for the next session
 
 **Read this document, then [`A7B.md`](A7B.md), then
-[`SCALE-PLAN.md`](SCALE-PLAN.md), then
-[`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md). In that order, before anything
-else.**
+[`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md), then
+[`PRE-CRAWL-DECISIONS.md`](PRE-CRAWL-DECISIONS.md). In that order, before
+anything else.** [`SCALE-PLAN.md`](SCALE-PLAN.md) is still the framing document
+and its four questions are still open; the two documents above it are newer and
+narrow three of them.
 
-### The content inventory is DONE — 2026-09-20
+**Everything in this section is as of 2026-09-20.**
 
-[`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md). **The previous brief said the
-three registry folders are named nowhere in this repository and told you to ask.
-That instruction has outlived its condition** — the registry is a real artefact
-and it was found, not guessed:
+---
+
+### Your task: build the fork A crawler. Start with D3.
+
+**D3 first, and not for sequencing reasons — because it contradicts code that
+runs today.** `00_fetch_drive.py:263-273` resolves shortcuts and recurses into
+folder targets. That was harmless when the corpus was one owned folder and is
+not harmless when it is other people's Drives: it means **the corpus boundary is
+defined by whatever a third party happened to link to.** Every other decision
+can be built alongside the crawler. This one is a change to a pass that already
+works, and leaving it until later means writing the crawler against behaviour
+that is about to be reversed.
+
+Then, roughly: the registry reader (five rows, **three folders and two
+workbooks** — see below), the crawl with D6's skip, the content index, and the
+join last. **The join is the part to design slowly**; `SCALE-PLAN.md` explains
+why it is the alias problem for the third time.
+
+---
+
+### The registry, resolved
 
 A spreadsheet titled **`links`**, `1GNKvvv9LM36om6QJiDuyP01r-L3N19oJGBi1Yjcun5I`,
-owned by the B2C account. **It lives inside the corpus folder itself**
-(`parentId` = `config/drive.yaml`'s `folder_id`). Five rows — three folders and
-**two workbooks**, so "the registry is a list of folders" is wrong about 40% of
-it:
+owned by the B2C account, **living inside the corpus folder itself**. Five rows,
+not three — *"the registry is a list of folders"* is wrong about 40% of it:
 
 | | | id |
 |---|---|---|
 | A | Applied Agentic AI | `1yHZYpbJTjfxumTMU5qNvfSuLXLImJpad` |
 | B | Software+System Pod | `19MxiYsE8B3T-O0VqnOF7gtU_7oxlRFJo` |
-| C | Data + Mangement *(sic)* | `1aVg_UbUCsuDxv9XXICIxbmpMbjUz5ETm` |
+| C | Data + Mangement *(sic — load-bearing)* | `1aVg_UbUCsuDxv9XXICIxbmpMbjUz5ETm` |
 | P1 | Domain Classes Poll Feedback 2026 | `1CcifEPJzSxaqTCguM2e6iOXW9tnjRt75ZPoskN2M-LY` |
 | P2 | MLSU/Gen AI/Agentic AI Poll Feedback 2026 | `1zBDUysiidZFdfHVQcOmymv7ulYOz94t5q89rw6HrYDc` |
 
-**Measured: 37 folders opened of ≥187 discovered, 75 files, 5 decks read.
-Every count in that document is a floor over a fifth of what is known to
-exist, and "2,000+ files" remains unverified.**
+**The sheet itself is excluded from ingestion** (`taxonomy.yaml -> excluded.files`,
+path **`links`**, not `links.xlsx` — pass 0 keys on the pre-export name and the
+other spelling fails open silently).
 
-### Two things from it that change what you do next
+**Measured: 37 folders opened of ≥187 discovered, 75 files, 5 decks.** Every
+count in the inventory is a floor over a fifth of what is known to exist, and
+**"2,000+ files" is still unverified** — do not repeat it as though it were
+measured.
 
-**1 · `CLAUDE.md` §0 is about to become false, and no test covers it.** It says
-every file in the corpus folder is already a binary and the export map has never
-fired. The `links` sheet is a **native Google Sheet in that folder**, and
-`00_fetch_drive.py:103` maps spreadsheets to `.xlsx`. The next pass 0 run
-exports it — first firing ever — and pass 1 ingests it as an added file
-(74 → 75, `file.expect` 74 ± 2 still holds, with one slot left). **A
-configuration file is about to become a `file` node** unless something excludes
-it. This is an instance-9 shape: the claim is true today and nothing in the
-program will notice when it stops being.
+---
 
-**2 · The contact-data control has to move, not widen.** `REGISTRY-INVENTORY.md`
-§5 found **five** contact-data shapes and only the first is a spreadsheet
-column — the shape `sources.py` is an allow-list over. Form-response sheets
-generate an `Email Address` column automatically; a LinkedIn roster has no
-columns; a consent register carries per-person publishing restrictions nothing
-in the taxonomy can express; and **file-owner metadata is collected by the act
-of citing a file in someone else's Drive**. The single-owner corpus is why that
-last one has never mattered — an A7B question-3 guarantee held by a reason
-nobody wrote down.
+### The six pre-crawl decisions — and which of them anything enforces
 
-### Decisions taken since — [`PRE-CRAWL-DECISIONS.md`](PRE-CRAWL-DECISIONS.md)
+Full reasoning in [`PRE-CRAWL-DECISIONS.md`](PRE-CRAWL-DECISIONS.md). The second
+column is the one that matters, because `A7B.md` instance 9 is precisely the
+failure of reading a document as a control.
 
-**D1** no person extraction from slide content, at any confidence — instructor
-attribution comes from the poll workbooks, always with its response count.
-**D2** fork A confirmed as the design. **D3** shortcuts: resolve and report, do
-not follow — this **reverses what `00_fetch_drive.py` does today**. **D4** store
-`owner_domain`, never the owner address. **D5** do not ingest `SMEs consent`,
-because a consent licence keys on the *purpose* of the reader and no such axis
-exists in the model — the full argument is D5 and it is a taxonomy limit, not a
-privacy preference.
+| | decision | enforced by |
+|---|---|---|
+| **D1** | No person extraction from slide content — at any confidence, with any flag. Attribution comes from the poll workbooks, always with its response count | **nothing. Prose.** The extractor it governs does not exist yet |
+| **D2** | Fork A — a search index with a graph over a known subset | **nothing. Prose.** A design direction is not a constraint |
+| **D3** | Shortcuts: resolve and report, do not follow | **nothing — and running code does the opposite** |
+| **D4** | Store `owner_domain`, never the owner address | **nothing. Prose.** The assertion (*no provenance field contains `@`*) is specified, not written |
+| **D5** | Do not ingest `SMEs consent` | partly — the mechanism exists, but only bites once those paths are in the crawl's scope, which they are not |
+| **D6** | `(File responses)` folders: skip by name, **report the skip** — never by a size cap | **nothing. Prose.** |
 
-**Four of the five are prose, and the table at the end of that document says so
-explicitly.** They become tests when the code they govern is written.
+**Five of six are prose.** They are recorded now because the decisions are cheap
+today and expensive at 2,000 files, not because writing them down makes them
+true. **Each becomes a test when the code it governs is written, and that code
+must not be written without it.**
 
-### Landed in code, 2026-09-20
+**The two that will be argued with, so the reasons are here:**
 
-- **The contact signature class** in `pipeline/check_no_payroll_committed.py`.
-  Three families: payroll (unchanged), contact **column headers** with a
-  measured density rule (worst legitimate prose 10, threshold 100), and contact
-  **literal identifiers** — free-mail addresses and LinkedIn profile URLs — at
-  **threshold one, anywhere**, because the near-miss was four addresses in a
-  Markdown file and a density rule would have waved it through. Exemptions need
-  a `contact-ok: <reason>` marker, scoped the same way `taxonomy-literal-ok` is;
-  a bare marker is itself an offence. **Stated gap, on purpose:**
-  corporate-domain addresses, `@interviewkickstart.com`, and phone numbers.
-- **The registry sheet is excluded** (`taxonomy.yaml -> excluded.files`, path
-  `links` — **not** `links.xlsx`; pass 0 keys on the pre-export name and the
-  wrong one fails open silently).
-- **Pass 0's export map is now exercised** against a fake service for all four
-  native types, plus the positive control that a binary still downloads
-  (`tests/test_export_map_is_exercised.py`). Verified by mutation: writing
-  `links.xlsx` in the exclusion reddens three tests.
+- **D1 is not a threshold and must never be softened into one.** `CLAUDE.md` §4
+  governs which *real records* to keep. This is the prior question — whether a
+  `Name, Role, Company` tuple on a slide is a record at all. Ranking a
+  fabrication yields a ranked fabrication. Four decks carry four such tuples;
+  two are a template placeholder and an icebreaker example, and **one of the
+  fabricated names is also a rated instructor in P2.**
+- **D5 is a modelling limit, not a privacy preference.** A consent licence keys
+  on the **purpose of the reader**; every control here keys on the producer or
+  the viewer's role. A declared purpose is unverifiable — instance 7 exactly.
 
-### The three follow-up measurements — DONE, `REGISTRY-INVENTORY.md` §10
+---
 
-- **The deck ratio (8 of 75) was measured over the wrong stratum.** Decks sit
-  one to three levels *below* where the first pass stopped. The module folders
-  also turn out to have a repeating shape — the first one found in folder A.
-  Not re-estimated; the direction of the error is now known.
-- **The five 2023-dormant folders in C are empty. All of them**, plus the two
-  below `Backend` — six folders, zero files, ~40% of that folder's top level.
-  One of the empties is named **`Backend - API Design`**: a confident-looking
-  hit for the spec's own example query with nothing behind it.
+### The three follow-up measurements
+
+- **The deck ratio (8 of 75) was measured at the wrong depth.** Decks sit one to
+  three levels *below* where the pass stopped. Not re-estimated; the direction
+  of the error and its cause are known. The module folders also repeat — the
+  first repeating unit found in folder A.
+- **The five 2023-dormant folders in C are empty — all of them**, plus two below
+  `Backend`. Six folders, zero files, ~40% of that folder's top level. **One is
+  named `Backend - API Design`** — an empty folder that path-matches the
+  project's canonical example query. **That is the fork A ranking regression
+  test**, written down with its id in `PRE-CRAWL-DECISIONS.md` §D2 before the
+  code exists.
 - **One `(File responses)` folder is 2.73 GiB across 60 files, listing not
-  exhausted** — largest 535 MiB, twelve over 50 MiB, all `.zip` and `.mov`.
-  **~49× the whole current corpus on disk** (2.73 GiB vs 57.4 MiB), and there are at
-  least seven more in folder A. **Every filename carries a learner's name**, so
-  this is a sixth contact shape and it lives in the *path*. Forced **D6**.
+  exhausted** — ~49× the whole corpus on disk (57.4 MiB), largest file 535 MiB,
+  all `.zip` and `.mov`. **Every filename carries a learner's name**, so this is
+  a **sixth contact shape and it lives in the path**. At least seven more such
+  folders in folder A. Forced D6.
 
-Also turned up: a registry folder owned by an address at a **personal company
-domain** — precisely the gap D4 and the new contact guard both state they do not
-catch. The backstop is a backstop.
+Also: a registry folder owned at a **personal company domain** — exactly the gap
+D4 and the contact guard both state they do not catch. The backstop is a
+backstop.
 
-### Then: `SCALE-PLAN.md`'s four open questions
+---
 
-Still open, but Q3 is now the urgent one and §8 of the inventory says why. **Q1's
-"2,000 files" is still unmeasured.**
+### Landed in code
 
-**Do not extract people from slide content.** §7 of the inventory is a measured
-demonstration, not an argument: four decks carry four instructor-shaped
-`Name, Role, Company` tuples, and two of them are a template placeholder and an
-icebreaker example persona. One of the fabricated names — `Hannah Chen` — is
-**also a real rated instructor in the registry's own P2 workbook.**
+- **The contact signature class**, `pipeline/check_no_payroll_committed.py`.
+  Three families: payroll (unchanged); contact **column headers** with a density
+  rule (data-shaped → 1, prose → 100 against a measured worst case of 10);
+  contact **literal identifiers** — free-mail addresses and LinkedIn profile
+  URLs — at **threshold one, anywhere**. Exemptions need `contact-ok: <reason>`,
+  scoped exactly as `taxonomy-literal-ok` is; a bare marker is an offence.
+  **Stated gap, deliberate:** corporate-domain addresses,
+  `@interviewkickstart.com` (already tracked on purpose in
+  `people-firstnames.yaml` with `evidence:`), phone numbers.
+  **It is a backstop, not the control.**
+- **The registry sheet excluded**, and **pass 0's export map exercised** for all
+  four native types against a fake service, with the positive control that a
+  binary still downloads (`tests/test_export_map_is_exercised.py`). Mutation-
+  verified: the `links.xlsx` spelling reddens three tests.
 
-**Do not write an extractor. Do not build the registry reader.** The inventory
-recommends fork A and names what to measure next.
+**Why the guard exists at all is the thing to carry forward**, and it is now
+`A7B.md` question 4: the payroll density rule was reused for contact data and
+**would have waved through the actual near-miss** — four addresses in a Markdown
+file. A header is a word; an address is a person. Alongside it, *measure with
+the matcher you ship*: three figures in this project were honestly measured and
+described something other than the claim they were put into.
+
+---
+
+### Still open
+
+**`SCALE-PLAN.md`'s four questions.** Q3 — *what replaces `sources.py`'s narrow
+inclusion as the real contact-data control* — is the urgent one, and the
+inventory's §8 says why: five of the six contact shapes are outside the
+allow-list's reach. Q1's "2,000 files" is unmeasured.
+
+**Everything else that was open stays open and is listed in §10** — payroll
+ingestion awaiting its approval block, untracking `graph.json`, session metrics,
+R18's Drive-visibility question, post-deploy check 3, the three aliases, and
+`A7B.md`'s open question. **None of them is a prerequisite for the crawler**,
+and none was touched by this phase.

@@ -4,14 +4,15 @@
 outlive it.** Extracted from `DECISIONS.md` §A.7b so it can be read on its own;
 that section now points here.
 
-Ten instances of one failure, a named observation about which rules get tested,
+Ten instances of one failure, two failures one level up — in the rules and the
+numbers used to judge guards — a named observation about which rules get tested,
 and one open question. None of the ten was found by looking for it. Every one
 was found by a test that existed for another reason, by a real person being
 refused, or by someone asking a question nobody had asked before.
 
 ---
 
-## The three questions, in the order they get asked
+## The four questions, in the order they get asked
 
 Most of what follows is history. These are the part you use.
 
@@ -49,6 +50,27 @@ improvement that looks like progress.
 
 **Ask it of:** anything you are about to widen, speed up, or generalise. A
 guarantee can be true for a reason nobody wrote down.
+
+### 4 · This rule works elsewhere — what made it true there, and is that true here?
+
+*(The borrowed rule.)* The payroll class catches column headers, which appear in
+prose that describes the exclusion, so it uses a density threshold. Reusing that
+rule for contact data would have let the actual near-miss through: **four email
+addresses in a Markdown file is nothing against any prose threshold.** A header
+is a word; an address is a person, and there is no number of addresses in a
+tracked file that is fine because it is small.
+
+The reuse looks like consistency, reads well in review, and cannot be caught by
+a test — because the test would be written from the same rule.
+
+**Ask it of:** any rule, threshold or pattern being applied to a second domain.
+Name what made it true in the first one before you carry it.
+
+**And the companion, for the numbers rather than the rules:** *measure with the
+matcher you ship, on the stratum you are describing, in the state the system is
+actually in.* Three figures in this project were honestly measured and described
+something other than the claim they were put into — a cold cache, a wider
+matcher, the wrong depth of folder. Full account below.
 
 ---
 
@@ -456,6 +478,81 @@ carries the risk; the allow-list is named as the control and asserted in
 `tests/test_exclusion_is_deny_by_default.py`; and `CLAUDE.md` §2 now carries the
 warning at the point where somebody proposes widening coverage, rather than in a
 risk register they have no reason to open.
+
+#### The borrowed rule, and the instrument at the wrong setting
+
+Two failures that are not guards failing silently. They are **the numbers and the
+rules we use to judge guards** being wrong, which is upstream of everything
+above. Added 2026-09-20, from building the contact signature class.
+
+##### The borrowed rule
+
+`check_no_payroll_committed.py` had a rule that worked. Payroll signatures are
+column headers, and headers appear in prose that *describes* the exclusion — so
+the rule is a density threshold: a data-shaped file needs one occurrence, prose
+needs fifty. It was measured, it was justified, and it had already survived the
+"USES, NOT MENTIONS" failure that flagged seven of the project's own documents.
+
+Adding contact data to the same module, the obvious move was to apply the same
+rule. **It would have failed on the exact case the class was being built for.**
+
+The near-miss was four personal email addresses in a Markdown file. Against a
+prose threshold of fifty — or of any number calibrated on how densely documents
+*discuss* contact columns — four is nothing. The document would have committed.
+
+> **A header is a word. An address is a person.** Density is the right question
+> for one and a category error for the other: there is no number of email
+> addresses in a tracked file that is acceptable because it is small.
+
+So the class ships with two rules, not one: headers keep the density rule, and
+literal identifiers are caught at **one occurrence, anywhere**.
+
+**The general form, and why it belongs in this catalogue.** Every failure above
+is a guard that was wrong. This is a guard that was *right*, in the place it was
+written, reused one domain over where its justification did not travel. The
+reuse looks like consistency. It reads well in review — *"same rule as payroll"*
+is a sentence nobody argues with — and the thing that would have caught it is
+not a test, because the test would have been written from the same rule.
+
+> **A rule that works elsewhere arrives with its evidence attached and its
+> assumptions stripped. Before reusing one, name what made it true where it came
+> from, and check that the same thing is true here.**
+
+##### The instrument at the wrong setting
+
+Three cases now, and they are the same mistake wearing three costumes: **a
+number that is honestly measured, and describes something other than the thing
+the sentence is about.**
+
+| the number | what it actually measured | the claim it was about |
+|---|---|---|
+| `coverage` at **1,610 ms** | a **cold** buffer cache | steady-state query cost — warm, it is **18.8 ms** |
+| contact-header prose at **19** | a **case-insensitive grep over a wider pattern set** | the density the shipped, case-sensitive matcher sees — which is **10** |
+| decks at **8 of 75** | the **module-folder level**, where the crawl stopped | how many decks the registry holds — they sit one to three levels deeper |
+
+None of these is a lie, a rounding error, or a stale figure of the kind §1 of
+`STATE.md` is about. Each was taken carefully, on the day it was quoted. Each
+describes a different thing from the sentence it was put into.
+
+**The cold-buffer case is the one with a consequence already recorded**:
+optimising 1,610 ms would have chased buffer warming instead of the region pin,
+and the region pin is what produced the 51× improvement. **The matcher case
+would have set a threshold against a check nobody was running.** **The deck case
+made the registry look like it was mostly administration**, which is close to an
+argument against the whole content-search direction.
+
+> **Measure with the matcher you ship, on the stratum you are describing, in the
+> state the system is actually in.** A measurement carries a setting, and the
+> setting is part of the number. When it is dropped, the number keeps its
+> authority and loses its meaning.
+
+**The cheap habit this suggests:** when a measurement is going to justify a
+threshold, a design decision or a paragraph, write down *how* it was taken
+beside *what* it was — one clause, in the same sentence. Both numbers above were
+caught by doing exactly that and noticing the clause did not match the claim.
+Neither was caught by review.
+
+---
 
 #### OPEN QUESTION — which of our outputs does nobody read?
 

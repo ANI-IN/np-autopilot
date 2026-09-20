@@ -1,13 +1,18 @@
 # PRE-CRAWL DECISIONS — taken before the first crawl, not after
 
-**Five decisions. 2026-09-20.** Each one silently changes what the corpus *is*,
+**Six decisions. 2026-09-20.** Each one silently changes what the corpus *is*,
 and each becomes expensive to reverse once 2,000 files carry it.
 
-They are recorded here together because they share a property: **three of the
-five have already been decided by code that nobody decided.** Pass 0 follows
-shortcuts today. Provenance would carry a file owner today. Neither was a
-choice; both are defaults that were harmless at 75 files in one owned folder
-and stop being harmless the moment the corpus is other people's Drives.
+They are recorded here together because they share a property: **two of the six
+had already been decided by code that nobody decided.** Pass 0 follows shortcuts
+today. Provenance would carry a file owner today. Neither was a choice; both are
+defaults that were harmless at 75 files in one owned folder and stop being
+harmless the moment the corpus is other people's Drives.
+
+D6 was added after D1–D5, when the follow-up measurements found a single folder
+holding 2.73 GiB of learner uploads. It is left in its arrival order rather than
+folded in, because *"the first pass did not know the scale"* is part of what
+this document records.
 
 Evidence throughout is [`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md).
 
@@ -103,6 +108,37 @@ them in the same shape as the real ones.
 The seam stays visible. Where a topic maps to a module, say so and traverse;
 where it does not, say *"these files mention it; no module in the graph matches
 that name"* and stop.
+
+### The regression test fork A already has, found by measurement
+
+**`Backend - API Design` is an empty folder.** It sits in
+`Data + Mangement → Backend`, created 2023-02-28, never filled — one of six
+empty folders in that branch (`REGISTRY-INVENTORY.md` §10, M2).
+
+Its name is **the canonical example query for this entire project**: *"search
+API design and get back the files about it."* A content index that ranks on
+titles or paths returns it, confidently, at or near the top. It contains
+nothing.
+
+> **This is fork B failing, in one folder, already present in the corpus — and
+> it was found by measuring rather than by reasoning about relevance.** Not a
+> fabricated fact; something milder and harder to notice: a confident answer
+> with nothing behind it.
+
+**Keep it visible, and make it the test.** When the crawler or the index gains
+any ranking that considers a path or a title, `Backend - API Design` is the
+fixture: the assertion is that searching *"API design"* either does not return
+it, or returns it explicitly marked as holding no files. **An empty folder that
+scores well on the query the system was built for is exactly the regression
+nobody would think to write by hand** — so it is written down here, before the
+code exists, with the folder id:
+
+```
+Backend - API Design   1XrmskJnsHkIBUDCRDBdMk3q8vk5cqoxd/11MkOWXXkkFNTzKmmA9TytJ6G_FA4kM5P
+```
+
+It has a sibling, `Backend - Data Modeling`, also empty — so the test has a
+second case for free.
 
 ---
 
