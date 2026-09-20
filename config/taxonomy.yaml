@@ -718,6 +718,34 @@ excluded:
         exclusion and recorded by hand in people.yaml with this file cited as
         the (now out-of-corpus) evidence.
 
+    # NOTE THE MISSING EXTENSION, IT IS NOT A TYPO. Pass 0 keys the exclusion
+    # on `safe_name`, which is the Drive TITLE (00_fetch_drive.py:436), while
+    # `target_path` appends `.xlsx` only when writing the export. So the key
+    # here is `links` and `links.xlsx` would silently never match. Pass 0 prints
+    # "configured but NOT PRESENT in Drive" for an unmatched entry, which is the
+    # only thing that would reveal the mistake.
+    - path: links
+      reason: >
+        The scale-up REGISTRY, not corpus material. A two-column sheet of Drive
+        folder links (three folders, two poll workbooks) that says WHAT TO
+        CRAWL. It was created 2026-09-20 inside the corpus folder itself, so
+        pass 0 sees it as ordinary traffic and pass 1 would ingest it as an
+        added file.
+        Excluding it is a scope decision, not a privacy one: a configuration
+        file must not become a `file` node with provenance rows, because the
+        graph would then cite the crawl list as evidence about the corpus.
+        See docs/REGISTRY-INVENTORY.md §0 and docs/PRE-CRAWL-DECISIONS.md.
+      sheets_dropped: 1
+      known_cost: >
+        It is the only record IN DRIVE of which folders are in scope. That is
+        why its five rows are transcribed verbatim into
+        docs/REGISTRY-INVENTORY.md §0 — losing the file must not lose the
+        scope, and the repository now holds a hand-entered copy of it.
+        This entry also makes `links` the FIRST native Google file the export
+        map would ever have exported. Excluding it means the export path stays
+        unexercised against Drive, which is why it is exercised against a fake
+        service in tests/test_export_map_is_exercised.py instead.
+
   fields:
     description: >
       Dropped at extraction from every sheet, so they never become node

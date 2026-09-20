@@ -118,6 +118,8 @@ def test_our_hd_with_a_foreign_email_is_rejected(signing):
     """Incoherent, and checked AFTER hd rather than instead of it."""
     make, jwks, _ = signing
     with pytest.raises(AuthError) as exc:
+        # contact-ok: synthetic non-IK address; the assertion IS that it is
+        # refused, so a real address here would prove less, not more.
         _verify(make(email="someone@gmail.com"), jwks)
     assert "is not in that domain" in str(exc.value)
 

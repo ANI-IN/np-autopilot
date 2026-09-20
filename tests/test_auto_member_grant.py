@@ -99,6 +99,8 @@ def test_an_ik_workspace_identity_gets_member_automatically(signup):
 def test_a_non_ik_identity_still_gets_nothing(signup):
     """The mandatory condition. Layer 3 refuses these before they become a row
     at all; this proves that if one ever did, it would still get no profile."""
+    # contact-ok: synthetic outsider identity; belongs to nobody, and the
+    # assertion is that it is granted nothing.
     uid = signup("outside", "np-test-outsider@gmail.com")
     assert _profile(uid) is None, (
         "a non-IK identity was granted a profile by the auto path")

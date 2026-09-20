@@ -4,9 +4,11 @@ You are continuing `np-autopilot`: a knowledge graph over Interview Kickstart's
 New Programs corpus, projected into Supabase Postgres, served by a Vercel web
 app behind Google Workspace sign-in.
 
-**Read this, then [`A7B.md`](A7B.md), then [`SCALE-PLAN.md`](SCALE-PLAN.md).
-In that order, before anything else.** Everything here is current as of
-2026-09-20. Where a number is measured rather than assumed, it says so.
+**Read this, then [`A7B.md`](A7B.md), then [`SCALE-PLAN.md`](SCALE-PLAN.md),
+then [`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md) and
+[`PRE-CRAWL-DECISIONS.md`](PRE-CRAWL-DECISIONS.md). In that order, before
+anything else.** Everything here is current as of 2026-09-20. Where a number is
+measured rather than assumed, it says so.
 
 **This document has been wrong twice, both times in the same way — a claim that
 outlived its condition.** It said the graph had 5,048 nodes (the pipeline
@@ -26,7 +28,7 @@ matter.
 | **Explorer** | <https://np-autopilot.vercel.app> — 200, serves the graph UI |
 | **API** | `/api/config` 200; `/api/{search,node,neighbourhood,overview,coverage,staffing,aliases,me}` all **401 unauthenticated**; `/api/curate` 405 on GET, 401 on POST; `/api/session` 401/400/403 on bad input |
 | **Latency** | **44.3 ms** warm server-side median (n=18), from 2,252 ms. Functions pinned to `icn1`; the database is in `ap-northeast-2`. `LATENCY-MEASUREMENT.md` separates measured from inferred |
-| **Tests** | **313 passing, 1 skipped** (the skip is the live-header check, opt-in via `NP_VERIFY_URL`). Both `drive_dom.mjs` targets green |
+| **Tests** | **330 passing, 2 skipped**, measured 2026-09-20 (8m51s). One skip is the live-header check, opt-in via `NP_VERIFY_URL`. Both `drive_dom.mjs` targets green |
 | **Sign-in** | Works end to end. Google Workspace → `/api/session` → GoTrue → Supabase session → RLS |
 | **Security headers** | All six present on the deployed response: CSP (no `unsafe-inline` on `script-src`, inline blocks pinned by SHA-256), HSTS, `x-frame-options: DENY`, nosniff, no-referrer, permissions-policy. Plus `Cross-Origin-Opener-Policy: same-origin-allow-popups` |
 | **Service-role key** | **Zero occurrences** in the shipped bundle, and the variable is not set in the Vercel project at all. That bundle scan is the evidence — not the unit test, which until 2026-09-18 scanned `web/` while the routes live in `api/` and so proved nothing. Now covers both; see `DEPLOYMENT.md` and [`A7B.md`](A7B.md) instance 8 |
@@ -35,7 +37,7 @@ matter.
 
 - **Render and layout cost.** Never measured, in any region. §4.
   (In-region *latency* is now measured — `LATENCY-MEASUREMENT.md`.)
-- **The full test suite** (313 passing, ~7 min) runs against the real Supabase
+- **The full test suite** (330 passing, ~9 min) runs against the real Supabase
   but from a laptop, not from Vercel.
 - **Everything in `pipeline/`.** It has never run on Vercel and is not meant to.
 
@@ -163,7 +165,7 @@ lives in the `shared_accounts` table (migration 0014). See §5.
 ```bash
 set -a && . ~/.config/np-autopilot/env && set +a
 
-python3 -m pytest tests -q                  # 313 tests, ~7 minutes
+python3 -m pytest tests -q                  # 332 tests, ~9 minutes
 node eval/drive_dom.mjs                     # hosted explorer harness
 node eval/drive_dom.mjs knowledge/graph.html  # offline build harness
 
@@ -351,6 +353,7 @@ candidates reintroduces the picking one layer up.
 | **About to write or change a guard?** | [**`A7B.md`**](A7B.md) first — moved out of `DECISIONS.md` 2026-09-20. **Ten** instances of one failure pattern, the three questions that find the eleventh, and why the best-told instances are the least useful. Read it *before*, not after |
 | **About to build for 2,000 files?** | [`SCALE-PLAN.md`](SCALE-PLAN.md). Four questions recorded unanswered, and the fork between a search index over a known subset and a graph that guesses |
 | **What is actually in the registry folders?** | [`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md) — measured 2026-09-20. The three folders are three different data contracts; five shapes of contact data, four of which `sources.py` cannot reach; and a measured demonstration that instructor names on decks cannot be told from template placeholders |
+| **About to write the crawler?** | [`PRE-CRAWL-DECISIONS.md`](PRE-CRAWL-DECISIONS.md) — five decisions taken 2026-09-20, **three of which reverse or constrain behaviour that already exists in code**. Read it before `00_fetch_drive.py` is touched |
 | Why is the schema shaped this way? | `DECISIONS.md` §A |
 | How does curation sync with Postgres? | §B, and `pipeline/curation.py` |
 | What can run on Vercel, and why these poolers? | §C |
@@ -648,6 +651,59 @@ in the taxonomy can express; and **file-owner metadata is collected by the act
 of citing a file in someone else's Drive**. The single-owner corpus is why that
 last one has never mattered — an A7B question-3 guarantee held by a reason
 nobody wrote down.
+
+### Decisions taken since — [`PRE-CRAWL-DECISIONS.md`](PRE-CRAWL-DECISIONS.md)
+
+**D1** no person extraction from slide content, at any confidence — instructor
+attribution comes from the poll workbooks, always with its response count.
+**D2** fork A confirmed as the design. **D3** shortcuts: resolve and report, do
+not follow — this **reverses what `00_fetch_drive.py` does today**. **D4** store
+`owner_domain`, never the owner address. **D5** do not ingest `SMEs consent`,
+because a consent licence keys on the *purpose* of the reader and no such axis
+exists in the model — the full argument is D5 and it is a taxonomy limit, not a
+privacy preference.
+
+**Four of the five are prose, and the table at the end of that document says so
+explicitly.** They become tests when the code they govern is written.
+
+### Landed in code, 2026-09-20
+
+- **The contact signature class** in `pipeline/check_no_payroll_committed.py`.
+  Three families: payroll (unchanged), contact **column headers** with a
+  measured density rule (worst legitimate prose 10, threshold 100), and contact
+  **literal identifiers** — free-mail addresses and LinkedIn profile URLs — at
+  **threshold one, anywhere**, because the near-miss was four addresses in a
+  Markdown file and a density rule would have waved it through. Exemptions need
+  a `contact-ok: <reason>` marker, scoped the same way `taxonomy-literal-ok` is;
+  a bare marker is itself an offence. **Stated gap, on purpose:**
+  corporate-domain addresses, `@interviewkickstart.com`, and phone numbers.
+- **The registry sheet is excluded** (`taxonomy.yaml -> excluded.files`, path
+  `links` — **not** `links.xlsx`; pass 0 keys on the pre-export name and the
+  wrong one fails open silently).
+- **Pass 0's export map is now exercised** against a fake service for all four
+  native types, plus the positive control that a binary still downloads
+  (`tests/test_export_map_is_exercised.py`). Verified by mutation: writing
+  `links.xlsx` in the exclusion reddens three tests.
+
+### The three follow-up measurements — DONE, `REGISTRY-INVENTORY.md` §10
+
+- **The deck ratio (8 of 75) was measured over the wrong stratum.** Decks sit
+  one to three levels *below* where the first pass stopped. The module folders
+  also turn out to have a repeating shape — the first one found in folder A.
+  Not re-estimated; the direction of the error is now known.
+- **The five 2023-dormant folders in C are empty. All of them**, plus the two
+  below `Backend` — six folders, zero files, ~40% of that folder's top level.
+  One of the empties is named **`Backend - API Design`**: a confident-looking
+  hit for the spec's own example query with nothing behind it.
+- **One `(File responses)` folder is 2.73 GiB across 60 files, listing not
+  exhausted** — largest 535 MiB, twelve over 50 MiB, all `.zip` and `.mov`.
+  **~49× the whole current corpus on disk** (2.73 GiB vs 57.4 MiB), and there are at
+  least seven more in folder A. **Every filename carries a learner's name**, so
+  this is a sixth contact shape and it lives in the *path*. Forced **D6**.
+
+Also turned up: a registry folder owned by an address at a **personal company
+domain** — precisely the gap D4 and the new contact guard both state they do not
+catch. The backstop is a backstop.
 
 ### Then: `SCALE-PLAN.md`'s four open questions
 
