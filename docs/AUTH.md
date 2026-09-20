@@ -332,8 +332,138 @@ So the honest answer is neither *"it worked and the grant was redundant"* nor
 never had an occasion, because no new identity has signed in since it was
 applied.** The two sign-ins this project has seen both predate it.
 
-That is exactly the gap a schema check cannot close, which is why the next
-entry is a real sign-in and not another query.
+That is exactly the gap a schema check cannot close — so it was closed by
+driving GoTrue itself rather than by another query.
+
+#### Proven end to end through GoTrue — 2026-09-21
+
+A signup was performed against the **real GoTrue endpoint**
+(`POST /auth/v1/signup`, public anon key) with a probe address at the IK domain,
+and then deleted. Measured:
+
+```
+before:  auth.users=2 profiles=2
+signup   HTTP 200 -> user created, email_confirmed_at NULL
+after:   auth.users=3 profiles=3
+         probe user CREATED  profile=('member', is_shared_account=False)
+cleanup: 1 profile, 1 user deleted -> restored to 2/2
+```
+
+**The profile appeared as a consequence of GoTrue creating the account** — no
+SQL insert, no manual step, and 0014's derivation ran on the row the trigger
+wrote. Separately, simulating a session in the database confirms the far end:
+
+| profile | `np_role()` | rows visible |
+|---|---|---|
+| `admin` | `admin` | 3,146 |
+| `member` | `member` | **3,146** |
+| none | `none` | **0** |
+
+**Which links this covers, and which it does not.**
+
+| link | covered |
+|---|---|
+| Google OAuth in a browser → ID token with `hd` | **no** |
+| `/api/session` verifies `hd` and calls GoTrue | **no** |
+| GoTrue mints the `auth.users` row | **yes** — real endpoint |
+| 0015 trigger fires → `member` profile | **yes** — measured |
+| 0014 derives `is_shared_account` on that row | **yes** — measured |
+| a `member` profile grants reads (`np_role()`, RLS) | **yes** — in the database |
+| `/api/me` returns that role over HTTP | **no** — needs a real bearer token |
+
+The two uncovered links are the browser half. They are also the half that has
+demonstrably worked twice, since both existing accounts signed in that way and
+hold sessions.
+
+---
+
+### Layer 3 is INERT — found 2026-09-21
+
+**`auth_before_user_created` exists as a database function and is not
+registered as a GoTrue hook.** The probe above proves it: an email/password
+signup carries no `hd` claim at all, so a registered hook would have returned
+403 with *"This identity has no hosted-domain claim."* It returned **200** and
+created the user.
+
+This document has said, in this section and above it, that *"layer 3 still
+refuses a non-Workspace identity at signup."* **That is not true today.**
+
+**What makes it reachable.** GoTrue's own settings, read from
+`/auth/v1/settings`:
+
+```
+"email": true          <- email/password signup is enabled
+"disable_signup": false <- signup is not disabled
+"google": true
+```
+
+and the anon key is served to anyone by `/api/config`, because the browser needs
+it. So `POST /auth/v1/signup` is reachable by anyone on the internet, and it
+bypasses `/api/session` entirely — `web/lib/auth.py`'s `hd` check only runs on
+our route, never on GoTrue's.
+
+**What that gets an attacker, stated precisely.** Signing up as
+`anything@interviewkickstart.com` creates an `auth.users` row **and, since 0015,
+a `member` profile**. It does not, on its own, grant reads: the account is
+unconfirmed, and RLS keys on `auth.uid()` from a valid token. **Whether an
+unconfirmed account can obtain a session was NOT established** — the attempt to
+test it was rate-limited (HTTP 429) and no conclusion should be drawn from that
+run either way. The honest reading is: *the profile is created; the session is
+believed to require confirmation and that belief is untested here.*
+
+**The population that matters** is anyone who can receive mail at
+`interviewkickstart.com` without being a Workspace member — an alias, a
+distribution list, a mail-only contractor account, a forwarding former employee.
+For them, confirmation is achievable, and the result is a `member` profile
+without Workspace membership. **That is precisely the case
+§"Why `email.endsWith()` is not sufficient" exists to refuse.**
+
+**Two problems, deliberately not bundled:**
+
+1. **The auto-grant works and does not depend on the hook.** The 0015 trigger is
+   `after insert on auth.users` and fires regardless of how the row got there.
+   Registering the hook will not change the auto-grant; leaving it unregistered
+   does not break it.
+2. **Layer 3 is not enforcing.** That is a pre-existing gap that 0015 made
+   *louder* rather than caused: before the auto-grant, a stray signup produced a
+   row with no profile and no access. It now produces a `member` profile.
+
+**The cheapest fix is not the hook.** Nothing in this project uses
+email/password — it is Google-only by design. **Turn off the email provider**
+and the whole path closes, whether or not the hook is ever registered. The hook
+should still be registered, because it is the control this document claims, and
+because it also covers OAuth providers if one is ever added.
+
+---
+
+### The residual — what would have to break for an IK account to get nothing
+
+| # | failure | would we notice? |
+|---|---|---|
+| 1 | Trigger dropped or disabled (`tgenabled <> 'O'`) | **yes** — `grant_access.py check` exits 1 and names the account |
+| 2 | 0015 rolled back | **yes** — same check; it also prints that 0015 is not applied |
+| 3 | `profiles` insert refused by a constraint (e.g. a future CHECK the trigger does not satisfy) | **yes** — same check, though the *reason* needs the Postgres log |
+| 4 | Someone signs in with an IK **address** but no Workspace membership, and layer 0 lets them through | **no** — they would get `member`, which is the layer-3 gap above |
+| 5 | Profile deleted by `revoke` | **indistinguishable from 1–3.** See below |
+| 6 | GoTrue creates the user in a way that skips the trigger | **no** — no such path is known, and none is tested |
+
+**Failure 5 is the honest weakness of the new check.** `grant_access.py revoke`
+is a bare `delete from profiles` that records nothing, so a revoked account and
+a broken auto-grant are the same observation: *an IK account, signed in, with no
+profile.* The check reports both and **says so in its own output** rather than
+implying a precision it does not have. Making them separable needs a revocation
+record — a tombstone row or an audit entry — and that is not built.
+
+**What notices.** `python3 pipeline/grant_access.py check` — exits 1 if any IK
+account created after 0015 has no profile, names each one with how long it has
+been that way, and is safe to run unattended. `list` shows the same section.
+An account whose `created_at` is NULL is **flagged rather than skipped**,
+because a row that cannot be dated must not fall out of the only check watching
+for this.
+
+Verified by mutation: forcing `anomalous` to `False` reddens exactly the two
+tests that assert detection, and the positive control (a non-IK account with no
+profile is *not* flagged) stops "flag everything" from passing.
 
 ---
 

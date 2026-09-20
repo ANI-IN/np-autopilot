@@ -18,6 +18,7 @@ gets member" passes either way.
 """
 from __future__ import annotations
 
+import re as _re
 import sys
 import uuid
 from pathlib import Path
@@ -65,8 +66,11 @@ def signup():
                 cur.execute(
                     "insert into profiles (user_id, email, email_domain, role) "
                     "values (%s, %s, %s, %s)", (uid, email, IK, preset_role))
-            cur.execute("insert into auth.users (id, email) values (%s, %s)",
-                        (uid, email))
+            # created_at as GoTrue sets it. The column is nullable, and a row
+            # without it cannot be placed either side of the migration — see
+            # the undatable case in grant_access._unprovisioned.
+            cur.execute("insert into auth.users (id, email, created_at) "
+                        "values (%s, %s, now())", (uid, email))
             conn.commit()
         made.append(uid)
         return uid
@@ -162,3 +166,102 @@ def test_a_shared_mailbox_is_auto_granted_but_still_capped(signup):
         with db.connect(db.SESSION) as conn, conn.cursor() as cur:
             cur.execute("delete from shared_accounts where local_part = %s", (local,))
             conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Does anything NOTICE when the auto-grant stops working?
+#
+# Before 0015, an IK account with no profile was the correct resting state and
+# grant_access.py said so in those words. The auto-grant changed what the same
+# observation means and the wording outlived its condition: it is now a FAULT.
+#
+# A teammate in that state sees "you can read nothing", assumes it is normal,
+# and nobody finds out the trigger stopped firing. These tests are for the
+# thing that notices.
+# ---------------------------------------------------------------------------
+
+from pipeline import grant_access as ga                              # noqa: E402
+
+
+def test_an_ik_account_with_no_profile_is_reported_as_an_anomaly(signup):
+    """THE NEGATIVE CONTROL. A check that has never fired is indistinguishable
+    from one that cannot fire, so this breaks the thing and asserts it is seen.
+
+    The profile is deleted AFTER the trigger created it, which is exactly the
+    shape of both failure modes: a trigger that did not fire, and a revocation.
+    """
+    uid = signup("ik", f"np-test-noprofile@{IK}")
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        cur.execute("delete from profiles where user_id = %s", (uid,))
+        conn.commit()
+
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        applied, rows = ga._unprovisioned(cur)
+
+    assert applied is not None, "0015 is not applied; the split cannot be made"
+    mine = [r for r in rows if r["email"] == f"np-test-noprofile@{IK}"]
+    assert mine, "an IK account with no profile was not reported at all"
+    assert mine[0]["anomalous"], (
+        "an IK account created after 0015 with no profile was not flagged as "
+        "anomalous — the check cannot tell a broken auto-grant from a queue")
+    assert mine[0]["age"].total_seconds() >= 0
+
+
+def test_the_check_command_fails_when_an_ik_account_has_no_profile(signup, capsys):
+    """Exit code is the interface — this is meant to run unattended."""
+    assert ga.cmd_check(None) == 0, "expected a clean database to start from"
+
+    uid = signup("ik", f"np-test-noprofile@{IK}")
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        cur.execute("delete from profiles where user_id = %s", (uid,))
+        conn.commit()
+
+    rc = ga.cmd_check(None)
+    out = capsys.readouterr().out
+    assert rc == 1, "the check passed while an IK account had no profile"
+    assert "np-test-noprofile" in out, "the account was counted but not named"
+    assert "REVOKED" in out or "revoke" in out.lower(), (
+        "the report must say that a revocation and a broken trigger look "
+        "identical here — otherwise it implies a precision it does not have")
+
+
+def test_a_non_ik_account_with_no_profile_is_not_an_anomaly(signup):
+    """POSITIVE CONTROL. Without it, "flag everything" would pass the test above.
+
+    A non-IK identity having no profile is the system working correctly, and
+    reporting it as a fault would train people to ignore the output.
+    """
+    outsider = "np-test-outsider2@gmail.com"  # contact-ok: synthetic, and the
+    # assertion is that it is NOT flagged. Bound once so the literal appears on
+    # exactly one line — the marker covers its own line and the next code line,
+    # which a repeated literal further down would escape.
+    signup("outside", outsider)
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        _applied, rows = ga._unprovisioned(cur)
+    mine = [r for r in rows if r["email"] == outsider]
+    assert mine, "the non-IK account was not listed at all"
+    assert not mine[0]["anomalous"], (
+        "a non-IK account with no profile was flagged as a fault; it is the "
+        "correct outcome and flagging it makes the report noise")
+
+
+def test_the_cutoff_is_derived_from_the_migration_table_not_hardcoded():
+    """Instance 8: a date typed into the script is a second source of truth
+    about when the auto-grant started, and it rots in the passing direction."""
+    src = (REPO / "pipeline" / "grant_access.py").read_text()
+    assert "np_schema_migrations" in src
+
+    # USES, not MENTIONS. The module docstring legitimately says when the scope
+    # changed; what must not exist is a date CONSTANT the code compares against.
+    import ast as _ast
+    tree = _ast.parse(src)
+    docstrings = {id(_ast.get_docstring(n, clean=False))
+                  for n in _ast.walk(tree)
+                  if isinstance(n, (_ast.Module, _ast.FunctionDef, _ast.ClassDef))}
+    for node in _ast.walk(tree):
+        if isinstance(node, _ast.Constant) and isinstance(node.value, str):
+            if id(node.value) in docstrings:
+                continue
+            assert not _re.match(r"^\s*20\d\d-\d\d-\d\d", node.value), (
+                f"date literal {node.value!r} in code — derive the cutoff from "
+                "np_schema_migrations instead")

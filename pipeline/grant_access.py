@@ -103,6 +103,135 @@ def _lookup(cur, email: str):
     return cur.fetchone()
 
 
+AUTO_GRANT_VERSION = "0015"
+IK_DOMAIN = "interviewkickstart.com"
+
+
+def _auto_grant_applied_at(cur):
+    """When 0015 landed — DERIVED from the migration table, never hardcoded.
+
+    The whole point of this check is to tell "the trigger should have fired"
+    from "this account predates the trigger", and a date typed into this file
+    would be a second source of truth about when that changed (instance 8).
+    """
+    cur.execute("select applied_at from np_schema_migrations where version = %s",
+                (AUTO_GRANT_VERSION,))
+    row = cur.fetchone()
+    return row[0] if row else None
+
+
+def _unprovisioned(cur):
+    """auth.users rows with no profile, split by whether 0015 was live yet."""
+    applied = _auto_grant_applied_at(cur)
+    cur.execute("""
+        select u.email, u.created_at, u.last_sign_in_at,
+               u.email_confirmed_at is not null,
+               now() - u.created_at
+        from auth.users u
+        where not exists (select 1 from profiles p where p.user_id = u.id)
+        order by u.created_at
+    """)
+    out = []
+    for email, created, last, confirmed, age in cur.fetchall():
+        domain = (email or "").split("@")[-1].lower()
+        ik = domain == IK_DOMAIN
+        # A row with no created_at cannot be placed either side of the
+        # migration. FAIL LOUD rather than open: an IK account whose age is
+        # unknown is flagged, because the alternative is that a row with a
+        # missing timestamp silently drops out of the only check that watches
+        # for a broken auto-grant.
+        if created is None or applied is None:
+            after = None
+        else:
+            after = created > applied
+        out.append({
+            "email": email, "domain": domain, "created": created,
+            "last_sign_in": last, "confirmed": confirmed, "age": age,
+            "ik": ik,
+            "after_auto_grant": after,
+            # An IK account created after the trigger existed SHOULD have a
+            # profile. `after is None` means undatable, which is also flagged.
+            "anomalous": ik and after is not False,
+            "undatable": created is None,
+        })
+    return applied, out
+
+
+def _fmt_age(delta) -> str:
+    if delta is None:
+        return "?"
+    days = delta.days
+    if days >= 1:
+        return f"{days}d"
+    hours = delta.seconds // 3600
+    return f"{hours}h" if hours else f"{delta.seconds // 60}m"
+
+
+def _report_unprovisioned(_legacy=None) -> int:
+    """Print the no-profile population. Returns the number of ANOMALIES.
+
+    BEFORE 0015 this was, correctly, "the resting state for someone who has
+    signed in and not yet been granted access". The auto-grant changed what the
+    same observation means, and the old wording outlived its condition: an IK
+    account with no profile is now a FAULT, not a queue.
+    """
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        applied, rows = _unprovisioned(cur)
+
+    if not rows:
+        print("\nNO-PROFILE ACCOUNTS: none — every auth.users row has a profile")
+        return 0
+
+    anomalies = [r for r in rows if r["anomalous"]]
+    expected = [r for r in rows if not r["anomalous"]]
+
+    if anomalies:
+        print(f"\n*** {len(anomalies)} IK ACCOUNT(S) SIGNED IN AND GOT NOTHING ***")
+        print("    These were created AFTER the auto-grant existed, so migration "
+              f"{AUTO_GRANT_VERSION}'s trigger should have given each a profile.")
+        for r in anomalies:
+            print(f"      {r['email']:<46} no profile for {_fmt_age(r['age']):>5}"
+                  f"   (created {r['created'].strftime('%Y-%m-%d %H:%M')})")
+        print("    TWO CAUSES LOOK IDENTICAL HERE and this list cannot separate")
+        print("    them: the trigger failed to fire, or the profile was REVOKED.")
+        print("    `revoke` deletes the row and records nothing, so a revoked")
+        print("    account is indistinguishable from a broken auto-grant.")
+        print("    Check: did anyone revoke this person? If not, the trigger is")
+        print("    the suspect — `select tgenabled from pg_trigger` on auth.users.")
+
+    if expected:
+        print(f"\nNO PROFILE, EXPECTED ({len(expected)}):")
+        for r in expected:
+            if not r["ik"]:
+                why = "not an IK domain — correctly gets nothing"
+            else:
+                why = f"predates {AUTO_GRANT_VERSION}; needs a manual grant"
+            print(f"  {r['email']:<46} {_fmt_age(r['age']):>5}  {why}")
+
+    if applied is None:
+        print(f"\n  NOTE: migration {AUTO_GRANT_VERSION} is NOT APPLIED to this "
+              "database, so nothing is auto-granted and every row above is "
+              "expected. That is itself the thing to fix.")
+    return len(anomalies)
+
+
+def cmd_check(_args) -> int:
+    """Exit non-zero if any IK account is signed in with no profile.
+
+    Exists so the gap is COUNTABLE rather than reported one person at a time
+    when they complain. A teammate who signs in and reads nothing sees a
+    plausible-looking empty state and assumes it is normal; nobody finds out
+    the trigger stopped firing. This is what notices.
+    """
+    n = _report_unprovisioned()
+    print()
+    if n:
+        print(f"FAIL: {n} IK account(s) with no profile.")
+        return 1
+    print("OK: no IK account is signed in without a profile.")
+    return 0
+
+
 def cmd_list(_args) -> int:
     with db.connect(db.SESSION) as conn, conn.cursor() as cur:
         cur.execute("""
@@ -112,12 +241,6 @@ def cmd_list(_args) -> int:
             order by p.role, p.email
         """)
         rows = cur.fetchall()
-        cur.execute("""
-            select u.email, u.created_at from auth.users u
-            where not exists (select 1 from profiles p where p.user_id = u.id)
-            order by u.created_at
-        """)
-        unprovisioned = cur.fetchall()
 
     print(f"{'EMAIL':<46} {'ROLE':<11} SHARED  LAST SIGN-IN")
     for email, role, shared, _dom, _c, last in rows:
@@ -126,14 +249,7 @@ def cmd_list(_args) -> int:
     if not rows:
         print("  (no profiles — nobody can read anything)")
 
-    if unprovisioned:
-        # Not a warning. This is the correct resting state for someone who has
-        # signed in and not yet been granted access, and naming it stops it
-        # being mistaken for a broken login.
-        print(f"\nSIGNED IN, NO PROFILE ({len(unprovisioned)}) — these accounts "
-              "exist and read nothing:")
-        for email, created in unprovisioned:
-            print(f"  {email:<46} first seen {created.strftime('%Y-%m-%d')}")
+    _report_unprovisioned()
     return 0
 
 
@@ -253,13 +369,15 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("list")
+    sub.add_parser("check")
     g = sub.add_parser("grant")
     g.add_argument("email")
     g.add_argument("--role", default="member", choices=ROLES)
     r = sub.add_parser("revoke")
     r.add_argument("email")
     args = ap.parse_args()
-    return {"list": cmd_list, "grant": cmd_grant, "revoke": cmd_revoke}[args.cmd](args)
+    return {"list": cmd_list, "check": cmd_check,
+            "grant": cmd_grant, "revoke": cmd_revoke}[args.cmd](args)
 
 
 if __name__ == "__main__":
