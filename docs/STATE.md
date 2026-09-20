@@ -4,9 +4,16 @@ You are continuing `np-autopilot`: a knowledge graph over Interview Kickstart's
 New Programs corpus, projected into Supabase Postgres, served by a Vercel web
 app behind Google Workspace sign-in.
 
-**Read this first, then the pointer map at the bottom before opening anything
-else.** Everything here is current as of 2026-09-18. Where a number is measured
-rather than assumed, it says so.
+**Read this, then [`A7B.md`](A7B.md), then [`SCALE-PLAN.md`](SCALE-PLAN.md).
+In that order, before anything else.** Everything here is current as of
+2026-09-20. Where a number is measured rather than assumed, it says so.
+
+**This document has been wrong twice, both times in the same way — a claim that
+outlived its condition.** It said the graph had 5,048 nodes (the pipeline
+graph's count, not the projection's), and it said `--scope full` was blocked by
+R18 (a blocker that existed in prose and nowhere in the program). Both are
+corrected below. Treat every number here as *measured on a date*, and the dates
+matter.
 
 ---
 
@@ -17,16 +24,18 @@ rather than assumed, it says so.
 | | |
 |---|---|
 | **Explorer** | <https://np-autopilot.vercel.app> — 200, serves the graph UI |
-| **API** | `/api/config` 200; `/api/{search,node,neighbourhood,overview,coverage,staffing,aliases,me}` all **401 unauthenticated**; `/api/session` 401/400/403 on bad input |
+| **API** | `/api/config` 200; `/api/{search,node,neighbourhood,overview,coverage,staffing,aliases,me}` all **401 unauthenticated**; `/api/curate` 405 on GET, 401 on POST; `/api/session` 401/400/403 on bad input |
+| **Latency** | **44.3 ms** warm server-side median (n=18), from 2,252 ms. Functions pinned to `icn1`; the database is in `ap-northeast-2`. `LATENCY-MEASUREMENT.md` separates measured from inferred |
+| **Tests** | **313 passing, 1 skipped** (the skip is the live-header check, opt-in via `NP_VERIFY_URL`). Both `drive_dom.mjs` targets green |
 | **Sign-in** | Works end to end. Google Workspace → `/api/session` → GoTrue → Supabase session → RLS |
 | **Security headers** | All six present on the deployed response: CSP (no `unsafe-inline` on `script-src`, inline blocks pinned by SHA-256), HSTS, `x-frame-options: DENY`, nosniff, no-referrer, permissions-policy. Plus `Cross-Origin-Opener-Policy: same-origin-allow-popups` |
-| **Service-role key** | **Zero occurrences** in the shipped bundle, and the variable is not set in the Vercel project at all. That bundle scan is the evidence — not the unit test, which until 2026-09-18 scanned `web/` while the routes live in `api/` and so proved nothing. Now covers both; see `DEPLOYMENT.md` and `DECISIONS.md` §A.7b instance 8 |
+| **Service-role key** | **Zero occurrences** in the shipped bundle, and the variable is not set in the Vercel project at all. That bundle scan is the evidence — not the unit test, which until 2026-09-18 scanned `web/` while the routes live in `api/` and so proved nothing. Now covers both; see `DEPLOYMENT.md` and [`A7B.md`](A7B.md) instance 8 |
 
 ### Verified locally only — do NOT describe these as production-verified
 
 - **Render and layout cost.** Never measured, in any region. §4.
   (In-region *latency* is now measured — `LATENCY-MEASUREMENT.md`.)
-- **The full test suite** (260 passing, ~7 min) runs against the real Supabase
+- **The full test suite** (313 passing, ~7 min) runs against the real Supabase
   but from a laptop, not from Vercel.
 - **Everything in `pipeline/`.** It has never run on Vercel and is not meant to.
 
@@ -37,9 +46,10 @@ rather than assumed, it says so.
 | Graph in Postgres | **3,146 nodes / 4,021 edges** (public half only) |
 | Provenance | 30,658 `node_sources` rows over **74 files** |
 | Curation | 20 people, 15 confirmed aliases + 6 unresolved, 92 workflow owners, **45 `curation_notes`** |
-| Sensitive | **Zero rows projected.** `--scope full` refuses — but **not for the reason this table used to give.** R18 appears nowhere in `project_graph.py`; the program's own blocker was a hardcoded claim that the `recruiting` RLS path was missing, and that path **exists** (`nodes_recruiting_select`, `np_can_see_sensitive()`). Both claims outlived their conditions. The refusal is now derived, and refuses on the real ground: the **decision** is unrecorded — `docs/INGEST-SCOPE-REVERSAL.md`, approval block blank. `DECISIONS.md` §A.7b instance 9 |
+| Sensitive | **Zero rows projected.** `--scope full` refuses — but **not for the reason this table used to give.** R18 appears nowhere in `project_graph.py`; the program's own blocker was a hardcoded claim that the `recruiting` RLS path was missing, and that path **exists** (`nodes_recruiting_select`, `np_can_see_sensitive()`). Both claims outlived their conditions. The refusal is now derived, and refuses on the real ground: the **decision** is unrecorded — `docs/INGEST-SCOPE-REVERSAL.md`, approval block blank. [`A7B.md`](A7B.md) instance 9 |
 | Migrations | **0001–0015 applied.** `python3 pipeline/migrate.py status` |
-| Profiles | `animesh.kumar@…` = `member`; `b2c-courses-new-programs@…` = `member`, `is_shared_account=true` (correctly capped — it cannot hold `recruiting` or `admin`) |
+| Drive links | **74 of 74** files resolve. The ids were in pass 0's manifest since the beginning and nothing carried them forward |
+| Profiles | 1 `admin`, 1 `member`. The shared account is `is_shared_account=true` and correctly capped — it cannot hold `recruiting` or `admin`. **`member` is now granted automatically** at signup (migration 0015); `recruiting` and `admin` stay manual |
 
 ### TWO GRAPHS, DIFFERENT COUNTS — this confusion has already cost three numbers
 
@@ -153,7 +163,7 @@ lives in the `shared_accounts` table (migration 0014). See §5.
 ```bash
 set -a && . ~/.config/np-autopilot/env && set +a
 
-python3 -m pytest tests -q                  # 260 tests, ~7 minutes
+python3 -m pytest tests -q                  # 313 tests, ~7 minutes
 node eval/drive_dom.mjs                     # hosted explorer harness
 node eval/drive_dom.mjs knowledge/graph.html  # offline build harness
 
@@ -173,7 +183,7 @@ see §6.
 
 ---
 
-## 4 · Open items, each with its current state
+## 4 · Long-running open items, each with its current state
 
 ### R18 — the repository was public for eight days
 
@@ -246,7 +256,7 @@ corpus -> evidence IS NULL        <- not enforced
 So a hand fact mislabelled `origin: corpus`, carrying its evidence string,
 passes every constraint. Measured: **0 of 30,628 corpus rows carry evidence** —
 the invariant holds in the data, it is simply not enforced. The fix is one
-constraint in a new migration, written out in `DECISIONS.md` §A.7b. It guards
+constraint in a new migration, written out in [`A7B.md`](A7B.md). It guards
 §A.5's prohibition, which is the most load-bearing rule in the project.
 
 ### The three aliases — unresolved, deliberately
@@ -295,14 +305,19 @@ candidates reintroduces the picking one layer up.
   reason.
 - **Hand-entered facts carry `origin: hand`**, never emit `sourced_from`, and
   must remain **visibly distinct in any UI** from scanned facts.
-- **Sensitive nodes are not projected at all.** `member` role only while R18 is
-  open.
+- **Sensitive nodes are not projected at all**, and the refusal is now *derived*
+  rather than asserted: `project_graph.py` queries `pg_policies`/`pg_proc` for the
+  recruiting path, and refuses on the ground that actually holds — the **decision**
+  is unrecorded (`INGEST-SCOPE-REVERSAL.md`, approval block blank). The old
+  "while R18 is open" reason was never in the program.
 - **D4's contact strip is NOT what keeps contact data out of the graph.** It was
   inert — one caller, wrong namespace, equality matching. What holds is
   `sources.py`'s allow-list: extraction reads 20 declared columns, all name
   columns. **The stated control fails open; the real one holds by accident**,
-  and it was chosen for coverage rather than safety. Hardened 2026-09-18;
-  `DECISIONS.md` §A.7b, "the control that never worked".
+  and it was chosen for coverage rather than safety. Hardened 2026-09-19 — the
+  pattern list is now an allow-list with substring matching and header
+  normalisation, and `property_scopes` refuses an unclassified property at
+  projection time. [`A7B.md`](A7B.md), "the control that never worked".
 - **Never the direct `db.<ref>.supabase.co` connection.** IPv6-only on this
   project: works on a laptop, fails on Vercel. Refused at runtime and greped in
   CI.
@@ -333,7 +348,8 @@ candidates reintroduces the picking one layer up.
 
 | Question | Read |
 |---|---|
-| **About to write or change a guard?** | `DECISIONS.md` **§A.7b** first. Six instances of one failure pattern and what catches the seventh. Read it *before*, not after |
+| **About to write or change a guard?** | [**`A7B.md`**](A7B.md) first — moved out of `DECISIONS.md` 2026-09-20. **Ten** instances of one failure pattern, the three questions that find the eleventh, and why the best-told instances are the least useful. Read it *before*, not after |
+| **About to build for 2,000 files?** | [`SCALE-PLAN.md`](SCALE-PLAN.md). Four questions recorded unanswered, and the fork between a search index over a known subset and a graph that guesses |
 | Why is the schema shaped this way? | `DECISIONS.md` §A |
 | How does curation sync with Postgres? | §B, and `pipeline/curation.py` |
 | What can run on Vercel, and why these poolers? | §C |
@@ -350,7 +366,10 @@ candidates reintroduces the picking one layer up.
 
 ## 8 · The next phase — the agreed plan
 
-**In this order.** Recorded 2026-09-18; not started.
+**All five are DONE**, in the order agreed. Recorded 2026-09-18, finished
+2026-09-19. Kept here rather than deleted because each entry records *why* the
+thing was built the way it was, and three of them turned on a measurement that
+contradicted the plan. What is open now is §10.
 
 ### 1. The sign-in flash — DONE 2026-09-18
 
@@ -390,7 +409,7 @@ at can never silently vanish from the landing page.
 Design Pathway — and `/api/overview` **names them**. The original plan was to
 let them appear as isolated nodes; measuring killed that, because every domain
 has a *deliverer*, so once `delivered_by` is included nothing is isolated and
-the gap renders identically to a healthy domain. That is the §A.7b shape, so
+the gap renders identically to a healthy domain. That is the `A7B.md` shape, so
 the count is derived from the edges instead.
 
 **The endpoint is bounded and cannot be widened by a caller** — node type and
@@ -452,24 +471,147 @@ durable: deleting a profile does not re-create it, because a re-login does not
 re-create the `auth.users` row. **If that ever stops being true, this reversal
 must be revisited** — a grant that reinstates itself is not revocable.
 
-### 5. The sign-in page and the explorer UI
+### 5. The sign-in page and the explorer UI — DONE 2026-09-18/19
 
-Make the sign-in page look like something IK would put in front of its team
-rather than a bare card. Improve the explorer: better layout, clearer
-affordances.
+**Landing page** (direction A of two, the graph-led one). Hierarchy from scale,
+weight and space, because the CSP permits no external font and no icon set. The
+hero is inline SVG in the explorer's own node-type colours, generated from
+`stats.json` by largest-remainder apportionment so 60 circles carry the true
+proportions — 36 instructor, 18 module, 2 workflow, one each of file, person,
+domain, program. `theme` is 0.5% and rounds to zero even at 60; stated rather
+than nudged.
 
-**Keep the provenance panel prominent — a hand-entered fact must stay visibly
-distinct from a scanned one.** That distinction was invisible for the whole
-project until the collision check surfaced it.
+**"What it will not tell you" gets the wider column and the larger type**,
+because it is the section that earns the page. The two permanent sidebar panels
+are gone — their content now appears where it triggers: the "not the whole
+graph" note is a clause *on* the count it qualifies, and the "file search was not
+carried over" note appears when somebody types a filename into a box that
+matches labels.
 
-**Keep everything §G2 listed as preserved**, all of which carry solved bugs:
+**Six type-specific views**, shaped by the four properties the coverage report
+identified rather than listing them. Relationships are grouped by relation with
+per-edge detail. Hash routes, node only.
 
-- the cooling schedule (`ALPHA_DECAY`, `ALPHA_MIN`) — the layout freezes at 366
-  frames and must keep doing so
-- selection split from layout — a click must not move a single coordinate
-- debounced resize that never restarts the simulation
-- `CAP = 8` with "show N more", disclosed
-- paint-time decorative drift that never writes `n.x` / `n.y`
+**Provenance is grouped by file**, collapsed, leading with *"cited in N files"* —
+which is the cross-validated signal, and what a flat list of 152 rows buried.
+The grouping is presentational only; §A.4 is why the duplicates must not be
+deduped at source.
 
-`eval/drive_dom.mjs` asserts every one of these against both renderers. Run it
-before and after.
+**The curation surface** (admin only): claims, sibling test, recorded reasoning,
+candidates in the corpus owner's recorded order with `existing_expert_in_edges`
+and `taught_modules` so blast radius is visible before the decision. No
+recommended, no best, no score. The reasoning gates the button and is persisted
+into the row, not only the audit table, because `curation.py export` writes the
+table back to YAML and a decision whose reasoning lived only in the audit would
+return as a bare mapping.
+
+---
+
+## 9 · What the four properties mean for any new view
+
+Measured 2026-09-18. **Coverage decides the rendering**, and getting this wrong
+is how a field becomes a lie.
+
+| property | coverage | rule |
+|---|---|---|
+| `basis` on `expert_in` | **100%** (1,066 self-declared / 89 HR record) | state it every time |
+| `inferred` on `contains` | **100%** — every program→module edge | state it every time |
+| `cross_validated` on instructor | **100%** (746 true / 1,169 false) | state it every time |
+| `review` | **3.4%** | **present-only, and NEVER a clean bill** |
+| `avg_rating` on `teaches` | **1.7%** | present-only, **omitted** when absent — not dashed, not zeroed |
+
+The `review` rule is the subtle one: 96.6% are unflagged because nobody looked,
+not because they were checked and cleared. A "no issues" badge claims an
+assessment the data cannot support. `avg_rating` is the same trap from the other
+side — **a field rendered at low coverage reads as absence rather than as
+not-extracted.**
+
+---
+
+## 10 · Open items from the current phase
+
+### Approved, awaiting the approval block — payroll ingestion
+
+`docs/INGEST-SCOPE-REVERSAL.md`. Scope is **(1) only** — the cost file, not
+contact fields. The block is deliberately blank and **nothing is extracted until
+it is filled in**; `project_graph.py --scope full` refuses and points at it.
+
+Two things on record there that matter more than the scope: **the file contains
+4,697 email occurrences**, so approving it without field-level minimisation
+partially reverses a decision explicitly declined — and **condition 1 is not a
+fifth condition**, because `nodes_recruiting_select` keys on `sensitive`, so
+declining it voids recruiting-only rather than standing beside it.
+
+Minimisation, agreed: keep the 18 labour codes, `Base Rate`, `Hourly Rate`,
+`Hours Amount`, a person key. Drop everything else, including every email column.
+
+### Declined and recorded — LinkedIn
+
+`docs/CONTACT-DATA.md`. All three populations: the 20 NP staff (no question
+stated), the 497 instructors who have taught (**four times acceler's 123**, and
+the bind is structural), and all 3,817 (not close). The extraction-time identity
+key was **also not built**, because checking showed it cannot reach the problem:
+person resolution is explicit-alias-only, fuzzy proposes and never applies, and
+the one real false-merge risk lives in a file with no LinkedIn column.
+
+### Costed, not started — untracking `knowledge/graph.json`
+
+`docs/UNTRACKING-GRAPH-JSON.md`. **2–3 days, not a week**, and the week is the Q5
+hybrid which untracking does not force. **The digest manifest is a condition, not
+a mitigation.** Deliberately not started: the type views and session extraction
+change what the graph holds, and the diff should not be missing while that is in
+flight.
+
+### Next — session metrics as an edge time series
+
+4,046 sessions, 4,082 rated rows, 2023-10-01 → 2026-08-30. **Not a node type** —
+that is +129% nodes for a leaf nothing traverses to, which is the Alert mistake.
+**Exclude `T.A Ratings` and `TA RAW` explicitly**: they carry `Student Name` and
+`Student Email`.
+
+Per-class, per-instructor, per-domain and per-quarter are supported. **Per-module
+is not** — sessions carry topic strings, not module ids, and that join needs an
+`Ambiguous` path. **Attendance stays out** until it can distinguish "0 attended"
+from "not recorded".
+
+Quarterly: raw weighted average, response count, named rubric. **Never a band
+across quarters** — five rubric sheets disagree, and Q19 is the eval question
+written to catch exactly that fabrication. `config/quarters.yaml`, never a
+sheet-name parse.
+
+**Response count travels with every average.** A 4.9 from 3 responses and a 4.6
+from 200 are not comparable; an average without its N is the same failure as a
+count without its floor.
+
+### Still open
+
+- **R18 traffic calibration: CLOSED.** The Drive folder's prior visibility is
+  still unanswered (`CACHE-EXPOSURE.md` §0a).
+- **Check 3 of the post-deploy list** — still unrun. See §4.
+- **The three aliases** — unresolved, deliberately. `Agentic AI` cannot be
+  resolved from the data at all and now says so on the surface.
+- **`A7B.md`'s open question** — which of our outputs does nobody read?
+
+---
+
+## 11 · The opening brief for the next session
+
+**Read this document, then [`A7B.md`](A7B.md), then
+[`SCALE-PLAN.md`](SCALE-PLAN.md). In that order, before anything else.**
+
+**First task: answer `SCALE-PLAN.md`'s four open questions with measurements,
+not proposals.**
+
+Start with a **content inventory of the three registry folders** — file types,
+counts, and a representative sample of what is actually in them.
+`01-corpus-inventory.md` is the shape to copy: measured, not guessed. It exists
+in that form because **reading headers instead of rows gave the wrong answer at
+75 files**, and it will give a more confident wrong answer at 2,000.
+
+> **The three registry folders are not named anywhere in this repository.** Ask
+> which they are before inventorying, rather than guessing from directory names
+> — guessing which folders to measure is how a measurement becomes an assumption
+> with a number attached.
+
+**Do not write an extractor. Do not build the registry reader.** Report what is
+there, then decide.
