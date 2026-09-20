@@ -103,6 +103,22 @@ class PartialListing(RuntimeError):
     """
 
 
+#: EVERY way a listing can fail, not just the HTTP ones.
+#:
+#: The first real run of this script enumerated row A completely (8,079 files,
+#: 1,697 folders, 15 minutes) and then DIED on row B with a bare
+#: `ConnectionResetError` — a socket-level error, not an `HttpError`, so the
+#: handler written to name failures never saw it. The run produced no row B, no
+#: JSON, and a traceback where a report should have been.
+#:
+#: That is this module's own rule failing on its first outing: *a failure must
+#: be named, never skipped* — and a crash is the loudest possible way to skip
+#: one, because it takes the rest of the crawl with it. The lesson is the one
+#: already in `A7B.md`: the handler's scope was written down (HttpError) rather
+#: than derived from the question (can this listing be trusted?).
+TRANSIENT = (ConnectionError, TimeoutError, OSError, HttpError)
+
+
 def owner_domain(resource: dict) -> str:
     """D4 — the domain, never the address.
 
@@ -132,13 +148,14 @@ class Crawler:
         self.repeats: list[dict] = []
         self.pages_total = 0
         self.api_calls = 0
+        self.retries = 0
 
     # -- exhaustive listing ------------------------------------------------
     def list_all(self, folder_id: str) -> list[dict]:
         """Every child, or an exception. Never a partial list."""
         out, token, pages = [], None, 0
         while True:
-            for attempt in range(4):
+            for attempt in range(5):
                 try:
                     self.api_calls += 1
                     resp = self.svc.files().list(
@@ -148,9 +165,14 @@ class Crawler:
                         includeItemsFromAllDrives=True,
                     ).execute()
                     break
-                except HttpError as exc:
-                    status = getattr(exc.resp, "status", 0)
-                    if status in (429, 500, 502, 503) and attempt < 3:
+                except TRANSIENT as exc:
+                    last = attempt == 4
+                    retryable = (
+                        not isinstance(exc, HttpError)
+                        or getattr(exc.resp, "status", 0) in (429, 500, 502, 503)
+                    )
+                    if retryable and not last:
+                        self.retries += 1
                         time.sleep(1.5 * (attempt + 1))
                         continue
                     raise
@@ -176,7 +198,7 @@ class Crawler:
 
         try:
             children = self.list_all(folder_id)
-        except (HttpError, PartialListing) as exc:
+        except (*TRANSIENT, PartialListing) as exc:
             self.opened.discard(folder_id)         # NOT opened — do not claim it
             self.failures.append({
                 "path": path, "id": folder_id, "kind": "folder-listing",
@@ -239,12 +261,14 @@ class Crawler:
                     supportsAllDrives=True).execute()
                 s["target_name"] = meta.get("name")
                 s["target_owner_domain"] = owner_domain(meta)
-            except HttpError as exc:
+            except TRANSIENT as exc:
                 s["target_owner_domain"] = None
                 s["verdict"] = "unreadable"
+                status = getattr(getattr(exc, 'resp', None), 'status', None)
                 self.failures.append({
                     "path": s["path"], "id": tid, "kind": "shortcut-target",
-                    "reason": f"HTTP {getattr(exc.resp, 'status', '?')}",
+                    "reason": f"HTTP {status}" if status
+                              else f"{type(exc).__name__}: {str(exc)[:120]}",
                 })
 
 
@@ -328,8 +352,15 @@ def main() -> int:
                   f"reached this account.")
             per_row.append({"code": code, "label": label, "unreadable": True})
             continue
-        depth = c.walk(fid, code, 0)
-        c.classify_shortcuts()
+        row_error = None
+        try:
+            depth = c.walk(fid, code, 0)
+            c.classify_shortcuts()
+        except Exception as exc:                       # noqa: BLE001
+            # A row that dies must not delete the rows that succeeded, and must
+            # not be reported as though it finished. Both halves matter.
+            row_error = f"{type(exc).__name__}: {str(exc)[:200]}"
+            depth = 0
         elapsed = time.time() - t0
 
         not_opened = c.discovered - c.opened
@@ -353,6 +384,14 @@ def main() -> int:
         all_detail[code] = {**row, "file_paths": [f["path"] for f in c.files]}
 
         # ---------------- per-row report ----------------
+        if row_error:
+            print(f"\n{code}  {label}")
+            print(f"    INCOMPLETE — the walk raised and this row's numbers are")
+            print(f"    NOT a count: {row_error}")
+            print(f"    partial: {len(c.files)} files, {len(c.opened)} folders "
+                  f"opened of {len(c.discovered)} discovered")
+            per_row[-1]["incomplete"] = row_error
+            continue
         print(f"\n{code}  {label}")
         print(f"    Drive name : {real_name!r}  (owner domain {root_owner})")
         print(f"    files      : {row['files']:,}   ({human(row['bytes'])})")

@@ -242,8 +242,13 @@ def test_the_skip_is_declared_not_a_size_threshold():
 
 def test_owner_is_recorded_as_a_domain_never_an_address():
     """D4, and the assertion the decision specified."""
-    assert cr.owner_domain(
-        {"owners": [{"emailAddress": "Someone.Real@Gmail.com"}]}) == "gmail.com"
+    # The marker must sit on the OFFENDING line, not above the statement: it
+    # covers its own line plus the next line that is code, and in a multi-line
+    # expression the identifier is usually two lines down.
+    invented = "Someone.Real@Gmail.com"  # contact-ok: invented; the assertion
+    # is that only its DOMAIN survives, and a real address here would be the
+    # exact thing D4 forbids.
+    assert cr.owner_domain({"owners": [{"emailAddress": invented}]}) == "gmail.com"
     assert cr.owner_domain({}) == "unknown"
     assert cr.owner_domain({"owners": [{"emailAddress": "broken"}]}) == "unknown"
 
@@ -277,3 +282,69 @@ def test_a_clean_walk_leaves_nothing_discovered_but_unopened():
         "discovered and opened diverged on a tree with no skips or failures")
     assert depth == 2, f"max depth {depth}, expected 2"
     assert len(c.files) == 1
+
+
+def test_a_socket_level_failure_is_named_rather_than_crashing_the_crawl():
+    """THE REGRESSION TEST. This is what actually happened on the first run.
+
+    Row A enumerated completely — 8,079 files, 1,697 folders, 15 minutes — and
+    then row B died on a bare `ConnectionResetError`. It is not an `HttpError`,
+    so the handler written to name failures never saw it, and the run produced
+    no row B, no JSON, and a traceback where a report should have been.
+
+    That is this module's own rule failing on its first outing: a failure must
+    be NAMED, never skipped, and a crash is the loudest possible way to skip
+    one because it takes the rest of the crawl with it. The handler's scope had
+    been written down (`HttpError`) rather than derived from the question
+    (can this listing be trusted?) — instance 8, in new code, the same week.
+    """
+    class _ResetDrive:
+        def __init__(self):
+            self.attempts = 0
+
+        def files(self):
+            return self
+
+        def list(self, **kw):
+            return self
+
+        def execute(self):
+            self.attempts += 1
+            raise ConnectionResetError(54, "Connection reset by peer")
+
+    drive = _ResetDrive()
+    c = cr.Crawler(drive)
+    c.discovered.add("root")
+    slept: list[float] = []
+    cr.time.sleep, real_sleep = slept.append, cr.time.sleep
+    try:
+        c.walk("root", "R", 0)                # must NOT raise
+    finally:
+        cr.time.sleep = real_sleep
+
+    assert slept == [1.5, 3.0, 4.5, 6.0], (
+        f"backoff schedule changed: {slept}")
+
+    assert drive.attempts == 5, (
+        f"retried {drive.attempts} times; a transient socket error deserves "
+        "retries before it is called a failure")
+    assert c.retries == 4
+    assert "root" not in c.opened, "a folder that never listed was called opened"
+    assert len(c.failures) == 1
+    f = c.failures[0]
+    assert f["kind"] == "folder-listing"
+    assert "ConnectionResetError" in f["reason"], (
+        f"the failure must name what went wrong, got {f['reason']!r}")
+
+
+def test_one_row_dying_does_not_delete_the_rows_that_finished():
+    """Row A was complete and unreported because row B crashed.
+
+    Losing fifteen minutes of correct enumeration to a later failure is its own
+    bug, separate from the handler being too narrow.
+    """
+    src = (REPO / "pipeline" / "count_registry.py").read_text()
+    assert "row_error" in src, "per-row isolation is gone"
+    assert "INCOMPLETE" in src, (
+        "a row that died must be reported as INCOMPLETE rather than silently "
+        "printing partial numbers as though they were a count")
