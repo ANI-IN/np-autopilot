@@ -223,6 +223,39 @@ stops it reaching git is no longer one layer.
 
 ---
 
+## A dependency that did not exist when this document was written
+
+**Added 2026-09-21, and it changes who is affected by approving this.**
+
+Migration 0015 (2026-09-18) made `member` **automatic**: every verified
+`@interviewkickstart.com` Workspace identity gets a `member` profile on first
+sign-in, with no administrator step. `docs/AUTH.md` records the reversal.
+
+When this document was written, "who can read the projection" meant *whoever an
+administrator had deliberately given a profile to* — two people. It now means
+**every employee at Interview Kickstart, by default, on first sign-in.**
+
+That is safe today precisely because of what this document has not yet
+approved: nothing sensitive is projected, so `member` reads the public half.
+**Approving the sensitive projection changes both halves of that sentence at
+once** — and the second half changed under this document without it being
+updated.
+
+> **Before filling in the block below, decide separately: should the default,
+> automatic role still be able to read what `--scope full` would project?**
+>
+> If the answer is no, the fix belongs *with* this approval and not after it.
+> At least three options are open — narrow what `member` reads, make the
+> default role narrower than `member`, or gate the sensitive projection on a
+> role that is never automatic. `AUTH.md` §"Say it plainly" carries the same
+> note from the identity side.
+
+This is not an objection to the scope decision. It is a second decision that
+approving this one silently makes, and R6 requires the record to show what was
+decided against which facts.
+
+---
+
 ## Approval — to be completed by the approver, not by me
 
 R6 requires the record to show who decided, when, and against which facts.

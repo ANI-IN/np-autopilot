@@ -246,7 +246,18 @@ def main() -> int:
             "in-pipeline candidates about named external people. That is a\n"
             "recorded decision under R6 — see docs/INGEST-SCOPE-REVERSAL.md,\n"
             "whose approval block is blank. Fill it in, then remove this refusal\n"
-            "in the same commit so the record and the capability arrive together.")
+            "in the same commit so the record and the capability arrive together.\n"
+            "\nAND DECIDE THIS TOO, because approving the scope decides it\n"
+            "silently: since migration 0015 (2026-09-18) `member` is granted\n"
+            "AUTOMATICALLY to every verified @interviewkickstart.com Workspace\n"
+            "identity on first sign-in. When this refusal was written, the\n"
+            "readership was whoever an administrator had chosen — two people.\n"
+            "It is now every employee, by default.\n"
+            "That is safe only while the sensitive half is not projected, which\n"
+            "is the thing you are about to change. Should the default, automatic\n"
+            "role still read what --scope full projects?\n"
+            "  docs/AUTH.md -> 'Say it plainly'\n"
+            "  docs/INGEST-SCOPE-REVERSAL.md -> 'A dependency that did not exist'")
 
     # PUBLIC HALF ONLY. include_sensitive=False is the whole scope decision, in
     # one argument, rather than a filter applied later that someone can forget.

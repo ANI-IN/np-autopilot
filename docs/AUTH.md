@@ -275,6 +275,68 @@ either way.
 
 ---
 
+#### SAY IT PLAINLY: everyone at IK now reads the graph by default
+
+There is no longer any step between *being an Interview Kickstart Workspace
+account* and *reading the whole projected graph*. No request, no approval, no
+administrator. Sign in once and the data is there.
+
+**That is fine today, and it is fine for a specific reason that is not
+permanent:** the projection contains nothing sensitive. `--scope full` refuses,
+1,902 sensitive nodes are not projected at all, and what a `member` can read is
+the public half — domains, modules, instructors who have taught, workflows.
+
+**It stops being fine the moment the sensitive half is projected.** At that
+point "every IK employee, automatically" is the population that reads whatever
+`member` can reach, and the question *who should see the hiring funnel* stops
+being answered by `recruiting` alone — because the split between public and
+sensitive is then the only thing standing between a default-granted role and
+277 named hiring rejections.
+
+> **The auto-grant and the sensitive projection are safe individually and
+> interact.** Neither decision's record mentioned the other until now. Whoever
+> proposes `--scope full` owns re-deciding this one, and
+> `docs/INGEST-SCOPE-REVERSAL.md` carries the same note at the point of
+> approval so it cannot be missed from that side.
+
+What that re-decision looks like is not settled here. The options are at least:
+keep `member` as the default but move more into `sensitive`; make the default
+role narrower than `member`; or gate the sensitive projection on a role that is
+never automatic. **All three are open.** What is closed is the assumption that
+auto-granting `member` is a decision with no downstream dependency.
+
+---
+
+#### Verification status — 2026-09-21
+
+**Applied and correct; exercised by tests, not yet by a real sign-in.**
+
+| | |
+|---|---|
+| 0015 applied | **2026-09-18 12:54:09Z** (`np_schema_migrations`) |
+| Function `grant_member_on_signup` | present, `security definer` |
+| Trigger `auth_user_created_grants_member` | present on `auth.users`, **enabled** |
+| `profiles_derive_shared` (0014) | still present, BEFORE insert on `profiles` |
+| `shared_accounts_stay_member`, `domain_is_ik`, `role_is_known` | all present |
+| `tests/test_auto_member_grant.py` | **5 passed** against the live database |
+
+**Why an administrator still appeared to be necessary.** Both existing accounts
+were created **before 0015 existed** — `auth.users` rows at 09:15:02 and
+09:53:28, and 0015 applied at 12:54:09, three and a half hours later. Their
+profiles were written manually at 09:53:11 and 10:20:42, which was genuinely
+required at the time.
+
+So the honest answer is neither *"it worked and the grant was redundant"* nor
+*"the trigger is not firing"*: **the trigger fires — the tests insert real
+`auth.users` rows on the live database and the profile appears — but it has
+never had an occasion, because no new identity has signed in since it was
+applied.** The two sign-ins this project has seen both predate it.
+
+That is exactly the gap a schema check cannot close, which is why the next
+entry is a real sign-in and not another query.
+
+---
+
 ## Audit
 
 Every request writes one JSON line: timestamp, subject, email,
