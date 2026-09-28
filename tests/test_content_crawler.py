@@ -238,3 +238,79 @@ def test_two_drive_files_with_the_same_path_get_different_cache_names(mod):
     """
     p = "/SD1: Full Stack/.../2. Live Class Slides/JS and WebD - Live Class by JD"
     assert mod._safe_name(p, "11symrzjyqvQBEQj") != mod._safe_name(p, "1VNWhrz1n7XVkqux")
+
+
+# ---------------------------------------------------------------------------
+# 1c — the end-of-run integrity check, made permanent
+# ---------------------------------------------------------------------------
+
+def test_the_manifest_hash_matches_the_bytes_on_disk_for_crlf_text(mod, tmp_path, world):
+    """CRLF is why this test exists rather than a generic round-trip.
+
+    The first integrity check I ran reported 259 sha256 mismatches. 258 were
+    files containing CRLF and a check that used read_text(), which applies
+    universal-newline translation. The crawler was correct; the CHECK was
+    wrong, and it was one step from being reported as a crawler failure.
+    So the permanent check compares RAW BYTES, and this fixture carries CRLF
+    to keep it honest.
+    """
+    world.blobs["doc1"] = b"line one\r\nline two\r\nmail ops@interviewkickstart.com\r\n"
+    out = mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    import hashlib
+    row = out.manifest["doc1"]
+    raw = (out.cache_dir / row["text_path"]).read_bytes()
+    assert b"\r\n" in raw, "fixture must actually exercise CRLF"
+    assert hashlib.sha256(raw).hexdigest() == row["sha256"]
+
+
+def test_integrity_is_checked_at_the_end_of_every_run(mod, tmp_path, world):
+    out = mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    assert out.integrity["sha256_mismatches"] == 0
+    assert out.integrity["orphan_files"] == 0
+    assert out.integrity["missing_files"] == 0
+    assert out.integrity["colliding_text_paths"] == 0
+
+
+def test_a_corrupted_cache_file_is_caught_rather_than_reported_clean(mod, tmp_path, world):
+    """Negative control. An integrity check that cannot fail is furniture."""
+    out = mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    victim = out.cache_dir / out.manifest["doc1"]["text_path"]
+    victim.write_text("tampered", encoding="utf-8")
+    again = mod.verify_cache(out.cache_dir)
+    assert again["sha256_mismatches"] == 1
+
+
+def test_an_orphan_file_in_the_cache_is_reported(mod, tmp_path, world):
+    out = mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    (out.cache_dir / "text" / "left_behind.txt").write_text("x", encoding="utf-8")
+    assert mod.verify_cache(out.cache_dir)["orphan_files"] == 1
+
+
+def test_the_run_summary_is_written_to_a_durable_file(mod, tmp_path, world):
+    out = mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    summary = out.cache_dir / mod.SUMMARY_FILE
+    assert summary.exists()
+    import json as _j
+    body = _j.loads(summary.read_text(encoding="utf-8"))
+    assert body["integrity"]["sha256_mismatches"] == 0
+    assert body["stats"]["exported"] >= 1
+    assert body["skips"]
+
+
+# ---------------------------------------------------------------------------
+# 2 — download-disabled-by-owner is its own reason, derived from metadata
+# ---------------------------------------------------------------------------
+
+def test_a_download_disabled_file_gets_its_own_reason_code(mod):
+    entry = {"id": "x", "name": "Timed Test.docx",
+             "capabilities": {"canDownload": False},
+             "copyRequiresWriterPermission": True}
+    assert mod.download_disabled(entry) is True
+
+
+def test_an_ordinary_file_is_not_flagged_as_download_disabled(mod):
+    """Negative control: 870 of 919 exports must not acquire this reason."""
+    entry = {"id": "y", "name": "ok.docx",
+             "capabilities": {"canDownload": True},
+             "copyRequiresWriterPermission": False}
+    assert mod.download_disabled(entry) is False

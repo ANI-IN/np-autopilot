@@ -323,3 +323,45 @@ def test_the_module_folder_wins_over_the_parent_path():
 def test_a_module_named_folder_is_preferred_at_any_depth():
     path = "/Module-2: Object Modeling/2. Live Class Slides/deck.pptx"
     assert cur.module_folder_from_path(path) == "Module-2: Object Modeling"
+
+
+# ---------------------------------------------------------------------------
+# Phone precision — audited against the run-3 cache, 2026-09-29
+# ---------------------------------------------------------------------------
+
+#: Drawn from contexts actually present in the cache, not invented.
+PHONE_CASES = [
+    ("what does 200 300 400 500 HTTP Response code mean?", False),
+    ("New Data Jobs Projected 2024 2034 (BLS: 33.5% growth)", False),
+    ("listen on 8080 3000 for the dev server", False),
+    ("rows 1200 4500 scanned in the query plan", False),
+    ("Winner DOB Ohio International 1998 04 1981 Iowa Open", False),
+    ("call me on +1 415 555 0134 any time", True),
+    ("San Diego, CA 619 555 0147 | someone@example.com", True),
+    ("Tel: 020 7946 0958", True),
+    ("+91 98765 43210", True),
+]
+
+
+@pytest.mark.parametrize("text,is_phone", PHONE_CASES)
+def test_phone_redaction_keeps_curriculum_numbers(text, is_phone):
+    """The audit's finding, as a test.
+
+    The first pattern required only `\\d{3,5}[sep]\\d{3,5}` — six digits — so
+    `200 300 400 500` on a slide teaching HTTP status codes became
+    `200 <phone redacted> 500`. That is not over-redaction of contact data, it
+    is DESTRUCTION OF CURRICULUM, and it is the cost `CLAUDE.md` §4 is about:
+    a rule that silently removes correct answers.
+
+    Measured on the run-3 cache: 148 phone redactions across 132 files, and
+    not one had phone-shaped context.
+    """
+    out, counts = rd.redact(text)
+    assert bool(counts.get("phone")) is is_phone
+
+
+def test_phone_redaction_still_has_no_density_threshold():
+    """Negative control. Tightening the SHAPE must not reintroduce a count
+    rule — A7B's borrowed rule: one address, or one number, is enough."""
+    out, counts = rd.redact("+1 415 555 0134")
+    assert counts["phone"] == 1

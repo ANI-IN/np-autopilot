@@ -50,6 +50,11 @@ from pipeline.lib.paths import REPO_ROOT, build_log                    # noqa: E
 #: Its OWN subdirectory of the cache. Never the corpus folders.
 CACHE_SUBDIR = "content-rowB"
 
+#: Durable run record, beside the manifest. The stdout report scrolls away and
+#: BUILD_LOG carries only a summary line; this is the file a later reader can
+#: diff against the next run.
+SUMMARY_FILE = "run-summary.json"
+
 FOLDER = "application/vnd.google-apps.folder"
 SHORTCUT = "application/vnd.google-apps.shortcut"
 
@@ -63,7 +68,9 @@ TEXT_EXPORT = {
 }
 
 FIELDS = ("nextPageToken, files(id, name, mimeType, modifiedTime, size, "
-          "owners(emailAddress), shortcutDetails(targetId, targetMimeType))")
+          "owners(emailAddress), copyRequiresWriterPermission, "
+          "capabilities(canDownload), "
+          "shortcutDetails(targetId, targetMimeType))")
 
 #: ~10 requests/second. count_registry sustained 1.9/s without trouble.
 RATE_LIMIT_SECONDS = 0.1
@@ -75,6 +82,65 @@ class CrawlResult(NamedTuple):
     skips: Counter
     stats: Counter
     shortcuts: list
+    integrity: dict
+
+
+def download_disabled(entry: dict) -> bool:
+    """True when the OWNER has turned off download for viewers.
+
+    DERIVED FROM METADATA, not from a failed fetch. Measured on the run-3
+    cache: 49 files returned HTTP 403 on get_media, and the separation is
+    total — every one has `copyRequiresWriterPermission: true` and
+    `capabilities.canDownload: false`, and every file that succeeded has the
+    opposite. All 49 are owned at interviewkickstart.com.
+
+    It is its OWN reason code because `no-text-extractor` means "we read it and
+    could not parse it" and this means "we were never allowed to read it". One
+    is a gap in our tooling, the other is a permission somebody can lift. A
+    single code for both is the shape where absence and failure look the same.
+    """
+    caps = entry.get("capabilities") or {}
+    return (caps.get("canDownload") is False
+            or bool(entry.get("copyRequiresWriterPermission")))
+
+
+def verify_cache(cache_dir: Path) -> dict:
+    """Integrity of the cache against its manifest. RAW BYTES, always.
+
+    Comparing with `read_text()` applies universal-newline translation, which
+    reported 259 mismatches on a cache that had 1 — 258 of them files
+    containing CRLF. The check was wrong, not the crawler, and it was one step
+    from being reported as a crawler failure.
+    """
+    cache_dir = Path(cache_dir)
+    man_path = cache_dir / "manifest.json"
+    if not man_path.exists():
+        return {"manifest": "missing"}
+    man = json.loads(man_path.read_text(encoding="utf-8"))
+    exported = [r for r in man.values() if r.get("action") == "export"]
+    declared = {r["text_path"] for r in exported}
+    mismatches = missing = 0
+    for r in exported:
+        f = cache_dir / r["text_path"]
+        if not f.exists():
+            missing += 1
+            continue
+        if _sha256(f.read_bytes()) != r["sha256"]:
+            mismatches += 1
+    on_disk = {str(p.relative_to(cache_dir)) for p in (cache_dir / "text").glob("*.txt")} \
+        if (cache_dir / "text").exists() else set()
+    return {
+        "manifest_rows": len(man),
+        "exported": len(exported),
+        "files_on_disk": len(on_disk),
+        "colliding_text_paths": len(exported) - len(declared),
+        "missing_files": missing,
+        "orphan_files": len(on_disk - declared),
+        "sha256_mismatches": mismatches,
+        "provenance_rows_with_at": sum(
+            1 for v in man.values()
+            if any("@" in str(x) for x in v.values() if x is not None)),
+    }
 
 
 def _sha256(data: bytes) -> str:
@@ -263,6 +329,20 @@ def crawl(service, root_id: str, cache_root: Path, *, approved_domains: list,
                                      "redacted": prior.get("redacted", {})}
                 continue
 
+            if download_disabled(e):
+                # Established BEFORE attempting a fetch, so the reason is the
+                # owner's setting rather than whatever error it produced.
+                stats["download_disabled"] += 1
+                row["action"] = "metadata_only"
+                row["rule"] = "download-disabled-by-owner"
+                row["reason"] = ("the owner disabled download/copy for viewers "
+                                 "(copyRequiresWriterPermission)")
+                row["sha256"] = None
+                row["sha256_of"] = None
+                skips["download-disabled-by-owner"] += 1
+                manifest[e["id"]] = row
+                continue
+
             body, meta = _fetch_text(service, limiter, e["id"], mime, name)
             if body is None:
                 # NOT an error, and not silent. A file with no extractor is
@@ -308,9 +388,16 @@ def crawl(service, root_id: str, cache_root: Path, *, approved_domains: list,
             f"{len(bad)} manifest rows contain '@'. No provenance field may "
             "carry an address; the owner is stored as a domain.")
 
+    integrity = verify_cache(cache_dir)
+    (cache_dir / SUMMARY_FILE).write_text(json.dumps({
+        "finished_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "stats": dict(stats), "skips": dict(skips),
+        "shortcuts": len(shortcuts), "integrity": integrity,
+    }, indent=1, sort_keys=True), encoding="utf-8")
+
     if report:
-        _report(cache_dir, manifest, skips, stats, shortcuts, limiter)
-    return CrawlResult(cache_dir, manifest, skips, stats, shortcuts)
+        _report(cache_dir, manifest, skips, stats, shortcuts, limiter, integrity)
+    return CrawlResult(cache_dir, manifest, skips, stats, shortcuts, integrity)
 
 
 def _fetch_text(service, limiter, file_id: str, mime: str,
@@ -339,7 +426,7 @@ def _fetch_text(service, limiter, file_id: str, mime: str,
         return None, {"reason": f"{type(exc).__name__} fetching {mime}"}
 
 
-def _report(cache_dir, manifest, skips, stats, shortcuts, limiter) -> None:
+def _report(cache_dir, manifest, skips, stats, shortcuts, limiter, integrity) -> None:
     """COUNT, DO NOT ENUMERATE — CLAUDE.md §5. One line per category."""
     print("=" * 74)
     print("PASS 6 — row B content crawl. Four approved domains.")
@@ -357,6 +444,13 @@ def _report(cache_dir, manifest, skips, stats, shortcuts, limiter) -> None:
     if shortcuts:
         print(f"  shortcuts      : {len(shortcuts)} recorded, 0 followed (D3)")
     print("  people from decks: NEVER (D1). Instructors are a later phase.")
+    bad = {k: v for k, v in integrity.items()
+           if k in ("colliding_text_paths", "missing_files", "orphan_files",
+                    "sha256_mismatches", "provenance_rows_with_at") and v}
+    print(f"  integrity      : {'CLEAN' if not bad else 'FAILED ' + str(bad)}"
+          f"  ({integrity.get('files_on_disk')} files vs "
+          f"{integrity.get('exported')} exports, raw-byte hashes)")
+    print(f"  summary        : {cache_dir / SUMMARY_FILE}")
 
 
 def main() -> int:
