@@ -30,3 +30,85 @@ facts:
       observation and NOT the cause. The cause is that there are no instructors.
       Recorded because the difference matters: one explanation implies the
       domains are staffed but undocumented, the other says they are not staffed.
+
+  - id: sd1-full-stack-program-weeks
+    subject: [SD1: Full Stack]
+    fact: >
+      The Full Stack programme runs Data Structures & Algorithms in program
+      weeks 1-5 and Scalable Systems Design in weeks 6-8 BEFORE its own five
+      modules, so those modules are program weeks 9, 10, 11, 12 and 13 — in the
+      order of the active `Full Stack` tab of `Full Stack Course Outline v2`:
+      Databases, API Design and Implementation, Cloud Infrastructure,
+      JavaScript and Web Development, UI System Design.
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: 2026-09-29
+    evidence: >
+      Direct statement, 2026-09-29. NO FILE IN ROW B ESTABLISHES IT, and the
+      measurement is why it had to be asserted rather than read: SD2's KYP and
+      SD4's outline both carry the prerequisite rows that make their numbering
+      global (weeks 9-12 and 9-14), and SD1's outline has no such rows — its
+      active tab heads the column with nothing at all. The one place the word
+      `Week` appears over these values is the superseded `OLD Full Stack` tab,
+      which puts TWO module sequences side by side in the same rows, each
+      numbered from 1. On that tab `Week` is demonstrably a per-track ordinal,
+      which is why the label could not be taken at face value.
+    consequence: >
+      SD1 modules carry a program_week (9-13) whose edge records
+      source_kind: hand and this assertion, NEVER a curriculum file. It must
+      never be presentable as though a scan produced it (CLAUDE.md, §A.5) and
+      it emits no sourced_from edge.
+
+      APPLIES TO SD1 ONLY. SD3 (Backend) has no week column in any curriculum
+      document in row B and stays program_week: null with reason
+      no-curriculum-week until a document states one or the owner asserts it.
+      The offset of 8 is NOT a rule: it is not applied to SD3, and
+      pipeline/lib/curriculum.py still raises ArithmeticWeekRefused on any
+      attempt to compute a program week from a folder sequence.
+
+  - id: rowb-revamp-base-is-current
+    subject: [SD1: Full Stack, SD3: Backend Engineering]
+    fact: >
+      For the row-B revamp forks, the BASE version is current and the fork
+      subtrees are historical. They are kept in the graph, visibly marked,
+      never deleted.
+
+      THE RULE COVERS THREE FOLDER NAMINGS, and the third was asked about
+      separately: `Revamp 2024`, `Q4 2024: Revamp`, and
+      `New Material Aug 2023`. The last sits under SD1 `1. Module - Databases
+      - Content` and is a non-current fork like the other two — confirmed by
+      the corpus owner on 2026-09-29 when the question was put to him
+      explicitly, because the name does not say "revamp" and the first
+      statement of this rule named only the two that do. Structurally it was
+      always the same shape: a sibling of `1. Foundation Material`,
+      `2. Live Class Slides`, `3. Practice Problem` and `4. Assignment
+      Problem`, exactly as `Revamp 2024` is in the same module.
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: 2026-09-29
+    evidence: >
+      Direct statement, 2026-09-29. It had to be asserted because the corpus
+      cannot answer it: newest modifiedTime per branch was measured 2026-09-29
+      and split 4 base-newer to 2 revamp-newer, with `Q4 2024: Revamp` under
+      SD3 Module-5 holding files touched 2026-08. A modifiedTime moves on a
+      rename, a move or a permission edit, so it is evidence of EDITING and not
+      of what is taught.
+    consequence: >
+      Seven fork subtrees carry superseded_by pointing at the matching base
+      version, with origin: hand and this citation:
+
+        SD1  1. Module - Databases - Content / Revamp 2024
+        SD1  1. Module - Databases - Content / New Material Aug 2023
+        SD1  2. Module - API Design and Implementation - Content / Revamp 2024
+        SD1  4. Module - JavaScript and Web Dev - Content / Revamp - 2024
+        SD3  Module-3: API Design / Revamp 2024
+        SD3  Module-4: Cloud Native Design / Q4 2024: Revamp
+        SD3  Module-5: Concurrency / Q4 2024: Revamp
+
+      ONE IS LEFT AMBIGUOUS AND IS NOT A REVAMP FORK AT ALL:
+      `Module-5: Concurrency/2. Live Class Slides/Updated Content - Aug 2023`
+      sits INSIDE the base live-class folder rather than beside the module's
+      numbered units, so it has no sibling base to point at. It is a variant
+      within the base, not a parallel version of it. Recorded unresolved rather
+      than forced into the rule that fits the other seven.
+
