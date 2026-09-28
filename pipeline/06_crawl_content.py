@@ -43,6 +43,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import approval                                      # noqa: E402
 from pipeline.lib import content_scope as scope                        # noqa: E402
+from pipeline.lib import extract_text as ex                            # noqa: E402
 from pipeline.lib import redact as rd                                  # noqa: E402
 from pipeline.lib.paths import REPO_ROOT, build_log                    # noqa: E402
 
@@ -237,18 +238,24 @@ def crawl(service, root_id: str, cache_root: Path, *, approved_domains: list,
                                      "redacted": prior.get("redacted", {})}
                 continue
 
-            raw = _export_text(service, limiter, e["id"], mime)
-            if raw is None:
-                stats["export_failed"] += 1
+            body, meta = _fetch_text(service, limiter, e["id"], mime, name)
+            if body is None:
+                # NOT an error, and not silent. A file with no extractor is
+                # recorded with the reason, because "no text" and "text we
+                # failed to read" must not look the same downstream.
+                stats["no_text"] += 1
                 row["action"] = "metadata_only"
-                row["rule"] = "export-failed"
+                row["rule"] = "no-text-extractor"
+                row["reason"] = meta.get("reason")
                 row["sha256"] = None
                 row["sha256_of"] = None
+                skips["no-text-extractor"] += 1
                 manifest[e["id"]] = row
                 continue
 
-            # REDACTION BEFORE DISK. There is no code path that writes `raw`.
-            text, counts = rd.redact(raw.decode("utf-8", "replace"))
+            # REDACTION BEFORE DISK. There is no code path that writes `body`.
+            text, counts = rd.redact(body)
+            row.update({k: v for k, v in meta.items() if k != "reason"})
             rel = f"text/{_safe_name(child)}.txt"
             dest = cache_dir / rel
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -281,13 +288,20 @@ def crawl(service, root_id: str, cache_root: Path, *, approved_domains: list,
     return CrawlResult(cache_dir, manifest, skips, stats, shortcuts)
 
 
-def _export_text(service, limiter, file_id: str, mime: str) -> bytes | None:
-    """Text only. A binary that is not natively exportable is downloaded, and
-    media never reaches here because classify_file held it back."""
+def _fetch_text(service, limiter, file_id: str, mime: str,
+                name: str) -> tuple[str | None, dict]:
+    """(text, meta) or (None, {"reason": ...}).
+
+    A native Google file exports AS text and needs no parsing. Anything else is
+    downloaded and handed to `lib/extract_text.py`, which returns None rather
+    than decoded noise — the defect this replaced wrote zip bytes into a .txt.
+    Media never reaches here; classify_file held it back.
+    """
     try:
         if mime in TEXT_EXPORT:
-            return limiter(lambda: service.files().export(
+            data = limiter(lambda: service.files().export(
                 fileId=file_id, mimeType=TEXT_EXPORT[mime]).execute())
+            return data.decode("utf-8", "replace"), {}
         from googleapiclient.http import MediaIoBaseDownload
         buf = io.BytesIO()
         req = service.files().get_media(fileId=file_id, supportsAllDrives=True)
@@ -295,9 +309,9 @@ def _export_text(service, limiter, file_id: str, mime: str) -> bytes | None:
         done = False
         while not done:
             _, done = limiter(lambda: dl.next_chunk())
-        return buf.getvalue()
-    except Exception:                                              # noqa: BLE001
-        return None
+        return ex.extract(buf.getvalue(), mime, name)
+    except Exception as exc:                                       # noqa: BLE001
+        return None, {"reason": f"{type(exc).__name__} fetching {mime}"}
 
 
 def _report(cache_dir, manifest, skips, stats, shortcuts, limiter) -> None:
@@ -310,7 +324,7 @@ def _report(cache_dir, manifest, skips, stats, shortcuts, limiter) -> None:
     print(f"  files seen     : {stats['files_seen']}")
     print(f"  exported       : {stats['exported']}   unchanged: {stats['unchanged']}")
     print(f"  redacted in    : {stats['files_with_redactions']} files")
-    print(f"  export failed  : {stats['export_failed']}")
+    print(f"  no text        : {stats['no_text']} (recorded with a reason)")
     print(f"  rate retries   : {limiter.retries}")
     if skips:
         print("  skipped by rule: " + ", ".join(

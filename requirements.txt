@@ -23,6 +23,16 @@ openpyxl==3.1.5              # every .xlsx read; read_only=True everywhere
 python-docx==1.2.0           # 01_walk_corpus probes .docx shape
 PyYAML==6.0.2                # taxonomy, people, aliases, the migration baseline
 
+# --- pass 6: text out of binaries (row-B content crawl) ------------------
+# Added 2026-09-29. Without these, a .pptx (a zip) and a .pdf were being
+# decoded as utf-8 and written into the cache as replacement characters — a
+# failure that produces output, so nothing downstream reports it. 347 of the
+# 991 files in scope are binary, and most of them are the decks.
+# Pipeline-only: neither is in pyproject.toml, because no HTTP request touches
+# them and the Vercel bundle is already against its size limit.
+python-pptx==1.0.2           # slide text WITH slide numbers
+PyMuPDF==1.28.0              # pdf text with page numbers (imports as `fitz`)
+
 # --- pass 0: Google Drive, service account, drive.readonly ---
 google-api-python-client==2.200.0
 google-auth==2.49.2
