@@ -144,9 +144,34 @@ def _list_all(service, limiter, folder_id: str) -> list[dict]:
             return out
 
 
-def _safe_name(path: str) -> str:
-    """A cache filename that cannot escape the cache directory."""
-    return re.sub(r"[^A-Za-z0-9_.-]+", "_", path.strip("/"))[:180]
+def _safe_name(path: str, file_id: str = "") -> str:
+    """A cache filename that cannot escape the cache directory, and cannot
+    collide with another path's.
+
+    THE TRUNCATION WAS A BUG AND IT WAS SILENT. This returned the first 180
+    characters of the sanitised path. In the first real crawl that collapsed 61
+    files onto 15 names — 46 exports overwritten, including 14 distinct
+    foundational-content files in one SD2 folder whose paths differ only in
+    their last component, far past character 180. The manifest recorded each
+    row's own sha256 while the file on disk held the last writer's text, so the
+    manifest was wrong and resume was wrong with it, and nothing errored:
+    the failure produced output.
+
+    THE SUFFIX HASHES THE FILE ID, NOT THE PATH. Hashing the path fixed the
+    truncation collisions and left a second class behind: Drive permits two
+    files with the SAME NAME in the SAME FOLDER, so two distinct files share
+    one path and collide however much of that path you hash. That cost 2 more
+    exports in the second crawl, in SD1's JavaScript module. A path is not an
+    identity in Drive; the file id is.
+
+    `..` is collapsed as well — it could not traverse once separators were
+    gone, but a name that still reads as a traversal is one refactor away from
+    being one.
+    """
+    clean = re.sub(r"[^A-Za-z0-9_.-]+", "_", path.strip("/"))
+    clean = clean.replace("..", "_")
+    digest = hashlib.sha256((file_id or path).encode("utf-8")).hexdigest()[:12]
+    return f"{clean[:150]}_{digest}"
 
 
 def crawl(service, root_id: str, cache_root: Path, *, approved_domains: list,
@@ -256,7 +281,7 @@ def crawl(service, root_id: str, cache_root: Path, *, approved_domains: list,
             # REDACTION BEFORE DISK. There is no code path that writes `body`.
             text, counts = rd.redact(body)
             row.update({k: v for k, v in meta.items() if k != "reason"})
-            rel = f"text/{_safe_name(child)}.txt"
+            rel = f"text/{_safe_name(child, e['id'])}.txt"
             dest = cache_dir / rel
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(text, encoding="utf-8")

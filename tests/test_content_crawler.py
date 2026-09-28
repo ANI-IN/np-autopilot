@@ -202,3 +202,39 @@ def test_crawl_refuses_when_no_domain_is_approved(mod, tmp_path, world):
     read as 'all of them'."""
     with pytest.raises(ValueError, match="approved_domains is empty"):
         mod.crawl(world, "ROOT", tmp_path, approved_domains=[])
+
+
+def test_two_long_paths_sharing_a_prefix_get_different_cache_names(mod):
+    """FOUND IN THE FIRST REAL CRAWL. `_safe_name` truncated to 180 characters,
+    so 61 files whose paths shared a long prefix collapsed onto 15 names and
+    46 exports were silently overwritten — including 14 distinct foundational
+    -content files in one SD2 folder.
+
+    The manifest recorded each row's OWN sha256 while the file on disk held the
+    last writer's text, so the manifest was wrong and resume was wrong with it.
+    Nothing errored: the failure produced output.
+    """
+    base = ("/SD2: Frontend/IK: Frontend Content Repo/Week 4/"
+            "4 - Leveling Up with Advanced JavaScript and CSS/1. Foundational "
+            "Material/v1: FM Text/Leveling Up with Advanced Javascript and CSS- "
+            "Foundational Content/")
+    a = mod._safe_name(base + "11. Advanced CSS: Positioning w/ Translate")
+    b = mod._safe_name(base + "6. Storage: cookies vs localStorage")
+    assert a != b
+
+
+def test_a_cache_name_still_cannot_escape_the_cache_directory(mod):
+    """Negative control: the collision fix must not reintroduce separators."""
+    n = mod._safe_name("/../../etc/passwd")
+    assert "/" not in n and ".." not in n
+
+
+def test_two_drive_files_with_the_same_path_get_different_cache_names(mod):
+    """FOUND IN THE SECOND CRAWL. Drive allows two files with the SAME NAME in
+    the SAME FOLDER, so a cache name derived from the path alone collides by
+    construction — 2 of 919 exports, in SD1's JavaScript module.
+
+    A path is not an identity here. The Drive file id is.
+    """
+    p = "/SD1: Full Stack/.../2. Live Class Slides/JS and WebD - Live Class by JD"
+    assert mod._safe_name(p, "11symrzjyqvQBEQj") != mod._safe_name(p, "1VNWhrz1n7XVkqux")

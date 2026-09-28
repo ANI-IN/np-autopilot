@@ -2750,3 +2750,24 @@ document of ours. Final hash `a53462823ca26466fc5e6b3bf18615ec51bb96ed003249a866
 ## 2026-09-18 18:23:27Z — 03_resolve
 
 - Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-28 21:09:12Z — 06_crawl_content
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Files: 1440, exported 919
+- Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 51, 'learner-content': 163}
+- Seconds: 2083
+
+## 2026-09-28 21:43:17Z — 06_crawl_content
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Files: 1440, exported 919
+- Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 51, 'learner-content': 163}
+- Seconds: 1936
+
+## 2026-09-28 22:18:06Z — 06_crawl_content
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Files: 1440, exported 919
+- Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 51, 'learner-content': 163}
+- Seconds: 1966
