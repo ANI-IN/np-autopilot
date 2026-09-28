@@ -425,6 +425,118 @@ repo as wrongly public while never checking our own. Full detail in
 
 ---
 
+## R19 — A full working copy of the repository was uploaded INTO the corpus folder
+
+**Likelihood: n/a, it happened · Impact: high · STATUS: NOT REMEDIATED —
+both artefacts were still present when this was written**
+
+> **Numbering note.** `docs/CACHE-EXPOSURE.md` §0a reserves **R19** for the
+> "was the Drive folder ever domain-wide" branch, should it turn out to be the
+> real one. That question is still open. Either this becomes R20 or §0a's
+> reservation is re-pointed — decide, do not leave two R19s.
+
+Reported by the corpus owner 2026-09-28: a complete working copy of this
+repository was uploaded into the pass-0 corpus folder (`config/drive.yaml ->
+folder_id`), both as an archive and as an unpacked tree.
+
+### The removal has NOT taken effect — verified 2026-09-29
+
+The owner's account was *"I have now moved it out of that folder."* Listed with
+pass 0's own read-only `list_folder()` — no download, no recursion into the
+corpus, scope `drive.readonly` — the corpus folder's top level is:
+
+```
+dir   00-master … 06-analysis      the 7 corpus folders
+dir   NP-Autopilot-Corpus          modified 2026-09-28T18:51:34Z   <-- the unpacked tree
+file  links                        modified 2026-09-28T18:22:06Z   the registry (excluded)
+file  np-autopilot-main.zip        modified 2026-09-28T18:35:24Z   1,867,536 B   <-- the archive
+```
+
+**Both artefacts are still there.** That is the R18 shape a second time, and it
+is worth naming: *a remediation believed to have happened, never checked against
+the system that would show it.* R18 was an assumption about `private: true`
+written down five times and verified zero. This is an assumption about a move,
+held one day, and it was wrong. The finding exists only because the listing was
+run instead of the sentence being believed.
+
+### What the upload put in the folder that was not already in it
+
+The distinction collapses most of the volume. `.drive-cache/` and
+`05-operations/` **are the corpus** — re-uploading them exposes nothing to a
+viewer of that folder who could not already see it. What is new:
+
+| | |
+|---|---|
+| `.vercel/.env.production.local` | `SUPABASE_DB_URL_TRANSACTION` — **the database password**. Also `SUPABASE_ANON_KEY`, `SUPABASE_URL`, `GOOGLE_OAUTH_CLIENT_ID`, `NP_ALLOWED_HD`, `NP_SHARED_ACCOUNTS`, `VERCEL_OIDC_TOKEN`, and the `VERCEL_GIT_*` set naming the private repo and its id |
+| `.env.local` | `VERCEL_OIDC_TOKEN` |
+| `knowledge/graph-sensitive.json` | **1,902 instructor nodes withheld from the repository on purpose — 277 named hiring rejections and 1,625 in-pipeline candidates** (§F.2). The same subject matter as R18 |
+| `knowledge/candidates.json` (14.0 MB), `resolved.json` (7.0 MB), `rejections.json` | pre-resolution extraction output, including the rejection entries that name a withheld person against a tracker sheet and row number |
+| `.git/` | the full history of the current repository object |
+| `config/drive.yaml` | the corpus `folder_id`, and the **path** to the service-account key |
+| every analysis document | including doc 01 §Tier 0, which describes the payroll file's columns and the 8,001-email finding, and this file |
+
+**What was NOT in the upload** — checked, not assumed:
+
+- **The service-account key itself.** It lives outside the repo under
+  `~/.config/np-autopilot/`, and `key_path()` refuses to read a key from inside
+  the repository at all. No key-shaped filename appears anywhere in the
+  uploaded tree.
+- **`SUPABASE_DB_URL_SESSION`.** It is deliberately never set in Vercel, so it
+  was absent from `.vercel/.env.production.local`. **This is not the relief it
+  looks like:** both URLs carry the *same* project password — verified by
+  comparing truncated SHA-256 fingerprints, never by reading the values — so
+  exposing the transaction URL exposed the credential the session pooler uses
+  to connect as the owner.
+- **The excluded payroll file.** `US Instructor Cost Analysis.xlsx` is excluded
+  at fetch time (R17), so it is not in `.drive-cache/` and was not carried by
+  the upload.
+
+### Who could see it — UNRESOLVED, and not resolvable from here
+
+The same wall as `CACHE-EXPOSURE.md` §0a. The service account holds
+`drive.readonly`. `files.get(fields="permissions")` returns `shared: true` for
+the corpus folder and for both artefacts, with an **empty non-user permission
+list and zero user permissions** — which is a reader's incomplete view of the
+ACL, not a finding that nobody else has access. *A reader can read the files and
+cannot read who else can.*
+
+**Treat `shared: true` with nothing visible as a floor, never as "only me".**
+
+### The window
+
+| | |
+|---|---|
+| **Start** | `________` — Drive reports `modifiedTime` 2026-09-28T18:35:24Z (archive) and 18:51:34Z (tree). Only the owner knows whether those are the upload times or later touches |
+| **End** | **NOT YET.** Still present 2026-09-29. The end is when both artefacts leave the folder *and* leave Trash |
+| **Is the length knowable?** | **Yes — and unusually so.** Unlike R18 and §0a, both ends of this window are knowable. Do not let it inherit their "start unknown, so it cannot be called short" framing |
+
+### Facts only the owner can supply
+
+- [ ] **The folder's General access on 2026-09-28** — Restricted, or domain-wide? §0a's open question, now load-bearing for a second incident.
+- [ ] **Who the folder is shared with, and how many people.**
+- [ ] **Drive activity log for both artefacts** — views and downloads between upload and removal. Owner-only; the service account cannot read it.
+- [ ] **How the upload happened, and with which tool**, so the Phase 4 guard is aimed at the real path rather than an imagined one.
+- [ ] **Database password rotation completed at** `________`. Stated as done 2026-09-28.
+- [ ] **Was `SUPABASE_ANON_KEY` rotated?** It is publishable by design and is served to every browser by `/api/config`, so rotation is probably a no-op — record the decision rather than leaving it assumed.
+- [ ] **Was `VERCEL_OIDC_TOKEN` treated as burned?** It is short-lived and the local copies are dated 2026-09-18, so it was very likely expired before the upload. Confirm rather than assume.
+- [ ] **Disclosure.** The subjects of `graph-sensitive.json` are named external people and the data is hiring outcomes. R18 §"What this changes" put that question to legal; it returns here unchanged, and it is not the pipeline's to answer.
+
+### What this changes
+
+1. **The pipeline is one `refresh.py` away from ingesting its own repository.**
+   Pass 0's `walk()` recurses every folder in scope and has no name-based
+   refusal; pass 1 treats an **added** file as reportable-and-ingestible by
+   design. Nothing in either pass would refuse `NP-Autopilot-Corpus/`. A guard
+   is proposed in `docs/` — **and a proposal is not a control until it is
+   code** (`docs/A7B.md`, question 2).
+2. **`.drive-cache/` must be checked against the upload window** before the next
+   build is trusted, and the manifest is what makes that checkable.
+3. **A remediation reported by a person is not a remediation observed by the
+   system.** The cheap habit this argues for: after any Drive-side cleanup, run
+   the read-only listing and paste the output, rather than reporting the intent.
+
+---
+
 ## Summary
 
 | # | Risk | Likelihood | Impact |
@@ -448,3 +560,4 @@ repo as wrongly public while never checking our own. Full detail in
 | R16 | Reference impl is public | certain | your call |
 | R17 | Excluded payroll file reachable by the cloud identity — **fixed at fetch time 2026-09-17**; the account can still read it on demand | certain | high |
 | R18 | **The repository was PUBLIC for 8 days** — 277 named hiring rejections and 1,625 candidates readable by anyone. Set private on discovery | happened | high |
+| R19 | **A working copy of the repo was uploaded into the corpus folder** — DB password, `graph-sensitive.json`, `.git/`. **Still present 2026-09-29; not remediated** | happened | high |

@@ -20,6 +20,7 @@ Evidence throughout is [`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md).
 |---|---|---|
 | **D1** | No person extraction from slide content, at any confidence | **decided — never** |
 | **D2** | Fork A: a search index with a graph over a known subset | **confirmed as the design** |
+| **D2a** | Reversal of D2: a content graph for the Domain→KYP→Module→Week→Live Class→Assignment→Deck→Topic chain, four domains in row B | **APPROVED 2026-09-29** — enforced by `pipeline/lib/approval.py` + `tests/test_d2a_approval_gate.py` |
 | **D3** | Shortcuts: resolve and report, do not follow | **CLOSED IN CODE 2026-09-20** — `00_fetch_drive.py`, `tests/test_shortcuts_are_not_followed.py` |
 | **D4** | File-owner metadata: store the domain, never the address | **decided** |
 | **D5** | The `SMEs consent` folder: do not ingest | **decided — and it is a taxonomy limit, not a privacy preference** |
@@ -139,6 +140,128 @@ Backend - API Design   1XrmskJnsHkIBUDCRDBdMk3q8vk5cqoxd/11MkOWXXkkFNTzKmmA9TytJ
 
 It has a sibling, `Backend - Data Modeling`, also empty — so the test has a
 second case for free.
+
+---
+
+## D2a · PROPOSED REVERSAL of D2, scoped to four domains in row B
+
+**Status: PROPOSED, NOT APPROVED, NOT BUILT. Drafted 2026-09-29.** Nothing is
+crawled, extracted, projected or ingested on the strength of this section. The
+approval block at the end is deliberately blank, and `--scope` for any content
+crawler must refuse while it is.
+
+### What D2 says today, and what is being proposed instead
+
+D2 confirmed **fork A**: *a content search index, with a graph over a known
+curated subset, and a visible seam between them.* Where a topic maps to a module
+the system traverses; where it does not it says *"these files mention it; no
+module in the graph matches that name"* and stops.
+
+**The proposal is to build a content GRAPH for one explicitly bounded chain**,
+rather than an index with a seam:
+
+```
+Domain → KYP → Module → Week → Live Class → Assignment → Assignment Review
+Module → Deck → Topic
+Module → Repo / supporting file
+```
+
+over **four domains in registry row B only**: `SD1: Full Stack`,
+`SD2: Frontend`, `SD3: Backend Engineering`, `SD4: Test Engineering`.
+
+### Why this is not simply "fork B after all"
+
+D2's argument against fork B rests on `REGISTRY-INVENTORY.md` §7, and §7 is
+about **people**: four instructor-shaped tuples on decks, two of them
+fabricated, indistinguishable by shape from the two real ones. That argument is
+untouched here and is not being reopened.
+
+**This chain contains no person layer.** Owners and instructors are deferred to
+a later phase by the requester's own instruction, D1 stands unmodified, and
+nothing in the proposed taxonomy has a `person` endpoint. The entities are
+structural — a module, a week, a deck, an assignment — and their identity comes
+from **folder paths and curriculum-sheet rows**, not from prose or slide
+decoration.
+
+> **The distinction that makes this proposal different from fork B: fork B
+> guesses at entities that a document mentions. This extracts entities that a
+> folder structure and a curriculum sheet DECLARE.** A folder named
+> `Module-3: API Design` is not an inference about API design; it is a
+> statement by the curriculum's authors.
+
+### What is genuinely new risk, stated rather than minimised
+
+1. **Topics are extracted from deck and document text**, and a topic is a much
+   weaker claim than a module. Topics are proposed as a node type with an
+   explicit slide/row citation, and they must never be promoted to a module by
+   similarity.
+2. **The topic→module join is the alias problem for the fourth time**
+   (`SCALE-PLAN.md`). It must return `Ambiguous`, never pick.
+3. **Contact data now arrives through document and slide text**, which
+   `sources.py`'s column allow-list has never reached. §D7 below is the control,
+   and it is a precondition, not a follow-up.
+4. **The empty-folder regression is live.** `Backend - API Design` sits in
+   row C and is out of scope for this phase — but SD3's real `Module-3: API
+   Design` and SD1's `2. Module - API Design and Implementation - Content` are
+   both in scope and both match the canonical query. Ranking must not be
+   introduced without the §D2 fixture.
+
+### The measurement this rests on
+
+Row B's four domains, mapped read-only 2026-09-29: **991 files, 327 folders,
+zero shortcuts, zero `(File responses)` folders, zero listing failures.** The
+chain above was derived from that map and from nine curriculum files opened in
+full, not from an assumed schema. Details and the per-link reliability table are
+in the Phase 0 report.
+
+**The honest limit: it is four domains of twelve in one registry row of five.**
+Row B's other eight domain folders were listed and not opened. Nothing here
+should be read as a statement about rows A or C, whose data contracts
+`REGISTRY-INVENTORY.md` §2 measured as materially different.
+
+---
+
+### APPROVAL — completed by the corpus owner
+
+```
+Approved by:            Animesh Kumar
+Date:                   2026-09-29
+
+Scope approved:         [x] SD1 Full Stack
+                        [x] SD2 Frontend
+                        [x] SD3 Backend Engineering
+                        [x] SD4 Test Engineering
+
+Topic extraction from deck/document text:   [x] approved   [ ] declined
+Contact redaction control (§D7) reviewed:   [x] yes        [ ] no
+Owners/instructors remain deferred:         [x] confirmed
+
+Conditions or exclusions:
+Row B only. Rows A and C remain out of scope. P1 and P2 are deferred —
+ratings / instructor attribution, later phase. Owners and instructors are
+deferred: where owner or instructor data appears it is noted, nothing is
+built for it, and no join is made to the existing instructor graph.
+```
+
+**Approved 2026-09-29, and the crawler ENFORCES it.** `pipeline/lib/approval.py`
+parses this block on every run: a blank `Approved by` or `Date` refuses the
+crawl and names this file, and only the domains ticked above are walked.
+Blanking the block stops the crawler again — the gate is derived on each run,
+not a flag somebody set once, which is the property `project_graph.py` gained
+when its hardcoded refusal was replaced by a query. Mutation-verified in
+`tests/test_d2a_approval_gate.py`.
+
+**Two things this approval does NOT decide.** The owner's Phase-1 answers
+arrived with the template's own alternatives still in place, so the choice was
+never made and is not inferred here:
+
+- **SD1's program weeks.** Whether Full Stack includes the 8 weeks of DSA and
+  Systems Design — making its five modules program weeks 9-13 — or starts at
+  its own module 1. Until answered, SD1 carries `program_week: null` with
+  reason `no-curriculum-week`, exactly as SD3 does.
+- **Revamp currency.** Whether the `Revamp 2024` / `Q4 2024: Revamp` subtrees
+  supersede the base ones. Until answered both versions are kept, `revision` is
+  populated, and `superseded_by` stays null.
 
 ---
 

@@ -300,6 +300,79 @@ node_types:
 # it does not get it — enumerate the types instead.
 # ---------------------------------------------------------------------------
 
+
+  # ------------------------------------------------------------------------
+  # ROW-B CONTENT CHAIN — added 2026-09-29, PROPOSED under D2a.
+  #
+  # Every `expect` below is null and must stay null: these are floors over 4 of
+  # 12 domain folders in 1 of 5 registry rows. CLAUDE.md §2.
+  # ------------------------------------------------------------------------
+
+  - name: curriculum_doc
+    expect: null
+    key: drive_file_id
+    properties: [label, label_raw, kind, drive_file_id, owner_domain, sources, sensitive]
+    note: >
+      ONE node type for curriculum documents, with `kind` telling them apart.
+      Measured 2026-09-29: exactly one KYP exists across 991 files in the four
+      approved domains (SD2's `Intro to Course - Front-EndEngineering - KYP
+      Doc.pdf`). SD1, SD3 and SD4 have no KYP at all — that is a CONTENT GAP
+      and must be reported as one, not papered over by calling an outline a KYP.
+
+  - name: program_week
+    expect: null
+    key: [curriculum_doc, number]
+    properties: [label, label_raw, number, recovered_from_date_coercion, sources, sensitive]
+    note: >
+      A PROGRAM week, and it exists only where a curriculum document states one.
+      A `Week N` FOLDER is not a week — it is local sequencing within the domain
+      and becomes the `sequence` property on the domain->module edge.
+      The offset of 8 between the two (weeks 1-5 Algorithms, 6-8 Scalable System
+      Design) is EXPECTED and is never used to compute one from the other:
+      pipeline/lib/curriculum.py raises ArithmeticWeekRefused.
+
+  - name: live_class
+    expect: null
+    key: [module, drive_file_id]
+    properties: [label, label_raw, revision, superseded_by, sources, sensitive]
+
+  - name: assignment
+    expect: null
+    key: [module, drive_file_id]
+    properties: [label, label_raw, sources, sensitive]
+
+  - name: assignment_review
+    expect: null
+    key: [assignment, drive_file_id]
+    properties: [label, label_raw, sources, sensitive]
+    note: >
+      METADATA ONLY. Learner-authored material inside a review is never opened
+      (owner's Phase-0 answer 5); the node carries name, path and its assignment
+      and nothing from inside the file.
+
+  - name: slide_deck
+    expect: null
+    key: drive_file_id
+    properties: [label, label_raw, slide_count, owner_domain, sources, sensitive]
+    note: >
+      A deck NEVER yields a person. D1, and REGISTRY-INVENTORY §7 is the
+      measurement: four instructor-shaped tuples on registry decks, two of them
+      fabricated and structurally identical to the two real ones.
+
+  - name: content_topic
+    expect: null
+    key: [module, normalised_label]
+    properties: [label, label_raw, slide_number, sources, sensitive]
+    note: >
+      SCOPED TO ITS MODULE, deliberately. A global topic node merges Backend's
+      `API Design` with Testing's `API Testing` on a name, which is the alias
+      failure this project has already had three times.
+
+  - name: code_repo
+    expect: null
+    key: drive_file_id
+    properties: [label, label_raw, owner_domain, sources, sensitive]
+
 edge_types:
 
   - name: belongs_to
@@ -456,6 +529,105 @@ edge_types:
 # ---------------------------------------------------------------------------
 # Controlled vocabulary
 # ---------------------------------------------------------------------------
+
+
+  # ------------------------------------------------------------------------
+  # ROW-B CONTENT CHAIN edges — PROPOSED under D2a, 2026-09-29.
+  #
+  # DEVIATION FROM THE REQUESTED CHAIN, stated rather than hidden. The brief
+  # asks for Week -> Live Class -> Assignment. Weeks exist only where a
+  # curriculum document states one, and SD3 has no week column anywhere — so
+  # hanging live classes off weeks would give Backend zero live classes. That
+  # is a cutoff hiding correct answers (CLAUDE.md §4). Live classes,
+  # assignments and decks therefore attach to the MODULE, and the week attaches
+  # to the module alongside them.
+  # ------------------------------------------------------------------------
+
+  - name: described_by
+    role: domain_curriculum
+    from: domain
+    to: curriculum_doc
+    cardinality: 1:n
+    expect: null
+    source: row-B domain folder, curriculum document by name
+
+  - name: introduces
+    role: curriculum_module
+    from: curriculum_doc
+    to: module
+    cardinality: n:n
+    expect: null
+    edge_properties: [source_kind]
+    source: the curriculum document's own module table
+
+  - name: offers
+    role: domain_module
+    from: domain
+    to: module
+    cardinality: 1:n
+    expect: null
+    edge_properties: [sequence]
+    source: row-B folder structure
+    note: >
+      `sequence` is the LOCAL ordinal from the `Week N` folder name. It orders
+      modules within the domain and is not a week.
+
+  - name: scheduled_in
+    role: module_week
+    from: module
+    to: program_week
+    cardinality: n:n
+    expect: null
+    edge_properties: [source_kind, source_file, recovered_from_date_coercion]
+    source: a curriculum document, never arithmetic
+    note: >
+      The edge carries the curriculum source the week came from, because a
+      module can sit at a different program week in a different program.
+      Absent for SD3 today, and that absence is reported as a gap.
+
+  - name: delivers
+    role: module_live_class
+    from: module
+    to: live_class
+    cardinality: 1:n
+    expect: null
+
+  - name: assessed_by
+    role: module_assignment
+    from: module
+    to: assignment
+    cardinality: 1:n
+    expect: null
+
+  - name: reviewed_in
+    role: assignment_review
+    from: assignment
+    to: assignment_review
+    cardinality: 1:n
+    expect: null
+
+  - name: presented_with
+    role: live_class_deck
+    from: live_class
+    to: slide_deck
+    cardinality: n:n
+    expect: null
+
+  - name: covers_topic
+    role: module_topic
+    from: module
+    to: content_topic
+    cardinality: 1:n
+    expect: null
+    edge_properties: [slide_number]
+    source: lesson-plan tabs, and deck text with its slide number
+
+  - name: ships_with
+    role: module_repo
+    from: module
+    to: code_repo
+    cardinality: 1:n
+    expect: null
 
 tool_vocabulary:      # closed. workflow.tools may contain only these.
   - Zoom
@@ -664,6 +836,7 @@ property_scopes:
     - decline_rate
     - declined_count
     - doctype
+    - drive_file_id
     - effort
     - employee_ids
     - family
@@ -673,25 +846,37 @@ property_scopes:
     - inferred
     - join_basis
     - join_key
+    - kind
     - last_seen_quarter
+    - normalised_label
+    - number
+    - owner_domain
     - parsed
     - pipeline_status
     - provenance
     - rank
+    - recovered_from_date_coercion
     - relative_path
     - renderable
     - requests_from
     - requests_to
     - review
+    - revision
     - role
     - roster_count
     - seen_in_sheets
     - seniority
+    - sequence
     - sheet_count
+    - slide_count
+    - slide_number
+    - source_file
+    - source_kind
     - stage
     - status
     - steps
     - subject_raw
+    - superseded_by
     - team
     - theme_id
     - title
