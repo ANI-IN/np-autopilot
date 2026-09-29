@@ -246,9 +246,47 @@ align-items:flex-start;justify-content:center;overflow:auto}
 #fresh{margin-top:4px;padding-top:12px;border-top:1px solid #21262d;
   font-size:10.5px;color:#6e7681}
 #fresh b{color:#8b949e;font-weight:600}
+
+/* ---- B2 views ---------------------------------------------------------- */
+.tier{margin:8px 0}
+.tier .tk{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8b949e;margin-bottom:4px}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:11px;background:#21262d;border:1px solid #30363d;border-radius:10px;
+     padding:2px 8px;color:#c9d1d9}
+.tag em{font-style:normal;color:#8b949e;font-size:10px}
+.tag.role-primary{border-color:#3fb950;color:#7ee787}
+.tag.role-backup_1,.tag.role-backup_2,.tag.role-backup_3{border-color:#484f58}
+.chain .k{color:#8b949e}
+#vbar{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;
+      display:flex;gap:4px;background:#0d1117cc;border:1px solid #30363d;
+      border-radius:6px;padding:3px}
+#vbar button{font-size:11px;background:none;border:0;color:#8b949e;padding:3px 10px;
+      border-radius:4px;cursor:pointer}
+#vbar button[aria-pressed="true"]{background:#21262d;color:#e6edf3}
+#sheet{position:absolute;inset:44px 12px 12px 312px;z-index:5;overflow:auto;
+       background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;display:none}
+#sheet h2{font-size:13px;margin:0 0 10px;color:#e6edf3}
+#sheet table{border-collapse:collapse;font-size:11px}
+#sheet th,#sheet td{border:1px solid #21262d;padding:3px 6px;text-align:left;
+       white-space:nowrap;color:#c9d1d9}
+#sheet th{position:sticky;top:0;background:#161b22;color:#8b949e;font-weight:400}
+#sheet td.on{background:#1f6feb33}
+#sheet td.unconf{background:repeating-linear-gradient(45deg,#f0883e22,#f0883e22 3px,transparent 3px,transparent 6px)}
+#sheet .lane{display:flex;gap:2px;align-items:center;margin:3px 0}
+#sheet .cell{min-width:78px;font-size:10px;border:1px solid #21262d;border-radius:4px;
+       padding:3px 5px;color:#c9d1d9;background:#161b22}
+#sheet .cell.faded{opacity:.35}
+.badge{font-size:9px;text-transform:uppercase;letter-spacing:.04em;background:#21262d;
+       border-radius:3px;padding:1px 4px;margin-left:5px;color:#8b949e}
 </style></head><body>
 
 <canvas id="c"></canvas>
+<div id="vbar">
+  <button type="button" data-view="graph" aria-pressed="true">graph</button>
+  <button type="button" data-view="matrix" aria-pressed="false">who teaches what</button>
+  <button type="button" data-view="timeline" aria-pressed="false">programme timeline</button>
+</div>
+<div id="sheet"></div>
 <div id="tip"></div>
 <div id="diag"></div>
 
@@ -407,7 +445,12 @@ window.__NP = {
   // shape's safety would then rest on RLS being right for every row type,
   // forever -- and DECISIONS A.7b is a catalogue of guards that silently
   // stopped applying.
-  nodeBudget: 1200
+  // RAISED FROM 1,200 for the structure view. docs/DEFAULT-VIEW.md D1/D2
+  // replaces the 60-node overview with the whole structure layer: 3,308 nodes
+  // and 4,970 edges. The cap stays — a client that holds everything walks what
+  // it holds instead of asking SQL, which is the guarantee /api/structure is
+  // written to preserve — it is just now above the size of that one view.
+  nodeBudget: 4200
 };
 
 // ---- FIRST PAINT MUST REFLECT THE REAL STATE ----------------------------
@@ -551,10 +594,17 @@ function adaptNode(r){
   // request, so storing it on a merged node would mean whichever fetch happened
   // to arrive last decides how far away it is.
   const p=r.props||{};
+  // LEGACY = a label-keyed module with no mastersheet identity. 904 of the 924
+  // are in this state and they are FADED, not hidden: CLAUDE.md §4 applied to a
+  // renderer. A hidden-by-default legacy module is a filter on truth wearing a
+  // stylesheet, and the MOD/INS reviews that would clean them up are open.
+  const legacy = r.type==='module' && p.domain_slug===undefined;
   return {id:r.id, l:r.label, t:r.type, d:0, iso:false,
           st:p.status||'', th:(p.theme_id!==undefined?p.theme_id:null),
           wid:p.workflow_id||null, eff:p.effort||null, al:p.alerts||0,
-          raw:r.label_raw||null, sens:!!r.sensitive, p:p, loaded:false};
+          raw:r.label_raw||null, sens:!!r.sensitive, p:p, loaded:false,
+          legacy:legacy, dom:p.domain_slug||null,
+          merged:Array.isArray(p.merge_ids)?p.merge_ids:null};
 }
 function adaptEdge(r){
   return {s:r.source_id, t:r.target_id, r:r.rel, p:r.props||{}};
@@ -658,7 +708,10 @@ function centreOn(n,k){
 // unowned three are reported by name instead; see data.overview), so this costs
 // nothing now and prevents a silent drop later.
 const state={types:new Set(TYPES),showIso:true,showDash:true,separate:false,
-  sel:null,expanded:new Set(),depth:1};
+  sel:null,expanded:new Set(),depth:1,
+  // B2 additions. `hideLegacy` is an opt-out, never a default.
+  hideLegacy:false,view:'graph',fDomain:null,fWeek:null,fRole:null,
+  showContent:false};
 let allDeg=new Map();
 let A=[],E=[],anchors=new Map();
 // Declared BEFORE recompute(), which assigns them. (Ported: declaring these
@@ -814,7 +867,12 @@ function draw(){
     if(sx<-20||sx>W+20||sy<-20||sy>H+20)continue;
     const r=(n.iso?2:Math.min(3+Math.sqrt(n.d)*1.1,11))*Math.max(.55,Math.min(cam.k,1.6));
     ctx.beginPath();ctx.arc(sx,sy,r,0,7);
-    ctx.fillStyle=C[n.t]||'#888';ctx.globalAlpha=n.iso?.4:1;ctx.fill();
+    ctx.fillStyle=C[n.t]||'#888';
+    // Faded, and still drawn, still clickable, still searchable.
+    // Default is FADED, not hidden. `hideLegacy` is an explicit opt-out; an
+    // undefined flag must not be the thing that hides 904 real modules.
+    ctx.globalAlpha=(n.legacy&&state.hideLegacy)?0:(n.legacy?.22:(n.iso?.4:1));
+    ctx.fill();
     if(state.sel===n.id){ctx.globalAlpha=1;ctx.lineWidth=2.5;ctx.strokeStyle='#fff';ctx.stroke()}
     // A node whose neighbourhood has never been fetched is drawn hollow, so
     // "nothing connects here" is visibly different from "not expanded yet".
@@ -976,6 +1034,104 @@ const TYPE_FACTS = {
   file: p => fact('sheets', p.sheet_count) + fact('parsed', p.parsed),
 };
 
+// ---- B2 PANELS -----------------------------------------------------------
+// EVIDENCE TIERS ARE RENDERED APART. A legacy `teaches` edge and a mastersheet
+// `taught_by` edge are two claims by two sources that have not been reconciled;
+// showing them in one list would manufacture agreement that does not exist.
+// The tier is read off the EDGE (`p.tier`), not from the relation name, so a
+// renamed relation cannot silently collapse the distinction.
+// NOT `neighboursOf` — that name is already taken by the CAP-limited traversal
+// the expand panel uses, and shadowing it made openNode throw on every click.
+// Caught by eval/drive_dom.mjs, which is exactly the class of bug it exists for.
+function edgesTouching(id){
+  const out=[];
+  for(const e of E){
+    if(e.s===id) out.push([e,e.t,'out']);
+    else if(e.t===id) out.push([e,e.s,'in']);
+  }
+  return out;
+}
+
+// A label shared by more than one node is an OPEN identity question, not a
+// merge. The four that remain are INS-08/30/31/32, answered "leave apart".
+function duplicateLabels(){
+  const seen=new Map();
+  for(const n of D.nodes){ if(n.t!=='instructor')continue;
+    seen.set(n.l,(seen.get(n.l)||0)+1); }
+  const dup=new Set();
+  for(const [l,c] of seen) if(c>1) dup.add(l);
+  return dup;
+}
+let DUPES=new Set();
+
+function tierRows(id){
+  const by={mastersheet:[],legacy:[]};
+  for(const [e,other] of edgesTouching(id)){
+    const tier=e.p&&e.p.tier; if(!tier)continue;
+    const n=idx.byId.get(other); if(!n)continue;
+    (by[tier]||(by[tier]=[])).push({label:n.l,role:(e.p&&e.p.instructor_role)||null,
+                                    legacy:n.legacy});
+  }
+  let html='';
+  const block=(key,title,why)=>{
+    const rows=by[key]||[];
+    if(!rows.length) return '';
+    rows.sort((a,b)=>a.label.localeCompare(b.label));
+    const tags=rows.map(r=>'<span class="tag'+(r.role?' role-'+esc(r.role):'')+'">'+
+      esc(r.label)+(r.role?' <em>'+esc(r.role.replace('_',' '))+'</em>':'')+'</span>').join(' ');
+    return '<div class="tier"><div class="tk">'+esc(title)+' <span class="dim">'+
+           esc(why)+'</span></div><div class="tags">'+tags+'</div></div>';
+  };
+  html+=block('mastersheet','mastersheet','assigned in the Resource Collection Mastersheet, with a role');
+  html+=block('legacy','legacy','ran the class, per the label-keyed graph');
+  return html;
+}
+
+function unconfirmedFlag(n){
+  if(!n||n.t!=='instructor')return '';
+  if(!DUPES.has(n.l))return '';
+  return '<div class="flag">UNCONFIRMED IDENTITY \u2014 another instructor node '+
+    'carries this exact label and the two have not been merged. Left apart by '+
+    'owner decision (REVIEW-QUEUE INS-08/30/31/32), not by oversight.</div>';
+}
+
+// THE FULL CHAIN for a module: domain, programme week, every session by kind,
+// and the instructors by tier. Built from node TYPES, not relation names.
+function moduleChain(id){
+  const parts=[];
+  const dom=[],wk=[],sess=[],asg=[],rev=[];
+  for(const [e,other] of edgesTouching(id)){
+    const n=idx.byId.get(other); if(!n)continue;
+    if(n.t==='domain')dom.push(n);
+    else if(n.t==='program_week')wk.push(n);
+    else if(n.t==='class_session')sess.push([n,e]);
+    else if(n.t==='assignment')asg.push(n);
+    else if(n.t==='assignment_review')rev.push(n);
+  }
+  const row=(k,v)=>v?'<div class="ft"><span class="k">'+esc(k)+'</span><span class="v">'+v+'</span></div>':'';
+  if(dom.length)parts.push(row('domain',esc(dom[0].l)));
+  if(wk.length)parts.push(row('programme week',esc(String(wk[0].p.number||wk[0].l))));
+  const kinds=sess.filter(([n,e])=>!(e.p&&e.p.attached_file))
+                  .map(([n])=>n.p.session_kind).filter(Boolean);
+  if(kinds.length)parts.push(row('sessions',esc([...new Set(kinds)].sort().join(', '))));
+  // NOT OFFERED, never "missing": practice problems are optional per module.
+  if(kinds.length && kinds.indexOf('post_class')<0)
+    parts.push(row('practice problems','<span class="dim">not offered \u2014 optional per module (owner fact)</span>'));
+  if(asg.length)parts.push(row('assignment',esc(asg[0].l)));
+  if(rev.length)parts.push(row('assignment review',esc(rev[0].l)));
+  const attached=sess.filter(([n,e])=>e.p&&e.p.attached_file).length;
+  if(attached)parts.push(row('files attached at session level',String(attached)));
+  return parts.length?'<div class="facts chain">'+parts.join('')+'</div>':'';
+}
+
+function mergedNote(n){
+  if(!n||!n.merged||!n.merged.length)return '';
+  const raws=(n.p&&n.p.merged_label_raw)||[];
+  return '<div class="tnote">Merged on '+esc(n.merged.join(', '))+
+    (raws.length?' \u2014 also known as '+esc(raws.join('; ')):'')+
+    '. Every absorbed label is kept as a citation key.</div>';
+}
+
 //: A standing note per type, where the ABSENCE of something is the answer.
 const TYPE_NOTE = {
   workflow: 'Ownership is domain-level at New Programs, so a workflow has no '+
@@ -1026,6 +1182,11 @@ async function openNode(id){
   const note=TYPE_NOTE[n&&n.t];
   const pr=[];
   if(facts) pr.push('<div class="facts">'+facts+'</div>');
+  if(n&&n.t==='module') pr.push(moduleChain(id));
+  const tiers=(n&&(n.t==='module'||n.t==='instructor'))?tierRows(id):'';
+  if(tiers) pr.push(tiers);
+  pr.push(unconfirmedFlag(n));
+  pr.push(mergedNote(n));
   pr.push(reviewFlag(props));
   if(note) pr.push('<div class="tnote">'+esc(note)+'</div>');
   pr.push('<div class="acts"><button type="button" id="goto">centre</button>');
@@ -1197,10 +1358,25 @@ document.getElementById('q').addEventListener('input',ev=>{
     try{ out=await api('/search?q='+encodeURIComponent(v)+'&limit=40'); }
     catch(e){ return; }
     const rows=out.results||[];
+    // BADGES say what KIND OF CLAIM a hit is, which the type alone does not.
+    // A legacy module and a mastersheet module are both `module`; an
+    // instructor whose identity is an open review row looks identical to one
+    // that is settled. Both distinctions matter before someone acts on a hit.
+    const badge=r=>{
+      const n=idx.byId.get(r.id);
+      const p=r.props||(n&&n.p)||{};
+      if(r.type==='module'&&p.domain_slug===undefined)
+        return '<span class="badge" title="label-keyed, not reconciled with the mastersheet">legacy</span>';
+      if(r.type==='instructor'&&DUPES.has(r.label))
+        return '<span class="badge" title="another node carries this exact label; left apart by owner decision">unconfirmed</span>';
+      if(Array.isArray(p.merge_ids)&&p.merge_ids.length)
+        return '<span class="badge" title="'+esc(p.merge_ids.join(', '))+'">merged</span>';
+      return '';
+    };
     res.innerHTML=rows.map(r=>
       '<div class="hit" data-id="'+esc(r.id)+'"><i style="background:'+
       (C[r.type]||'#888')+'"></i><span>'+esc(r.label)+'</span><em>'+
-      esc(r.type)+'</em></div>').join('')
+      esc(r.type)+'</em>'+badge(r)+'</div>').join('')
       ||'<div class="src"><b>No match.</b> This is a LABEL match over the '+
         'projected graph \u2014 a miss is not evidence the corpus lacks it, only '+
         'that this graph does not hold that label.</div>';
@@ -1531,6 +1707,31 @@ document.getElementById('curbtn').onclick=openCuration;
 // every G2-preserved constraint without renegotiating one: 5% of the node
 // budget, CAP=8 is natural for one or two owners, and the cooling schedule
 // settles it immediately.
+// THE DEFAULT VIEW. /api/structure returns the whole structure layer rather
+// than a capped sample — docs/DEFAULT-VIEW.md D1/D2, recorded as an owner
+// decision because a capped landing view showed a shape the graph does not
+// have. Topics, decks, curriculum docs, repos and files stay behind a toggle:
+// 5,200 more nodes and 37,771 more edges.
+async function loadStructure(){
+  let out;
+  try{ out=await api('/structure'); }
+  catch(e){ return false; }
+  const res=mergeGraph(D,{nodes:(out.nodes||[]).map(adaptNode),
+                          edges:(out.edges||[]).map(adaptEdge)},BUDGET);
+  window.__NP.structureNote=out.note||'';
+  let msg='';
+  if(res.refused) msg='<b>'+res.refused+' nodes were not loaded</b> \u2014 this '+
+    'client holds at most '+BUDGET+'.';
+  else if(out.legacy_modules)
+    msg='<b>'+out.legacy_modules+' legacy modules</b> are shown faded: they are '+
+        'keyed on their label and have not been reconciled with the '+
+        'mastersheet. Nothing is hidden \u2014 see docs/REVIEW-QUEUE.md.';
+  banner(msg, res.refused?'err':'');
+  recompute(true,'structure view');
+  try{ afterStructure(); }catch(e){ console.warn('view setup', e); }
+  return true;
+}
+
 async function loadOverview(){
   let out;
   try{ out=await api('/overview'); }
@@ -1589,7 +1790,7 @@ async function afterSignIn(){
   // the change that stops it being free. A recompute must follow a CHANGE, not
   // an event. If the fetch fails there is no recompute at all -- 'initial' has
   // already rendered the empty canvas, and api() has already said what broke.
-  await loadOverview();
+  await loadStructure();
 }
 
 document.getElementById('signout').onclick=async ()=>{
@@ -1674,6 +1875,191 @@ async function openRoute(){
   return true;
 }
 addEventListener('hashchange',()=>{ if(!_routing) openRoute(); });
+
+
+// ==========================================================================
+// B2 VIEWS — matrix, timeline, filters, badges, shareable URLs
+// ==========================================================================
+// All three read the SAME structure payload the graph view holds. They are
+// derived views, not extra endpoints: a second fetch path would be a second
+// place for the tier distinction to get lost.
+
+const SHEET=document.getElementById('sheet'), VBAR=document.getElementById('vbar');
+
+function domainsInPlay(){
+  const m=new Map();
+  for(const n of D.nodes){ if(n.t==='module'&&n.dom) m.set(n.dom,true); }
+  return [...m.keys()].sort();
+}
+
+function modulesFor(dom){
+  return D.nodes.filter(n=>n.t==='module'&&(!dom||n.dom===dom)&&!n.legacy)
+                .sort((a,b)=>(a.dom||'').localeCompare(b.dom||'')||
+                             ((a.p.sequence||0)-(b.p.sequence||0)));
+}
+
+// WHO TEACHES WHAT. Rows are instructors, columns modules, cells carry the
+// ROLE. A cell whose instructor identity is still an open review row is
+// HATCHED rather than filled: it is a claim that has not been confirmed, and
+// colouring it like the others would say it had been.
+function renderMatrix(){
+  const mods=modulesFor(state.fDomain);
+  const rows=new Map();
+  for(const e of E){
+    const tier=e.p&&e.p.tier; if(!tier)continue;
+    const a=idx.byId.get(e.s), b=idx.byId.get(e.t); if(!a||!b)continue;
+    const mod=a.t==='module'?a:(b.t==='module'?b:null);
+    const ins=a.t==='instructor'?a:(b.t==='instructor'?b:null);
+    if(!mod||!ins)continue;
+    if(!mods.some(m=>m.id===mod.id))continue;
+    const role=(e.p&&e.p.instructor_role)||(tier==='legacy'?'taught':'');
+    if(state.fRole&&role!==state.fRole)continue;
+    if(!rows.has(ins.id))rows.set(ins.id,{ins,cells:new Map()});
+    rows.get(ins.id).cells.set(mod.id,{role,tier});
+  }
+  const list=[...rows.values()].sort((x,y)=>x.ins.l.localeCompare(y.ins.l));
+  let h='<h2>Who teaches what'+(state.fDomain?' \u2014 '+esc(state.fDomain):'')+
+        ' <span class="dim">'+list.length+' instructors \u00d7 '+mods.length+
+        ' modules</span></h2>';
+  if(!list.length){ SHEET.innerHTML=h+'<p class="dim">No staffing edges match this filter.</p>'; return; }
+  h+='<table><thead><tr><th>instructor</th>';
+  for(const m of mods) h+='<th title="'+esc(m.l)+'">'+esc((m.dom||'')+'/'+(m.p.sequence||''))+'</th>';
+  h+='</tr></thead><tbody>';
+  for(const r of list){
+    const unconf=DUPES.has(r.ins.l);
+    h+='<tr><td>'+esc(r.ins.l)+(unconf?'<span class="badge">unconfirmed</span>':'')+'</td>';
+    for(const m of mods){
+      const c=r.cells.get(m.id);
+      h+='<td class="'+(c?(unconf?'unconf':'on'):'')+'" title="'+
+         esc(c?(c.tier+' \u2014 '+(c.role||'')):'')+'">'+
+         (c?esc((c.role||'\u2022').replace('backup_','b')):'')+'</td>';
+    }
+    h+='</tr>';
+  }
+  h+='</tbody></table><p class="dim">Hatched = the instructor identity is an '+
+     'open REVIEW-QUEUE row (INS-08/30/31/32); the cell is shown, not hidden. '+
+     'Cell text is the mastersheet role; \u2022 is a legacy `teaches` edge.</p>';
+  SHEET.innerHTML=h;
+}
+
+// PROGRAMME TIMELINE. Modules laid on their programme week, one lane per
+// domain. The week is an OWNER FACT, not a number derived from the folder
+// sequence — `Week N` in the corpus is a local sequence and deriving a
+// calendar week from it is refused in curriculum.py.
+function renderTimeline(){
+  const weeks=new Map();
+  for(const n of D.nodes){ if(n.t==='program_week') weeks.set(n.id,n.p.number||null); }
+  const lanes=new Map();
+  for(const m of modulesFor(state.fDomain)){
+    let wk=null;
+    for(const [e,other] of edgesTouching(m.id)){
+      const n=idx.byId.get(other);
+      if(n&&n.t==='program_week'){ wk=weeks.get(n.id); break; }
+    }
+    if(state.fWeek&&String(wk)!==String(state.fWeek))continue;
+    if(!lanes.has(m.dom))lanes.set(m.dom,[]);
+    lanes.get(m.dom).push({m,wk});
+  }
+  const all=[...lanes.values()].flat().map(x=>x.wk).filter(x=>x!=null);
+  const lo=Math.min(...all,9), hi=Math.max(...all,14);
+  let h='<h2>Programme timeline <span class="dim">weeks '+lo+'\u2013'+hi+
+        ', one lane per domain</span></h2>';
+  for(const [dom,items] of [...lanes.entries()].sort()){
+    h+='<div class="lane"><div class="cell" style="min-width:110px">'+esc(dom)+'</div>';
+    for(let w=lo;w<=hi;w++){
+      const hit=items.filter(x=>x.wk===w);
+      h+='<div class="cell'+(hit.length?'':' faded')+'" title="week '+w+'">'+
+         (hit.length?esc(hit.map(x=>x.m.l).join(', ')):'<span class="dim">w'+w+'</span>')+
+         '</div>';
+    }
+    h+='</div>';
+  }
+  h+='<p class="dim">Programme weeks are an owner fact '+
+     '(config/out-of-corpus-facts.yaml). `Week N` in the corpus folders is a '+
+     'local sequence and a calendar week is never derived from it.</p>';
+  SHEET.innerHTML=h;
+}
+
+function setView(v,push){
+  state.view=v;
+  for(const b of VBAR.querySelectorAll('button'))
+    b.setAttribute('aria-pressed', String(b.dataset.view===v));
+  SHEET.style.display = v==='graph' ? 'none' : 'block';
+  if(v==='matrix')renderMatrix();
+  if(v==='timeline')renderTimeline();
+  if(push!==false)writeUrl();
+}
+for(const b of VBAR.querySelectorAll('button'))
+  b.onclick=()=>setView(b.dataset.view,true);
+
+// SHAREABLE URLS. View, focus and every filter live in the query string, so a
+// link reproduces what the sender was looking at. Nothing is kept in
+// localStorage: a URL someone can read is the point.
+let _writing=false;
+function writeUrl(){
+  if(_writing)return; _writing=true;
+  const q=new URLSearchParams();
+  if(state.view!=='graph')q.set('view',state.view);
+  if(state.sel)q.set('focus',state.sel);
+  if(state.fDomain)q.set('domain',state.fDomain);
+  if(state.fWeek)q.set('week',state.fWeek);
+  if(state.fRole)q.set('role',state.fRole);
+  if(state.hideLegacy)q.set('legacy','hidden');
+  const s=q.toString();
+  history.replaceState(null,'',s?('?'+s):location.pathname);
+  _writing=false;
+}
+function readUrl(){
+  const q=new URLSearchParams(location.search);
+  state.fDomain=q.get('domain')||null;
+  state.fWeek=q.get('week')||null;
+  state.fRole=q.get('role')||null;
+  state.hideLegacy=q.get('legacy')==='hidden';
+  const v=q.get('view'); if(v)setView(v,false);
+  const f=q.get('focus'); if(f&&idx.byId.get(f))openNode(f);
+}
+
+// FILTERS. Rendered into the left pane once the structure payload has told us
+// which domains exist — hardcoding four would go stale the day a fifth is
+// approved.
+function renderFilters(){
+  const host=document.getElementById('types'); if(!host)return;
+  const doms=domainsInPlay(); if(!doms.length)return;
+  const sel=(id,label,opts,cur)=>
+    '<label class="ck" style="display:block">'+esc(label)+
+    ' <select id="'+id+'"><option value="">all</option>'+
+    opts.map(o=>'<option value="'+esc(o)+'"'+(String(cur)===String(o)?' selected':'')+
+      '>'+esc(o)+'</option>').join('')+'</select></label>';
+  const weeks=[...new Set(D.nodes.filter(n=>n.t==='program_week')
+      .map(n=>n.p.number).filter(x=>x!=null))].sort((a,b)=>a-b);
+  const box=document.createElement('div');
+  box.id='filters';
+  box.innerHTML='<div class="sub">filters</div>'+
+    sel('fdom','domain',doms,state.fDomain||'')+
+    sel('fwk','programme week',weeks,state.fWeek||'')+
+    sel('frole','role',['primary','backup_1','backup_2','backup_3'],state.fRole||'')+
+    '<label class="ck"><input type="checkbox" id="flegacy"'+
+    (state.hideLegacy?' checked':'')+'> hide legacy modules</label>';
+  host.parentNode.insertBefore(box,host);
+  const on=(id,fn)=>{const el=document.getElementById(id); if(el)el.onchange=fn;};
+  on('fdom',e=>{state.fDomain=e.target.value||null;refreshView()});
+  on('fwk',e=>{state.fWeek=e.target.value||null;refreshView()});
+  on('frole',e=>{state.fRole=e.target.value||null;refreshView()});
+  on('flegacy',e=>{state.hideLegacy=e.target.checked;refreshView()});
+}
+function refreshView(){
+  writeUrl();
+  if(state.view==='matrix')renderMatrix();
+  else if(state.view==='timeline')renderTimeline();
+  else draw();
+}
+
+// Called once the structure payload has landed.
+function afterStructure(){
+  DUPES=duplicateLabels();
+  renderFilters();
+  readUrl();
+}
 
 if(!window.__NP_NO_BOOT){ loadStats(); boot(); }
 </script>

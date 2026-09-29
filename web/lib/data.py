@@ -299,6 +299,77 @@ def provenance(conn, node_id: str) -> dict:
     }
 
 
+#: The STRUCTURE LAYER: what the default view shows without a toggle. Derived
+#: from edge endpoints, never written out — B2, the same rule pass 7 follows.
+#:
+#: `file` is deliberately absent. 1,443 of them carry no edge at all (they exist
+#: to be cited), so including them would put two thirds of the payload on screen
+#: as unconnected dots.
+def _structure_types() -> tuple[set, set]:
+    def tgt(role):
+        return _tax.edge_endpoints(_tax.edge_for_role(role))[1]
+
+    def src(role):
+        return _tax.edge_endpoints(_tax.edge_for_role(role))[0]
+
+    core = {"domain", "program", "module", "person", "instructor", "theme",
+            "workflow",
+            tgt("module_week"), tgt("module_session"),
+            tgt("module_assignment"), tgt("assignment_reviewed_in")}
+    deferred = {"file", tgt("module_topic"), tgt("module_deck"),
+                src("curriculum_module"), tgt("module_repo")}
+    return core, deferred
+
+
+STRUCTURE_TYPES, DEFERRED_TYPES = _structure_types()
+
+
+def structure(conn) -> dict:
+    """The whole structure layer, and the edges among it. No parameters.
+
+    PARAMETERLESS FOR THE SAME REASON `overview` IS. §A.3 made the catastrophic
+    provenance join unwriteable in SQL, but a client that assembles its own
+    graph from bulk downloads walks what it holds instead of asking. The
+    protection lives in the query layer, so this endpoint must not be turnable
+    into "give me an arbitrary subgraph" by a query string — the type list is a
+    module constant, not an argument.
+
+    IT IS BIGGER THAN THE VIEW IT REPLACES, AND THAT IS A RECORDED DECISION.
+    `overview` is capped at 60-odd nodes; this returns roughly 3,355 and 4,970
+    edges. docs/DEFAULT-VIEW.md D1/D2 is the owner decision, and the reason is
+    that a capped landing view showed a shape the graph does not have.
+
+    PROVENANCE IS STILL UNREACHABLE HERE. `sourced_from` is excluded, so the
+    degree-18,134 file hubs cannot enter the payload.
+    """
+    types = sorted(STRUCTURE_TYPES)
+    prov = _tax.edge_for_role("provenance")
+    with conn.cursor() as cur:
+        cur.execute(
+            "select id, type, label, label_raw, props from nodes "
+            "where type = any(%s)", (types,))
+        nodes = _rows(cur)
+        cur.execute(
+            "select rel, source_id, target_id, props from edges "
+            "where rel <> %s "
+            "  and source_id in (select id from nodes where type = any(%s)) "
+            "  and target_id in (select id from nodes where type = any(%s))",
+            (prov, types, types))
+        edges = _rows(cur)
+    legacy = sum(1 for n in nodes
+                 if n["type"] == "module" and not (n["props"] or {}).get("domain_slug"))
+    return {
+        "nodes": nodes,
+        "edges": edges,
+        "types": types,
+        "deferred_types": sorted(DEFERRED_TYPES),
+        "legacy_modules": legacy,
+        "note": ("The structure layer. Topics, decks, curriculum docs, repos "
+                 "and files are behind a toggle and load on demand — they are "
+                 "5,200 more nodes and 37,771 more edges."),
+    }
+
+
 def coverage(conn) -> dict:
     """SQL, per DECISIONS §C.2 — the one path that is strictly better as SQL.
 

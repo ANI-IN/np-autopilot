@@ -40,13 +40,13 @@ from lib.auth import AuthError                                         # noqa: E
 from lib.guard import audit, identify                                  # noqa: E402
 
 import aliases, config, coverage, curate, me, neighbourhood, node      # noqa: E402,E401
-import overview, search, session, staffing                             # noqa: E402,E401
+import overview, search, session, staffing, structure                  # noqa: E402,E401
 
 #: path -> (endpoint name, read function). Every one of these is served by
 #: _serve_read, which is the only place a request meets a connection.
 READS = {f"/api/{mod.ENDPOINT[0]}": mod.ENDPOINT
          for mod in (aliases, coverage, me, neighbourhood, node, overview,
-                     search, staffing)}
+                     search, staffing, structure)}
 
 #: path -> write function. Served by _serve_write, which identifies the caller
 #: exactly as _serve_read does. A write route cannot bring its own front door
