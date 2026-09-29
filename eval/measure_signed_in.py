@@ -50,6 +50,10 @@ NEW_ENDPOINTS = ["/api/structure"]
 SMALL_BY_DESIGN = {"/api/config"}
 SAMPLES = 20
 
+#: Cold loads per run. One sample is noise: two runs against an unchanged
+#: production site reported TTFB 207 ms and 1,230 ms.
+COLD_LOADS = 5
+
 
 def invalid_measurements(results: dict, node_id, phase: str) -> list:
     """Why a latency table is not a measurement. Empty means it is.
@@ -103,10 +107,60 @@ def _args(argv):
                          "and reported, never required; every other endpoint "
                          "stays strict. post: after the deploy. /api/structure "
                          "is timed and REQUIRED.")
+    ap.add_argument("--wait-for-enter", action="store_true",
+                    help="pause after opening the page and wait for Enter, "
+                         "for when signing in takes a while")
+    ap.add_argument("--headless", action="store_true",
+                    help="no visible browser; only useful when already "
+                         "signed in or for a signed-out smoke test")
     ap.add_argument("outdir", nargs="?", default=None,
                     help="unused; kept so an old invocation does not silently "
                          "become a phase")
     return ap.parse_args(argv)
+
+
+def _nav_timings(page):
+    return page.evaluate("""() => {
+        const n = performance.getEntriesByType('navigation')[0] || {};
+        const paint = performance.getEntriesByType('paint');
+        return {ttfb: n.responseStart, dcl: n.domContentLoadedEventEnd,
+                load: n.loadEventEnd,
+                fcp: (paint.find(x=>x.name==='first-contentful-paint')||{}).startTime ?? null,
+                transfer: n.transferSize, decoded: n.decodedBodySize};
+    }""")
+
+
+def _stat(vals):
+    """(median, min, max) — a single sample is not a measurement.
+
+    Two runs against an unchanged production site reported TTFB 207 ms and
+    1,230 ms. One of those numbers was going to become "the baseline" and the
+    other would have looked like a regression or a win depending on which got
+    written down first.
+    """
+    v = sorted(x for x in vals if x is not None)
+    if not v:
+        return (None, None, None)
+    return (statistics.median(v), v[0], v[-1])
+
+
+def _fmt(triple, unit="ms"):
+    med, lo, hi = triple
+    if med is None:
+        return "—"
+    return f"{med:.0f}{unit}  ({lo:.0f}–{hi:.0f})"
+
+
+#: How the page ACTUALLY holds its session. `let SESSION = null` at the top
+#: level of a classic script lives in the global LEXICAL environment, not on
+#: `window` — so `window.SESSION` is undefined while the bare name resolves.
+#: The first token check asked for `window.SESSION`, found nothing, and
+#: reported "no access token in the page" on a page that was correctly signed
+#: in. The app itself reads the bare name; so does this.
+_HAS_TOKEN = """() => {
+    try { return !!(SESSION && SESSION.access_token); }
+    catch (e) { return false; }
+}"""
 
 
 def main(argv=None) -> int:
@@ -124,99 +178,97 @@ def main(argv=None) -> int:
           + ("  (/api/structure probed, not required)" if phase == "pre"
              else "  (/api/structure required)"))
     SESSION_DIR.mkdir(exist_ok=True)
+    local = "127.0.0.1" in SITE or "localhost" in SITE
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(
-            headless=bool(os.environ.get('NP_MEASURE_BASE')))
+            browser = p.chromium.launch(headless=args.headless or local)
             ctx = browser.new_context()
             page = ctx.new_page()
 
-            local = "127.0.0.1" in SITE or "localhost" in SITE
             print(f"\n  Opening {SITE}" +
-                  ("  (local smoke test — no sign-in needed)" if local
-                   else " — sign in, then leave the window alone."))
+                  ("  (local smoke test)" if local
+                   else " — sign in if prompted."))
             page.goto(SITE, wait_until="domcontentloaded")
+
+            if args.wait_for_enter:
+                input("\n  Sign in, then press Enter here to start measuring... ")
+
             if not local:
-                print("  Waiting for /api/me to return 200 (up to 5 minutes)...")
+                print("  Waiting for the app to finish signing in...")
             try:
-                page.wait_for_function(
-                    """() => fetch('/api/me').then(r => r.status === 200)
-                             .catch(() => false)""",
-                    timeout=300_000)
+                page.wait_for_function(_HAS_TOKEN, timeout=300_000)
             except Exception:
-                sys.exit("  timed out waiting for sign-in.")
+                sys.exit(
+                    "  timed out waiting for a session. The app never stored "
+                    "an access token.\n"
+                    "  Re-run with --wait-for-enter if you need longer to "
+                    "sign in.")
             ctx.storage_state(path=str(SESSION))
-            print("  signed in. session stored to a gitignored path.\n")
+            print("  signed in.\n")
 
-            # ---- cold load, signed in -----------------------------------
-            ctx2 = browser.new_context(storage_state=str(SESSION))
-            page2 = ctx2.new_page()
+            # ---- COLD LOADS: five, reported as median and range ----------
+            # A single cold sample is noise. Each one gets a FRESH CONTEXT so
+            # it is genuinely cold rather than warmed by the previous load.
+            print(f"  COLD LOAD, SIGNED IN ({COLD_LOADS} loads)")
+            ttfb, fcp, dcl, load, settled, transfer, decoded = ([] for _ in range(7))
             sizes: dict[str, int] = {}
-            page2.on("response", lambda r: sizes.__setitem__(
-                r.url.replace(SITE, ""),
-                len(r.body()) if r.request.resource_type != "image" else 0)
-                if "/api/" in r.url or r.url.endswith((".json", "/")) else None)
+            page2 = None
+            for i in range(COLD_LOADS):
+                c = browser.new_context(storage_state=str(SESSION))
+                pg = c.new_page()
+                pg.on("response", lambda r: sizes.__setitem__(
+                    r.url.replace(SITE, ""),
+                    len(r.body()) if r.request.resource_type != "image" else 0)
+                    if "/api/" in r.url or r.url.endswith((".json", "/")) else None)
+                t0 = time.time()
+                pg.goto(SITE, wait_until="domcontentloaded")
+                pg.wait_for_load_state("networkidle")
+                settled.append((time.time() - t0) * 1000)
+                nav = _nav_timings(pg)
+                ttfb.append(nav["ttfb"]); fcp.append(nav["fcp"])
+                dcl.append(nav["dcl"]); load.append(nav["load"])
+                transfer.append(nav["transfer"]); decoded.append(nav["decoded"])
+                if i == COLD_LOADS - 1:
+                    page2 = pg                       # keep the last one warm
+                else:
+                    c.close()
 
-            t0 = time.time()
-            page2.goto(SITE, wait_until="domcontentloaded")
-            dom = time.time() - t0
-            page2.wait_for_load_state("networkidle")
-            settled = time.time() - t0
-
-            nav = page2.evaluate("""() => {
-                const n = performance.getEntriesByType('navigation')[0] || {};
-                const paint = performance.getEntriesByType('paint');
-                return {ttfb: n.responseStart, domContentLoaded: n.domContentLoadedEventEnd,
-                        load: n.loadEventEnd,
-                        fp: (paint.find(x=>x.name==='first-paint')||{}).startTime ?? null,
-                        fcp: (paint.find(x=>x.name==='first-contentful-paint')||{}).startTime ?? null,
-                        transfer: n.transferSize, decoded: n.decodedBodySize};
-            }""")
-
-            print("  COLD LOAD, SIGNED IN")
-            print(f"    TTFB                    {nav['ttfb']:8.0f} ms")
-            print(f"    first contentful paint  {(nav['fcp'] or 0):8.0f} ms")
-            print(f"    DOMContentLoaded        {nav['domContentLoaded']:8.0f} ms")
-            print(f"    load event              {nav['load']:8.0f} ms")
-            print(f"    settled (networkidle)   {settled*1000:8.0f} ms")
-            print(f"    document transfer       {nav['transfer']:8} bytes"
-                  f"  ({nav['decoded']} decoded)")
+            print(f"    {'TTFB':24} {_fmt(_stat(ttfb))}")
+            print(f"    {'first contentful paint':24} {_fmt(_stat(fcp))}")
+            print(f"    {'DOMContentLoaded':24} {_fmt(_stat(dcl))}")
+            print(f"    {'load event':24} {_fmt(_stat(load))}")
+            print(f"    {'settled (networkidle)':24} {_fmt(_stat(settled))}")
+            print(f"    {'document transfer':24} "
+                  f"{_fmt(_stat(transfer), ' bytes')} "
+                  f"({_stat(decoded)[0]:.0f} decoded)")
 
             print("\n  PAYLOAD PER CALL")
             for u, n in sorted(sizes.items(), key=lambda kv: -(kv[1] or 0))[:12]:
                 if n:
                     print(f"    {u[:52]:52} {n:8} bytes")
 
-            # ---- p50/p95 on the real query path -------------------------
-            # AUTHENTICATED, WHICH THE FIRST VERSION WAS NOT. It issued a bare
-            # `fetch(ep)` from page.evaluate. This app keeps the Supabase access
-            # token in PAGE MEMORY and sends it as an Authorization header —
-            # it is not a cookie — so a bare fetch carried no credential and
-            # every timed request was a 401. The table looked plausible
-            # (219 ms p50) and was measuring the auth rejection path.
-            #
-            # The token is read INSIDE the page and never crosses into this
-            # process: the whole timing loop runs in one page.evaluate, so
-            # nothing here can print or store it.
-            print(f"\n  LATENCY, SIGNED IN ({SAMPLES} samples)")
-
-            # THE TOKEN MUST EXIST BEFORE ANYTHING IS TIMED. Without this the
-            # loop throws `Cannot read properties of null` deep inside
-            # page.evaluate, which reads as a harness bug rather than as "this
-            # page is not actually authenticated". Found by smoke-testing
-            # against the local server, where SESSION is genuinely null because
-            # that server stubs identity and never needs a token.
-            has_token = page.evaluate(
-                "() => !!(window.SESSION && SESSION.access_token)")
-            if not has_token:
+            # ---- WAIT FOR THE APP'S OWN AUTHENTICATED REQUEST ------------
+            # Not just for a token to exist: for the app to have USED it. The
+            # previous failure was a scope bug, but a race is the other way
+            # this goes wrong, and waiting on the app's own first data call
+            # covers both without guessing a delay.
+            try:
+                page2.wait_for_function(
+                    """() => (performance.getEntriesByType('resource') || [])
+                             .some(r => /\\/api\\/(overview|structure|coverage)/
+                                        .test(r.name))""",
+                    timeout=60_000)
+            except Exception:
+                print("  (the app made no data request of its own; continuing)")
+            if not page2.evaluate(_HAS_TOKEN):
                 raise SystemExit(
-                    "  no access token in the page. The measurement cannot run "
-                    "authenticated, and an unauthenticated table is what "
-                    "invalidated the first baseline.\n"
-                    "  If you signed in and still see this, the app changed "
-                    "where it keeps the session.")
+                    "  no access token in the page after load. The app keeps "
+                    "its session in the global lexical scope as `SESSION`; if "
+                    "that changed, this script must change with it.")
 
-            node_id = page.evaluate("""async () => {
+            # ---- p50/p95 on the real query path -------------------------
+            print(f"\n  LATENCY, SIGNED IN ({SAMPLES} samples)")
+            node_id = page2.evaluate("""async () => {
                 const h = {authorization: 'Bearer ' + SESSION.access_token};
                 for (const ep of ['/api/structure', '/api/overview']) {
                     try {
@@ -234,7 +286,7 @@ def main(argv=None) -> int:
             if node_id:
                 eps.append("/api/node?id=" + node_id)
 
-            results = page.evaluate("""async ([eps, n]) => {
+            results = page2.evaluate("""async ([eps, n]) => {
                 const h = {authorization: 'Bearer ' + SESSION.access_token};
                 const out = {};
                 for (const ep of eps) {
@@ -258,13 +310,10 @@ def main(argv=None) -> int:
                 print(f"    {ep[:26]:26} {pct(r['times'],.5):7.0f}ms "
                       f"{pct(r['times'],.95):7.0f}ms {r['bytes']:9} "
                       f"{r['status']:7}")
-            # PRE-DEPLOY: probe the new endpoint, report, never require. A
-            # 404 here is the expected state — it has not shipped — and the
-            # run must not fail on it. If it answers 200 that is worth knowing
-            # too, because it means the deploy already happened.
+
             if phase == "pre":
                 for ep in NEW_ENDPOINTS:
-                    st = page.evaluate("""async (ep) => {
+                    st = page2.evaluate("""async (ep) => {
                         const h = {authorization: 'Bearer ' + SESSION.access_token};
                         try { const r = await fetch(ep, {headers: h});
                               return r.status; }
@@ -284,7 +333,6 @@ def main(argv=None) -> int:
                 raise SystemExit(
                     "  the timed requests did not return data. A latency table "
                     "built from 401s is worse than no table.")
-
             browser.close()
     finally:
         if SESSION_DIR.exists():

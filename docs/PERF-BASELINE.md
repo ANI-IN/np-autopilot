@@ -3,6 +3,37 @@
 Measured on `np-autopilot.vercel.app` by `eval/measure_signed_in.py`,
 2026-09-29, signed in. B3 compares against these.
 
+## No baseline yet — two runs, two failures
+
+Both attempts produced no usable latency table, for two different reasons, and
+both are recorded because the second was caused by the fix for the first.
+
+**Run 1 — the timed requests were unauthenticated.** A bare `fetch(ep)` from
+`page.evaluate`; the app sends the token as an `Authorization` header from page
+memory, not a cookie. Every timed request was a 401 at a plausible-looking
+219 ms.
+
+**Run 2 — the token check read the wrong scope.** `public/index.html` declares
+`let SESSION = null` at the top level of a classic script, which lives in the
+global LEXICAL environment and NOT on `window`. The check asked for
+`window.SESSION`. Verified against the real production page, signed out:
+
+```
+typeof window.SESSION  ->  "undefined"
+bare SESSION           ->  null (declared)
+```
+
+So it was false whether or not anyone was signed in, and it reported "no access
+token in the page" on a page that had signed in automatically in two seconds.
+The app itself reads the bare name; the script now does too.
+
+Cold-load numbers from those runs are NOT a baseline either: TTFB was 207 ms in
+one and 1,230 ms in the other with nothing deployed between them. A single cold
+sample is noise. The script now takes five cold loads, each in a fresh context,
+and reports **median and range**.
+
+## Superseded — the single-sample figures
+
 ## Valid, and kept as the baseline
 
 | | value |

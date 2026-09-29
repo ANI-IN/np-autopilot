@@ -72,7 +72,7 @@ def test_a_real_looking_run_passes():
 def test_the_timed_requests_send_an_authorization_header():
     """The fix itself, asserted in the source: a bare fetch is what broke it."""
     src = SCRIPT.read_text(encoding="utf-8")
-    loop = src[src.index("results = page.evaluate"):]
+    loop = src[src.index("results = page2.evaluate"):]
     assert "authorization" in loop.lower(), (
         "the timing loop issues requests without an Authorization header")
     assert "SESSION.access_token" in loop
@@ -168,3 +168,64 @@ def test_the_phase_must_be_stated():
         m["invalid_measurements"]({}, "nid", "guess")
     src = SCRIPT.read_text(encoding="utf-8")
     assert 'required=True' in src and '"pre", "post"' in src.replace("'", '"')
+
+
+# ---------------------------------------------------------------------------
+# WHERE THE APP KEEPS ITS SESSION
+# ---------------------------------------------------------------------------
+
+def test_the_token_check_reads_the_bare_name_not_window():
+    """`let SESSION = null` at the top level of a classic script lives in the
+    global LEXICAL environment, NOT on `window`.
+
+    Verified against the real production page, signed out:
+        typeof window.SESSION -> "undefined"
+        bare SESSION          -> null (declared)
+
+    So a check written as `window.SESSION && ...` is false whether or not
+    anyone is signed in. It reported "no access token in the page" on a page
+    that had signed in automatically in about two seconds.
+    """
+    src = SCRIPT.read_text(encoding="utf-8")
+    # Comments may NAME the broken form — that is how the reason survives.
+    # What must not happen is evaluating it.
+    code = "\n".join(l for l in src.splitlines()
+                     if not l.strip().startswith(("#", "#:")))
+    assert "window.SESSION" not in code, (
+        "the token check reads window.SESSION, which is always undefined: "
+        "the app declares `let SESSION` in the global lexical scope")
+    assert "_HAS_TOKEN" in code and "SESSION && SESSION.access_token" in code
+
+
+def test_the_page_declares_session_the_way_the_script_expects():
+    """The other half of the pair: if the PAGE changes how it holds the
+    session, this fails here rather than as a mysterious timeout."""
+    html = (REPO / "public" / "index.html").read_text(encoding="utf-8")
+    assert "let SESSION=null;" in html or "let SESSION = null;" in html, (
+        "public/index.html no longer declares `let SESSION` at top level; "
+        "eval/measure_signed_in.py reads that name and must change with it")
+    assert "window.SESSION" not in html, (
+        "the page now puts SESSION on window; the script could read either, "
+        "but they must agree")
+
+
+def test_cold_load_is_sampled_not_guessed():
+    """Two runs against an unchanged site reported TTFB 207 ms and 1,230 ms."""
+    m = _mod()
+    assert m["COLD_LOADS"] >= 5
+    med, lo, hi = m["_stat"]([207, 1230, 300, 280, 310])
+    assert med == 300 and lo == 207 and hi == 1230
+    assert m["_stat"]([None, None]) == (None, None, None)
+
+
+def test_it_waits_for_the_apps_own_authenticated_request():
+    """A scope bug was the cause this time; a race is the other way it goes
+    wrong. Waiting on the app's own first data call covers both."""
+    src = SCRIPT.read_text(encoding="utf-8")
+    assert "getEntriesByType('resource')" in src
+    assert "overview|structure" in src
+
+
+def test_there_is_a_wait_for_enter_escape_hatch():
+    src = SCRIPT.read_text(encoding="utf-8")
+    assert "--wait-for-enter" in src or "wait_for_enter" in src
