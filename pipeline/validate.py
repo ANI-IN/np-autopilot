@@ -36,7 +36,8 @@ class Report:
         self.exercised.add(category)
 
 
-def categories_fired(graph_path: Path, candidates_path: Path | None = None) -> list[str]:
+def categories_fired(graph_path: Path, candidates_path: Path | None = None,
+                     cache_dir: Path | None = None) -> list[str]:
     """Run the checks on `graph_path` silently and return the categories that fired.
 
     Used by tests/test_validate_categories.py to prove each check actually works
@@ -51,11 +52,12 @@ def categories_fired(graph_path: Path, candidates_path: Path | None = None) -> l
     import contextlib
     import io
     with contextlib.redirect_stdout(io.StringIO()):
-        return _run(graph_path, candidates_path)[0]
+        return _run(graph_path, candidates_path, cache_dir)[0]
 
 
 def failures(graph_path: Path, category: str | None = None,
-             candidates_path: Path | None = None) -> list[tuple[str, str]]:
+             candidates_path: Path | None = None,
+             cache_dir: Path | None = None) -> list[tuple[str, str]]:
     """FAIL-level findings, optionally for one category. Returns (category, message).
 
     The level-aware counterpart to categories_fired(). Added when a new category
@@ -65,15 +67,18 @@ def failures(graph_path: Path, category: str | None = None,
     import contextlib
     import io
     with contextlib.redirect_stdout(io.StringIO()):
-        rows = _run(graph_path, candidates_path)[6]
+        rows = _run(graph_path, candidates_path, cache_dir)[6]
     return [(c, m) for lv, c, m in rows
             if lv == FAIL and (category is None or c == category)]
 
 
-def _run(graph_path: Path | None = None, candidates_path: Path | None = None):
+def _run(graph_path: Path | None = None, candidates_path: Path | None = None,
+         cache_dir: Path | None = None):
     """`candidates_path` defaults to the build's knowledge/candidates.json. Tests
     pass a synthetic one: the real file is gitignored (it carries the hiring
-    funnel), and the only thing read from it here is the blank-identifier list."""
+    funnel), and the only thing read from it here is the blank-identifier list.
+    `cache_dir` defaults to .drive-cache/; tests pass a synthetic one so the R17
+    cache check can be shown to fire on a machine with no cache (CI)."""
     # Validation reads BOTH halves. A rule that only ever sees the public file
     # cannot catch a defect in the withheld one, and the withheld one is the
     # half carrying judgements about named external people.
@@ -245,7 +250,7 @@ def _run(graph_path: Path | None = None, candidates_path: Path | None = None):
     # see that pass 0 had downloaded it anyway and left it on disk, which is
     # where it matters once the pipeline runs unattended on shared
     # infrastructure with its own backups and snapshots.
-    cache_dir = KNOWLEDGE_DIR.parent / ".drive-cache"
+    cache_dir = cache_dir or KNOWLEDGE_DIR.parent / ".drive-cache"
     if cache_dir.is_dir():
         present = [p for p in sorted(excluded) if (cache_dir / p).exists()]
         if present:

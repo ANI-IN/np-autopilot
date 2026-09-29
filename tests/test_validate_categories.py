@@ -27,12 +27,39 @@ GRAPH = REPO / "knowledge" / "graph.json"
 CANDIDATES = REPO / "tests" / "fixtures" / "candidates.synthetic.json"
 
 
-def categories_fired(graph_path):
-    return _validate.categories_fired(graph_path, candidates_path=CANDIDATES)
+def categories_fired(graph_path, cache_dir=None):
+    return _validate.categories_fired(graph_path, candidates_path=CANDIDATES,
+                                      cache_dir=cache_dir)
 
 
-def failures(graph_path, category=None):
-    return _validate.failures(graph_path, category, candidates_path=CANDIDATES)
+def failures(graph_path, category=None, cache_dir=None):
+    return _validate.failures(graph_path, category, candidates_path=CANDIDATES,
+                              cache_dir=cache_dir)
+
+
+def _cache_holding_an_excluded_file(tmp_path: Path) -> Path:
+    """A SYNTHETIC .drive-cache/ with an empty placeholder at an excluded path —
+    exactly what R17 guards against: pass 0 fetching a file it must not."""
+    cache = tmp_path / "drive-cache"
+    target = cache / taxonomy.excluded_files()[0]
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(b"")
+    return cache
+
+
+def test_an_excluded_file_in_the_cache_is_caught(tmp_path):
+    """R17. Not exercisable from the real cache — there should never be one to
+    find — and CI has no cache at all, so it is proved on a synthetic one."""
+    found = failures(GRAPH, "excluded-file-cache",
+                     cache_dir=_cache_holding_an_excluded_file(tmp_path))
+    assert found and "PRESENT IN THE CACHE" in found[0][1]
+
+
+def test_an_empty_cache_is_clean_for_that_check(tmp_path):
+    """The baseline for the injection above."""
+    (tmp_path / "empty-cache").mkdir()
+    assert failures(GRAPH, "excluded-file-cache",
+                    cache_dir=tmp_path / "empty-cache") == []
 
 
 def _mutate(tmp_path: Path, fn) -> Path:
@@ -120,6 +147,8 @@ def test_all_categories_are_exercised_across_the_suite(tmp_path):
     ]
     for i, fn in enumerate(injections):
         fired |= set(categories_fired(_mutate(tmp_path / str(i), fn)))
+    fired |= set(categories_fired(
+        GRAPH, cache_dir=_cache_holding_an_excluded_file(tmp_path / "cache")))
     # index rather than unpack: _run's arity changed once already, and a
     # positional unpack turns that into a confusing ValueError in an unrelated test
     categories = __import__("pipeline.validate", fromlist=["_run"])._run(GRAPH, CANDIDATES)[5]
