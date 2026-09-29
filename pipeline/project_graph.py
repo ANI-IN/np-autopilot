@@ -52,6 +52,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import db, graphio, layout, taxonomy                # noqa: E402
+from pipeline.lib import freshness                                  # noqa: E402
 from pipeline.lib.paths import KNOWLEDGE_DIR, REPO_ROOT                          # noqa: E402
 
 #: Coordinates that make an assertion id. Mirrors ASSERTION_COORDS in
@@ -306,6 +307,12 @@ def main() -> int:
     ap.add_argument("--scope", default="public", choices=["public", "full"])
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+
+    # Phase C refuses to project a mastersheet older than Drive
+    # (pipeline/lib/freshness.py; owner request 2026-09-30). A dry run writes
+    # nothing and is not gated.
+    if not args.dry_run:
+        freshness.require_fresh("project_graph")
 
     if args.scope == "full":
         # WAS A HARDCODED REFUSAL SAYING THE RECRUITING RLS PATH "DOES NOT EXIST

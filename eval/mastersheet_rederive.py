@@ -36,8 +36,10 @@ import openpyxl                                                      # noqa: E40
 import yaml                                                          # noqa: E402
 
 from pipeline.lib import taxonomy as tax                             # noqa: E402
+from pipeline.lib import freshness                                  # noqa: E402
 from pipeline.lib.paths import CONFIG_DIR, KNOWLEDGE_DIR, REPO_ROOT   # noqa: E402
 
+OWNER_FACTS = REPO_ROOT / "config" / "mastersheet-owner-facts.yaml"
 SHEET = (REPO_ROOT / ".drive-cache" / "02-curriculum" /
          "Resource Collection Mastersheet (Software + System).xlsx")
 
@@ -148,8 +150,32 @@ def main() -> int:
     if not SHEET.exists():
         print(f"  the corpus cache is absent: {SHEET}")
         return 0
+    # never re-derive from a copy older than Drive (owner request 2026-09-30)
+    freshness.require_fresh("mastersheet_rederive")
     sheet, graph = reread(SHEET), from_graph()
     expected = expected_weeks()
+    # A role the OWNER withdrew (config/mastersheet-owner-facts.yaml, origin:
+    # hand) is still in the sheet and deliberately not in the graph. Taken off
+    # the sheet side here and LISTED, so it is an explained difference, never
+    # a silent one — and a fact naming a person the sheet no longer lists is
+    # itself a difference.
+    explained, stale = [], []
+    # Read straight from the YAML: this check must not import the parser it
+    # is checking (tests/test_mastersheet_rederivation.py).
+    facts = yaml.safe_load(OWNER_FACTS.read_text(encoding="utf-8")) or {}
+    for fact in facts.get("withdrawn_roles") or []:
+        assert fact.get("origin") == "hand" and fact.get("asserted_by"), fact
+        dom, seq, role, person = (fact["domain"], int(fact["sequence"]),
+                                  fact["role"], fact["person"])
+        s = sheet.get((dom, seq))
+        field = "primary" if role == "primary" else "backups"
+        if s and person in s[field]:
+            s[field] = [x for x in s[field] if x != person]
+            explained.append(f"{dom}/{seq} {role} {person} — {fact['fact']} "
+                             f"({fact['asserted_by']}, {fact['asserted_at']})")
+        else:
+            stale.append(((dom, seq), "stale owner fact", f"{role} {person} is not in "
+                          "the sheet", "config/mastersheet-owner-facts.yaml"))
 
     keys = sorted(set(sheet) | set(graph))
     print("=" * 96)
@@ -184,6 +210,9 @@ def main() -> int:
               f"{cells[1]:>14} {cells[2]:>14} {cells[3]:>10}")
 
     print("\n" + "=" * 96)
+    diffs += stale
+    for x in explained:
+        print(f"  explained by an owner fact: {x}")
     if diffs:
         print(f"  {len(diffs)} DIFFERENCE(S)")
         for k, field, a, b in diffs:
