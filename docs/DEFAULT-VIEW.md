@@ -34,6 +34,14 @@ dropped; every file and deck is still reachable one hop from its module.
 | behind toggles (nodes) | 4,757 | 5,200 |
 | combined nodes | 8,957 | 8,555 |
 
+**Measured again 2026-09-29, after the MOD and INS merges: 3,307 structure
+nodes / 4,970 edges** (904 of them legacy modules), from the local projection
+via `web/lib/data.py::structure()` and independently from
+`knowledge/merged_graph.json` — the two agree. The 3,355 above was correct when
+measured; the merges since absorbed 48 nodes — modules 942 → 924, and
+instructors 1,953 (1,915 main + 38 mastersheet) → 1,923 across the INS bulk,
+the Velaga/Velega alias and PPL-11's `Bharath`. The edge count is unchanged. **3,307 is the figure to quote.**
+
 `file` rises 1,440 → 1,957 because the 508 unavailable-content nodes were
 typed `live_class` and are now typed `file`. They are still **marked, never
 dropped** — `docs/DOWNLOAD-DISABLED-FILES.md` is unchanged.
@@ -81,8 +89,10 @@ grouping and hiding.
 16 of the collisions are now answered and applied (`config/module-merges.yaml`,
 pass 8). Module nodes 942 → 924, duplicate module labels **15 → 0**. What
 remains de-emphasised is the ~900 legacy modules that never collided with a
-row-B module at all, plus **30 instructor labels still duplicated across the
-two graphs** while the INS bulk is unanswered.
+row-B module at all, plus **4 instructor labels still duplicated across the
+two graphs** — `Bill Ogden` / `William David Ogden` (INS-08/30) and
+`Konstantinos`, `Shelby` (INS-31/32), all left apart by owner decision. It was
+30 before the INS bulk answer was applied.
 
 ---
 
@@ -94,7 +104,7 @@ Targets, against a measured ~360 ms Vercel cold-start + RTT floor:
 |---|---|
 | first render | ≤ 1.0 s p50 |
 | settled layout | ≤ 1.5 s p50 |
-| default-view payload | ≤ 150 KB brotli (3,355 nodes / 4,970 edges) |
+| default-view payload | ≤ 150 KB brotli (3,307 nodes / 4,970 edges) |
 | `/api/*` | ≤ 400 ms p95 |
 | search | ≤ 250 ms p95 warm |
 
@@ -105,8 +115,8 @@ Targets, against a measured ~360 ms Vercel cold-start + RTT floor:
    one length-prefixed blob. One request.
 3. **ETag + `Cache-Control: private, max-age=300, must-revalidate`.**
    `private` because the graph is behind auth.
-4. **Canvas 2D by default; WebGL only behind the topic toggle.** 3,355 arcs is
-   a few ms a frame. 8,555 with topics on is not.
+4. **Canvas 2D by default; WebGL only behind the topic toggle.** 3,307 arcs is
+   a few ms a frame. 8,507 with topics on is not.
 5. **Lazy panels** — `/api/node` on click, never in the bulk payload.
 6. **`pg_trgm` GIN index** for substring search. `nodes_label_idx` already
    serves prefix matching.

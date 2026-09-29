@@ -373,7 +373,7 @@ def structure(conn) -> dict:
     module constant, not an argument.
 
     IT IS BIGGER THAN THE VIEW IT REPLACES, AND THAT IS A RECORDED DECISION.
-    `overview` is capped at 60-odd nodes; this returns roughly 3,355 and 4,970
+    `overview` is capped at 60-odd nodes; this returns 3,307 nodes and 4,970
     edges. docs/DEFAULT-VIEW.md D1/D2 is the owner decision, and the reason is
     that a capped landing view showed a shape the graph does not have.
 

@@ -66,13 +66,21 @@ hazard §I now refuses.
 | **default structure view** | **3,307** | **4,970** |
 | of which legacy modules, faded | 904 | |
 
+**3,307 / 4,970 is the one structure-view figure**, re-measured 2026-09-30 two
+ways that agree: `web/lib/data.py::structure()` on the local projection, and
+the same type filter over `knowledge/merged_graph.json`. `DEFAULT-VIEW.md`'s
+3,355 was correct when measured, before the MOD, INS and PPL-11 merges absorbed
+48 nodes; `PERF-BASELINE.md`'s 3,308 was copied from a B2 comment written
+before PPL-11 (the comment, in `public/index.html`, still says 3,308 — it sits
+in a CSP-hashed inline script, so it is corrected with B3's next edit there).
+
 ---
 
 # B · COMPLETED WORK
 
 | work | commits |
 |---|---|
-| Drive-upload incident handled; `07-risks.md` R19 | (pre-session baseline) |
+| Drive-upload incident handled; `07-risks.md` R20 (first written as R19) | (pre-session baseline) |
 | Phase 0 — row B mapping, SD1–SD4, D2a drafted then approved | `b3add86`, `e358f8f` |
 | Phase 1 — 21 guards written BEFORE the crawler, each mutation-verified; D1/D3/D4/D5/D6 enforced by tests | `b4e473c` |
 | Phase 2 — the crawl: three runs, two filename-collision classes, file-id naming, binaries no longer decoded as noise, redaction v2 as a cache contract, integrity check made permanent, run summary durable | `3eaed24`, `2fa718f`, `65e1f26`, `bf205d8`, `405f9f9`, `b8d6341`, `c4b60bd` |
@@ -226,13 +234,15 @@ f. **Extend to other row-B domains** — scope change, re-run from Phase 2.
 
 # E · OPEN REVIEW ITEMS AND PENDING OWNER DECISIONS
 
-`docs/REVIEW-QUEUE.md` holds **86 rows**. Answered: MOD 16, INS 32, PPL-11.
+`docs/REVIEW-QUEUE.md` holds **86 rows: 51 answered, 35 open.** Answered = the
+owner has decided the row, "leave unresolved" included (convention stated at
+the top of `REVIEW-QUEUE.md`, same in both files).
 
 | prefix | rows | state |
 |---|---:|---|
 | `MOD` | 16 | **all answered and applied** |
 | `INS` | 32 | **all answered** (26 bulk + 6 individual) |
-| `PPL` | 12 | **1 answered** (PPL-11); PPL-01/06 resolved via INS-31/32; **9 open** |
+| `PPL` | 12 | **3 answered** — PPL-11 applied; PPL-01/06 left unresolved with INS-31/32; **9 open** |
 | `DCK` | 14 | **open** — deck filename → instructor proposals |
 | `TOPv` | 3 | **open** — module label variants |
 | `TOPm` | 3 | **open** — mastersheet vs folder label |
@@ -319,8 +329,21 @@ stack — both are the migrations relying on the environment, and both fail
   "view only". `docs/DOWNLOAD-DISABLED-FILES.md`.
 - **The Drive-upload incident**: the database password was **NOT rotated**, by
   owner choice. The uploaded copies were moved out of the corpus folder.
-- **R19/R20 numbering is unresolved.** `07-risks.md` R19 and
-  `docs/CACHE-EXPOSURE.md` §0a both claim R19. Decide; do not leave two.
+- **R19/R20 numbering — RESOLVED 2026-09-30.** The Drive-upload incident is
+  `07-risks.md` **R20**; `docs/CACHE-EXPOSURE.md` §0a keeps R19 for the
+  folder-visibility question.
+- **`07-risks.md` R20 disagrees with this file on two facts, not reconciled
+  here because only the owner knows them:** it says both uploaded artefacts
+  were *still present* 2026-09-29 and that the password rotation was *stated as
+  done* 2026-09-28; the incident bullet above says the copies were moved out and the password was
+  NOT rotated. Re-list the folder read-only and record which is current.
+- **CI has been red on `main` since at least 2026-09-20** — `test`, `payroll`
+  and `secrets` fail, `renderer` passes; no successful run in the last 40.
+  Causes seen in the log: tests that need uncommitted files
+  (`knowledge/candidates.json`, `config/drive.yaml`), a stale frozen baseline in
+  `test_migration_verification`, a JWT literal the `secrets` job finds, and the
+  payroll check. **§D.4's "merge only when all four are green" cannot be met
+  until this is fixed** — a decision for the owner, not a side effect of B3.
 - **Registry drift**: the hardcoded registry in `count_registry.py` versus the
   live folder.
 - **Registry row C is shared "anyone with the link"** — out of scope, but the

@@ -48,8 +48,12 @@ as an improvement.
 ### What this baseline is NOT
 
 `/api/overview` returns 35,204 bytes for ~60 nodes. The structure view returns
-3,308 nodes and 4,970 edges, so B3's payload target is not "smaller than
-35 KB" — it is a payload roughly 55x the node count under 150 KB brotli. The
+3,307 nodes and 4,970 edges, so B3's payload target is not "smaller than
+35 KB" — it is a payload roughly 55x the node count under 150 KB brotli.
+(3,307 measured 2026-09-29 on the local projection, and from
+`knowledge/merged_graph.json`. The 3,308 first written here was copied from a
+B2 comment in `public/index.html` that was correct when written, before PPL-11
+merged `Bharath` into `Bharath Anand` — it was already stale when it was copied.) The
 comparison that matters is bytes per node, and time to a settled layout.
 
 ## Superseded — two runs that produced no usable table

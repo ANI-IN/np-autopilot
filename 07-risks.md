@@ -425,15 +425,16 @@ repo as wrongly public while never checking our own. Full detail in
 
 ---
 
-## R19 — A full working copy of the repository was uploaded INTO the corpus folder
+## R20 — A full working copy of the repository was uploaded INTO the corpus folder
 
 **Likelihood: n/a, it happened · Impact: high · STATUS: NOT REMEDIATED —
 both artefacts were still present when this was written**
 
-> **Numbering note.** `docs/CACHE-EXPOSURE.md` §0a reserves **R19** for the
-> "was the Drive folder ever domain-wide" branch, should it turn out to be the
-> real one. That question is still open. Either this becomes R20 or §0a's
-> reservation is re-pointed — decide, do not leave two R19s.
+> **Numbering note — resolved 2026-09-29.** This was first written as R19,
+> which `docs/CACHE-EXPOSURE.md` §0a had already reserved for the "was the
+> Drive folder ever domain-wide" branch. By owner decision this incident is
+> **R20** and §0a keeps R19. Any older reference to "R19 — the upload" means
+> this section.
 
 Reported by the corpus owner 2026-09-28: a complete working copy of this
 repository was uploaded into the pass-0 corpus folder (`config/drive.yaml ->
@@ -560,4 +561,4 @@ cannot read who else can.*
 | R16 | Reference impl is public | certain | your call |
 | R17 | Excluded payroll file reachable by the cloud identity — **fixed at fetch time 2026-09-17**; the account can still read it on demand | certain | high |
 | R18 | **The repository was PUBLIC for 8 days** — 277 named hiring rejections and 1,625 candidates readable by anyone. Set private on discovery | happened | high |
-| R19 | **A working copy of the repo was uploaded into the corpus folder** — DB password, `graph-sensitive.json`, `.git/`. **Still present 2026-09-29; not remediated** | happened | high |
+| R20 | **A working copy of the repo was uploaded into the corpus folder** — DB password, `graph-sensitive.json`, `.git/`. **Still present 2026-09-29; not remediated** | happened | high |

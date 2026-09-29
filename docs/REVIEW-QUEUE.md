@@ -1,8 +1,15 @@
 # REVIEW QUEUE — 86 decisions, answer by ID
 
-**Generated 2026-09-29 from the four review YAMLs. Nothing here is applied.**
-Every row is `confirmed: false` in its source file; this document is the same
-rows in one place, with a recommendation and an ID to answer by.
+**Generated 2026-09-29 from the four review YAMLs; answers recorded below as
+they arrived.** 51 of 86 rows are answered — MOD 16, INS 32, PPL 3 — and the
+applied ones are merged by pass 8 (`pipeline/08_merge_graphs.py`). **35 remain
+open**: TOPv 3, TOPm 3, TOPt 6, PPL 9, DCK 14. The tables below are the rows as
+first generated, with a recommendation and an ID to answer by.
+
+**Count convention.** A row is **answered** once the owner has decided it —
+including "leave unresolved", which is a decision, not a pending question
+(INS-08/30, INS-31/32 and, with them, PPL-01/06). A row is **open** only while
+it has no owner answer. `docs/HANDOFF.md` §E uses the same convention.
 
 **A recommendation is not a decision.** Where it says *needs owner knowledge*,
 the evidence genuinely does not settle it and a guess would be the
@@ -200,7 +207,7 @@ Recorded in `config/instructor-identity.yaml`. Hand-entered facts emit no
 |---|---|
 | `INS-05` `INS-06` | **One person.** Canonical `Balaram Velaga` (the mastersheet spelling); `Balaram Velega` is an alias. Both spellings stay in `label_raw` and provenance — neither source is edited (§1). The merged instructor shows both modules. |
 | `INS-08` `INS-30` | **Unresolved by decision.** `Bill Ogden` / `William David Ogden` stay separate nodes, rendered **unconfirmed** in the matrix. Not a gap in review. |
-| `INS-31` `INS-32` (with `PPL-06`, `PPL-01`) | **Full names unknown.** `Konstantinos` and `Shelby` remain open review items and **keep their module attachments**, marked unconfirmed. Moving real modules onto an unconfirmed full name would attach them to a guess. |
+| `INS-31` `INS-32` (with `PPL-06`, `PPL-01`) | **Full names unknown — left unresolved by decision** (answered, not open; see the count convention above). `Konstantinos` and `Shelby` stay unresolved nodes and **keep their module attachments**, marked unconfirmed. Moving real modules onto an unconfirmed full name would attach them to a guess. |
 
 Remaining open: 78 of 86.
 
@@ -237,3 +244,16 @@ evidence and is not treated as a conflict.
 | still duplicated | `Bill Ogden`, `William David Ogden` (INS-08/30), `Konstantinos`, `Shelby` (INS-31/32) — all four by owner decision |
 
 Remaining open: **36 of 86** — `TOPv` 3, `TOPm` 3, `TOPt` 6, `PPL` 10, `DCK` 14.
+
+### PPL-11 — answered 2026-09-29, applied by pass 8
+
+Recorded in `config/instructor-identity.yaml` (`bharath-anand`, `origin: hand`).
+
+| id | answer |
+|---|---|
+| `PPL-11` | **`Bharath` (Test Engineering, primary) is Bharath Anand.** Merged: one `Bharath Anand` instructor node; `Bharath` stays in `label_raw` and provenance (§1). Verified in `knowledge/merged_graph.json` 2026-09-30 — no standalone `Bharath` node remains. |
+
+Remaining open: **35 of 86** — `TOPv` 3, `TOPm` 3, `TOPt` 6, `PPL` 9
+(PPL-02…05, 07…10, 12), `DCK` 14. The earlier "36" counted PPL-11 as open;
+the earlier "Remaining open" lines above are the running count at the time
+each answer landed.

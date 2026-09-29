@@ -152,8 +152,11 @@ approval.py` parses it on every run, so blanking `Approved by` or `Date` makes
 domains ticked there are walked. Verified by blanking it, running the crawler,
 and restoring — `tests/test_d2a_approval_gate.py`.
 
-Extraction, projection and ingestion remain unbuilt; the crawl produced a text
-cache under `.drive-cache/content-rowB/` and nothing else.
+**Since built (updated 2026-09-29):** the crawl's text cache under
+`.drive-cache/content-rowB/` now feeds the content model
+(`pipeline/07_build_content_graph.py`) and the merge (`08_merge_graphs.py`).
+The merged public half — 8,507 nodes — is projected to the LOCAL database
+only; production still holds the pre-crawl graph (`docs/HANDOFF.md` §A).
 
 ### What D2 says today, and what is being proposed instead
 
@@ -277,12 +280,14 @@ when its hardcoded refusal was replaced by a query. Mutation-verified in
 recorded as `origin: hand` in `config/out-of-corpus-facts.yaml` — asserted, not
 read, and never presentable as though a scan produced them (§A.5):
 
-- **SD1's program weeks — DECIDED.** Full Stack runs DSA in program weeks 1-5
-  and Scalable Systems Design in 6-8 before its own modules, so its five
-  modules are program weeks **9-13** in the order of the active `Full Stack`
-  tab. `out-of-corpus-facts.yaml -> sd1-full-stack-program-weeks`.
-  **SD1 only.** SD3 keeps `program_week: null` with reason
-  `no-curriculum-week`, and the offset of 8 is still never computed —
+- **Program weeks — DECIDED, for all four domains.** Each runs DSA in program
+  weeks 1-5 and Scalable Systems Design in 6-8 before its own modules:
+  Full Stack **9-13**, Frontend **9-12**, Backend **9-13**, Testing **9-14**,
+  written out per module in `out-of-corpus-facts.yaml -> rowb-program-weeks`.
+  That fact superseded the SD1-only one first recorded here
+  (`sd1-full-stack-program-weeks`, no longer in the file); SD3's weeks, once
+  `program_week: null` with reason `no-curriculum-week`, are now 9-13 by owner
+  fact. Values, not a formula: the offset of 8 is still never computed —
   `ArithmeticWeekRefused` stands.
 - **Revamp currency — DECIDED.** The **base** versions are current; the seven
   `Revamp 2024` / `Q4 2024: Revamp` / `New Material Aug 2023` subtrees that
