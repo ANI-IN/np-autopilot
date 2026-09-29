@@ -51,10 +51,16 @@ def baseline():
 
 @pytest.fixture(scope="module")
 def graph():
-    """The UNION. The baseline pins the whole graph; RLS separates the halves
-    in Postgres, not the filesystem."""
+    """The UNION, and now the MERGED union.
+
+    The baseline pins what `project_graph.py` actually writes; RLS separates
+    the halves in Postgres, not the filesystem. This read `load_graph` until
+    2026-09-29, so it pinned knowledge/graph.json while the projection had
+    become both graphs merged on the answered REVIEW-QUEUE rows — the test
+    compared the baseline against a graph nobody projects.
+    """
     from pipeline.lib import graphio
-    return graphio.load_graph()
+    return graphio.load_merged(include_sensitive=True)
 
 
 def _checked(baseline):
@@ -99,7 +105,7 @@ def test_the_baseline_records_what_will_move_it(baseline):
 
 def _mismatches(verify, baseline, mutate):
     from pipeline.lib import graphio
-    g = graphio.load_graph()
+    g = graphio.load_merged(include_sensitive=True)
     mutate(g)
     rows = verify.compare(_checked(baseline), verify.measure(g))
     return [p for ok, p, _ in rows if not ok]
