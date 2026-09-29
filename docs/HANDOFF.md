@@ -41,7 +41,7 @@ this session has been deployed or applied.
 |---|---|---|
 | graph | 3,146 nodes / 4,021 edges, `projected_at` **2026-09-20 11:00:22Z** (see below) | merged public **8,507 / 42,741** |
 | UI | the old bounded ~60-node overview | structure view, panels, matrix, timeline, filters |
-| database | migrations through **0016** | local PostgreSQL 17 with **0017, 0018, 0019 applied** |
+| database | migrations through **0016** | local Supabase stack with **0017–0020 applied** |
 | connections | one per request | one per warm instance (cold-start fixes) |
 | `/api/structure` | **404, does not exist** | serving 3,307 nodes / 4,970 edges |
 
@@ -175,7 +175,7 @@ Push `content-crawl-rowB` → show all four CI jobs green → merge into `main`
 
 ## 5 · Phase C (database)
 `pg_dump` of exactly the tables `project_graph.py` replaces, to a gitignored
-path (report size and row counts) → apply **0017, 0018, 0019** to production
+path (report size and row counts) → apply **0017, 0018, 0019, 0020** to production
 (`migrate.py status` before and after) → project the merged public half →
 `verify_migration.py` and `curation.py check` → confirm the curation tables
 (people, aliases, workflow owners, notes, audit) are untouched, with row counts
@@ -315,10 +315,15 @@ stack — both are the migrations relying on the environment, and both fail
   on Supabase's own image does (`=X/postgres`). Safe in production by
   environment, not by migration. `test_the_hook_is_callable_by_the_role_gotrue_uses`
   fails.
-- **Proposed, not written:** one migration (0020) — `alter table
-  auth_hook_refusals enable row level security` and `revoke execute … from
-  public` on both hook functions. Needs the owner's go-ahead; it would go to
-  production in Phase C with 0017–0019.
+- **Fixed by migration 0020 — written and tested LOCALLY only** (owner approval
+  2026-09-30). RLS on `auth_hook_refusals` with one insert policy for
+  `supabase_auth_admin`; EXECUTE on the hook and `_hook_pick` revoked from
+  PUBLIC, anon, authenticated and service_role, granted to
+  `supabase_auth_admin` only. Up, down and up again on the local stack; both
+  failing tests green; new tests call the hook AS `supabase_auth_admin` under
+  RLS (allow, and refuse-with-recorded-row) and as each client role (denied).
+  The down restores production's pre-0020 ACLs, never the fresh-apply PUBLIC
+  grant. **Goes to production in Phase C with 0017–0019.**
 
 - **`interview-kickstart.com` (hyphen): 185 files.** IT confirmation still
   pending. Included in the main externally-owned list by owner decision.
