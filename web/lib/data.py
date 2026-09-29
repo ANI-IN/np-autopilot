@@ -60,6 +60,42 @@ class DepthExceeded(Exception):
 #: a second request on a reused connection cannot see the first one's identity.
 _WARM = None
 
+#: ONE ROUND TRIP, not two. `set_config('role', ..., true)` is what `SET LOCAL
+#: ROLE` does, and both settings are still transaction-LOCAL — which is the
+#: property the reset depends on. Two statements meant two network round trips
+#: on every request, paid before any query ran.
+_SETUP_SQL = ("select set_config('request.jwt.claims', %s, true),"
+              "       set_config('role', 'authenticated', true)")
+
+
+def _warm_connection():
+    global _WARM
+    if _WARM is None or getattr(_WARM, "closed", True):
+        _WARM = _db.connect(_db.TRANSACTION)
+    return _WARM
+
+
+def _discard():
+    global _WARM
+    dead, _WARM = _WARM, None
+    if dead is not None:
+        try:
+            dead.close()
+        except Exception:                                              # noqa: BLE001
+            pass
+
+
+def _reset_or_discard(conn):
+    """What the finally: below does, for a failure before the yield."""
+    try:
+        conn.rollback()
+    except Exception:                                                  # noqa: BLE001
+        _discard()
+
+
+def _begin(conn, claims_json: str):
+    with conn.cursor() as cur:
+        cur.execute(_SETUP_SQL, (claims_json,))
 
 
 @contextmanager
@@ -73,24 +109,33 @@ def request_connection(identity_subject: str | None):
     catch and work around.
     """
     global _WARM
-    conn = _WARM
-    if conn is None or getattr(conn, "closed", True):
-        conn = _db.connect(_db.TRANSACTION)
-        _WARM = conn
+    claims = {"role": "authenticated"}
+    if identity_subject:
+        claims["sub"] = str(identity_subject)
+    claims_json = json.dumps(claims)
+    conn = _warm_connection()
+    # A CONNECTION THAT DIED WHILE IDLE. The pooler or the network can drop the
+    # reused connection between requests, and psycopg only finds out on the
+    # next write — `closed` is still False. The setup statement is that write.
+    # It is retried ONCE, on a fresh connection, and only when psycopg reports
+    # the connection itself broken: nothing of the caller's has run yet, so a
+    # retry here cannot run anything twice. A genuine SQL error, or a failure
+    # once the endpoint has the connection, is never retried.
+    # tests/test_warm_connection_recovers.py kills it both ways.
     try:
-        with conn.cursor() as cur:
-            claims = {"role": "authenticated"}
-            if identity_subject:
-                claims["sub"] = str(identity_subject)
-            # ONE ROUND TRIP, not two. `set_config('role', ..., true)` is what
-            # `SET LOCAL ROLE` does, and both settings are still
-            # transaction-LOCAL — which is the property the reset depends on.
-            # Two statements meant two network round trips on every request,
-            # paid before any query ran.
-            cur.execute(
-                "select set_config('request.jwt.claims', %s, true),"
-                "       set_config('role', 'authenticated', true)",
-                (json.dumps(claims),))
+        _begin(conn, claims_json)
+    except Exception:
+        if not (conn.closed or getattr(conn, "broken", False)):
+            _reset_or_discard(conn)
+            raise
+        _discard()
+        conn = _warm_connection()          # a failure here propagates: no loop
+        try:
+            _begin(conn, claims_json)
+        except Exception:
+            _reset_or_discard(conn)
+            raise
+    try:
         yield conn
     finally:
         # ROLLBACK, NOT CLOSE. Both settings above are transaction-LOCAL —
