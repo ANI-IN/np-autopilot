@@ -135,7 +135,18 @@ class Graph:
             # bare node and the instructor TABLE fills it in; returning early
             # meant whichever came first won and the table's columns were lost.
             existing = self.nodes[node_id]
-            existing["sources"].extend(sources)
+            # DEDUPED. A provenance record identical on every field is the SAME
+            # assertion, and `project_graph.assertion_id` is content-addressed,
+            # so 28 copies of one record become 28 rows with one id and the
+            # projection aborts on a collision. Measured before this: 216
+            # fully-identical duplicates, from topic text that repeats down a
+            # spreadsheet tab where the row is not part of the locator.
+            seen = {json.dumps(s, sort_keys=True) for s in existing["sources"]}
+            for s in sources:
+                k = json.dumps(s, sort_keys=True)
+                if k not in seen:
+                    existing["sources"].append(s)
+                    seen.add(k)
             for k, v in props.items():
                 if v is not None and k not in ("label_raw",):
                     existing.setdefault(k, v)

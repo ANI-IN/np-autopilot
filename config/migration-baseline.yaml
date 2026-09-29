@@ -2,7 +2,7 @@ version: 1
 note: "Frozen migration reference. Every migration-verification run asserts against THIS,\
   \ never against a live rebuild \u2014 a live rebuild would move with the corpus and prove\
   \ nothing. Re-freeze only in a commit that says why."
-frozen_at: '2026-09-17T05:58:38+00:00'
+frozen_at: '2026-09-29T11:24:14+00:00'
 built_as_of: '2026-09-09'
 plugin_version: 0.1.9
 taxonomy_version: 2
@@ -11,124 +11,193 @@ open_questions_that_will_move_these:
   \ Resolving any of them moves edge_counts and component structure."
 scopes:
   full:
-    content_hash: 0165f164e104d6add2b54a014a839692a8c1bab1a88de1f95c889e46c5c14250
+    content_hash: 4d5ce4f6fcf111fef1fa8496a47821d212352132132b3a8f7031cb4fb798e7d9
     totals:
-      nodes: 5048
-      edges: 36677
+      nodes: 10438
+      edges: 44879
     node_counts:
-      domain: 42
-      file: 74
-      instructor: 3817
-      module: 922
+      assignment: 64
+      assignment_review: 3
+      class_session: 134
+      code_repo: 38
+      content_topic: 2770
+      curriculum_doc: 23
+      domain: 46
+      file: 1957
+      instructor: 3826
+      instructor_contact: 28
+      module: 924
       person: 43
       program: 42
+      program_week: 20
+      slide_deck: 412
       theme: 16
       workflow: 92
     edge_counts:
+      assessed_by: 64
       belongs_to: 92
       contains: 351
       covers: 28
+      covers_topic: 6271
       delivered_by: 43
+      delivers: 460
+      delivers_session: 787
+      described_by: 23
       expert_in: 1155
+      introduces: 13
+      offers: 20
       owned_by: 55
+      presented_with: 412
+      reachable_at: 36
+      reviewed_in: 3
+      scheduled_in: 20
+      ships_with: 38
       sourced_from: 32656
       supported_by: 58
+      taught_by: 55
       teaches: 2239
     duplicates:
-      distinct_colliding_triples: 1687
-      extra_rows: 26448
+      distinct_colliding_triples: 3165
+      extra_rows: 30610
       by_rel:
+        covers_topic: 1397
+        delivers_session: 74
         expert_in: 22
+        reachable_at: 7
         sourced_from: 1665
     provenance:
       entries_by_origin:
-        corpus: 32730
-        hand: 15
-      nodes_total: 5048
-      nodes_with_sources: 5048
-      nodes_with_hand_provenance: 15
+        corpus: 41493
+        hand: 35
+      nodes_total: 10438
+      nodes_with_sources: 10438
+      nodes_with_hand_provenance: 35
     components:
-      excluding_provenance: 42
-      largest: 1881
-      isolated: 2878
+      excluding_provenance: 44
+      largest: 5847
+      isolated: 2877
   public:
-    content_hash: eba7c479301879907de4524f835c48350444df8980ea5dd6f3ce929234172082
+    content_hash: 77aabd8a31f3df20643e6222f7be772a11b9ce16cac55b31de7ac98e88cb58d5
     totals:
-      nodes: 3146
-      edges: 34575
+      nodes: 8508
+      edges: 42741
     node_counts:
-      domain: 42
-      file: 74
-      instructor: 1915
-      module: 922
+      assignment: 64
+      assignment_review: 3
+      class_session: 134
+      code_repo: 38
+      content_topic: 2770
+      curriculum_doc: 23
+      domain: 46
+      file: 1957
+      instructor: 1924
+      module: 924
       person: 43
       program: 42
+      program_week: 20
+      slide_deck: 412
       theme: 16
       workflow: 92
     edge_counts:
+      assessed_by: 64
       belongs_to: 92
       contains: 351
       covers: 28
+      covers_topic: 6271
       delivered_by: 43
+      delivers: 460
+      delivers_session: 787
+      described_by: 23
       expert_in: 1155
+      introduces: 13
+      offers: 20
       owned_by: 55
+      presented_with: 412
+      reviewed_in: 3
+      scheduled_in: 20
+      ships_with: 38
       sourced_from: 30554
       supported_by: 58
+      taught_by: 55
       teaches: 2239
     duplicates:
-      distinct_colliding_triples: 1579
-      extra_rows: 26331
+      distinct_colliding_triples: 3050
+      extra_rows: 30485
       by_rel:
+        covers_topic: 1397
+        delivers_session: 74
         expert_in: 22
         sourced_from: 1557
     provenance:
       entries_by_origin:
-        corpus: 30628
-        hand: 15
-      nodes_total: 3146
-      nodes_with_sources: 3146
-      nodes_with_hand_provenance: 15
+        corpus: 39355
+        hand: 35
+      nodes_total: 8508
+      nodes_with_sources: 8508
+      nodes_with_hand_provenance: 35
     components:
-      excluding_provenance: 42
-      largest: 1881
-      isolated: 976
-content_hash: 0165f164e104d6add2b54a014a839692a8c1bab1a88de1f95c889e46c5c14250
+      excluding_provenance: 41
+      largest: 5822
+      isolated: 978
+content_hash: 77aabd8a31f3df20643e6222f7be772a11b9ce16cac55b31de7ac98e88cb58d5
 totals:
-  nodes: 5048
-  edges: 36677
+  nodes: 8508
+  edges: 42741
 node_counts:
-  domain: 42
-  file: 74
-  instructor: 3817
-  module: 922
+  assignment: 64
+  assignment_review: 3
+  class_session: 134
+  code_repo: 38
+  content_topic: 2770
+  curriculum_doc: 23
+  domain: 46
+  file: 1957
+  instructor: 1924
+  module: 924
   person: 43
   program: 42
+  program_week: 20
+  slide_deck: 412
   theme: 16
   workflow: 92
 edge_counts:
+  assessed_by: 64
   belongs_to: 92
   contains: 351
   covers: 28
+  covers_topic: 6271
   delivered_by: 43
+  delivers: 460
+  delivers_session: 787
+  described_by: 23
   expert_in: 1155
+  introduces: 13
+  offers: 20
   owned_by: 55
-  sourced_from: 32656
+  presented_with: 412
+  reviewed_in: 3
+  scheduled_in: 20
+  ships_with: 38
+  sourced_from: 30554
   supported_by: 58
+  taught_by: 55
   teaches: 2239
 duplicates:
-  distinct_colliding_triples: 1687
-  extra_rows: 26448
+  distinct_colliding_triples: 3050
+  extra_rows: 30485
   by_rel:
+    covers_topic: 1397
+    delivers_session: 74
     expert_in: 22
-    sourced_from: 1665
+    sourced_from: 1557
 provenance:
   entries_by_origin:
-    corpus: 32730
-    hand: 15
-  nodes_total: 5048
-  nodes_with_sources: 5048
-  nodes_with_hand_provenance: 15
+    corpus: 39355
+    hand: 35
+  nodes_total: 8508
+  nodes_with_sources: 8508
+  nodes_with_hand_provenance: 35
 components:
-  excluding_provenance: 42
-  largest: 1881
-  isolated: 2878
+  excluding_provenance: 41
+  largest: 5822
+  isolated: 978

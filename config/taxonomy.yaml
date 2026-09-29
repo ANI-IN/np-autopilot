@@ -895,6 +895,31 @@ common_properties:
 # moving them is a data decision rather than a mechanism decision.
 property_scopes:
   public:
+    # --- added 2026-09-29 for the merged projection (pass 8 + B1). ---------
+    # All sixteen are STRUCTURAL or PROVENANCE. None is contact data; the
+    # three contact fields stay under `sensitive` below and reach only the
+    # gitignored half (docs/CONTACT-DATA.md §R).
+    #
+    # They are listed here rather than defaulted because the old default put
+    # an unclassified field in the PUBLIC half — so widening defaulted toward
+    # exposure, and each of these had to be looked at once.
+    - attached_file        # a session edge naming the file that landed on it
+    - confirmed            # false on the MOD-04 edges: kept, not asserted
+    - from                 # which source kind a topic edge came from
+    - historical           # a superseded revamp subtree, or a deck named Old
+    - ins_id               # which INS row merged this edge's endpoint
+    - join                 # how a proposed join was arrived at
+    - label_had_link       # the label carried a URL; original in label_raw
+    - match_evidence       # why a file was attached to that session
+    - merge_ids            # which answered review rows produced this node
+    - merged_from          # the id this edge used to point at
+    - merged_label_raw     # the absorbed node's label, kept as a citation key
+    - mod_id               # which MOD row merged this edge's endpoint
+    - page                 # locator: page number in a document
+    - slide                # locator: slide number in a deck
+    - tab                  # locator: worksheet tab name
+    - tier                 # which evidence tier a staffing edge belongs to
+    # ----------------------------------------------------------------------
     - admitted_by
     - alerts
     - avg_rating

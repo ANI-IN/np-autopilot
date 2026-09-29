@@ -52,11 +52,20 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import db, graphio, taxonomy                        # noqa: E402
-from pipeline.lib.paths import KNOWLEDGE_DIR                          # noqa: E402
+from pipeline.lib.paths import KNOWLEDGE_DIR, REPO_ROOT                          # noqa: E402
 
 #: Coordinates that make an assertion id. Mirrors ASSERTION_COORDS in
 #: 03_resolve.py — the collision check in DECISIONS §A.4 is what fixed this set.
-COORDS = ("origin", "file", "sheet", "row", "column", "page", "within_cell", "ordinal")
+#: The coordinates that make a provenance record UNIQUE. `slide` and `tab` were
+#: added 2026-09-29 with the content graph: a deck topic cites a slide and a
+#: spreadsheet topic cites a tab, and without them 64 distinct sources on one
+#: topic collapsed to 3 assertion ids and the projection aborted on a collision.
+#: Adding a coordinate changes every assertion id once. They are content-
+#: addressed and rebuilt by TRUNCATE + COPY on every projection, and nothing
+#: outside the table references them, so a one-time change is safe — but it is
+#: a change, which is why it is written down rather than just done.
+COORDS = ("origin", "file", "sheet", "row", "column", "page", "slide", "tab",
+          "within_cell", "ordinal")
 
 #: Node keys that become columns rather than props.
 NODE_COLUMNS = {"id", "type", "label", "label_raw", "sensitive", "sources"}
@@ -74,8 +83,79 @@ def assertion_id(node_id: str, prop: str | None, src: dict) -> str:
     return hashlib.sha256("\x1f".join(parts).encode()).hexdigest()
 
 
-def rows_for(graph: dict):
+#: DRIVE_URL IS DERIVED, not stored by pass 1, so the shape of the link is one
+#: decision in one place. `open?id=` rather than `/file/d/<id>/view` because the
+#: corpus holds several Drive types and only the generic form resolves all.
+def _drive_url(fid):
+    return f"https://drive.google.com/open?id={fid}" if fid else None
+
+
+def _file_rows() -> list[tuple]:
+    """Every file the projection may cite: pass 1's corpus AND the row-B crawl.
+
+    Two manifests, one table. `files.relative_path` carries
+    `check (relative_path !~ '^/')` and the crawl records absolute paths, so
+    the leading slash is stripped here — the same normalisation `_file_ref`
+    applies to provenance, and they must agree or every content citation is a
+    foreign-key violation.
+    """
+    rows: dict[str, tuple] = {}
+    manifest = json.loads((KNOWLEDGE_DIR / "files.json").read_text(encoding="utf-8"))
+    for r in manifest["files"] + manifest["failures"]:
+        rows[r["path"]] = (r["path"], r.get("sha256"), r.get("bytes"),
+                           r.get("sheet_count"), bool(r.get("parsed")),
+                           r.get("drive_file_id"),
+                           _drive_url(r.get("drive_file_id")))
+
+    crawl = CACHE_MANIFEST
+    if crawl.exists():
+        for fid, r in json.loads(crawl.read_text(encoding="utf-8")).items():
+            rel = (r.get("path") or "").lstrip("/")
+            if not rel:
+                continue
+            rows.setdefault(rel, (rel, r.get("sha256"), r.get("bytes"), None,
+                                  r.get("action") == "export", fid,
+                                  _drive_url(fid)))
+
+        # THE DOMAIN FOLDERS THEMSELVES. A domain node's evidence is the Drive
+        # FOLDER it was found in — pass 7 records `evidence_kind:
+        # folder-structure` — and `node_sources` carries
+        # `check (origin <> 'corpus' or file is not null)`: a corpus assertion
+        # must name something in `files`. That constraint is right, so the
+        # folder is registered rather than the assertion weakened to `hand`.
+        #
+        # Derived from the manifest's own first path segment, so a fifth domain
+        # entering scope needs no edit here.
+        for rel in {p.split("/", 1)[0] for p in list(rows) if "/" in p}:
+            rows.setdefault(rel, (rel, None, None, None, False, None, None))
+    return list(rows.values())
+
+
+def _file_ref(raw, known: set) -> tuple[str | None, str | None]:
+    """(value for node_sources.file, extra evidence) for one provenance path.
+
+    TWO SHAPES REACH HERE AND ONLY ONE IS A FILE. The 75-file corpus records a
+    relative path; the row-B crawl records an ABSOLUTE one (`/SD1: Full
+    Stack/...`), and `files.relative_path` carries
+    `check (relative_path !~ '^/')`, so the leading slash is stripped.
+
+    Four of the paths are not files at all — `/SD1: Full Stack` and its three
+    siblings are the DOMAIN FOLDERS, cited as evidence that a domain node
+    exists. `node_sources.file` is a foreign key into `files`, so a folder
+    cannot go there. It becomes evidence text instead, which is what it always
+    was: the fact is "this folder is the domain", not "this file says so".
+    """
+    if not raw:
+        return None, None
+    rel = raw.lstrip("/")
+    if rel in known:
+        return rel, None
+    return None, f"drive folder: {rel}"
+
+
+def rows_for(graph: dict, known_files: set | None = None):
     """(nodes, edges, sources) as tuples ready for COPY."""
+    known_files = known_files or set()
     nodes, edges, sources = [], [], []
     for n in graph["nodes"]:
         props = {k: v for k, v in n.items() if k not in NODE_COLUMNS}
@@ -98,13 +178,17 @@ def rows_for(graph: dict):
                 # are real provenance and they are not the same fact, so they
                 # land in different columns rather than being flattened to text.
                 col = src.get("column")
+                fref, extra = _file_ref(src.get("file"), known_files)
+                evidence = src.get("evidence")
+                if extra:
+                    evidence = f"{evidence}; {extra}" if evidence else extra
                 sources.append((
-                    aid, n["id"], prop, src.get("origin"), src.get("file"),
+                    aid, n["id"], prop, src.get("origin"), fref,
                     src.get("sheet"), src.get("row"),
                     col if isinstance(col, int) else None,
                     col if isinstance(col, str) else None,
                     src.get("page"), src.get("within_cell"),
-                    src.get("ordinal", 0), src.get("evidence"),
+                    src.get("ordinal", 0), evidence,
                     src.get("entered_at"), prop_ordinal,
                 ))
     # PROVENANCE IS NOT AN EDGE HERE. DECISIONS §A.3: moving it to its own table
@@ -132,6 +216,9 @@ def rows_for(graph: dict):
 
 #: What the sensitive half needs before it may be projected. Checked, not
 #: assumed — see the refusal in main().
+#: The row-B crawl's manifest. Absent on a clone that has not crawled.
+CACHE_MANIFEST = REPO_ROOT / ".drive-cache" / "content-rowB" / "manifest.json"
+
 RECRUITING_POLICY = "nodes_recruiting_select"
 RECRUITING_FUNC = "np_can_see_sensitive"
 
@@ -300,7 +387,13 @@ def main() -> int:
         if leaked:
             sys.exit(f"{len(leaked)} sensitive nodes in the public half — refusing")
 
-    nodes, edges, sources = rows_for(graph)
+    # The `files` table must know every path provenance cites, so it is built
+    # BEFORE the rows that reference it — pass 1's manifest plus the row-B
+    # crawl's. Without the second, 1,437 content files are foreign-key
+    # violations and the projection aborts on the first one.
+    file_rows = _file_rows()
+    known_files = {r[0] for r in file_rows}
+    nodes, edges, sources = rows_for(graph, known_files)
     content = graphio.content_hash(graph)
 
     print("=" * 74)
@@ -316,18 +409,7 @@ def main() -> int:
         print("\n  --dry-run: nothing written")
         return 0
 
-    manifest = json.loads((KNOWLEDGE_DIR / "files.json").read_text(encoding="utf-8"))
-    # DRIVE_URL IS DERIVED HERE, not stored by pass 1, so the shape of the link
-    # is one decision in one place. `open?id=` rather than `/file/d/<id>/view`
-    # because the corpus holds several Drive types and only the generic form
-    # resolves all of them.
-    def _drive_url(fid):
-        return f"https://drive.google.com/open?id={fid}" if fid else None
-
-    files = [(r["path"], r.get("sha256"), r.get("bytes"), r.get("sheet_count"),
-              bool(r.get("parsed")), r.get("drive_file_id"),
-              _drive_url(r.get("drive_file_id")))
-             for r in manifest["files"] + manifest["failures"]]
+    files = file_rows
     node_types = [(n["name"], (n.get("description") or "").strip()[:400])
                   for n in taxonomy.node_types()]
     edge_rels = [(e["name"], e["from"], e["to"], (e.get("source") or "").strip()[:400])

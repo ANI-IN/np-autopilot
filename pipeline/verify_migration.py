@@ -253,8 +253,13 @@ def main() -> int:
     else:
         # `full` is the union of both halves; `public` is the committed file
         # alone, which is what this phase projects.
-        g = graphio.load_graph(Path(args.graph),
-                               include_sensitive=(scope == "full"))
+        # THE MERGED GRAPH, because that is what project_graph.py writes.
+        # This read `load_graph` until 2026-09-29 and so described
+        # knowledge/graph.json alone — 3,146 nodes against a projection of
+        # 8,508. Running it in file mode reported 32/32 VERIFIED while the
+        # database held something else entirely, which is the shape docs/A7B.md
+        # catalogues: a green check comparing two things that already agreed.
+        g = graphio.load_merged(include_sensitive=(scope == "full"))
     actual = measure(g)
 
     if args.freeze:
@@ -277,10 +282,8 @@ def main() -> int:
                 # TWO scopes, because the database deliberately holds only the
                 # public half in this phase. Verifying it against the full
                 # baseline would fail on every count and prove nothing.
-                "full": measure(graphio.load_graph(Path(args.graph),
-                                                   include_sensitive=True)),
-                "public": measure(graphio.load_graph(Path(args.graph),
-                                                     include_sensitive=False)),
+                "full": measure(graphio.load_merged(include_sensitive=True)),
+                "public": measure(graphio.load_merged(include_sensitive=False)),
             },
             **actual,
         }
