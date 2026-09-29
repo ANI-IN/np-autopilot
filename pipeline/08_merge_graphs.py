@@ -43,6 +43,7 @@ def main() -> int:
     content_g = json.loads(CONTENT.read_text(encoding="utf-8"))
     spec = mm.load_spec()
     merged = mm.merge(main_g, content_g, spec)
+    not_topics = sorted(n["id"] for n in merged["nodes"] if n.get(mm.NOT_A_TOPIC))
 
     before_nodes = len(main_g["nodes"]) + len(content_g["nodes"])
     before_edges = len(main_g["edges"]) + len(content_g["edges"])
@@ -133,6 +134,12 @@ def main() -> int:
         print("    still duplicated, and why:")
         for lab in sorted(after_ins):
             print(f"      {after_ins[lab]}x {lab}")
+
+    by_id = {n["id"]: n for n in merged["nodes"]}
+    print(f"\n  D1: topics that are a person's name, marked {mm.NOT_A_TOPIC}: "
+          f"{len(not_topics)}")
+    for i in not_topics:
+        print(f"      {by_id[i]['label']}")
 
     OUT.write_text(json.dumps(merged, indent=1, sort_keys=True), encoding="utf-8")
     print(f"\n  -> {OUT}")

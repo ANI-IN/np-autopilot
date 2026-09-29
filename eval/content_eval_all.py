@@ -60,7 +60,10 @@ def sessions(m, kind):
 
 
 def topics(m, limit=15):
-    es = sorted(out(m, "module_topic"),
+    # D1: a topic whose label is a person's name is marked not_a_topic by pass
+    # 8 and is never ranked (pipeline/lib/module_merge.py).
+    es = sorted((e for e in out(m, "module_topic")
+                 if not N[e["target"]].get("not_a_topic")),
                 key=lambda e: (e.get("rank") if e.get("rank") is not None else 99,
                                N[e["target"]]["label"]))
     seen, rows = set(), []

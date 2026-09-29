@@ -120,7 +120,11 @@ def main() -> int:
         # --- facts -----------------------------------------------------------
         decks = [e for e in out if e["rel"] == R["module_deck"]]
         superseded = [e for e in decks if e.get("superseded_by")]
-        topics = [e for e in out if e["rel"] == R["module_topic"]]
+        all_topics = [e for e in out if e["rel"] == R["module_topic"]]
+        # D1: a person's name is not a topic (module_merge.mark_person_name_topics).
+        # Held back from the count and the ranking, and SAID so below.
+        not_topics = [e for e in all_topics if N[e["target"]].get("not_a_topic")]
+        topics = [e for e in all_topics if not N[e["target"]].get("not_a_topic")]
         current_topics = [e for e in topics if not e.get("historical")]
         if week:
             wn, we = week
@@ -253,6 +257,12 @@ def main() -> int:
                          + (" · _historical_" if e.get("historical") else ""))
         if not topics:
             lines.append("_no topics extracted_")
+        if not_topics:
+            lines.append("")
+            lines.append(f"_{len(not_topics)} extracted title(s) held back as a person's "
+                         "name, not a topic (D1; kept in the graph, marked "
+                         "`not_a_topic`): " + ", ".join(sorted({md(N[e['target']]['label'])
+                                                              for e in not_topics})) + "_")
         lines.append("")
 
         # --- every other link: module files, curriculum docs, repos -------------

@@ -2,7 +2,7 @@ version: 1
 note: "Frozen migration reference. Every migration-verification run asserts against THIS,\
   \ never against a live rebuild \u2014 a live rebuild would move with the corpus and prove\
   \ nothing. Re-freeze only in a commit that says why."
-frozen_at: '2026-09-29T13:05:39+00:00'
+frozen_at: '2026-09-29T21:33:16+00:00'
 built_as_of: '2026-09-09'
 plugin_version: 0.1.9
 taxonomy_version: 2
@@ -11,7 +11,7 @@ open_questions_that_will_move_these:
   \ Resolving any of them moves edge_counts and component structure."
 scopes:
   full:
-    content_hash: da3f995ec7fb440ac3701be1de47915e3789a60a867102a0796b0458ebe95f0d
+    content_hash: 2ba6ff7353c5d64ec58006c7b6f4e26393c6d8bb93d17efe6eb3305505ab26bd
     totals:
       nodes: 10437
       edges: 51735
@@ -77,7 +77,7 @@ scopes:
       largest: 5846
       isolated: 2877
   public:
-    content_hash: 91db001ce621bfdb166ee77ea80c2f7886494a29084f1808b396d1a1c38611fe
+    content_hash: 6ca2644f40ff5d3c8639f4926593611fed69803d52d34c60b90f96260ac7bc72
     totals:
       nodes: 8507
       edges: 49561
@@ -139,7 +139,7 @@ scopes:
       excluding_provenance: 41
       largest: 5821
       isolated: 978
-content_hash: da3f995ec7fb440ac3701be1de47915e3789a60a867102a0796b0458ebe95f0d
+content_hash: 2ba6ff7353c5d64ec58006c7b6f4e26393c6d8bb93d17efe6eb3305505ab26bd
 totals:
   nodes: 10437
   edges: 51735

@@ -1351,6 +1351,8 @@ function topicLinks(id,limit){
   const rows=[];
   for(const [e,other] of edgesTouching(id)){
     const n=idx.byId.get(other); if(!n||n.t!=='content_topic')continue;
+    // D1: a person's name is not a topic — marked by pass 8, never listed.
+    if(n.p&&n.p.not_a_topic)continue;
     const p=e.p||{};
     const loc=p.slide!==undefined?('slide '+p.slide)
              :p.page!==undefined?('page '+p.page)

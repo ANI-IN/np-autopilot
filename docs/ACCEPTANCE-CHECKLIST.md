@@ -101,7 +101,7 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 | Programme week | 10 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4643/) |
 | Decks | 10 |
-| Topics | 476 current |
+| Topics | 475 current |
 
 **Sessions**
 
@@ -143,13 +143,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Object_Modeling_v1.5_1.pptx](https://drive.google.com/open?id=1TK__grf3TvLf9WQjnVC8-rAWvOTzvYQX)
 - [Toni's Object_Modeling_v1.5_1.pptx](https://drive.google.com/open?id=1w9i-ymI1O9OgbNXdCThkputiiUf4bf8a)
 
-**Top 5 of 476 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 475 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. Object Modeling — slide 1 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
 2. Introduction – Mike Dolt — slide 2 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
 3. Welcome to today’s class, before we begin, — slide 3 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
 4. Optimize Your Experience — slide 4 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
 5. Today’s Agenda — slide 5 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
+
+_1 extracted title(s) held back as a person's name, not a topic (D1; kept in the graph, marked `not_a_topic`): Nikhil Kolekar_
 
 **Other files (0)** _(module-level files, curriculum documents, repositories)_
 
@@ -167,7 +169,7 @@ _none recorded_
 | Programme week | 11 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4644/) |
 | Decks | 13 (3 superseded) |
-| Topics | 239 current, 602 historical |
+| Topics | 238 current, 599 historical |
 
 **Sessions**
 
@@ -215,13 +217,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [API design.pptx](https://drive.google.com/open?id=1Gyd9zTgPt4cKJVGmbtmhreq-GZBqxUjk) · _superseded_
 - [Old API Design.pptx](https://drive.google.com/open?id=1-dnrK70b_vBNMOdSWiHUcBeqIp0GPhuM) · _superseded_
 
-**Top 5 of 841 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 837 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. Backend API Design — slide 1 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
-2. Robert Kreznarich — slide 2 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
-3. Some API Design (a little bit of theory) — slide 4 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
-4. Possible Technologies for APIs — slide 5 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
-5. APIs for Internal System Communication — slide 6 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
+2. Some API Design (a little bit of theory) — slide 4 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
+3. Possible Technologies for APIs — slide 5 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
+4. APIs for Internal System Communication — slide 6 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
+5. Possible Technologies for APIs — slide 7 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
+
+_4 extracted title(s) held back as a person's name, not a topic (D1; kept in the graph, marked `not_a_topic`): Krishnamoorthy Venkatraman, Robert Kreznarich_
 
 **Other files (5)** _(module-level files, curriculum documents, repositories)_
 
@@ -313,7 +317,7 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 | Programme week | 13 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4646/) |
 | Decks | 6 (2 superseded) |
-| Topics | 149 current, 224 historical |
+| Topics | 145 current, 223 historical |
 
 **Sessions**
 
@@ -360,13 +364,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Concurrency Super Set Slides](https://drive.google.com/open?id=1y2Y2ffqMPMAcFijQ_SfcJH2ELgfmU4GvlynBK2qy5ek) · _superseded_
 - [Concurrency Super Set Slides.pptx](https://drive.google.com/open?id=10ionI2eD58mwuKXKzew11cX5o13vNZJr) · _superseded_
 
-**Top 5 of 373 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 368 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. Backend — page 1 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
-2. Robert Kreznarich — page 2 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
-3. Everyone is allowed to talk during class but please keep yourself on mute unless — page 3 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
-4. Let’s introduce ourselves! — page 4 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
-5. This course is broken down into four typical interviewing concepts and topics: — page 5 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
+2. Everyone is allowed to talk during class but please keep yourself on mute unless — page 3 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
+3. Let’s introduce ourselves! — page 4 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
+4. This course is broken down into four typical interviewing concepts and topics: — page 5 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
+5. •Most CPUs remain idle while running.  Use multithreading to utilize CPU cycles — page 6 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
+
+_5 extracted title(s) held back as a person's name, not a topic (D1; kept in the graph, marked `not_a_topic`): Robert Kreznarich, Zeki Sherif_
 
 **Other files (13)** _(module-level files, curriculum documents, repositories)_
 

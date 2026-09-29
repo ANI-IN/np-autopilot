@@ -807,6 +807,19 @@ if(PORTED){
   if(files.length!==2) errors.push('DETAIL: an attached-file edge did not receive its props');
   if(!m2||m2.partial!==false) errors.push('DETAIL: the node is still marked partial');
   if(!m2||m2.x!==before[0]||m2.y!==before[1]) errors.push('DETAIL: fetching detail moved the node');
+
+  // D1: a topic whose label is a person's name is never listed in a panel.
+  g.nodes.push({id:'top_real', l:'REST Constraints', t:'content_topic', d:0, p:{}, loaded:true},
+               {id:'top_name', l:'Synthetic Instructor', t:'content_topic', d:0,
+                p:{not_a_topic:'person_name'}, loaded:true});
+  g.edges.push({id:901, s:'mod_synthetic', t:'top_real', r:'covers_topic', p:{slide:3}},
+               {id:902, s:'mod_synthetic', t:'top_name', r:'covers_topic', p:{slide:2}});
+  run('recompute(false,"topic test")');
+  const tl = run('topicLinks("mod_synthetic",10)');
+  console.log('  topic panel lists a real topic      :', tl.includes('REST Constraints'));
+  console.log('  topic panel lists a person name     :', tl.includes('Synthetic Instructor'), '(want false)');
+  if(!tl.includes('REST Constraints')) errors.push('TOPICS: a real topic is missing from the panel');
+  if(tl.includes('Synthetic Instructor')) errors.push('D1: a person-name topic is listed in the panel');
 }
 
 console.log('\n=== RESULT ===');

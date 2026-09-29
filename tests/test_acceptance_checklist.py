@@ -150,7 +150,9 @@ def test_topics_state_how_many_there_are_and_show_five_real_ones():
     rel = taxonomy.edge_for_role("module_topic")
     blocks = _blocks()
     for m in mods:
-        mine = [N[e["target"]]["label"] for e in g["edges"] if e["source"] == m["id"] and e["rel"] == rel]
+        # a person's name is not a topic (D1) and is held back from N
+        mine = [N[e["target"]]["label"] for e in g["edges"] if e["source"] == m["id"]
+                and e["rel"] == rel and not N[e["target"]].get("not_a_topic")]
         b = blocks[m["label"]]
         assert f"of {len(mine)} topics**" in b, m["label"]
         listed = [l for l in b.split("**Top", 1)[1].split("\n\n", 2)[1].split("\n")
