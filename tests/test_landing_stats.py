@@ -73,12 +73,20 @@ def test_the_landing_page_describes_the_projection_not_the_pipeline_graph():
     """
     stats = json.loads(STATS.read_text(encoding="utf-8"))
     assert stats["scope"] == "public"
-    assert stats["nodes"] < 5048, (
-        f"stats.json reports {stats['nodes']} nodes — that is the pipeline "
-        "graph, which the explorer does not serve")
+    # DERIVED, NOT A NUMBER. This said `< 5048` — the pipeline graph's size in
+    # September — which the merged public half (8,507) outgrew, so it would
+    # have failed on correct data after Phase C. The claim is that the page
+    # describes what is PROJECTED: the merged public half, and the database.
+    from pipeline.lib import graphio
+    projected = len(graphio.load_merged(include_sensitive=False)["nodes"])
     with db.connect(db.SESSION) as conn, conn.cursor() as cur:
         cur.execute("select count(*) from nodes")
-        assert stats["nodes"] == cur.fetchone()[0]
+        in_db = cur.fetchone()[0]
+    assert stats["nodes"] == in_db, (
+        f"stats.json says {stats['nodes']} nodes, the database holds {in_db}")
+    assert in_db == projected, (
+        f"the database holds {in_db} nodes but the merged public graph has "
+        f"{projected} — the landing page and the explorer describe different graphs")
 
 
 def test_no_count_on_the_landing_page_is_hand_written():
