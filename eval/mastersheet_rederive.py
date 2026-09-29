@@ -40,13 +40,38 @@ from pipeline.lib import freshness                                  # noqa: E402
 from pipeline.lib.paths import CONFIG_DIR, KNOWLEDGE_DIR, REPO_ROOT   # noqa: E402
 
 OWNER_FACTS = REPO_ROOT / "config" / "mastersheet-owner-facts.yaml"
-SHEET = (REPO_ROOT / ".drive-cache" / "02-curriculum" /
-         "Resource Collection Mastersheet (Software + System).xlsx")
+#: The LIVE sheet (owner decision 2026-09-30, config/mastersheet-scope.yaml),
+#: exported outside the repo by pipeline/fetch_mastersheet.py. The corpus copy
+#: is superseded and no longer re-derived.
+SHEET = freshness.live_path()
 
 TABS = {"Full Stack Engineering": "full-stack", "Frontend Engineering": "frontend",
         "Backend Engineering": "backend", "Test Engineering": "testing"}
 
-MODULE_RE = re.compile(r"^Week\s*(\d+)(?:\s*/\s*\d+)?\s*[-–]\s*(.+)$", re.I)
+# ITS OWN READING OF A MODULE ROW, deliberately not the pipeline's regex. It
+# used to be a copy of it — `[-–]` between week and name — so when the Full
+# Stack instructor block wrote "Week 1/5: Databases", BOTH skipped the row,
+# both said SD1/1 had no instructor, and this check agreed with the thing it
+# checks (found 2026-09-30). Now: the week number, an optional "/N", then ANY
+# run of punctuation, then the name. A row that starts like a week and yields
+# no name, or does not start like a week at all, is an error here — never
+# skipped.
+WEEK_HEAD = re.compile(r"^\s*week\s*(\d+)\s*(?:/\s*\d+)?", re.I)
+
+
+class ReadError(RuntimeError):
+    pass
+
+
+def week_row(text: str):
+    """(seq, name) for a module row, None for a row that is not one."""
+    m = WEEK_HEAD.match(text or "")
+    if not m:
+        return None
+    name = text[m.end():].lstrip(" \t-–—:.").strip()
+    if not name:
+        raise ReadError(f"{text!r} starts like a module row but names no module")
+    return int(m.group(1)), name
 
 
 def cell(rows, r, c):
@@ -71,9 +96,8 @@ def reread(path: Path) -> dict:
         table_row = next((i for i in range(n)
                           if "name of the instructor" in cell(rows, i, 0).lower()), n)
 
-        mods = [(i, int(m.group(1)), m.group(2).strip())
-                for i in range(1, folder_row)
-                for m in [MODULE_RE.match(cell(rows, i, 0))] if m]
+        mods = [(i, *wr) for i in range(1, folder_row)
+                for wr in [week_row(cell(rows, i, 0))] if wr]
         for idx, (row_i, seq, name) in enumerate(mods):
             stop = mods[idx + 1][0] if idx + 1 < len(mods) else folder_row
             sessions = []
@@ -86,14 +110,19 @@ def reread(path: Path) -> dict:
 
         if topic_row is not None:
             for i in range(topic_row + 1, table_row):
-                m = MODULE_RE.match(cell(rows, i, 0))
-                if not m:
+                topic = cell(rows, i, 0)
+                if not topic:
                     continue
-                key = (slug, int(m.group(1)))
+                wr = week_row(topic)
+                if wr is None:
+                    raise ReadError(f"{tab} row {i + 1}: instructor row {topic!r} "
+                                    "is not a module row")
+                key = (slug, wr[0])
                 if key not in out:
-                    continue
+                    raise ReadError(f"{tab} row {i + 1}: instructor row {topic!r} "
+                                    "names no module on this tab")
                 split = lambda s: [p.strip() for p in re.split(r"\s*[/,]\s*", s)
-                                   if p.strip()]
+                                   if p.strip()]    # "Faraaz Sareshwala/" -> one name
                 out[key]["primary"] = split(cell(rows, i, 1))
                 out[key]["backups"] = sum((split(cell(rows, i, c))
                                            for c in (2, 3, 4)), [])
@@ -148,7 +177,7 @@ def expected_weeks() -> dict:
 
 def main() -> int:
     if not SHEET.exists():
-        print(f"  the corpus cache is absent: {SHEET}")
+        print(f"  the live mastersheet is not fetched (pipeline/fetch_mastersheet.py): {SHEET}")
         return 0
     # never re-derive from a copy older than Drive (owner request 2026-09-30)
     freshness.require_fresh("mastersheet_rederive")

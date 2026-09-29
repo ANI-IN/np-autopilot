@@ -1,0 +1,62 @@
+# Mastersheet scope — which file, which tabs, and why the rest are not read.
+#
+# Owner decision (Animesh Kumar, 2026-09-30, origin: hand — checklist review
+# part 3). Enforced by pipeline/lib/mastersheet.py (every tab read goes
+# through one scope check) and tests/test_mastersheet_scope.py.
+#
+# A tab that is neither `read` nor `excluded` FAILS the build: a new tab in
+# the live sheet needs a decision, not a default.
+version: 1
+origin: hand
+decided_by: Animesh Kumar (corpus owner)
+decided_at: "2026-09-30"
+
+# The LIVE Google Sheet the team maintains. It replaces the corpus copy as
+# the source of every mastersheet-derived fact. Exported as .xlsx by
+# pipeline/fetch_mastersheet.py (cell fills survive the export) into
+# NP_MASTERSHEET_DIR — outside the repo: the export carries contact data.
+source:
+  drive_id: 1setMmRvBUNu9_85nT4xvvUFySodB6kiWb7bQ8qLEqAQ
+  name: Resource Collection Mastersheet (Software + System)
+  kind: native Google Sheet, exported as xlsx
+  shared_with: service account, Viewer (canEdit false, verified 2026-09-30)
+
+# The corpus copy. Kept in the graph as a SUPERSEDED source — not deleted,
+# not read for facts. (Its SD1/1 instructor row was always there; the parser
+# dropped it — see DECISIONS / HANDOFF. Superseding it is about which sheet is
+# authoritative, not about that bug.)
+superseded:
+  - drive_id: 1f4T6u2mcWjeJuBa02_E_Svrid4BbaCnB
+    path: 02-curriculum/Resource Collection Mastersheet (Software + System).xlsx
+    status: superseded by the live sheet 2026-09-30; not read for facts
+
+read:
+  - Full Stack Engineering
+  - Frontend Engineering
+  - Backend Engineering
+  - Test Engineering
+
+# ONLY these four rows of this tab: domain -> Uplevel link.
+uplevel_resources:
+  tab: Uplevel Resources
+  rows: [Full Stack Engineering, Backend Engineering, Frontend Engineering, Test Engineering]
+
+excluded:
+  - tab: Indian Instructors
+    reason: personal emails, Discord links and ratings — contact data, never read
+  - tab: Training Sheet
+    reason: personal emails, Discord links and ratings — contact data, never read
+  - tab: Instructor(FullStack)
+    reason: an older staffing table, superseded by the Full Stack tab's instructor block
+  - tab: Interview Repo
+    reason: module -> question-bank links; candidate for a later release (HANDOFF §D.8), not ingested
+  - tab: Upskill Guide
+    reason: out of scope for this release
+  - tab: Cloud Engineering
+    reason: domain out of scope for this release
+  - tab: SRE Engineering
+    reason: domain out of scope for this release
+  - tab: Security Engineering
+    reason: domain out of scope for this release
+  - tab: Embedded Systems
+    reason: domain out of scope for this release

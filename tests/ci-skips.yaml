@@ -9,7 +9,9 @@
 # checkout CI gets. Almost all are DB tests (no database in CI — they run
 # against the local Supabase stack, HANDOFF.md §I) or need gitignored
 # corpus / withheld / build files that must never be committed.
-# Total: 182. (+1 on 2026-09-30, checklist review: red-cell detection reads
+# Total: 181. (-1 on 2026-09-30, part 3: the re-derivation's independence check
+# no longer needs the sheet; its two data tests read the LIVE sheet.)
+# (+1 on 2026-09-30, checklist review: red-cell detection reads
 # the cached mastersheet.) (+10 on 2026-09-30, B3: the connection-drop tests and the
 # structure-payload DB tests — local stack only, like every DB test.)
 
@@ -19,7 +21,7 @@ skips:
   "needs the Supabase connection": 16
   "no database to test against": 10
   "no database configured": 18
-  "needs the corpus cache and a built content graph": 3
+  "needs the live mastersheet (pipeline/fetch_mastersheet.py) and a built content graph": 2
   "knowledge/candidates.json is a gitignored build intermediate": 2
   "needs the local Supabase stack's supabase_auth_admin login": 2
   "no .drive-cache on this machine": 2

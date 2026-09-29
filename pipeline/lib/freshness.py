@@ -5,17 +5,21 @@ SD1/1 review found the live sheet naming instructors the graph did not have.
 eval/mastersheet_rederive.py and Phase C (pipeline/project_graph.py) now
 refuse when the cached copy is older than Drive, naming both times.
 
-WHAT IT COMPARES. The cached copy's Drive `modifiedTime` (recorded by pass 0
-in .drive-cache/.manifest.json) against the file's CURRENT `modifiedTime`, and
-the cached bytes' md5 against Drive's `md5Checksum`. Either disagreeing is a
-refusal.
+WHAT IT COMPARES. Since 2026-09-30 the source is the LIVE Google Sheet
+(config/mastersheet-scope.yaml; NP_MASTERSHEET_DRIVE_ID overrides). Its
+export, written by pipeline/fetch_mastersheet.py outside the repo, carries a
+fetch record: Drive modifiedTime and version at fetch, and the export's sha256.
+Refused when Drive's CURRENT modifiedTime is newer than the record's, or the
+export on disk is no longer the bytes the record describes. A native Sheet has
+no md5Checksum, so bytes are checked locally, times against Drive.
 
-WHAT IT WOULD NOT HAVE CAUGHT. The SD1/1 case: the corpus file and the cache
-were identical (same modifiedTime, version 12, same md5) — the sheet the owner
-reads is a different Drive file that the service account cannot see. That is
-why the source id is configurable (NP_MASTERSHEET_DRIVE_ID): pointed at the
-live sheet, once it is shared with the service account, the same check
-compares it against the cache.
+A CORRECTION, recorded where the wrong claim was made. This guard was first
+written saying the SD1/1 gap came from the owner's live sheet being a different
+file. It did not: the corpus copy always held SD1/1's three instructors, in a
+row written "Week 1/5: Databases", and the parser — and the "independent"
+re-derivation, which copied its regex — skipped the ":" silently. The files
+really are different Drive files, and the owner chose the live one as
+authoritative; the gap itself was the extractor (CLAUDE.md §6).
 
 FAILS CLOSED. Could-not-look is a refusal, not a pass (the R21 lesson: a
 check that goes green when it could not look is how a public repo lasted 13
@@ -36,30 +40,46 @@ from pathlib import Path
 from pipeline.lib.paths import REPO_ROOT
 
 SHEET_FILE = "Resource Collection Mastersheet (Software + System).xlsx"
-CACHE = REPO_ROOT / ".drive-cache"
-MANIFEST = CACHE / ".manifest.json"
 SOURCE_ENV = "NP_MASTERSHEET_DRIVE_ID"
+DIR_ENV = "NP_MASTERSHEET_DIR"
 SKIP_ENV = "NP_FRESHNESS_SKIP"
+#: Read as YAML here, NOT through pipeline/lib/mastersheet.py: the independent
+#: re-derivation imports this module and must not import the parser it checks.
+SCOPE_FILE = REPO_ROOT / "config" / "mastersheet-scope.yaml"
+
+
+def source_id() -> str:
+    """The live sheet (config/mastersheet-scope.yaml, owner decision
+    2026-09-30); NP_MASTERSHEET_DRIVE_ID overrides it."""
+    import yaml
+    env = os.environ.get(SOURCE_ENV, "").strip()
+    if env:
+        return env
+    return yaml.safe_load(SCOPE_FILE.read_text(encoding="utf-8"))["source"]["drive_id"]
+
+
+def live_dir() -> Path:
+    return Path(os.environ.get(DIR_ENV, "~/.config/np-autopilot/mastersheet")).expanduser()
+
+
+def live_path() -> Path:
+    """Where pipeline/fetch_mastersheet.py put the export — outside the repo."""
+    return live_dir() / f"{source_id()}.xlsx"
 
 
 def _t(s: str) -> datetime:
     return datetime.fromisoformat(s.replace("Z", "+00:00"))
 
 
-def cached_entry(manifest: dict) -> dict | None:
-    """The manifest row for the mastersheet copy the pipeline reads."""
-    return next((f for f in manifest.get("files") or []
-                 if f.get("path", "").rsplit("/", 1)[-1] == SHEET_FILE), None)
-
-
 def verdict(cached: dict | None, cached_md5: str | None, drive: dict | None,
             fetched_at: str | None = None) -> tuple[bool, str]:
     """(ok, message). Pure: every input is passed in, so it is testable offline."""
     if not cached or not cached.get("modified"):
-        return False, (f"REFUSED: {SHEET_FILE} is not in the cache manifest "
-                       f"({MANIFEST.relative_to(REPO_ROOT)}); run pass 0")
-    held = f"the cache holds the version modified {cached['modified']}" + (
-        f" (fetched {fetched_at})" if fetched_at else "")
+        return False, (f"REFUSED: the mastersheet has not been fetched to {live_dir()} "
+                       "(no fetch record); run pipeline/fetch_mastersheet.py")
+    held = (f"the cache holds the version modified {cached['modified']}"
+            + (f", version {cached['version']}" if cached.get("version") else "")
+            + (f" (fetched {fetched_at})" if fetched_at else ""))
     if not drive or not drive.get("modifiedTime"):
         return False, (f"REFUSED: could not read Drive's modifiedTime for "
                        f"{(drive or {}).get('id') or 'the source'}; {held}. "
@@ -106,25 +126,27 @@ def drive_metadata(file_id: str, service=None) -> dict:
 
 
 def check(service=None) -> tuple[bool, str]:
+    sid = source_id()
+    rec_path = live_dir() / f"{sid}.json"
     try:
-        manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
-        return False, f"REFUSED: cannot read the cache manifest ({type(exc).__name__})"
-    cached = cached_entry(manifest)
-    md5 = None
+        cached = json.loads(rec_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        cached = None
     if cached:
-        path = CACHE / cached["path"]
-        if path.exists():
-            md5 = hashlib.md5(path.read_bytes()).hexdigest()
-    source = os.environ.get(SOURCE_ENV) or (cached or {}).get("id")
+        # The export must still be the bytes its record describes.
+        path = live_dir() / f"{sid}.xlsx"
+        digest = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
+        if digest != cached.get("sha256"):
+            return False, (f"REFUSED: {path} is not the file its fetch record "
+                           "describes (missing or changed since the fetch); re-fetch")
     try:
-        drive = drive_metadata(source, service) if source else None
+        drive = drive_metadata(sid, service)
     except BaseException as exc:          # SystemExit from pass 0's abort() too
         if isinstance(exc, KeyboardInterrupt):
             raise
         # type only: a message can carry a key path or a token
-        drive = {"id": source, "error": type(exc).__name__}
-    ok, msg = verdict(cached, md5, drive, manifest.get("fetched_at"))
+        drive = {"id": sid, "error": type(exc).__name__}
+    ok, msg = verdict(cached, None, drive, (cached or {}).get("fetched_at"))
     if not ok and drive and drive.get("error"):
         msg += f" ({drive['error']})"
     return ok, msg

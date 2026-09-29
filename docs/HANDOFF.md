@@ -182,22 +182,20 @@ SD3/1–5, SD4/1–6, recorded in `config/owner-confirmations.yaml` (origin: han
 each bound to a fingerprint of its block's mastersheet facts so a later change
 takes the tick off. **SD1/1–5 are not confirmed.**
 
-**BLOCKER — SD1/1 Databases.** The owner's live sheet reads Primary Konstantinos
-Pappas · Backup 1 Ashish Kaila · Backup 2 Nikhil Kolekar; the graph has no
-mastersheet instructor for it. The corpus file (Drive `1f4T6u2m…`, modified
-2026-09-02, version 12) is **byte-identical** to the cache (same md5), and it is
-the only file of that name the service account can see — so the live sheet is
-a **different Drive file**, outside the corpus. A re-fetch cannot fix this. The
-owner must either (a) replace the corpus file's content with the live sheet
-(then pass 0, passes 7–8, diff, regenerate), or (b) share the live sheet with
-the service account and approve adding it to scope
-(`NP_MASTERSHEET_DRIVE_ID` then points the freshness check at it). Until then
-SD1/1 cannot be confirmed and the window does not start.
+**SD1/1 Databases — CORRECTED 2026-09-30 (part 3).** It was first reported
+here as "the live sheet is a different Drive file; a re-fetch cannot fix this".
+**That diagnosis was wrong.** The corpus copy always held SD1/1's instructors
+(Konstantinos Pappas · Ashish Kaila · Nikhil Kolekar) in a row written
+`Week 1/5: Databases`; the parser accepted only `-`/`–` after the week, skipped
+the row silently, and the "independent" re-derivation — which had copied the
+same regex — agreed. CLAUDE.md §6, a sixth time. Fixed: `:` accepted, and any
+instructor row that does not map now fails the build (tests on the exact live
+cells, mutation-tested). SD1/1 is ticked once the rebuilt block shows the three.
 
 **Freshness guard** (`pipeline/lib/freshness.py`): `project_graph.py` and
 `eval/mastersheet_rederive.py` refuse when the cached mastersheet is older than
 Drive or differs from it, naming both times; could-not-look is a refusal.
-Run-sheet step 0. It would **not** have caught SD1/1 (see above).
+Run-sheet step 0. Since part 3 it checks the LIVE sheet (§7).
 
 ## 4 · The window — Phase C and Phase D in ONE sitting
 **Owner decision, Animesh Kumar, 2026-09-30 (origin: hand): migrations →
@@ -297,20 +295,51 @@ e. **Plugin `/module` command** (e.g. `/module API Design`) answering the full
    chain with citations; bump `plugin.json`.
 f. **Extend to other row-B domains** — scope change, re-run from Phase 2.
 
+## 7 · Mastersheet source: the LIVE sheet (owner decision, 2026-09-30)
+
+The live Google Sheet the team maintains (Drive
+`1setMmRvBUNu9_85nT4xvvUFySodB6kiWb7bQ8qLEqAQ`, shared Viewer with the
+service account) replaces the corpus copy as the source of every
+mastersheet-derived fact. The corpus copy (`1f4T6u2m…`) stays in the graph as
+a **superseded** source — not deleted, not read for facts.
+`config/mastersheet-scope.yaml` declares it all: the four domain tabs and the
+four `Uplevel Resources` rows are read; nine tabs are excluded by name with a
+reason; an undeclared tab fails the build (`tests/test_mastersheet_scope.py`).
+
+- Fetch: `python3 pipeline/fetch_mastersheet.py` exports .xlsx (cell fills
+  survive) to `~/.config/np-autopilot/mastersheet/` — OUTSIDE the repo: the
+  export carries contact data, pass 1 walks `.drive-cache/`, and the repo sits
+  under a synced folder (R22). A fetch record beside it holds Drive
+  modifiedTime, version and sha256; the freshness guard compares against it.
+- Diff before any rebuild: `python3 eval/mastersheet_diff.py OLD NEW` — every
+  mastersheet fact; contact columns as counts only.
+- **Pending (part 3 §6, after the owner confirms the diff):** point pass 7 and
+  its readers at the live export, carry the corpus copy as a superseded source,
+  rebuild 7–8, re-derive against the live sheet (0 unexplained), regenerate
+  the checklist, tick SD1/1–5, full suite, CI, merge.
+
+## 8 · Candidate for a later release — `Interview Repo`
+
+The live sheet's `Interview Repo` tab maps modules to question-bank links. Owner
+decision 2026-09-30: a candidate for a later release; **not ingested** now
+(excluded in `config/mastersheet-scope.yaml`). When taken up: declare its
+columns (never the whole tab), check each link column for contact data first,
+and give it its own diff and review.
+
 ---
 
 # E · OPEN REVIEW ITEMS AND PENDING OWNER DECISIONS
 
-`docs/REVIEW-QUEUE.md` holds **88 rows: 65 answered, 23 open** (checklist
+`docs/REVIEW-QUEUE.md` holds **89 rows: 67 answered, 22 open** (checklist
 review, 2026-09-30). Answered = the owner has decided the row, "leave
 unresolved" included (convention stated at the top of `REVIEW-QUEUE.md`, same
 in both files).
 
 | prefix | rows | state |
 |---|---:|---|
-| `MOD` | 18 | **16 answered and applied**; **MOD-17/18 open** — label collisions created by adopting the mastersheet names |
+| `MOD` | 18 | **all answered** — 16 applied; MOD-17/18 kept separate by decision (2026-09-30) |
 | `INS` | 32 | **all answered and applied** — INS-08/30/31/32 merged 2026-09-30 |
-| `PPL` | 12 | **11 answered** — PPL-01…08, 10, 11 merged; PPL-09 left unresolved; **PPL-12 open** |
+| `PPL` | 13 | **11 answered** — PPL-01…08, 10, 11 merged; PPL-09 left unresolved; **PPL-12 open; PPL-13 open** (proposal: Reginald = Reginald Johnson) |
 | `DCK` | 14 | **open** — deck filename → instructor proposals |
 | `TOPv` | 3 | **answered and applied** — mastersheet name is the label, folder name is `label_raw` |
 | `TOPm` | 3 | **answered and applied** — same answer |
@@ -320,7 +349,7 @@ in both files).
 - `PPL-09` — `Reginald`. Keeps its module row; rendered unconfirmed
   (`identity_unconfirmed`) in the checklist and the matrix.
 
-Answer the remaining 23 before Phase C where possible.
+Answer the remaining 22 before Phase C where possible.
 
 **PENDING — billing decision, the owner's:** raising the Vercel function
 `memory` setting buys proportionally more CPU, shortening interpreter start-up

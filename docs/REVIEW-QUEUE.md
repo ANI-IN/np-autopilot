@@ -1,11 +1,12 @@
-# REVIEW QUEUE — 88 decisions, answer by ID
+# REVIEW QUEUE — 89 decisions, answer by ID
 
 **Generated 2026-09-29 from the four review YAMLs; answers recorded below as
-they arrived.** 65 of 88 rows are answered — MOD 16, INS 32, PPL 11, TOPv 3,
+they arrived.** 67 of 89 rows are answered — MOD 18, INS 32, PPL 11, TOPv 3,
 TOPm 3 — and the applied ones are merged by pass 8
-(`pipeline/08_merge_graphs.py`) or pass 7 (the module labels). **23 remain
-open**: MOD 2 (MOD-17/18, added 2026-09-30), TOPt 6, PPL 1 (PPL-12), DCK 14. The tables below are the rows as first
-generated, with a recommendation and an ID to answer by.
+(`pipeline/08_merge_graphs.py`) or pass 7 (the module labels). **22 remain
+open**: TOPt 6, PPL 2 (PPL-12; PPL-13, a proposal added 2026-09-30), DCK 14.
+The tables below are the rows as first generated, with a recommendation and an
+ID to answer by.
 
 **Count convention.** A row is **answered** once the owner has decided it —
 including "leave unresolved", which is a decision, not a pending question
@@ -18,14 +19,14 @@ picking-with-no-signal failure `lib/resolve.py` exists to refuse.
 
 | group | rows | source |
 |---|---:|---|
-| `MOD` | 18 | `config/module-aliases-review.yaml` (MOD-17/18 added 2026-09-30) |
+| `MOD` | 18 | `config/module-aliases-review.yaml` (MOD-17/18 added and answered 2026-09-30) |
 | `TOPv` | 3 | `config/content-topic-review.yaml` |
 | `TOPm` | 3 | `config/content-topic-review.yaml` |
 | `TOPt` | 6 | `config/content-topic-review.yaml` |
-| `PPL` | 12 | `config/mastersheet-people-review.yaml` |
+| `PPL` | 13 | `config/mastersheet-people-review.yaml` (PPL-13 added 2026-09-30) |
 | `DCK` | 14 | `config/deck-instructor-review.yaml` |
 | `INS` | 32 | derived: both graphs (see below) |
-| **total** | **88** | |
+| **total** | **89** | |
 
 
 ## MOD — row-B module labels that collide with an existing module node
@@ -299,4 +300,18 @@ Remaining open: **23 of 88** — `MOD-17/18` 2, `TOPt` 6, `PPL-12` 1, `DCK` 14. 
 rows name `Konstantinos` or `Shelby`; those identities are now settled, but
 which instructor a deck belongs to is a separate question and the rows stay
 open.
+
+### Checklist review part 3 — 2026-09-30, Animesh Kumar (origin: hand)
+
+| id | answer |
+|---|---|
+| `MOD-17` `MOD-18` | **Keep separate — not merged.** Recorded in `config/module-merges.yaml` (`kept_separate`). The two label pairs stay duplicated by decision, and `tests/test_module_merges.py` pins them as the only duplicate module labels. |
+
+**New row — a PROPOSAL, not applied. The owner confirms or declines it.**
+
+| id | proposal | evidence (live sheet `1setMmRv…`, fetched 2026-09-30, version 2736) | recommendation |
+|---|---|---|---|
+| `PPL-13` | `Reginald` → **Reginald Johnson** (reopens `PPL-09`, left unresolved 2026-09-30) | `Backend Engineering!D50`: week 4 *Cloud Native Design*, **Backup 2** = `Reginald`. `Backend Engineering!A66`: the Backend tab's instructor table lists `Reginald Johnson` — the only Reginald on any of the four in-scope tabs. | **confirm** — same tab, the only candidate; applied like the other first-name merges, alias kept, tiers apart |
+
+Remaining open: **22 of 89** — `TOPt` 6, `PPL-12` 1, `PPL-13` 1, `DCK` 14.
 

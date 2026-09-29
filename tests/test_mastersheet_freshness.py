@@ -17,8 +17,7 @@ sys.path.insert(0, str(REPO))
 from pipeline.lib import freshness as fr                                # noqa: E402
 
 ID = "synthetic-mastersheet-id"
-CACHED = {"id": ID, "path": f"02-curriculum/{fr.SHEET_FILE}",
-          "modified": "2026-09-02T11:45:15.000Z"}
+CACHED = {"id": ID, "modified": "2026-09-02T11:45:15.000Z"}
 MD5 = "0" * 32
 
 
@@ -89,14 +88,23 @@ def test_require_fresh_refuses_a_stale_cache(monkeypatch):
     assert "project_graph" in str(e.value) and "REFUSED" in str(e.value)
 
 
+def _fetched(tmp_path, monkeypatch, id_=ID, modified="2026-09-02T11:45:15.000Z"):
+    """A fetch record + export, as pipeline/fetch_mastersheet.py leaves them."""
+    import hashlib
+    import json
+    data = b"synthetic export bytes"
+    (tmp_path / f"{id_}.xlsx").write_bytes(data)
+    (tmp_path / f"{id_}.json").write_text(json.dumps({
+        "id": id_, "modified": modified, "version": "7",
+        "fetched_at": "2026-09-16T21:00:10Z",
+        "sha256": hashlib.sha256(data).hexdigest()}), encoding="utf-8")
+    monkeypatch.setenv(fr.DIR_ENV, str(tmp_path))
+    monkeypatch.setenv(fr.SOURCE_ENV, id_)
+
+
 def test_require_fresh_refuses_when_drive_is_unreachable(monkeypatch, tmp_path):
     monkeypatch.delenv(fr.SKIP_ENV, raising=False)
-    manifest = tmp_path / ".manifest.json"
-    import json
-    manifest.write_text(json.dumps({"fetched_at": "2026-09-16T21:00:10Z",
-                                    "files": [CACHED]}), encoding="utf-8")
-    monkeypatch.setattr(fr, "MANIFEST", manifest)
-    monkeypatch.setattr(fr, "CACHE", tmp_path)
+    _fetched(tmp_path, monkeypatch)
     fake = FakeDrive(exc=OSError("network down"))
     with pytest.raises(SystemExit) as e:
         fr.require_fresh("mastersheet_rederive", service=fake)
@@ -105,15 +113,45 @@ def test_require_fresh_refuses_when_drive_is_unreachable(monkeypatch, tmp_path):
 
 
 def test_the_source_id_is_configurable(monkeypatch, tmp_path):
-    import json
-    manifest = tmp_path / ".manifest.json"
-    manifest.write_text(json.dumps({"files": [CACHED]}), encoding="utf-8")
-    monkeypatch.setattr(fr, "MANIFEST", manifest)
-    monkeypatch.setattr(fr, "CACHE", tmp_path)
-    monkeypatch.setenv(fr.SOURCE_ENV, "the-live-sheet")
+    _fetched(tmp_path, monkeypatch, id_="the-live-sheet")
     fake = FakeDrive(meta=drive("2026-09-02T11:45:15.000Z", id_="the-live-sheet"))
     assert fr.check(service=fake)[0]
     assert fake.asked[0]["fileId"] == "the-live-sheet"
+
+
+def test_the_default_source_is_the_owners_live_sheet(monkeypatch):
+    monkeypatch.delenv(fr.SOURCE_ENV, raising=False)
+    assert fr.source_id() == "1setMmRvBUNu9_85nT4xvvUFySodB6kiWb7bQ8qLEqAQ"
+
+
+def test_a_live_edit_after_the_fetch_is_refused(monkeypatch, tmp_path):
+    _fetched(tmp_path, monkeypatch)
+    ok, msg = fr.check(service=FakeDrive(meta=drive("2026-09-30T09:00:00.000Z")))
+    assert not ok and "NEWER" in msg and "version 7" in msg
+
+
+def test_an_export_changed_since_its_fetch_is_refused(monkeypatch, tmp_path):
+    _fetched(tmp_path, monkeypatch)
+    (tmp_path / f"{ID}.xlsx").write_bytes(b"tampered")
+    ok, msg = fr.check(service=FakeDrive(meta=drive("2026-09-02T11:45:15.000Z")))
+    assert not ok and "not the file its fetch record describes" in msg
+
+
+def test_never_fetched_is_refused(monkeypatch, tmp_path):
+    monkeypatch.setenv(fr.DIR_ENV, str(tmp_path))
+    ok, msg = fr.check(service=FakeDrive(meta=drive("2026-09-02T11:45:15.000Z")))
+    assert not ok and "fetch_mastersheet.py" in msg
+
+
+def test_the_fetch_refuses_to_write_inside_the_repo(monkeypatch):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "fetch_mastersheet", REPO / "pipeline" / "fetch_mastersheet.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    monkeypatch.setenv(fr.DIR_ENV, str(REPO / "knowledge"))
+    with pytest.raises(SystemExit, match="inside the repo"):
+        mod.target_dir()
 
 
 def test_the_skip_must_carry_a_reason_and_says_so(monkeypatch, capsys):

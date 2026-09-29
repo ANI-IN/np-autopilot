@@ -233,7 +233,7 @@ grows by an order of magnitude, aggregate.
 ## 6 · Assume the extractor before you assume the corpus
 
 **Every "the corpus doesn't have it" conclusion in this project eventually became
-"the extractor hadn't looked there yet." Five times.**
+"the extractor hadn't looked there yet." Six times.**
 
 | I concluded | it was actually |
 |---|---|
@@ -242,6 +242,7 @@ grows by an order of magnitude, aggregate.
 | `UpLevel Schedule Structure` is probably nothing | 26 per-domain schedules and the best module evidence in the corpus |
 | doc 05's `Suresh Venkatesan` example must be wrong | it was right; the sheet had never been opened |
 | the module layer is thin | 671 of 922 modules were reachable, just not by the edge I was looking at |
+| SD1/1 has no mastersheet instructor, so the owner's live sheet must be a different, newer file | the corpus copy always had all three; the row read `Week 1/5: Databases`, the parser accepted only `-`, and the "independent" re-derivation had copied the same regex — so the check agreed with the bug |
 
 Before writing "not in the corpus" in any answer, doc or commit message: **name
 the sheets you actually read.** If you cannot, you have found a gap in the

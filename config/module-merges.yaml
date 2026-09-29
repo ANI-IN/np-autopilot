@@ -101,6 +101,29 @@ merges:
       evidence on the SESSIONS, not on the module.
 
 # ---------------------------------------------------------------------------
+# Answered: KEEP SEPARATE (Animesh Kumar, 2026-09-30, origin: hand).
+# Both collisions appeared when the row-B modules took their mastersheet
+# names (TOPv/TOPm). Same label, two nodes, by decision — not an oversight.
+# tests/test_module_merges.py pins these as the only duplicate module labels.
+# Nothing reads this list to act; it is the record of the answer.
+# ---------------------------------------------------------------------------
+kept_separate:
+  - id: MOD-17
+    rowb: {domain: full-stack, sequence: 3}
+    legacy: mod_a7301acdd24c0050
+    label: Cloud Infrastructure
+    decided_by: Animesh Kumar
+    decided_at: "2026-09-30"
+    origin: hand
+  - id: MOD-18
+    rowb: {domain: full-stack, sequence: 4}
+    legacy: mod_067e0cede10d31eb
+    label: JavaScript and Web Development
+    decided_by: Animesh Kumar
+    decided_at: "2026-09-30"
+    origin: hand
+
+# ---------------------------------------------------------------------------
 # Recorded, NOT acted on. Out of scope for this release.
 # ---------------------------------------------------------------------------
 findings:

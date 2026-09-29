@@ -332,13 +332,15 @@ def test_absence_of_evidence_is_not_treated_as_a_conflict(merged):
 # ---------------------------------------------------------------------------
 
 # Adopting the mastersheet names (TOPv/TOPm, 2026-09-30) made two row-B
-# modules collide with legacy modules of the same name. A collision is not a
-# match: they are OPEN review rows MOD-17/18, not merged, until the owner says.
-OPEN_MODULE_COLLISIONS = {"cloud infrastructure", "javascript and web development"}
-
-
-def test_the_only_duplicate_module_labels_are_the_open_review_rows(merged):
+# modules collide with legacy modules of the same name. MOD-17/18, answered
+# the same day: KEEP SEPARATE (config/module-merges.yaml `kept_separate`).
+def test_the_only_duplicate_module_labels_are_the_ones_kept_separate(merged):
     import collections
+    kept = mm.yaml.safe_load(mm.MERGES_FILE.read_text(encoding="utf-8"))["kept_separate"]
+    assert {k["id"] for k in kept} == {"MOD-17", "MOD-18"}
+    assert all(k["origin"] == "hand" and k["decided_by"] for k in kept)
     c = collections.Counter((n.get("label") or "").strip().lower()
                             for n in _mods(merged))
-    assert {k for k, v in c.items() if v > 1} == OPEN_MODULE_COLLISIONS
+    assert {k for k, v in c.items() if v > 1} == {k["label"].lower() for k in kept}
+    ids = {n["id"] for n in _mods(merged)}
+    assert all(k["legacy"] in ids for k in kept), "a kept-separate legacy node was merged away"
