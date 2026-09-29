@@ -71,6 +71,7 @@ def test_a_structured_roster_is_not_caught_by_the_deck_rule():
 
 def test_a_file_owner_is_reduced_to_its_domain():
     assert cs.owner_domain("someone@interviewkickstart.com") == "interviewkickstart.com"
+    # contact-ok: synthetic, the assertion IS that only the domain survives
     assert cs.owner_domain("instructor@gmail.com") == "gmail.com"
 
 
@@ -86,6 +87,7 @@ def test_no_provenance_field_may_contain_an_at_sign():
     of field names somebody maintains — the instance-8 fix applied in advance.
     A new provenance column is covered by default."""
     good = {"file": "SD3/Module-1/x.pptx", "owner_domain": "gmail.com", "row": 4}
+    # contact-ok: synthetic, the assertion IS that this row is refused
     bad = {"file": "SD3/Module-1/x.pptx", "owner": "sme@gmail.com"}
     assert cs.provenance_is_clean(good) is True
     assert cs.provenance_is_clean(bad) is False
@@ -187,6 +189,7 @@ def test_an_address_is_redacted_at_threshold_one():
 
 
 def test_a_linkedin_url_is_redacted():
+    # contact-ok: synthetic profile URL, the assertion is that it IS redacted
     out, counts = rd.redact("profile https://www.linkedin.com/in/someone-1234")
     assert "linkedin.com" not in out
     assert counts["linkedin"] == 1
@@ -338,7 +341,7 @@ PHONE_CASES = [
     ("rows 1200 4500 scanned in the query plan", False),
     ("Winner DOB Ohio International 1998 04 1981 Iowa Open", False),
     ("call me on +1 415 555 0134 any time", True),
-    ("San Diego, CA 619 555 0147 | someone@example.com", True),
+    ("San Diego, CA 619 555 0147 | someone@example.com", True),  # contact-ok: synthetic resume line
     ("Tel: 020 7946 0958", True),
     ("+91 98765 43210", True),
 ]
@@ -400,13 +403,13 @@ def test_a_bare_digit_run_needs_a_phone_word_beside_it(text, is_phone):
 # Redacting them removes teaching content and protects nobody.
 
 RESERVED_CASES = [
-    ("POST /login with user@example.com", False),
-    ("admin@example.org and dev@example.net", False),
-    ("svc@api.example and qa@my.test", False),
-    ("bad@nowhere.invalid", False),
+    ("POST /login with user@example.com", False),      # contact-ok: RFC 2606 reserved, the assertion IS that it is not redacted
+    ("admin@example.org and dev@example.net", False),  # contact-ok: RFC 2606 reserved documentation names
+    ("svc@api.example and qa@my.test", False),         # contact-ok: RFC 2606 reserved TLDs
+    ("bad@nowhere.invalid", False),                    # contact-ok: RFC 2606 reserved TLD
     ("root@localhost", False),
-    ("mail ops@interviewkickstart.com for access", True),
-    ("instructor@gmail.com", True),
+    ("mail ops@interviewkickstart.com for access", True),   # contact-ok: corporate domain, a known gap the guard states
+    ("instructor@gmail.com", True),                    # contact-ok: synthetic fixture asserting redaction fires
 ]
 
 
@@ -419,6 +422,7 @@ def test_reserved_documentation_domains_are_not_redacted(text, should_redact):
 def test_a_reserved_name_as_a_substring_of_a_real_domain_is_still_redacted():
     """Negative control. `example.com.attacker.net` is a REAL domain that
     merely contains a reserved one, and a substring check would exempt it."""
+    # contact-ok: synthetic, asserts a reserved name inside a REAL domain still redacts
     out, counts = rd.redact("x@example.com.somereal.net")
     assert counts.get("email") == 1
 

@@ -114,16 +114,40 @@ def curriculum_kind(name: str) -> str | None:
 # one hand fact about one domain, and `cur.program_week_from_local` still
 # refuses to compute a week from a sequence.
 
-_SD1_FACT = ("config/out-of-corpus-facts.yaml -> sd1-full-stack-program-weeks "
-             "(origin: hand, Animesh Kumar, 2026-09-29)")
-_SD1_WEEKS = {1: 9, 2: 10, 3: 11, 4: 12, 5: 13}
+_FACTS_FILE = "config/out-of-corpus-facts.yaml"
+_FACT_ID = "rowb-program-weeks"
+_WEEKS_CACHE: dict | None = None
+
+
+def _program_weeks() -> dict:
+    """Per-module program weeks, READ FROM THE FACT FILE, never computed.
+
+    A dict of explicit values, so adding a domain means adding its numbers
+    rather than extending an arithmetic. `cur.program_week_from_local` still
+    raises on any attempt to derive one from a folder sequence — the offset of
+    8 is a fact about these four programmes, not a rule.
+    """
+    global _WEEKS_CACHE
+    if _WEEKS_CACHE is None:
+        import yaml
+        from pipeline.lib.paths import REPO_ROOT
+        data = yaml.safe_load((REPO_ROOT / _FACTS_FILE).read_text(encoding="utf-8"))
+        fact = next(f for f in data["facts"] if f["id"] == _FACT_ID)
+        _WEEKS_CACHE = {d: {int(k): int(v) for k, v in w.items()}
+                        for d, w in fact["weeks"].items()}
+    return _WEEKS_CACHE
+
+
+_FACT_CITATION = (f"{_FACTS_FILE} -> {_FACT_ID} "
+                  "(origin: hand, Animesh Kumar, 2026-09-29)")
 
 
 def program_week_for(domain_slug: str, sequence: int) -> cur.ProgramWeek | None:
     """The program week, or None with a gap reported by the caller."""
-    if domain_slug == "full-stack" and sequence in _SD1_WEEKS:
-        return cur.ProgramWeek(_SD1_WEEKS[sequence], "hand", _SD1_FACT)
-    return None
+    value = _program_weeks().get(domain_slug, {}).get(sequence)
+    if value is None:
+        return None
+    return cur.ProgramWeek(value, "hand", _FACT_CITATION)
 
 
 # ---------------------------------------------------------------------------
@@ -422,3 +446,158 @@ def propose_tab_join(tab: str, domain_slug: str,
         row.update(ambiguous=False, candidate=hits[0][0],
                    candidate_sequence=hits[0][1])
     return row
+
+
+# ---------------------------------------------------------------------------
+# Joining crawled files to mastersheet sessions
+# ---------------------------------------------------------------------------
+#
+# The mastersheet is the STRUCTURAL layer (what exists, in what order, taught
+# by whom); the crawl is the CONTENT layer (what is actually taught). A file
+# always keeps its module edge, which the folder path makes reliable. A SESSION
+# edge is added only where evidence allows, and the edge records which kind.
+#
+# Where neither kind of evidence applies the file stays module-level. That is
+# the whole rule: an unplaced deck is a smaller answer, a guessed one is a
+# wrong answer that looks the same.
+
+
+class SessionMatch(NamedTuple):
+    kind: str
+    evidence: str          # "folder" | "name"
+    detail: str
+
+
+_FOLDER_EVIDENCE = (
+    ("review", re.compile(r"/Assignment Review(?:\s*-\s*[^/]+)?/", re.I)),
+    ("class", re.compile(r"/(?:\d+\.\s*)?Live[ _]Class[^/]*/|/Slides?/", re.I)),
+    ("task", re.compile(r"/(?:\d+\.\s*)?Assignments?[^/]*/|/(?:\d+\.\s*)?Timed[ -]?Test", re.I)),
+    ("post_class", re.compile(r"/(?:\d+\.\s*)?Practice[^/]*/", re.I)),
+    ("pre_class", re.compile(r"/(?:\d+\.\s*)?Found\w*[^/]*/", re.I)),
+)
+
+_NAME_EVIDENCE = (
+    ("alternate_review", re.compile(r"alternate.*assignment\s*review", re.I)),
+    ("review", re.compile(r"assignment\s*review", re.I)),
+    ("alternate_class", re.compile(r"alternate\s*class", re.I)),
+    ("pre_class", re.compile(r"foundation material", re.I)),
+    ("post_class", re.compile(r"practice problem", re.I)),
+    ("class", re.compile(r"[–—-]\s*class\b", re.I)),
+)
+
+
+def session_for_file(path: str, name: str,
+                     available_kinds) -> SessionMatch | None:
+    """Which session a crawled file belongs to, or None.
+
+    NAME evidence is tried FIRST: `API Design – Alternate Class` sitting in a
+    `2. Live Class Slides` folder is an alternate class, and the folder alone
+    would call it a class. The more specific evidence wins.
+
+    A kind the module does not actually have is never invented — Test
+    Engineering has no post_class sessions, so a `Practice Problems` folder
+    there places nothing.
+    """
+    kinds = set(available_kinds or ())
+    for kind, rx in _NAME_EVIDENCE:
+        if rx.search(name) and kind in kinds:
+            return SessionMatch(kind, "name", rx.pattern[:40])
+    for kind, rx in _FOLDER_EVIDENCE:
+        if rx.search(path) and kind in kinds:
+            return SessionMatch(kind, "folder", rx.pattern[:40])
+    return None
+
+
+#: A deck filename often ends in a first name — `UI & DOM - Jakob.pptx`. With
+#: the mastersheet giving per-module instructors, that can be PROPOSED. It is
+#: never applied: D1 forbids people from slide CONTENT, and a filename is
+#: weaker evidence than the sheet, not stronger.
+#: Three shapes, all measured in the row-B cache. The extension is OPTIONAL —
+#: native Google decks have none, which is why the first version proposed
+#: nothing at all.
+_NAME_SHAPES = (
+    re.compile(r"\bby\s+([A-Z][A-Za-z.'`-]+(?:\s+[A-Z][A-Za-z.'`-]+)?)"
+               r"$"),
+    re.compile(r"[-–—]\s*([A-Z][A-Za-z.'`-]+(?:\s+[A-Z][A-Za-z.'`-]+)?)"
+               r"\s*(?:\([^)]*\))?\s*$"),
+    re.compile(r"^([A-Z][A-Za-z.'`-]+(?:\s+[A-Z][A-Za-z.'`-]+)?)\s*:"),
+)
+
+
+_EXT = re.compile(r"\.(pptx|pdf|docx|xlsx|key|ppt|doc|txt|md|zip)$", re.I)
+
+
+def deck_name_token(filename: str) -> str | None:
+    """The person-shaped token in a deck filename, or None.
+
+    The extension is removed FIRST. Leaving it on let `Ashish.pdf` through as a
+    name, because a surname legitimately contains a dot (`St. John`) and the
+    character class has to allow one.
+    """
+    stem = _EXT.sub("", filename).strip()
+    for rx in _NAME_SHAPES:
+        m = rx.search(stem)
+        if m:
+            return m.group(1).strip(" .")
+    return None
+
+
+def propose_deck_instructor(filename: str, assignments: dict) -> dict | None:
+    """A proposal linking a deck to one of its module's instructors, or None."""
+    token = deck_name_token(filename)
+    if not token:
+        return None
+    hits = [(person, role) for role, people in (assignments or {}).items()
+            for person in (people if isinstance(people, list) else [])
+            if _same_person_hint(token, person)]
+    if not hits:
+        return None
+    row = {"deck": filename, "matched_token": token, "confirmed": False,
+           "evidence": "deck filename first name"}
+    if len(hits) > 1:
+        row.update(ambiguous=True, candidates=[h[0] for h in hits],
+                   note="the filename matches more than one instructor on this "
+                        "module; a human decides, nothing is applied")
+    else:
+        row.update(ambiguous=False, candidate=hits[0][0],
+                   instructor_role=hits[0][1])
+    return row
+
+
+def _same_person_hint(token: str, person: str) -> bool:
+    """A first name matching a first name. A HINT, which is why it proposes."""
+    t, p = token.lower().split(), person.lower().split()
+    return bool(t and p and t[0] == p[0])
+
+
+# ---------------------------------------------------------------------------
+# Topic ranking
+# ---------------------------------------------------------------------------
+#
+# Ranking ORDERS topics; it never drops one. CLAUDE.md §4 — a cutoff must not
+# hide a correct answer, and nothing here is a cutoff.
+
+_TOPIC_RANK = {
+    "curriculum": 0,          # lesson plans and outlines come first
+    "class": 1,
+    "alternate_class": 2,
+    "pre_class": 3,
+    "task": 4,
+    "review": 5,
+    "alternate_review": 6,
+    "post_class": 7,
+}
+
+_HISTORICAL = re.compile(r"/(Revamp[\s-]*20\d\d|Q\d\s*20\d\d:?\s*Revamp|"
+                         r"New Material Aug 2023)(?:/|$)|^\s*\[?(old|deprecated|"
+                         r"do ?not ?use)\b", re.I)
+
+
+def topic_rank(source_kind: str | None) -> int:
+    """Lower sorts first. An unknown source ranks last but is still kept."""
+    return _TOPIC_RANK.get(source_kind or "", 99)
+
+
+def is_historical(path: str, name: str) -> bool:
+    """A superseded revamp subtree, or a deck whose own name says `Old`."""
+    return bool(_HISTORICAL.search(path) or _HISTORICAL.search(name))

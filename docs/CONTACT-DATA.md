@@ -1,7 +1,12 @@
 # CONTACT DATA — the D4 question, written before any extraction
 
-**Status: recommended NO, 2026-09-18. Not built. Recorded rather than dropped,
-because the reasoning is what makes the decision re-checkable if it is reopened.**
+**Status: PARTIALLY REVERSED by the corpus owner, 2026-09-29. See §R at the end
+— the original recommendation and its reasoning are left standing above it,
+unedited, because a reversal is only re-checkable against what it reversed.**
+
+**Original status: recommended NO, 2026-09-18. Not built. Recorded rather than
+dropped, because the reasoning is what makes the decision re-checkable if it is
+reopened.**
 
 The trigger was small: the instructor panel could show a LinkedIn link. The data
 exists — `01-corpus-inventory.md` counts **4,524 distinct LinkedIn URLs**
@@ -289,3 +294,69 @@ reverse **explicitly and by narrowing the rule**, never by exception:
    came to be trusted for months in the first place.
 
 **Nothing extracted. Awaiting the population.**
+
+---
+
+# §R · REVERSAL — the Resource Collection Mastersheet instructor tables
+
+**Approved 2026-09-29. This reverses the 2026-09-18 recommendation for ONE
+source and leaves it standing for every other.**
+
+## What changed, and what did not
+
+The 2026-09-18 decision said no to instructor contact data for all three
+populations. The reasoning above is unchanged and still applies to the decks,
+the documents, the file-owner metadata and the row-B content crawl.
+
+What is approved is narrower: **the instructor tables in
+`02-curriculum/Resource Collection Mastersheet (Software + System).xlsx`**, on
+the `Full Stack Engineering`, `Frontend Engineering`, `Backend Engineering` and
+`Test Engineering` tabs. Those tables have a `Contact #`, an `Email id` and a
+`Linkedin` column, authored deliberately as a roster.
+
+**Why this source and not the others.** Every population in the original
+decision was reached by inference — a name on a slide, an address in a file's
+owner metadata, a URL in a document's body. This is a column, in a table, with
+a header, maintained as a roster. It is the evidence shape `node_sources` was
+built to cite, and the one the extractor can be pointed at deliberately rather
+than sweeping up.
+
+## Conditions, each enforced by something that runs
+
+| condition | enforced by |
+|---|---|
+| the three contact columns go ONLY into the sensitive half | they are declared `sensitive` in `taxonomy.yaml -> property_scopes`, and `project_graph.py::_refuse_unclassified_properties` REFUSES to project a sensitive property on a row without `sensitive: true`. They therefore live on a `sensitive: true` node, which `graphio.split_graph` writes to `graph-sensitive.json` — gitignored |
+| never in `knowledge/graph.json` or anything git-tracked | `tests/test_no_contact_data_in_tracked_files.py` scans every tracked file for an address, a phone or a LinkedIn URL |
+| admin-only when projected | the `recruiting` RLS path, unchanged — `nodes_recruiting_select` keys on `sensitive` |
+| name, years, company, designation, past companies may be public | `mastersheet.split_instructor_row()` returns the two sets separately, and a test asserts no public field carries an `@` or a profile URL |
+| the content-crawl redaction is untouched | it governs deck and document TEXT, which this is not. `redact.py` is unchanged by this reversal |
+| `sources.py`'s allow-list is extended EXPLICITLY | the new columns are named there one at a time; `tests/test_exclusion_is_deny_by_default.py` still fails on an undeclared contact column |
+| the payroll / contact CI guard still passes without blanket exemptions | `check_no_payroll_committed.py` is unchanged, and no blanket exemption is added for this source |
+
+## What the parser found while implementing it
+
+**One row in `Test Engineering` has an email and a LinkedIn URL pasted into the
+NAME column, and no name at all.** A column map says where a field *should*
+be; it does not say what a cell *contains*. So `split_instructor_row` scrubs
+contact tokens out of public fields into the private side and flags the row,
+and `is_unusable()` reports a row that scrubbing leaves nameless rather than
+ingesting it or dropping it silently. Found by the test, not by reading.
+
+## What this does NOT approve
+
+- anything of this kind from decks, documents or unstructured text
+- file-owner addresses (D4 stands: the owner is stored as a DOMAIN)
+- the LinkedIn roster in `SMEs consent` (D5 stands, and it is a modelling
+  limit rather than a privacy preference)
+- publishing any of it — the sensitive half is not projected at all today, and
+  `--scope full` still refuses
+
+```
+Approved by:            Animesh Kumar
+Date:                   2026-09-29
+Scope:                  Resource Collection Mastersheet instructor tables,
+                        four domain tabs, that source only
+Sensitive fields:       the three contact columns named in §R
+Public fields:          name, years of experience, current company,
+                        current designation, past tier-1 companies
+```

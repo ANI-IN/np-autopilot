@@ -1,6 +1,6 @@
 # Module label variants found across folder shapes.
 #
-# generated: 2026-09-29T07:52:04Z
+# generated: 2026-09-29T08:24:44Z
 # variants: 3
 #
 # The module's IDENTITY is (domain_slug, sequence), so a variant is a
@@ -48,6 +48,26 @@ tab_joins:
     source_doc: 'Front-End: Detailed Course Outline[2023]'
     candidate: 'Frontend System Design'
     candidate_sequence: 3
+    confirmed: false
+# mastersheet label differences: 3
+# The Resource Collection Mastersheet names each module too. Where it
+# disagrees with the folder, that is EVIDENCE for resolving the
+# variant — cited here, still a proposal, never auto-applied.
+mastersheet_labels:
+  - domain: full-stack
+    sequence: 3
+    folder_label: 'Cloud'
+    mastersheet_label: 'Cloud Infrastructure'
+    confirmed: false
+  - domain: full-stack
+    sequence: 4
+    folder_label: 'JavaScript and Web Dev'
+    mastersheet_label: 'JavaScript and Web Development'
+    confirmed: false
+  - domain: testing
+    sequence: 5
+    folder_label: 'Test Automation Design Patterns'
+    mastersheet_label: 'Test Automation'
     confirmed: false
 variants:
   - domain: full-stack

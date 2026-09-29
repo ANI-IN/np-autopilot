@@ -373,6 +373,35 @@ node_types:
     key: drive_file_id
     properties: [label, label_raw, owner_domain, sources, sensitive]
 
+  - name: class_session
+    expect: null
+    key: [module, session_kind, uplevel_link]
+    properties: [label, label_raw, session_kind, resource_type, uplevel_link,
+                 sources, sensitive]
+    note: >
+      One row of the mastersheet's session block. `session_kind` is one of
+      pre_class, class, alternate_class, assignment, assignment_review,
+      alternate_assignment_review, post_class — and it comes from the resource
+      NAME, because the sheet's own `Type` column collapses the four live-class
+      variants into one value.
+
+  - name: instructor_contact
+    expect: null
+    key: instructor_slug
+    properties: [label, label_raw, contact_phone, contact_email, linkedin_url,
+                 scrubbed_from_public, sources, sensitive]
+    note: >
+      ALWAYS sensitive: true. A companion to `instructor`, carrying only the
+      three columns approved in docs/CONTACT-DATA.md §R.
+
+      It is a separate NODE rather than three properties on the instructor
+      because the existing split is node-level — graphio.split_graph sends
+      `sensitive: true` nodes to the gitignored half — while the owner's
+      condition is property-level: name, years, company and designation stay
+      public. A companion node expresses that with the machinery that already
+      exists and is already enforced, instead of a new one that would have to
+      be trusted.
+
 edge_types:
 
   - name: belongs_to
@@ -629,6 +658,44 @@ edge_types:
     cardinality: 1:n
     expect: null
 
+  - name: reachable_at
+    role: contact_of
+    from: instructor
+    to: instructor_contact
+    cardinality: 1:1
+    expect: null
+    source: Resource Collection Mastersheet instructor tables (CONTACT-DATA §R)
+
+  - name: taught_by
+    role: module_instructor
+    from: module
+    to: instructor
+    cardinality: n:n
+    expect: null
+    edge_properties: [instructor_role]
+    source: >
+      Resource Collection Mastersheet, per-module instructor block
+      (Topic | Primary Instructor | Backup 1 | Backup 2 | Backup 3)
+    note: >
+      DELIBERATELY NOT `teaches`. `teaches` is an instructor<->module pairing
+      derived from class rosters and schedule sheets, with class_dates as its
+      evidence. This is a STAFFING ASSIGNMENT from a planning sheet: it says
+      who is meant to take the module, not who has stood in front of a class.
+      Merging them would do to staffing what folding expert_in into teaches
+      would have done — collapse two evidence classes into one answer.
+
+  - name: delivers_session
+    role: module_session
+    from: module
+    to: class_session
+    cardinality: 1:n
+    expect: null
+    edge_properties: [session_kind]
+
+# ---------------------------------------------------------------------------
+# Controlled vocabulary
+# ---------------------------------------------------------------------------
+
 tool_vocabulary:      # closed. workflow.tools may contain only these.
   - Zoom
   - Uplevel
@@ -831,12 +898,17 @@ property_scopes:
     - class_dates
     - classes
     - confirmed_count
+    - content_available
     - corpus_disagrees
     - cross_validated
+    - current_company
+    - current_designation
     - decline_rate
     - declined_count
     - doctype
+    - domain_slug
     - drive_file_id
+    - drive_folder
     - effort
     - employee_ids
     - family
@@ -844,14 +916,20 @@ property_scopes:
     - first_seen_quarter
     - granularity
     - inferred
+    - instructor_role
     - join_basis
     - join_key
     - kind
+    - label_variants
     - last_seen_quarter
+    - locator_kind
+    - mime
     - normalised_label
     - number
     - owner_domain
     - parsed
+    - past_companies
+    - path
     - pipeline_status
     - provenance
     - rank
@@ -860,6 +938,7 @@ property_scopes:
     - renderable
     - requests_from
     - requests_to
+    - resource_type
     - review
     - revision
     - role
@@ -867,9 +946,12 @@ property_scopes:
     - seen_in_sheets
     - seniority
     - sequence
+    - session_kind
     - sheet_count
     - slide_count
     - slide_number
+    - slug
+    - source_doc
     - source_file
     - source_kind
     - stage
@@ -881,9 +963,22 @@ property_scopes:
     - theme_id
     - title
     - tools
+    - unavailable_reason
+    - unavailable_rule
+    - uplevel_link
     - via_alias
     - workflow_id
-  sensitive: []
+    - years_experience
+  sensitive:
+    # Approved 2026-09-29 — docs/CONTACT-DATA.md §R, instructor tables in the
+    # Resource Collection Mastersheet ONLY. Classified `sensitive` so that
+    # project_graph.py REFUSES to project them on a row without sensitive:true,
+    # which is what forces them onto a node that graphio writes to the
+    # gitignored half. The classification IS the enforcement.
+    - contact_email
+    - contact_phone
+    - linkedin_url
+    - scrubbed_from_public
 
 excluded:
 

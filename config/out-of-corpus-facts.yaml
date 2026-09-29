@@ -31,40 +31,49 @@ facts:
       Recorded because the difference matters: one explanation implies the
       domains are staffed but undocumented, the other says they are not staffed.
 
-  - id: sd1-full-stack-program-weeks
-    subject: [SD1: Full Stack]
+  - id: rowb-program-weeks
+    subject: [SD1: Full Stack, SD2: Frontend, SD3: Backend Engineering, SD4: Test Engineering]
     fact: >
-      The Full Stack programme runs Data Structures & Algorithms in program
-      weeks 1-5 and Scalable Systems Design in weeks 6-8 BEFORE its own five
-      modules, so those modules are program weeks 9, 10, 11, 12 and 13 — in the
-      order of the active `Full Stack` tab of `Full Stack Course Outline v2`:
-      Databases, API Design and Implementation, Cloud Infrastructure,
-      JavaScript and Web Development, UI System Design.
+      All four row-B domains run Data Structures & Algorithms in program weeks
+      1-5 and Scalable Systems Design in weeks 6-8 BEFORE their own modules.
+      The per-module program weeks, in each domain's module order, are:
+    weeks:
+      full-stack:   {1: 9, 2: 10, 3: 11, 4: 12, 5: 13}
+      frontend:     {1: 9, 2: 10, 3: 11, 4: 12}
+      backend:      {1: 9, 2: 10, 3: 11, 4: 12, 5: 13}
+      testing:      {1: 9, 2: 10, 3: 11, 4: 12, 5: 13, 6: 14}
     origin: hand
     asserted_by: Animesh Kumar (corpus owner)
     asserted_at: 2026-09-29
     evidence: >
-      Direct statement, 2026-09-29. NO FILE IN ROW B ESTABLISHES IT, and the
-      measurement is why it had to be asserted rather than read: SD2's KYP and
-      SD4's outline both carry the prerequisite rows that make their numbering
-      global (weeks 9-12 and 9-14), and SD1's outline has no such rows — its
-      active tab heads the column with nothing at all. The one place the word
-      `Week` appears over these values is the superseded `OLD Full Stack` tab,
-      which puts TWO module sequences side by side in the same rows, each
-      numbered from 1. On that tab `Week` is demonstrably a per-track ordinal,
-      which is why the label could not be taken at face value.
-    consequence: >
-      SD1 modules carry a program_week (9-13) whose edge records
-      source_kind: hand and this assertion, NEVER a curriculum file. It must
-      never be presentable as though a scan produced it (CLAUDE.md, §A.5) and
-      it emits no sourced_from edge.
+      Direct statement, 2026-09-29, superseding the SD1-only fact recorded
+      earlier the same day.
 
-      APPLIES TO SD1 ONLY. SD3 (Backend) has no week column in any curriculum
-      document in row B and stays program_week: null with reason
-      no-curriculum-week until a document states one or the owner asserts it.
-      The offset of 8 is NOT a rule: it is not applied to SD3, and
+      CORROBORATED BY THE CORPUS for two of the four, which is why those two
+      are worth naming: the SD2 KYP (`Intro to Course - Front-EndEngineering -
+      KYP Doc.pdf`, page 1) states `1 - 5 Algorithms`, `6-8 Scalable System
+      Design`, `9-12 Front-End Engineering`; and `IK: Test Engineering -
+      Curriculum Outline` places its six modules at 9-14 with the same two
+      prerequisite rows above them. Full Stack and Backend have no such
+      statement in row B — their outlines carry no prerequisite rows at all —
+      so for those two this is assertion alone.
+
+      VALUES, NOT A FORMULA. They are written out per module on purpose. The
+      offset of 8 is a fact ABOUT these four programmes today, not a rule: a
+      module sits at a different program week in a different programme, and
       pipeline/lib/curriculum.py still raises ArithmeticWeekRefused on any
-      attempt to compute a program week from a folder sequence.
+      attempt to compute one from a folder sequence. Adding a fifth domain
+      means adding its values here, not extending an arithmetic.
+    consequence: >
+      Every module in the four approved domains now carries a program_week
+      whose edge records source_kind: hand and this assertion. None of them
+      emits a sourced_from edge and none may be presented as though a scan
+      produced it (CLAUDE.md §A.5).
+
+      This closes the `no-curriculum-week` gap that Frontend, Backend and
+      Testing reported. It does NOT make the weeks corpus evidence — the gap
+      is closed by an owner statement, and a reader asking "where does week 11
+      come from" gets this file, not a curriculum document.
 
   - id: rowb-revamp-base-is-current
     subject: [SD1: Full Stack, SD3: Backend Engineering]

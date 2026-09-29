@@ -1,0 +1,138 @@
+# Deck filename -> instructor proposals. NOTHING HERE IS APPLIED.
+#
+# generated: 2026-09-29T08:24:44Z
+# rows: 14
+#
+# A deck named `UI & DOM - Jakob.pptx` hints at an instructor, and the
+# mastersheet now says who that module's instructors are — so the hint
+# can be checked. D1 is unchanged: it forbids people from slide
+# CONTENT, and a filename is weaker evidence than the sheet, not
+# stronger. Ambiguous rows list every candidate rather than ranking.
+version: 1
+proposals:
+  - deck: '[Copy Sep 2023} New Databases Live Class - Ashish'
+    domain: backend
+    sequence: 1
+    matched_token: 'Ashish'
+    session: 'class'
+    candidate: 'Ashish Kaila'
+    instructor_role: backup_3
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: 'New Database Design Live Class - Konstantinos'
+    domain: backend
+    sequence: 1
+    matched_token: 'Konstantinos'
+    session: 'class'
+    candidate: 'Konstantinos'
+    instructor_role: primary
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: 'IK-backend-concurrency-presentation-v5 - Faraaz'
+    domain: backend
+    sequence: 5
+    matched_token: 'Faraaz'
+    session: 'class'
+    candidate: 'Faraaz'
+    instructor_role: primary
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: 'Copy of API Design&Impl - Live Class by Shelby Copy'
+    domain: full-stack
+    sequence: 2
+    matched_token: 'Shelby Copy'
+    session: 'class'
+    candidate: 'Shelby'
+    instructor_role: primary
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: 'Frontend - Module 3 - System Design - Evgeny Vinnik'
+    domain: frontend
+    sequence: 3
+    matched_token: 'Evgeny Vinnik'
+    session: 'class'
+    candidate: 'Evgeny Vinnik'
+    instructor_role: backup_1
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: 'API Design&Impl - Live Class by Shelby Copy'
+    domain: full-stack
+    sequence: 2
+    matched_token: 'Shelby Copy'
+    session: 'class'
+    candidate: 'Shelby'
+    instructor_role: primary
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: 'UI System Design - Live Class Slides - Ashish'
+    domain: full-stack
+    sequence: 5
+    matched_token: 'Ashish'
+    session: 'class'
+    candidate: 'Ashish Kaila'
+    instructor_role: backup_3
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: "IK's Copy of Live Class Slides: Automation Testing - Hetal Modi"
+    domain: testing
+    sequence: 4
+    matched_token: 'Hetal Modi'
+    session: 'class'
+    candidate: 'Hetal Modi'
+    instructor_role: primary
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: 'Cloud Testing - Live Class - Azeem'
+    domain: testing
+    sequence: 6
+    matched_token: 'Azeem'
+    session: 'class'
+    candidate: 'Azeem Ghumman'
+    instructor_role: backup_1
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: 'Frontend - Module 3 - System Design- Adam Toth'
+    domain: frontend
+    sequence: 3
+    matched_token: 'Adam Toth'
+    session: 'class'
+    candidate: 'Adam Toth'
+    instructor_role: primary
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: 'Frontend System Design - by Adam.pptx'
+    domain: frontend
+    sequence: 3
+    matched_token: 'Adam'
+    session: 'class'
+    candidate: 'Adam Toth'
+    instructor_role: primary
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: 'JS and WebD - Live Class by Ashish'
+    domain: full-stack
+    sequence: 4
+    matched_token: 'Ashish'
+    session: 'class'
+    candidate: 'Ashish Kaila'
+    instructor_role: backup_1
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: 'UI System Design - Live Class Slides - Adam Toth'
+    domain: full-stack
+    sequence: 5
+    matched_token: 'Adam Toth'
+    session: 'class'
+    candidate: 'Adam Toth'
+    instructor_role: backup_1
+    evidence: 'deck filename first name'
+    confirmed: false
+  - deck: 'Fundamentals of Test Eng. Live Class Slides: Week 1 Slides - Bill Ogden'
+    domain: testing
+    sequence: 1
+    matched_token: 'Bill Ogden'
+    session: 'class'
+    candidate: 'Bill Ogden'
+    instructor_role: primary
+    evidence: 'deck filename first name'
+    confirmed: false
