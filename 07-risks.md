@@ -427,8 +427,17 @@ repo as wrongly public while never checking our own. Full detail in
 
 ## R20 — A full working copy of the repository was uploaded INTO the corpus folder
 
-**Likelihood: n/a, it happened · Impact: high · STATUS: NOT REMEDIATED —
-both artefacts were still present when this was written**
+**Likelihood: n/a, it happened · Impact: high · STATUS: artefacts REMOVED
+from the corpus folder (verified 2026-09-30); the database password was NOT
+rotated, by owner choice — the exposed credential is still live**
+
+> **Reconciled 2026-09-30 (owner decision, Animesh Kumar, origin: hand).** The
+> uploaded copies were moved out of the corpus folder, and the password was
+> not rotated. Verified the way this section asks: pass 0's read-only
+> `list_folder()` at 2026-09-30 00:10 IST lists only `00-master` … `06-analysis`
+> and `links` — neither `NP-Autopilot-Corpus/` nor `np-autopilot-main.zip`.
+> Whether they have also left the owner's **Trash** is not visible to a reader.
+> The sections below are the record as of 2026-09-29 and are left as written.
 
 > **Numbering note — resolved 2026-09-29.** This was first written as R19,
 > which `docs/CACHE-EXPOSURE.md` §0a had already reserved for the "was the
@@ -508,7 +517,7 @@ cannot read who else can.*
 | | |
 |---|---|
 | **Start** | `________` — Drive reports `modifiedTime` 2026-09-28T18:35:24Z (archive) and 18:51:34Z (tree). Only the owner knows whether those are the upload times or later touches |
-| **End** | **NOT YET.** Still present 2026-09-29. The end is when both artefacts leave the folder *and* leave Trash |
+| **End** | **Out of the folder by 2026-09-30 00:10 IST** (listed; still present 2026-09-29). Trash not visible to a reader — the end is when both leave Trash too |
 | **Is the length knowable?** | **Yes — and unusually so.** Unlike R18 and §0a, both ends of this window are knowable. Do not let it inherit their "start unknown, so it cannot be called short" framing |
 
 ### Facts only the owner can supply
@@ -517,7 +526,7 @@ cannot read who else can.*
 - [ ] **Who the folder is shared with, and how many people.**
 - [ ] **Drive activity log for both artefacts** — views and downloads between upload and removal. Owner-only; the service account cannot read it.
 - [ ] **How the upload happened, and with which tool**, so the Phase 4 guard is aimed at the real path rather than an imagined one.
-- [ ] **Database password rotation completed at** `________`. Stated as done 2026-09-28.
+- [x] **Database password rotation: NOT done, by owner choice** (recorded 2026-09-30). The earlier line here read "stated as done 2026-09-28"; that was wrong. **The transaction-pooler password that was in the upload is still the live credential** — which is also the session pooler's, so an owner-level connection.
 - [ ] **Was `SUPABASE_ANON_KEY` rotated?** It is publishable by design and is served to every browser by `/api/config`, so rotation is probably a no-op — record the decision rather than leaving it assumed.
 - [ ] **Was `VERCEL_OIDC_TOKEN` treated as burned?** It is short-lived and the local copies are dated 2026-09-18, so it was very likely expired before the upload. Confirm rather than assume.
 - [ ] **Disclosure.** The subjects of `graph-sensitive.json` are named external people and the data is hiring outcomes. R18 §"What this changes" put that question to legal; it returns here unchanged, and it is not the pipeline's to answer.
@@ -561,4 +570,4 @@ cannot read who else can.*
 | R16 | Reference impl is public | certain | your call |
 | R17 | Excluded payroll file reachable by the cloud identity — **fixed at fetch time 2026-09-17**; the account can still read it on demand | certain | high |
 | R18 | **The repository was PUBLIC for 8 days** — 277 named hiring rejections and 1,625 candidates readable by anyone. Set private on discovery | happened | high |
-| R20 | **A working copy of the repo was uploaded into the corpus folder** — DB password, `graph-sensitive.json`, `.git/`. **Still present 2026-09-29; not remediated** | happened | high |
+| R20 | **A working copy of the repo was uploaded into the corpus folder** — DB password, `graph-sensitive.json`, `.git/`. **Removed from the folder 2026-09-30; password NOT rotated (owner choice)** | happened | high |
