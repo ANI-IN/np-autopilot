@@ -139,6 +139,32 @@ _ARCHIVE_MIMES = {
 }
 
 
+#: OWNER DECISION, 2026-09-29 (Animesh Kumar). Three instructor-authored files
+#: inside an `Assignment Review` folder, included despite the learner-content
+#: rule.
+#:
+#: KEYED ON DRIVE FILE ID, NOT ON A NAME OR A PATTERN, and that is the whole
+#: design. A rule like "exempt anything called speaker notes" is a name list
+#: that rots, and it would widen silently the moment another folder used the
+#: word. Three ids are three decisions somebody made, each re-checkable.
+#:
+#: The gate this cleared: the folder is `Assignment Review - Roland`, so
+#: including its contents would put a name in a provenance path. Roland was
+#: established as an INSTRUCTOR, not a learner — the SD4 handbook names him as
+#: the author of foundation material, and a slide byline reads "IK: Technical
+#: Mentor - Roland Kunkel". That evidence settled the gate and enters no graph:
+#: D1 is unchanged, instructors stay deferred, and
+#: `tests/test_content_crawl_guards.py` asserts none of it becomes a person.
+INCLUDE_DESPITE_LEARNER_RULE = {
+    "1JfYvWuVXkbrUentG1jqi7gYU2kJp1KxH":
+        "Live Class Assignment Session Speaker Notes.md (Assignment Review - Roland)",
+    "1OeFGoPw5VO4t1QY1K3PcECQLrw2eL2VEEFc0CV_RW4s":
+        "Live class assignment solutions: Design patterns (Assignment Review - Roland)",
+    "1W5ei_MBy-T0sOJDOVcVN65s9ALEhldmm":
+        "Live Class Assignment Session Speaker Notes.md (Assignment Review)",
+}
+
+
 def classify_folder(path: str, name: str) -> Decision:
     """Walk it, or skip it by a named rule."""
     if _RESPONSES_RE.search(name):
@@ -153,7 +179,8 @@ def classify_folder(path: str, name: str) -> Decision:
     return Decision("walk")
 
 
-def classify_file(path: str, name: str, mime: str) -> Decision:
+def classify_file(path: str, name: str, mime: str,
+                  file_id: str | None = None) -> Decision:
     """Export its text, record it as metadata only, or skip it by name.
 
     Order is deliberate. The learner rule is checked BEFORE the media rule so a
@@ -161,6 +188,12 @@ def classify_file(path: str, name: str, mime: str) -> Decision:
     `no-media-download` — two different reasons to hold the same file back, and
     collapsing them would lose the one that matters.
     """
+    if file_id and file_id in INCLUDE_DESPITE_LEARNER_RULE:
+        # An owner decision beats the rule, and only for these exact files.
+        return Decision("export", "owner-include",
+                        "instructor-authored, included by owner decision "
+                        "2026-09-29 despite sitting under an Assignment Review "
+                        "folder")
     if _LEARNER_PATH_RE.search(path) or _LEARNER_FILE_RE.search(name):
         return Decision("metadata_only", "learner-content",
                         "learner-authored material inside an assignment "

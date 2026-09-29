@@ -296,7 +296,7 @@ def crawl(service, root_id: str, cache_root: Path, *, approved_domains: list,
                 walk(e["id"], child, depth + 1)
                 continue
 
-            decision = scope.classify_file(child, name, mime)
+            decision = scope.classify_file(child, name, mime, e["id"])
             stats["files_seen"] += 1
             row = {
                 "path": child,

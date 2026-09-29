@@ -17,6 +17,7 @@ mutation record is in the Phase 1 report.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -420,3 +421,66 @@ def test_a_reserved_name_as_a_substring_of_a_real_domain_is_still_redacted():
     merely contains a reserved one, and a substring check would exempt it."""
     out, counts = rd.redact("x@example.com.somereal.net")
     assert counts.get("email") == 1
+
+
+# ---------------------------------------------------------------------------
+# D1 regression — the Roland evidence cleared a gate and enters no graph
+# ---------------------------------------------------------------------------
+#
+# Deck text, a handbook and a slide byline were read on 2026-09-29 to settle
+# ONE question: is the name in `Assignment Review - Roland/` a learner's, which
+# would put a learner in a provenance path? It is not — he is an instructor.
+#
+# That evidence did its job and stops there. None of it becomes graph data:
+# not the name, not "Technical Mentor", not the employer. D1 is unchanged and
+# instructors are still deferred. This test exists because "we only used it to
+# decide" is precisely the kind of promise A7B says to turn into a check.
+
+ROLAND_EVIDENCE = [
+    ("Hello, my name is Roland and I've worked as a test engineer", SLIDES),
+    ("IK: Technical Mentor - Roland Kunkel", PPTX),
+    ("Welcome to IK or Interview Kickstart. My name is Roland", PPTX),
+]
+
+
+@pytest.mark.parametrize("text,mime", ROLAND_EVIDENCE)
+def test_the_roland_evidence_never_becomes_a_person(text, mime):
+    """Whatever the text says, a deck yields no people."""
+    assert cs.may_extract_people(mime) is False
+
+
+def test_an_instructor_named_in_a_folder_is_not_extracted_from_the_filename():
+    """`Assignment Review - Roland/` names a real instructor in a PATH. The
+    deferral covers filenames too, so the path is provenance and nothing more."""
+    assert cs.may_extract_people_from_filename(
+        "Assignment Review - Roland/Live class assignment solutions") is False
+
+
+def test_the_include_list_is_keyed_on_file_id_not_on_a_name():
+    """The 3 instructor files are included by Drive file ID. Keying on
+    'Roland' would make an owner decision depend on a person's name appearing
+    in a path — which is both a name list that rots and a rule that would
+    quietly widen if another folder used the same word."""
+    ids = cs.INCLUDE_DESPITE_LEARNER_RULE
+    assert ids, "the include list must exist"
+    assert all(re.fullmatch(r"[A-Za-z0-9_-]{20,}", k) for k in ids), \
+        "every key must be a Drive file id, never a name or a path"
+
+
+def test_an_owner_included_file_is_exported_despite_the_learner_rule():
+    d = cs.classify_file(
+        path="/X/3. Assignment/Assignment Review - Roland/Live Class Assignment Session Speaker Notes.md",
+        name="Live Class Assignment Session Speaker Notes.md", mime="text/markdown",
+        file_id="1JfYvWuVXkbrUentG1jqi7gYU2kJp1KxH")
+    assert d.action == "export"
+    assert d.rule == "owner-include"
+
+
+def test_a_lookalike_file_in_the_same_folder_is_still_skipped():
+    """Negative control — the exemption is three ids, not a folder or a name."""
+    d = cs.classify_file(
+        path="/X/3. Assignment/Assignment Review - Roland/Live Class Assignment Session Speaker Notes.md",
+        name="Live Class Assignment Session Speaker Notes.md", mime="text/markdown",
+        file_id="someOtherDriveFileIdEntirely00")
+    assert d.action == "metadata_only"
+    assert d.rule == "learner-content"

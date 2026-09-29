@@ -112,3 +112,45 @@ facts:
       within the base, not a parallel version of it. Recorded unresolved rather
       than forced into the rule that fits the other seven.
 
+  - id: rowb-resume-folders-are-fictional-templates
+    subject: [SD1: Full Stack, SD2: Frontend, SD3: Backend Engineering, SD4: Test Engineering]
+    fact: >
+      The resume files in row B's `Resume` folders are FICTIONAL TEMPLATES —
+      worked examples for the career module — not real people's resumes. The
+      names, addresses, employers and contact details in them are invented.
+      They stay in the graph as career-module content.
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: 2026-09-29
+    scope:
+      - "SD1: Full Stack/IK: Full Stack: Content Repo/Uplevel Shared/Resume"
+      - "SD2: Frontend/IK: Frontend Content Repo/Uplevel Shared/Resume"
+      - "SD3: Backend Engineering/Module-1: Database Design/Uplevel shared/Resume"
+      - "SD4: Test Engineering/Resume"
+      - "SD4: Test Engineering/Uplevel Shared/Resume"
+      - "SD4: Test Engineering/Uplevel Shared/Resume/AI resume"
+    evidence: >
+      Direct confirmation, 2026-09-29. Nothing in the files states it: a
+      fictional resume and a real one are the same artefact, which is exactly
+      why this needed a person. The corroborating shape is that one of them
+      carries the byline `RESUME WORDED & CO.`, a template vendor — but that
+      is one file of 117 and is not sufficient on its own.
+    consequence: >
+      REDACTION STAYS ON, UNCHANGED, and that is deliberate. These 117 files
+      hold 121 of the crawl's 148 phone redactions, 116 of 197 email and 119
+      of 167 LinkedIn — the MAJORITY of every category. Redacting invented
+      contact details costs nothing: the curriculum value of a resume template
+      is its structure and wording, not its phone number.
+
+      Turning redaction off here would be the expensive direction. It would
+      make the control depend on a per-folder judgement about whether the
+      people inside are real, which is a judgement no extractor can make and
+      no reader can re-check — and it would mean a real resume dropped into a
+      template folder is published. `docs/A7B.md` instance 7: a check keyed on
+      a value somebody supplies is that person's opinion, stored, with a
+      constraint's reputation.
+
+      What the fact DOES change is interpretation. A reader asking why 71% of
+      this corpus's contact redactions sit in six folders now has an answer
+      that is not "the curriculum is full of personal data".
+

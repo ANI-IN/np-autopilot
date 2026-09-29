@@ -671,6 +671,12 @@ the question asked.
 - **The three aliases** — unresolved, deliberately. `Agentic AI` cannot be
   resolved from the data at all and now says so on the surface.
 - **`A7B.md`'s open question** — which of our outputs does nobody read?
+- **`interview-kickstart.com` (hyphen) owns 185 of 1,440 row-B files** —
+  12.8%, concentrated in three SD4 foundation-material trees. **With IT as of
+  2026-09-29: does IK own that domain?** D4 stores an owner domain and nothing
+  else, so the domain is the entire signal. Same measurement: 204 files owned
+  at free-mail addresses (`gmail.com` 179, `hotmail.com` 22). See
+  `REGISTRY-INVENTORY.md` §11.
 
 ---
 
