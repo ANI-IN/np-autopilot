@@ -724,6 +724,26 @@ if(PORTED){
   const mrows = (html.match(/Robert Kreznarich/g)||[]).length;
   console.log('  matrix rows for him                :', mrows, '(want 1)');
   if(mrows !== 1) errors.push('MATRIX: expected one row per person, got '+mrows);
+
+  // THE CELL AND THE LOAD MUST NOT DEPEND ON EDGE ORDER. On M1 he has a
+  // legacy `teaches` AND a mastersheet primary; the cell used to show
+  // whichever edge came last. Checked in both orders.
+  const loadOf = () => {
+    const row = (sheet ? sheet.innerHTML : '').split('<tr>').find(r => r.includes('Robert Kreznarich')) || '';
+    const m = row.match(/class="load[^"]*"[^>]*>([^<]*)/);
+    return m ? m[1].replace(/\u00a0/g, ' ').trim() : '(no load cell)';
+  };
+  const first = loadOf();
+  const mine = g.edges.filter(e => e.s === R || e.t === R);
+  const rest = g.edges.filter(e => !(e.s === R || e.t === R));
+  g.edges.length = 0; g.edges.push(...rest, ...mine.reverse());
+  run('recompute(false,"order test")');
+  run('setView("matrix", false)');
+  const second = loadOf();
+  console.log('  load, edges in both orders         :', first, '|', second, '(want 1 P · 1 B)');
+  if(first !== '1 P · 1 B' || second !== '1 P · 1 B')
+    errors.push('MATRIX LOAD depends on edge order or ranks legacy over the mastersheet: '
+                + first + ' / ' + second);
 }
 
 // ---- B3: THE COLUMNAR PAYLOAD, AS THE SERVER ENCODES IT -------------------

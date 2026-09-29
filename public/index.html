@@ -2164,6 +2164,10 @@ function modulesFor(dom){
 // ROLE. A cell whose instructor identity is still an open review row is
 // HATCHED rather than filled: it is a claim that has not been confirmed, and
 // colouring it like the others would say it had been.
+const ROLE_RANK={primary:4,backup_1:3,backup_2:2,backup_3:1};
+function cellRank(c){
+  return (c.tier==='legacy'?0:10)+(ROLE_RANK[c.role]||0);
+}
 function renderMatrix(){
   const mods=modulesFor(state.fDomain);
   const rows=new Map();
@@ -2177,9 +2181,16 @@ function renderMatrix(){
     const role=(e.p&&e.p.instructor_role)||(tier==='legacy'?'taught':'');
     if(state.fRole&&role!==state.fRole)continue;
     if(!rows.has(ins.id))rows.set(ins.id,{ins,cells:new Map()});
-    rows.get(ins.id).cells.set(mod.id,{role,tier});
+    // ONE CELL, TWO KINDS OF EVIDENCE: a pair can carry a legacy `teaches`
+    // edge AND a mastersheet `taught_by` role. The cell used to show whichever
+    // edge came LAST, so the load column (D4a) depended on edge order — and
+    // under-counted two roles until B3 happened to reorder the edges. The rule
+    // is explicit now: the mastersheet role wins; within a tier, the stronger.
+    const cells=rows.get(ins.id).cells, prev=cells.get(mod.id), next={role,tier};
+    if(!prev||cellRank(next)>cellRank(prev))cells.set(mod.id,next);
   }
-  const list=[...rows.values()].sort((x,y)=>x.ins.l.localeCompare(y.ins.l));
+  const list=[...rows.values()].sort((x,y)=>x.ins.l.localeCompare(y.ins.l)||
+    (x.ins.id<y.ins.id?-1:x.ins.id>y.ins.id?1:0));   // ties: stable, by id
   let h='<h2>Who teaches what'+(state.fDomain?' \u2014 '+esc(state.fDomain):'')+
         ' <span class="dim">'+list.length+' instructors \u00d7 '+mods.length+
         ' modules</span></h2>';
