@@ -3,7 +3,56 @@
 Measured on `np-autopilot.vercel.app` by `eval/measure_signed_in.py`,
 2026-09-29, signed in. B3 compares against these.
 
-## No baseline yet — two runs, two failures
+## BASELINE — production, pre-deploy, 2026-09-29
+
+`python3 eval/measure_signed_in.py --phase pre`, signed in, 5 cold loads,
+20 samples per endpoint. **This is what B3 is measured against.**
+
+### Cold load — median (min–max) over 5 loads, each in a fresh context
+
+| | median | range |
+|---|---:|---|
+| TTFB | **64 ms** | 62–67 |
+| first contentful paint | **220 ms** | 196–232 |
+| DOMContentLoaded | **147 ms** | 132–163 |
+| load event | **148 ms** | 133–164 |
+| settled (networkidle) | **1,202 ms** | 1,172–**5,533** |
+| document transfer | 33,399 bytes | (88,995 decoded) |
+
+The settled range carries one 5.5 s outlier against a tight 1.17–1.20 s for the
+other four. The median is the figure; the outlier is recorded rather than
+dropped, because a 5 s settle happened once and will happen again.
+
+### Payload per call
+
+| | bytes |
+|---|---:|
+| `/` | 88,995 |
+| `/api/overview` | 35,204 |
+| `/stats.json` | 512 |
+| `/api/me` | 179 |
+
+### Latency, signed in, 20 samples
+
+| endpoint | p50 | p95 | bytes | status |
+|---|---:|---:|---:|---:|
+| `/api/overview` | **334 ms** | **447 ms** | 35,204 | 200 |
+| `/api/search?q=api` | **273 ms** | **372 ms** | 1,601 | 200 |
+| `/api/config` | **218 ms** | **394 ms** | 429 | 200 |
+| `/api/node` | **322 ms** | **506 ms** | 617 | 200 |
+| `/api/structure` | — | — | — | 404 — not served (new endpoint) |
+
+`/api/structure` has no "before". It will be reported as a new-view figure, not
+as an improvement.
+
+### What this baseline is NOT
+
+`/api/overview` returns 35,204 bytes for ~60 nodes. The structure view returns
+3,308 nodes and 4,970 edges, so B3's payload target is not "smaller than
+35 KB" — it is a payload roughly 55x the node count under 150 KB brotli. The
+comparison that matters is bytes per node, and time to a settled layout.
+
+## Superseded — two runs that produced no usable table
 
 Both attempts produced no usable latency table, for two different reasons, and
 both are recorded because the second was caused by the fix for the first.

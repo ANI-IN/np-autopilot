@@ -216,10 +216,23 @@ def main(argv=None) -> int:
             for i in range(COLD_LOADS):
                 c = browser.new_context(storage_state=str(SESSION))
                 pg = c.new_page()
-                pg.on("response", lambda r: sizes.__setitem__(
-                    r.url.replace(SITE, ""),
-                    len(r.body()) if r.request.resource_type != "image" else 0)
-                    if "/api/" in r.url or r.url.endswith((".json", "/")) else None)
+                # GUARDED. `r.body()` is a round trip to the browser, and a
+                # response can still be in flight when the context closes —
+                # which raises TargetClosedError from inside an asyncio
+                # callback, long after the numbers were collected and printed.
+                # A missing size is not a failed measurement; a stack trace
+                # under a valid table is just noise that makes it look failed.
+                def _record(r, _sizes=sizes):
+                    try:
+                        if not ("/api/" in r.url
+                                or r.url.endswith((".json", "/"))):
+                            return
+                        if r.request.resource_type == "image":
+                            return
+                        _sizes[r.url.replace(SITE, "")] = len(r.body())
+                    except Exception:
+                        pass
+                pg.on("response", _record)
                 t0 = time.time()
                 pg.goto(SITE, wait_until="domcontentloaded")
                 pg.wait_for_load_state("networkidle")
@@ -333,6 +346,12 @@ def main(argv=None) -> int:
                 raise SystemExit(
                     "  the timed requests did not return data. A latency table "
                     "built from 401s is worse than no table.")
+            # Detach first: a listener firing during teardown is the whole
+            # reason the last run printed two tracebacks under a good table.
+            try:
+                page2.remove_listener("response", _record)
+            except Exception:
+                pass
             browser.close()
     finally:
         if SESSION_DIR.exists():
