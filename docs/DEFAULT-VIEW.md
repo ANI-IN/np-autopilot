@@ -60,6 +60,30 @@ This is the `CLAUDE.md` §4 rule applied to a renderer rather than a threshold:
 rank or warn, never silently exclude. A hidden-by-default legacy module would
 be a filter on truth wearing a stylesheet.
 
+### Grouping, amended 2026-09-29
+
+The first version of this section said the legacy modules are "grouped under
+their domain". **724 of the 922 have no `contains` edge from any programme**,
+so for most of them that grouping edge does not exist. Measured, not assumed.
+
+So the rule is:
+
+1. group by **domain** where a domain edge exists;
+2. otherwise put the module in one faded cluster labelled
+   **"Legacy — no programme recorded"**.
+
+The cluster is a statement about the evidence, not a bin for leftovers. Its
+label says what is true of everything in it, which is the difference between
+grouping and hiding.
+
+### After the MOD merges
+
+16 of the collisions are now answered and applied (`config/module-merges.yaml`,
+pass 8). Module nodes 942 → 924, duplicate module labels **15 → 0**. What
+remains de-emphasised is the ~900 legacy modules that never collided with a
+row-B module at all, plus **30 instructor labels still duplicated across the
+two graphs** while the INS bulk is unanswered.
+
 ---
 
 ## D3 · Speed plan — approved

@@ -46,6 +46,10 @@ TRACKED_GRAPH_ARTEFACTS = [
     "knowledge/files.json",
     "knowledge/_graph_data.json",
     "knowledge/content_graph.json",
+    # Pass 8's output. A NEW tracked graph artefact is exactly the thing this
+    # list exists to catch, and adding it here is not optional: the merged
+    # graph carries every instructor node both halves contribute.
+    "knowledge/merged_graph.json",
 ]
 
 

@@ -203,3 +203,19 @@ Recorded in `config/instructor-identity.yaml`. Hand-entered facts emit no
 | `INS-31` `INS-32` (with `PPL-06`, `PPL-01`) | **Full names unknown.** `Konstantinos` and `Shelby` remain open review items and **keep their module attachments**, marked unconfirmed. Moving real modules onto an unconfirmed full name would attach them to a guess. |
 
 Remaining open: 78 of 86.
+
+### MOD-01…16 — answered 2026-09-29, applied by pass 8
+
+Recorded in `config/module-merges.yaml`, applied by `pipeline/08_merge_graphs.py`.
+
+| ids | answer |
+|---|---|
+| `MOD-02 03 05 06 07 08 09 10 11 13 16` | **merge** (bulk) — shared instructor and same programme family |
+| `MOD-01` | **merge.** Legacy instructors stay a separate evidence tier and are never shown as mastersheet roles; the sheet cell stays "blank in source" |
+| `MOD-12` | **merge** — distinctive label, no contradicting evidence |
+| `MOD-14` | **merge**, and must never be joined with SD4/5 `Test Automation`. Asserted by `tests/test_module_merges.py` |
+| `MOD-04` | **merge into SD2/2 (Frontend).** The legacy Full-Stack programme edges are kept with their provenance, marked **unconfirmed** — neither deleted nor asserted |
+| `MOD-15` | legacy `Week 5 - Test Automation` **is** SD4/5; the two `… Class` rows map to its class and assignment-review **sessions**. Legacy instructors (Roland Kunkel, Ioan Moldovan) stay legacy-tier evidence on those sessions |
+
+Remaining open: **62 of 86** — 26 `INS` bulk rows, `INS-08/30/31/32` answered as
+deliberately unresolved, and the `TOPv` / `TOPm` / `TOPt` / `PPL` / `DCK` groups.
