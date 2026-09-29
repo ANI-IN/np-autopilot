@@ -41,6 +41,25 @@ Caught by the corpus owner reading the byte column, not by the script.
 - `tests/test_measurement_is_authenticated.py` replays the exact bad run —
   401/54 bytes, verbatim — and asserts it is rejected.
 
+## Which run is which — stated, never inferred
+
+`eval/measure_signed_in.py` requires `--phase`:
+
+| flag | `/api/structure` | the other four |
+|---|---|---|
+| `--phase pre` | probed and reported (`not served (new endpoint)`), never required | **strict** |
+| `--phase post` | timed and **required** | **strict** |
+
+There is no default. Inferring "this must be a pre-deploy run because
+`/api/structure` 404s" would make the script relax its own checks exactly when
+the endpoint it guards had broken — a guard that switches itself off at the
+moment it matters. `invalid_measurements()` raises on any phase it was not
+given.
+
+The relaxation is scoped to the unshipped endpoint and to nothing else: in
+`--phase pre`, a 401 on `/api/overview` still fails the run, and a missing
+`/api/node` id still fails it in both phases.
+
 ## Not yet measurable
 
 `/api/structure` does not exist in production, so it has no "before". It will

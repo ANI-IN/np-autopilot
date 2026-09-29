@@ -17,6 +17,7 @@ Run:  python3 eval/measure_signed_in.py
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -35,30 +36,49 @@ SITE = os.environ.get("NP_MEASURE_BASE", "https://np-autopilot.vercel.app")
 SESSION_DIR = REPO / ".measure"
 SESSION = SESSION_DIR / "session.json"
 
-ENDPOINTS = ["/api/structure", "/api/overview", "/api/search?q=api",
-             "/api/config"]
+#: Timed and STRICTLY validated in both phases. These exist in production
+#: today, so a 401 or a too-small body is a broken measurement either way.
+BASE_ENDPOINTS = ["/api/overview", "/api/search?q=api", "/api/config"]
+
+#: Added by B3. Absent from production until the deploy, so `--phase pre` only
+#: PROBES it and reports what it found; `--phase post` times it and requires it.
+NEW_ENDPOINTS = ["/api/structure"]
 
 #: Endpoints whose small body is CORRECT. /api/config is four settings; the
-#: size floor below would flag it forever. Everything else returning under
-#: ~200 bytes is an error body, not data.
+#: size floor would flag it forever. Everything else returning under ~200
+#: bytes is an error body, not data.
 SMALL_BY_DESIGN = {"/api/config"}
 SAMPLES = 20
 
 
-def invalid_measurements(results: dict, node_id) -> list:
+def invalid_measurements(results: dict, node_id, phase: str) -> list:
     """Why a latency table is not a measurement. Empty means it is.
 
     THE CHECK THAT WAS MISSING. The first run reported a clean-looking table —
     /api/overview p50 219 ms — built entirely from 401 responses, because the
     timed requests carried no Authorization header. Every body was 54 bytes,
     the size of `{"error":"unauthorised",...}`, and nothing said so.
+
+    PHASE IS PASSED IN, NEVER INFERRED. Deciding "this looks like a pre-deploy
+    run because /api/structure 404s" would make the script relax its own
+    checks whenever the endpoint broke — a guard that switches itself off
+    exactly when the thing it guards has failed. The caller states which run
+    this is.
     """
+    if phase not in ("pre", "post"):
+        raise ValueError(f"phase must be 'pre' or 'post', not {phase!r}")
     bad = []
     for ep, r in results.items():
+        if phase == "pre" and ep.split("?")[0] in NEW_ENDPOINTS:
+            continue                      # probed and reported, not required
         if r.get("status") != 200:
             bad.append(f"{ep}: HTTP {r.get('status')}")
         elif ep.split("?")[0] not in SMALL_BY_DESIGN and r.get("bytes", 0) < 200:
             bad.append(f"{ep}: {r.get('bytes')} bytes — too small to be data")
+    if phase == "post":
+        for ep in NEW_ENDPOINTS:
+            if ep not in results:
+                bad.append(f"{ep}: not measured, and required after deploy")
     if node_id is None:
         bad.append("/api/node: no node id could be fetched to time it")
     return bad
@@ -69,13 +89,40 @@ def pct(vals, q):
     return vals[min(len(vals) - 1, int(q * len(vals)))]
 
 
-def main() -> int:
+def _args(argv):
+    """`--phase` is REQUIRED. There is no default and no inference.
+
+    A default would be a guess about which side of the deploy this is, and the
+    wrong guess in the safe-looking direction — `pre` — silently drops the
+    strictness the owner asked to keep.
+    """
+    ap = argparse.ArgumentParser(
+        description="Measure the live explorer while signed in.")
+    ap.add_argument("--phase", required=True, choices=("pre", "post"),
+                    help="pre: before the B3 deploy. /api/structure is probed "
+                         "and reported, never required; every other endpoint "
+                         "stays strict. post: after the deploy. /api/structure "
+                         "is timed and REQUIRED.")
+    ap.add_argument("outdir", nargs="?", default=None,
+                    help="unused; kept so an old invocation does not silently "
+                         "become a phase")
+    return ap.parse_args(argv)
+
+
+def main(argv=None) -> int:
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
         sys.exit("playwright is not installed:  python3 -m pip install playwright"
                  "  &&  python3 -m playwright install chromium")
 
+    args = _args(argv)
+    phase = args.phase
+    endpoints = (BASE_ENDPOINTS if phase == "pre"
+                 else NEW_ENDPOINTS + BASE_ENDPOINTS)
+    print(f"\n  PHASE: {phase}-deploy"
+          + ("  (/api/structure probed, not required)" if phase == "pre"
+             else "  (/api/structure required)"))
     SESSION_DIR.mkdir(exist_ok=True)
     try:
         with sync_playwright() as p:
@@ -183,7 +230,7 @@ def main() -> int:
                 return null;
             }""")
 
-            eps = list(ENDPOINTS)
+            eps = list(endpoints)
             if node_id:
                 eps.append("/api/node?id=" + node_id)
 
@@ -211,7 +258,25 @@ def main() -> int:
                 print(f"    {ep[:26]:26} {pct(r['times'],.5):7.0f}ms "
                       f"{pct(r['times'],.95):7.0f}ms {r['bytes']:9} "
                       f"{r['status']:7}")
-            bad = invalid_measurements(results, node_id)
+            # PRE-DEPLOY: probe the new endpoint, report, never require. A
+            # 404 here is the expected state — it has not shipped — and the
+            # run must not fail on it. If it answers 200 that is worth knowing
+            # too, because it means the deploy already happened.
+            if phase == "pre":
+                for ep in NEW_ENDPOINTS:
+                    st = page.evaluate("""async (ep) => {
+                        const h = {authorization: 'Bearer ' + SESSION.access_token};
+                        try { const r = await fetch(ep, {headers: h});
+                              return r.status; }
+                        catch (e) { return 0; }
+                    }""", ep)
+                    note = ("not served (new endpoint)" if st in (404, 0)
+                            else f"ALREADY SERVED (HTTP {st}) — is this really "
+                                 f"a pre-deploy run?")
+                    print(f"    {ep[:26]:26} {'—':>8} {'—':>8} {'—':>9} "
+                          f"{st:7}   {note}")
+
+            bad = invalid_measurements(results, node_id, phase)
             if bad:
                 print("\n  MEASUREMENT INVALID:")
                 for b in bad:

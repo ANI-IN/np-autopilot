@@ -24,14 +24,18 @@ def _mod():
 
 
 def test_the_exact_run_that_slipped_through_is_now_rejected():
-    """The real numbers from 2026-09-29, verbatim."""
+    """The real numbers from 2026-09-29, verbatim.
+
+    Checked in the PRE phase, the more permissive one: even there the 401s are
+    rejected, because the relaxation is scoped to the unshipped endpoint.
+    """
     m = _mod()
     results = {
         "/api/overview":     {"status": 401, "bytes": 54, "times": [219]},
         "/api/search?q=api": {"status": 401, "bytes": 54, "times": [216]},
         "/api/config":       {"status": 200, "bytes": 429, "times": [217]},
     }
-    bad = m["invalid_measurements"](results, None)
+    bad = m["invalid_measurements"](results, None, "pre")
     assert bad, "the 401 baseline would still pass"
     joined = " ".join(bad)
     assert "/api/overview" in joined and "/api/search" in joined
@@ -42,7 +46,8 @@ def test_a_200_that_is_too_small_is_still_rejected():
     """An error body wearing a 200 is the next version of the same bug."""
     m = _mod()
     bad = m["invalid_measurements"](
-        {"/api/structure": {"status": 200, "bytes": 61, "times": [10]}}, "x")
+        {"/api/structure": {"status": 200, "bytes": 61, "times": [10]}}, "x",
+        "post")
     assert bad and "too small" in bad[0]
 
 
@@ -50,7 +55,8 @@ def test_config_is_allowed_to_be_small():
     """It is four settings. A blanket size floor would flag it forever."""
     m = _mod()
     assert not m["invalid_measurements"](
-        {"/api/config": {"status": 200, "bytes": 429, "times": [10]}}, "x")
+        {"/api/config": {"status": 200, "bytes": 429, "times": [10]}}, "x",
+        "pre")
 
 
 def test_a_real_looking_run_passes():
@@ -60,7 +66,7 @@ def test_a_real_looking_run_passes():
         "/api/search?q=api": {"status": 200, "bytes": 4200, "times": [120]},
         "/api/config":       {"status": 200, "bytes": 429, "times": [90]},
         "/api/node?id=x":    {"status": 200, "bytes": 2100, "times": [110]},
-    }, "x")
+    }, "x", "post")
 
 
 def test_the_timed_requests_send_an_authorization_header():
@@ -98,3 +104,67 @@ def test_the_token_never_leaves_the_page():
     # And the one evaluate that reads it must not RETURN it.
     assert "return SESSION.access_token" not in src
     assert "=> SESSION.access_token" not in src
+
+
+# ---------------------------------------------------------------------------
+# PHASE is stated, never inferred
+# ---------------------------------------------------------------------------
+
+def test_pre_deploy_does_not_fail_on_the_unshipped_endpoint():
+    m = _mod()
+    results = {
+        "/api/structure":    {"status": 404, "bytes": 9, "times": [30]},
+        "/api/overview":     {"status": 200, "bytes": 51000, "times": [210]},
+        "/api/search?q=api": {"status": 200, "bytes": 4200, "times": [180]},
+        "/api/config":       {"status": 200, "bytes": 429, "times": [190]},
+    }
+    assert not m["invalid_measurements"](results, "nid", "pre")
+
+
+def test_post_deploy_requires_the_new_endpoint():
+    m = _mod()
+    results = {
+        "/api/overview":     {"status": 200, "bytes": 51000, "times": [210]},
+        "/api/search?q=api": {"status": 200, "bytes": 4200, "times": [180]},
+        "/api/config":       {"status": 200, "bytes": 429, "times": [190]},
+    }
+    bad = m["invalid_measurements"](results, "nid", "post")
+    assert bad and "/api/structure" in bad[0]
+
+
+def test_post_deploy_rejects_a_broken_new_endpoint():
+    m = _mod()
+    results = {"/api/structure": {"status": 404, "bytes": 9, "times": [30]}}
+    assert m["invalid_measurements"](results, "nid", "post")
+
+
+def test_pre_deploy_keeps_every_other_endpoint_strict():
+    """The relaxation is scoped to the unshipped endpoint and nothing else."""
+    m = _mod()
+    results = {
+        "/api/structure": {"status": 404, "bytes": 9, "times": [30]},
+        "/api/overview":  {"status": 401, "bytes": 54, "times": [219]},
+    }
+    bad = m["invalid_measurements"](results, "nid", "pre")
+    assert bad and "/api/overview" in bad[0]
+    assert not any("/api/structure" in b for b in bad)
+
+
+def test_a_missing_node_id_fails_in_both_phases():
+    m = _mod()
+    for phase in ("pre", "post"):
+        bad = m["invalid_measurements"](
+            {"/api/config": {"status": 200, "bytes": 429, "times": [1]}},
+            None, phase)
+        assert any("/api/node" in b for b in bad), phase
+
+
+def test_the_phase_must_be_stated():
+    """No default, no inference. A guard that infers 'pre' from a 404 switches
+    itself off exactly when the endpoint it guards has broken."""
+    import pytest
+    m = _mod()
+    with pytest.raises(ValueError):
+        m["invalid_measurements"]({}, "nid", "guess")
+    src = SCRIPT.read_text(encoding="utf-8")
+    assert 'required=True' in src and '"pre", "post"' in src.replace("'", '"')
