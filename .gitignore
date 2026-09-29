@@ -105,3 +105,8 @@ config/*.rt-check.yaml
 # intermediates, not configuration.
 _uv/
 .python-version
+
+# Browser session captured by eval/measure_signed_in.py. It is a live auth
+# token for np-autopilot.vercel.app. The script deletes it when it finishes;
+# this line is what covers a run that is interrupted before it can.
+.measure/
