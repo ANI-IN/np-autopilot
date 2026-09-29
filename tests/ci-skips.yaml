@@ -9,12 +9,13 @@
 # checkout CI gets. Almost all are DB tests (no database in CI — they run
 # against the local Supabase stack, HANDOFF.md §I) or need gitignored
 # corpus / withheld / build files that must never be committed.
-# Total: 181. (+10 on 2026-09-30, B3: the connection-drop tests and the
+# Total: 182. (+1 on 2026-09-30, checklist review: red-cell detection reads
+# the cached mastersheet.) (+10 on 2026-09-30, B3: the connection-drop tests and the
 # structure-payload DB tests — local stack only, like every DB test.)
 
 skips:
   "no SUPABASE_DB_URL_SESSION / psycopg — database tests skipped": 97
-  "the corpus cache is absent; run pipeline/00_fetch_drive.py": 19
+  "the corpus cache is absent; run pipeline/00_fetch_drive.py": 20
   "needs the Supabase connection": 16
   "no database to test against": 10
   "no database configured": 18

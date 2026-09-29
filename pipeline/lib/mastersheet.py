@@ -414,3 +414,59 @@ def best_link(value: str, target: str | None) -> str:
         return target.strip()
     v = (value or "").strip()
     return v if _LINK_OK.match(v) else ""
+
+
+# ---------------------------------------------------------------------------
+# Red-highlighted cells, and the owner's word on what they mean
+# ---------------------------------------------------------------------------
+#
+# The sheet's authors mark a no-longer-valid instructor cell RED rather than
+# clearing it (owner, 2026-09-30). A values-only read cannot see that, so the
+# cell is read here — read_only, like every other read — and the MEANING comes
+# from config/mastersheet-owner-facts.yaml, never from the colour.
+
+OWNER_FACTS = Path(__file__).resolve().parents[2] / "config" / "mastersheet-owner-facts.yaml"
+ROLE_COLUMNS = {1: "primary", 2: "backup_1", 3: "backup_2", 4: "backup_3"}
+
+
+def _is_red(hexrgb) -> bool:
+    if not isinstance(hexrgb, str) or len(hexrgb) < 6:
+        return False
+    h = hexrgb[-6:]
+    r, g, b = int(h[:2], 16), int(h[2:4], 16), int(h[4:], 16)
+    return r >= 180 and g <= 120 and b <= 120
+
+
+def red_cells(path: Path, tab: str) -> dict:
+    """{(row0, col0): value} for every non-empty cell filled or written red."""
+    import openpyxl
+    wb = openpyxl.load_workbook(path, read_only=True)
+    out = {}
+    try:
+        for row in wb[tab].iter_rows():
+            for c in row:
+                if c.value in (None, ""):
+                    continue
+                fill = getattr(getattr(c.fill, "fgColor", None), "rgb", None) \
+                    if c.fill is not None and c.fill.fill_type else None
+                font = getattr(getattr(c.font, "color", None), "rgb", None) \
+                    if c.font is not None and c.font.color is not None else None
+                if _is_red(fill) or _is_red(font):
+                    out[(c.row - 1, c.column - 1)] = str(c.value)
+    finally:
+        wb.close()
+    return out
+
+
+def withdrawn_roles() -> dict:
+    """{(domain, sequence, role, person): fact} from the owner-facts file."""
+    import yaml
+    if not OWNER_FACTS.exists():
+        return {}
+    data = yaml.safe_load(OWNER_FACTS.read_text(encoding="utf-8")) or {}
+    out = {}
+    for f in data.get("withdrawn_roles") or []:
+        assert f.get("origin") == "hand" and f.get("asserted_by") and f.get("fact"), f
+        out[(f["domain"], int(f["sequence"]), f["role"], f["person"])] = f
+    return out
+

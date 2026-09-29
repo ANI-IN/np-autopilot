@@ -49,61 +49,6 @@ identities:
   # person. Exact matching never pairs them; a nickname table pairs them along
   # with false positives. The owner does not know, and a guess here would be
   # exactly the picking-with-no-signal failure lib/resolve.py refuses.
-  - slug: bill-ogden
-    canonical: Bill Ogden
-    status: unconfirmed
-    possibly_same_as: william-david-ogden
-    origin: hand
-    evidence: >-
-      Owner decision 2026-09-29 (Animesh Kumar), answering INS-08/INS-30:
-      unsure. Left UNRESOLVED deliberately. Both nodes remain separate and are
-      rendered "unconfirmed" in the who-teaches-what matrix.
-    resolves: [INS-08]
-
-  - slug: william-david-ogden
-    canonical: William David Ogden
-    status: unconfirmed
-    possibly_same_as: bill-ogden
-    origin: hand
-    evidence: >-
-      See bill-ogden. Unresolved by owner decision, not by absence of review.
-    resolves: [INS-30]
-
-  # ---- INS-31 / INS-32 -------------------------------------------------
-  # First-name-only forms that carry the row-B module rows, while the
-  # full-name nodes `Konstantinos Pappas` and `Shelby Cohen` carry none. The
-  # full names are UNKNOWN to the owner, so the first-name node stays the one
-  # the modules hang off — moving them to a full name nobody has confirmed
-  # would attach real modules to a guess.
-  - slug: konstantinos-first-name-only
-    canonical: Konstantinos
-    status: unconfirmed
-    possibly_same_as: konstantinos-pappas
-    keeps_module_attachments: true
-    origin: hand
-    evidence: >-
-      Owner decision 2026-09-29 (Animesh Kumar), answering INS-31 and PPL-06:
-      full name unknown. The first-name form remains an open review item and
-      keeps its module rows, marked unconfirmed.
-    resolves: [INS-31, PPL-06]
-
-  - slug: shelby-first-name-only
-    canonical: Shelby
-    status: unconfirmed
-    possibly_same_as: shelby-cohen
-    keeps_module_attachments: true
-    origin: hand
-    evidence: >-
-      Owner decision 2026-09-29 (Animesh Kumar), answering INS-32 and PPL-01:
-      full name unknown. The first-name form remains an open review item and
-      keeps its module rows, marked unconfirmed.
-    resolves: [INS-32, PPL-01]
-
-  # ---- PPL-11 ----------------------------------------------------------
-  # A first-name-only cell in Test Engineering, confirmed by the owner. Unlike
-  # INS-31/32 (`Konstantinos`, `Shelby`) the full name here IS known, so this
-  # one merges and those two do not — the difference is a confirmation, not a
-  # rule about first names.
   - slug: bharath-anand
     canonical: Bharath Anand
     aliases: [Bharath]
@@ -137,6 +82,101 @@ identities:
 # Measured at the time of confirmation: 0 exclusions. 17 pairs had domain
 # evidence on both sides and every one shared a family; 9 had evidence on only
 # one side.
+  - slug: konstantinos-pappas
+    canonical: Konstantinos Pappas
+    aliases: [Konstantinos]
+    status: confirmed
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-30 (Animesh Kumar), checklist review part 1:
+      `Konstantinos` is Konstantinos Pappas. Was left unresolved 2026-09-29 (full name unknown). Every spelling stays in label_raw / merged_label_raw and in
+      provenance; mastersheet and legacy tiers stay separate edges; the merge
+      is tagged (merged_from, merge_ids) and reversed by removing this entry.
+    resolves: [INS-31, PPL-06, INS-17]
+
+  - slug: shelby-cohen
+    canonical: Shelby Cohen
+    aliases: [Shelby]
+    status: confirmed
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-30 (Animesh Kumar), checklist review part 1:
+      `Shelby` is Shelby Cohen. Was left unresolved 2026-09-29 (full name unknown). Every spelling stays in label_raw / merged_label_raw and in
+      provenance; mastersheet and legacy tiers stay separate edges; the merge
+      is tagged (merged_from, merge_ids) and reversed by removing this entry.
+    resolves: [INS-32, PPL-01, PPL-07, PPL-08, INS-26]
+
+  - slug: william-david-ogden
+    canonical: William David Ogden
+    aliases: [Bill Ogden]
+    status: confirmed
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-30 (Animesh Kumar), checklist review part 1:
+      `Bill Ogden` is William David Ogden, corroborated by the deck "Quality Engineering Foundations - William Ogden (Bill).pptx". Was left unresolved 2026-09-29. Every spelling stays in label_raw / merged_label_raw and in
+      provenance; mastersheet and legacy tiers stay separate edges; the merge
+      is tagged (merged_from, merge_ids) and reversed by removing this entry.
+    resolves: [INS-08, INS-30]
+
+  - slug: faraaz-sareshwala
+    canonical: Faraaz Sareshwala
+    aliases: [Faraaz]
+    status: confirmed
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-30 (Animesh Kumar), checklist review part 1:
+      `Faraaz` is Faraaz Sareshwala. Every spelling stays in label_raw / merged_label_raw and in
+      provenance; mastersheet and legacy tiers stay separate edges; the merge
+      is tagged (merged_from, merge_ids) and reversed by removing this entry.
+    resolves: [PPL-10, INS-14]
+
+  - slug: cathy-ma
+    canonical: Cathy Ma
+    aliases: [Cathy]
+    status: confirmed
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-30 (Animesh Kumar), checklist review part 1:
+      `Cathy` is Cathy Ma. Every spelling stays in label_raw / merged_label_raw and in
+      provenance; mastersheet and legacy tiers stay separate edges; the merge
+      is tagged (merged_from, merge_ids) and reversed by removing this entry.
+    resolves: [PPL-04, INS-09]
+
+  - slug: nisarg-tanna
+    canonical: Nisarg Tanna
+    aliases: [Nisarg]
+    status: confirmed
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-30 (Animesh Kumar), checklist review part 1:
+      `Nisarg` is Nisarg Tanna. Every spelling stays in label_raw / merged_label_raw and in
+      provenance; mastersheet and legacy tiers stay separate edges; the merge
+      is tagged (merged_from, merge_ids) and reversed by removing this entry.
+    resolves: [PPL-02, PPL-03, PPL-05, INS-19]
+
+  - slug: robert-kreznarich
+    canonical: Robert Kreznarich
+    aliases: [Robert K]
+    status: confirmed
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-30 (Animesh Kumar), checklist review part 1:
+      `Robert K` (a label in the legacy graph) is Robert Kreznarich. Every spelling stays in label_raw / merged_label_raw and in
+      provenance; mastersheet and legacy tiers stay separate edges; the merge
+      is tagged (merged_from, merge_ids) and reversed by removing this entry.
+    resolves: [INS-21]
+
+  - slug: reginald-first-name-only
+    canonical: Reginald
+    status: unconfirmed
+    possibly_same_as: reginald-johnson
+    keeps_module_attachments: true
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-30 (Animesh Kumar): `Reginald` (SD3/4 Backup 2)
+      stays UNRESOLVED — no surname anywhere. Answered, not open.
+    resolves: [PPL-09]
+
 bulk_confirmed:
   rule: exact full-name match across the two graphs
   decided_by: Animesh Kumar

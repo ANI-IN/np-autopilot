@@ -26,6 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from pipeline.lib import module_merge as mm                          # noqa: E402
 from pipeline.lib import taxonomy as tax                              # noqa: E402
 from pipeline.lib.paths import KNOWLEDGE_DIR                          # noqa: E402
 
@@ -60,22 +61,10 @@ def sessions(m, kind):
 
 
 def topics(m, limit=15):
-    # D1: a topic whose label is a person's name is marked not_a_topic by pass
-    # 8 and is never ranked (pipeline/lib/module_merge.py).
-    es = sorted((e for e in out(m, "module_topic")
-                 if not N[e["target"]].get("not_a_topic")),
-                key=lambda e: (e.get("rank") if e.get("rank") is not None else 99,
-                               N[e["target"]]["label"]))
-    seen, rows = set(), []
-    for e in es:
-        lab = N[e["target"]]["label"]
-        if lab in seen:
-            continue
-        seen.add(lab)
-        rows.append(e)
-        if len(rows) == limit:
-            break
-    return rows
+    # One display order with the checklist and the client: not_a_topic held
+    # back, housekeeping slides last, repeated titles once
+    # (pipeline/lib/module_merge.py::rank_topics).
+    return mm.rank_topics(out(m, "module_topic"), N, limit)[0]
 
 
 def locator(e):

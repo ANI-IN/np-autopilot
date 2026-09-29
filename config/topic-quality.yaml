@@ -1,0 +1,76 @@
+# Topic quality — a SMALL, REVIEWED pattern list (owner request, Animesh Kumar,
+# 2026-09-30, checklist review part 1 §C). Applied by
+# pipeline/lib/module_merge.py::classify_topics inside merge(), so the
+# projection and every reader see the same marks.
+#
+#   person_bio  -> not_a_topic: person_bio   (D1: person content, not a subject)
+#   boilerplate -> boilerplate: true         RANKED LAST, NEVER REMOVED (CLAUDE.md §4)
+#
+# (A title that CONTAINS a known person's name is not listed here: it is
+# matched against the graph's own public names — module_merge.py.)
+#
+# Every pattern is case-insensitive, run against the whitespace-folded title,
+# and carries examples it MUST match and MUST NOT match.
+# tests/test_topic_quality.py fails if any example disagrees — a pattern is
+# only as good as the counter-examples it has been shown.
+version: 1
+
+person_bio:
+  - id: worked-at
+    pattern: '^(i\s+)?(have\s+)?(worked|working|previously\s+worked|formerly\s+worked|currently\s+working)\s+(at|as|for|with)\b'
+    match: ["Worked at Amazon, Apple, among others, as a software engineer",
+            "Currently working at Google as a staff engineer"]
+    no_match: ["Work queues and back-pressure", "How the worker pool works"]
+  - id: years-of-experience
+    pattern: '\b\d+\+?\s+years?\s+(of\s+)?(industry\s+|professional\s+|software\s+)?experience\b'
+    match: ["15+ years of industry experience", "10 years experience in QA"]
+    no_match: ["Experience with caching layers", "Year-over-year growth metrics"]
+
+boilerplate:
+  - id: agenda
+    pattern: '^(today[’''`]?s\s+)?agenda(?![\w-])'
+    match: ["Agenda", "Today’s Agenda", "today's agenda: part 1"]
+    no_match: ["Agenda-free design review", "Hidden agendas in API contracts"]
+  - id: outline
+    pattern: '^((course|class|session|lecture)\s+)?outline\s*$'
+    match: ["Outline", "Class Outline"]
+    no_match: ["Outline of the CAP theorem proof", "Outlier detection"]
+  - id: welcome
+    pattern: '^welcome\b'
+    match: ["Welcome", "Welcome to today’s class, before we begin,"]
+    no_match: ["Welcomed defaults considered harmful", "Onboarding welcome emails as events"]
+  - id: about-me-you
+    pattern: '^about\s+(me|you|us|yourself|the\s+instructor)\b'
+    match: ["About Me", "About you  (1 minute)"]
+    no_match: ["About caching", "Aboutness of an entity model"]
+  - id: introductions
+    pattern: '^(let[’''`]?s\s+introduce\b|introductions?\s*[:!.]?\s*$|introduce\s+yourself\b|instructor\s+introductions?\b)'
+    match: ["Let’s introduce ourselves!", "Introductions", "Introduction", "Introduce yourself"]
+    no_match: ["Introduction to REST", "Introduction to Databases", "Backend Databases Introduction"]
+  - id: hear-me
+    pattern: '\bif\s+you\s+can\s+hear\s+me\b'
+    match: ["If you can hear me, use the raise hand feature"]
+    no_match: ["Hearing aids and accessibility testing"]
+  - id: mute-etiquette
+    pattern: '(\bon\s+mute\b|\bmute\s+yourself\b|\betiquette\b|^optimi[sz]e\s+your\s+experience\b)'
+    match: ["Everyone is allowed to talk during class but please keep yourself on mute unless",
+            "Class etiquette", "Optimize Your Experience"]
+    no_match: ["Mutex and semaphores", "Muted vs unmuted state in UI tests", "Optimize your queries"]
+  - id: expectations
+    # standalone only: "Expectations from UI System Design interview" is
+    # interview-prep CONTENT, and the first version of this pattern ranked it
+    # last (found reviewing every match, 2026-09-30).
+    pattern: '^((class|course|session)\s+)?expectations\s*[:!.]?\s*$|^what\s+to\s+expect\b'
+    match: ["Expectations", "Course expectations", "What to expect today"]
+    no_match: ["Expected vs actual results", "Exception handling expectations in tests",
+               "Expectations from UI System Design interview"]
+  - id: interview-process
+    pattern: '^(the\s+)?(ik\s+)?interview\s+process\b'
+    match: ["Interview process", "The interview process"]
+    no_match: ["Designing an interview scheduling service", "The QA Interview"]
+  - id: section-divider
+    # a bare numbered divider carries no subject: "TOPIC #1" was #2 in
+    # Object Modeling's top 5 (found in the before/after review, 2026-09-30)
+    pattern: '^(topic|section|part|chapter)\s*#?\s*\d+\s*[:.]?\s*$'
+    match: ["TOPIC #1", "Section 2", "Part 3:"]
+    no_match: ["Topic modeling with LDA", "Part 1: Joins and indexes", "Partitioning 101"]

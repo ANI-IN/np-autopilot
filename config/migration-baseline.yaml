@@ -2,7 +2,7 @@ version: 1
 note: "Frozen migration reference. Every migration-verification run asserts against THIS,\
   \ never against a live rebuild \u2014 a live rebuild would move with the corpus and prove\
   \ nothing. Re-freeze only in a commit that says why."
-frozen_at: '2026-09-29T21:33:16+00:00'
+frozen_at: '2026-09-29T22:42:58+00:00'
 built_as_of: '2026-09-09'
 plugin_version: 0.1.9
 taxonomy_version: 2
@@ -11,10 +11,10 @@ open_questions_that_will_move_these:
   \ Resolving any of them moves edge_counts and component structure."
 scopes:
   full:
-    content_hash: 2ba6ff7353c5d64ec58006c7b6f4e26393c6d8bb93d17efe6eb3305505ab26bd
+    content_hash: c6cda0d961def36ccb2fcd4b91097c85cc3fb9a319f43da0dff6d7d44f7d776f
     totals:
-      nodes: 10437
-      edges: 51735
+      nodes: 10426
+      edges: 51734
     node_counts:
       assignment: 64
       assignment_review: 3
@@ -24,7 +24,7 @@ scopes:
       curriculum_doc: 23
       domain: 46
       file: 1957
-      instructor: 3825
+      instructor: 3814
       instructor_contact: 28
       module: 924
       person: 43
@@ -54,33 +54,33 @@ scopes:
       ships_with: 38
       sourced_from: 39512
       supported_by: 58
-      taught_by: 55
+      taught_by: 54
       teaches: 2239
     duplicates:
-      distinct_colliding_triples: 3930
-      extra_rows: 32027
+      distinct_colliding_triples: 3929
+      extra_rows: 32036
       by_rel:
         covers_topic: 1397
         delivers_session: 74
         expert_in: 22
         reachable_at: 7
-        sourced_from: 2430
+        sourced_from: 2429
     provenance:
       entries_by_origin:
         corpus: 41493
-        hand: 35
-      nodes_total: 10437
-      nodes_with_sources: 10437
-      nodes_with_hand_provenance: 35
+        hand: 36
+      nodes_total: 10426
+      nodes_with_sources: 10426
+      nodes_with_hand_provenance: 36
     components:
-      excluding_provenance: 44
-      largest: 5846
+      excluding_provenance: 42
+      largest: 5839
       isolated: 2877
   public:
-    content_hash: 6ca2644f40ff5d3c8639f4926593611fed69803d52d34c60b90f96260ac7bc72
+    content_hash: 31e08854a435ec723d5d2b00b623b149c1e2ba679791df07571efcc4dfc2a2b7
     totals:
-      nodes: 8507
-      edges: 49561
+      nodes: 8496
+      edges: 49560
     node_counts:
       assignment: 64
       assignment_review: 3
@@ -90,7 +90,7 @@ scopes:
       curriculum_doc: 23
       domain: 46
       file: 1957
-      instructor: 1923
+      instructor: 1912
       module: 924
       person: 43
       program: 42
@@ -118,31 +118,31 @@ scopes:
       ships_with: 38
       sourced_from: 37374
       supported_by: 58
-      taught_by: 55
+      taught_by: 54
       teaches: 2239
     duplicates:
-      distinct_colliding_triples: 3808
-      extra_rows: 31894
+      distinct_colliding_triples: 3807
+      extra_rows: 31903
       by_rel:
         covers_topic: 1397
         delivers_session: 74
         expert_in: 22
-        sourced_from: 2315
+        sourced_from: 2314
     provenance:
       entries_by_origin:
         corpus: 39355
-        hand: 35
-      nodes_total: 8507
-      nodes_with_sources: 8507
-      nodes_with_hand_provenance: 35
+        hand: 36
+      nodes_total: 8496
+      nodes_with_sources: 8496
+      nodes_with_hand_provenance: 36
     components:
       excluding_provenance: 41
-      largest: 5821
-      isolated: 978
-content_hash: 2ba6ff7353c5d64ec58006c7b6f4e26393c6d8bb93d17efe6eb3305505ab26bd
+      largest: 5812
+      isolated: 976
+content_hash: c6cda0d961def36ccb2fcd4b91097c85cc3fb9a319f43da0dff6d7d44f7d776f
 totals:
-  nodes: 10437
-  edges: 51735
+  nodes: 10426
+  edges: 51734
 node_counts:
   assignment: 64
   assignment_review: 3
@@ -152,7 +152,7 @@ node_counts:
   curriculum_doc: 23
   domain: 46
   file: 1957
-  instructor: 3825
+  instructor: 3814
   instructor_contact: 28
   module: 924
   person: 43
@@ -182,25 +182,25 @@ edge_counts:
   ships_with: 38
   sourced_from: 39512
   supported_by: 58
-  taught_by: 55
+  taught_by: 54
   teaches: 2239
 duplicates:
-  distinct_colliding_triples: 3930
-  extra_rows: 32027
+  distinct_colliding_triples: 3929
+  extra_rows: 32036
   by_rel:
     covers_topic: 1397
     delivers_session: 74
     expert_in: 22
     reachable_at: 7
-    sourced_from: 2430
+    sourced_from: 2429
 provenance:
   entries_by_origin:
     corpus: 41493
-    hand: 35
-  nodes_total: 10437
-  nodes_with_sources: 10437
-  nodes_with_hand_provenance: 35
+    hand: 36
+  nodes_total: 10426
+  nodes_with_sources: 10426
+  nodes_with_hand_provenance: 36
 components:
-  excluding_provenance: 44
-  largest: 5846
+  excluding_provenance: 42
+  largest: 5839
   isolated: 2877

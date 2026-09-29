@@ -221,46 +221,56 @@ def test_a_confirmed_instructor_alias_is_merged(merged):
         "§1: the alias spelling must survive as evidence")
 
 
-def test_an_unconfirmed_identity_is_NOT_merged(merged):
-    """INS-08/30 were answered 'unsure'. That answer must hold.
+# Owner answers of 2026-09-30 (checklist review, docs/REVIEW-QUEUE.md): the
+# first-name and short forms are the same people. They SUPERSEDE the
+# 2026-09-29 "left apart" answers these tests used to hold.
+CONFIRMED_ALIASES = {
+    "Konstantinos Pappas": "Konstantinos", "Shelby Cohen": "Shelby",
+    "William David Ogden": "Bill Ogden", "Faraaz Sareshwala": "Faraaz",
+    "Cathy Ma": "Cathy", "Nisarg Tanna": "Nisarg", "Robert Kreznarich": "Robert K",
+}
 
-    TWO nodes each, not one, and that is the correct outcome: these labels
-    occur in BOTH graphs, and the INS row asks whether the two are the same
-    person. Answering "unsure" leaves them apart. A test asserting one node
-    would be asserting the merge the owner declined.
-    """
-    for lab in ("Bill Ogden", "William David Ogden"):
+
+def test_a_confirmed_alias_is_merged_and_kept_as_a_citation_key(merged):
+    labels = {(n.get("label") or "").strip() for n in merged["nodes"]
+              if n["type"] == "instructor"}
+    for full, alias in CONFIRMED_ALIASES.items():
+        assert alias not in labels, f"{alias} still stands apart from {full}"
         hits = [n for n in merged["nodes"] if n["type"] == "instructor"
-                and (n.get("label") or "").strip() == lab]
-        assert len(hits) == 2, (
-            f"{lab}: expected the cross-graph pair to stay separate, got "
-            f"{len(hits)}")
-        assert not any(h.get("merge_ids") for h in hits), (
-            f"{lab} was merged despite an unconfirmed identity")
+                and n.get("label") == full]
+        assert len(hits) == 1, f"{full}: {len(hits)} nodes"
+        raws = {hits[0].get("label_raw"), *(hits[0].get("merged_label_raw") or [])}
+        assert alias in raws, f"{alias} lost as a citation key on {full}"
 
 
-def test_first_name_forms_keep_their_module_attachments(merged):
-    """INS-31/32: moving real modules onto an unconfirmed full name would
-    attach them to a guess."""
-    for lab in ("Konstantinos", "Shelby"):
-        hits = [x for x in merged["nodes"] if x["type"] == "instructor"
-                and (x.get("label") or "").strip() == lab]
-        assert hits, f"{lab} disappeared"
-        attached = [e for e in merged["edges"]
-                    if e.get("tier") == mm.TIER_MASTERSHEET
-                    and any(n["id"] in (e["source"], e["target"]) for n in hits)]
-        assert attached, f"{lab} lost its module rows"
+def test_the_merged_person_keeps_both_evidence_tiers_apart(merged):
+    """Merging a PERSON never merges a legacy `teaches` claim into a
+    mastersheet role."""
+    kp = next(n for n in merged["nodes"] if n["type"] == "instructor"
+              and n.get("label") == "Konstantinos Pappas")
+    tiers = {e.get("tier") for e in merged["edges"]
+             if kp["id"] in (e["source"], e["target"]) and e.get("tier")}
+    assert mm.TIER_MASTERSHEET in tiers
+    ms_edges = [e for e in merged["edges"] if kp["id"] in (e["source"], e["target"])
+                and e.get("tier") == mm.TIER_MASTERSHEET]
+    assert ms_edges, "Konstantinos Pappas lost the first-name form's module rows"
 
 
-def test_only_the_deliberately_unresolved_instructors_remain_duplicated(merged):
-    """After the INS bulk, exactly FOUR labels stay doubled — and each one is
-    doubled because the owner said so, not because nothing looked at it."""
+def test_reginald_stays_unresolved_and_is_flagged(merged):
+    """PPL-09: left unresolved by decision — kept, attached, flagged."""
+    hits = [n for n in merged["nodes"] if n["type"] == "instructor"
+            and (n.get("label") or "").strip() == "Reginald"]
+    assert len(hits) == 1 and hits[0].get("identity_unconfirmed")
+    assert [e for e in merged["edges"] if e.get("tier") == mm.TIER_MASTERSHEET
+            and hits[0]["id"] in (e["source"], e["target"])], "Reginald lost his module row"
+
+
+def test_no_instructor_label_remains_duplicated(merged):
+    """32 -> 4 after the INS bulk; 4 -> 0 after the 2026-09-30 answers."""
     import collections
     c = collections.Counter((n.get("label") or "").strip()
                             for n in merged["nodes"] if n["type"] == "instructor")
-    dupes = {k for k, v in c.items() if v > 1}
-    assert dupes == {"Bill Ogden", "William David Ogden",
-                     "Konstantinos", "Shelby"}, f"unexpected duplicates: {dupes}"
+    assert not {k for k, v in c.items() if v > 1}
 
 
 def test_the_bulk_safeguard_excluded_nothing_and_says_so(merged):
@@ -321,8 +331,14 @@ def test_absence_of_evidence_is_not_treated_as_a_conflict(merged):
 # The outcome
 # ---------------------------------------------------------------------------
 
-def test_no_duplicate_module_labels_remain(merged):
+# Adopting the mastersheet names (TOPv/TOPm, 2026-09-30) made two row-B
+# modules collide with legacy modules of the same name. A collision is not a
+# match: they are OPEN review rows MOD-17/18, not merged, until the owner says.
+OPEN_MODULE_COLLISIONS = {"cloud infrastructure", "javascript and web development"}
+
+
+def test_the_only_duplicate_module_labels_are_the_open_review_rows(merged):
     import collections
     c = collections.Counter((n.get("label") or "").strip().lower()
                             for n in _mods(merged))
-    assert not {k: v for k, v in c.items() if v > 1}
+    assert {k for k, v in c.items() if v > 1} == OPEN_MODULE_COLLISIONS

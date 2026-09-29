@@ -1138,21 +1138,6 @@
    "target": "ins_3ba3964184d6332f"
   },
   {
-   "instructor_role": "backup_3",
-   "rel": "taught_by",
-   "source": "mod_00ee7c30fff3dc36",
-   "sources": [
-    {
-     "column": "backup_3",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 49,
-     "sheet": "Full Stack Engineering"
-    }
-   ],
-   "target": "ins_883322ecf38c31bb"
-  },
-  {
    "rel": "delivers_session",
    "session_kind": "pre_class",
    "source": "mod_b591bcb07c5eb33b",
@@ -144571,7 +144556,7 @@
   }
  ],
  "meta": {
-  "built_at": "2026-09-29T13:03:32Z",
+  "built_at": "2026-09-29T22:33:16Z",
   "caveat": "Every count is a floor over 4 of 12 domain folders in 1 of 5 registry rows. Instructors and owners are DEFERRED and no person node exists. D1: no people from deck content.",
   "edge_counts": {
    "assessed_by": 64,
@@ -144586,9 +144571,9 @@
    "reviewed_in": 3,
    "scheduled_in": 20,
    "ships_with": 38,
-   "taught_by": 55
+   "taught_by": 54
   },
-  "edges": 8166,
+  "edges": 8165,
   "gaps": {
    "SD1: Full Stack: curriculum doc not joined to a module": 1,
    "SD2: Frontend: curriculum doc not joined to a module": 4,
@@ -144605,6 +144590,10 @@
    "session (folder)": 623,
    "session (name)": 30
   },
+  "mastersheet_red_cells_unexplained": [],
+  "mastersheet_withdrawn_roles": [
+   "sd1-4-daniel-grundel-backup-3"
+  ],
   "node_counts": {
    "assignment": 64,
    "assignment_review": 3,
@@ -144763,7 +144752,7 @@
   {
    "domain_slug": "full-stack",
    "id": "mod_ab9e5ee393195cf2",
-   "label": "Cloud",
+   "label": "Cloud Infrastructure",
    "label_raw": "Cloud",
    "label_variants": [
     "Cloud",
@@ -144801,7 +144790,7 @@
   {
    "domain_slug": "full-stack",
    "id": "mod_00ee7c30fff3dc36",
-   "label": "JavaScript and Web Dev",
+   "label": "JavaScript and Web Development",
    "label_raw": "JavaScript and Web Dev",
    "label_variants": [
     "JavaScript and Web Dev",
@@ -145315,7 +145304,7 @@
   {
    "domain_slug": "testing",
    "id": "mod_1262237b9b72b360",
-   "label": "Test Automation Design Patterns",
+   "label": "Test Automation",
    "label_raw": "Test Automation Design Patterns",
    "label_variants": [
     "Test Automation",
@@ -146279,6 +146268,15 @@
      "sheet": "Full Stack Engineering"
     },
     {
+     "entered_at": "2026-09-30",
+     "establishes": [
+      "withdrawn_roles"
+     ],
+     "evidence": "Full Stack Engineering!E50: Listed in the sheet as Backup 3 for SD1/4 JavaScript and Web Development, cell highlighted red; owner: no longer teaching it. (Animesh Kumar (corpus owner), 2026-09-30)",
+     "ordinal": 1,
+     "origin": "hand"
+    },
+    {
      "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 58,
@@ -146286,6 +146284,9 @@
     }
    ],
    "type": "instructor",
+   "withdrawn_roles": [
+    "full-stack/4 backup_3"
+   ],
    "years_experience": "10+"
   },
   {

@@ -254,6 +254,8 @@ align-items:flex-start;justify-content:center;overflow:auto}
 .lnk:hover{border-bottom-color:#58a6ff}
 .nolnk{color:#6e7681;font-style:italic}
 .loc{color:#8b949e}
+details.artefacts{display:inline-block;margin-left:6px;color:#8b949e}
+details.artefacts summary{cursor:pointer}
 .prow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:3px 0;
       border-bottom:1px solid #161b22}
 .pname{font-size:12px;color:#e6edf3;min-width:150px}
@@ -1233,12 +1235,16 @@ function taughtRows(id){
   return '<div class="tier">'+html+'</div>';
 }
 
+function isUnconfirmed(n){
+  return !!n&&(DUPES.has(n.l)||!!(n.p&&n.p.identity_unconfirmed));
+}
 function unconfirmedFlag(n){
   if(!n||n.t!=='instructor')return '';
-  if(!DUPES.has(n.l))return '';
-  return '<div class="flag">UNCONFIRMED IDENTITY \u2014 another instructor node '+
-    'carries this exact label and the two have not been merged. Left apart by '+
-    'owner decision (REVIEW-QUEUE INS-08/30/31/32), not by oversight.</div>';
+  if(!isUnconfirmed(n))return '';
+  return '<div class="flag">UNCONFIRMED IDENTITY \u2014 who this is has not been '+
+    'confirmed (for example a first name with no surname anywhere, or a label '+
+    'another node also carries). Left unresolved by owner decision, not by '+
+    'oversight \u2014 see docs/REVIEW-QUEUE.md.</div>';
 }
 
 // ---- SOURCE LINKS --------------------------------------------------------
@@ -1278,6 +1284,11 @@ const KIND_LABEL={pre_class:'Pre-class (foundation material)',class:'Class',
   alternate_class:'Alternate Class',task:'Assignment',
   review:'Assignment Review Class',alternate_review:'Alternate Assignment Review Class',
   post_class:'Practice problems'};
+
+// content_model.ARTEFACT_NAME, verbatim (tests/test_artefact_group.py): test-run
+// output and recorder config, collapsed for display — nothing is dropped.
+const ARTEFACT_NAME=new RegExp(String.raw`(\.pyc$|\.log$|^CACHEDIR\.TAG$|^(lastfailed|nodeids|stepwise)$|^recording\.conf$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-(result|container|attachment)(\.\w+)?$)`,'i');
+function isArtefact(name){return ARTEFACT_NAME.test(String(name||'').replace(/\/+$/,'').split('/').pop());}
 
 function moduleChain(id){
   const m=idx.byId.get(id); if(!m)return '';
@@ -1322,10 +1333,15 @@ function moduleChain(id){
       continue;
     }
     const files=attached.get(k)||[];
+    // Build/recording artefacts collapse into one group, every one still linked.
+    const real=files.filter(f=>!isArtefact(f.name)), junk=files.filter(f=>isArtefact(f.name));
+    const fl=f=>lnk(f.url,(f.deck?'Deck: ':'Drive: ')+f.name.slice(0,42),f.name);
     out.push('<div class="item"><span class="ik">'+esc(KIND_LABEL[k])+'</span>'+
       (lnk((n.p||{}).uplevel_link,'Uplevel')||nolnk('Uplevel link','no link in the sheet row'))+
       (files.length
-        ? files.map(f=>lnk(f.url,(f.deck?'Deck: ':'Drive: ')+f.name.slice(0,42),f.name)).join('')
+        ? real.map(fl).join('')+
+          (junk.length?'<details class="artefacts"><summary>Build/recording artefacts ('+
+            junk.length+')</summary>'+junk.map(fl).join('')+'</details>':'')
         : nolnk(want[0],want[1]))+
       '</div>');
   }
@@ -1348,17 +1364,30 @@ function moduleChain(id){
 // Slides API, which this read-only client does not call, so the link is the
 // deck and the slide number is stated beside it — the fallback the spec allows.
 function topicLinks(id,limit){
-  const rows=[];
+  // Same order as pipeline/lib/module_merge.py::rank_topics, so the panel,
+  // the checklist and the eval agree: current first, housekeeping slides last
+  // (never removed), source rank, source, locator; a repeated title once.
+  const all=[];
   for(const [e,other] of edgesTouching(id)){
     const n=idx.byId.get(other); if(!n||n.t!=='content_topic')continue;
-    // D1: a person's name is not a topic — marked by pass 8, never listed.
+    // D1: a person's name or bio is not a topic — marked by pass 8, never listed.
     if(n.p&&n.p.not_a_topic)continue;
     const p=e.p||{};
     const loc=p.slide!==undefined?('slide '+p.slide)
              :p.page!==undefined?('page '+p.page)
              :p.tab!==undefined?('tab '+p.tab):null;
     if(!loc)continue;
-    rows.push({label:n.l,loc:loc,url:p.deck_drive_url||null,rank:p.rank});
+    const num=typeof p.slide==='number'?[0,p.slide,'']:typeof p.page==='number'?[0,p.page,'']
+             :[1,0,String(p.tab===undefined?'':p.tab)];
+    all.push({label:n.l,loc:loc,url:p.deck_drive_url||null,
+              k:[p.historical?1:0,(n.p&&n.p.boilerplate)?1:0,p.rank==null?99:p.rank,
+                 String(p.deck_drive_url||''),num[0],num[1],num[2],n.l]});
+  }
+  all.sort((a,b)=>{for(let i=0;i<a.k.length;i++){if(a.k[i]<b.k[i])return -1;if(a.k[i]>b.k[i])return 1;}return 0;});
+  const rows=[],seen=new Set();
+  for(const r of all){
+    const f=r.label.split(/\s+/).filter(Boolean).join(' ').toLowerCase();
+    if(seen.has(f))continue; seen.add(f); rows.push(r);
     if(rows.length>=(limit||10))break;
   }
   if(!rows.length)return '';
@@ -2202,7 +2231,7 @@ function renderMatrix(){
   for(const m of mods) h+='<th title="'+esc(m.l)+'">'+esc((m.dom||'')+'/'+((m.p||{}).sequence||''))+'</th>';
   h+='</tr></thead><tbody>';
   for(const r of list){
-    const unconf=DUPES.has(r.ins.l);
+    const unconf=isUnconfirmed(r.ins);
     // LOAD IS COUNTED PER NODE, so it is never summed across an unresolved
     // identity: `Bill Ogden` is two nodes and gets two loads, each marked.
     // Adding them would assert the merge the owner declined (INS-08/30).

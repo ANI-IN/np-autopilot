@@ -354,50 +354,143 @@ def merge(main: dict, content: dict, spec: dict | None = None,
                 absorbed_nodes=len(absorbed), excluded_pairs=excluded,
                 nodes=len(out_nodes), edges=len(edges))
     out = {"meta": meta, "nodes": out_nodes, "edges": edges}
+    # AN UNRESOLVED IDENTITY IS SAID ON THE NODE, not inferred from a
+    # duplicated label: once the INS/PPL merges landed there were no
+    # duplicates left, and `Reginald` — unresolved by owner decision — would
+    # have lost his flag. status: unconfirmed in instructor-identity.yaml.
+    unconf = {i["canonical"].strip().lower(): i["slug"]
+              for i in (identities.get("identities") or [])
+              if i.get("status") == "unconfirmed"}
+    for n in out_nodes:
+        if n["type"] == "instructor" and (n.get("label") or "").strip().lower() in unconf:
+            n["identity_unconfirmed"] = unconf[n["label"].strip().lower()]
     # Here, not in pass 8: the projection and every reader call merge() in
     # memory (graphio.load_merged) and never read merged_graph.json.
-    meta["not_a_topic"] = len(mark_person_name_topics(out))
+    marks = classify_topics(out)
+    meta["not_a_topic"] = len(marks[PERSON_NAME]) + len(marks[PERSON_BIO])
+    meta["topic_marks"] = {k: len(v) for k, v in marks.items()}
     return out
 
 
 # ---------------------------------------------------------------------------
-# D1 — A PERSON'S NAME IS NOT A TOPIC
+# TOPIC QUALITY — D1 person content, and boilerplate ranked last
 # ---------------------------------------------------------------------------
 #
-# Pass 7 takes a deck's slide titles as topics, and an instructor's intro slide
-# is titled with their name: "Robert Kreznarich" was API Design's topic #2.
-# That is not a person extracted from content — no person node exists — but a
-# name presented as a subject is D1's failure in a softer form.
+# Pass 7 takes slide titles as topics. Three kinds are not subjects:
 #
-# MARKED, NOT DELETED. The node, its edge and its provenance stay: the slide
-# really says it, and deleting would make the graph disagree with the file.
-# `not_a_topic: person_name` takes it out of ranking and panels, and every
-# consumer states how many it held back rather than dropping them silently
-# (CLAUDE.md §4). The names come from the PUBLIC graph's own person and
-# instructor labels — never from the slide — so nothing is inferred about who
-# is a person; a topic is only recognised as a name the graph already holds.
-# Exact after case and whitespace folding: no fuzzy match, no guessing.
+#   not_a_topic: person_name  — the title IS or CONTAINS a known person's name
+#       ("Robert Kreznarich", "Introduction – Mike Dolt", "…: @SURUCHI")
+#   not_a_topic: person_bio   — an instructor-bio line ("Worked at Amazon…")
+#   boilerplate: true         — housekeeping ("Agenda", "About Me", "If you can
+#       hear me…"): still a topic, RANKED LAST, never removed (CLAUDE.md §4)
+#
+# MARKED, NOT DELETED: node, edge and provenance stay; every consumer says
+# what it held back. Names come from the PUBLIC graph's own person and
+# instructor labels (label, label_raw, merged_label_raw) — never from a slide —
+# so nothing is inferred about who is a person. Containment is whole-word and
+# only for MULTI-word names; a single first name counts only as an @mention
+# or as a trailing ": NAME" presenter tag,
+# because 209 one-word labels would otherwise match ordinary words. Bio and
+# boilerplate patterns are a reviewed list with examples,
+# config/topic-quality.yaml, held by tests/test_topic_quality.py.
 NOT_A_TOPIC = "not_a_topic"
 PERSON_NAME = "person_name"
+PERSON_BIO = "person_bio"
+BOILERPLATE = "boilerplate"
+TOPIC_QUALITY = CONFIG_DIR / "topic-quality.yaml"
 
 
 def _fold(s: str) -> str:
     return " ".join(str(s or "").split()).casefold()
 
 
-def mark_person_name_topics(g: dict) -> list[str]:
-    """Flag topic nodes whose label is a known person's. Returns their ids."""
-    topic_type = taxonomy.edge_endpoints(taxonomy.edge_for_role("module_topic"))[1]
+def load_topic_quality(path: Path | None = None) -> dict:
+    data = yaml.safe_load((path or TOPIC_QUALITY).read_text(encoding="utf-8")) or {}
+    return {kind: [(r["id"], re.compile(r["pattern"], re.I), r)
+                   for r in (data.get(kind) or [])]
+            for kind in ("person_bio", "boilerplate")}
+
+
+def _known_names(g: dict) -> set:
     people_types = {taxonomy.edge_endpoints(taxonomy.edge_for_role("module_instructor"))[1],
                     taxonomy.edge_endpoints(taxonomy.edge_for_role("domain_primary"))[1]}
+    names = set()
     # PUBLIC people only, so the marks are the same whichever scope is loaded:
     # a withheld name must never change what the public projection holds.
-    names = {_fold(n.get("label")) for n in g["nodes"]
-             if n["type"] in people_types and not n.get("sensitive")}
-    names.discard("")
-    marked = []
     for n in g["nodes"]:
-        if n["type"] == topic_type and _fold(n.get("label")) in names:
+        if n["type"] in people_types and not n.get("sensitive"):
+            for x in [n.get("label"), n.get("label_raw"), *(n.get("merged_label_raw") or [])]:
+                if _fold(x):
+                    names.add(_fold(x))
+    return names
+
+
+def classify_topics(g: dict, rules: dict | None = None) -> dict:
+    """Mark person content and boilerplate on topic nodes. Returns
+    {mark: [ids]}; the graph is changed in place, nothing is removed."""
+    rules = rules if rules is not None else load_topic_quality()
+    topic_type = taxonomy.edge_endpoints(taxonomy.edge_for_role("module_topic"))[1]
+    names = _known_names(g)
+    multi = sorted((n for n in names if len(n.split()) >= 2), key=len, reverse=True)
+    contains = re.compile("(?<!\\w)(" + "|".join(map(re.escape, multi)) + ")(?!\\w)") \
+        if multi else None
+    firsts = {n.split()[0] for n in names}
+    out = {PERSON_NAME: [], PERSON_BIO: [], BOILERPLATE: []}
+    for n in g["nodes"]:
+        if n["type"] != topic_type:
+            continue
+        f = _fold(n.get("label"))
+        mentions = re.findall(r"@([^\W\d_][\w.-]*)", f)
+        # "Caching: BALAJI" — a lesson plan's presenter tag, the same thing as
+        # an @mention without the @. Only as the LAST token after a colon.
+        mentions += re.findall(r":\s*([^\W\d_][\w.-]*)\s*$", f)
+        if f in names or (contains and contains.search(f)) or \
+                any(m.rstrip(".") in firsts for m in mentions):
             n[NOT_A_TOPIC] = PERSON_NAME
-            marked.append(n["id"])
-    return sorted(marked)
+            out[PERSON_NAME].append(n["id"])
+        elif any(rx.search(f) for _, rx, _ in rules["person_bio"]):
+            n[NOT_A_TOPIC] = PERSON_BIO
+            out[PERSON_BIO].append(n["id"])
+        if any(rx.search(f) for _, rx, _ in rules["boilerplate"]):
+            n[BOILERPLATE] = True
+            out[BOILERPLATE].append(n["id"])
+    return {k: sorted(v) for k, v in out.items()}
+
+
+def mark_person_name_topics(g: dict) -> list[str]:
+    """The person-name part of classify_topics, kept for its callers."""
+    return classify_topics(g)[PERSON_NAME]
+
+
+def _locator_key(e: dict) -> tuple:
+    for k in ("slide", "page"):
+        if isinstance(e.get(k), (int, float)):
+            return (0, e[k], "")
+    return (1, 0, str(e.get("tab") or ""))
+
+
+def rank_topics(edges: list, nodes: dict, limit: int | None = None) -> tuple[list, int]:
+    """The ONE display order for a module's topics — checklist, eval and the
+    client (public/index.html::topicLinks mirrors it) must agree.
+
+    not_a_topic is held back. Then: current before historical, content before
+    boilerplate (ranked LAST, never removed — CLAUDE.md §4), source rank,
+    source file, locator, label. Identical titles (whitespace- and
+    case-folded) show once; the graph keeps every one of them.
+
+    Returns (rows, duplicates_folded) so a caller can SAY how many it folded."""
+    ranked = sorted((e for e in edges if not nodes[e["target"]].get("not_a_topic")),
+                    key=lambda e: (bool(e.get("historical")),
+                                   bool(nodes[e["target"]].get(BOILERPLATE)),
+                                   e.get("rank") if e.get("rank") is not None else 99,
+                                   str(e.get("deck_drive_url") or ""),
+                                   _locator_key(e), nodes[e["target"]]["label"]))
+    seen, rows, folded = set(), [], 0
+    for e in ranked:
+        k = _fold(nodes[e["target"]]["label"])
+        if k in seen:
+            folded += 1
+            continue
+        seen.add(k)
+        rows.append(e)
+    return (rows if limit is None else rows[:limit]), folded

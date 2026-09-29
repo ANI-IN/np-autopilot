@@ -1,0 +1,27 @@
+# Owner facts about the Resource Collection Mastersheet that the sheet's VALUES
+# do not state. origin: hand — asserted, never read from a file, and never
+# presentable as though a scan produced them (CLAUDE.md, AUDIT §A.5).
+#
+# withdrawn_roles: a mastersheet role the sheet still lists but the owner says
+# is no longer held. Pass 7 does NOT mint that `taught_by` edge; the person
+# node stays, with a hand source recording what the sheet shows and what the
+# owner said. Keyed on (domain slug, module sequence, role, person as written).
+#
+# A red-highlighted instructor cell with NO entry here is reported by pass 7
+# every build and left as the sheet states it — its meaning is the owner's to
+# give, not the pipeline's to guess.
+version: 1
+
+withdrawn_roles:
+  - id: sd1-4-daniel-grundel-backup-3
+    domain: full-stack
+    sequence: 4
+    role: backup_3
+    person: Daniel Grundel
+    sheet_cell: "Full Stack Engineering!E50"
+    fact: >-
+      Listed in the sheet as Backup 3 for SD1/4 JavaScript and Web Development,
+      cell highlighted red; owner: no longer teaching it.
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"

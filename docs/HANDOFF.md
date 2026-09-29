@@ -177,6 +177,28 @@ module against the mastersheet; the window does not start until they
 confirm.** (Moved ahead of the window 2026-09-30 so the owner checks against the
 local build before production changes.)
 
+**State, 2026-09-30 (checklist review parts 1–2): 15 of 20 confirmed** — SD2/1–4,
+SD3/1–5, SD4/1–6, recorded in `config/owner-confirmations.yaml` (origin: hand),
+each bound to a fingerprint of its block's mastersheet facts so a later change
+takes the tick off. **SD1/1–5 are not confirmed.**
+
+**BLOCKER — SD1/1 Databases.** The owner's live sheet reads Primary Konstantinos
+Pappas · Backup 1 Ashish Kaila · Backup 2 Nikhil Kolekar; the graph has no
+mastersheet instructor for it. The corpus file (Drive `1f4T6u2m…`, modified
+2026-09-02, version 12) is **byte-identical** to the cache (same md5), and it is
+the only file of that name the service account can see — so the live sheet is
+a **different Drive file**, outside the corpus. A re-fetch cannot fix this. The
+owner must either (a) replace the corpus file's content with the live sheet
+(then pass 0, passes 7–8, diff, regenerate), or (b) share the live sheet with
+the service account and approve adding it to scope
+(`NP_MASTERSHEET_DRIVE_ID` then points the freshness check at it). Until then
+SD1/1 cannot be confirmed and the window does not start.
+
+**Freshness guard** (`pipeline/lib/freshness.py`): `project_graph.py` and
+`eval/mastersheet_rederive.py` refuse when the cached mastersheet is older than
+Drive or differs from it, naming both times; could-not-look is a refusal.
+Run-sheet step 0. It would **not** have caught SD1/1 (see above).
+
 ## 4 · The window — Phase C and Phase D in ONE sitting
 **Owner decision, Animesh Kumar, 2026-09-30 (origin: hand): migrations →
 deploy → projection**, so the OLD code never runs against the NEW data. The
@@ -279,27 +301,26 @@ f. **Extend to other row-B domains** — scope change, re-run from Phase 2.
 
 # E · OPEN REVIEW ITEMS AND PENDING OWNER DECISIONS
 
-`docs/REVIEW-QUEUE.md` holds **86 rows: 51 answered, 35 open.** Answered = the
-owner has decided the row, "leave unresolved" included (convention stated at
-the top of `REVIEW-QUEUE.md`, same in both files).
+`docs/REVIEW-QUEUE.md` holds **88 rows: 65 answered, 23 open** (checklist
+review, 2026-09-30). Answered = the owner has decided the row, "leave
+unresolved" included (convention stated at the top of `REVIEW-QUEUE.md`, same
+in both files).
 
 | prefix | rows | state |
 |---|---:|---|
-| `MOD` | 16 | **all answered and applied** |
-| `INS` | 32 | **all answered** (26 bulk + 6 individual) |
-| `PPL` | 12 | **3 answered** — PPL-11 applied; PPL-01/06 left unresolved with INS-31/32; **9 open** |
+| `MOD` | 18 | **16 answered and applied**; **MOD-17/18 open** — label collisions created by adopting the mastersheet names |
+| `INS` | 32 | **all answered and applied** — INS-08/30/31/32 merged 2026-09-30 |
+| `PPL` | 12 | **11 answered** — PPL-01…08, 10, 11 merged; PPL-09 left unresolved; **PPL-12 open** |
 | `DCK` | 14 | **open** — deck filename → instructor proposals |
-| `TOPv` | 3 | **open** — module label variants |
-| `TOPm` | 3 | **open** — mastersheet vs folder label |
+| `TOPv` | 3 | **answered and applied** — mastersheet name is the label, folder name is `label_raw` |
+| `TOPm` | 3 | **answered and applied** — same answer |
 | `TOPt` | 6 | **open** — lesson-plan tab → module |
 
-**Deliberately unresolved, by owner decision — do not "fix" these:**
-- `INS-08` / `INS-30` — Bill Ogden / William David Ogden. Two nodes, rendered
-  unconfirmed, hatched in the matrix.
-- `INS-31` / `INS-32` — `Konstantinos`, `Shelby`. First-name forms keep their
-  module rows.
+**Deliberately unresolved, by owner decision — do not "fix" this:**
+- `PPL-09` — `Reginald`. Keeps its module row; rendered unconfirmed
+  (`identity_unconfirmed`) in the checklist and the matrix.
 
-Answer the remaining 35 before Phase C where possible.
+Answer the remaining 23 before Phase C where possible.
 
 **PENDING — billing decision, the owner's:** raising the Vercel function
 `memory` setting buys proportionally more CPU, shortening interpreter start-up
