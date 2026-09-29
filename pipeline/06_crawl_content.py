@@ -100,8 +100,15 @@ def download_disabled(entry: dict) -> bool:
     single code for both is the shape where absence and failure look the same.
     """
     caps = entry.get("capabilities") or {}
-    return (caps.get("canDownload") is False
-            or bool(entry.get("copyRequiresWriterPermission")))
+    # `canDownload` ONLY. `copyRequiresWriterPermission` describes the file's
+    # setting; `canDownload` is what Drive evaluates for THIS identity, and the
+    # two disagree: two SD3 files carry the copy restriction and are still
+    # downloadable by us. OR-ing them marked readable curriculum as unavailable
+    # — A7B instance 7, a check keyed on a value that is not about us.
+    #
+    # `is False` rather than falsy, so a MISSING capabilities block means
+    # "try the fetch", never "record it unavailable on a guess".
+    return caps.get("canDownload") is False
 
 
 def verify_cache(cache_dir: Path) -> dict:

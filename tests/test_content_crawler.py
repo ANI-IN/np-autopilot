@@ -356,3 +356,29 @@ def test_an_unchanged_run_at_the_same_version_still_exports_nothing(mod, tmp_pat
 def test_the_cache_is_never_left_at_mixed_redaction_versions(mod, tmp_path, world):
     out = mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
     assert out.integrity["mixed_redaction_versions"] == 0
+
+
+def test_copy_restriction_alone_does_not_mean_we_cannot_download(mod):
+    """FOUND BY THE INTEGRITY CHECK, v2 run. Two SD3 files exported fine under
+    v1 and were reclassified `download-disabled-by-owner` under v2, leaving
+    their exports as orphans on disk.
+
+    Both have `copyRequiresWriterPermission: true` AND `canDownload: true`, and
+    the first version of this check OR-ed the two. That is A7B instance 7 in my
+    own code: `copyRequiresWriterPermission` describes the FILE's setting,
+    while `capabilities.canDownload` is the value Drive evaluates FOR THE
+    REQUESTING IDENTITY. Keying on the first is storing somebody's setting and
+    calling it our capability.
+
+    canDownload is now the test; the copy restriction is corroboration only.
+    """
+    entry = {"id": "x", "name": "Object Modelling.pptx",
+             "capabilities": {"canDownload": True},
+             "copyRequiresWriterPermission": True}
+    assert mod.download_disabled(entry) is False
+
+
+def test_a_missing_capabilities_block_does_not_silently_disable(mod):
+    """Absence is not a refusal. If Drive did not return capabilities we must
+    TRY the fetch, not record 'unavailable' on a guess."""
+    assert mod.download_disabled({"id": "y", "name": "z"}) is False

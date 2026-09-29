@@ -2771,3 +2771,17 @@ document of ours. Final hash `a53462823ca26466fc5e6b3bf18615ec51bb96ed003249a866
 - Files: 1440, exported 919
 - Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 51, 'learner-content': 163}
 - Seconds: 1966
+
+## 2026-09-29 06:55:24Z — 06_crawl_content
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Files: 1440, exported 917
+- Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 2, 'download-disabled-by-owner': 51, 'learner-content': 163}
+- Seconds: 1928
+
+## 2026-09-29 07:01:47Z — 06_crawl_content
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Files: 1440, exported 5
+- Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 2, 'download-disabled-by-owner': 49, 'learner-content': 160}
+- Seconds: 279
