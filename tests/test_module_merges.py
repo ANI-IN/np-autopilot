@@ -49,6 +49,29 @@ def _mod(g, slug, seq):
 # The explicit owner instruction on MOD-14
 # ---------------------------------------------------------------------------
 
+def _module_in_another_domain(main, avoid_family):
+    """A module that genuinely REACHES a domain unlike `avoid_family`.
+
+    Picking any module is not enough: most legacy modules have no domain edge
+    at all, and a side with no domain reach is "cannot tell", not a conflict —
+    which is precisely the distinction the check is built on. The first
+    version of this fixture picked such a module and the mutation silently
+    did nothing.
+    """
+    by_id = {n["id"]: n for n in main["nodes"]}
+    dom_rel = taxonomy.edge_for_role("domain_module")
+    for e in main["edges"]:
+        if e["rel"] not in (dom_rel, "covers", "contains"):
+            continue
+        src, tgt = by_id.get(e["source"]), by_id.get(e["target"])
+        if not src or not tgt or tgt["type"] != "module":
+            continue
+        fam = mm._family(src.get("label"))
+        if fam and fam != avoid_family:
+            return tgt
+    raise AssertionError("no module reaching a different domain; fixture broken")
+
+
 def test_automation_testing_and_test_automation_are_never_joined(merged):
     """MOD-14's condition, asserted rather than left to convention.
 
@@ -100,12 +123,12 @@ def test_every_touched_edge_records_the_merge_that_moved_it(merged):
     recomputing all of them."""
     moved = [e for e in merged["edges"] if "merged_from" in e]
     assert moved, "no edge was retargeted; the merge did nothing"
-    # instructor-alias moves carry merged_from without a mod_id, by design:
-    # they belong to an INS row, recorded on the node.
-    module_moves = [e for e in moved if e.get("mod_id")]
-    assert len(module_moves) >= len(moved) - 60
-    for e in module_moves:
-        assert e["mod_id"].startswith("MOD-")
+    untagged = [e for e in moved if not (e.get("mod_id") or e.get("ins_id"))]
+    assert not untagged, (
+        f"{len(untagged)} retargeted edges carry no review id, so the merge "
+        "that moved them cannot be reversed")
+    for e in moved:
+        assert (e.get("mod_id") or e.get("ins_id")).startswith(("MOD-", "INS-"))
 
 
 def test_provenance_is_unioned_not_replaced(graphs, merged):
@@ -224,21 +247,69 @@ def test_first_name_forms_keep_their_module_attachments(merged):
         assert attached, f"{lab} lost its module rows"
 
 
-def test_the_unanswered_INS_bulk_is_visible_as_remaining_duplicates(merged):
-    """NOT a failure — a measurement, asserted so it cannot drift silently.
-
-    26 exact-full-name INS rows were offered for bulk confirmation and have
-    not been answered, so those instructors are still two nodes each. If a
-    later change merged them without an answer, this goes red.
-    """
+def test_only_the_deliberately_unresolved_instructors_remain_duplicated(merged):
+    """After the INS bulk, exactly FOUR labels stay doubled — and each one is
+    doubled because the owner said so, not because nothing looked at it."""
     import collections
-    c = collections.Counter((n.get("label") or "").strip().lower()
+    c = collections.Counter((n.get("label") or "").strip()
                             for n in merged["nodes"] if n["type"] == "instructor")
     dupes = {k for k, v in c.items() if v > 1}
-    assert len(dupes) == 30, (
-        f"{len(dupes)} duplicated instructor labels; expected 30 while the "
-        "INS bulk is unanswered (26 bulk rows + the 4 answered 'leave apart')")
-    assert "balaram velega" not in dupes and "balaram velaga" not in dupes
+    assert dupes == {"Bill Ogden", "William David Ogden",
+                     "Konstantinos", "Shelby"}, f"unexpected duplicates: {dupes}"
+
+
+def test_the_bulk_safeguard_excluded_nothing_and_says_so(merged):
+    """0 exclusions is a RESULT, not an absence of checking. It is asserted so
+    that a check which silently stops running is visible."""
+    assert merged["meta"]["excluded_pairs"] == []
+
+
+def test_the_conflict_check_CAN_exclude_a_pair(graphs):
+    """Mutation: give one side of a merged pair a wholly different domain and
+    the pair must be excluded. Without this, the 0 above proves nothing."""
+    import copy
+    main, content = copy.deepcopy(graphs[0]), copy.deepcopy(graphs[1])
+    # Tilo Dickopp reaches `backend` from both sides. Re-point the main-graph
+    # node's teaching onto a module in an unrelated domain.
+    tilo = next(n for n in main["nodes"] if n["type"] == "instructor"
+                and n.get("label") == "Tilo Dickopp")
+    rel = taxonomy.edge_for_role("instructor_module")
+    alien = _module_in_another_domain(main, "backend")
+    main["edges"] = [e for e in main["edges"]
+                     if not (e["rel"] == rel and e["source"] == tilo["id"])]
+    main["edges"].append({"rel": rel, "source": tilo["id"], "target": alien["id"],
+                          "sources": [{"origin": "hand", "evidence": "mutation"}]})
+    out = mm.merge(main, content)
+    excluded = {x["id"] for x in out["meta"]["excluded_pairs"]}
+    assert excluded, "the conflict check excluded nothing when domains diverged"
+
+
+def test_an_excluded_pair_is_never_silently_merged(graphs):
+    """The exclusion must actually prevent the merge, not just log it."""
+    import copy
+    main, content = copy.deepcopy(graphs[0]), copy.deepcopy(graphs[1])
+    tilo = next(n for n in main["nodes"] if n["type"] == "instructor"
+                and n.get("label") == "Tilo Dickopp")
+    rel = taxonomy.edge_for_role("instructor_module")
+    alien = _module_in_another_domain(main, "backend")
+    main["edges"] = [e for e in main["edges"]
+                     if not (e["rel"] == rel and e["source"] == tilo["id"])]
+    main["edges"].append({"rel": rel, "source": tilo["id"], "target": alien["id"],
+                          "sources": [{"origin": "hand", "evidence": "mutation"}]})
+    out = mm.merge(main, content)
+    if any(x["canonical"] == "Tilo Dickopp" for x in out["meta"]["excluded_pairs"]):
+        hits = [n for n in out["nodes"] if n["type"] == "instructor"
+                and (n.get("label") or "").strip() == "Tilo Dickopp"]
+        assert len(hits) == 2, "an excluded pair was merged anyway"
+
+
+def test_absence_of_evidence_is_not_treated_as_a_conflict(merged):
+    """9 pairs had domain evidence on only one side. They merged, because
+    "I cannot tell" and "they differ" are different answers."""
+    for lab in ("Shelby Cohen", "Rushi Vyas", "Nisarg Tanna"):
+        hits = [n for n in merged["nodes"] if n["type"] == "instructor"
+                and (n.get("label") or "").strip() == lab]
+        assert len(hits) == 1, f"{lab} was excluded for having no evidence"
 
 
 # ---------------------------------------------------------------------------

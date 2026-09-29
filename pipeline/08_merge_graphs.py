@@ -115,6 +115,25 @@ def main() -> int:
               f"{','.join(n['merge_ids'])}"
               + (f"  legacy-tier: {', '.join(x for x in who if x)}" if who else ""))
 
+    # -- instructor identity ----------------------------------------------
+    def dupes(g, typ):
+        c = collections.Counter((n.get("label") or "").strip()
+                                for n in g["nodes"] if n["type"] == typ)
+        return {k: v for k, v in c.items() if v > 1}
+
+    before_ins = dupes({"nodes": main_g["nodes"] + content_g["nodes"]}, "instructor")
+    after_ins = dupes(merged, "instructor")
+    print(f"\n  INSTRUCTOR IDENTITY")
+    print(f"    duplicate labels      {len(before_ins):5} -> {len(after_ins)}")
+    ex = merged["meta"].get("excluded_pairs") or []
+    print(f"    pairs excluded by the safeguard: {len(ex)}")
+    for x in ex:
+        print(f"      {x['id']:8} {x['canonical']:24} {x['reason']}")
+    if after_ins:
+        print("    still duplicated, and why:")
+        for lab in sorted(after_ins):
+            print(f"      {after_ins[lab]}x {lab}")
+
     OUT.write_text(json.dumps(merged, indent=1, sort_keys=True), encoding="utf-8")
     print(f"\n  -> {OUT}")
     return 0

@@ -219,3 +219,21 @@ Recorded in `config/module-merges.yaml`, applied by `pipeline/08_merge_graphs.py
 
 Remaining open: **62 of 86** — 26 `INS` bulk rows, `INS-08/30/31/32` answered as
 deliberately unresolved, and the `TOPv` / `TOPm` / `TOPt` / `PPL` / `DCK` groups.
+
+### INS bulk — answered 2026-09-29, applied by pass 8
+
+26 exact full-name matches confirmed, with a safeguard run before every merge
+and re-run on every build: a pair is excluded if `lib/resolve.py` calls the name
+Ambiguous, or if the two nodes' **domain reach** is wholly disjoint.
+
+**0 pairs excluded.** 17 pairs had domain evidence on both sides and every one
+shared a family; 9 had evidence on one side only, which is *absence* of
+evidence and is not treated as a conflict.
+
+| | |
+|---|---|
+| duplicate instructor labels | **32 → 4** |
+| excluded by the safeguard | **0** |
+| still duplicated | `Bill Ogden`, `William David Ogden` (INS-08/30), `Konstantinos`, `Shelby` (INS-31/32) — all four by owner decision |
+
+Remaining open: **36 of 86** — `TOPv` 3, `TOPm` 3, `TOPt` 6, `PPL` 10, `DCK` 14.

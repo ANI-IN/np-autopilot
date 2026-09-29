@@ -27,7 +27,9 @@ up.
 """
 from __future__ import annotations
 
+import collections
 import copy
+import re
 from pathlib import Path
 from typing import Any
 
@@ -75,6 +77,81 @@ def _tier_for(rel: str) -> str | None:
         return TIER_LEGACY
     if rel == taxonomy.edge_for_role("module_instructor"):
         return TIER_MASTERSHEET
+    return None
+
+
+DOMAIN_FAMILIES = (
+    ("full", "full-stack"), ("front", "frontend"), ("back", "backend"),
+    ("test", "testing"), ("data", "data"), ("agentic", "agentic"),
+    ("engineering management", "em"), ("tpm", "tpm"), ("product", "product"),
+)
+
+
+def _family(label: str | None) -> str:
+    s = (label or "").lower()
+    for needle, fam in DOMAIN_FAMILIES:
+        if needle in s:
+            return fam
+    return re.sub(r"[^a-z]", "", s)[:12]
+
+
+def conflict_for(group: list, nodes: list, edges: list,
+                 all_labels: list | None = None) -> str | None:
+    """Why this same-label group must NOT be bulk-merged, or None.
+
+    WHY THE OBVIOUS CHECK DOES NOT WORK. The first version asked whether the
+    two nodes share a MODULE. They almost never can: only the modules with an
+    answered MOD row are one node, so for every instructor who does not teach
+    one of those, "no shared module" is guaranteed by construction and says
+    nothing about identity. It flagged 14 of 26 pairs and not one was a real
+    conflict — a cutoff excluding correct answers, CLAUDE.md §4 exactly.
+
+    DOMAIN REACH survives that, because a module still reaches its domain
+    whether or not it was merged. Two nodes whose domains are wholly disjoint
+    are evidence of two people; two nodes sharing a domain family are not.
+
+    Absence of evidence is NOT a conflict and is not treated as one: a pair
+    where either side reaches no domain at all returns None, because "I cannot
+    tell" and "they differ" are different answers.
+    """
+    from . import resolve as _resolve
+    labels = {(n.get("label") or "").strip() for n in group}
+    if all_labels is not None and labels:
+        one = sorted(labels)[0]
+        if isinstance(_resolve.resolve(one, all_labels), _resolve.Ambiguous):
+            return f"{one!r} is Ambiguous in lib/resolve.py"
+
+    by_id = {n["id"]: n for n in nodes}
+    incoming = collections.defaultdict(list)
+    for e in edges:
+        incoming[e["target"]].append(e)
+    dom_rel = taxonomy.edge_for_role("domain_module")
+
+    def domains(instructor_id):
+        out = set()
+        for e in edges:
+            if not e.get("tier"):
+                continue
+            ends = (e["source"], e["target"])
+            if instructor_id not in ends:
+                continue
+            other = ends[1] if ends[0] == instructor_id else ends[0]
+            mod = by_id.get(other)
+            if mod is None or mod["type"] != "module":
+                continue
+            if mod.get("domain_slug"):
+                out.add(_family(mod["domain_slug"]))
+            for ie in incoming[mod["id"]]:
+                if ie["rel"] in (dom_rel, "covers", "contains"):
+                    out.add(_family(by_id.get(ie["source"], {}).get("label")))
+        return {d for d in out if d}
+
+    sides = [domains(n["id"]) for n in group]
+    if not all(sides):
+        return None                       # cannot tell; not a conflict
+    if not set.intersection(*sides):
+        return ("domains are disjoint: "
+                + " vs ".join(",".join(sorted(s)) for s in sides))
     return None
 
 
@@ -165,6 +242,7 @@ def merge(main: dict, content: dict, spec: dict | None = None,
     # and collapsing one pair would leave the other, which reads as a merge
     # that worked.
     ident_remap: dict[str, str] = {}
+    ident_of: dict[str, str] = {}
     for ident in (identities.get("identities") or []):
         if ident.get("status") != "confirmed":
             continue
@@ -183,6 +261,7 @@ def merge(main: dict, content: dict, spec: dict | None = None,
             if other["id"] == canon["id"]:
                 continue
             ident_remap[other["id"]] = canon["id"]
+            ident_of[other["id"]] = ",".join(ident.get("resolves", [])) or ident["slug"]
             lab = other.get("label_raw") or other.get("label")
             if lab and lab not in canon["merged_label_raw"]:
                 canon["merged_label_raw"].append(lab)
@@ -199,13 +278,68 @@ def merge(main: dict, content: dict, spec: dict | None = None,
         for end in ("source", "target"):
             if e[end] in ident_remap:
                 e["merged_from"] = e[end]
+                if ident_of.get(e[end]):
+                    e["ins_id"] = ident_of[e[end]]
                 e[end] = ident_remap[e[end]]
+
+    # -- 6. INS BULK: exact full-name pairs, each conflict-checked -------
+    bulk = (identities or {}).get("bulk_confirmed") or {}
+    excluded: list[dict] = []
+    if bulk.get("pairs"):
+        all_labels = sorted({(n.get("label") or "").strip()
+                             for n in nodes if n["type"] == "instructor"})
+        for pair in bulk["pairs"]:
+            if pair["id"] in set(bulk.get("excludes") or ()):
+                continue
+            want = pair["canonical"].strip().lower()
+            group = [n for n in nodes if n["type"] == "instructor"
+                     and (n.get("label") or "").strip().lower() == want
+                     and n["id"] not in ident_remap]
+            if len(group) < 2:
+                continue
+            why = conflict_for(group, nodes, edges, all_labels)
+            if why:
+                # REPORTED, NEVER SILENT. An excluded pair is a row the owner
+                # has to answer, not a thing the build decided on its own.
+                excluded.append({"id": pair["id"],
+                                 "canonical": pair["canonical"], "reason": why})
+                continue
+            canon = min(group, key=lambda n: n["id"])
+            canon["label"] = pair["canonical"]
+            canon.setdefault("merged_label_raw", [])
+            canon.setdefault("merged_from", [])
+            canon.setdefault("merge_ids", [])
+            for other in group:
+                if other["id"] == canon["id"]:
+                    continue
+                ident_remap[other["id"]] = canon["id"]
+                ident_of[other["id"]] = pair["id"]
+                lab = other.get("label_raw") or other.get("label")
+                if lab and lab not in canon["merged_label_raw"]:
+                    canon["merged_label_raw"].append(lab)
+                canon["merged_from"].append(other["id"])
+                seen = {repr(s) for s in canon.get("sources", [])}
+                for s in other.get("sources", []):
+                    if repr(s) not in seen:
+                        canon.setdefault("sources", []).append(s)
+                        seen.add(repr(s))
+            if pair["id"] not in canon["merge_ids"]:
+                canon["merge_ids"].append(pair["id"])
+        # re-point edges for the pairs merged in this step. Every one records
+        # its INS id: same reversibility rule as the MOD merges.
+        for e in edges:
+            for end in ("source", "target"):
+                if e[end] in ident_remap:
+                    e["merged_from"] = e[end]
+                    if ident_of.get(e[end]):
+                        e["ins_id"] = ident_of[e[end]]
+                    e[end] = ident_remap[e[end]]
 
     absorbed = set(remap) | set(ident_remap)
     out_nodes = [n for n in nodes if n["id"] not in absorbed]
 
     meta = dict(main.get("meta", {}))
     meta.update(merged=True, merges_applied=applied,
-                absorbed_nodes=len(absorbed),
+                absorbed_nodes=len(absorbed), excluded_pairs=excluded,
                 nodes=len(out_nodes), edges=len(edges))
     return {"meta": meta, "nodes": out_nodes, "edges": edges}

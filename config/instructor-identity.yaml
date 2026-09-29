@@ -98,3 +98,57 @@ identities:
       full name unknown. The first-name form remains an open review item and
       keeps its module rows, marked unconfirmed.
     resolves: [INS-32, PPL-01]
+
+# ---------------------------------------------------------------------------
+# INS BULK — the 26 exact full-name matches, confirmed 2026-09-29.
+#
+# SAFEGUARD, run before every merge and re-run on every build. A pair is
+# EXCLUDED if `lib/resolve.py` calls the name Ambiguous, or if the two nodes'
+# DOMAIN REACH is wholly disjoint. Exclusions are reported, never silent.
+#
+# THE FIRST VERSION OF THIS CHECK ASKED WHETHER THE TWO NODES SHARE A MODULE.
+# They almost never can: only modules with an answered MOD row are one node,
+# so for any instructor not teaching one of those, "no shared module" is
+# guaranteed by construction. It flagged 14 of 26 pairs and not one was a real
+# conflict — a cutoff excluding correct answers, CLAUDE.md §4. Domain reach
+# survives, because a module reaches its domain whether or not it was merged.
+#
+# ABSENCE OF EVIDENCE IS NOT A CONFLICT. Where either side reaches no domain
+# at all the pair is merged, because "I cannot tell" and "they differ" are
+# different answers and only the second justifies exclusion.
+#
+# Measured at the time of confirmation: 0 exclusions. 17 pairs had domain
+# evidence on both sides and every one shared a family; 9 had evidence on only
+# one side.
+bulk_confirmed:
+  rule: exact full-name match across the two graphs
+  decided_by: Animesh Kumar
+  decided_at: 2026-09-29
+  excludes: [INS-05, INS-06, INS-08, INS-30, INS-31, INS-32]
+  pairs:
+    - {id: INS-01, canonical: 'Adam Toth'}
+    - {id: INS-02, canonical: 'Ashish Kaila'}
+    - {id: INS-03, canonical: 'Azeem Ghumman'}
+    - {id: INS-04, canonical: 'Balaji Santhanam'}
+    - {id: INS-07, canonical: 'Bharath Anand'}
+    - {id: INS-09, canonical: 'Cathy Ma'}
+    - {id: INS-10, canonical: 'Daniel Grundel'}
+    - {id: INS-11, canonical: 'David Prorok'}
+    - {id: INS-12, canonical: 'Dominique Canlas'}
+    - {id: INS-13, canonical: 'Evgeny Vinnik'}
+    - {id: INS-14, canonical: 'Faraaz Sareshwala'}
+    - {id: INS-15, canonical: 'Hetal Modi'}
+    - {id: INS-16, canonical: 'Jeff Wisman'}
+    - {id: INS-17, canonical: 'Konstantinos Pappas'}
+    - {id: INS-18, canonical: 'Nikhil Kolekar'}
+    - {id: INS-19, canonical: 'Nisarg Tanna'}
+    - {id: INS-20, canonical: 'Reginald Johnson'}
+    - {id: INS-21, canonical: 'Robert Kreznarich'}
+    - {id: INS-22, canonical: 'Rodrigo Salazar'}
+    - {id: INS-23, canonical: 'Rushi Vyas'}
+    - {id: INS-24, canonical: 'Sanjay Dhar'}
+    - {id: INS-25, canonical: 'Sergey Togulev'}
+    - {id: INS-26, canonical: 'Shelby Cohen'}
+    - {id: INS-27, canonical: 'Sindhu Singh Dua'}
+    - {id: INS-28, canonical: 'Thong Tran'}
+    - {id: INS-29, canonical: 'Tilo Dickopp'}
