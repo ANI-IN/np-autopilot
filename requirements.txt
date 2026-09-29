@@ -23,6 +23,16 @@ openpyxl==3.1.5              # every .xlsx read; read_only=True everywhere
 python-docx==1.2.0           # 01_walk_corpus probes .docx shape
 PyYAML==6.0.2                # taxonomy, people, aliases, the migration baseline
 
+# --- pass 6: text out of binaries (row-B content crawl) ------------------
+# Added 2026-09-29. Without these, a .pptx (a zip) and a .pdf were being
+# decoded as utf-8 and written into the cache as replacement characters — a
+# failure that produces output, so nothing downstream reports it. 347 of the
+# 991 files in scope are binary, and most of them are the decks.
+# Pipeline-only: neither is in pyproject.toml, because no HTTP request touches
+# them and the Vercel bundle is already against its size limit.
+python-pptx==1.0.2           # slide text WITH slide numbers
+PyMuPDF==1.28.0              # pdf text with page numbers (imports as `fitz`)
+
 # --- pass 0: Google Drive, service account, drive.readonly ---
 google-api-python-client==2.200.0
 google-auth==2.49.2
@@ -35,6 +45,13 @@ psycopg[binary]==3.3.5
 # [crypto] pulls `cryptography`, which is what actually verifies RS256. Without
 # the extra, PyJWT accepts the token shape and cannot check the signature.
 PyJWT[crypto]==2.10.1
+
+# --- B3: /api/structure compression, and the projection's precomputed layout ---
+# Brotli compresses the structure payload (gzip, stdlib, is the fallback when a
+# client does not offer br). numpy runs the layout simulation at projection
+# time (pipeline/lib/layout.py); it is pipeline-only, not in pyproject.toml.
+Brotli==1.2.0
+numpy==2.1.3
 
 # --- tests ---
 pytest==8.3.4

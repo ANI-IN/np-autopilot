@@ -20,6 +20,25 @@ SESSION = "SUPABASE_DB_URL_SESSION"
 #: no session state. See DECISIONS §C.1.
 TRANSACTION = "SUPABASE_DB_URL_TRANSACTION"
 
+#: The production Supabase project (STATE.md §2). Named so that a test run can
+#: recognise it and refuse — see `production_reason()`.
+PROD_PROJECT_REF = "yqmzjgzhxhihnpbgqmeh"
+#: Every Supabase-managed host: the poolers (`*.pooler.supabase.com`) and the
+#: direct connection (`db.<ref>.supabase.co`). None of them is a test database.
+_SUPABASE_HOST_SUFFIXES = (".supabase.com", ".supabase.co")
+#: Where the database tests go by default: the Supabase CLI local stack
+#: (`db/local/`, HANDOFF.md §I) — Supabase's own Postgres image, auth schema,
+#: roles and RLS, so a pass here says something true about production. The
+#: password is the stack's fixed local default, not a secret. Override with
+#: NP_TEST_DSN.
+LOCAL_TEST_DSN = "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+#: The same stack through its Supavisor transaction pooler on 6543 — the shape
+#: production's web requests use. Override with NP_TEST_DSN_TRANSACTION.
+LOCAL_TEST_DSN_TRANSACTION = ("postgresql://postgres.pooler-dev:postgres@"
+                              "127.0.0.1:6543/postgres")
+#: The one way to point the test suite at production. Exactly "1".
+ALLOW_PROD_TESTS = "NP_ALLOW_PROD_TESTS"
+
 
 def assert_not_direct(url: str) -> None:
     host = (urlparse(url).hostname or "")
@@ -31,6 +50,23 @@ def assert_not_direct(url: str) -> None:
             "have — use the session pooler for migrations, the transaction "
             "pooler for anything request-scoped."
         )
+
+
+def production_reason(u: str) -> str | None:
+    """Why this DSN is production, or None if it is not.
+
+    Derived from the DSN itself — the host and the project ref — never from a
+    flag somebody sets, so a test run cannot be told it is local while pointed
+    at Supabase. The reason names the host, never the password.
+    """
+    p = urlparse(u)
+    host = (p.hostname or "").lower()
+    user = unquote(p.username or "")
+    if host.endswith(_SUPABASE_HOST_SUFFIXES):
+        return f"host {host} is Supabase-managed"
+    if PROD_PROJECT_REF in host or PROD_PROJECT_REF in user:
+        return f"it names the production project ref {PROD_PROJECT_REF}"
+    return None
 
 
 def url(var: str = SESSION) -> str:

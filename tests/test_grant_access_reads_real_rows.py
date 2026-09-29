@@ -54,6 +54,7 @@ def _real_users(cur):
     return cur.fetchall()
 
 
+@pytest.mark.production_only
 @needs_db
 def test_hd_is_readable_from_every_real_google_identity():
     """THE TEST THAT WOULD HAVE CAUGHT IT.
@@ -84,6 +85,7 @@ def test_hd_is_readable_from_every_real_google_identity():
             "auth.identities.identity_data and add the path to HD_PATHS.")
 
 
+@pytest.mark.production_only
 @needs_db
 def test_the_old_top_level_read_really_was_empty():
     """The negative control, against production data rather than a fixture.
@@ -113,6 +115,7 @@ def test_the_old_top_level_read_really_was_empty():
             "re-checked against the new shape.")
 
 
+@pytest.mark.production_only
 @needs_db
 def test_every_configured_hd_path_is_valid_sql():
     """HD_PATHS is a list of SQL fragments; a typo would read as NULL.
@@ -138,6 +141,7 @@ def test_every_configured_hd_path_is_valid_sql():
             "entry in HD_PATHS is reading somewhere empty")
 
 
+@pytest.mark.production_only
 @needs_db
 def test_a_granted_profile_carries_the_verified_domain():
     """The domain written into `profiles` is the CHECKed constant, not a guess."""
@@ -226,6 +230,7 @@ def test_a_shared_account_cannot_be_granted_recruiting_or_admin(monkeypatch):
             conn.rollback()
 
 
+@pytest.mark.production_only
 @needs_db
 def test_a_normal_account_is_not_flagged(monkeypatch):
     """The positive control: the rule must not catch everyone.

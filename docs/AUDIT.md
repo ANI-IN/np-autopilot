@@ -134,7 +134,7 @@ working but with a known sharp edge · **stub** = exists, never exercised ·
 | `pipeline/00_fetch_drive.py` | 377 | **stub** | Complete and careful — native-export map, shortcut/cycle handling, empty-enumeration fatal, 404 probe. **Has never been run.** No `config/drive.yaml` exists. |
 | `pipeline/gen_workflow_owners.py` | 110 | **solid** | One-shot generator. Every suggestion lands `confirmed: false`. |
 | `commands/*.md` | 134 | **solid** | 5 commands. `staffing` and `coverage` shell out to `query.py`; `workflow`, `domain-owner`, `setup` read `graph.json` directly. |
-| `.claude-plugin/` | 2 files | **fragile** | Valid manifests. But the repo is private with no collaborators, so **no teammate can install it today**. |
+| `.claude-plugin/` | 2 files | **fragile** | Valid manifests. But the repo is private with no collaborators, so **no teammate can install it today**. *(Private was the intent; it was in fact public 2026-09-17→30 — `07-risks.md` R21. The diagrams in this document show the intended state.)* |
 | `tests/` | 393 | **solid** | 44 tests, 8.4s. Covers determinism, taxonomy single-source, validation-category firing, staffing tier separation. |
 | `eval/run_eval.py` | 401 | **solid** | 27 retrieval questions incl. 4 that pass only by refusing to answer. Fabrication scored worse than failure. |
 | `eval/drive_*.mjs` | 319 | **solid** | Headless DOM + render harness. Node, no `package.json`. |

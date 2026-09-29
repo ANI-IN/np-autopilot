@@ -18,12 +18,13 @@ Evidence throughout is [`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md).
 
 | | decision | status |
 |---|---|---|
-| **D1** | No person extraction from slide content, at any confidence | **decided — never** |
+| **D1** | No person extraction from slide content, at any confidence | **decided — never.** Enforced: `tests/test_content_crawl_guards.py` |
 | **D2** | Fork A: a search index with a graph over a known subset | **confirmed as the design** |
+| **D2a** | Reversal of D2: a content graph for the Domain→KYP→Module→Week→Live Class→Assignment→Deck→Topic chain, four domains in row B | **APPROVED 2026-09-29** — enforced by `pipeline/lib/approval.py` + `tests/test_d2a_approval_gate.py` |
 | **D3** | Shortcuts: resolve and report, do not follow | **CLOSED IN CODE 2026-09-20** — `00_fetch_drive.py`, `tests/test_shortcuts_are_not_followed.py` |
-| **D4** | File-owner metadata: store the domain, never the address | **decided** |
-| **D5** | The `SMEs consent` folder: do not ingest | **decided — and it is a taxonomy limit, not a privacy preference** |
-| **D6** | `(File responses)` folders: declared skip, reported | **decided — added after measurement, see §D6** |
+| **D4** | File-owner metadata: store the domain, never the address | **decided.** Enforced: `tests/test_content_crawl_guards.py`; migration `0017` written, NOT applied |
+| **D5** | The `SMEs consent` folder: do not ingest | **decided** — a taxonomy limit, not a privacy preference. Enforced: `tests/test_content_crawl_guards.py` |
+| **D6** | `(File responses)` folders: declared skip, reported | **decided — added after measurement, see §D6.** Enforced: `tests/test_content_crawl_guards.py` |
 
 ---
 
@@ -139,6 +140,166 @@ Backend - API Design   1XrmskJnsHkIBUDCRDBdMk3q8vk5cqoxd/11MkOWXXkkFNTzKmmA9TytJ
 
 It has a sibling, `Backend - Data Modeling`, also empty — so the test has a
 second case for free.
+
+---
+
+## D2a · REVERSAL of D2, scoped to four domains in row B
+
+**Status: APPROVED 2026-09-29, BUILT, AND CRAWLED.** The approval block at the
+end of this section is filled in, and it is not decoration: `pipeline/lib/
+approval.py` parses it on every run, so blanking `Approved by` or `Date` makes
+`pipeline/06_crawl_content.py` exit non-zero naming this file, and only the
+domains ticked there are walked. Verified by blanking it, running the crawler,
+and restoring — `tests/test_d2a_approval_gate.py`.
+
+**Since built (updated 2026-09-29):** the crawl's text cache under
+`.drive-cache/content-rowB/` now feeds the content model
+(`pipeline/07_build_content_graph.py`) and the merge (`08_merge_graphs.py`).
+The merged public half — 8,507 nodes — is projected to the LOCAL database
+only; production still holds the pre-crawl graph (`docs/HANDOFF.md` §A).
+
+### What D2 says today, and what is being proposed instead
+
+D2 confirmed **fork A**: *a content search index, with a graph over a known
+curated subset, and a visible seam between them.* Where a topic maps to a module
+the system traverses; where it does not it says *"these files mention it; no
+module in the graph matches that name"* and stops.
+
+**The proposal is to build a content GRAPH for one explicitly bounded chain**,
+rather than an index with a seam:
+
+```
+Domain → KYP → Module → Week → Live Class → Assignment → Assignment Review
+Module → Deck → Topic
+Module → Repo / supporting file
+```
+
+over **four domains in registry row B only**: `SD1: Full Stack`,
+`SD2: Frontend`, `SD3: Backend Engineering`, `SD4: Test Engineering`.
+
+### The chain AS BUILT differs from the chain as proposed, in two ways
+
+Both changes are in `config/taxonomy.yaml`, whose note carries the reasoning.
+
+**There is no `kyp` node type.** `curriculum_doc` replaces it, with
+`kind ∈ {kyp, handbook, outline, lesson_plan}`, because measurement found
+exactly ONE KYP across 991 files in the four domains — SD2's. Calling SD4's
+handbook or SD1's outline a KYP would have hidden a content gap inside a
+node type.
+
+**`live_class`, `assignment` and `slide_deck` attach to the MODULE, not to the
+week, and `program_week` attaches to the module alongside them.** A program
+week exists only where a curriculum document states one, and SD3 has none —
+so hanging live classes off weeks would give Backend zero live classes. That
+is a cutoff hiding correct answers, `CLAUDE.md` §4, and the reason the chain
+bends here rather than the data being forced to fit it.
+
+### Why this is not simply "fork B after all"
+
+D2's argument against fork B rests on `REGISTRY-INVENTORY.md` §7, and §7 is
+about **people**: four instructor-shaped tuples on decks, two of them
+fabricated, indistinguishable by shape from the two real ones. That argument is
+untouched here and is not being reopened.
+
+**This chain contains no person layer.** Owners and instructors are deferred to
+a later phase by the requester's own instruction, D1 stands unmodified, and
+nothing in the proposed taxonomy has a `person` endpoint. The entities are
+structural — a module, a week, a deck, an assignment — and their identity comes
+from **folder paths and curriculum-sheet rows**, not from prose or slide
+decoration.
+
+> **The distinction that makes this proposal different from fork B: fork B
+> guesses at entities that a document mentions. This extracts entities that a
+> folder structure and a curriculum sheet DECLARE.** A folder named
+> `Module-3: API Design` is not an inference about API design; it is a
+> statement by the curriculum's authors.
+
+### What is genuinely new risk, stated rather than minimised
+
+1. **Topics are extracted from deck and document text**, and a topic is a much
+   weaker claim than a module. Topics are proposed as a node type with an
+   explicit slide/row citation, and they must never be promoted to a module by
+   similarity.
+2. **The topic→module join is the alias problem for the fourth time**
+   (`SCALE-PLAN.md`). It must return `Ambiguous`, never pick.
+3. **Contact data now arrives through document and slide text**, which
+   `sources.py`'s column allow-list has never reached. §D7 below is the control,
+   and it is a precondition, not a follow-up.
+4. **The empty-folder regression is live.** `Backend - API Design` sits in
+   row C and is out of scope for this phase — but SD3's real `Module-3: API
+   Design` and SD1's `2. Module - API Design and Implementation - Content` are
+   both in scope and both match the canonical query. Ranking must not be
+   introduced without the §D2 fixture.
+
+### The measurement this rests on
+
+Row B's four domains, mapped read-only 2026-09-29: **991 files, 327 folders,
+zero shortcuts, zero `(File responses)` folders, zero listing failures.** The
+chain above was derived from that map and from nine curriculum files opened in
+full, not from an assumed schema. Details and the per-link reliability table are
+in the Phase 0 report.
+
+**The honest limit: it is four domains of twelve in one registry row of five.**
+Row B's other eight domain folders were listed and not opened. Nothing here
+should be read as a statement about rows A or C, whose data contracts
+`REGISTRY-INVENTORY.md` §2 measured as materially different.
+
+---
+
+### APPROVAL — completed by the corpus owner
+
+```
+Approved by:            Animesh Kumar
+Date:                   2026-09-29
+
+Scope approved:         [x] SD1 Full Stack
+                        [x] SD2 Frontend
+                        [x] SD3 Backend Engineering
+                        [x] SD4 Test Engineering
+
+Topic extraction from deck/document text:   [x] approved   [ ] declined
+Contact redaction control (§D7) reviewed:   [x] yes        [ ] no
+Owners/instructors remain deferred:         [x] confirmed
+
+Conditions or exclusions:
+Row B only. Rows A and C remain out of scope. P1 and P2 are deferred —
+ratings / instructor attribution, later phase. Owners and instructors are
+deferred: where owner or instructor data appears it is noted, nothing is
+built for it, and no join is made to the existing instructor graph.
+```
+
+**Approved 2026-09-29, and the crawler ENFORCES it.** `pipeline/lib/approval.py`
+parses this block on every run: a blank `Approved by` or `Date` refuses the
+crawl and names this file, and only the domains ticked above are walked.
+Blanking the block stops the crawler again — the gate is derived on each run,
+not a flag somebody set once, which is the property `project_graph.py` gained
+when its hardcoded refusal was replaced by a query. Mutation-verified in
+`tests/test_d2a_approval_gate.py`.
+
+**Both open questions were resolved by the owner on 2026-09-29**, and both are
+recorded as `origin: hand` in `config/out-of-corpus-facts.yaml` — asserted, not
+read, and never presentable as though a scan produced them (§A.5):
+
+- **Program weeks — DECIDED, for all four domains.** Each runs DSA in program
+  weeks 1-5 and Scalable Systems Design in 6-8 before its own modules:
+  Full Stack **9-13**, Frontend **9-12**, Backend **9-13**, Testing **9-14**,
+  written out per module in `out-of-corpus-facts.yaml -> rowb-program-weeks`.
+  That fact superseded the SD1-only one first recorded here
+  (`sd1-full-stack-program-weeks`, no longer in the file); SD3's weeks, once
+  `program_week: null` with reason `no-curriculum-week`, are now 9-13 by owner
+  fact. Values, not a formula: the offset of 8 is still never computed —
+  `ArithmeticWeekRefused` stands.
+- **Revamp currency — DECIDED.** The **base** versions are current; the seven
+  `Revamp 2024` / `Q4 2024: Revamp` / `New Material Aug 2023` subtrees that
+  have a matching base carry `superseded_by` pointing at it and stay in the
+  graph, marked historical rather than deleted.
+  `out-of-corpus-facts.yaml -> rowb-revamp-base-is-current`.
+  **One is deliberately left ambiguous:**
+  `Module-5: Concurrency/2. Live Class Slides/Updated Content - Aug 2023` sits
+  *inside* the base live-class folder rather than beside the module's numbered
+  units, so it has no sibling base to point at. It is a variant within the
+  base, not a parallel version of it, and it is recorded unresolved rather than
+  forced into the rule that fits the other seven.
 
 ---
 
@@ -402,22 +563,30 @@ answer is a teaching deck.
 Being explicit, because `A7B.md` instance 9 is the failure of assuming a
 document is a control.
 
-| decision | enforced by | or only recorded |
-|---|---|---|
-| D1 no people from slides | — | **recorded only.** There is no extractor yet; the test belongs with the code that would violate it |
-| D2 fork A | — | **recorded only.** A design direction is not a constraint |
-| D3 shortcuts | **`tests/test_shortcuts_are_not_followed.py`** — six tests, mutation-verified: restoring the follow branch reddens two | **closed** |
-| D4 owner domain | — | **recorded only.** The `@`-in-provenance assertion is specified above and not yet written |
-| D5 consent folder | `config/taxonomy.yaml -> excluded.files` — **but only once those paths are in the registry crawl's scope**, which does not exist yet | partly |
-| D6 `(File responses)` | — | **recorded only.** The skip belongs in the crawler, with the report line beside it |
+| decision | enforced by |
+|---|---|
+| D1 no people from slides | **`tests/test_content_crawl_guards.py`** — `may_extract_people()` is False for every deck mime, and False for a deck FILENAME too while instructors are deferred. Three tests incl. a negative control that a structured roster is still permitted. Mutation-verified |
+| D2 fork A | — **recorded only.** A design direction is not a constraint. Superseded in scope by D2a |
+| **D2a** content graph, four row-B domains | **`tests/test_d2a_approval_gate.py`** — the approval block is parsed on every run; blank it and the crawler refuses naming this file. `approved_domains` is a required argument of `crawl()`, so no caller reaches it without stating its scope. Mutation-verified by blanking the block and running the crawler |
+| D3 shortcuts | **`tests/test_shortcuts_are_not_followed.py`** — six tests, mutation-verified: restoring the follow branch reddens two. Also re-asserted at the point of use in `tests/test_content_crawler.py` |
+| D4 owner domain | **`tests/test_content_crawl_guards.py`** — `owner_domain()` returns the domain only, and `provenance_is_clean()` derives "no field contains `@`" over the row's values rather than a field list, so a new provenance column is covered by default. Also **`db/migrations/0017`**, written and NOT YET APPLIED. Mutation-verified |
+| D5 consent folder | **`tests/test_content_crawl_guards.py`** — `classify_folder()` skips `SMEs consent` by name and carries the rule, plus `config/taxonomy.yaml -> excluded.files`. Mutation-verified |
+| D6 `(File responses)` | **`tests/test_content_crawl_guards.py`** — skipped by name with its rule, plus a negative control that a big folder is NOT skipped for being big. Mutation-verified. Measured: **0 such folders exist in the four approved domains** — D6's cost is concentrated in row A |
 
-**Five of six are prose, and prose is what instance 9 is about.** They are
-recorded now because the decisions are cheap today and expensive later — not
-because writing them down makes them true. Each becomes a test when the code it
-governs is written, and the code must not be written without it.
+**Five of six were prose when this document was written. One is now.** D1, D3,
+D4, D5, D6 and D2a each have a test that goes red when the guard is removed —
+21 guards, each broken and restored, recorded in commit `b4e473c`. D2 alone
+remains a design direction, which is the honest category for it.
 
-The one thing that *is* enforced today is narrower and worth naming precisely:
-the registry sheet itself is excluded (`tests/test_export_map_is_exercised.py`),
-and pass 0's export path is exercised against a fake service so that
-`CLAUDE.md` §0's "the export map has never fired" stops being a claim nothing
-would notice becoming false.
+**What that does NOT mean.** A guard with a test is not a guard that has met
+the case it was written for. Three of these have never fired on real data: D5's
+consent folder and D6's response folders do not exist in the four approved
+domains, and the `403 rateLimitExceeded` retry path logged zero retries across
+three full crawls. They are correct and unexercised, which is the same pair of
+words `CLAUDE.md` §0 uses about the export map. Recorded so a clean run is not
+read as evidence they work.
+
+The narrower thing that was already enforced is unchanged: the registry sheet
+is excluded (`tests/test_export_map_is_exercised.py`), and pass 0's export path
+is exercised against a fake service so that `CLAUDE.md` §0's "the export map
+has never fired" stops being a claim nothing would notice becoming false.

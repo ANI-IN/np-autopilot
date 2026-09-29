@@ -116,9 +116,16 @@ def test_write_log_survives_an_unwritable_path(fetch_mod, tmp_path, monkeypatch,
 
 
 def test_a_real_failing_invocation_leaves_a_record(tmp_path, isolate_build_log):
-    """End to end: run the script with a key path that does not exist."""
+    """End to end: run the script with a key path that does not exist.
+
+    Against a SYNTHETIC config: config/drive.yaml is gitignored, so on a clean
+    clone (CI) the script aborted one step earlier, on the missing config, and
+    the key path this test exists for was never reached."""
     log = tmp_path / "BUILD_LOG.md"
+    config = tmp_path / "drive.yaml"
+    config.write_text("folder_id: SYNTHETIC-FOLDER-ID\n", encoding="utf-8")
     env = {**os.environ, "NP_BUILD_LOG": str(log),
+           "NP_DRIVE_CONFIG": str(config),
            "NP_DRIVE_SA_KEY": str(tmp_path / "absent-key.json")}
     r = subprocess.run([sys.executable, "pipeline/00_fetch_drive.py", "--dry-run"],
                        cwd=REPO, capture_output=True, text=True, env=env)

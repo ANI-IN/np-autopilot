@@ -1,0 +1,171 @@
+# instructor-identity.yaml — curated instructor identities.
+#
+# WHY THIS IS NOT `people.yaml`. That file is the New Programs roster: 20
+# entries, authoritative and CLOSED at 15 by its own declaration. Instructors
+# are a different and open population — 1,915 label-keyed nodes in the main
+# graph, 38 mastersheet-keyed in the content graph — so putting them in a file
+# that declares itself closed would make one of the two statements false.
+#
+# PROVENANCE, same rule as people.yaml and taxonomy.yaml -> common_properties:
+#   origin: hand   names out-of-corpus evidence and emits NO sourced_from edge.
+#                  `evidence` is required. It must never be presented as though
+#                  a scan produced it (CLAUDE.md, "Other traps").
+#
+# NOTHING HERE REWRITES A SOURCE. CLAUDE.md §1: a filename or a cell typo is
+# the citation key back to the corpus. `label_raw` and every provenance record
+# keep the original spelling; this file only says which spellings are the same
+# person.
+#
+# A `status: unconfirmed` entry is NOT a failure and must not be resolved by
+# picking. lib/resolve.py returns Ambiguous by default, and an unconfirmed
+# identity is rendered as unconfirmed rather than silently merged or dropped.
+
+version: 1
+
+decided_by: Animesh Kumar
+decided_at: 2026-09-29
+
+identities:
+
+  # ---- INS-05 / INS-06 -------------------------------------------------
+  # Two spellings one letter apart, BOTH present in the main graph. The
+  # content crawl exposed this; it is a main-graph defect, not a cross-graph
+  # join. Velaga holds the row-B module and teaches 0; Velega teaches 4 and
+  # holds none. Merged, they are one instructor with both.
+  - slug: balaram-velaga
+    canonical: Balaram Velaga
+    aliases: [Balaram Velega]
+    status: confirmed
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-29 (Animesh Kumar), answering REVIEW-QUEUE
+      INS-05/INS-06. The mastersheet spells it `Balaram Velaga`, and that is
+      the canonical form. `Balaram Velega` is the same person. Both spellings
+      stay in label_raw and in provenance; neither source is edited.
+    resolves: [INS-05, INS-06]
+
+  # ---- INS-08 / INS-30 -------------------------------------------------
+  # `Bill` is a conventional short form of `William`, so these MAY be one
+  # person. Exact matching never pairs them; a nickname table pairs them along
+  # with false positives. The owner does not know, and a guess here would be
+  # exactly the picking-with-no-signal failure lib/resolve.py refuses.
+  - slug: bill-ogden
+    canonical: Bill Ogden
+    status: unconfirmed
+    possibly_same_as: william-david-ogden
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-29 (Animesh Kumar), answering INS-08/INS-30:
+      unsure. Left UNRESOLVED deliberately. Both nodes remain separate and are
+      rendered "unconfirmed" in the who-teaches-what matrix.
+    resolves: [INS-08]
+
+  - slug: william-david-ogden
+    canonical: William David Ogden
+    status: unconfirmed
+    possibly_same_as: bill-ogden
+    origin: hand
+    evidence: >-
+      See bill-ogden. Unresolved by owner decision, not by absence of review.
+    resolves: [INS-30]
+
+  # ---- INS-31 / INS-32 -------------------------------------------------
+  # First-name-only forms that carry the row-B module rows, while the
+  # full-name nodes `Konstantinos Pappas` and `Shelby Cohen` carry none. The
+  # full names are UNKNOWN to the owner, so the first-name node stays the one
+  # the modules hang off — moving them to a full name nobody has confirmed
+  # would attach real modules to a guess.
+  - slug: konstantinos-first-name-only
+    canonical: Konstantinos
+    status: unconfirmed
+    possibly_same_as: konstantinos-pappas
+    keeps_module_attachments: true
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-29 (Animesh Kumar), answering INS-31 and PPL-06:
+      full name unknown. The first-name form remains an open review item and
+      keeps its module rows, marked unconfirmed.
+    resolves: [INS-31, PPL-06]
+
+  - slug: shelby-first-name-only
+    canonical: Shelby
+    status: unconfirmed
+    possibly_same_as: shelby-cohen
+    keeps_module_attachments: true
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-29 (Animesh Kumar), answering INS-32 and PPL-01:
+      full name unknown. The first-name form remains an open review item and
+      keeps its module rows, marked unconfirmed.
+    resolves: [INS-32, PPL-01]
+
+  # ---- PPL-11 ----------------------------------------------------------
+  # A first-name-only cell in Test Engineering, confirmed by the owner. Unlike
+  # INS-31/32 (`Konstantinos`, `Shelby`) the full name here IS known, so this
+  # one merges and those two do not — the difference is a confirmation, not a
+  # rule about first names.
+  - slug: bharath-anand
+    canonical: Bharath Anand
+    aliases: [Bharath]
+    status: confirmed
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-29 (Animesh Kumar), answering REVIEW-QUEUE PPL-11:
+      `Bharath` in the Test Engineering tab, on Automation Testing, is Bharath
+      Anand. `Bharath` stays in label_raw and in provenance — CLAUDE.md §1, the
+      cell is the citation key and is never rewritten.
+    resolves: [PPL-11]
+
+# ---------------------------------------------------------------------------
+# INS BULK — the 26 exact full-name matches, confirmed 2026-09-29.
+#
+# SAFEGUARD, run before every merge and re-run on every build. A pair is
+# EXCLUDED if `lib/resolve.py` calls the name Ambiguous, or if the two nodes'
+# DOMAIN REACH is wholly disjoint. Exclusions are reported, never silent.
+#
+# THE FIRST VERSION OF THIS CHECK ASKED WHETHER THE TWO NODES SHARE A MODULE.
+# They almost never can: only modules with an answered MOD row are one node,
+# so for any instructor not teaching one of those, "no shared module" is
+# guaranteed by construction. It flagged 14 of 26 pairs and not one was a real
+# conflict — a cutoff excluding correct answers, CLAUDE.md §4. Domain reach
+# survives, because a module reaches its domain whether or not it was merged.
+#
+# ABSENCE OF EVIDENCE IS NOT A CONFLICT. Where either side reaches no domain
+# at all the pair is merged, because "I cannot tell" and "they differ" are
+# different answers and only the second justifies exclusion.
+#
+# Measured at the time of confirmation: 0 exclusions. 17 pairs had domain
+# evidence on both sides and every one shared a family; 9 had evidence on only
+# one side.
+bulk_confirmed:
+  rule: exact full-name match across the two graphs
+  decided_by: Animesh Kumar
+  decided_at: 2026-09-29
+  excludes: [INS-05, INS-06, INS-08, INS-30, INS-31, INS-32]
+  pairs:
+    - {id: INS-01, canonical: 'Adam Toth'}
+    - {id: INS-02, canonical: 'Ashish Kaila'}
+    - {id: INS-03, canonical: 'Azeem Ghumman'}
+    - {id: INS-04, canonical: 'Balaji Santhanam'}
+    - {id: INS-07, canonical: 'Bharath Anand'}
+    - {id: INS-09, canonical: 'Cathy Ma'}
+    - {id: INS-10, canonical: 'Daniel Grundel'}
+    - {id: INS-11, canonical: 'David Prorok'}
+    - {id: INS-12, canonical: 'Dominique Canlas'}
+    - {id: INS-13, canonical: 'Evgeny Vinnik'}
+    - {id: INS-14, canonical: 'Faraaz Sareshwala'}
+    - {id: INS-15, canonical: 'Hetal Modi'}
+    - {id: INS-16, canonical: 'Jeff Wisman'}
+    - {id: INS-17, canonical: 'Konstantinos Pappas'}
+    - {id: INS-18, canonical: 'Nikhil Kolekar'}
+    - {id: INS-19, canonical: 'Nisarg Tanna'}
+    - {id: INS-20, canonical: 'Reginald Johnson'}
+    - {id: INS-21, canonical: 'Robert Kreznarich'}
+    - {id: INS-22, canonical: 'Rodrigo Salazar'}
+    - {id: INS-23, canonical: 'Rushi Vyas'}
+    - {id: INS-24, canonical: 'Sanjay Dhar'}
+    - {id: INS-25, canonical: 'Sergey Togulev'}
+    - {id: INS-26, canonical: 'Shelby Cohen'}
+    - {id: INS-27, canonical: 'Sindhu Singh Dua'}
+    - {id: INS-28, canonical: 'Thong Tran'}
+    - {id: INS-29, canonical: 'Tilo Dickopp'}

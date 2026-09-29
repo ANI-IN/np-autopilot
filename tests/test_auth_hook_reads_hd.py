@@ -95,6 +95,10 @@ REFUSE_SHAPES = {
     "wrong hd, nested": {"claims": {"custom_claims": {"hd": "evil.com"},
                                     "email": "a@evil.com"}},
     "hd ok but email disagrees": {"claims": {"custom_claims": {"hd": IK},
+                                             # contact-ok: synthetic. A consumer-provider domain is the POINT —
+                                             # migration 0007's rule is that a Workspace `hd` claim cannot be
+                                             # trusted when the address is outside that domain, and the
+                                             # assertion is that this shape is REFUSED.
                                              "email": "a@gmail.com"}},
     "empty payload": {},
 }
@@ -173,3 +177,85 @@ def test_the_hook_is_callable_by_the_role_gotrue_uses():
     assert can_pick, "supabase_auth_admin cannot execute the claim reader"
     assert can_insert, "supabase_auth_admin cannot write the diagnostic row"
     assert not anon_exec, "anon can execute the hook — it should not"
+
+
+# ---------------------------------------------------------------------------
+# 0020 — run it as GoTrue does, and as nobody else can
+# ---------------------------------------------------------------------------
+#
+# Everything above calls the hook as the table owner, and the privilege test
+# only ASKS whether supabase_auth_admin may execute it. With RLS now on the
+# refusals table, the question that matters is whether a sign-in still works
+# end to end as the role GoTrue actually connects with. The local Supabase
+# stack lets that role log in (its fixed local password); production's is not
+# known here, so these run against the local stack only.
+
+GOTRUE_LOCAL = "postgresql://supabase_auth_admin:postgres@127.0.0.1:54322/postgres"
+_ON_LOCAL_STACK = db.available() and db.params(db.SESSION)["port"] == 54322
+needs_local_stack = pytest.mark.skipif(
+    not _ON_LOCAL_STACK,
+    reason="needs the local Supabase stack's supabase_auth_admin login")
+
+
+def _as_gotrue(event: dict):
+    import psycopg
+    with psycopg.connect(GOTRUE_LOCAL, connect_timeout=10) as conn, \
+            conn.cursor() as cur:
+        cur.execute("select current_user")
+        assert cur.fetchone()[0] == "supabase_auth_admin"
+        # Schema-qualified, as GoTrue calls it (pg-functions://postgres/public/
+        # auth_before_user_created): this role's search_path is `auth`.
+        cur.execute("select public.auth_before_user_created(%s::jsonb)",
+                    (json.dumps(event),))
+        out = cur.fetchone()[0]
+        conn.commit()
+    return (out or {}).get("error")
+
+
+@needs_local_stack
+def test_gotrue_allows_a_workspace_identity_under_rls():
+    assert _as_gotrue(ALLOW_SHAPES["claims.custom_claims.hd"]) is None
+
+
+@needs_local_stack
+def test_gotrue_refuses_and_the_refusal_is_recorded_under_rls():
+    """The diagnostic insert is the part RLS could have broken silently: the
+    hook would still refuse, and nobody would learn why."""
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        cur.execute("delete from auth_hook_refusals")
+        conn.commit()
+    err = _as_gotrue(REFUSE_SHAPES["no hd anywhere"])
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        cur.execute("select count(*) from auth_hook_refusals")
+        recorded = cur.fetchone()[0]
+        cur.execute("delete from auth_hook_refusals")
+        conn.commit()
+    assert err is not None and err.get("http_code") == 403
+    assert recorded == 1, "the refusal was not recorded when GoTrue ran the hook"
+
+
+@pytest.mark.parametrize("role", ["anon", "authenticated", "service_role"])
+def test_no_other_role_can_run_the_hook(role):
+    """0007 revoked anon and authenticated and forgot PUBLIC. Asserted by
+    CALLING it, not only by reading the ACL."""
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        cur.execute(f"set local role {role}")
+        with pytest.raises(Exception, match="permission denied for function"):
+            cur.execute("select auth_before_user_created('{}'::jsonb)")
+        conn.rollback()
+
+
+@pytest.mark.parametrize("role", ["anon", "authenticated"])
+def test_the_refusals_table_is_invisible_to_client_roles(role):
+    """RLS plus no grant: a row that exists cannot be read by a client role."""
+    with db.connect(db.SESSION) as conn, conn.cursor() as cur:
+        cur.execute("insert into auth_hook_refusals (reason) values ('rls probe')")
+        cur.execute(f"set local role {role}")
+        try:
+            cur.execute("select count(*) from auth_hook_refusals")
+            seen = cur.fetchone()[0]
+        except Exception as exc:
+            assert "permission denied" in str(exc)
+            seen = 0
+        conn.rollback()
+    assert seen == 0, f"{role} can read auth_hook_refusals"

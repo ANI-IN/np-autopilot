@@ -363,7 +363,7 @@ id is immutable and GitHub never reuses one:
 | `id` | **1363038448** | **1374030791** |
 | `node_id` | `R_kgDOUT5Q8A` | `R_kgDOUeYLxw` |
 | `created_at` | 2026-09-09T17:54:03Z | 2026-09-17T06:27:47Z |
-| `private` | **false** | **true** |
+| `private` | **false** | ~~**true**~~ **false — it was created public. See R21** |
 
 Different id, different node_id, created seven hours after the deletion. The
 exposed repository was not made private and was not rewritten in place — it was
@@ -425,6 +425,256 @@ repo as wrongly public while never checking our own. Full detail in
 
 ---
 
+## R20 — A full working copy of the repository was uploaded INTO the corpus folder
+
+**Likelihood: n/a, it happened · Impact: high · STATUS: artefacts REMOVED
+from the corpus folder (verified 2026-09-30); the database password was NOT
+rotated, by owner choice — the exposed credential is still live**
+
+> **Reconciled 2026-09-30 (owner decision, Animesh Kumar, origin: hand).** The
+> uploaded copies were moved out of the corpus folder, and the password was
+> not rotated. Verified the way this section asks: pass 0's read-only
+> `list_folder()` at 2026-09-30 00:10 IST lists only `00-master` … `06-analysis`
+> and `links` — neither `NP-Autopilot-Corpus/` nor `np-autopilot-main.zip`.
+> Whether they have also left the owner's **Trash** is not visible to a reader.
+> The sections below are the record as of 2026-09-29 and are left as written.
+
+> **Numbering note — resolved 2026-09-29.** This was first written as R19,
+> which `docs/CACHE-EXPOSURE.md` §0a had already reserved for the "was the
+> Drive folder ever domain-wide" branch. By owner decision this incident is
+> **R20** and §0a keeps R19. Any older reference to "R19 — the upload" means
+> this section.
+
+Reported by the corpus owner 2026-09-28: a complete working copy of this
+repository was uploaded into the pass-0 corpus folder (`config/drive.yaml ->
+folder_id`), both as an archive and as an unpacked tree.
+
+### The removal has NOT taken effect — verified 2026-09-29
+
+The owner's account was *"I have now moved it out of that folder."* Listed with
+pass 0's own read-only `list_folder()` — no download, no recursion into the
+corpus, scope `drive.readonly` — the corpus folder's top level is:
+
+```
+dir   00-master … 06-analysis      the 7 corpus folders
+dir   NP-Autopilot-Corpus          modified 2026-09-28T18:51:34Z   <-- the unpacked tree
+file  links                        modified 2026-09-28T18:22:06Z   the registry (excluded)
+file  np-autopilot-main.zip        modified 2026-09-28T18:35:24Z   1,867,536 B   <-- the archive
+```
+
+**Both artefacts are still there.** That is the R18 shape a second time, and it
+is worth naming: *a remediation believed to have happened, never checked against
+the system that would show it.* R18 was an assumption about `private: true`
+written down five times and verified zero. This is an assumption about a move,
+held one day, and it was wrong. The finding exists only because the listing was
+run instead of the sentence being believed.
+
+### What the upload put in the folder that was not already in it
+
+The distinction collapses most of the volume. `.drive-cache/` and
+`05-operations/` **are the corpus** — re-uploading them exposes nothing to a
+viewer of that folder who could not already see it. What is new:
+
+| | |
+|---|---|
+| `.vercel/.env.production.local` | `SUPABASE_DB_URL_TRANSACTION` — **the database password**. Also `SUPABASE_ANON_KEY`, `SUPABASE_URL`, `GOOGLE_OAUTH_CLIENT_ID`, `NP_ALLOWED_HD`, `NP_SHARED_ACCOUNTS`, `VERCEL_OIDC_TOKEN`, and the `VERCEL_GIT_*` set naming the private repo and its id |
+| `.env.local` | `VERCEL_OIDC_TOKEN` |
+| `knowledge/graph-sensitive.json` | **1,902 instructor nodes withheld from the repository on purpose — 277 named hiring rejections and 1,625 in-pipeline candidates** (§F.2). The same subject matter as R18 |
+| `knowledge/candidates.json` (14.0 MB), `resolved.json` (7.0 MB), `rejections.json` | pre-resolution extraction output, including the rejection entries that name a withheld person against a tracker sheet and row number |
+| `.git/` | the full history of the current repository object |
+| `config/drive.yaml` | the corpus `folder_id`, and the **path** to the service-account key |
+| every analysis document | including doc 01 §Tier 0, which describes the payroll file's columns and the 8,001-email finding, and this file |
+
+**What was NOT in the upload** — checked, not assumed:
+
+- **The service-account key itself.** It lives outside the repo under
+  `~/.config/np-autopilot/`, and `key_path()` refuses to read a key from inside
+  the repository at all. No key-shaped filename appears anywhere in the
+  uploaded tree.
+- **`SUPABASE_DB_URL_SESSION`.** It is deliberately never set in Vercel, so it
+  was absent from `.vercel/.env.production.local`. **This is not the relief it
+  looks like:** both URLs carry the *same* project password — verified by
+  comparing truncated SHA-256 fingerprints, never by reading the values — so
+  exposing the transaction URL exposed the credential the session pooler uses
+  to connect as the owner.
+- **The excluded payroll file.** `US Instructor Cost Analysis.xlsx` is excluded
+  at fetch time (R17), so it is not in `.drive-cache/` and was not carried by
+  the upload.
+
+### Who could see it — UNRESOLVED, and not resolvable from here
+
+The same wall as `CACHE-EXPOSURE.md` §0a. The service account holds
+`drive.readonly`. `files.get(fields="permissions")` returns `shared: true` for
+the corpus folder and for both artefacts, with an **empty non-user permission
+list and zero user permissions** — which is a reader's incomplete view of the
+ACL, not a finding that nobody else has access. *A reader can read the files and
+cannot read who else can.*
+
+**Treat `shared: true` with nothing visible as a floor, never as "only me".**
+
+### The window
+
+| | |
+|---|---|
+| **Start** | `________` — Drive reports `modifiedTime` 2026-09-28T18:35:24Z (archive) and 18:51:34Z (tree). Only the owner knows whether those are the upload times or later touches |
+| **End** | **Out of the folder by 2026-09-30 00:10 IST** (listed; still present 2026-09-29). Trash not visible to a reader — the end is when both leave Trash too |
+| **Is the length knowable?** | **Yes — and unusually so.** Unlike R18 and §0a, both ends of this window are knowable. Do not let it inherit their "start unknown, so it cannot be called short" framing |
+
+### Facts only the owner can supply
+
+- [ ] **The folder's General access on 2026-09-28** — Restricted, or domain-wide? §0a's open question, now load-bearing for a second incident.
+- [ ] **Who the folder is shared with, and how many people.**
+- [ ] **Drive activity log for both artefacts** — views and downloads between upload and removal. Owner-only; the service account cannot read it.
+- [ ] **How the upload happened, and with which tool**, so the Phase 4 guard is aimed at the real path rather than an imagined one.
+- [x] **Database password rotation: NOT done, by owner choice** (recorded 2026-09-30). The earlier line here read "stated as done 2026-09-28"; that was wrong. **The transaction-pooler password that was in the upload is still the live credential** — which is also the session pooler's, so an owner-level connection.
+- [ ] **Was `SUPABASE_ANON_KEY` rotated?** It is publishable by design and is served to every browser by `/api/config`, so rotation is probably a no-op — record the decision rather than leaving it assumed.
+- [ ] **Was `VERCEL_OIDC_TOKEN` treated as burned?** It is short-lived and the local copies are dated 2026-09-18, so it was very likely expired before the upload. Confirm rather than assume.
+- [ ] **Disclosure.** The subjects of `graph-sensitive.json` are named external people and the data is hiring outcomes. R18 §"What this changes" put that question to legal; it returns here unchanged, and it is not the pipeline's to answer.
+
+### What this changes
+
+1. **The pipeline is one `refresh.py` away from ingesting its own repository.**
+   Pass 0's `walk()` recurses every folder in scope and has no name-based
+   refusal; pass 1 treats an **added** file as reportable-and-ingestible by
+   design. Nothing in either pass would refuse `NP-Autopilot-Corpus/`. A guard
+   is proposed in `docs/` — **and a proposal is not a control until it is
+   code** (`docs/A7B.md`, question 2).
+2. **`.drive-cache/` must be checked against the upload window** before the next
+   build is trusted, and the manifest is what makes that checkable.
+3. **A remediation reported by a person is not a remediation observed by the
+   system.** The cheap habit this argues for: after any Drive-side cleanup, run
+   the read-only listing and paste the output, rather than reporting the intent.
+
+---
+
+## R21 — The REPLACEMENT repository was public from creation, for 13 days
+
+**Likelihood: n/a, it happened · Impact: high · STATUS: CLOSED 2026-09-29
+19:06:50Z — private, verified anonymously and authenticated; the disclosure
+question stays open**
+
+Found 2026-09-29 by querying the GitHub API immediately before a planned
+`git push` of the row-B branch, rather than by reading our own documentation —
+the same way, and for the same reason, R18 was found.
+
+```
+gh api repos/ANI-IN/np-autopilot  ->  "id": 1374030791, "private": false, "visibility": "public"
+curl https://api.github.com/repos/ANI-IN/np-autopilot   (no credentials)  ->  HTTP 200
+events: 2026-09-17T06:27:47Z PublicEvent ANI-IN   (the same second as created_at)
+forks 0 · stars 0 · watchers 0
+```
+
+**This is R18's remediation.** The exposed repository `1363038448` was deleted
+and `1374030791` created in its place — and the replacement was **created
+public**. R18's own table above recorded it as `private: true`; STATE.md said
+"private, repo id `1374030791`". **Nothing checked.** The push that would have
+published the whole row-B branch was stopped by the check, not by the record.
+
+### The window
+
+| | |
+|---|---|
+| **Start** | **2026-09-17T06:27:47Z** — `PublicEvent`, the second of creation. Known exactly |
+| **End** | **Between 2026-09-29T18:58:55Z and 19:06:50Z** (00:28–00:36 IST on 2026-09-30). Last observed public at 18:58:55Z (anonymous API 200, and at 18:39:02Z and 18:45:07Z before it — the owner's first attempt had not taken). First observed private at **19:06:50Z**: anonymous API **404**, web page **404**, git endpoint **401**, authenticated `private: true`, `pipeline/check_repo_private.py` passing both ways. Made private by the owner with `gh repo edit --visibility private`. No `PrivateEvent` had appeared in the events feed at that time |
+| **Length** | ≈ 13 days, **and it cannot be called short** — R18's window was 8 |
+
+### What was exposed
+
+`main` as pushed, last on 2026-09-20T22:24Z: **107 commits**, every analysis
+and design document (`07-risks.md` itself, R17, R18, R20's description of the
+upload, `docs/CACHE-EXPOSURE.md`, `docs/STATE.md` with the Supabase project ref,
+Vercel project id and account topology), and **`knowledge/graph.json` — the
+public half: 1,915 instructor names, 43 internal staff with titles**, 922
+modules, 92 workflows.
+
+**NOT exposed — never committed to this repository, checked across all 107
+commits:** `knowledge/graph-sensitive.json` (the 277 hiring rejections and
+1,625 candidates of R18), `candidates.json`, `rejections.json`,
+`resolved.json`, any `.env` or `.vercel/` file (only `.env.example`, whose
+values are empty), and the corpus — checked by listing every tree in `main`'s
+history. **Never pushed
+at all:** the `content-crawl-rowB` branch — `content_graph.json`,
+`merged_graph.json` and everything since 2026-09-21.
+
+### Traffic — and it does NOT all match CI
+
+GitHub's traffic API, 14-day window, read 2026-09-29: **141 clones, 47 unique;
+1 view; 0 referrers.** CI checks the repository out once per job, four jobs per
+run, so each CI run is ~4 clones. Compared day by day:
+
+| day | clones | unique | CI runs | CI checkouts |
+|---|---:|---:|---:|---:|
+| 09-17 | 8 | 3 | 2 | 8 |
+| 09-18 | 35 | 15 | 3 | 12 |
+| 09-19 | 3 | 3 | 0 | 0 |
+| 09-20 | 86 | 21 | 10 | 40 |
+| 09-21 | 7 | 6 | 0 | 0 |
+| 09-22 | 1 | 1 | 0 | 0 |
+| 09-23 | 1 | 1 | 0 | 0 |
+| **total** | **141** | | **15** | **60** |
+
+**81 clones are not CI checkouts**, including 12 on four days with no CI run at
+all. Some may be this project's own `git fetch`/clone activity from the owner's
+machine; the traffic API does not say who, and **it cannot be established from
+here that any of them was someone else — or that none was.** As R18 put it:
+zero forks and zero stars is not evidence of zero copies, and here the counter
+is not even zero.
+
+### Cause
+
+Created public during R18's remediation, while every document recorded it as
+private. The same shape as R18 exactly — *an assumption about visibility,
+written down and never verified against the system that decides it* — one
+remediation later.
+
+### What now prevents it
+
+`pipeline/check_repo_private.py` passes only on positive evidence of privacy
+(authenticated `private: true`, or an anonymous request refused), and fails on
+anything else, including when it cannot reach the API. It runs as the **first
+step of CI's `secrets` job** and as a versioned **pre-push hook**
+(`.githooks/pre-push`; `git config core.hooksPath .githooks` once per clone).
+It refused the row-B push on 2026-09-29. `tests/test_repo_visibility_check.py`,
+mutation-verified.
+
+### Facts only the owner can supply
+
+- [x] **When it became private** — bounded by observation to 18:58:55Z–19:06:50Z
+  on 2026-09-29; confirmed by the anonymous check, not by the settings page.
+- [x] **Whether the 81 non-CI clones include the owner's own fetches — NO.**
+  Owner answer, 2026-09-30 (Animesh Kumar, origin: hand): no one on our side
+  cloned or pulled the repository. **So the 81 non-CI clones — 12 of them on
+  days with no CI run — are unexplained and external.** R21 is therefore not
+  "exposed, not demonstrably accessed": the repository was **cloned by parties
+  outside the project**, at least 81 times, and those copies are outside
+  anyone's control. How many distinct parties cannot be derived: GitHub's 47
+  "unique cloners" does not separate CI runners from anyone else.
+- [ ] **Disclosure — ESCALATED 2026-09-30, and now sits alongside R18's.**
+  1,915 named external instructors and 43 named staff were publicly readable
+  for 13 days, a second time — and unlike R18, whose traffic counters read
+  zero, **here there is positive evidence of external copies.** R18 put the
+  question to legal; R21 goes to the same place with a stronger fact pattern,
+  and it is not the pipeline's to answer.
+
+### Public archives — checked read-only 2026-09-30, nothing submitted
+
+| archive | result |
+|---|---|
+| **Software Heritage** | **No copy.** `origin/https://github.com/ANI-IN/np-autopilot/get/` → 404 "not found"; origin search for `np-autopilot` → empty |
+| **Internet Archive (Wayback)** | **No copy.** Availability API: no snapshots; CDX index for every URL under the repository: empty |
+| **GH Archive** (public event log) | **Not found** in any of the 9 hour files covering the repository's public events (by name and by repo id). GH Archive samples GitHub's public event feed and is known to miss events, so this is a floor, not proof. Its records are metadata (event, actor, commit messages), not the code |
+| **Sourcegraph** | 0 matches — **inconclusive**: it may drop a repository once it turns private |
+| **grep.app** | **Not checkable** — requests are stopped at a bot checkpoint |
+
+**Removal routes, should a copy surface:** Software Heritage — its takedown
+process under its content policy; Internet Archive — a removal request to
+`info@archive.org` naming the URLs; GH Archive — an issue on
+`igrigorik/gharchive.org`. **None was needed, and none was submitted.** None
+of this reaches the 81 external clones, which is why the disclosure question
+is the live one.
+
+---
+
 ## Summary
 
 | # | Risk | Likelihood | Impact |
@@ -448,3 +698,5 @@ repo as wrongly public while never checking our own. Full detail in
 | R16 | Reference impl is public | certain | your call |
 | R17 | Excluded payroll file reachable by the cloud identity — **fixed at fetch time 2026-09-17**; the account can still read it on demand | certain | high |
 | R18 | **The repository was PUBLIC for 8 days** — 277 named hiring rejections and 1,625 candidates readable by anyone. Set private on discovery | happened | high |
+| R20 | **A working copy of the repo was uploaded into the corpus folder** — DB password, `graph-sensitive.json`, `.git/`. **Removed from the folder 2026-09-30; password NOT rotated (owner choice)** | happened | high |
+| R21 | **The replacement repository was public from creation for 13 days** — 107 commits, 1,915 instructor names, 43 staff; **81 external clones**. Private, verified 2026-09-29 19:06:50Z. Disclosure escalated with R18 | happened | high |

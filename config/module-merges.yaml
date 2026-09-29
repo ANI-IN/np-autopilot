@@ -1,0 +1,123 @@
+# module-merges.yaml — the answers to REVIEW-QUEUE MOD-01..16.
+#
+# origin: hand. Animesh Kumar, 2026-09-29. These emit no `sourced_from` edge
+# and must never be presented as though a scan produced them.
+#
+# WHAT A MERGE DOES, AND WHAT IT MUST NOT DO
+#
+#   keeps  every label_raw, every provenance record, every edge. The legacy
+#          node is absorbed, not deleted: its label_raw moves to
+#          `merged_label_raw`, its sources are unioned, its edges are
+#          retargeted and each one records the id it came from.
+#   never  merges EVIDENCE TIERS. A legacy `teaches` edge and a mastersheet
+#          `taught_by` edge are two different claims about staffing and are
+#          kept apart, tagged `tier`. Collapsing them would invent agreement
+#          between two sources that have not been reconciled — and staffing
+#          is the question CLAUDE.md §4 records a filter already hiding once.
+#   always records its MOD id on every node and edge it touches, so any single
+#          merge can be reversed without unpicking the others.
+#
+# NO SOURCE FILE IS EDITED. The corpus is read-only (§1) and the two graph
+# JSONs are build outputs; this file is the only place the decision lives.
+
+version: 1
+decided_by: Animesh Kumar
+decided_at: 2026-09-29
+
+merges:
+
+  # ---- bulk: shared instructor AND same programme family ---------------
+  - {id: MOD-02, into: {domain: full-stack, sequence: 2}, legacy: [mod_634b876cf02fa5b1]}
+  - {id: MOD-03, into: {domain: full-stack, sequence: 5}, legacy: [mod_f22ff2920b64b2e2]}
+  - {id: MOD-05, into: {domain: frontend,   sequence: 3}, legacy: [mod_d6fd916a4165de90]}
+  - {id: MOD-06, into: {domain: frontend,   sequence: 4}, legacy: [mod_b8ddd79028eb4371]}
+  - {id: MOD-07, into: {domain: backend,    sequence: 1}, legacy: [mod_4626b0a141705837]}
+  - {id: MOD-08, into: {domain: backend,    sequence: 2}, legacy: [mod_92a2658d64f95888]}
+  - {id: MOD-09, into: {domain: backend,    sequence: 3}, legacy: [mod_720627d346304074]}
+  - {id: MOD-10, into: {domain: backend,    sequence: 4}, legacy: [mod_9126f0641fdf336a]}
+  - {id: MOD-11, into: {domain: backend,    sequence: 5}, legacy: [mod_e70fca39091d2c9a]}
+  - {id: MOD-13, into: {domain: testing,    sequence: 3}, legacy: [mod_35b3d005d7cf83cb]}
+  - {id: MOD-16, into: {domain: testing,    sequence: 6}, legacy: [mod_83f6f7e2dec851c0]}
+
+  # ---- individually answered -------------------------------------------
+
+  # The mastersheet cell is BLANK, so there is no shared instructor to find —
+  # absence of the join evidence, not absence of the module. The legacy
+  # instructors stay legacy-tier and are never shown as mastersheet roles;
+  # the mastersheet answer for this module remains "blank in source".
+  - id: MOD-01
+    into: {domain: full-stack, sequence: 1}
+    legacy: [mod_508b16ecef815eec]
+    note: >-
+      Legacy instructors remain a separate evidence tier. The mastersheet
+      primary stays "blank in source" — see eval negative control N1.
+
+  # A distinctive label with nothing contradicting it. The one shared
+  # instructor is Bill Ogden, whose identity is itself INS-08 and
+  # unconfirmed; the merge does not depend on resolving that.
+  - id: MOD-12
+    into: {domain: testing, sequence: 1}
+    legacy: [mod_e751e5c1931a40aa]
+    note: >-
+      Legacy node is under no programme. Shared instructor `Bill Ogden` is
+      unconfirmed (INS-08) and is not what the merge rests on.
+
+  # MUST NOT be joined with SD4/5 `Test Automation`. Two different modules
+  # whose labels are anagram-adjacent; tests/test_module_merges.py asserts
+  # they stay distinct.
+  - id: MOD-14
+    into: {domain: testing, sequence: 4}
+    legacy: [mod_336de92bd7833acc]
+    never_join: {domain: testing, sequence: 5}
+    note: >-
+      `Automation Testing` (SD4/4) and `Test Automation` (SD4/5) are distinct
+      modules. Asserted by test, not by convention.
+
+  # Owner note: Full Stack may overlap Frontend in CONTENT, but each domain
+  # names its modules differently and `UI & DOM` is Frontend's. The legacy
+  # Full-Stack programme -> UI & DOM edges are KEPT with their provenance and
+  # marked unconfirmed — neither deleted nor asserted.
+  - id: MOD-04
+    into: {domain: frontend, sequence: 2}
+    legacy: [mod_09595755ccfd3591]
+    mark_unconfirmed: [contains]
+    note: >-
+      Legacy node sits under the Full-Stack programmes. Those edges survive,
+      flagged unconfirmed, because deleting them would destroy evidence and
+      asserting them would claim a domain move nobody decided.
+
+  # The legacy layer encodes SESSION TYPE IN THE MODULE LABEL. `Week 5 - Test
+  # Automation` is the module; the two `... Class` rows are its sessions. The
+  # mastersheet's Test Engineering tab corroborates both the module name and
+  # the session names.
+  - id: MOD-15
+    into: {domain: testing, sequence: 5}
+    legacy: [mod_1a312401f6cfe8ac]
+    sessions:
+      - {legacy: mod_e3dcb2d72d8960bb, session_kind: class}
+      - {legacy: mod_5d19862e4bb533a7, session_kind: review}
+    note: >-
+      Legacy instructors (Roland Kunkel, Ioan Moldovan) become legacy-tier
+      evidence on the SESSIONS, not on the module.
+
+# ---------------------------------------------------------------------------
+# Recorded, NOT acted on. Out of scope for this release.
+# ---------------------------------------------------------------------------
+findings:
+  - id: LEGACY-SESSION-ROWS
+    count: 100
+    of: 922
+    detail: >-
+      100 of the 922 legacy label-keyed `module` nodes are SESSION rows
+      wearing a module label: 62 end in `Class`, 37 in `Assignment Review
+      Class`, 1 in `Assignment`. The row-B remodel represents these as
+      class_session / assignment / assignment_review nodes hanging off a
+      module. MOD-15 is the first instance answered; the other ~97 are
+      deferred and no change is made to them in this release.
+  - id: LEGACY-NO-PROGRAMME
+    count: 724
+    of: 922
+    detail: >-
+      724 of 922 legacy modules have no `contains` edge from any programme.
+      The default view groups by domain where a domain edge exists and puts
+      the remainder in one faded cluster — docs/DEFAULT-VIEW.md D2.

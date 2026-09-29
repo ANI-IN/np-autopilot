@@ -246,9 +246,63 @@ align-items:flex-start;justify-content:center;overflow:auto}
 #fresh{margin-top:4px;padding-top:12px;border-top:1px solid #21262d;
   font-size:10.5px;color:#6e7681}
 #fresh b{color:#8b949e;font-weight:600}
+
+.item{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;padding:3px 0;
+      border-bottom:1px solid #161b22;font-size:11px}
+.ik{min-width:150px;color:#8b949e}
+.lnk{color:#58a6ff;text-decoration:none;border-bottom:1px solid #1f6feb55}
+.lnk:hover{border-bottom-color:#58a6ff}
+.nolnk{color:#6e7681;font-style:italic}
+.loc{color:#8b949e}
+.prow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:3px 0;
+      border-bottom:1px solid #161b22}
+.pname{font-size:12px;color:#e6edf3;min-width:150px}
+.ev{font-size:10px;border-radius:3px;padding:1px 6px;border:1px solid #30363d;color:#c9d1d9}
+.ev em{font-style:normal;color:#8b949e;margin-left:3px}
+.ev-mastersheet{border-color:#3fb950}
+.ev-legacy{border-color:#8957e5}
+/* ---- B2 views ---------------------------------------------------------- */
+.tier{margin:8px 0}
+.tier .tk{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8b949e;margin-bottom:4px}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:11px;background:#21262d;border:1px solid #30363d;border-radius:10px;
+     padding:2px 8px;color:#c9d1d9}
+.tag em{font-style:normal;color:#8b949e;font-size:10px}
+.tag.role-primary{border-color:#3fb950;color:#7ee787}
+.tag.role-backup_1,.tag.role-backup_2,.tag.role-backup_3{border-color:#484f58}
+.chain .k{color:#8b949e}
+#vbar{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;
+      display:flex;gap:4px;background:#0d1117cc;border:1px solid #30363d;
+      border-radius:6px;padding:3px}
+#vbar button{font-size:11px;background:none;border:0;color:#8b949e;padding:3px 10px;
+      border-radius:4px;cursor:pointer}
+#vbar button[aria-pressed="true"]{background:#21262d;color:#e6edf3}
+#sheet{position:absolute;inset:44px 12px 12px 312px;z-index:5;overflow:auto;
+       background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;display:none}
+#sheet h2{font-size:13px;margin:0 0 10px;color:#e6edf3}
+#sheet table{border-collapse:collapse;font-size:11px}
+#sheet th,#sheet td{border:1px solid #21262d;padding:3px 6px;text-align:left;
+       white-space:nowrap;color:#c9d1d9}
+#sheet th{position:sticky;top:0;background:#161b22;color:#8b949e;font-weight:400}
+#sheet td.on{background:#1f6feb33}
+#sheet td.load{color:#8b949e;white-space:nowrap}
+#sheet td.load.unconf{color:#f0883e}
+#sheet td.unconf{background:repeating-linear-gradient(45deg,#f0883e22,#f0883e22 3px,transparent 3px,transparent 6px)}
+#sheet .lane{display:flex;gap:2px;align-items:center;margin:3px 0}
+#sheet .cell{min-width:78px;font-size:10px;border:1px solid #21262d;border-radius:4px;
+       padding:3px 5px;color:#c9d1d9;background:#161b22}
+#sheet .cell.faded{opacity:.35}
+.badge{font-size:9px;text-transform:uppercase;letter-spacing:.04em;background:#21262d;
+       border-radius:3px;padding:1px 4px;margin-left:5px;color:#8b949e}
 </style></head><body>
 
 <canvas id="c"></canvas>
+<div id="vbar">
+  <button type="button" data-view="graph" aria-pressed="true">graph</button>
+  <button type="button" data-view="matrix" aria-pressed="false">who teaches what</button>
+  <button type="button" data-view="timeline" aria-pressed="false">programme timeline</button>
+</div>
+<div id="sheet"></div>
 <div id="tip"></div>
 <div id="diag"></div>
 
@@ -407,7 +461,12 @@ window.__NP = {
   // shape's safety would then rest on RLS being right for every row type,
   // forever -- and DECISIONS A.7b is a catalogue of guards that silently
   // stopped applying.
-  nodeBudget: 1200
+  // RAISED FROM 1,200 for the structure view. docs/DEFAULT-VIEW.md D1/D2
+  // replaces the 60-node overview with the whole structure layer: 3,308 nodes
+  // and 4,970 edges. The cap stays — a client that holds everything walks what
+  // it holds instead of asking SQL, which is the guarantee /api/structure is
+  // written to preserve — it is just now above the size of that one view.
+  nodeBudget: 4200
 };
 
 // ---- FIRST PAINT MUST REFLECT THE REAL STATE ----------------------------
@@ -510,7 +569,12 @@ function neighboursOf(index,id,cap,expanded){
 const EDGE_SEP=String.fromCharCode(1);
 function mergeGraph(D,incoming,budget){
   const have=new Set(D.nodes.map(n=>n.id));
-  const edgeKey=e=>e.s+EDGE_SEP+e.r+EDGE_SEP+e.t;
+  // AN EDGE'S IDENTITY IS ITS DATABASE ID. Keying on (source, rel, target)
+  // silently dropped 675 of the structure view's 4,970 edges: a module joins
+  // the same session once PER ATTACHED FILE, so 653 of 727 attached-file links
+  // never reached a panel, and 22 expert_in claims sharing endpoints collapsed.
+  // The triple is only the fallback for a shape that carries no id.
+  const edgeKey=e=>(e.id!==undefined&&e.id!==null)?'#'+e.id:e.s+EDGE_SEP+e.r+EDGE_SEP+e.t;
   const haveEdges=new Set(D.edges.map(edgeKey));
   let added=0, refused=0;
   for(const n of (incoming.nodes||[])){
@@ -551,13 +615,93 @@ function adaptNode(r){
   // request, so storing it on a merged node would mean whichever fetch happened
   // to arrive last decides how far away it is.
   const p=r.props||{};
+  // LEGACY = a label-keyed module with no mastersheet identity. 904 of the 924
+  // are in this state and they are FADED, not hidden: CLAUDE.md §4 applied to a
+  // renderer. A hidden-by-default legacy module is a filter on truth wearing a
+  // stylesheet, and the MOD/INS reviews that would clean them up are open.
+  const legacy = r.type==='module' && p.domain_slug===undefined;
   return {id:r.id, l:r.label, t:r.type, d:0, iso:false,
           st:p.status||'', th:(p.theme_id!==undefined?p.theme_id:null),
           wid:p.workflow_id||null, eff:p.effort||null, al:p.alerts||0,
-          raw:r.label_raw||null, sens:!!r.sensitive, p:p, loaded:false};
+          raw:r.label_raw||null, sens:!!r.sensitive, p:p, loaded:false,
+          legacy:legacy, dom:p.domain_slug||null,
+          merged:Array.isArray(p.merge_ids)?p.merge_ids:null};
 }
 function adaptEdge(r){
-  return {s:r.source_id, t:r.target_id, r:r.rel, p:r.props||{}};
+  return {id:(r.id===undefined?null:r.id), s:r.source_id, t:r.target_id,
+          r:r.rel, p:r.props||{}};
+}
+
+// ---- B3: THE COLUMNAR STRUCTURE PAYLOAD ----------------------------------
+// /api/structure ships columns (web/lib/data.py::pack_structure): ids, a type
+// table, labels, Float32 positions computed at projection time, Uint16
+// (source, target, rel) triples, Uint32 edge ids, and props WITHOUT the
+// panel-only keys — openNode() fetches those. Decoded here into exactly the
+// shapes adaptNode/adaptEdge produce, so nothing downstream changes. Typed
+// arrays read little-endian, which is what the server packs.
+function _b64bytes(s){
+  const bin=atob(s||''); const u=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+  return u;
+}
+function decodeStructure(o){
+  if(o.format!=='columnar-1')          // the pre-B3 shape still decodes
+    return {nodes:(o.nodes||[]).map(adaptNode),edges:(o.edges||[]).map(adaptEdge),
+            laidOut:false};
+  const xy=new Float32Array(_b64bytes(o.xy).buffer);
+  const ev=new Uint16Array(_b64bytes(o.e).buffer);
+  const eid=new Uint32Array(_b64bytes(o.eid).buffer);
+  // adapt-drop: partial — names the held-back keys for other API readers; this client marks every decoded node partial itself
+  // adapt-drop: deferred_types — the content toggle uses this page's own CONTENT_TYPES
+  const np=o.np||{}, ep=o.ep||{}, raw=o.raw||{};
+  const nodes=[], edges=[];
+  let laidOut=o.n>0;
+  for(let i=0;i<o.n;i++){
+    const a=adaptNode({id:o.ids[i], type:o.types[o.t[i]], label:o.labels[i],
+                       label_raw:(raw[i]!==undefined?raw[i]:null), props:np[i]||{}});
+    a.partial=true;                    // panel-only props arrive on open
+    const x=xy[2*i], y=xy[2*i+1];
+    if(Number.isFinite(x)&&Number.isFinite(y)){a.x=x;a.y=y;a.vx=0;a.vy=0}
+    else laidOut=false;
+    nodes.push(a);
+  }
+  for(let j=0;j<o.m;j++)
+    edges.push({id:eid[j], s:o.ids[ev[3*j]], t:o.ids[ev[3*j+1]],
+                r:o.rels[ev[3*j+2]], p:ep[j]||{}});
+  return {nodes,edges,laidOut};
+}
+
+// ---- B3: LAZY PANELS -----------------------------------------------------
+// The bulk payload leaves out what only a panel reads. Opening a node fetches
+// /api/node?detail=1 once: the node, its structure edges and its neighbours,
+// all with FULL props, which replace the partial ones in place. Positions,
+// degree and selection are untouched — this is data, not layout.
+// The PROMISE is cached, not the result: two opens of the same node in flight
+// (a click and the hash route it sets) share one request.
+const DETAIL=new Map();
+function ensureDetail(id){
+  if(!DETAIL.has(id))DETAIL.set(id,_fetchDetail(id));
+  return DETAIL.get(id);
+}
+async function _fetchDetail(id){
+  let out=null;
+  try{ out=await api('/node?id='+encodeURIComponent(id)+'&detail=1'); }
+  catch(e){ DETAIL.delete(id); return null; }  // a failure may be retried
+  if(!out||out.error)return out;
+  const whole=r=>{
+    const n=idx.byId.get(r.id); if(!n)return;
+    const a=adaptNode(r);
+    for(const k of ['p','st','th','wid','eff','al','raw','dom','merged','legacy'])n[k]=a[k];
+  };
+  if(out.node)whole(out.node);
+  for(const r of (out.neighbours||[]))whole(r);
+  const byId=new Map();
+  for(const e of D.edges)if(e.id!==null&&e.id!==undefined)byId.set(String(e.id),e);
+  for(const r of (out.edges||[])){
+    const e=byId.get(String(r.id)); if(e)e.p=r.props||{};
+  }
+  const n=idx.byId.get(id); if(n)n.partial=false;
+  return out;
 }
 
 // ---- RESTART DIAGNOSTIC (ported) ---------------------------------------
@@ -581,7 +725,18 @@ window.__NP_RECOMPUTES=0;
 const D=window.__NP.data, C=window.__NP.colors;
 const EXPERT=window.__NP.expert, LEFT=300, RIGHT=330, CAP=8;
 const API=window.__NP.api, BUDGET=window.__NP.nodeBudget;
-const TYPES=['domain','program','module','person','instructor','workflow','theme'];
+// STRUCTURE first, then the content layer. The list was seven types and the
+// content graph adds nine; a type absent from here has no filter chip, so it
+// is reachable only by search and looks like it was not projected.
+// `file` stays out on purpose: 1,443 of them are provenance-only and carry no
+// edge, which is why coverage's isolated CTE excludes them too.
+const TYPES=['domain','program','module','program_week','class_session',
+             'assignment','assignment_review','person','instructor',
+             'workflow','theme',
+             'slide_deck','content_topic','curriculum_doc','code_repo'];
+// Everything after `theme` is the content layer, hidden behind a toggle in the
+// default view (docs/DEFAULT-VIEW.md D1).
+const CONTENT_TYPES=['slide_deck','content_topic','curriculum_doc','code_repo'];
 let idx=buildIndex(D);
 
 // ---- ESCAPING. New in the port, and not cosmetic. ------------------------
@@ -647,7 +802,10 @@ function centreOn(n,k){
 // unowned three are reported by name instead; see data.overview), so this costs
 // nothing now and prevents a silent drop later.
 const state={types:new Set(TYPES),showIso:true,showDash:true,separate:false,
-  sel:null,expanded:new Set(),depth:1};
+  sel:null,expanded:new Set(),depth:1,
+  // B2 additions. `hideLegacy` is an opt-out, never a default.
+  hideLegacy:false,view:'graph',fDomain:null,fWeek:null,fRole:null,
+  showContent:false};
 let allDeg=new Map();
 let A=[],E=[],anchors=new Map();
 // Declared BEFORE recompute(), which assigns them. (Ported: declaring these
@@ -803,7 +961,12 @@ function draw(){
     if(sx<-20||sx>W+20||sy<-20||sy>H+20)continue;
     const r=(n.iso?2:Math.min(3+Math.sqrt(n.d)*1.1,11))*Math.max(.55,Math.min(cam.k,1.6));
     ctx.beginPath();ctx.arc(sx,sy,r,0,7);
-    ctx.fillStyle=C[n.t]||'#888';ctx.globalAlpha=n.iso?.4:1;ctx.fill();
+    ctx.fillStyle=C[n.t]||'#888';
+    // Faded, and still drawn, still clickable, still searchable.
+    // Default is FADED, not hidden. `hideLegacy` is an explicit opt-out; an
+    // undefined flag must not be the thing that hides 904 real modules.
+    ctx.globalAlpha=(n.legacy&&state.hideLegacy)?0:(n.legacy?.22:(n.iso?.4:1));
+    ctx.fill();
     if(state.sel===n.id){ctx.globalAlpha=1;ctx.lineWidth=2.5;ctx.strokeStyle='#fff';ctx.stroke()}
     // A node whose neighbourhood has never been fetched is drawn hollow, so
     // "nothing connects here" is visibly different from "not expanded yet".
@@ -965,6 +1128,253 @@ const TYPE_FACTS = {
   file: p => fact('sheets', p.sheet_count) + fact('parsed', p.parsed),
 };
 
+// ---- B2 PANELS -----------------------------------------------------------
+// EVIDENCE TIERS ARE RENDERED APART. A legacy `teaches` edge and a mastersheet
+// `taught_by` edge are two claims by two sources that have not been reconciled;
+// showing them in one list would manufacture agreement that does not exist.
+// The tier is read off the EDGE (`p.tier`), not from the relation name, so a
+// renamed relation cannot silently collapse the distinction.
+// NOT `neighboursOf` — that name is already taken by the CAP-limited traversal
+// the expand panel uses, and shadowing it made openNode throw on every click.
+// Caught by eval/drive_dom.mjs, which is exactly the class of bug it exists for.
+function edgesTouching(id){
+  const out=[];
+  for(const e of E){
+    if(e.s===id) out.push([e,e.t,'out']);
+    else if(e.t===id) out.push([e,e.s,'in']);
+  }
+  return out;
+}
+
+// A label shared by more than one node is an OPEN identity question, not a
+// merge. The four that remain are INS-08/30/31/32, answered "leave apart".
+function duplicateLabels(){
+  const seen=new Map();
+  for(const n of D.nodes){ if(n.t!=='instructor')continue;
+    seen.set(n.l,(seen.get(n.l)||0)+1); }
+  const dup=new Set();
+  for(const [l,c] of seen) if(c>1) dup.add(l);
+  return dup;
+}
+let DUPES=new Set();
+
+// ONE ROW PER PERSON, TIERS AS BADGES ON THAT ROW.
+//
+// The first version printed a block per tier, so an instructor with both a
+// mastersheet assignment and a legacy teaching record appeared twice in one
+// panel and read as two people. The tiers must stay unmerged — they are
+// unreconciled claims — but that is a statement about the EVIDENCE, not about
+// the person, and rendering it as two rows said the wrong one.
+//
+// An unresolved IDENTITY is different and does stay on its own row: those are
+// two separate nodes (INS-08/30/31/32) and collapsing them would be the merge
+// the owner declined.
+const ROLE_LABEL={primary:'Primary',backup_1:'Backup 1',backup_2:'Backup 2',
+                  backup_3:'Backup 3'};
+function roleText(role,tier){
+  if(role) return (ROLE_LABEL[role]||role.replace('_',' '));
+  return tier==='legacy' ? 'teaches class' : 'assigned';
+}
+function evidenceBadges(ev){
+  const seen=new Set(); const out=[];
+  for(const e of ev){
+    const k=e.tier+'|'+(e.role||'');
+    if(seen.has(k))continue; seen.add(k);
+    out.push('<span class="ev ev-'+esc(e.tier)+'">'+esc(roleText(e.role,e.tier))+
+             ' <em>'+esc(e.tier)+'</em></span>');
+  }
+  return out.join('');
+}
+function _collect(id, wantType){
+  const by=new Map();
+  for(const [e,other] of edgesTouching(id)){
+    const tier=e.p&&e.p.tier; if(!tier)continue;
+    const n=idx.byId.get(other); if(!n||n.t!==wantType)continue;
+    if(!by.has(n.id))by.set(n.id,{n,ev:[]});
+    by.get(n.id).ev.push({tier,role:(e.p&&e.p.instructor_role)||null});
+  }
+  return [...by.values()];
+}
+// MODULE panel: every person once, with their role and source badges.
+function peopleRows(id){
+  const rows=_collect(id,'instructor');
+  if(!rows.length)return '';
+  rows.sort((a,b)=>a.n.l.localeCompare(b.n.l));
+  const html=rows.map(r=>'<div class="prow"><span class="pname">'+esc(r.n.l)+
+    (DUPES.has(r.n.l)?'<span class="badge">unconfirmed</span>':'')+'</span>'+
+    evidenceBadges(r.ev)+'</div>').join('');
+  return '<div class="tier"><div class="tk">people <span class="dim">one row '+
+         'each; badges are the evidence, and the two sources are never '+
+         'reconciled</span></div>'+html+'</div>';
+}
+// INSTRUCTOR panel: every module taught, grouped by role, each with its badge.
+function taughtRows(id){
+  const rows=_collect(id,'module');
+  if(!rows.length)return '';
+  const rank=r=>({primary:0,backup_1:1,backup_2:2,backup_3:3}[r]!==undefined
+                 ?{primary:0,backup_1:1,backup_2:2,backup_3:3}[r]:4);
+  const best=r=>Math.min.apply(null,r.ev.map(e=>rank(e.role)));
+  rows.sort((a,b)=>best(a)-best(b)||a.n.l.localeCompare(b.n.l));
+  const groups=new Map();
+  for(const r of rows){
+    const key=roleText(r.ev.slice().sort((x,y)=>rank(x.role)-rank(y.role))[0].role,
+                       r.ev[0].tier);
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(r);
+  }
+  let html='';
+  for(const [role,rs] of groups){
+    html+='<div class="tk">'+esc(role)+' <span class="dim">'+rs.length+
+          ' module'+(rs.length===1?'':'s')+'</span></div>';
+    html+=rs.map(r=>'<div class="prow"><span class="pname">'+esc(r.n.l)+
+      (r.n.legacy?'<span class="badge">legacy</span>':'')+'</span>'+
+      evidenceBadges(r.ev)+'</div>').join('');
+  }
+  return '<div class="tier">'+html+'</div>';
+}
+
+function unconfirmedFlag(n){
+  if(!n||n.t!=='instructor')return '';
+  if(!DUPES.has(n.l))return '';
+  return '<div class="flag">UNCONFIRMED IDENTITY \u2014 another instructor node '+
+    'carries this exact label and the two have not been merged. Left apart by '+
+    'owner decision (REVIEW-QUEUE INS-08/30/31/32), not by oversight.</div>';
+}
+
+// ---- SOURCE LINKS --------------------------------------------------------
+// Every item shows ALL of its direct links. The mastersheet is NEVER an item's
+// link — it is the citation, and it appears under Provenance. Where a kind of
+// link is absent the reason is stated; nothing is guessed and nothing falls
+// back to the sheet.
+//
+// Everyone at IK has view access to these folders and to Uplevel (owner fact,
+// config/out-of-corpus-facts.yaml), so no access caveat is shown. That is not a
+// claim every link resolves: a download-disabled file still gets its Drive link
+// because canDownload false stops an EXPORT, not a person opening it.
+const HTTP=/^https?:\/\//i;
+function lnk(url,label,title){
+  if(!url||!HTTP.test(String(url)))return '';
+  return '<a class="lnk" href="'+esc(url)+'" target="_blank" '+
+         'rel="noopener noreferrer"'+(title?' title="'+esc(title)+'"':'')+'>'+
+         esc(label)+'</a>';
+}
+function nolnk(kind,reason){
+  return '<span class="nolnk">no '+esc(kind)+': '+esc(reason)+'</span>';
+}
+
+//: What each session kind should carry, and what to say when it does not.
+const WANTS={
+  pre_class:        ['Drive files',    'no file matched at session level'],
+  class:            ['slide deck',     'no deck matched at session level'],
+  alternate_class:  ['slide deck',     'no deck matched at session level'],
+  task:             ['assignment doc', 'no document matched at session level'],
+  review:           ['deck or solutions', 'no file matched at session level'],
+  alternate_review: ['deck or solutions', 'no file matched at session level'],
+  post_class:       ['Drive files',    'no file matched at session level'],
+};
+const KIND_ORDER=['pre_class','class','alternate_class','task','review',
+                  'alternate_review','post_class'];
+const KIND_LABEL={pre_class:'Pre-class (foundation material)',class:'Class',
+  alternate_class:'Alternate Class',task:'Assignment',
+  review:'Assignment Review Class',alternate_review:'Alternate Assignment Review Class',
+  post_class:'Practice problems'};
+
+function moduleChain(id){
+  const m=idx.byId.get(id); if(!m)return '';
+  const sessions=new Map(), attached=new Map(), extras=[];
+  let dom=null, wk=null;
+  for(const [e,other] of edgesTouching(id)){
+    const n=idx.byId.get(other); if(!n)continue;
+    if(n.t==='domain'){dom=n;continue}
+    if(n.t==='program_week'){wk=n;continue}
+    if(n.t==='assignment'||n.t==='assignment_review'){extras.push(n);continue}
+    if(n.t!=='class_session')continue;
+    const p=e.p||{};
+    if(p.attached_file){
+      const k=p.session_kind||'';
+      if(!attached.has(k))attached.set(k,[]);
+      attached.get(k).push({name:p.attached_file,url:p.attached_drive_url,
+                            deck:!!p.attached_is_deck});
+    }else{
+      sessions.set((n.p||{}).session_kind||'?',n);
+    }
+  }
+  const out=[];
+  // --- the module itself ---
+  const mp=m.p||{};
+  out.push('<div class="item"><span class="ik">Module</span>'+
+    (lnk(mp.uplevel_link,'Uplevel module')||nolnk('Uplevel link','not in the mastersheet row'))+
+    (lnk((dom&&(dom.p||{}).drive_folder_url),'Drive: '+(dom?dom.l:'domain')+' folder',
+         'the domain folder; pass 6 records file ids, not folder ids, so the '+
+         'module subfolder has no direct link')
+      || nolnk('Drive folder','pass 6 records file ids, not folder ids'))+
+    '</div>');
+  // --- each session, in teaching order ---
+  for(const k of KIND_ORDER){
+    const n=sessions.get(k);
+    const want=WANTS[k]||['file','no file matched'];
+    if(!n){
+      // NOT OFFERED is a fact about the module, not a missing link.
+      out.push('<div class="item"><span class="ik">'+esc(KIND_LABEL[k])+'</span>'+
+        nolnk('session', k==='post_class'
+          ? 'not offered \u2014 practice problems are optional per module'
+          : 'not in the mastersheet for this module')+'</div>');
+      continue;
+    }
+    const files=attached.get(k)||[];
+    out.push('<div class="item"><span class="ik">'+esc(KIND_LABEL[k])+'</span>'+
+      (lnk((n.p||{}).uplevel_link,'Uplevel')||nolnk('Uplevel link','no link in the sheet row'))+
+      (files.length
+        ? files.map(f=>lnk(f.url,(f.deck?'Deck: ':'Drive: ')+f.name.slice(0,42),f.name)).join('')
+        : nolnk(want[0],want[1]))+
+      '</div>');
+  }
+  // --- assignment / review artefacts found in Drive but not on a session ---
+  for(const n of extras.slice(0,6))
+    out.push('<div class="item"><span class="ik">'+esc(n.t.replace('_',' '))+'</span>'+
+      (lnk((n.p||{}).drive_url,'Drive: '+n.l.slice(0,42),n.l)||nolnk('Drive link','no file id recorded'))+
+      '</div>');
+  const head=[];
+  if(dom)head.push('<div class="ft"><span class="k">domain</span><span class="v">'+esc(dom.l)+'</span></div>');
+  if(wk)head.push('<div class="ft"><span class="k">programme week</span><span class="v">'+
+                  esc(String((wk.p||{}).number||wk.l))+'</span></div>');
+  return (head.length?'<div class="facts chain">'+head.join('')+'</div>':'')+
+         '<div class="tier"><div class="tk">source links <span class="dim">'+
+         'every item, all of its links; the mastersheet is the citation, never '+
+         'the link</span></div>'+out.join('')+'</div>';
+}
+
+// TOPICS open the deck AT THE SLIDE. A page-object-id deep link needs the
+// Slides API, which this read-only client does not call, so the link is the
+// deck and the slide number is stated beside it — the fallback the spec allows.
+function topicLinks(id,limit){
+  const rows=[];
+  for(const [e,other] of edgesTouching(id)){
+    const n=idx.byId.get(other); if(!n||n.t!=='content_topic')continue;
+    const p=e.p||{};
+    const loc=p.slide!==undefined?('slide '+p.slide)
+             :p.page!==undefined?('page '+p.page)
+             :p.tab!==undefined?('tab '+p.tab):null;
+    if(!loc)continue;
+    rows.push({label:n.l,loc:loc,url:p.deck_drive_url||null,rank:p.rank});
+    if(rows.length>=(limit||10))break;
+  }
+  if(!rows.length)return '';
+  return '<div class="tier"><div class="tk">topics <span class="dim">deck plus '+
+    'the slide number; a page-object deep link needs the Slides API</span></div>'+
+    rows.map(r=>'<div class="item"><span class="ik">'+esc(r.label.slice(0,44))+
+      '</span><span class="loc">'+esc(r.loc)+'</span>'+
+      (r.url?lnk(r.url,'open deck'):'')+'</div>').join('')+'</div>';
+}
+
+function mergedNote(n){
+  if(!n||!n.merged||!n.merged.length)return '';
+  const raws=(n.p&&n.p.merged_label_raw)||[];
+  return '<div class="tnote">Merged on '+esc(n.merged.join(', '))+
+    (raws.length?' \u2014 also known as '+esc(raws.join('; ')):'')+
+    '. Every absorbed label is kept as a citation key.</div>';
+}
+
 //: A standing note per type, where the ABSENCE of something is the answer.
 const TYPE_NOTE = {
   workflow: 'Ownership is domain-level at New Programs, so a workflow has no '+
@@ -1010,11 +1420,22 @@ async function openNode(id){
   document.getElementById('right').style.display='block';
   document.getElementById('nl').textContent=n?n.l:id;
   document.getElementById('nt').textContent=n?n.t:'';
+  if(n&&n.partial){
+    document.getElementById('nprops').innerHTML='<div class="src">loading details…</div>';
+    await ensureDetail(id);
+    if(state.sel!==id)return;          // another node was opened meanwhile
+  }
   const props=(n&&n.p)||{};
   const facts=(TYPE_FACTS[n&&n.t]||(()=>''))(props);
   const note=TYPE_NOTE[n&&n.t];
   const pr=[];
   if(facts) pr.push('<div class="facts">'+facts+'</div>');
+  if(n&&n.t==='module'){ pr.push(moduleChain(id)); pr.push(topicLinks(id,10)); }
+  const tiers=(n&&n.t==='module')?peopleRows(id)
+             :(n&&n.t==='instructor')?taughtRows(id):'';
+  if(tiers) pr.push(tiers);
+  pr.push(unconfirmedFlag(n));
+  pr.push(mergedNote(n));
   pr.push(reviewFlag(props));
   if(note) pr.push('<div class="tnote">'+esc(note)+'</div>');
   pr.push('<div class="acts"><button type="button" id="goto">centre</button>');
@@ -1109,9 +1530,11 @@ function groupByFile(rows){
 async function renderProvenance(id){
   const box=document.getElementById('files');
   box.innerHTML='<div class="src">loading provenance…</div>';
-  let out;
-  try{ out=await api('/node?id='+encodeURIComponent(id)); }
-  catch(e){ box.innerHTML='<div class="src">provenance unavailable</div>'; return; }
+  let out=DETAIL.has(id)?await DETAIL.get(id):null;
+  if(!out){
+    try{ out=await api('/node?id='+encodeURIComponent(id)); }
+    catch(e){ box.innerHTML='<div class="src">provenance unavailable</div>'; return; }
+  }
   if(out.error){ box.innerHTML='<div class="src">'+esc(out.error)+'</div>'; return; }
   const n=idx.byId.get(id);
   if(n&&out.node){ n.st=(out.node.props||{}).status||n.st;
@@ -1186,10 +1609,25 @@ document.getElementById('q').addEventListener('input',ev=>{
     try{ out=await api('/search?q='+encodeURIComponent(v)+'&limit=40'); }
     catch(e){ return; }
     const rows=out.results||[];
+    // BADGES say what KIND OF CLAIM a hit is, which the type alone does not.
+    // A legacy module and a mastersheet module are both `module`; an
+    // instructor whose identity is an open review row looks identical to one
+    // that is settled. Both distinctions matter before someone acts on a hit.
+    const badge=r=>{
+      const n=idx.byId.get(r.id);
+      const p=r.props||(n&&n.p)||{};
+      if(r.type==='module'&&p.domain_slug===undefined)
+        return '<span class="badge" title="label-keyed, not reconciled with the mastersheet">legacy</span>';
+      if(r.type==='instructor'&&DUPES.has(r.label))
+        return '<span class="badge" title="another node carries this exact label; left apart by owner decision">unconfirmed</span>';
+      if(Array.isArray(p.merge_ids)&&p.merge_ids.length)
+        return '<span class="badge" title="'+esc(p.merge_ids.join(', '))+'">merged</span>';
+      return '';
+    };
     res.innerHTML=rows.map(r=>
       '<div class="hit" data-id="'+esc(r.id)+'"><i style="background:'+
       (C[r.type]||'#888')+'"></i><span>'+esc(r.label)+'</span><em>'+
-      esc(r.type)+'</em></div>').join('')
+      esc(r.type)+'</em>'+badge(r)+'</div>').join('')
       ||'<div class="src"><b>No match.</b> This is a LABEL match over the '+
         'projected graph \u2014 a miss is not evidence the corpus lacks it, only '+
         'that this graph does not hold that label.</div>';
@@ -1520,6 +1958,42 @@ document.getElementById('curbtn').onclick=openCuration;
 // every G2-preserved constraint without renegotiating one: 5% of the node
 // budget, CAP=8 is natural for one or two owners, and the cooling schedule
 // settles it immediately.
+// THE DEFAULT VIEW. /api/structure returns the whole structure layer rather
+// than a capped sample — docs/DEFAULT-VIEW.md D1/D2, recorded as an owner
+// decision because a capped landing view showed a shape the graph does not
+// have. Topics, decks, curriculum docs, repos and files stay behind a toggle:
+// 5,200 more nodes and 37,771 more edges.
+async function loadStructure(){
+  let out;
+  try{ out=await api('/structure'); }
+  catch(e){ return false; }
+  const dec=decodeStructure(out);
+  const res=mergeGraph(D,{nodes:dec.nodes,edges:dec.edges},BUDGET);
+  window.__NP.structureNote=out.note||'';
+  let msg='';
+  if(res.refused) msg='<b>'+res.refused+' nodes were not loaded</b> \u2014 this '+
+    'client holds at most '+BUDGET+'.';
+  else if(out.legacy_modules)
+    msg='<b>'+out.legacy_modules+' legacy modules</b> are shown faded: they are '+
+        'keyed on their label and have not been reconciled with the '+
+        'mastersheet. Nothing is hidden \u2014 see docs/REVIEW-QUEUE.md.';
+  banner(msg, res.refused?'err':'');
+  recompute(true,'structure view');
+  // B3: THE LAYOUT WAS COMPUTED AT PROJECTION (pipeline/lib/layout.py — this
+  // page's own step(), run once). Start frozen and fitted rather than spend
+  // 366 frames recomputing coordinates that are already here. Anything that
+  // later adds nodes still calls recompute() and simulates, as before.
+  if(dec.laidOut && !res.refused){
+    frozen=true; alpha=0; settle=0;
+    fit();
+    window.__NP_STATE={settle:settle,alpha:alpha,frozen:frozen,precomputed:true,
+                       recomputes:window.__NP_RECOMPUTES,nodes:D.nodes.length};
+    console.log('[np] precomputed layout: '+D.nodes.length+' nodes, frozen at load');
+  }
+  try{ afterStructure(); }catch(e){ console.warn('view setup', e); }
+  return true;
+}
+
 async function loadOverview(){
   let out;
   try{ out=await api('/overview'); }
@@ -1578,7 +2052,7 @@ async function afterSignIn(){
   // the change that stops it being free. A recompute must follow a CHANGE, not
   // an event. If the fetch fails there is no recompute at all -- 'initial' has
   // already rendered the empty canvas, and api() has already said what broke.
-  await loadOverview();
+  await loadStructure();
 }
 
 document.getElementById('signout').onclick=async ()=>{
@@ -1663,6 +2137,218 @@ async function openRoute(){
   return true;
 }
 addEventListener('hashchange',()=>{ if(!_routing) openRoute(); });
+
+
+// ==========================================================================
+// B2 VIEWS — matrix, timeline, filters, badges, shareable URLs
+// ==========================================================================
+// All three read the SAME structure payload the graph view holds. They are
+// derived views, not extra endpoints: a second fetch path would be a second
+// place for the tier distinction to get lost.
+
+const SHEET=document.getElementById('sheet'), VBAR=document.getElementById('vbar');
+
+function domainsInPlay(){
+  const m=new Map();
+  for(const n of D.nodes){ if(n.t==='module'&&n.dom) m.set(n.dom,true); }
+  return [...m.keys()].sort();
+}
+
+function modulesFor(dom){
+  return D.nodes.filter(n=>n.t==='module'&&(!dom||n.dom===dom)&&!n.legacy)
+                .sort((a,b)=>(a.dom||'').localeCompare(b.dom||'')||
+                             (((a.p||{}).sequence||0)-((b.p||{}).sequence||0)));
+}
+
+// WHO TEACHES WHAT. Rows are instructors, columns modules, cells carry the
+// ROLE. A cell whose instructor identity is still an open review row is
+// HATCHED rather than filled: it is a claim that has not been confirmed, and
+// colouring it like the others would say it had been.
+const ROLE_RANK={primary:4,backup_1:3,backup_2:2,backup_3:1};
+function cellRank(c){
+  return (c.tier==='legacy'?0:10)+(ROLE_RANK[c.role]||0);
+}
+function renderMatrix(){
+  const mods=modulesFor(state.fDomain);
+  const rows=new Map();
+  for(const e of E){
+    const tier=e.p&&e.p.tier; if(!tier)continue;
+    const a=idx.byId.get(e.s), b=idx.byId.get(e.t); if(!a||!b)continue;
+    const mod=a.t==='module'?a:(b.t==='module'?b:null);
+    const ins=a.t==='instructor'?a:(b.t==='instructor'?b:null);
+    if(!mod||!ins)continue;
+    if(!mods.some(m=>m.id===mod.id))continue;
+    const role=(e.p&&e.p.instructor_role)||(tier==='legacy'?'taught':'');
+    if(state.fRole&&role!==state.fRole)continue;
+    if(!rows.has(ins.id))rows.set(ins.id,{ins,cells:new Map()});
+    // ONE CELL, TWO KINDS OF EVIDENCE: a pair can carry a legacy `teaches`
+    // edge AND a mastersheet `taught_by` role. The cell used to show whichever
+    // edge came LAST, so the load column (D4a) depended on edge order — and
+    // under-counted two roles until B3 happened to reorder the edges. The rule
+    // is explicit now: the mastersheet role wins; within a tier, the stronger.
+    const cells=rows.get(ins.id).cells, prev=cells.get(mod.id), next={role,tier};
+    if(!prev||cellRank(next)>cellRank(prev))cells.set(mod.id,next);
+  }
+  const list=[...rows.values()].sort((x,y)=>x.ins.l.localeCompare(y.ins.l)||
+    (x.ins.id<y.ins.id?-1:x.ins.id>y.ins.id?1:0));   // ties: stable, by id
+  let h='<h2>Who teaches what'+(state.fDomain?' \u2014 '+esc(state.fDomain):'')+
+        ' <span class="dim">'+list.length+' instructors \u00d7 '+mods.length+
+        ' modules</span></h2>';
+  if(!list.length){ SHEET.innerHTML=h+'<p class="dim">No staffing edges match this filter.</p>'; return; }
+  h+='<table><thead><tr><th>instructor</th><th title="modules taught: '+
+     'Primary and Backup">load</th>';
+  for(const m of mods) h+='<th title="'+esc(m.l)+'">'+esc((m.dom||'')+'/'+((m.p||{}).sequence||''))+'</th>';
+  h+='</tr></thead><tbody>';
+  for(const r of list){
+    const unconf=DUPES.has(r.ins.l);
+    // LOAD IS COUNTED PER NODE, so it is never summed across an unresolved
+    // identity: `Bill Ogden` is two nodes and gets two loads, each marked.
+    // Adding them would assert the merge the owner declined (INS-08/30).
+    let P=0,B=0;
+    for(const c of r.cells.values()){
+      if(c.role==='primary')P++;
+      else if(c.role&&c.role.indexOf('backup')===0)B++;
+    }
+    const load=P+'\u00a0P\u00a0\u00b7\u00a0'+B+'\u00a0B';
+    h+='<tr><td>'+esc(r.ins.l)+(unconf?'<span class="badge">unconfirmed</span>':'')+
+       '</td><td class="load'+(unconf?' unconf':'')+'" title="'+
+       (unconf?'this row only \u2014 not summed across an unresolved identity'
+              :'modules taught')+'">'+load+(unconf?'&nbsp;<span class="dim">?</span>':'')+'</td>';
+    for(const m of mods){
+      const c=r.cells.get(m.id);
+      h+='<td class="'+(c?(unconf?'unconf':'on'):'')+'" title="'+
+         esc(c?(c.tier+' \u2014 '+(c.role||'')):'')+'">'+
+         (c?esc((c.role||'\u2022').replace('backup_','b')):'')+'</td>';
+    }
+    h+='</tr>';
+  }
+  h+='</tbody></table><p class="dim">Load counts modules per ROW. Where an '+
+     'identity is unresolved the load is shown per row and never summed '+
+     'across the rows \u2014 that would assert a merge the owner declined. '+
+     'Hatched = the instructor identity is an '+
+     'open REVIEW-QUEUE row (INS-08/30/31/32); the cell is shown, not hidden. '+
+     'Cell text is the mastersheet role; \u2022 is a legacy `teaches` edge.</p>';
+  SHEET.innerHTML=h;
+}
+
+// PROGRAMME TIMELINE. Modules laid on their programme week, one lane per
+// domain. The week is an OWNER FACT, not a number derived from the folder
+// sequence — `Week N` in the corpus is a local sequence and deriving a
+// calendar week from it is refused in curriculum.py.
+function renderTimeline(){
+  const weeks=new Map();
+  for(const n of D.nodes){ if(n.t==='program_week') weeks.set(n.id,(n.p||{}).number||null); }
+  const lanes=new Map();
+  for(const m of modulesFor(state.fDomain)){
+    let wk=null;
+    for(const [e,other] of edgesTouching(m.id)){
+      const n=idx.byId.get(other);
+      if(n&&n.t==='program_week'){ wk=weeks.get(n.id); break; }
+    }
+    if(state.fWeek&&String(wk)!==String(state.fWeek))continue;
+    if(!lanes.has(m.dom))lanes.set(m.dom,[]);
+    lanes.get(m.dom).push({m,wk});
+  }
+  const all=[...lanes.values()].flat().map(x=>x.wk).filter(x=>x!=null);
+  const lo=Math.min(...all,9), hi=Math.max(...all,14);
+  let h='<h2>Programme timeline <span class="dim">weeks '+lo+'\u2013'+hi+
+        ', one lane per domain</span></h2>';
+  for(const [dom,items] of [...lanes.entries()].sort()){
+    h+='<div class="lane"><div class="cell" style="min-width:110px">'+esc(dom)+'</div>';
+    for(let w=lo;w<=hi;w++){
+      const hit=items.filter(x=>x.wk===w);
+      h+='<div class="cell'+(hit.length?'':' faded')+'" title="week '+w+'">'+
+         (hit.length?esc(hit.map(x=>x.m.l).join(', ')):'<span class="dim">w'+w+'</span>')+
+         '</div>';
+    }
+    h+='</div>';
+  }
+  h+='<p class="dim">Programme weeks are an owner fact '+
+     '(config/out-of-corpus-facts.yaml). `Week N` in the corpus folders is a '+
+     'local sequence and a calendar week is never derived from it.</p>';
+  SHEET.innerHTML=h;
+}
+
+function setView(v,push){
+  state.view=v;
+  for(const b of VBAR.querySelectorAll('button'))
+    b.setAttribute('aria-pressed', String(b.dataset.view===v));
+  SHEET.style.display = v==='graph' ? 'none' : 'block';
+  if(v==='matrix')renderMatrix();
+  if(v==='timeline')renderTimeline();
+  if(push!==false)writeUrl();
+}
+for(const b of VBAR.querySelectorAll('button'))
+  b.onclick=()=>setView(b.dataset.view,true);
+
+// SHAREABLE URLS. View, focus and every filter live in the query string, so a
+// link reproduces what the sender was looking at. Nothing is kept in
+// localStorage: a URL someone can read is the point.
+let _writing=false;
+function writeUrl(){
+  if(_writing)return; _writing=true;
+  const q=new URLSearchParams();
+  if(state.view!=='graph')q.set('view',state.view);
+  if(state.sel)q.set('focus',state.sel);
+  if(state.fDomain)q.set('domain',state.fDomain);
+  if(state.fWeek)q.set('week',state.fWeek);
+  if(state.fRole)q.set('role',state.fRole);
+  if(state.hideLegacy)q.set('legacy','hidden');
+  const s=q.toString();
+  history.replaceState(null,'',s?('?'+s):location.pathname);
+  _writing=false;
+}
+function readUrl(){
+  const q=new URLSearchParams(location.search);
+  state.fDomain=q.get('domain')||null;
+  state.fWeek=q.get('week')||null;
+  state.fRole=q.get('role')||null;
+  state.hideLegacy=q.get('legacy')==='hidden';
+  const v=q.get('view'); if(v)setView(v,false);
+  const f=q.get('focus'); if(f&&idx.byId.get(f))openNode(f);
+}
+
+// FILTERS. Rendered into the left pane once the structure payload has told us
+// which domains exist — hardcoding four would go stale the day a fifth is
+// approved.
+function renderFilters(){
+  const host=document.getElementById('types'); if(!host)return;
+  const doms=domainsInPlay(); if(!doms.length)return;
+  const sel=(id,label,opts,cur)=>
+    '<label class="ck" style="display:block">'+esc(label)+
+    ' <select id="'+id+'"><option value="">all</option>'+
+    opts.map(o=>'<option value="'+esc(o)+'"'+(String(cur)===String(o)?' selected':'')+
+      '>'+esc(o)+'</option>').join('')+'</select></label>';
+  const weeks=[...new Set(D.nodes.filter(n=>n.t==='program_week')
+      .map(n=>(n.p||{}).number).filter(x=>x!=null))].sort((a,b)=>a-b);
+  const box=document.createElement('div');
+  box.id='filters';
+  box.innerHTML='<div class="sub">filters</div>'+
+    sel('fdom','domain',doms,state.fDomain||'')+
+    sel('fwk','programme week',weeks,state.fWeek||'')+
+    sel('frole','role',['primary','backup_1','backup_2','backup_3'],state.fRole||'')+
+    '<label class="ck"><input type="checkbox" id="flegacy"'+
+    (state.hideLegacy?' checked':'')+'> hide legacy modules</label>';
+  host.parentNode.insertBefore(box,host);
+  const on=(id,fn)=>{const el=document.getElementById(id); if(el)el.onchange=fn;};
+  on('fdom',e=>{state.fDomain=e.target.value||null;refreshView()});
+  on('fwk',e=>{state.fWeek=e.target.value||null;refreshView()});
+  on('frole',e=>{state.fRole=e.target.value||null;refreshView()});
+  on('flegacy',e=>{state.hideLegacy=e.target.checked;refreshView()});
+}
+function refreshView(){
+  writeUrl();
+  if(state.view==='matrix')renderMatrix();
+  else if(state.view==='timeline')renderTimeline();
+  else draw();
+}
+
+// Called once the structure payload has landed.
+function afterStructure(){
+  DUPES=duplicateLabels();
+  renderFilters();
+  readUrl();
+}
 
 if(!window.__NP_NO_BOOT){ loadStats(); boot(); }
 </script>

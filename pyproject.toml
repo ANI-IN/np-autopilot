@@ -11,8 +11,8 @@
 #
 #   2. A DEPENDENCY SET SCOPED TO THE FUNCTION. Installing requirements.txt into
 #      the function produced a 232.95 MB bundle against a 225 MB limit — and
-#      failed, which is how this was found. The web app reaches exactly three
-#      third-party packages; the rest is corpus parsing and Drive access that no
+#      failed, which is how this was found. The web app reaches exactly four
+#      third-party packages (Brotli since B3); the rest is corpus parsing and Drive access that no
 #      HTTP request touches. grpcio alone is most of the overage.
 #
 # Versions are pinned to the same values as requirements.txt. If they ever
@@ -26,6 +26,7 @@ dependencies = [
     "psycopg[binary]==3.3.5",   # web/lib/data.py, via pipeline/lib/db.py
     "PyJWT[crypto]==2.10.1",    # web/lib/auth.py — [crypto] is what verifies RS256
     "PyYAML==6.0.2",            # pipeline/lib/taxonomy.py, reached from api/staffing.py
+    "Brotli==1.2.0",            # api/index.py — /api/structure compression (B3)
 ]
 
 [tool.vercel]

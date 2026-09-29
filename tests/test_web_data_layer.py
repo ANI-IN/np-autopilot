@@ -88,8 +88,11 @@ def test_the_request_connection_never_runs_as_owner(member_profile):
 def test_the_transaction_pooler_is_used_with_prepares_disabled():
     """Works-locally-fails-on-Vercel, prevented in the connection itself."""
     import inspect
+    # The connect moved into _warm_connection() with the idle-drop retry (B3);
+    # request_connection must still reach the pool ONLY through it.
     src = inspect.getsource(data.request_connection)
-    assert "_db.TRANSACTION" in src
+    assert "_warm_connection()" in src and "_db.connect" not in src
+    assert "_db.connect(_db.TRANSACTION)" in inspect.getsource(data._warm_connection)
     assert "prepare_threshold" in inspect.getsource(db.connect)
 
 

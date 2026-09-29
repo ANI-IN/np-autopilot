@@ -17,6 +17,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import paths                                        # noqa: E402
@@ -55,6 +57,10 @@ def test_conftest_has_redirected_this_session(isolate_build_log):
 # the passes: append still happens, just not to the tracked file
 # --------------------------------------------------------------------------
 
+@pytest.mark.skipif(not (REPO / "knowledge" / "candidates.json").exists(),
+                    reason="needs the gitignored knowledge/candidates.json: "
+                           "03_resolve.py rewrites knowledge/resolved.json in "
+                           "place, so a synthetic input would clobber a real build")
 def test_resolve_pass_appends_to_the_injected_log_and_not_the_tracked_one(
         isolate_build_log):
     """03_resolve.py is the pass the test suite shells out to (B5 determinism).

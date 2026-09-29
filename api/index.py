@@ -39,19 +39,55 @@ from lib import data                                                   # noqa: E
 from lib.auth import AuthError                                         # noqa: E402
 from lib.guard import audit, identify                                  # noqa: E402
 
-import aliases, config, coverage, curate, me, neighbourhood, node      # noqa: E402,E401
-import overview, search, session, staffing                             # noqa: E402,E401
+import config                                                          # noqa: E402
 
-#: path -> (endpoint name, read function). Every one of these is served by
-#: _serve_read, which is the only place a request meets a connection.
-READS = {f"/api/{mod.ENDPOINT[0]}": mod.ENDPOINT
-         for mod in (aliases, coverage, me, neighbourhood, node, overview,
-                     search, staffing)}
+#: THE ROUTE TABLE IS NAMES, AND THE MODULE IS IMPORTED WHEN IT IS SERVED.
+#:
+#: Importing all eleven endpoint modules at module load meant a cold start
+#: serving /api/overview also paid for `session` -> `gotrue` ->
+#: `urllib.request`, and for `curate` -> the curation service. Measured at
+#: ~77 ms of import on a cold start, most of it for code the request will not
+#: touch.
+#:
+#: THE GUARD PROPERTY IS UNCHANGED, and it is the reason this is a table of
+#: NAMES rather than a dispatch each module registers for itself: `_serve_read`
+#: is still the only path from a request to a connection, and it still calls
+#: identify() unconditionally before it loads anything. A lazily imported
+#: module cannot bring its own front door either.
+#:
+#: The path IS the module name for every endpoint —
+#: `tests/test_lazy_route_table.py` fails if one ever stops matching, because
+#: the failure mode is a silent 404 on a route that exists.
+READ_NAMES = ("aliases", "coverage", "me", "neighbourhood", "node", "overview",
+              "search", "staffing", "structure")
+WRITE_NAMES = ("curate",)
 
-#: path -> write function. Served by _serve_write, which identifies the caller
-#: exactly as _serve_read does. A write route cannot bring its own front door
-#: either — and the role check lives further in still, in curation_service.
-WRITES = {f"/api/{curate.ENDPOINT[0]}": curate.ENDPOINT[1]}
+READS = {f"/api/{n}" for n in READ_NAMES}
+WRITES = {f"/api/{n}" for n in WRITE_NAMES}
+
+_ENDPOINTS: dict = {}
+
+
+def endpoint_for(path: str):
+    """(name, fn) for a route, importing its module the first time only."""
+    name = path[len("/api/"):]
+    if name not in _ENDPOINTS:
+        import importlib
+        mod = importlib.import_module(name)
+        ep = mod.ENDPOINT
+        if ep[0] != name:
+            raise RuntimeError(
+                f"{name}.py declares ENDPOINT {ep[0]!r}; the router maps "
+                f"/api/{name} to the module of the same name, so this route "
+                f"would 404 while looking present")
+        _ENDPOINTS[name] = ep
+    return _ENDPOINTS[name][:2]
+
+
+def endpoint_options(name: str) -> dict:
+    """The optional third ENDPOINT element: etag / cache / compress (B3)."""
+    ep = _ENDPOINTS.get(name) or ()
+    return ep[2] if len(ep) > 2 else {}
 
 MAX_BODY = 16 * 1024
 
@@ -64,29 +100,114 @@ BASE_HEADERS = [
 ]
 
 
-def _respond(start_response, status: int, body: dict, *, no_store: bool = False):
-    raw = json.dumps(body, default=str).encode()
+def _respond(start_response, status: int, body: dict, *, no_store: bool = False,
+             cache: str | None = None, etag: str | None = None,
+             accept_encoding: str | None = None):
+    raw = json.dumps(body, default=str, separators=(",", ":") if cache else None).encode()
     headers = list(BASE_HEADERS)
     # A session response carries refresh tokens; authorised data must not sit in
-    # a shared cache either.
-    headers.append(("cache-control",
-                    "no-store, private" if no_store else "private, no-store"))
+    # a shared cache either. An endpoint may opt into PRIVATE caching (B3):
+    # `private` still keeps it out of every shared cache.
+    headers.append(("cache-control", cache if cache and not no_store else
+                    ("no-store, private" if no_store else "private, no-store")))
+    if etag:
+        headers.append(("etag", etag))
+    if cache:
+        headers.append(("vary", "Authorization, Accept-Encoding"))
+    if accept_encoding is not None:
+        raw, enc = _compress(raw, accept_encoding)
+        if enc:
+            headers.append(("content-encoding", enc))
     headers.append(("content-length", str(len(raw))))
     start_response(f"{status} {'OK' if status == 200 else 'ERROR'}", headers)
     return [raw]
 
 
+#: Compressed bodies, keyed by the SHA-256 of the exact bytes and the encoding.
+#: The payload is still built from a query under the caller's RLS on every
+#: request — only the compression of IDENTICAL bytes is reused, so nothing one
+#: caller was allowed to see can reach another.
+_COMPRESSED: dict = {}
+
+#: QUALITY 5, NOT 11. Measured on the 504,596 B structure payload: q11 is
+#: 109,626 B in 550 ms, q5 is 127,261 B in 7 ms. Quality 11 first shipped and
+#: raised the local cold-start premium from 13.5 ms to 578 ms — every new
+#: instance paid it before its memo was warm. 14% smaller is not worth that,
+#: and q5 is still well under the 150 KB target.
+BROTLI_QUALITY = 5
+
+
+def _compress(raw: bytes, accept_encoding: str) -> tuple[bytes, str | None]:
+    import hashlib
+    offered = {t.split(";")[0].strip().lower() for t in accept_encoding.split(",")}
+    enc = None
+    if "br" in offered:
+        try:
+            import brotli                                             # noqa: F401
+            enc = "br"
+        except ImportError:
+            enc = None
+    if enc is None and "gzip" in offered:
+        enc = "gzip"
+    if enc is None:
+        return raw, None
+    key = (hashlib.sha256(raw).digest(), enc)
+    hit = _COMPRESSED.get(key)
+    if hit is None:
+        if enc == "br":
+            import brotli
+            hit = brotli.compress(raw, quality=BROTLI_QUALITY)
+        else:
+            import gzip
+            hit = gzip.compress(raw, compresslevel=9)
+        if len(_COMPRESSED) >= 4:
+            _COMPRESSED.pop(next(iter(_COMPRESSED)))
+        _COMPRESSED[key] = hit
+    return hit, enc
+
+
+def _not_modified(start_response, etag: str, cache: str):
+    start_response("304 Not Modified",
+                   [("etag", etag), ("cache-control", cache),
+                    ("vary", "Authorization, Accept-Encoding"),
+                    ("x-content-type-options", "nosniff"),
+                    ("referrer-policy", "no-referrer")])
+    return [b""]
+
+
+def _etag_matches(header: str | None, etag: str) -> bool:
+    if not header:
+        return False
+    if header.strip() == "*":
+        return True
+    return etag in {t.strip().removeprefix("W/") for t in header.split(",")}
+
+
 def _serve_read(path: str, params: dict, environ, start_response):
     """The only path from an HTTP request to a database connection."""
-    name, fn = READS[path]
     started = time.time()
+    # IDENTIFY FIRST, then load the module. The table lookup used to be free,
+    # so the order did not matter; `endpoint_for` performs an IMPORT, and an
+    # unauthenticated caller should not be able to make the server do work it
+    # would otherwise skip. Asserted by tests/test_lazy_route_table.py.
     try:
         identity = identify(_Headers(environ))
     except AuthError as exc:
         return _respond(start_response, 401,
                         {"error": "unauthorised", "reason": str(exc)})
+    name, fn = endpoint_for(path)
+    opts = endpoint_options(name)
+    etag = None
     try:
         with data.request_connection(identity.subject) as conn:
+            # CONDITIONAL GET, before the payload query (B3). The validator is
+            # derived from the projection and the caller's role; on a match the
+            # browser keeps its own private copy and nothing is rebuilt.
+            if opts.get("etag"):
+                etag = opts["etag"](conn)
+                if etag and _etag_matches(environ.get("HTTP_IF_NONE_MATCH"), etag):
+                    audit(identity, name, params, 0, started)
+                    return _not_modified(start_response, etag, opts["cache"])
             payload, rows = fn(conn, identity, params)
     except data.DepthExceeded as exc:
         return _respond(start_response, 400,
@@ -96,7 +217,10 @@ def _serve_read(path: str, params: dict, environ, start_response):
         print(traceback.format_exc(), file=sys.stderr)
         return _respond(start_response, 500, {"error": "internal"})
     audit(identity, name, params, rows, started)
-    return _respond(start_response, 200, payload)
+    return _respond(start_response, 200, payload, cache=opts.get("cache"),
+                    etag=etag,
+                    accept_encoding=(environ.get("HTTP_ACCEPT_ENCODING", "")
+                                     if opts.get("compress") else None))
 
 
 def _serve_write(path: str, environ, start_response):
@@ -108,7 +232,7 @@ def _serve_write(path: str, environ, start_response):
     the optimistic lock and the audit row belong together and a route that
     pre-checked the role would be a second place that has to stay correct.
     """
-    fn = WRITES[path]
+    _, fn = endpoint_for(path)
     started = time.time()
     try:
         identity = identify(_Headers(environ))
@@ -187,6 +311,7 @@ def app(environ, start_response):
                             {"error": "bad_request", "reason": "body is not JSON"},
                             no_store=True)
         try:
+            import session                                          # noqa: PLC0415
             status, out = session.handle(
                 (body.get("action") or "signin").strip().lower(), body)
         except Exception:                                              # noqa: BLE001

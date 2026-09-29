@@ -7,6 +7,27 @@
 version: 1
 
 facts:
+  - id: ik-has-view-access-to-drive-and-uplevel
+    subject: [{IK: everyone with an @interviewkickstart.com account}]
+    fact: >-
+      Everyone at Interview Kickstart has VIEW access to the row-B Drive
+      folders and to Uplevel. A link in the explorer therefore resolves for
+      any signed-in reader, and the UI shows no access warning beside one.
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: 2026-09-29
+    evidence: >-
+      Direct statement, 2026-09-29, given as the final source-links
+      specification.
+    consequence: >-
+      Source links are rendered without an "you may not have access" caveat.
+      This is NOT a statement that every link works: a file whose export was
+      refused still gets its Drive link because canDownload false stops an
+      export, not a human opening it (docs/DOWNLOAD-DISABLED-FILES.md), and a
+      link that 404s is a broken link, not a permission problem. Where a link
+      is ABSENT the UI says which kind is missing and why, rather than
+      implying access.
+
   - id: android-ios-no-instructors
     subject: [Android, iOS]
     fact: >
@@ -30,3 +51,170 @@ facts:
       observation and NOT the cause. The cause is that there are no instructors.
       Recorded because the difference matters: one explanation implies the
       domains are staffed but undocumented, the other says they are not staffed.
+
+  - id: rowb-program-weeks
+    subject: [SD1: Full Stack, SD2: Frontend, SD3: Backend Engineering, SD4: Test Engineering]
+    fact: >
+      All four row-B domains run Data Structures & Algorithms in program weeks
+      1-5 and Scalable Systems Design in weeks 6-8 BEFORE their own modules.
+      The per-module program weeks, in each domain's module order, are:
+    weeks:
+      full-stack:   {1: 9, 2: 10, 3: 11, 4: 12, 5: 13}
+      frontend:     {1: 9, 2: 10, 3: 11, 4: 12}
+      backend:      {1: 9, 2: 10, 3: 11, 4: 12, 5: 13}
+      testing:      {1: 9, 2: 10, 3: 11, 4: 12, 5: 13, 6: 14}
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: 2026-09-29
+    evidence: >
+      Direct statement, 2026-09-29, superseding the SD1-only fact recorded
+      earlier the same day.
+
+      CORROBORATED BY THE CORPUS for two of the four, which is why those two
+      are worth naming: the SD2 KYP (`Intro to Course - Front-EndEngineering -
+      KYP Doc.pdf`, page 1) states `1 - 5 Algorithms`, `6-8 Scalable System
+      Design`, `9-12 Front-End Engineering`; and `IK: Test Engineering -
+      Curriculum Outline` places its six modules at 9-14 with the same two
+      prerequisite rows above them. Full Stack and Backend have no such
+      statement in row B — their outlines carry no prerequisite rows at all —
+      so for those two this is assertion alone.
+
+      VALUES, NOT A FORMULA. They are written out per module on purpose. The
+      offset of 8 is a fact ABOUT these four programmes today, not a rule: a
+      module sits at a different program week in a different programme, and
+      pipeline/lib/curriculum.py still raises ArithmeticWeekRefused on any
+      attempt to compute one from a folder sequence. Adding a fifth domain
+      means adding its values here, not extending an arithmetic.
+    consequence: >
+      Every module in the four approved domains now carries a program_week
+      whose edge records source_kind: hand and this assertion. None of them
+      emits a sourced_from edge and none may be presented as though a scan
+      produced it (CLAUDE.md §A.5).
+
+      This closes the `no-curriculum-week` gap that Frontend, Backend and
+      Testing reported. It does NOT make the weeks corpus evidence — the gap
+      is closed by an owner statement, and a reader asking "where does week 11
+      come from" gets this file, not a curriculum document.
+
+  - id: rowb-revamp-base-is-current
+    subject: [SD1: Full Stack, SD3: Backend Engineering]
+    fact: >
+      For the row-B revamp forks, the BASE version is current and the fork
+      subtrees are historical. They are kept in the graph, visibly marked,
+      never deleted.
+
+      THE RULE COVERS THREE FOLDER NAMINGS, and the third was asked about
+      separately: `Revamp 2024`, `Q4 2024: Revamp`, and
+      `New Material Aug 2023`. The last sits under SD1 `1. Module - Databases
+      - Content` and is a non-current fork like the other two — confirmed by
+      the corpus owner on 2026-09-29 when the question was put to him
+      explicitly, because the name does not say "revamp" and the first
+      statement of this rule named only the two that do. Structurally it was
+      always the same shape: a sibling of `1. Foundation Material`,
+      `2. Live Class Slides`, `3. Practice Problem` and `4. Assignment
+      Problem`, exactly as `Revamp 2024` is in the same module.
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: 2026-09-29
+    evidence: >
+      Direct statement, 2026-09-29. It had to be asserted because the corpus
+      cannot answer it: newest modifiedTime per branch was measured 2026-09-29
+      and split 4 base-newer to 2 revamp-newer, with `Q4 2024: Revamp` under
+      SD3 Module-5 holding files touched 2026-08. A modifiedTime moves on a
+      rename, a move or a permission edit, so it is evidence of EDITING and not
+      of what is taught.
+    consequence: >
+      Seven fork subtrees carry superseded_by pointing at the matching base
+      version, with origin: hand and this citation:
+
+        SD1  1. Module - Databases - Content / Revamp 2024
+        SD1  1. Module - Databases - Content / New Material Aug 2023
+        SD1  2. Module - API Design and Implementation - Content / Revamp 2024
+        SD1  4. Module - JavaScript and Web Dev - Content / Revamp - 2024
+        SD3  Module-3: API Design / Revamp 2024
+        SD3  Module-4: Cloud Native Design / Q4 2024: Revamp
+        SD3  Module-5: Concurrency / Q4 2024: Revamp
+
+      ONE IS LEFT AMBIGUOUS AND IS NOT A REVAMP FORK AT ALL:
+      `Module-5: Concurrency/2. Live Class Slides/Updated Content - Aug 2023`
+      sits INSIDE the base live-class folder rather than beside the module's
+      numbered units, so it has no sibling base to point at. It is a variant
+      within the base, not a parallel version of it. Recorded unresolved rather
+      than forced into the rule that fits the other seven.
+
+  - id: rowb-resume-folders-are-fictional-templates
+    subject: [SD1: Full Stack, SD2: Frontend, SD3: Backend Engineering, SD4: Test Engineering]
+    fact: >
+      The resume files in row B's `Resume` folders are FICTIONAL TEMPLATES —
+      worked examples for the career module — not real people's resumes. The
+      names, addresses, employers and contact details in them are invented.
+      They stay in the graph as career-module content.
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: 2026-09-29
+    scope:
+      - "SD1: Full Stack/IK: Full Stack: Content Repo/Uplevel Shared/Resume"
+      - "SD2: Frontend/IK: Frontend Content Repo/Uplevel Shared/Resume"
+      - "SD3: Backend Engineering/Module-1: Database Design/Uplevel shared/Resume"
+      - "SD4: Test Engineering/Resume"
+      - "SD4: Test Engineering/Uplevel Shared/Resume"
+      - "SD4: Test Engineering/Uplevel Shared/Resume/AI resume"
+    evidence: >
+      Direct confirmation, 2026-09-29. Nothing in the files states it: a
+      fictional resume and a real one are the same artefact, which is exactly
+      why this needed a person. The corroborating shape is that one of them
+      carries the byline `RESUME WORDED & CO.`, a template vendor — but that
+      is one file of 117 and is not sufficient on its own.
+    consequence: >
+      REDACTION STAYS ON, UNCHANGED, and that is deliberate. These 117 files
+      hold 121 of the crawl's 148 phone redactions, 116 of 197 email and 119
+      of 167 LinkedIn — the MAJORITY of every category. Redacting invented
+      contact details costs nothing: the curriculum value of a resume template
+      is its structure and wording, not its phone number.
+
+      Turning redaction off here would be the expensive direction. It would
+      make the control depend on a per-folder judgement about whether the
+      people inside are real, which is a judgement no extractor can make and
+      no reader can re-check — and it would mean a real resume dropped into a
+      template folder is published. `docs/A7B.md` instance 7: a check keyed on
+      a value somebody supplies is that person's opinion, stored, with a
+      constraint's reputation.
+
+      What the fact DOES change is interpretation. A reader asking why 71% of
+      this corpus's contact redactions sit in six folders now has an answer
+      that is not "the curriculum is full of personal data".
+
+  - id: practice-problems-are-optional
+    subject: [SD1: Full Stack, SD2: Frontend, SD3: Backend Engineering, SD4: Test Engineering]
+    fact: >
+      Practice problems (the `post_class` session) are OPTIONAL per module. A
+      module without them is complete, not incomplete.
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: 2026-09-29
+    evidence: >
+      Direct statement, 2026-09-29. The corpus is consistent with it and could
+      not have established it: all six Test Engineering modules have no
+      Practice Problems row in the mastersheet, while all fourteen modules in
+      the other three domains do. Measured, that is a clean split by domain —
+      which reads equally well as "Testing is missing something" until somebody
+      says otherwise. Only the owner could.
+    consequence: >
+      `post_class` is reported as PRESENT or NOT OFFERED in the completeness
+      matrix, never as a gap. The required links are module, program week,
+      class, assignment, decks, topics and instructors.
+
+      SESSIONS COME FROM THE SHEET'S ROWS, NEVER FROM A TEMPLATE, and that is
+      already how pass 7 works: `session_for_file` is given the kinds the
+      module actually has, and returns None for any other. Verified against
+      real data 2026-09-29 — 20 modules, ZERO mismatches between the sheet's
+      rows and the graph's session nodes, and no `post_class` node exists for
+      any Testing module.
+
+      A Drive folder named `Practice Problem(s)` does NOT create one either.
+      Of 51 such files, 30 attach to a post_class session that the sheet
+      declares, 16 stay module-level, and 5 attach elsewhere on folder
+      evidence — including SD4's single case, a live-class prerequisite doc
+      inside `2. Live_Class/` that correctly became a `class` attachment in a
+      domain with no post_class session at all.
+

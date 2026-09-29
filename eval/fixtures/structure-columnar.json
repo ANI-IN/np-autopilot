@@ -1,0 +1,112 @@
+{
+ "deferred_types": [
+  "code_repo",
+  "content_topic",
+  "curriculum_doc",
+  "file",
+  "slide_deck"
+ ],
+ "e": "AAABAAAAAAABAAAAAAACAAEA",
+ "eid": "ZQAAAGYAAABnAAAA",
+ "ep": {
+  "0": {
+   "tier": "mastersheet"
+  },
+  "1": {
+   "tier": "mastersheet"
+  }
+ },
+ "format": "columnar-1",
+ "ids": [
+  "mod_synthetic",
+  "ses_synthetic",
+  "wk_synthetic"
+ ],
+ "labels": [
+  "Synthetic Module",
+  "Class",
+  "Week 9"
+ ],
+ "legacy_modules": 0,
+ "m": 3,
+ "n": 3,
+ "note": "The structure layer. Topics, decks, curriculum docs, repos and files are behind a toggle and load on demand \u2014 they are 5,200 more nodes and 37,771 more edges.",
+ "np": {
+  "0": {
+   "domain_slug": "synthetic",
+   "sequence": 1
+  },
+  "1": {
+   "status": "current"
+  },
+  "2": {
+   "number": 9
+  }
+ },
+ "partial": {
+  "edge": [
+   "attached_drive_url",
+   "attached_file",
+   "attached_id",
+   "attached_is_deck",
+   "avg_rating",
+   "basis",
+   "class_dates",
+   "classes",
+   "inferred",
+   "join_basis",
+   "provenance",
+   "rank",
+   "session_kind",
+   "sources",
+   "subject_raw",
+   "via_alias"
+  ],
+  "node": [
+   "cadence",
+   "cross_validated",
+   "decline_rate",
+   "doctype",
+   "drive_folder_url",
+   "drive_url",
+   "family",
+   "file_count",
+   "first_seen_quarter",
+   "granularity",
+   "last_seen_quarter",
+   "merged_label_raw",
+   "parsed",
+   "pipeline_status",
+   "requests_to",
+   "review",
+   "roster_count",
+   "seniority",
+   "session_kind",
+   "sheet_count",
+   "stage",
+   "steps",
+   "team",
+   "title",
+   "tools",
+   "uplevel_link"
+  ]
+ },
+ "raw": {
+  "1": "Class "
+ },
+ "rels": [
+  "delivers_session",
+  "scheduled_in"
+ ],
+ "t": [
+  1,
+  0,
+  2
+ ],
+ "types": [
+  "class_session",
+  "module",
+  "program_week"
+ ],
+ "xy": "AADwwQAAIEIAALBAAADowAAAwH8AAMB/"
+}

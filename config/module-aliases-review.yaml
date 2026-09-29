@@ -1,0 +1,91 @@
+# Row-B modules whose LABEL collides with an existing module node.
+#
+# generated: 2026-09-29T13:03:32Z
+# collisions: 16
+#
+# A collision is NOT a match. Row-B modules are keyed on
+# (domain_slug, sequence); these rows exist so a human can decide
+# whether each is the same module as the label-keyed one in the
+# existing graph. Nothing here is applied while confirmed: false.
+version: 1
+collisions:
+  - label: 'Databases'
+    domain: full-stack
+    sequence: 1
+    module_key: mod_0bc009fd274eea44
+    confirmed: false
+  - label: 'API Design and Implementation'
+    domain: full-stack
+    sequence: 2
+    module_key: mod_e5f708116a4b7fac
+    confirmed: false
+  - label: 'UI System Design'
+    domain: full-stack
+    sequence: 5
+    module_key: mod_b591bcb07c5eb33b
+    confirmed: false
+  - label: 'UI & DOM'
+    domain: frontend
+    sequence: 2
+    module_key: mod_50a33a8e184e6849
+    confirmed: false
+  - label: 'Frontend System Design'
+    domain: frontend
+    sequence: 3
+    module_key: mod_0d3e49f1778b9090
+    confirmed: false
+  - label: 'Leveling Up with Advanced JavaScript and CSS'
+    domain: frontend
+    sequence: 4
+    module_key: mod_bb30095a76e9b5c6
+    confirmed: false
+  - label: 'Database Design'
+    domain: backend
+    sequence: 1
+    module_key: mod_36793b37f57c09a0
+    confirmed: false
+  - label: 'Object Modeling'
+    domain: backend
+    sequence: 2
+    module_key: mod_cefc969d84e291e5
+    confirmed: false
+  - label: 'API Design'
+    domain: backend
+    sequence: 3
+    module_key: mod_150eb79c4ec6f254
+    confirmed: false
+  - label: 'Cloud Native Design'
+    domain: backend
+    sequence: 4
+    module_key: mod_44e86d468ffa62f5
+    confirmed: false
+  - label: 'Concurrency'
+    domain: backend
+    sequence: 5
+    module_key: mod_68672ce55043c450
+    confirmed: false
+  - label: 'Quality Engineering Foundations'
+    domain: testing
+    sequence: 1
+    module_key: mod_2e4842a29bc521ba
+    confirmed: false
+  - label: 'API Testing'
+    domain: testing
+    sequence: 3
+    module_key: mod_a036b35b54865c2a
+    confirmed: false
+  - label: 'Automation Testing'
+    domain: testing
+    sequence: 4
+    module_key: mod_e3865bea05ed325a
+    confirmed: false
+  - label: 'Test Automation Design Patterns'
+    domain: testing
+    sequence: 5
+    module_key: mod_1262237b9b72b360
+    confirmed: false
+  - label: 'Cloud Testing'
+    domain: testing
+    sequence: 6
+    module_key: mod_b1feb3161efd9eaa
+    confirmed: false

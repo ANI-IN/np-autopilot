@@ -300,6 +300,103 @@ node_types:
 # it does not get it — enumerate the types instead.
 # ---------------------------------------------------------------------------
 
+
+  # ------------------------------------------------------------------------
+  # ROW-B CONTENT CHAIN — added 2026-09-29, PROPOSED under D2a.
+  #
+  # Every `expect` below is null and must stay null: these are floors over 4 of
+  # 12 domain folders in 1 of 5 registry rows. CLAUDE.md §2.
+  # ------------------------------------------------------------------------
+
+  - name: curriculum_doc
+    expect: null
+    key: drive_file_id
+    properties: [label, label_raw, kind, drive_file_id, owner_domain, sources, sensitive]
+    note: >
+      ONE node type for curriculum documents, with `kind` telling them apart.
+      Measured 2026-09-29: exactly one KYP exists across 991 files in the four
+      approved domains (SD2's `Intro to Course - Front-EndEngineering - KYP
+      Doc.pdf`). SD1, SD3 and SD4 have no KYP at all — that is a CONTENT GAP
+      and must be reported as one, not papered over by calling an outline a KYP.
+
+  - name: program_week
+    expect: null
+    key: [curriculum_doc, number]
+    properties: [label, label_raw, number, recovered_from_date_coercion, sources, sensitive]
+    note: >
+      A PROGRAM week, and it exists only where a curriculum document states one.
+      A `Week N` FOLDER is not a week — it is local sequencing within the domain
+      and becomes the `sequence` property on the domain->module edge.
+      The offset of 8 between the two (weeks 1-5 Algorithms, 6-8 Scalable System
+      Design) is EXPECTED and is never used to compute one from the other:
+      pipeline/lib/curriculum.py raises ArithmeticWeekRefused.
+
+  - name: assignment
+    expect: null
+    key: [module, drive_file_id]
+    properties: [label, label_raw, sources, sensitive]
+
+  - name: assignment_review
+    expect: null
+    key: [assignment, drive_file_id]
+    properties: [label, label_raw, sources, sensitive]
+    note: >
+      METADATA ONLY. Learner-authored material inside a review is never opened
+      (owner's Phase-0 answer 5); the node carries name, path and its assignment
+      and nothing from inside the file.
+
+  - name: slide_deck
+    expect: null
+    key: drive_file_id
+    properties: [label, label_raw, slide_count, owner_domain, sources, sensitive]
+    note: >
+      A deck NEVER yields a person. D1, and REGISTRY-INVENTORY §7 is the
+      measurement: four instructor-shaped tuples on registry decks, two of them
+      fabricated and structurally identical to the two real ones.
+
+  - name: content_topic
+    expect: null
+    key: [module, normalised_label]
+    properties: [label, label_raw, slide_number, sources, sensitive]
+    note: >
+      SCOPED TO ITS MODULE, deliberately. A global topic node merges Backend's
+      `API Design` with Testing's `API Testing` on a name, which is the alias
+      failure this project has already had three times.
+
+  - name: code_repo
+    expect: null
+    key: drive_file_id
+    properties: [label, label_raw, owner_domain, sources, sensitive]
+
+  - name: class_session
+    expect: null
+    key: [module, session_kind, uplevel_link]
+    properties: [label, label_raw, session_kind, resource_type, uplevel_link,
+                 sources, sensitive]
+    note: >
+      One row of the mastersheet's session block. `session_kind` is one of
+      pre_class, class, alternate_class, assignment, assignment_review,
+      alternate_assignment_review, post_class — and it comes from the resource
+      NAME, because the sheet's own `Type` column collapses the four live-class
+      variants into one value.
+
+  - name: instructor_contact
+    expect: null
+    key: instructor_slug
+    properties: [label, label_raw, contact_phone, contact_email, linkedin_url,
+                 scrubbed_from_public, sources, sensitive]
+    note: >
+      ALWAYS sensitive: true. A companion to `instructor`, carrying only the
+      three columns approved in docs/CONTACT-DATA.md §R.
+
+      It is a separate NODE rather than three properties on the instructor
+      because the existing split is node-level — graphio.split_graph sends
+      `sensitive: true` nodes to the gitignored half — while the owner's
+      condition is property-level: name, years, company and designation stay
+      public. A companion node expresses that with the machinery that already
+      exists and is already enforced, instead of a new one that would have to
+      be trusted.
+
 edge_types:
 
   - name: belongs_to
@@ -452,6 +549,153 @@ edge_types:
     note: >
       Citation only, never a traversal path. All 92 workflows share one file
       node, so this is a degree-92 hub, not a bridge (R6b).
+
+# ---------------------------------------------------------------------------
+# Controlled vocabulary
+# ---------------------------------------------------------------------------
+
+
+  # ------------------------------------------------------------------------
+  # ROW-B CONTENT CHAIN edges — PROPOSED under D2a, 2026-09-29.
+  #
+  # DEVIATION FROM THE REQUESTED CHAIN, stated rather than hidden. The brief
+  # asks for Week -> Live Class -> Assignment. Weeks exist only where a
+  # curriculum document states one, and SD3 has no week column anywhere — so
+  # hanging live classes off weeks would give Backend zero live classes. That
+  # is a cutoff hiding correct answers (CLAUDE.md §4). Live classes,
+  # assignments and decks therefore attach to the MODULE, and the week attaches
+  # to the module alongside them.
+  # ------------------------------------------------------------------------
+
+  - name: described_by
+    role: domain_curriculum
+    from: domain
+    to: curriculum_doc
+    cardinality: 1:n
+    expect: null
+    source: row-B domain folder, curriculum document by name
+
+  - name: introduces
+    role: curriculum_module
+    from: curriculum_doc
+    to: module
+    cardinality: n:n
+    expect: null
+    edge_properties: [source_kind]
+    source: the curriculum document's own module table
+
+  - name: offers
+    role: domain_module
+    from: domain
+    to: module
+    cardinality: 1:n
+    expect: null
+    edge_properties: [sequence]
+    source: row-B folder structure
+    note: >
+      `sequence` is the LOCAL ordinal from the `Week N` folder name. It orders
+      modules within the domain and is not a week.
+
+  - name: scheduled_in
+    role: module_week
+    from: module
+    to: program_week
+    cardinality: n:n
+    expect: null
+    edge_properties: [source_kind, source_file, recovered_from_date_coercion]
+    source: a curriculum document, never arithmetic
+    note: >
+      The edge carries the curriculum source the week came from, because a
+      module can sit at a different program week in a different program.
+      Absent for SD3 today, and that absence is reported as a gap.
+
+  # RETIRED `live_class` AS A NODE TYPE, 2026-09-29. Pass 7 minted one
+  # live_class per FILE — 845 of them — while the mastersheet remodel had
+  # already produced 134 class_session nodes that are the real sessions. 402
+  # of the 845 were a wrapper around a slide_deck built from the same file,
+  # and the deck node already existed; the other 443 were class-role files
+  # that already had a file node. It was a duplicate layer, and it was the
+  # single largest thing in the default view.
+  #
+  # Files and decks now hang off the module directly, behind a toggle. The
+  # structure layer keeps only sessions the mastersheet actually names.
+  - name: delivers
+    role: module_class_file
+    from: module
+    to: file
+    cardinality: 1:n
+    expect: null
+
+  - name: assessed_by
+    role: module_assignment
+    from: module
+    to: assignment
+    cardinality: 1:n
+    expect: null
+
+  - name: reviewed_in
+    role: assignment_reviewed_in
+    from: assignment
+    to: assignment_review
+    cardinality: 1:n
+    expect: null
+
+  - name: presented_with
+    role: module_deck
+    from: module
+    to: slide_deck
+    cardinality: n:n
+    expect: null
+
+  - name: covers_topic
+    role: module_topic
+    from: module
+    to: content_topic
+    cardinality: 1:n
+    expect: null
+    edge_properties: [slide_number]
+    source: lesson-plan tabs, and deck text with its slide number
+
+  - name: ships_with
+    role: module_repo
+    from: module
+    to: code_repo
+    cardinality: 1:n
+    expect: null
+
+  - name: reachable_at
+    role: contact_of
+    from: instructor
+    to: instructor_contact
+    cardinality: 1:1
+    expect: null
+    source: Resource Collection Mastersheet instructor tables (CONTACT-DATA §R)
+
+  - name: taught_by
+    role: module_instructor
+    from: module
+    to: instructor
+    cardinality: n:n
+    expect: null
+    edge_properties: [instructor_role]
+    source: >
+      Resource Collection Mastersheet, per-module instructor block
+      (Topic | Primary Instructor | Backup 1 | Backup 2 | Backup 3)
+    note: >
+      DELIBERATELY NOT `teaches`. `teaches` is an instructor<->module pairing
+      derived from class rosters and schedule sheets, with class_dates as its
+      evidence. This is a STAFFING ASSIGNMENT from a planning sheet: it says
+      who is meant to take the module, not who has stood in front of a class.
+      Merging them would do to staffing what folding expert_in into teaches
+      would have done — collapse two evidence classes into one answer.
+
+  - name: delivers_session
+    role: module_session
+    from: module
+    to: class_session
+    cardinality: 1:n
+    expect: null
+    edge_properties: [session_kind]
 
 # ---------------------------------------------------------------------------
 # Controlled vocabulary
@@ -651,6 +895,42 @@ common_properties:
 # moving them is a data decision rather than a mechanism decision.
 property_scopes:
   public:
+    # --- SOURCE LINKS, 2026-09-29. All public: a Drive or Uplevel URL is
+    # --- where a reader goes to see the thing, and everyone at IK has view
+    # --- access to both (config/out-of-corpus-facts.yaml). None is contact
+    # --- data; `mailto:` targets are refused at the reader, not here.
+    - attached_drive_url
+    - attached_id
+    - attached_is_deck
+    - deck_drive_url
+    - drive_folder_url
+    - drive_url
+    - locator_kind
+    # --- added 2026-09-29 for the merged projection (pass 8 + B1). ---------
+    # All sixteen are STRUCTURAL or PROVENANCE. None is contact data; the
+    # three contact fields stay under `sensitive` below and reach only the
+    # gitignored half (docs/CONTACT-DATA.md §R).
+    #
+    # They are listed here rather than defaulted because the old default put
+    # an unclassified field in the PUBLIC half — so widening defaulted toward
+    # exposure, and each of these had to be looked at once.
+    - attached_file        # a session edge naming the file that landed on it
+    - confirmed            # false on the MOD-04 edges: kept, not asserted
+    - from                 # which source kind a topic edge came from
+    - historical           # a superseded revamp subtree, or a deck named Old
+    - ins_id               # which INS row merged this edge's endpoint
+    - join                 # how a proposed join was arrived at
+    - label_had_link       # the label carried a URL; original in label_raw
+    - match_evidence       # why a file was attached to that session
+    - merge_ids            # which answered review rows produced this node
+    - merged_from          # the id this edge used to point at
+    - merged_label_raw     # the absorbed node's label, kept as a citation key
+    - mod_id               # which MOD row merged this edge's endpoint
+    - page                 # locator: page number in a document
+    - slide                # locator: slide number in a deck
+    - tab                  # locator: worksheet tab name
+    - tier                 # which evidence tier a staffing edge belongs to
+    # ----------------------------------------------------------------------
     - admitted_by
     - alerts
     - avg_rating
@@ -659,11 +939,17 @@ property_scopes:
     - class_dates
     - classes
     - confirmed_count
+    - content_available
     - corpus_disagrees
     - cross_validated
+    - current_company
+    - current_designation
     - decline_rate
     - declined_count
     - doctype
+    - domain_slug
+    - drive_file_id
+    - drive_folder
     - effort
     - employee_ids
     - family
@@ -671,34 +957,69 @@ property_scopes:
     - first_seen_quarter
     - granularity
     - inferred
+    - instructor_role
     - join_basis
     - join_key
+    - kind
+    - label_variants
     - last_seen_quarter
+    - locator_kind
+    - mime
+    - normalised_label
+    - number
+    - owner_domain
     - parsed
+    - past_companies
+    - path
     - pipeline_status
     - provenance
     - rank
+    - recovered_from_date_coercion
     - relative_path
     - renderable
     - requests_from
     - requests_to
+    - resource_type
     - review
+    - revision
     - role
     - roster_count
     - seen_in_sheets
     - seniority
+    - sequence
+    - session_kind
     - sheet_count
+    - slide_count
+    - slide_number
+    - slug
+    - source_doc
+    - source_file
+    - source_kind
     - stage
     - status
     - steps
     - subject_raw
+    - superseded_by
     - team
     - theme_id
     - title
     - tools
+    - unavailable_reason
+    - unavailable_rule
+    - uplevel_link
     - via_alias
     - workflow_id
-  sensitive: []
+    - years_experience
+  sensitive:
+    # Approved 2026-09-29 — docs/CONTACT-DATA.md §R, instructor tables in the
+    # Resource Collection Mastersheet ONLY. Classified `sensitive` so that
+    # project_graph.py REFUSES to project them on a row without sensitive:true,
+    # which is what forces them onto a node that graphio writes to the
+    # gitignored half. The classification IS the enforcement.
+    - contact_email
+    - contact_phone
+    - linkedin_url
+    - scrubbed_from_public
 
 excluded:
 

@@ -2750,3 +2750,97 @@ document of ours. Final hash `a53462823ca26466fc5e6b3bf18615ec51bb96ed003249a866
 ## 2026-09-18 18:23:27Z — 03_resolve
 
 - Nodes 4974 | alias merges applied 23 | fuzzy proposed 2 | applied 0
+
+## 2026-09-28 21:09:12Z — 06_crawl_content
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Files: 1440, exported 919
+- Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 51, 'learner-content': 163}
+- Seconds: 2083
+
+## 2026-09-28 21:43:17Z — 06_crawl_content
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Files: 1440, exported 919
+- Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 51, 'learner-content': 163}
+- Seconds: 1936
+
+## 2026-09-28 22:18:06Z — 06_crawl_content
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Files: 1440, exported 919
+- Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 51, 'learner-content': 163}
+- Seconds: 1966
+
+## 2026-09-29 06:55:24Z — 06_crawl_content
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Files: 1440, exported 917
+- Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 2, 'download-disabled-by-owner': 51, 'learner-content': 163}
+- Seconds: 1928
+
+## 2026-09-29 07:01:47Z — 06_crawl_content
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Files: 1440, exported 5
+- Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 2, 'download-disabled-by-owner': 49, 'learner-content': 160}
+- Seconds: 279
+
+## 2026-09-29 07:39:22Z — 06_crawl_content
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Files: 1440, exported 921
+- Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 3, 'download-disabled-by-owner': 49, 'learner-content': 160}
+- Seconds: 1977
+
+## 2026-09-29 07:45:56Z — validate
+
+- validate: 0 FAIL, 16 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-29 08:41:58Z — validate
+
+- validate: 1 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-29 08:49:24Z — validate
+
+- validate: 1 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-29 08:49:29Z — validate
+
+- validate: 1 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-29 08:50:29Z — validate
+
+- validate: 0 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-29 08:50:43Z — validate
+
+- validate: 1 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-29 08:50:45Z — validate
+
+- validate: 0 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-29 08:50:53Z — validate
+
+- validate: 0 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-29 09:29:44Z — validate
+
+- validate: 0 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-29 10:24:43Z — validate
+
+- validate: 0 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-29 10:40:12Z — validate
+
+- validate: 0 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-29 11:05:16Z — validate
+
+- validate: 0 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-29 17:31:49Z — validate
+
+- validate: 0 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges

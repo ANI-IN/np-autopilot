@@ -41,10 +41,74 @@ BASELINE = CONFIG_DIR / "migration-baseline.yaml"
 PLUGIN = REPO_ROOT / ".claude-plugin" / "plugin.json"
 
 
+def _derive_provenance_edges(nodes: list, prov: str) -> list:
+    """One provenance edge per (node, cited file), derived from `sources`.
+
+    THE TWO HALVES OF THE GRAPH MATERIALISE PROVENANCE DIFFERENTLY. Pass 4
+    emits a `sourced_from` EDGE as well as the `sources` entry; pass 7 emits
+    only the entry, because DECISIONS §A.3 moved provenance out of `edges`
+    precisely to stop traversals hitting the degree-18,134 file hubs. The newer
+    pass is the one following the decision.
+
+    The database normalises both into `node_sources`, so a round trip that
+    COUNTED stored edges compared 30,554 on the file side with 37,376
+    reconstructed — a difference that says nothing about whether the projection
+    is faithful, only which pass happened to materialise an edge.
+
+    So both sides derive the shape from the same field. What is being verified
+    is the provenance CONTENT, which is the thing that must survive the trip.
+    """
+    by_path = {}
+    for n in nodes:
+        if n.get("type") == "file":
+            rel = n.get("relative_path") or n.get("label")
+            if rel:
+                by_path[str(rel).lstrip("/")] = n["id"]
+    out = []
+    for n in nodes:
+        if n.get("type") == "file":
+            continue                    # a file never cites itself
+        for s in n.get("sources", []):
+            f = (s.get("file") or "").lstrip("/")
+            tgt = by_path.get(f)
+            if tgt:
+                out.append({"rel": prov, "source": n["id"], "target": tgt})
+    return out
+
+
+def _normalised_nodes(nodes: list) -> list:
+    """Nodes with provenance written the same way on both sides.
+
+    THE TWO HALVES DISAGREE ABOUT A DEFAULT. Pass 4 writes `ordinal: 0`
+    explicitly on 30,643 entries; pass 7 omits the key when it is zero, and
+    `node_sources.ordinal` is NOT NULL DEFAULT 0 so the database always has a
+    value. Three conventions for one fact.
+
+    Filling the default here — on BOTH sides, in the one function that measures
+    both — compares the provenance rather than which builder happened to write
+    a zero. Omitting it instead was tried first and broke the other half, which
+    is how the disagreement showed itself.
+    """
+    out = []
+    for n in nodes:
+        srcs = n.get("sources")
+        if not srcs:
+            out.append(n)
+            continue
+        m = dict(n)
+        m["sources"] = [dict(s, ordinal=s.get("ordinal", 0)) for s in srcs]
+        out.append(m)
+    return out
+
+
 def measure(g: dict) -> dict:
     """Every figure the baseline pins, measured from one graph."""
-    nodes, edges = g["nodes"], g["edges"]
     prov = taxonomy.edge_for_role("provenance")
+    nodes = _normalised_nodes(g["nodes"])
+    # Stored provenance edges are DISCARDED and re-derived, identically on both
+    # sides. See _derive_provenance_edges.
+    edges = [e for e in g["edges"] if e["rel"] != prov] + \
+            _derive_provenance_edges(nodes, prov)
 
     triples = collections.Counter((e["source"], e["target"], e["rel"]) for e in edges)
     colliding = {k: c for k, c in triples.items() if c > 1}
@@ -83,7 +147,12 @@ def measure(g: dict) -> dict:
     sizes.sort(reverse=True)
 
     return {
-        "content_hash": graphio.content_hash(g),
+        # HASHED ON THE NORMALISED GRAPH, not the raw one. `graphio.content_hash`
+        # is the version lock and is left alone; here the point is a round-trip
+        # comparison, and hashing raw edges compares which pass materialised a
+        # provenance edge rather than whether the provenance survived. Same
+        # reason `edges` above is normalised.
+        "content_hash": graphio.content_hash({"nodes": nodes, "edges": edges}),
         "totals": {"nodes": len(nodes), "edges": len(edges)},
         "node_counts": dict(sorted(collections.Counter(n["type"] for n in nodes).items())),
         "edge_counts": dict(sorted(collections.Counter(e["rel"] for e in edges).items())),
@@ -135,7 +204,8 @@ def graph_from_db() -> dict:
         cur.execute("""
             select node_id, origin, file, sheet, row_num, col_num, col_name,
                    page, within_cell, ordinal, evidence, entered_at,
-                   prop, prop_ordinal
+                   prop, prop_ordinal, slide, tab, owner_domain, mime,
+                   evidence_kind
             from node_sources
             order by node_id, ordinal, prop_ordinal
         """)
@@ -143,13 +213,28 @@ def graph_from_db() -> dict:
         order: list[tuple] = []
         for (node_id, origin, file, sheet, row_num, col_num, col_name, page,
              within_cell, ordinal, evidence, entered_at, prop,
-             prop_ordinal) in cur.fetchall():
+             prop_ordinal, slide, tab, owner_domain, mime,
+             evidence_kind) in cur.fetchall():
+            # SLIDE AND TAB ARE PART OF THE IDENTITY of a citation. Leaving
+            # them out of this key is what made two topics cited from different
+            # slides of one deck group into a single entry.
             key = (node_id, origin, file, sheet, row_num, col_num, col_name,
-                   page, within_cell, ordinal)
+                   page, within_cell, ordinal, slide, tab, owner_domain,
+                   mime, evidence_kind)
             if key not in grouped:
                 entry = {"origin": origin, "ordinal": ordinal}
                 if file is not None:
                     entry["file"] = file
+                if slide is not None:
+                    entry["slide"] = slide
+                if tab is not None:
+                    entry["tab"] = tab
+                if owner_domain is not None:
+                    entry["owner_domain"] = owner_domain
+                if mime is not None:
+                    entry["mime"] = mime
+                if evidence_kind is not None:
+                    entry["evidence_kind"] = evidence_kind
                 if sheet is not None:
                     entry["sheet"] = sheet
                 if row_num is not None:
@@ -253,8 +338,13 @@ def main() -> int:
     else:
         # `full` is the union of both halves; `public` is the committed file
         # alone, which is what this phase projects.
-        g = graphio.load_graph(Path(args.graph),
-                               include_sensitive=(scope == "full"))
+        # THE MERGED GRAPH, because that is what project_graph.py writes.
+        # This read `load_graph` until 2026-09-29 and so described
+        # knowledge/graph.json alone — 3,146 nodes against a projection of
+        # 8,508. Running it in file mode reported 32/32 VERIFIED while the
+        # database held something else entirely, which is the shape docs/A7B.md
+        # catalogues: a green check comparing two things that already agreed.
+        g = graphio.load_merged(include_sensitive=(scope == "full"))
     actual = measure(g)
 
     if args.freeze:
@@ -277,10 +367,8 @@ def main() -> int:
                 # TWO scopes, because the database deliberately holds only the
                 # public half in this phase. Verifying it against the full
                 # baseline would fail on every count and prove nothing.
-                "full": measure(graphio.load_graph(Path(args.graph),
-                                                   include_sensitive=True)),
-                "public": measure(graphio.load_graph(Path(args.graph),
-                                                     include_sensitive=False)),
+                "full": measure(graphio.load_merged(include_sensitive=True)),
+                "public": measure(graphio.load_merged(include_sensitive=False)),
             },
             **actual,
         }

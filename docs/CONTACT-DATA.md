@@ -1,7 +1,12 @@
 # CONTACT DATA — the D4 question, written before any extraction
 
-**Status: recommended NO, 2026-09-18. Not built. Recorded rather than dropped,
-because the reasoning is what makes the decision re-checkable if it is reopened.**
+**Status: PARTIALLY REVERSED by the corpus owner, 2026-09-29. See §R at the end
+— the original recommendation and its reasoning are left standing above it,
+unedited, because a reversal is only re-checkable against what it reversed.**
+
+**Original status: recommended NO, 2026-09-18. Not built. Recorded rather than
+dropped, because the reasoning is what makes the decision re-checkable if it is
+reopened.**
 
 The trigger was small: the instructor panel could show a LinkedIn link. The data
 exists — `01-corpus-inventory.md` counts **4,524 distinct LinkedIn URLs**
@@ -289,3 +294,160 @@ reverse **explicitly and by narrowing the rule**, never by exception:
    came to be trusted for months in the first place.
 
 **Nothing extracted. Awaiting the population.**
+
+---
+
+# §R · REVERSAL — the Resource Collection Mastersheet instructor tables
+
+**Approved 2026-09-29. This reverses the 2026-09-18 recommendation for ONE
+source and leaves it standing for every other.**
+
+## What changed, and what did not
+
+The 2026-09-18 decision said no to instructor contact data for all three
+populations. The reasoning above is unchanged and still applies to the decks,
+the documents, the file-owner metadata and the row-B content crawl.
+
+What is approved is narrower: **the instructor tables in
+`02-curriculum/Resource Collection Mastersheet (Software + System).xlsx`**, on
+the `Full Stack Engineering`, `Frontend Engineering`, `Backend Engineering` and
+`Test Engineering` tabs. Those tables have a `Contact #`, an `Email id` and a
+`Linkedin` column, authored deliberately as a roster.
+
+**Why this source and not the others.** Every population in the original
+decision was reached by inference — a name on a slide, an address in a file's
+owner metadata, a URL in a document's body. This is a column, in a table, with
+a header, maintained as a roster. It is the evidence shape `node_sources` was
+built to cite, and the one the extractor can be pointed at deliberately rather
+than sweeping up.
+
+## Conditions, each enforced by something that runs
+
+| condition | enforced by |
+|---|---|
+| the three contact columns go ONLY into the sensitive half | they are declared `sensitive` in `taxonomy.yaml -> property_scopes`, and `project_graph.py::_refuse_unclassified_properties` REFUSES to project a sensitive property on a row without `sensitive: true`. They therefore live on a `sensitive: true` node, which `graphio.split_graph` writes to `graph-sensitive.json` — gitignored |
+| never in `knowledge/graph.json` or anything git-tracked | `tests/test_no_contact_data_in_tracked_files.py` scans every tracked file for an address, a phone or a LinkedIn URL |
+| admin-only when projected | the `recruiting` RLS path, unchanged — `nodes_recruiting_select` keys on `sensitive` |
+| name, years, company, designation, past companies may be public | `mastersheet.split_instructor_row()` returns the two sets separately, and a test asserts no public field carries an `@` or a profile URL |
+| the content-crawl redaction is untouched | it governs deck and document TEXT, which this is not. `redact.py` is unchanged by this reversal |
+| `sources.py`'s allow-list is extended EXPLICITLY | the new columns are named there one at a time; `tests/test_exclusion_is_deny_by_default.py` still fails on an undeclared contact column |
+| the payroll / contact CI guard still passes without blanket exemptions | `check_no_payroll_committed.py` is unchanged, and no blanket exemption is added for this source |
+
+## What the parser found while implementing it
+
+**One row in `Test Engineering` has an email and a LinkedIn URL pasted into the
+NAME column, and no name at all.** A column map says where a field *should*
+be; it does not say what a cell *contains*. So `split_instructor_row` scrubs
+contact tokens out of public fields into the private side and flags the row,
+and `is_unusable()` reports a row that scrubbing leaves nameless rather than
+ingesting it or dropping it silently. Found by the test, not by reading.
+
+## What this does NOT approve
+
+- anything of this kind from decks, documents or unstructured text
+- file-owner addresses (D4 stands: the owner is stored as a DOMAIN)
+- the LinkedIn roster in `SMEs consent` (D5 stands, and it is a modelling
+  limit rather than a privacy preference)
+- publishing any of it — the sensitive half is not projected at all today, and
+  `--scope full` still refuses
+
+```
+Approved by:            Animesh Kumar
+Date:                   2026-09-29
+Scope:                  Resource Collection Mastersheet instructor tables,
+                        four domain tabs, that source only
+Sensitive fields:       the three contact columns named in §R
+Public fields:          name, years of experience, current company,
+                        current designation, past tier-1 companies
+```
+
+---
+
+# §L · LABEL CHECK — narrowed from "any @ or any http" to an address and a URL
+
+**Approved by Animesh Kumar, 2026-09-29.** Implemented by
+`db/migrations/0018_label_rejects_addresses_not_words.{up,down}.sql`.
+
+## What the old check did, and why it had to change
+
+`0002_graph_schema.up.sql` constrained every node label with:
+
+```sql
+check (label !~ '@' and lower(label) !~ 'http')
+```
+
+The name says what it is for — a label must not carry contact data. The test
+was the *character* `@` and the *substring* `http`. Against the 75-file corpus
+that cost nothing: no label in it contained either, so the check never fired
+and never had to be right.
+
+The row-B content graph has 5,811 nodes and **116 fail it**:
+
+| what | count | example |
+|---|---:|---|
+| contains `http`, but it is the PROTOCOL | 104 | `HTTP Methods and Error Codes` |
+| contains `http`, and it is a real URL | 10 | `Given: https://reqres.in/api/users/2` |
+| contains `@`, and it is a MENTION | 2 | `Introduction to Cloud Testing: @Tim` |
+
+By type: 44 `file`, 31 `content_topic`, 27 `live_class`, 12 `slide_deck`.
+
+A guard in this shape does not fail safe. Under it the only ways to project the
+content graph are to drop 116 real nodes or to turn the constraint off, and
+under a deadline it is the second. That is `CLAUDE.md` §4: a threshold may rank
+or warn; it may exclude only when the shape **cannot be the thing at all**.
+`HTTP Methods and Error Codes` plainly can be a topic.
+
+## The narrowing
+
+| | before | after |
+|---|---|---|
+| address | any `@` | `local@domain.tld` |
+| link | any `http` | `https?://` |
+
+This is **narrower**, so it is recorded here as a decision rather than made as a
+refactor — the same reason §R exists.
+
+## Negative controls
+
+Verified against PostgreSQL before the migration was written, and they are the
+acceptance test for it. Still **rejected**:
+
+- `someone@example.org` — email shape
+- `profile https://example.com/in/x` — URL scheme. (A LinkedIn profile
+  URL is the case that matters in practice; it is described rather than
+  written out, because a document about keeping addresses out of the repo
+  should not be the thing that puts one in.)
+- `Given: https://reqres.in/api/users/2` — a real URL in a real topic
+
+Now **accepted**:
+
+- `HTTP Methods and Error Codes` — the protocol, not a link
+- `Common HTTP response codes used with REST:` — same
+- `Introduction to Cloud Testing: @Tim` — a mention, not an address
+- `Availability, Reliability, Scalability & Replication: @SURUCHI` — same
+
+Measured effect: content labels rejected **116 → 10**; main-graph labels
+rejected **0 → 0**.
+
+## The ten that really do carry a URL are cleaned, never dropped
+
+Pass 7 strips the URL from the label and keeps the original in provenance
+(`label_raw` and the source record). The node survives and the citation back to
+the file is intact. `CLAUDE.md` §1: a failed join is visible, a deleted node is
+not.
+
+## Three places, one rule
+
+The same test now lives in the DB constraint (0018), in `pipeline/validate.py`,
+and in pass 7's label cleaner. The constraint is the one that cannot be bypassed
+by a code path that forgets, which is why it is the one written down here.
+
+## What this does NOT approve
+
+- It does not permit an address anywhere else. `property_scopes`, the
+  node-level sensitive split and §R are all unchanged.
+- It does not permit a URL in a label. Ten labels are cleaned, not admitted.
+- It says nothing about `@` in any field other than `nodes.label`. Migration
+  0017 still forbids `@` in every provenance column, and that stays broad on
+  purpose: provenance records a file owner as a DOMAIN, so an `@` there is
+  always wrong.

@@ -20,7 +20,10 @@ DEFAULT_BUILD_LOG = REPO_ROOT / "BUILD_LOG.md"
 TAXONOMY_FILE = CONFIG_DIR / "taxonomy.yaml"
 PEOPLE_FILE = CONFIG_DIR / "people.yaml"
 WORKFLOW_OWNERS_FILE = CONFIG_DIR / "workflow-owners.yaml"
-DRIVE_CONFIG = CONFIG_DIR / "drive.yaml"
+#: Pass 0's config (folder_id, key PATH). Overridden by NP_DRIVE_CONFIG, the
+#: same seam as NP_BUILD_LOG: it lets a test run the real script against a
+#: synthetic config. It changes which file is read, never the Drive scope.
+DRIVE_CONFIG = Path(os.environ.get("NP_DRIVE_CONFIG", CONFIG_DIR / "drive.yaml"))
 
 #: Default corpus root. Overridden by NP_CORPUS_PATH.
 DEFAULT_CORPUS_PATH = REPO_ROOT

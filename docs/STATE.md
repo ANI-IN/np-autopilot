@@ -1,5 +1,9 @@
 # STATE — working brief for a session with no memory
 
+> **Resuming after a cleared session? Start with [docs/HANDOFF.md](HANDOFF.md)** —
+> where things stand, what is done, what is next, every owner decision, and
+> the working agreement. Written 2026-09-29.
+
 You are continuing `np-autopilot`: a knowledge graph over Interview Kickstart's
 New Programs corpus, projected into Supabase Postgres, served by a Vercel web
 app behind Google Workspace sign-in.
@@ -110,7 +114,7 @@ this table.
 
 | Thing | Lives under | Identifier |
 |---|---|---|
-| **GitHub** | `ANI-IN` (personal) | `ANI-IN/np-autopilot`, private, repo id `1374030791` |
+| **GitHub** | `ANI-IN` (personal) | `ANI-IN/np-autopilot`, repo id `1374030791` — **was PUBLIC from creation 2026-09-17 until 2026-09-29 18:58–19:06Z; private, verified 19:06:50Z** (`07-risks.md` R21). Private is what it must be; `pipeline/check_repo_private.py` is what says whether it is |
 | **Vercel** | `b2c-courses-new-programs@interviewkickstart.com` (shared) | project `np-autopilot`, `prj_Imn4VGzZLPgeRH0TaOiyJAGxrzNZ`, scope `b2c-courses-new-programs-4557s-projects` |
 | **Supabase** | same shared account | ref `yqmzjgzhxhihnpbgqmeh`, region **ap-northeast-2 (Seoul)** |
 | **Google Cloud OAuth** | same shared account | consent screen **Internal** |
@@ -193,9 +197,10 @@ see §6.
 
 ### R18 — the repository was public for eight days
 
-**Status: remediated. The GitHub package is closed; one Drive question
-remains.** Found 2026-09-17; set private, then deleted and recreated (old id
-`1363038448` → new `1374030791`). History rewritten. What was readable: 3,817
+**Status: NOT remediated as recorded — see R21.** Found 2026-09-17; set
+private, then deleted and recreated (old id `1363038448` → new `1374030791`)
+— **and the replacement was created PUBLIC and stayed so for 13 days**, while
+this line said "remediated" (`07-risks.md` R21, found 2026-09-29). History rewritten. What was readable: 3,817
 instructor names including **277 named hiring rejections** and 1,625
 mid-pipeline candidates.
 
@@ -671,6 +676,12 @@ the question asked.
 - **The three aliases** — unresolved, deliberately. `Agentic AI` cannot be
   resolved from the data at all and now says so on the surface.
 - **`A7B.md`'s open question** — which of our outputs does nobody read?
+- **`interview-kickstart.com` (hyphen) owns 185 of 1,440 row-B files** —
+  12.8%, concentrated in three SD4 foundation-material trees. **With IT as of
+  2026-09-29: does IK own that domain?** D4 stores an owner domain and nothing
+  else, so the domain is the entire signal. Same measurement: 204 files owned
+  at free-mail addresses (`gmail.com` 179, `hotmail.com` 22). See
+  `REGISTRY-INVENTORY.md` §11.
 
 ---
 

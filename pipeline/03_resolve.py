@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import yaml                                                            # noqa: E402
 
+from pipeline.lib import ids as _ids                                   # noqa: E402
 from pipeline.lib import taxonomy                                      # noqa: E402
 from pipeline.lib.paths import CONFIG_DIR, KNOWLEDGE_DIR, build_log    # noqa: E402
 
@@ -62,15 +63,10 @@ def json_safe(value):
     return value
 
 
-def node_id(node_type: str, canonical: str) -> str:
-    """Deterministic id. Hash of type + canonical name, never of the raw label.
-
-    The reference implementation derived ids from the raw label ('I:workflows
-    are powerful'), so any label edit silently created a new node and orphaned
-    every edge pointing at the old one.
-    """
-    digest = hashlib.sha256(f"{node_type}\x00{canonical}".encode()).hexdigest()
-    return f"{node_type[:3]}_{digest[:16]}"
+#: MOVED to pipeline/lib/ids.py so pass 7 can import it — a module whose name
+#: starts with a digit cannot be imported, which is why pass 7 grew a second
+#: minting function that produced ids the DB constraint rejects.
+node_id = _ids.node_id
 
 
 def load_people() -> tuple[dict, dict]:

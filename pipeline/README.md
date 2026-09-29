@@ -14,11 +14,26 @@ re-parsing must never re-download.
 | 3 | `03_resolve.py` | built | `candidates.json`, `config/people.yaml` | `resolved.json`, `config/people-review.yaml` |
 | 4 | `04_build_graph.py` | built | `resolved.json`, `candidates.json`, `files.json`, corpus, config | **`graph.json`**, two review files |
 | 5 | `05_render_html.py` | built | `graph.json`, `files.json` | `graph.html`, `_graph_*.{json,mjs}` |
+| 6 | `06_crawl_content.py` | **built 2026-09-29 — never run against Drive.** Row B, four approved domains. Guards in `lib/content_scope.py`, `lib/redact.py`, `lib/curriculum.py`; 52 tests, 20 mutation-verified | registry row B | `.drive-cache/content-rowB/` |
+| 7 | `07_build_content_graph.py` | **built 2026-09-29.** Row B content chain: modules keyed (domain, sequence), curriculum docs, topics with slide/page/tab locators. No network — pass 6 fetches, pass 7 parses | `.drive-cache/content-rowB/` | `knowledge/content_graph.json`, 2 review YAMLs |
+| 8 | `08_merge_graphs.py` | **built 2026-09-29.** Applies the ANSWERED `REVIEW-QUEUE` decisions — 16 MOD merges and the confirmed instructor aliases — and writes one graph. Separate from pass 7 on purpose: the join is a human decision read from `config/module-merges.yaml`, and fusing an answer sheet into a build step makes the build unreproducible whenever the answers change. Evidence tiers are never merged | `graph.json`, `content_graph.json`, `config/module-merges.yaml` | `knowledge/merged_graph.json` |
 | — | `validate.py` | built — 17 categories, all fault-injection tested | `graph.json` | stdout, build log |
 
 Helpers: `gen_index.py` regenerates `knowledge/INDEX.md` from `graph.json` —
 never hand-write a count there. `gen_workflow_owners.py` regenerates the 92-row
 ownership stub; every suggestion lands `confirmed: false`.
+
+`gen_csp_hashes.py` recomputes the two inline-script sha256 hashes in
+`vercel.json` from `public/index.html`. `script-src` has no
+`'unsafe-inline'`, so editing the page without recomputing makes the
+DEPLOYED page refuse to run its own scripts — a blank explorer and a console
+error nobody sees. Run it after any edit to the page; `--check` fails
+instead of writing, for CI.
+
+`gen_acceptance_checklist.py` regenerates `docs/ACCEPTANCE-CHECKLIST.md` —
+every module's items with their Uplevel and Drive links, for click-checking.
+Generated, never hand-written: 20 modules x 8 items goes stale on the next
+crawl and nobody notices until a link is dead.
 
 `count_registry.py` is **not a pass and never fetches anything.** It enumerates
 the scale-up registry's Drive folders and reports what is there — file and
@@ -46,6 +61,12 @@ It distinguishes data from prose by occurrence count — measured, five orders o
 magnitude apart — so the project's own record of why the file is excluded does
 not trip the guard that enforces it. Run by CI; usable as a pre-commit hook with
 `--staged`.
+
+`check_repo_private.py` fails unless GitHub positively reports the repository
+private — the authenticated API's `private: true`, or an anonymous request
+refused. It could not look = it fails. The repository was public twice while
+every document said private (`07-risks.md` R18, R21). First step of CI's
+`secrets` job, and `.githooks/pre-push`.
 
 `gen_landing_stats.py` regenerates `public/stats.json`, the counts and build
 date the explorer's landing page shows. It reads `projection_meta` and the
@@ -142,6 +163,7 @@ returns; it does not decide it. `/staffing` never merges its evidence tiers, and
 | `NP_CORPUS_PATH` | repo root | corpus root. The one override; never hardcode a path. |
 | `NP_BUILD_LOG` | `BUILD_LOG.md` | where a pass appends its run record. Tests redirect it so `pytest` cannot dirty the working tree. |
 | `NP_LANDING_STATS` | `public/stats.json` | where `gen_landing_stats.py` writes the landing page's counts. Redirected by tests for the same reason as `NP_BUILD_LOG`: `project_graph.py` regenerates it on every public projection and the suite re-projects, so without the override a test run rewrites a tracked file. |
+| `NP_DRIVE_CONFIG` | `config/drive.yaml` | pass 0's config (folder id, key PATH). Tests point it at a synthetic config so the real script can be run on a clone without the gitignored one. Changes which file is read, never the Drive scope. |
 | `NP_AS_OF` | today, UTC | the date pass 4 treats as "now". `teaches` splits class dates into past and future, so the graph is deterministic within a day and not across days. Pin this to reproduce a historical build. |
 | `NP_DRIVE_SA_KEY` | `service_account_key` in `config/drive.yaml` | path to the pass-0 service-account key. **A path, never the key.** Pass 0 refuses to read a key from inside the repo: `.gitignore` stops a commit, not a copy into a build context. |
 | `NP_ALLOWED_HD` | `interviewkickstart.com` | the Google Workspace hosted domain a token must carry. **Deployment-level, never per request** — it is the domain rule, not a preference. Read by `web/lib/auth.py` and by `grant_access.py`, which refuses to provision an account whose provider `hd` disagrees. |

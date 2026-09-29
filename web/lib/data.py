@@ -31,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from pipeline.lib import db as _db                                    # noqa: E402
 from pipeline.lib import taxonomy as _tax                              # noqa: E402
+from pipeline.lib import layout as _layout                             # noqa: E402
 
 #: Depth cap for neighbourhood expansion. Fails LOUDLY rather than truncating:
 #: a silently truncated neighbourhood looks like a sparse graph, and this
@@ -47,6 +48,57 @@ class DepthExceeded(Exception):
     """Asked for a traversal deeper than the cap."""
 
 
+#: ONE CONNECTION PER WARM FUNCTION INSTANCE, reused across invocations.
+#:
+#: Opening a connection to Supabase measured 1.3 s from a laptop to
+#: ap-northeast-2 — in-region from Vercel it is far less, but it was being paid
+#: on EVERY request, warm or cold. A Vercel Python function handles one request
+#: at a time per instance, so a module-level connection is not shared
+#: concurrently.
+#:
+#: WHAT MAKES THIS SAFE IS THE ROLLBACK, not the caching. See the finally:
+#: block below, and tests/test_warm_connection_isolation.py, which asserts that
+#: a second request on a reused connection cannot see the first one's identity.
+_WARM = None
+
+#: ONE ROUND TRIP, not two. `set_config('role', ..., true)` is what `SET LOCAL
+#: ROLE` does, and both settings are still transaction-LOCAL — which is the
+#: property the reset depends on. Two statements meant two network round trips
+#: on every request, paid before any query ran.
+_SETUP_SQL = ("select set_config('request.jwt.claims', %s, true),"
+              "       set_config('role', 'authenticated', true)")
+
+
+def _warm_connection():
+    global _WARM
+    if _WARM is None or getattr(_WARM, "closed", True):
+        _WARM = _db.connect(_db.TRANSACTION)
+    return _WARM
+
+
+def _discard():
+    global _WARM
+    dead, _WARM = _WARM, None
+    if dead is not None:
+        try:
+            dead.close()
+        except Exception:                                              # noqa: BLE001
+            pass
+
+
+def _reset_or_discard(conn):
+    """What the finally: below does, for a failure before the yield."""
+    try:
+        conn.rollback()
+    except Exception:                                                  # noqa: BLE001
+        _discard()
+
+
+def _begin(conn, claims_json: str):
+    with conn.cursor() as cur:
+        cur.execute(_SETUP_SQL, (claims_json,))
+
+
 @contextmanager
 def request_connection(identity_subject: str | None):
     """A connection scoped to one caller, for one request.
@@ -57,19 +109,51 @@ def request_connection(identity_subject: str | None):
     than impossible, because "impossible" would be an exception a route could
     catch and work around.
     """
-    conn = _db.connect(_db.TRANSACTION)
+    global _WARM
+    claims = {"role": "authenticated"}
+    if identity_subject:
+        claims["sub"] = str(identity_subject)
+    claims_json = json.dumps(claims)
+    conn = _warm_connection()
+    # A CONNECTION THAT DIED WHILE IDLE. The pooler or the network can drop the
+    # reused connection between requests, and psycopg only finds out on the
+    # next write — `closed` is still False. The setup statement is that write.
+    # It is retried ONCE, on a fresh connection, and only when psycopg reports
+    # the connection itself broken: nothing of the caller's has run yet, so a
+    # retry here cannot run anything twice. A genuine SQL error, or a failure
+    # once the endpoint has the connection, is never retried.
+    # tests/test_warm_connection_recovers.py kills it both ways.
     try:
-        with conn.cursor() as cur:
-            claims = {"role": "authenticated"}
-            if identity_subject:
-                claims["sub"] = str(identity_subject)
-            cur.execute("select set_config('request.jwt.claims', %s, true)",
-                        (json.dumps(claims),))
-            cur.execute('set local role "authenticated"')
+        _begin(conn, claims_json)
+    except Exception:
+        if not (conn.closed or getattr(conn, "broken", False)):
+            _reset_or_discard(conn)
+            raise
+        _discard()
+        conn = _warm_connection()          # a failure here propagates: no loop
+        try:
+            _begin(conn, claims_json)
+        except Exception:
+            _reset_or_discard(conn)
+            raise
+    try:
         yield conn
     finally:
-        conn.rollback()
-        conn.close()
+        # ROLLBACK, NOT CLOSE. Both settings above are transaction-LOCAL —
+        # `set_config(..., true)` and `SET LOCAL ROLE` — so the rollback is
+        # what clears this request's identity, and it is the only thing
+        # standing between one caller and the next. Never weaken it to a
+        # commit, and never skip it on a path that returns early.
+        #
+        # If the rollback itself fails the connection is not in a state anyone
+        # should inherit, so it is dropped rather than reused.
+        try:
+            conn.rollback()
+        except Exception:
+            try:
+                conn.close()
+            finally:
+                _WARM = None
 
 
 def _rows(cur) -> list[dict]:
@@ -143,7 +227,7 @@ def neighbourhood(conn, node_id: str, depth: int = 1,
         nodes = _rows(cur)
         ids = [n["id"] for n in nodes]
         cur.execute(
-            "select rel, source_id, target_id, props from edges "
+            "select id, rel, source_id, target_id, props from edges "
             "where source_id = any(%s) and target_id = any(%s)", (ids, ids))
         edges = _rows(cur)
     return {"nodes": nodes, "edges": edges,
@@ -217,7 +301,7 @@ def overview(conn) -> dict:
     """
     with conn.cursor() as cur:
         cur.execute(
-            "select rel, source_id, target_id, props from edges "
+            "select id, rel, source_id, target_id, props from edges "
             "where rel = any(%s) and (source_id in "
             "  (select id from nodes where type = %s) or target_id in "
             "  (select id from nodes where type = %s))",
@@ -299,6 +383,218 @@ def provenance(conn, node_id: str) -> dict:
     }
 
 
+#: The STRUCTURE LAYER: what the default view shows without a toggle. Derived
+#: from edge endpoints, never written out — B2, the same rule pass 7 follows.
+#: Defined in pipeline/lib/layout.py since B3, because the projection lays out
+#: exactly these nodes and the two must not drift.
+#:
+#: `file` is deliberately absent. 1,443 of them carry no edge at all (they exist
+#: to be cited), so including them would put two thirds of the payload on screen
+#: as unconnected dots.
+STRUCTURE_TYPES, DEFERRED_TYPES = _layout.structure_types()
+
+#: The wire format of /api/structure. Part of the ETag, so changing the shape
+#: invalidates every cached copy. Bump it on ANY change to pack_structure().
+STRUCTURE_FORMAT = "columnar-1"
+
+#: PANEL-ONLY PROPERTIES (B3, lazy panels). Read by the side panel and nowhere
+#: else in the client, so the bulk payload leaves them out and
+#: /api/node?detail=1 brings them, whole, when a node is opened.
+#:
+#: A BLACKLIST, NOT A WHITELIST, deliberately. The adapter rule in
+#: public/index.html is "carry props whole; do not pick from it", because a
+#: property added upstream and silently absent downstream raises no error. So a
+#: NEW property still reaches the bulk by default; only these, each one proved
+#: panel-only, are held back. tests/test_structure_payload.py scans the client
+#: and fails if any of them is read outside the panel functions.
+PANEL_ONLY_NODE_PROPS = frozenset({
+    # TYPE_FACTS — the facts block at the top of a panel
+    "cadence", "decline_rate", "doctype", "family", "file_count",
+    "first_seen_quarter", "granularity", "last_seen_quarter", "parsed",
+    "pipeline_status", "requests_to", "roster_count", "seniority",
+    "sheet_count", "stage", "steps", "team", "title", "tools",
+    # crossVal, reviewFlag, mergedNote
+    "cross_validated", "review", "merged_label_raw",
+    # moduleChain — the source links
+    "drive_url", "drive_folder_url", "uplevel_link", "session_kind",
+})
+PANEL_ONLY_EDGE_PROPS = frozenset({
+    # relDetail — per-relationship detail in the panel
+    "basis", "class_dates", "classes", "inferred", "avg_rating", "rank",
+    "via_alias",
+    # moduleChain — attached files per session
+    "attached_file", "attached_drive_url", "attached_is_deck", "session_kind",
+    # never read by the client at all; they arrive with the detail
+    "provenance", "sources", "subject_raw", "join_basis", "attached_id",
+})
+
+
+def _b64(fmt: str, values) -> str:
+    import base64
+    import struct
+    values = list(values)
+    return base64.b64encode(struct.pack(f"<{len(values)}{fmt}", *values)).decode()
+
+
+def pack_structure(nodes: list, edges: list) -> dict:
+    """Rows -> the columnar wire format. Pure, so it is testable offline.
+
+    nodes: (id, type, label, label_raw, props, x, y)   ordered by id
+    edges: (id, rel, source_id, target_id, props)       ordered by id
+
+    Positions are Float32 pairs (NaN where no layout exists — the client then
+    simulates, as it always did). Edges are Uint16 (source, target, rel)
+    index triples plus their database ids as Uint32: several edges can join
+    the same two nodes under the same relation (a module and a session, once
+    per attached file), so an edge's identity is its id, not its endpoints.
+    """
+    ids = [n[0] for n in nodes]
+    if len(ids) > 0xFFFF:
+        raise RuntimeError(f"{len(ids)} structure nodes exceed the Uint16 edge "
+                           "index; widen the format (and bump STRUCTURE_FORMAT)")
+    ix = {v: i for i, v in enumerate(ids)}
+    types = sorted({n[1] for n in nodes})
+    tix = {v: i for i, v in enumerate(types)}
+    rels = sorted({e[1] for e in edges})
+    rix = {v: i for i, v in enumerate(rels)}
+    nan = float("nan")
+    kept = [e for e in edges if e[2] in ix and e[3] in ix]
+    if kept and max(e[0] for e in kept) > 0xFFFFFFFF:
+        raise RuntimeError("an edge id exceeds Uint32; widen the format")
+
+    def bulk(props, drop):
+        return {k: v for k, v in (props or {}).items() if k not in drop}
+
+    np_, ep_ = {}, {}
+    for i, n in enumerate(nodes):
+        b = bulk(n[4], PANEL_ONLY_NODE_PROPS)
+        if b:
+            np_[str(i)] = b
+    for j, e in enumerate(kept):
+        b = bulk(e[4], PANEL_ONLY_EDGE_PROPS)
+        if b:
+            ep_[str(j)] = b
+    legacy = sum(1 for n in nodes
+                 if n[1] == "module" and not (n[4] or {}).get("domain_slug"))
+    return {
+        "format": STRUCTURE_FORMAT,
+        "n": len(ids),
+        "ids": ids,
+        "types": types,
+        "t": [tix[n[1]] for n in nodes],
+        "labels": [n[2] for n in nodes],
+        "raw": {str(i): n[3] for i, n in enumerate(nodes)
+                if n[3] is not None and n[3] != n[2]},
+        "xy": _b64("f", (c for n in nodes
+                         for c in ((n[5], n[6]) if n[5] is not None else (nan, nan)))),
+        "rels": rels,
+        "m": len(kept),
+        "e": _b64("H", (v for e in kept for v in (ix[e[2]], ix[e[3]], rix[e[1]]))),
+        "eid": _b64("I", (e[0] for e in kept)),
+        "np": np_,
+        "ep": ep_,
+        "partial": {"node": sorted(PANEL_ONLY_NODE_PROPS),
+                    "edge": sorted(PANEL_ONLY_EDGE_PROPS)},
+        "deferred_types": sorted(DEFERRED_TYPES),
+        "legacy_modules": legacy,
+        "note": ("The structure layer. Topics, decks, curriculum docs, repos "
+                 "and files are behind a toggle and load on demand — they are "
+                 "5,200 more nodes and 37,771 more edges."),
+    }
+
+
+def structure(conn) -> dict:
+    """The whole structure layer, and the edges among it. No parameters.
+
+    PARAMETERLESS FOR THE SAME REASON `overview` IS. §A.3 made the catastrophic
+    provenance join unwriteable in SQL, but a client that assembles its own
+    graph from bulk downloads walks what it holds instead of asking. The
+    protection lives in the query layer, so this endpoint must not be turnable
+    into "give me an arbitrary subgraph" by a query string — the type list is a
+    module constant, not an argument.
+
+    IT IS BIGGER THAN THE VIEW IT REPLACES, AND THAT IS A RECORDED DECISION.
+    `overview` is capped at 60-odd nodes; this returns 3,307 nodes and 4,970
+    edges. docs/DEFAULT-VIEW.md D1/D2 is the owner decision, and the reason is
+    that a capped landing view showed a shape the graph does not have.
+
+    B3: COLUMNAR, LAID OUT, AND WITHOUT THE PANEL. Coordinates come from
+    node_layout (computed at projection); panel-only properties are left for
+    /api/node?detail=1. 2.59 MB of JSON became a few hundred KB — see
+    docs/perf/.
+
+    PROVENANCE IS STILL UNREACHABLE HERE. `sourced_from` is excluded, so the
+    degree-18,134 file hubs cannot enter the payload.
+    """
+    types = sorted(STRUCTURE_TYPES)
+    prov = _tax.edge_for_role("provenance")
+    with conn.cursor() as cur:
+        cur.execute(
+            "select n.id, n.type, n.label, n.label_raw, n.props, l.x, l.y "
+            "from nodes n left join node_layout l on l.node_id = n.id "
+            "where n.type = any(%s) order by n.id", (types,))
+        nodes = cur.fetchall()
+        cur.execute(
+            "select id, rel, source_id, target_id, props from edges "
+            "where rel <> %s "
+            "  and source_id in (select id from nodes where type = any(%s)) "
+            "  and target_id in (select id from nodes where type = any(%s)) "
+            "order by id",
+            (prov, types, types))
+        edges = cur.fetchall()
+    return pack_structure(nodes, edges)
+
+
+def structure_etag(conn) -> str | None:
+    """A validator for /api/structure that costs one small query, not the payload.
+
+    Changes when the projection changes (content_hash, projected_at — edge ids
+    and coordinates are rebuilt on every projection), when the wire format
+    changes, and when the CALLER'S ROLE changes: RLS decides what the payload
+    holds, and a member and a recruiter must never share a validator. None when
+    the caller can see no projection at all, so nothing is cached.
+    """
+    import hashlib
+    with conn.cursor() as cur:
+        cur.execute("select content_hash, projected_at::text, (select np_role()) "
+                    "from projection_meta where id = 1")
+        row = cur.fetchone()
+    if not row or row[2] in (None, "none"):
+        return None
+    h = hashlib.sha256("|".join([STRUCTURE_FORMAT, *map(str, row)]).encode())
+    return '"' + h.hexdigest()[:32] + '"'
+
+
+def node_detail(conn, node_id: str) -> dict:
+    """Everything a panel reads that the bulk payload left out (B3, lazy panels).
+
+    The node's full props, its structure-layer edges with full props, and those
+    neighbours with full props — one hop, which is as far as any panel reads
+    (moduleChain, peopleRows, taughtRows, relDetail). Content-layer neighbours
+    are not included: the bulk never held them, and when the content toggle
+    loads them they arrive whole.
+    """
+    types = sorted(STRUCTURE_TYPES)
+    prov = _tax.edge_for_role("provenance")
+    with conn.cursor() as cur:
+        cur.execute(
+            "select e.id, e.rel, e.source_id, e.target_id, e.props "
+            "from edges e where e.rel <> %s "
+            "  and (e.source_id = %s or e.target_id = %s)",
+            (prov, node_id, node_id))
+        edges = _rows(cur)
+        others = sorted({e["target_id"] if e["source_id"] == node_id
+                         else e["source_id"] for e in edges})
+        cur.execute(
+            "select id, type, label, label_raw, props from nodes "
+            "where id = any(%s) and type = any(%s)", (others, types))
+        nbrs = _rows(cur)
+    keep = {n["id"] for n in nbrs} | {node_id}
+    return {"edges": [e for e in edges
+                      if e["source_id"] in keep and e["target_id"] in keep],
+            "neighbours": nbrs}
+
+
 def coverage(conn) -> dict:
     """SQL, per DECISIONS §C.2 — the one path that is strictly better as SQL.
 
@@ -326,15 +622,27 @@ def coverage(conn) -> dict:
               (select count(*) from nodes m where m.type='module' and not exists
                  (select 1 from edges e where e.rel='contains' and e.target_id=m.id))
                 as modules_without_program,
-              (select count(*) from nodes m where m.type='module' and not exists
-                 (select 1 from edges e where e.rel='teaches' and e.target_id=m.id))
+              -- BOTH STAFFING TIERS. The legacy graph attaches an instructor
+              -- with `teaches` (instructor -> module); the mastersheet uses
+              -- `taught_by` (module -> instructor). Counting only the first
+              -- reported every module staffed solely by the mastersheet as
+              -- unstaffed — measured at 158 against a true 152. The two are
+              -- deliberately separate edges (they are unreconciled evidence,
+              -- config/module-merges.yaml), so coverage must ask for both.
+              (select count(*) from nodes m where m.type='module'
+                 and not exists (select 1 from edges e
+                                 where e.rel=%s and e.target_id=m.id)
+                 and not exists (select 1 from edges e
+                                 where e.rel=%s and e.source_id=m.id))
                 as modules_without_instructor,
               (select count(*) from nodes d where d.type='domain' and not exists
                  (select 1 from edges e where e.source_id=d.id
                     and e.rel = any(%s)))
                 as domains_without_owner,
               (select count(*) from isolated) as isolated_records
-        """, ([_tax.edge_for_role(r) for r in DOMAIN_ATTACHMENT_ROLES],))
+        """, (_tax.edge_for_role("instructor_module"),
+              _tax.edge_for_role("module_instructor"),
+              [_tax.edge_for_role(r) for r in DOMAIN_ATTACHMENT_ROLES]))
         row = _rows(cur)[0]
     row["workflow_ownership"] = (
         "OUT OF SCOPE — ownership in New Programs attaches to domains, not "
@@ -342,6 +650,16 @@ def coverage(conn) -> dict:
     row["counts_are_floors"] = (
         "person, instructor and module counts are floors over 127 of 374 "
         "worksheets, not totals.")
+    row["two_module_populations"] = (
+        "This graph holds 924 modules from two sources: 20 keyed "
+        "(domain, sequence) from the Resource Collection Mastersheet, and the "
+        "rest keyed on their label. 16 collisions were merged on answered "
+        "REVIEW-QUEUE rows; the remainder have not been reconciled, so a "
+        "module count is not a count of distinct courses.")
+    row["modules_without_program_caveat"] = (
+        "724 of the legacy modules carry no programme edge at all, so this "
+        "number is dominated by a structural gap in the legacy layer rather "
+        "than by missing data about any one module.")
     return row
 
 
@@ -377,4 +695,26 @@ def domain_subgraph(conn, domain_label: str) -> dict:
             where e.rel = %s and e.target_id = %s
         """, (_tax.edge_for_role("instructor_domain"), dom["id"]))
         declared = _rows(cur)
-    return {"domain": dom, "taught": taught, "declared": declared}
+
+        # THE MASTERSHEET TIER. Row-B modules hang off a domain by `offers`
+        # and name their instructors by `taught_by`, so the join above — which
+        # walks domain -> programme -> module -> teaches — cannot see any of
+        # them. Before this query /staffing reported four domains as having no
+        # row-B instructors at all, which read as absence and was invisibility.
+        #
+        # It is returned SEPARATELY for the same reason `declared` is: a
+        # roster row and a delivered class are different kinds of evidence,
+        # and the caller is the thing that must not merge them.
+        cur.execute("""
+            select i.id, i.label, e.props as edge_props,
+                   m.label as module, e.props->>'instructor_role' as role
+            from edges dm
+            join nodes m on m.id = dm.target_id and m.type = 'module'
+            join edges e on e.source_id = m.id and e.rel = %s
+            join nodes i on i.id = e.target_id
+            where dm.rel = %s and dm.source_id = %s
+        """, (_tax.edge_for_role("module_instructor"),
+              _tax.edge_for_role("domain_module"), dom["id"]))
+        sheet = _rows(cur)
+    return {"domain": dom, "taught": taught, "declared": declared,
+            "sheet": sheet}

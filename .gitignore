@@ -39,6 +39,7 @@ gcp-*.json
 # has no read-only tier, so committing it grants every collaborator access to it
 # permanently, including through history. DECISIONS §F.2.
 knowledge/graph-sensitive.json
+knowledge/content_graph-sensitive.json
 
 # Build intermediates that carry the SAME funnel data graph-sensitive.json was
 # split out to withhold — and more of it raw. resolved.json holds all 1,625
@@ -104,3 +105,8 @@ config/*.rt-check.yaml
 # intermediates, not configuration.
 _uv/
 .python-version
+
+# Browser session captured by eval/measure_signed_in.py. It is a live auth
+# token for np-autopilot.vercel.app. The script deletes it when it finishes;
+# this line is what covers a run that is interrupted before it can.
+.measure/

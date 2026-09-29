@@ -1,0 +1,84 @@
+# Instructor names from the Resource Collection Mastersheet that need
+# a human decision. NOTHING HERE IS APPLIED.
+#
+# generated: 2026-09-29T13:03:32Z
+# rows: 12
+#
+# A first-name-only cell (`Shelby`, `Faraaz`, `Bharath`) is a
+# PROPOSAL against the tab's own instructor table, never a merge —
+# lib/resolve.py returns Ambiguous by default because three shipped
+# bugs came from picking with no signal. A row listed with no
+# candidate matched nothing and is left alone.
+version: 1
+names:
+  - name: 'Shelby'
+    domain: full-stack
+    role: primary
+    reason: 'first-name-only form'
+    candidate: 'Shelby Cohen'
+    confirmed: false
+  - name: 'Nisarg'
+    domain: full-stack
+    role: backup_2
+    reason: 'first-name-only form'
+    candidate: 'Nisarg Tanna'
+    confirmed: false
+  - name: 'Nisarg'
+    domain: full-stack
+    role: backup_1
+    reason: 'first-name-only form'
+    candidate: 'Nisarg Tanna'
+    confirmed: false
+  - name: 'Cathy'
+    domain: full-stack
+    role: backup_1
+    reason: 'first-name-only form'
+    candidate: 'Cathy Ma'
+    confirmed: false
+  - name: 'Nisarg'
+    domain: full-stack
+    role: primary
+    reason: 'first-name-only form'
+    candidate: 'Nisarg Tanna'
+    confirmed: false
+  - name: 'Konstantinos'
+    domain: backend
+    role: primary
+    reason: 'first-name-only form'
+    candidate: 'Konstantinos Pappas'
+    confirmed: false
+  - name: 'Shelby'
+    domain: backend
+    role: backup_2
+    reason: 'first-name-only form'
+    candidate: 'Shelby Cohen'
+    confirmed: false
+  - name: 'Shelby'
+    domain: backend
+    role: backup_1
+    reason: 'first-name-only form'
+    candidate: 'Shelby Cohen'
+    confirmed: false
+  - name: 'Reginald'
+    domain: backend
+    role: backup_2
+    reason: 'first-name-only form'
+    candidate: 'Reginald Johnson'
+    confirmed: false
+  - name: 'Faraaz'
+    domain: backend
+    role: primary
+    reason: 'first-name-only form'
+    candidate: 'Faraaz Sareshwala'
+    confirmed: false
+  - name: 'Bharath'
+    domain: testing
+    role: primary
+    reason: 'first-name-only form'
+    candidate: 'Bharath Anand'
+    confirmed: false
+  - name: '(none)'
+    domain: testing
+    role: table
+    reason: 'row held contact data and no name; scrubbed and NOT ingested'
+    confirmed: false

@@ -859,8 +859,36 @@ The live ones that matter:
   loses a real deck, following it reaches into a personal account.
 - **1 in row A** points at a folder of learner capstone work, also `gmail.com`.
 - **1 in row B** points at a file owned at **`interview-kickstart.com`** —
-  note the hyphen. That is **not** the company's primary domain and no other
-  file in 11,577 is owned there. Recorded as an observation, not a conclusion.
+  note the hyphen. That is **not** the company's primary domain. Recorded as an
+  observation, not a conclusion.
+
+  > **UPDATED 2026-09-29 — it is 185 files, not one.** The row-B content crawl
+  > records an owner domain per file (D4), and across the four approved domains
+  > **185 of 1,440 files (12.8%) are owned at `interview-kickstart.com`**. They
+  > are not scattered: 163 of them sit in three `FM: VIDEOS` foundation-material
+  > trees in SD4 Test Engineering, weeks 3, 4 and 5.
+  >
+  > **Two corrections to earlier figures, both mine, both the same mistake.**
+  > "no other file in 11,577 is owned there" was true of the shortcut-target
+  > survey and was written as though it were true of the registry — the survey
+  > only ever read shortcut targets. And a first pass at this update said
+  > **119**, which was the count inside one subtree (`Assignment Review -
+  > Roland`) quoted as a corpus-wide total. `docs/A7B.md`, "the instrument at
+  > the wrong setting", for the third and fourth time in this document.
+  >
+  > **Still an observation.** Whether Interview Kickstart owns that domain is
+  > with IT as of 2026-09-29. It matters because D4 stores an owner DOMAIN and
+  > nothing else, so the domain is the whole signal: if IK owns it, these are
+  > internal files; if it does not, 185 curriculum files in an approved domain
+  > are authored somewhere nobody has accounted for.
+  >
+  > **The same measurement found more than the hyphen.** Owner domains across
+  > the four approved domains: `interviewkickstart.com` 1,051,
+  > `interview-kickstart.com` 185, **`gmail.com` 179, `hotmail.com` 22,
+  > `alexmitchelltech.com` 3**. So **204 files are owned at personal free-mail
+  > addresses** — §5(iv) measured four such accounts from a 75-file sample and
+  > called it a channel with no control; at 1,440 files it is 14% of the
+  > corpus.
 
 ### `(File responses)`: 9, all in row A, all skipped by name
 

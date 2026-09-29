@@ -1,0 +1,22 @@
+{
+  "_comment": "SYNTHETIC. Stands in for knowledge/candidates.json (gitignored: it carries the hiring funnel) in tests that only need its blank_identifiers list. No real person, file row or contact value. Shape matches the real entries' keys.",
+  "source": "synthetic fixture",
+  "built_at": "2026-09-30",
+  "candidates": [],
+  "confirmations": [],
+  "expertise_claims": [],
+  "teaches_pairs": [],
+  "blank_identifiers": [
+    {
+      "name": "Synthetic Recent Joiner",
+      "raw": "Synthetic Recent Joiner",
+      "file": "00-master/synthetic-objectives.xlsx",
+      "sheet": "Objectives",
+      "row": 2,
+      "column": "ENo",
+      "role": "person",
+      "tokens": ["Synthetic", "Recent", "Joiner"],
+      "note": "blank identifier retained and reported, never dropped (CLAUDE.md §2a(ii))"
+    }
+  ]
+}

@@ -36,7 +36,8 @@ class Report:
         self.exercised.add(category)
 
 
-def categories_fired(graph_path: Path) -> list[str]:
+def categories_fired(graph_path: Path, candidates_path: Path | None = None,
+                     cache_dir: Path | None = None) -> list[str]:
     """Run the checks on `graph_path` silently and return the categories that fired.
 
     Used by tests/test_validate_categories.py to prove each check actually works
@@ -51,10 +52,12 @@ def categories_fired(graph_path: Path) -> list[str]:
     import contextlib
     import io
     with contextlib.redirect_stdout(io.StringIO()):
-        return _run(graph_path)[0]
+        return _run(graph_path, candidates_path, cache_dir)[0]
 
 
-def failures(graph_path: Path, category: str | None = None) -> list[tuple[str, str]]:
+def failures(graph_path: Path, category: str | None = None,
+             candidates_path: Path | None = None,
+             cache_dir: Path | None = None) -> list[tuple[str, str]]:
     """FAIL-level findings, optionally for one category. Returns (category, message).
 
     The level-aware counterpart to categories_fired(). Added when a new category
@@ -64,12 +67,18 @@ def failures(graph_path: Path, category: str | None = None) -> list[tuple[str, s
     import contextlib
     import io
     with contextlib.redirect_stdout(io.StringIO()):
-        rows = _run(graph_path)[6]
+        rows = _run(graph_path, candidates_path, cache_dir)[6]
     return [(c, m) for lv, c, m in rows
             if lv == FAIL and (category is None or c == category)]
 
 
-def _run(graph_path: Path | None = None):
+def _run(graph_path: Path | None = None, candidates_path: Path | None = None,
+         cache_dir: Path | None = None):
+    """`candidates_path` defaults to the build's knowledge/candidates.json. Tests
+    pass a synthetic one: the real file is gitignored (it carries the hiring
+    funnel), and the only thing read from it here is the blank-identifier list.
+    `cache_dir` defaults to .drive-cache/; tests pass a synthetic one so the R17
+    cache check can be shown to fire on a machine with no cache (CI)."""
     # Validation reads BOTH halves. A rule that only ever sees the public file
     # cannot catch a defect in the withheld one, and the withheld one is the
     # half carrying judgements about named external people.
@@ -241,7 +250,7 @@ def _run(graph_path: Path | None = None):
     # see that pass 0 had downloaded it anyway and left it on disk, which is
     # where it matters once the pipeline runs unattended on shared
     # infrastructure with its own backups and snapshots.
-    cache_dir = KNOWLEDGE_DIR.parent / ".drive-cache"
+    cache_dir = cache_dir or KNOWLEDGE_DIR.parent / ".drive-cache"
     if cache_dir.is_dir():
         present = [p for p in sorted(excluded) if (cache_dir / p).exists()]
         if present:
@@ -293,7 +302,8 @@ def _run(graph_path: Path | None = None):
     if dupes:
         r.add(FAIL, "duplicate-id", f"{len(dupes)} duplicate node ids")
     # blank identifiers (retained, reported)
-    cand = json.loads((KNOWLEDGE_DIR / "candidates.json").read_text(encoding="utf-8"))
+    cand = json.loads((candidates_path or KNOWLEDGE_DIR / "candidates.json")
+                      .read_text(encoding="utf-8"))
     blanks = cand.get("blank_identifiers", [])
     if blanks:
         names = sorted({b.get("name", b.get("raw", "?")) for b in blanks})
@@ -404,6 +414,14 @@ def _run(graph_path: Path | None = None):
     else:
         r.add(INFO, "quarter-map", f"all {len(qs)} quarter sheets resolve through the map")
 
+    # ---- the row-B content graph (pass 7) ----------------------------------
+    #
+    # A SEPARATE FILE AND A SEPARATE CONTRACT. It is not merged into graph.json
+    # and its modules are not joined to the 922 label-keyed ones; running these
+    # checks here keeps one validator rather than two, and they are skipped
+    # cleanly when pass 7 has not run.
+    check_content_graph(r)
+
     # ---------------- output -------------------------------------------------
     order = {FAIL: 0, WARN: 1, INFO: 2}
     for level in (FAIL, WARN, INFO):
@@ -458,6 +476,105 @@ def main() -> int:
         fh.write(delta + "\n")
     print(f"\nBUILD_LOG delta line:\n  {delta}")
     return 1 if fails else 0
+
+
+def check_content_graph(r) -> None:
+    """Checks for the row-B content graph. Silent when it does not exist."""
+    from pipeline.lib import content_model as _cm
+    from pipeline.lib.paths import KNOWLEDGE_DIR as _K
+
+    path = _K / "content_graph.json"
+    CATS = ["content-provenance", "content-no-person", "content-topic-locator",
+            "content-module-key", "content-week-source",
+            "content-unavailable-marked", "content-no-address"]
+    for c in CATS:
+        r.category(c)
+    if not path.exists():
+        for c in CATS:
+            r.add(INFO, c, "pass 7 has not run; no content graph to check")
+        return
+
+    g = json.loads(path.read_text(encoding="utf-8"))
+    nodes = {n["id"]: n for n in g["nodes"]}
+
+    missing = [n for n in g["nodes"] if not n.get("sources")]
+    missing += [e for e in g["edges"] if not e.get("sources")]
+    r.add(FAIL if missing else INFO, "content-provenance",
+          f"{len(missing)} content nodes/edges with no provenance"
+          if missing else
+          f"all {len(g['nodes'])} nodes and {len(g['edges'])} edges carry provenance")
+
+    # D1 — a person may not be derived from DECK CONTENT.
+    #
+    # THIS CHECK USED TO ASSERT "no person layer at all", which was correct only
+    # while instructors were deferred. The mastersheet reversal un-deferred them
+    # (docs/CONTACT-DATA.md §R) and the check went on enforcing the superseded
+    # decision — it failed on 38 legitimate nodes and, worse, it would have said
+    # nothing new if a deck-derived person had appeared alongside them.
+    #
+    # What D1 still forbids is the DERIVATION, not the node type. So the test is
+    # provenance: every person must be citable to a mastersheet SHEET and ROW.
+    # A person lifted from slide prose cannot have those, which is exactly the
+    # difference D1 draws between a structured row and deck text.
+    from pipeline.lib import mastersheet as _ms
+    people = [n for n in g["nodes"] if n["type"] in ("person", "instructor")]
+    stray = [n["id"] for n in people
+             if not n.get("sources")
+             or not all(s.get("file", "").endswith(_ms.SHEET_FILE)
+                        and s.get("sheet") and s.get("row")
+                        for s in n["sources"])]
+    r.add(FAIL if stray else INFO, "content-no-person",
+          f"{len(stray)} of {len(people)} person/instructor nodes are not "
+          f"traceable to a mastersheet sheet+row — D1 forbids deriving a "
+          f"person from deck content" if stray else
+          f"all {len(people)} person/instructor nodes cite a mastersheet "
+          f"sheet and row; none is deck-derived (D1)")
+
+    topic_rel = taxonomy.edge_for_role("module_topic")
+    unlocated = [e for e in g["edges"] if e["rel"] == topic_rel
+                 and not any(k in e for k in ("slide", "page", "tab"))]
+    r.add(FAIL if unlocated else INFO, "content-topic-locator",
+          f"{len(unlocated)} topic edges cite no slide, page or tab"
+          if unlocated else
+          f"every one of {sum(1 for e in g['edges'] if e['rel'] == topic_rel)} "
+          "topic edges cites a slide, page or tab")
+
+    bad_key = [n for n in g["nodes"] if n["type"] == "module"
+               and n["id"] != _cm.module_key(n.get("domain_slug", ""),
+                                             n.get("sequence", -1))]
+    r.add(FAIL if bad_key else INFO, "content-module-key",
+          f"{len(bad_key)} modules whose id is not module_key(domain, sequence)"
+          if bad_key else
+          "every module id is derived from (domain_slug, sequence), not its label")
+
+    week_rel = taxonomy.edge_for_role("module_week")
+    weak = [e for e in g["edges"] if e["rel"] == week_rel
+            and not (e.get("source_kind") and e.get("source_file"))]
+    r.add(FAIL if weak else INFO, "content-week-source",
+          f"{len(weak)} program-week edges carry no curriculum source — a week "
+          "with no source is a fact with nowhere to point" if weak else
+          f"all {sum(1 for e in g['edges'] if e['rel'] == week_rel)} program-week "
+          "edges name the curriculum source they came from")
+
+    unmarked = [n for n in g["nodes"]
+                if n.get("content_available") is False
+                and not n.get("unavailable_reason")]
+    leaked = [n for n in g["nodes"]
+              if n.get("content_available") is False and "topics" in n]
+    r.add(FAIL if (unmarked or leaked) else INFO, "content-unavailable-marked",
+          f"{len(unmarked)} unavailable nodes with no reason, {len(leaked)} "
+          "carrying inferred content" if (unmarked or leaked) else
+          f"{sum(1 for n in g['nodes'] if n.get('content_available') is False)} "
+          "unavailable nodes, each marked with a reason and no inferred content")
+
+    at = [n["id"] for n in g["nodes"]
+          for s in n.get("sources", []) if "@" in str(s)]
+    at += [i for e in g["edges"] for s in e.get("sources", [])
+           if "@" in str(s) for i in [e["rel"]]]
+    r.add(FAIL if at else INFO, "content-no-address",
+          f"{len(at)} content provenance entries contain '@' — D4 stores an "
+          "owner DOMAIN, never an address" if at else
+          "no content provenance entry contains '@' (D4)")
 
 
 if __name__ == "__main__":
