@@ -675,6 +675,51 @@ is the live one.
 
 ---
 
+## R22 — The repository folder is synced to iCloud and backed up by Google Drive
+
+**Likelihood: n/a, it is happening · Impact: high · STATUS: ACCEPTED BY OWNER,
+DEFERRED UNTIL AFTER LAUNCH** (Animesh Kumar, 2026-09-30, origin: hand —
+"priority is going live"; deferred, not dismissed)
+
+Found 2026-09-30 when 32 untracked "<name> 2.<ext>" files appeared in the
+working tree — iCloud conflict copies — while preparing the Phase C rehearsal.
+Checked read-only:
+
+- **iCloud Drive, Desktop & Documents sync is ON.**
+  `~/Library/Mobile Documents/com~apple~CloudDocs/Desktop -> ~/Desktop`, and
+  the repository lives at `~/Desktop/NP-Autopilot-Corpus`.
+- **Google Drive for Desktop backs up `~/Desktop`** as a "folders from your
+  computer" root. Its local mirror database lists **this repository — 4,287
+  items** — as backed up, including every file kept out of git on purpose:
+
+| file | why it is not in git |
+|---|---|
+| `.vercel/.env.production.local` | the database password — **the live, unrotated one (R20)** |
+| `knowledge/graph-sensitive.json` | 277 named hiring rejections, 1,625 in-pipeline candidates |
+| `knowledge/content_graph-sensitive.json` | instructor phone / email / LinkedIn (`docs/CONTACT-DATA.md` §R) |
+| `knowledge/candidates.json`, `rejections.json`, `resolved.json` | raw extraction of the same funnel |
+| `config/drive.yaml` | the corpus folder id and the key PATH (not the key) |
+
+**Which Google account receives the backup is NOT established.** The Drive
+for Desktop configuration is dominated by `@gmail.com` references (517 against
+35 `@interviewkickstart.com`), which suggests a personal account; only the
+owner can confirm it (Drive for Desktop → Preferences). The service-account
+key and `~/.config/np-autopilot/env` live under `~/.config`, outside both sync
+roots.
+
+**Done now:** the 32 conflict copies were verified byte-for-byte identical to
+their originals and deleted (2026-09-30); none was tracked. Nothing was moved,
+and no cloud copy was touched.
+
+**Deferred, and owed after launch** (HANDOFF §D.6): move the repository out of
+`~/Desktop`; delete the cloud copies (Drive "Computers" backup and iCloud,
+including version history and trash); **rotate the database password, then
+redeploy** so every rollback target carries the new one. The rehearsal's copy
+of production lives only in `~/.config/np-autopilot/rehearsal/`, checked to be
+outside both sync roots, and is deleted after the window.
+
+---
+
 ## Summary
 
 | # | Risk | Likelihood | Impact |
@@ -700,3 +745,4 @@ is the live one.
 | R18 | **The repository was PUBLIC for 8 days** — 277 named hiring rejections and 1,625 candidates readable by anyone. Set private on discovery | happened | high |
 | R20 | **A working copy of the repo was uploaded into the corpus folder** — DB password, `graph-sensitive.json`, `.git/`. **Removed from the folder 2026-09-30; password NOT rotated (owner choice)** | happened | high |
 | R21 | **The replacement repository was public from creation for 13 days** — 107 commits, 1,915 instructor names, 43 staff; **81 external clones**. Private, verified 2026-09-29 19:06:50Z. Disclosure escalated with R18 | happened | high |
+| R22 | **The repository folder syncs to iCloud and a Google Drive backup** — 4,287 items incl. the DB password and the withheld hiring data; backup account unconfirmed (likely personal). **Accepted by owner, deferred until after launch** | happening | high |

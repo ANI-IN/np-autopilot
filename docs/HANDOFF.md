@@ -12,11 +12,10 @@ recalled.
 
 | | |
 |---|---|
-| branch | `content-crawl-rowB` |
-| HEAD | **`42af286`** |
-| ahead of `origin/main` | **33 commits** |
-| `git status` | clean |
-| pushed? | **no** — nothing pushed, nothing merged |
+| `main` | **`0f0c78f`** — `content-crawl-rowB` merged 2026-09-30, unsquashed; CI green on all four jobs |
+| working branch | `phase-cd-prep` — pre-window work (checklist, D1, R22, this plan) |
+| repository | **private** since 2026-09-29 19:06Z (R21); pushes pass `.githooks/pre-push` |
+| production | still the OLD system — nothing deployed, nothing applied (see below) |
 
 ## Verification, all green
 
@@ -162,33 +161,47 @@ requests** — run only against the local Supabase stack (§I).
 Report LOCAL before/after against `docs/PERF-BASELINE.md`: settled time,
 cold-start time, bytes per node, p50/p95 per endpoint.
 
-## 2 · Merge to `main`
+## 2 · Merge to `main` — DONE 2026-09-30 (`0f0c78f`; main CI green, all four jobs)
 Push `content-crawl-rowB` → show all four CI jobs green **on the branch's own
 run** → merge into `main` **only when green**. Main's current red is the known
 pre-existing failures (owner ruling 2026-09-30, §G), not the bar. The push
 itself is refused while the repository is public (R21).
 
-## 3 · Phase C (database)
-`pg_dump` of exactly the tables `project_graph.py` replaces, to a gitignored
-path (report size and row counts) → apply **0017, 0018, 0019, 0020, 0021** to production
-(`migrate.py status` before and after) → project the merged public half →
-`verify_migration.py` and `curation.py check` → confirm the curation tables
-(people, aliases, workflow owners, notes, audit) are untouched, with row counts
-before and after.
+## 3 · Owner acceptance — BEFORE the window
+`docs/ACCEPTANCE-CHECKLIST.md`, generated from `knowledge/merged_graph.json`
+(the graph the window projects), full §D.4 spec: per module the domain,
+programme week (owner fact), sessions with every file, instructors by
+mastersheet role (legacy and unconfirmed shown separately), assignment, decks,
+the top 5 of N topics with locators, and every link. **The owner ticks each
+module against the mastersheet; the window does not start until they
+confirm.** (Moved ahead of the window 2026-09-30 so the owner checks against the
+local build before production changes.)
 
-## 4 · Owner acceptance
-Regenerate `docs/ACCEPTANCE-CHECKLIST.md` — one block per module: domain,
-programme week, sessions with links, instructors with roles, assignment, deck
-count, top 5 topics with locators, every link. **The owner ticks each module
-against the mastersheet. Phase D does not start until they confirm.**
+## 4 · The window — Phase C and Phase D in ONE sitting
+**Owner decision, Animesh Kumar, 2026-09-30 (origin: hand): migrations →
+deploy → projection**, so the OLD code never runs against the NEW data. The
+old code on the new data was assessed read-only on 2026-09-30: "7 of 42
+domains have no owner", Backend Engineering staffed by nobody, 42 of 50
+search hits undrawable, 294 of 300 nodes hidden on expanding API Design. The
+reverse overlap — new code on old data, for the projection's run time — is
+expected to be safe (a missing layout falls back to the in-browser
+simulation); the rehearsal confirms it before the window, and the run-sheet
+records the result.
 
-## 5 · Phase D (deploy)
-Deploy from a **`.git`-less `/tmp` copy** → verify `/api/config` 200,
-`/api/me` and `/api/overview` 401 unauthenticated, `stats.json` counts, the
-security headers, and `drive_dom.mjs` against the live site →
-`measure_signed_in.py --phase post` (before/after against the baseline,
-including a first-request-after-idle cold-start figure on the live `icn1`
-function) → **run the `production_only` tests against production, read-only**:
+The step-by-step run-sheet, with the rehearsal's measured times and every
+rollback: **`docs/WINDOW-RUNSHEET.md`**. In outline:
+
+1. backup (pg_dump of the projection's tables + curation) → 2. migrations
+0017–0021 → 3. owner Google sign-in (0020 touches the sign-in hook) →
+4. deploy the prebuilt artifact → 5. projection → 6. verify → 7. live checks,
+the owner opens API Design and the matrix, **and tells the team to reload open
+tabs**.
+
+**Rollback is by restore, never by re-projection:** after 0021 the OLD
+`project_graph.py` cannot TRUNCATE (node_layout's foreign key), so the only way
+back to the old graph is the step-1 backup.
+
+The `production_only` tests, read-only, at step 6:
 
 ```bash
 set -a && . ~/.config/np-autopilot/env && set +a
@@ -201,13 +214,23 @@ identities, the live projection vs `public/stats.json`). Each runs under
 (`tests/db_guard.py`), so a write fails the test instead of landing. **Only
 with `-m production_only`**: the opt-in lifts the refusal for the whole suite,
 and the rest of it writes. The auth/RLS tests need no production run — they
-already run against Supabase's real stack locally (§I), not a shim. **Expect
-`test_the_landing_page_describes_the_projection_not_the_pipeline_graph` to
-fail after Phase C**: it asserts `stats.json` nodes `< 5048`, and the merged
-public half is 8,507 — fix that assertion in Phase C, before this run.
-→ document rollback (restore from the Phase C backup, redeploy the
-previous build) → tell the owner exactly what to click to see API Design's full
-chain and the matrix. (The single-type views are B3.5 — after launch, §6.)
+already run against Supabase's real stack locally (§I), not a shim. (The landing-stats test's old `< 5048` assertion is fixed — it now derives
+the projected count, `cf6acb0`.)
+
+## 5 · Immediately after launch — R22, deferred by the owner
+**Accepted by the owner and deferred until after launch (2026-09-30), not
+dismissed.** `07-risks.md` R22: the repository folder syncs to iCloud and to a
+Google Drive "Computers" backup, including the database password and the
+withheld hiring data.
+
+1. Move the repository out of `~/Desktop` (e.g. `~/src/np-autopilot`); update
+   `NP_CORPUS_PATH` if the corpus mirror moves with it.
+2. Remove the cloud copies: the Drive "Computers" backup of `Desktop/
+   NP-Autopilot-Corpus` and the iCloud copy — including version history and
+   trash. Confirm which Google account held the backup.
+3. **Rotate the database password, then redeploy** — so that every rollback
+   target (the new production deployment, and the one before it) carries the
+   new password, and none still holds the leaked one.
 
 ## 6 · First release AFTER launch
 
@@ -504,7 +527,7 @@ python3 -m pytest tests -q         # DB tests go to the local stack if it is up,
 #  and the DB tests insert, delete and re-project. tests/conftest.py refuses a
 #  production DSN (Supabase host or project ref) with a usage error unless
 #  NP_ALLOW_PROD_TESTS=1 — and that opt-in is for Phase D's read-only
-#  production_only run ONLY (§D.5):  pytest tests -m production_only
+#  production_only run ONLY (§D.4):  pytest tests -m production_only
 #  The report header's first line says which database the run used.
 #  Other targets: NP_TEST_DSN / NP_TEST_DSN_TRANSACTION (still refused if prod).
 #  Every run ends with "skips by reason (N)". CI enforces tests/ci-skips.yaml
