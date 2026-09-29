@@ -170,8 +170,10 @@ version" list (no overlapping labels, generic names always with parent context,
 grouped search with keyboard nav, URL-held state, readable dimmed nodes).
 
 ## 4 · Push and merge
-Push `content-crawl-rowB` → show all four CI jobs green → merge into `main`
-**only when green**.
+Push `content-crawl-rowB` → show all four CI jobs green **on the branch's own
+run** → merge into `main` **only when green**. Main's current red is the known
+pre-existing failures (owner ruling 2026-09-30, §G), not the bar. The push
+itself is refused while the repository is public (R21).
 
 ## 5 · Phase C (database)
 `pg_dump` of exactly the tables `project_graph.py` replaces, to a gitignored
@@ -351,11 +353,9 @@ stack — both are the migrations relying on the environment, and both fail
   NOT rotated. Re-list the folder read-only and record which is current.
 - **CI has been red on `main` since at least 2026-09-20** — `test`, `payroll`
   and `secrets` fail, `renderer` passes; no successful run in the last 40.
-  Causes seen in the log: tests that need uncommitted files
-  (`knowledge/candidates.json`, `config/drive.yaml`), a stale frozen baseline in
-  `test_migration_verification`, a JWT literal the `secrets` job finds, and the
-  payroll check. **§D.4's "merge only when all four are green" cannot be met
-  until this is fixed** — a decision for the owner, not a side effect of B3.
+  **Owner ruling 2026-09-30 (Animesh Kumar, origin: hand):** §D.4's "all four
+  jobs green" applies to the **`content-crawl-rowB` branch's own CI run**;
+  main's red state is the known pre-existing failures this branch fixes.
 - **Registry drift**: the hardcoded registry in `count_registry.py` versus the
   live folder.
 - **Registry row C is shared "anyone with the link"** — out of scope, but the
