@@ -103,9 +103,9 @@ def test_no_program_week_is_ever_computed_from_a_folder_sequence():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("path,kind", [
-    ("/D/Module-3: API Design/2. Live Class Slides/deck.pptx", "live_class"),
-    ("/D/Module-3: API Design/3. Assignments/API Assignment", "assignment"),
-    ("/D/Module-5: X/3. Assignment/Assignment Review/notes.md", "assignment_review"),
+    ("/D/Module-3: API Design/2. Live Class Slides/deck.pptx", "class"),
+    ("/D/Module-3: API Design/3. Assignments/API Assignment", "task"),
+    ("/D/Module-5: X/3. Assignment/Assignment Review/notes.md", "review"),
     ("/D/Module-1: X/1. Foundation Materials/intro", "foundation"),
 ])
 def test_files_are_attached_by_the_folder_that_names_their_role(path, kind):
@@ -211,3 +211,117 @@ def test_every_node_carries_a_file_and_an_origin():
     src = cm.provenance(row)
     assert src["file"] and src["origin"] == "corpus"
     assert "@" not in str(src)
+
+
+# ---------------------------------------------------------------------------
+# Topics are TITLES, not every line — measured on the first build
+# ---------------------------------------------------------------------------
+#
+# Taking every 3-90 character line under a locator produced 17,392 topics
+# across 20 modules — 5,637 on Backend's API Design alone, of which 2,386 were
+# distinct. The layer contained `Objectives`, `Agenda`, `Pause for Questions`,
+# `Master API Development concepts.` and `<NAME>` (a template placeholder).
+# "API Design covers Pause for Questions" is not a gap in the data, it is a
+# confidently wrong answer.
+#
+# This is not a threshold hiding correct answers (CLAUDE.md §4). It is D1's
+# prior question in a new place: is a body bullet a TOPIC at all, or is it
+# content ABOUT one? The slide title is the topic; the bullets are its body.
+
+DECK = """[slide 3]
+REST API Design
+- statelessness
+- cacheability
+- HATEOAS
+
+[slide 4]
+Spring Framework
+@RestController
+"""
+
+
+def test_a_topic_is_the_slide_title_not_every_bullet():
+    got = cm.topics_from_text(DECK, source="deck")
+    assert [t.label for t in got] == ["REST API Design", "Spring Framework"]
+
+
+def test_each_title_keeps_its_own_slide_number():
+    got = cm.topics_from_text(DECK, source="deck")
+    assert [(t.locator_kind, t.locator) for t in got] == [("slide", 3), ("slide", 4)]
+
+
+def test_a_slide_with_no_title_contributes_no_topic():
+    """Negative control: an empty slide must not borrow the next one's title."""
+    assert cm.topics_from_text("[slide 9]\n\n", source="deck") == []
+
+
+def test_a_lesson_plan_tab_yields_one_topic_per_row_not_per_cell():
+    """Lesson-plan tabs are the structured source and come FIRST. Their rows
+    are `Topic | Flow | Learning Objectives`, so the topic is the row's first
+    cell — the rest is what the topic covers."""
+    text = ("[tab Concurrency Lesson Plan]\n"
+            "Topic,Flow,Learning Objectives\n"
+            "Thread Pools,30min,Builds on MPCQ\n"
+            "Timer,30min,Defer execution\n")
+    got = cm.topics_from_text(text, source="curriculum")
+    assert [t.label for t in got] == ["Thread Pools", "Timer"]
+    assert all(t.locator_kind == "tab" for t in got)
+
+
+def test_a_header_row_is_not_a_topic():
+    text = "[tab X]\nTopic,Flow,Learning Objectives\nSharding,20min,Scale out\n"
+    got = cm.topics_from_text(text, source="curriculum")
+    assert "Topic" not in [t.label for t in got]
+
+
+# ---------------------------------------------------------------------------
+# Lesson plans join by ORDINAL, which is structural; tabs join by NAME,
+# which is the alias problem and must only propose
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("name,seq", [
+    ("Lesson Plan 2 - API Design and Implementation", 2),
+    ("Lesson Plan 1 - JS Language and Libraries - Front-end Course", 1),
+    ("Lesson Plan 4 - Leveling Up with Advance JavaScript and CSS", 4),
+    ("Lesson Plan 5 - UI System Design", 5),
+])
+def test_a_numbered_lesson_plan_joins_to_a_module_by_its_ordinal(name, seq):
+    """`Lesson Plan N` is the Nth module of its domain — the same structural
+    fact the module key already rests on. This is NOT a name match: the title
+    after the number is never compared to anything."""
+    assert cm.lesson_plan_sequence(name) == seq
+
+
+@pytest.mark.parametrize("name", [
+    "Backend: Lesson plans",          # no ordinal — multi-tab, one per module
+    "Lesson Plan - Test Engineering",  # no ordinal
+    "Full Stack Course Outline v2",
+])
+def test_an_unnumbered_curriculum_doc_yields_no_ordinal(name):
+    """Negative control. Guessing an ordinal from a title is the name match
+    this avoids."""
+    assert cm.lesson_plan_sequence(name) is None
+
+
+def test_a_tab_name_that_looks_like_a_module_is_PROPOSED_not_joined():
+    """`Backend: Lesson plans` has a `Concurrency Lesson Plan` tab and Backend
+    has a `Concurrency` module. That is a name match with guaranteed misses —
+    the third thing SCALE-PLAN calls the alias problem — so it proposes."""
+    got = cm.propose_tab_join("Concurrency Lesson Plan", "backend",
+                              {"Concurrency": 5, "API Design": 3})
+    assert got["confirmed"] is False
+    assert got["candidate_sequence"] == 5
+
+
+def test_a_tab_matching_nothing_proposes_nothing():
+    assert cm.propose_tab_join("Interview questions", "backend",
+                               {"Concurrency": 5}) is None
+
+
+def test_a_tab_matching_two_modules_is_returned_as_ambiguous():
+    """lib/resolve.py's rule: ambiguity is returned, never resolved by
+    picking."""
+    got = cm.propose_tab_join("API", "backend",
+                              {"API Design": 3, "API Testing": 4})
+    assert got["ambiguous"] is True
+    assert sorted(got["candidates"]) == ["API Design", "API Testing"]

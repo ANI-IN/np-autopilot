@@ -600,7 +600,7 @@ edge_types:
     expect: null
 
   - name: reviewed_in
-    role: assignment_review
+    role: assignment_reviewed_in
     from: assignment
     to: assignment_review
     cardinality: 1:n

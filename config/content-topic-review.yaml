@@ -1,0 +1,64 @@
+# Module label variants found across folder shapes.
+#
+# generated: 2026-09-29T07:52:04Z
+# variants: 3
+#
+# The module's IDENTITY is (domain_slug, sequence), so a variant is a
+# display question, not an identity one. Recorded because normalising
+# `JS` to `JavaScript` is a curated alias and must be confirmed one at
+# a time, never applied implicitly.
+version: 1
+# tab->module proposals: 6, all unconfirmed. A tab name
+# matching a module label is a NAME MATCH — the alias problem for the
+# third time — so it proposes and never applies. Ambiguous rows list
+# every candidate rather than ranking them.
+tab_joins:
+  - tab: 'Concurrency Lesson Plan'
+    domain: backend
+    source_doc: 'Backend: Lesson plans'
+    candidate: 'Concurrency'
+    candidate_sequence: 5
+    confirmed: false
+  - tab: 'API Testing Automation'
+    domain: testing
+    source_doc: 'Lesson Plan - Test Engineering'
+    candidate: 'API Testing'
+    candidate_sequence: 3
+    confirmed: false
+  - tab: 'Automation Testing Lesson Plan'
+    domain: testing
+    source_doc: 'Lesson Plan - Test Engineering'
+    candidate: 'Automation Testing'
+    candidate_sequence: 4
+    confirmed: false
+  - tab: 'Performance Testing Lesson Plan'
+    domain: testing
+    source_doc: 'Lesson Plan - Test Engineering'
+    candidate: 'Performance Testing'
+    candidate_sequence: 2
+    confirmed: false
+  - tab: 'Quality Engineering Foundations'
+    domain: testing
+    source_doc: 'Lesson Plan - Test Engineering'
+    candidate: 'Quality Engineering Foundations'
+    candidate_sequence: 1
+    confirmed: false
+  - tab: 'Frontend'
+    domain: frontend
+    source_doc: 'Front-End: Detailed Course Outline[2023]'
+    candidate: 'Frontend System Design'
+    candidate_sequence: 3
+    confirmed: false
+variants:
+  - domain: full-stack
+    sequence: 3
+    variants: {"Cloud": 29, "Cloud Infrastructure": 4}
+    confirmed: false
+  - domain: full-stack
+    sequence: 4
+    variants: {"JavaScript and Web Dev": 61, "JavaScript and Web Development": 7}
+    confirmed: false
+  - domain: testing
+    sequence: 5
+    variants: {"Test Automation Design Patterns": 280, "Test Automation": 2}
+    confirmed: false

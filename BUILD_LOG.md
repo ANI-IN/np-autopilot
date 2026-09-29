@@ -2792,3 +2792,7 @@ document of ours. Final hash `a53462823ca26466fc5e6b3bf18615ec51bb96ed003249a866
 - Files: 1440, exported 921
 - Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 3, 'download-disabled-by-owner': 49, 'learner-content': 160}
 - Seconds: 1977
+
+## 2026-09-29 07:45:56Z — validate
+
+- validate: 0 FAIL, 16 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges

@@ -15,6 +15,7 @@ re-parsing must never re-download.
 | 4 | `04_build_graph.py` | built | `resolved.json`, `candidates.json`, `files.json`, corpus, config | **`graph.json`**, two review files |
 | 5 | `05_render_html.py` | built | `graph.json`, `files.json` | `graph.html`, `_graph_*.{json,mjs}` |
 | 6 | `06_crawl_content.py` | **built 2026-09-29 — never run against Drive.** Row B, four approved domains. Guards in `lib/content_scope.py`, `lib/redact.py`, `lib/curriculum.py`; 52 tests, 20 mutation-verified | registry row B | `.drive-cache/content-rowB/` |
+| 7 | `07_build_content_graph.py` | **built 2026-09-29.** Row B content chain: modules keyed (domain, sequence), curriculum docs, topics with slide/page/tab locators. No network — pass 6 fetches, pass 7 parses | `.drive-cache/content-rowB/` | `knowledge/content_graph.json`, 2 review YAMLs |
 | — | `validate.py` | built — 17 categories, all fault-injection tested | `graph.json` | stdout, build log |
 
 Helpers: `gen_index.py` regenerates `knowledge/INDEX.md` from `graph.json` —

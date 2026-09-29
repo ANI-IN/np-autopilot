@@ -131,9 +131,9 @@ def program_week_for(domain_slug: str, sequence: int) -> cur.ProgramWeek | None:
 # ---------------------------------------------------------------------------
 
 _ROLES = (
-    ("assignment_review", re.compile(r"/Assignment Review(?:\s*-\s*[^/]+)?/", re.I)),
-    ("live_class", re.compile(r"/(?:\d+\.\s*)?Live[ _]Class[^/]*/|/Slides?/", re.I)),
-    ("assignment", re.compile(r"/(?:\d+\.\s*)?Assignments?[^/]*/|timed[ _-]?test", re.I)),
+    ("review", re.compile(r"/Assignment Review(?:\s*-\s*[^/]+)?/", re.I)),
+    ("class", re.compile(r"/(?:\d+\.\s*)?Live[ _]Class[^/]*/|/Slides?/", re.I)),
+    ("task", re.compile(r"/(?:\d+\.\s*)?Assignments?[^/]*/|timed[ _-]?test", re.I)),
     ("practice", re.compile(r"/(?:\d+\.\s*)?Practice[^/]*/", re.I)),
     ("foundation", re.compile(r"/(?:\d+\.\s*)?Found\w*[^/]*/", re.I)),
 )
@@ -149,6 +149,11 @@ _ARCHIVE_MIMES = {"application/zip", "application/x-zip-compressed"}
 
 def role_of(path: str) -> str | None:
     """Which part of the module a file plays, from the folder that names it.
+
+    Returns a ROLE name (`review`, `class`, `task`, ...), deliberately NOT a
+    taxonomy node type. An internal vocabulary that shadows the taxonomy's is
+    a second source of truth for the same words, which is what
+    `tests/test_taxonomy_single_source.py` refuses.
 
     Assignment review is checked FIRST: it lives inside an assignment folder,
     so a looser order files every review as an assignment.
@@ -190,25 +195,79 @@ _MIN_TOPIC_CHARS = 3
 
 
 def topics_from_text(text: str, source: str) -> list[Topic]:
-    """Topics with the slide or page they came from. No locator, no topic."""
+    """Topics with the slide, page or tab they came from.
+
+    A TOPIC IS A TITLE, NOT EVERY LINE. Taking every 3-90 character line under
+    a locator produced 17,392 topics across 20 modules on the first build —
+    5,637 on Backend's API Design alone — including `Objectives`, `Agenda`,
+    `Pause for Questions`, `Master API Development concepts.` and `<NAME>`,
+    a template placeholder. "API Design covers Pause for Questions" is not a
+    gap in the data; it is a confidently wrong answer.
+
+    This is NOT `CLAUDE.md` §4's threshold hiding correct answers. It is D1's
+    prior question in a new place: is a body bullet a TOPIC at all, or is it
+    content ABOUT one? The title is the topic; the bullets are its body, and
+    they stay in the cache with provenance either way.
+
+    Two sources, in the order the owner specified:
+      curriculum_doc  a `[tab ...]` block is a lesson plan or outline. Its
+                      rows are `Topic | Flow | Learning Objectives`, so the
+                      topic is the row's FIRST cell and the rest is what the
+                      topic covers.
+      deck / doc      the first non-empty line after each `[slide N]` or
+                      `[page N]` marker.
+    """
     out: list[Topic] = []
-    kind, num = None, None
+    kind, num, want_title = None, None, False
+    header_seen = False
     for raw in text.splitlines():
         line = raw.strip()
         m = _LOCATOR.match(line)
         if m:
             kind = m.group(1).lower()
             digits = re.search(r"\d+", m.group(2))
-            num = int(digits.group()) if digits else None
+            num = int(digits.group()) if digits else _tab_ordinal(m.group(2))
+            want_title, header_seen = True, False
             continue
-        if kind is None or num is None:
-            continue                      # text before any locator is uncited
-        if not (_MIN_TOPIC_CHARS <= len(line) <= _MAX_TOPIC_CHARS):
+        if kind is None or num is None or not line:
             continue
-        if not re.search(r"[A-Za-z]", line):
+
+        if kind == "tab":
+            cell = line.split(",", 1)[0].strip().strip('"')
+            if not header_seen and cell.lower() in _TAB_HEADERS:
+                header_seen = True          # the header row names the columns
+                continue
+            if _is_topic_label(cell):
+                out.append(Topic(cell, kind, num))
             continue
-        out.append(Topic(line, kind, num))
+
+        if want_title:
+            want_title = False              # ONE title per slide or page
+            if _is_topic_label(line):
+                out.append(Topic(line, kind, num))
     return out
+
+
+#: Column headers a lesson-plan tab uses for its first column. Skipped so the
+#: word `Topic` does not become a topic.
+_TAB_HEADERS = {"topic", "topics", "module", "week", "weeek", "concepts",
+                "interview questions", "coursework", ""}
+
+_TAB_ORDINALS: dict[str, int] = {}
+
+
+def _tab_ordinal(name: str) -> int:
+    """A tab has a name, not a number, and provenance needs something stable
+    to cite. The ordinal is assigned in first-seen order per process."""
+    return _TAB_ORDINALS.setdefault(name.strip(), len(_TAB_ORDINALS) + 1)
+
+
+def _is_topic_label(s: str) -> bool:
+    """Shape only. A 300-character paragraph cannot be a topic label at all —
+    the same kind of test CLAUDE.md §4 permits for an `@` in a name."""
+    if not (_MIN_TOPIC_CHARS <= len(s) <= _MAX_TOPIC_CHARS):
+        return False
+    return bool(re.search(r"[A-Za-z]", s))
 
 
 def topic_key(domain_slug: str, sequence: int, label: str) -> str:
@@ -308,3 +367,58 @@ def provenance(row: dict, **extra) -> dict:
     }
     src.update({k: v for k, v in extra.items() if v is not None})
     return {k: v for k, v in src.items() if v is not None}
+
+
+# ---------------------------------------------------------------------------
+# Joining curriculum documents to modules
+# ---------------------------------------------------------------------------
+#
+# 19 of the 23 curriculum documents in row B sit at the DOMAIN root, not under
+# a module folder, so a path-based join reaches none of them — and they are the
+# structured topic source the owner named first. Two joins are available and
+# they are not the same kind of thing:
+#
+#   BY ORDINAL   `Lesson Plan 2 - API Design and Implementation` is the second
+#                module of its domain. That is the same structural fact the
+#                module key already rests on, and the title after the number is
+#                never compared to anything. Safe to apply.
+#
+#   BY TAB NAME  `Backend: Lesson plans` has one tab per module — `Concurrency
+#                Lesson Plan`, `API development with Spring`. Matching those to
+#                module labels is a name match with guaranteed misses: the
+#                third occurrence of what `SCALE-PLAN.md` calls the alias
+#                problem. It PROPOSES into a review file and never applies.
+
+_LESSON_ORDINAL = re.compile(r"\bLesson\s*Plan\s*(\d+)\b", re.IGNORECASE)
+
+
+def lesson_plan_sequence(name: str) -> int | None:
+    """`Lesson Plan N - <anything>` -> N. No number, no join."""
+    m = _LESSON_ORDINAL.search(name)
+    return int(m.group(1)) if m else None
+
+
+def propose_tab_join(tab: str, domain_slug: str,
+                     modules: dict) -> dict | None:
+    """A PROPOSAL for `config/content-topic-review.yaml`, never a join.
+
+    `modules` maps module label -> sequence. Matching is substring on the
+    normalised strings, and TWO matches are returned as ambiguous rather than
+    ranked — `lib/resolve.py` returns Ambiguous by default because three
+    shipped bugs came from picking with no signal to the caller.
+    """
+    norm_tab = cur.normalise_for_join(tab)
+    hits = [(label, seq) for label, seq in modules.items()
+            if cur.normalise_for_join(label) in norm_tab
+            or norm_tab in cur.normalise_for_join(label)]
+    if not hits:
+        return None
+    row = {"tab": tab, "domain": domain_slug, "confirmed": False}
+    if len(hits) > 1:
+        row.update(ambiguous=True, candidates=[h[0] for h in hits],
+                   note="two or more modules match this tab name; a human "
+                        "decides, and nothing is applied while unconfirmed")
+    else:
+        row.update(ambiguous=False, candidate=hits[0][0],
+                   candidate_sequence=hits[0][1])
+    return row
