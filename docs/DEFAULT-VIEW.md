@@ -99,7 +99,12 @@ two graphs** — `Bill Ogden` / `William David Ogden` (INS-08/30) and
 ## D3 · Speed plan — approved
 
 **Status 2026-09-30 (B3, local only):** items 1, 2, 3 and 5 DONE; item 6
-(`pg_trgm`) NOT shipped — the index cannot be used under RLS (HANDOFF §G);
+(`pg_trgm`) **NOT shipped, by owner decision (Animesh Kumar, 2026-09-30,
+origin: hand)**: the index sped up search only for the table owner (18.5 →
+1.4 ms); under RLS it gains nothing, because `ILIKE` is not LEAKPROOF and the
+policy must run first, so the planner can never use it. Search stays ~9 ms
+p50, and a SECURITY DEFINER search would duplicate the visibility rules
+(`docs/PERF-BASELINE.md` §B3);
 item 4 unchanged — the canvas is 2D and no WebGL path was built, since B3's
 scope was the other five. Locally: settled 135 ms, default-view payload
 127,261 B brotli (target ≤ 150 KB). Production figures are Phase D's

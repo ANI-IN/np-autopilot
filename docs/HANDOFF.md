@@ -129,7 +129,7 @@ in a CSP-hashed inline script, so it is corrected with B3's next edit there).
 | columnar brotli `/api/structure` | **DONE** — `bbf6b2c`; 2,591,861 B → 127,261 B |
 | ETag with private caching | **DONE** — `bbf6b2c`; 304 in ~2 ms |
 | lazy panels | **DONE** — `bbf6b2c`; `/api/node?detail=1` on open |
-| `pg_trgm` search index | **NOT SHIPPED** — unusable under RLS; see §G |
+| `pg_trgm` search index | **NOT SHIPPED, owner decision 2026-09-30** — unusable under RLS; see §G |
 
 Local before/after: `docs/PERF-BASELINE.md` §"B3 — LOCAL before/after".
 Settled layout **6,450 → 135 ms**; wire bytes per node **784 → 38.5**. Nothing
@@ -150,7 +150,7 @@ already built (`topicLinks()` in `public/index.html`). Measured 2026-09-30 in
 deck's Drive link, with **3,626** a slide number, **952** a page number (PDFs)
 and **1,693** a sheet tab.
 
-## 1 · Finish B3 (speed) — DONE LOCALLY 2026-09-30, see §C (`pg_trgm` open, §G)
+## 1 · Finish B3 (speed) — DONE LOCALLY 2026-09-30, see §C (`pg_trgm` not shipped by decision, §G)
 The five remaining items: precomputed layout; columnar brotli
 `/api/structure`; ETag + private caching; lazy panels; `pg_trgm` index.
 
@@ -336,12 +336,11 @@ rows above. They existed only in conversation. They are recorded now.
   whichever came last; two loads were under-counted in B2's screenshot. Now
   explicit: the mastersheet role wins, then the stronger role. Checked in both
   orders.
-- **OPEN, owner's decision — `pg_trgm` was not shipped.** As the table owner a
-  trigram index cut substring search 18.5 → 1.4 ms; for a real caller the
-  planner can never use it, because `ILIKE` is not LEAKPROOF and RLS applies
-  the policy first (verified with sequential scans disabled). Options: leave
-  it (search is ~9 ms p50 locally), or a `SECURITY DEFINER` search that
-  re-implements the visibility rules — not recommended: a second copy of RLS.
+- **DECIDED — `pg_trgm` not shipped** (owner, Animesh Kumar, 2026-09-30,
+  origin: hand). The index sped up search only for the table owner (18.5 →
+  1.4 ms); under RLS the planner can never use it, because `ILIKE` is not
+  LEAKPROOF. Search is ~9 ms p50 under RLS, and a `SECURITY DEFINER` search
+  would duplicate the visibility rules. `docs/PERF-BASELINE.md` §B3.
 
 **R21 — the GitHub repository was PUBLIC from creation (2026-09-17) for 13
 days**, found 2026-09-29 before a push. **Private, verified 2026-09-29

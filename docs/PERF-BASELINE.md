@@ -214,11 +214,18 @@ Target was ≤ 150 KB brotli: met at 127 KB. The production transport of the
   measure.
 - **A panel now costs one request** (`/api/node?detail=1`, ~10 ms locally),
   where it used to cost the whole panel's data in every page load.
-- **`pg_trgm` was NOT shipped.** As the table owner a trigram index cut search
-  from 18.5 ms to 1.4 ms; for a real caller it is never used, because `ILIKE`
-  is not LEAKPROOF and RLS must apply the policy first — even with sequential
-  scans disabled the planner cannot use it. Search stays ~9 ms p50. Owner's
-  call (HANDOFF §G).
+- **`pg_trgm` was NOT shipped — owner decision, Animesh Kumar, 2026-09-30
+  (origin: hand).** Measured: as the table owner (who bypasses RLS) a GIN
+  trigram index on `nodes.label` cut `ILIKE '%api%'` from 18.5 ms to 1.4 ms,
+  `'%design%'` 7.0 → 1.7 ms, `'%kreznarich%'` 6.2 → 0.13 ms. **For a real
+  caller the gain is zero:** under RLS the planner must apply the policy
+  before any non-LEAKPROOF condition, `ILIKE` (`texticlike`) is not
+  LEAKPROOF, so the index can never be used — verified in the `authenticated`
+  session with sequential scans disabled, where it still chose a sequential
+  scan. Search under RLS is ~9 ms p50 locally. The only way round it is a
+  `SECURITY DEFINER` search that re-implements the visibility rules — a
+  second copy of RLS, which this project will not keep. Migration 0022 was
+  never committed.
 
 ---
 
