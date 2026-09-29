@@ -9,8 +9,12 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.13" }
       - run: pip install -r requirements.txt
-      # Database and corpus are unavailable here; those tests skip themselves.
+      # Database and corpus are unavailable here; those tests skip themselves —
+      # and every skip must be listed, by reason and count, in
+      # tests/ci-skips.yaml. A new skip fails the job until it is.
       - run: python -m pytest tests -q
+        env:
+          NP_SKIP_LEDGER: enforce
 
   renderer:
     runs-on: ubuntu-latest

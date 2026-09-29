@@ -107,6 +107,64 @@ def pytest_report_header(config):
     return f"database: {_DATABASE}"
 
 
+# ---------------------------------------------------------------------------
+# THE SKIP LEDGER. A skip is a test that did not run, and CI's `test` job is
+# green over 169 of them. So every run prints its skips grouped by reason, and
+# with NP_SKIP_LEDGER=enforce (set in ci.yml) the counts must equal
+# tests/ci-skips.yaml EXACTLY: a new or grown skip fails until it is listed,
+# and a vanished one fails until the ledger is tightened, so a stale allowance
+# cannot later absorb a new skip. Opt-in by variable, not by CI=true, because
+# some tests run pytest on a subset in a subprocess.
+# ---------------------------------------------------------------------------
+from collections import Counter                                       # noqa: E402
+
+#: NP_SKIP_LEDGER_FILE exists only so tests/test_skip_ledger.py can prove the
+#: ledger fails on a mismatch without editing the real one.
+SKIP_LEDGER = Path(os.environ.get("NP_SKIP_LEDGER_FILE") or REPO / "tests" / "ci-skips.yaml")
+_SKIPS: Counter = Counter()
+_LEDGER_PROBLEMS: list[str] = []
+
+
+def pytest_runtest_logreport(report):
+    if report.skipped and not hasattr(report, "wasxfail"):
+        lr = report.longrepr
+        reason = lr[2] if isinstance(lr, tuple) else str(lr)
+        _SKIPS[reason.removeprefix("Skipped: ")] += 1
+
+
+def _ledger_problems() -> list[str]:
+    import yaml
+    listed = (yaml.safe_load(SKIP_LEDGER.read_text(encoding="utf-8")) or {}).get("skips") or {}
+    out = []
+    for reason in sorted(set(listed) | set(_SKIPS)):
+        want, got = listed.get(reason, 0), _SKIPS.get(reason, 0)
+        if got != want:
+            out.append(f"{got} skipped, ledger lists {want}: {reason}")
+    return out
+
+
+def pytest_sessionfinish(session, exitstatus):
+    if os.environ.get("NP_SKIP_LEDGER") == "enforce":
+        _LEDGER_PROBLEMS[:] = _ledger_problems()
+        if _LEDGER_PROBLEMS and session.exitstatus == 0:
+            session.exitstatus = pytest.ExitCode.TESTS_FAILED
+
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    tr = terminalreporter
+    tr.section(f"skips by reason ({sum(_SKIPS.values())})")
+    for reason, n in sorted(_SKIPS.items(), key=lambda kv: (-kv[1], kv[0])):
+        tr.write_line(f"{n:5d}  {reason}")
+    if os.environ.get("NP_SKIP_LEDGER") == "enforce":
+        if _LEDGER_PROBLEMS:
+            tr.write_line(f"SKIP LEDGER MISMATCH ({SKIP_LEDGER.name}) — a skip "
+                          "is a test that did not run; list it deliberately:")
+            for p in _LEDGER_PROBLEMS:
+                tr.write_line(f"  {p}")
+        else:
+            tr.write_line(f"skip ledger: matches {SKIP_LEDGER.name}")
+
+
 def pytest_collection_modifyitems(config, items):
     if _TARGET_IS_PRODUCTION:
         return

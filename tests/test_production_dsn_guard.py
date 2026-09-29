@@ -68,7 +68,8 @@ def test_the_reason_never_carries_the_password():
 def _pytest(env_overrides: dict, *args: str) -> subprocess.CompletedProcess:
     env = {k: v for k, v in os.environ.items()
            if k not in (db.SESSION, db.TRANSACTION, db.ALLOW_PROD_TESTS,
-                        "NP_TEST_DSN", "NP_TEST_DSN_TRANSACTION")}
+                        "NP_TEST_DSN", "NP_TEST_DSN_TRANSACTION", "NP_SKIP_LEDGER",
+                        "NP_SKIP_LEDGER_FILE")}
     env.update(env_overrides)
     return subprocess.run(
         [sys.executable, "-m", "pytest", "-p", "no:cacheprovider", *args],
