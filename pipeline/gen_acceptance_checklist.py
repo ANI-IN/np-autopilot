@@ -100,8 +100,16 @@ def main() -> int:
             tot += 1
             u = n.get("uplevel_link") or ""
             ok += bool(u)
-            files = attached.get(k, [])
-            drive = ", ".join(f"[{nm[:34]}]({url})" for nm, url in files[:3]) \
+            # EVERY FILE, BY ITS FULL NAME. This listed the first 3, each cut to
+            # 34 characters, with no count: API Design's Class row showed 3 of
+            # its 13 decks, and the owner ticks every link against the
+            # mastersheet. A cap that drops links silently is CLAUDE.md §4's
+            # filter on truth, and a truncated filename is a broken citation
+            # key (§1). tests/test_acceptance_checklist.py holds it to the graph.
+            files = sorted(attached.get(k, []))
+            drive = (f"**{len(files)}:** " + ", ".join(
+                f"[{nm.replace('|', '/')}]({url})" if url else nm.replace('|', '/')
+                for nm, url in files)) \
                 if files else "_no file matched at session level_"
             lines.append(f"| {KIND_LABEL[k]} | "
                          f"{f'[open]({u})' if u else '_no Uplevel link_'} | {drive} |")
