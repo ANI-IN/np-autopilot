@@ -51,7 +51,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from pipeline.lib import db, graphio, taxonomy                        # noqa: E402
+from pipeline.lib import db, graphio, layout, taxonomy                # noqa: E402
 from pipeline.lib.paths import KNOWLEDGE_DIR, REPO_ROOT                          # noqa: E402
 
 #: Coordinates that make an assertion id. Mirrors ASSERTION_COORDS in
@@ -401,6 +401,12 @@ def main() -> int:
     known_files = {r[0] for r in file_rows}
     nodes, edges, sources = rows_for(graph, known_files)
     content = graphio.content_hash(graph)
+    # B3: the structure view's coordinates, computed here once instead of in
+    # every browser on every load (pipeline/lib/layout.py, migration 0021).
+    # Before the transaction, so a slow layout cannot hold its locks.
+    t_layout = time.time()
+    coords = layout.for_graph(graph)
+    layout_s = time.time() - t_layout
 
     print("=" * 74)
     print("PROJECT GRAPH -> POSTGRES")
@@ -427,7 +433,7 @@ def main() -> int:
             # ONE transaction. psycopg opens one implicitly and commits on exit;
             # any exception rolls the whole thing back and the previous graph
             # survives intact.
-            cur.execute("truncate node_sources, edges, nodes, files, "
+            cur.execute("truncate node_layout, node_sources, edges, nodes, files, "
                         "edge_rels, node_types, projection_meta restart identity")
 
             cur.executemany("insert into node_types(name,description) values (%s,%s)",
@@ -443,6 +449,9 @@ def main() -> int:
                           "from stdin") as cp:
                 for row in nodes:
                     cp.write_row(row)
+            with cur.copy("copy node_layout (node_id,x,y) from stdin") as cp:
+                for node_id, (x, y) in coords.items():
+                    cp.write_row((node_id, x, y))
             with cur.copy("copy edges (rel,source_id,target_id,props) "
                           "from stdin") as cp:
                 for row in edges:
@@ -467,6 +476,8 @@ def main() -> int:
     elapsed = time.time() - started
 
     print()
+    print(f"  layout       : {len(coords):,} structure nodes in {layout_s:.1f}s "
+          "(node_layout)")
     print(f"  projected in {elapsed:.1f}s "
           f"({(len(nodes)+len(edges)+len(sources))/max(elapsed,0.01):,.0f} rows/s)")
     print("  one transaction — a failure would have left the previous graph intact")
