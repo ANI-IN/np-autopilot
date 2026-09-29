@@ -1,0 +1,310 @@
+"""The row-B content model: how a cached file becomes nodes, edges and topics.
+
+Pure functions, so the pass script is a thin caller and every rule here is
+testable without a Drive or a cache — the same shape `lib/content_scope.py`
+has for the crawl.
+
+THE RULES THIS ENCODES, each an owner decision or a standing rule:
+
+  module identity   (domain_slug, sequence). NEVER the label — `API Design`
+                    exists in Backend and `API Design and Implementation` in
+                    Full Stack, and the projection already holds 922
+                    label-keyed modules that these must not silently join.
+  program week      from a curriculum document, or from the owner's hand fact
+                    for SD1 only. SD3 is null and reports a gap. Never
+                    computed from a folder sequence — `curriculum.py` raises.
+  attachment        live classes, assignments, reviews and decks hang off the
+                    MODULE, not the week, because a week exists only where a
+                    curriculum doc states one and SD3 has none.
+  topics            must carry a locator (slide or page). A topic that cannot
+                    cite where it came from is not evidence.
+  D1                a deck never yields a person. Not ranked, not flagged.
+  unavailable       a download-disabled file is still a node, marked, with no
+                    content and no inferred content.
+"""
+from __future__ import annotations
+
+import hashlib
+import re
+import unicodedata
+from typing import NamedTuple
+
+from pipeline.lib import curriculum as cur
+
+# ---------------------------------------------------------------------------
+# Module identity
+# ---------------------------------------------------------------------------
+
+
+class ModuleRef(NamedTuple):
+    domain: str
+    sequence: int
+    label: str
+
+
+#: Ordered: the most specific shape first. Each domain folder in row B uses a
+#: different one, and two of them use more than one.
+_MODULE_SHAPES = (
+    re.compile(r"/Uplevel [Ss]hared/Week (?P<seq>\d+)/\d+\s*[-:]\s*(?P<label>[^/]+)"),
+    re.compile(r"Content Repo/Week (?P<seq>\d+)/\d+\s*[-:]\s*(?P<label>[^/]+)"),
+    re.compile(r"/(?P<seq2>\d+)\.\s*Module\s*-\s*(?P<label2>.+?)\s*-\s*Content(?:/|$)"),
+    re.compile(r"/Module-(?P<seq3>\d+):\s*(?P<label3>[^/]+)"),
+)
+
+
+def parse_module(path: str) -> ModuleRef | None:
+    """The module a path belongs to, or None.
+
+    ORDER IS THE POINT. SD3 nests every week folder under
+    `Module-1: Database Design`, so the `Module-N:` shape must be tried LAST —
+    a path matching both is a week inside Module-1, and the week is the truth.
+    """
+    domain = path.strip("/").split("/")[0]
+    for rx in _MODULE_SHAPES:
+        m = rx.search(path)
+        if not m:
+            continue
+        g = m.groupdict()
+        seq = g.get("seq") or g.get("seq2") or g.get("seq3")
+        label = g.get("label") or g.get("label2") or g.get("label3")
+        return ModuleRef(domain, int(seq), label.strip())
+    return None
+
+
+def module_key(domain_slug: str, sequence: int) -> str:
+    return cur.module_key(domain_slug, sequence)
+
+
+# ---------------------------------------------------------------------------
+# Curriculum documents
+# ---------------------------------------------------------------------------
+
+_KIND_PATTERNS = (
+    ("kyp", re.compile(r"\bkyp\b", re.I)),
+    ("handbook", re.compile(r"handbook", re.I)),
+    ("lesson_plan", re.compile(r"lesson\s*plan", re.I)),
+    ("outline", re.compile(r"course outline|curriculum outline|detailed course",
+                           re.I)),
+)
+
+
+def curriculum_kind(name: str) -> str | None:
+    """Which kind of curriculum document, or None for ordinary content.
+
+    Measured 2026-09-29: exactly ONE `kyp` exists across 991 files in the four
+    approved domains. `curriculum_doc` carries the kind rather than a `kyp`
+    node type existing, so that SD1, SD3 and SD4 having no KYP reads as a
+    CONTENT GAP instead of being hidden inside a node type.
+    """
+    for kind, rx in _KIND_PATTERNS:
+        if rx.search(name):
+            return kind
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Program week
+# ---------------------------------------------------------------------------
+#
+# SD1 only, from `config/out-of-corpus-facts.yaml -> sd1-full-stack-program-
+# weeks`: DSA occupies program weeks 1-5 and Scalable Systems Design 6-8, so
+# the five Full Stack modules are weeks 9-13 in outline order.
+#
+# The +8 is NOT a rule and is not applied anywhere else. It is the content of
+# one hand fact about one domain, and `cur.program_week_from_local` still
+# refuses to compute a week from a sequence.
+
+_SD1_FACT = ("config/out-of-corpus-facts.yaml -> sd1-full-stack-program-weeks "
+             "(origin: hand, Animesh Kumar, 2026-09-29)")
+_SD1_WEEKS = {1: 9, 2: 10, 3: 11, 4: 12, 5: 13}
+
+
+def program_week_for(domain_slug: str, sequence: int) -> cur.ProgramWeek | None:
+    """The program week, or None with a gap reported by the caller."""
+    if domain_slug == "full-stack" and sequence in _SD1_WEEKS:
+        return cur.ProgramWeek(_SD1_WEEKS[sequence], "hand", _SD1_FACT)
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Role of a file within its module
+# ---------------------------------------------------------------------------
+
+_ROLES = (
+    ("assignment_review", re.compile(r"/Assignment Review(?:\s*-\s*[^/]+)?/", re.I)),
+    ("live_class", re.compile(r"/(?:\d+\.\s*)?Live[ _]Class[^/]*/|/Slides?/", re.I)),
+    ("assignment", re.compile(r"/(?:\d+\.\s*)?Assignments?[^/]*/|timed[ _-]?test", re.I)),
+    ("practice", re.compile(r"/(?:\d+\.\s*)?Practice[^/]*/", re.I)),
+    ("foundation", re.compile(r"/(?:\d+\.\s*)?Found\w*[^/]*/", re.I)),
+)
+
+_DECK_MIMES = {
+    "application/vnd.google-apps.presentation",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.ms-powerpoint",
+}
+
+_ARCHIVE_MIMES = {"application/zip", "application/x-zip-compressed"}
+
+
+def role_of(path: str) -> str | None:
+    """Which part of the module a file plays, from the folder that names it.
+
+    Assignment review is checked FIRST: it lives inside an assignment folder,
+    so a looser order files every review as an assignment.
+    """
+    for role, rx in _ROLES:
+        if rx.search(path):
+            return role
+    return None
+
+
+def is_deck(mime: str) -> bool:
+    return mime in _DECK_MIMES
+
+
+def is_repo(mime: str, name: str) -> bool:
+    return mime in _ARCHIVE_MIMES or name.lower().endswith((".zip", ".tar.gz"))
+
+
+# ---------------------------------------------------------------------------
+# Topics
+# ---------------------------------------------------------------------------
+
+
+class Topic(NamedTuple):
+    label: str
+    locator_kind: str      # "slide" | "page" | "tab" | "row"
+    locator: int
+
+
+_LOCATOR = re.compile(r"^\[(slide|page|tab)\s+([^\]]+)\]\s*$", re.I)
+
+#: A topic line has to look like a heading, not a sentence. Measured against
+#: the real decks: bullets and titles are short and carry few stop words;
+#: prose runs long. This RANKS nothing and EXCLUDES nothing that is shaped
+#: like a topic — it is a shape test, in the sense CLAUDE.md §4 permits:
+#: a 300-character paragraph cannot be a topic label at all.
+_MAX_TOPIC_CHARS = 90
+_MIN_TOPIC_CHARS = 3
+
+
+def topics_from_text(text: str, source: str) -> list[Topic]:
+    """Topics with the slide or page they came from. No locator, no topic."""
+    out: list[Topic] = []
+    kind, num = None, None
+    for raw in text.splitlines():
+        line = raw.strip()
+        m = _LOCATOR.match(line)
+        if m:
+            kind = m.group(1).lower()
+            digits = re.search(r"\d+", m.group(2))
+            num = int(digits.group()) if digits else None
+            continue
+        if kind is None or num is None:
+            continue                      # text before any locator is uncited
+        if not (_MIN_TOPIC_CHARS <= len(line) <= _MAX_TOPIC_CHARS):
+            continue
+        if not re.search(r"[A-Za-z]", line):
+            continue
+        out.append(Topic(line, kind, num))
+    return out
+
+
+def topic_key(domain_slug: str, sequence: int, label: str) -> str:
+    """Scoped to the module. A global topic node merges Backend's `API Design`
+    with Testing's `API Testing` on a name — the alias failure, a fourth time."""
+    norm = re.sub(r"\s+", " ",
+                  re.sub(r"[^a-z0-9]+", " ",
+                         unicodedata.normalize("NFKD", label).lower())).strip()
+    raw = f"topic|{domain_slug}|{int(sequence)}|{norm}"
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+# ---------------------------------------------------------------------------
+# D1
+# ---------------------------------------------------------------------------
+
+def people_from_text(text: str) -> list:
+    """Always empty. D1, and the owner's deferral of instructors.
+
+    A function rather than an absence, so that a future caller reaching for
+    "the people in this deck" finds a refusal with a reason rather than
+    writing the regex themselves. `REGISTRY-INVENTORY.md` §7 is the
+    measurement: four instructor-shaped tuples on registry decks, two of them
+    fabricated and structurally identical to the two real ones.
+    """
+    return []
+
+
+# ---------------------------------------------------------------------------
+# Unavailable content
+# ---------------------------------------------------------------------------
+
+_UNAVAILABLE_REASON = {
+    "download-disabled-by-owner":
+        "content unavailable: download disabled by owner",
+    "no-text-extractor":
+        "content unavailable: no text extractor for this file type",
+    "no-media-download":
+        "content not read: media and archives are recorded, never downloaded",
+    "learner-content":
+        "content not read: learner-authored material inside an assignment review",
+}
+
+
+def node_for_unavailable(row: dict) -> dict:
+    """A node for a file whose content we do not hold. Marked, never dropped.
+
+    It carries NO text and NO topics, and that absence is the point: a module
+    that looks thin because its deck is on this list must say so rather than
+    read as a gap in the curriculum.
+    """
+    return {
+        "label": row["name"],
+        "label_raw": row["name"],
+        "path": row["path"],
+        "mime": row["mime"],
+        "content_available": False,
+        "unavailable_rule": row["rule"],
+        "unavailable_reason": _UNAVAILABLE_REASON.get(
+            row["rule"], f"content unavailable: {row['rule']}"),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Revamp currency
+# ---------------------------------------------------------------------------
+
+_REVAMP = re.compile(r"/(Revamp[\s-]*20\d\d|Q\d\s*20\d\d:?\s*Revamp|"
+                     r"New Material Aug 2023)(?:/|$)", re.I)
+
+#: Left ambiguous by the owner, 2026-09-29: it sits INSIDE the base live-class
+#: folder rather than beside the module's numbered units, so it has no sibling
+#: base to point at. Recorded rather than forced into the rule that covers the
+#: other seven.
+_AMBIGUOUS = re.compile(r"/2\. Live Class Slides/Updated Content - Aug 2023(?:/|$)",
+                        re.I)
+
+
+def revision_of(path: str) -> str:
+    """`base`, `revamp` or `ambiguous`."""
+    if _AMBIGUOUS.search(path):
+        return "ambiguous"
+    return "revamp" if _REVAMP.search(path) else "base"
+
+
+# ---------------------------------------------------------------------------
+# Provenance
+# ---------------------------------------------------------------------------
+
+def provenance(row: dict, **extra) -> dict:
+    """A source entry for one cached file. Never carries an address (D4)."""
+    src = {
+        "origin": "corpus",
+        "file": row["path"],
+        "owner_domain": row.get("owner_domain"),
+        "mime": row.get("mime"),
+    }
+    src.update({k: v for k, v in extra.items() if v is not None})
+    return {k: v for k, v in src.items() if v is not None}

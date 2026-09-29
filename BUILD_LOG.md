@@ -2785,3 +2785,10 @@ document of ours. Final hash `a53462823ca26466fc5e6b3bf18615ec51bb96ed003249a866
 - Files: 1440, exported 5
 - Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 2, 'download-disabled-by-owner': 49, 'learner-content': 160}
 - Seconds: 279
+
+## 2026-09-29 07:39:22Z — 06_crawl_content
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Files: 1440, exported 921
+- Skips: {'out-of-scope-domain': 8, 'no-media-download': 307, 'no-text-extractor': 3, 'download-disabled-by-owner': 49, 'learner-content': 160}
+- Seconds: 1977

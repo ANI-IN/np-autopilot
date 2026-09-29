@@ -64,8 +64,34 @@ SHORTCUT = "application/vnd.google-apps.shortcut"
 TEXT_EXPORT = {
     "application/vnd.google-apps.document": "text/plain",
     "application/vnd.google-apps.presentation": "text/plain",
-    "application/vnd.google-apps.spreadsheet": "text/csv",
 }
+
+#: Sheets are exported as XLSX AND THEN PARSED, never as csv.
+#:
+#: Drive's csv export returns ONLY THE FIRST TAB. `Backend: Lesson plans` has
+#: five and the cache held one; the `Interview questions` tab was absent
+#: entirely, and the export succeeded so nothing errored. `CLAUDE.md` §0 says
+#: this about pass 0's own export map — "Sheets -> xlsx preserves every tab,
+#: which is the whole point of this pass" — and this crawler had quietly given
+#: that property up. 42 exported files are spreadsheets; 23 are curriculum
+#: documents, the primary topic source.
+SHEET_MIME = "application/vnd.google-apps.spreadsheet"
+SHEET_EXPORT_AS = ("application/vnd.openxmlformats-officedocument"
+                   ".spreadsheetml.sheet")
+
+#: EXTRACTION rules are part of the cache contract, like redaction — but they
+#: move independently, so they get their own version PER MIME FAMILY. Bumping
+#: one re-exports the files it governs instead of all 922.
+EXTRACT_VERSIONS = {
+    #: 2 — xlsx-with-every-tab replaced first-tab-only csv, 2026-09-29
+    "sheet": 2,
+    "default": 1,
+}
+
+
+def extract_version_for(mime: str) -> int:
+    return EXTRACT_VERSIONS["sheet" if "spreadsheet" in mime
+                            else "default"]
 
 FIELDS = ("nextPageToken, files(id, name, mimeType, modifiedTime, size, "
           "owners(emailAddress), copyRequiresWriterPermission, "
@@ -333,6 +359,7 @@ def crawl(service, root_id: str, cache_root: Path, *, approved_domains: list,
             # otherwise-unchanged file stale.
             if (prior and prior.get("modifiedTime") == row["modifiedTime"]
                     and prior.get("redaction_version") == rd.REDACTION_VERSION
+                    and prior.get("extract_version") == extract_version_for(mime)
                     and prior.get("text_path")
                     and (cache_dir / prior["text_path"]).exists()):
                 stats["unchanged"] += 1
@@ -387,6 +414,7 @@ def crawl(service, root_id: str, cache_root: Path, *, approved_domains: list,
             # not say so is a hash pretending to be an integrity check.
             row["sha256_of"] = "redacted-text"
             row["redaction_version"] = rd.REDACTION_VERSION
+            row["extract_version"] = extract_version_for(mime)
             stats["exported"] += 1
             if counts:
                 stats["files_with_redactions"] += 1
@@ -429,6 +457,10 @@ def _fetch_text(service, limiter, file_id: str, mime: str,
             data = limiter(lambda: service.files().export(
                 fileId=file_id, mimeType=TEXT_EXPORT[mime]).execute())
             return data.decode("utf-8", "replace"), {}
+        if mime == SHEET_MIME:
+            data = limiter(lambda: service.files().export(
+                fileId=file_id, mimeType=SHEET_EXPORT_AS).execute())
+            return ex.extract(data, SHEET_EXPORT_AS, name)
         from googleapiclient.http import MediaIoBaseDownload
         buf = io.BytesIO()
         req = service.files().get_media(fileId=file_id, supportsAllDrives=True)

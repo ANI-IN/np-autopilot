@@ -382,3 +382,58 @@ def test_a_missing_capabilities_block_does_not_silently_disable(mod):
     """Absence is not a refusal. If Drive did not return capabilities we must
     TRY the fetch, not record 'unavailable' on a guess."""
     assert mod.download_disabled({"id": "y", "name": "z"}) is False
+
+
+# ---------------------------------------------------------------------------
+# Spreadsheets: every tab, not just the first
+# ---------------------------------------------------------------------------
+
+def test_a_spreadsheet_is_exported_with_every_tab(mod, tmp_path):
+    """FOUND WHILE BUILDING PHASE 3. The crawler exported Sheets as `text/csv`,
+    and Drive's CSV export returns ONLY THE FIRST TAB. `Backend: Lesson plans`
+    has five; the cache held one, and the `Interview questions` tab was simply
+    absent. The export succeeded and produced plausible output, so nothing
+    errored — the same shape as the binary-decode bug.
+
+    CLAUDE.md §0 already says why this matters, about pass 0's own export map:
+    "Sheets -> xlsx preserves every tab, which is the whole point of this
+    pass." This crawler chose csv and lost that property.
+
+    42 exported files are spreadsheets and 23 of them are curriculum documents
+    — the primary topic source for Phase 3.
+    """
+    import io
+    import openpyxl
+    wb = openpyxl.Workbook()
+    wb.active.title = "Curriculum Outline"
+    wb.active["A1"] = "Module"
+    wb.create_sheet("Interview questions")["A1"] = "What is idempotency?"
+    buf = io.BytesIO(); wb.save(buf)
+
+    drive = _FakeDrive({"ROOT": [_f("dom", "SD3: Backend Engineering", FOLDER)],
+                        "dom": [_f("sheet1", "Backend: Lesson plans",
+                                   "application/vnd.google-apps.spreadsheet")]},
+                       {"sheet1": buf.getvalue()})
+    out = mod.crawl(drive, "ROOT", tmp_path, approved_domains=APPROVED)
+    text = (out.cache_dir / out.manifest["sheet1"]["text_path"]).read_text()
+    assert "Interview questions" in text, "the second tab is missing"
+    assert "What is idempotency?" in text
+    assert "[tab " in text, "tab boundaries must be locatable for provenance"
+
+
+def test_the_extract_version_is_recorded_and_drives_resume(mod, tmp_path, world):
+    """Extraction rules are part of the cache contract too, and they move
+    independently of redaction — so they get their own version rather than
+    riding on REDACTION_VERSION, which would re-export 922 files to fix 42."""
+    out = mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    exported = [r for r in out.manifest.values() if r["action"] == "export"]
+    assert all("extract_version" in r for r in exported)
+    world.exported.clear()
+    man = tmp_path / mod.CACHE_SUBDIR / "manifest.json"
+    body = json.loads(man.read_text())
+    for r in body.values():
+        if r["action"] == "export":
+            r["extract_version"] = 0
+    man.write_text(json.dumps(body))
+    mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    assert world.exported, "an extract-version bump must re-export"
