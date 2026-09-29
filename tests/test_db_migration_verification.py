@@ -15,6 +15,7 @@ completed projection; they are not part of the offline suite.
 """
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -61,7 +62,14 @@ def test_the_clean_projection_verifies():
     """The baseline. Without this, every failure below proves nothing."""
     code, out = _verify()
     assert code == 0, out
-    assert "32/32 checks passed" in out
+    # Every check passes, and none has quietly gone missing: 54 as of B2.5
+    # (683fb9b). This said "32/32" until 2026-09-29 and nobody noticed: the
+    # test only ran against a database when someone loaded production's env,
+    # so it had not run since the verifier grew in B2/B2.5.
+    m = re.search(r"RESULT: (\d+)/(\d+) checks passed", out)
+    assert m, out
+    passed, total = int(m[1]), int(m[2])
+    assert passed == total and total >= 54, out
 
 
 @pytest.mark.parametrize("name,sql,expect_in_output", [

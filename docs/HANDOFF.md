@@ -22,7 +22,8 @@ recalled.
 
 | check | result |
 |---|---|
-| test suite | **559 passed**, 120 skipped, 0 failed |
+| test suite, no database (what CI sees) | **581 passed**, 130 skipped, 0 failed — 2026-09-30, after step 0 (was 559 / 120) |
+| test suite, local Supabase stack (§I) | **699 passed, 2 FAILED**, 10 skipped — the 2 are real migration gaps, §G; 7 skips are `production_only` |
 | `pipeline/validate.py` | **0 FAIL**, 19 WARN, 20/27 categories exercised |
 | `eval/content_eval.py` | **14/14**, 0 fabrications |
 | `eval/content_eval_all.py` | **103/103**, 0 fabrications (§D2 excluded as unfailable) |
@@ -38,7 +39,7 @@ this session has been deployed or applied.
 
 | | production today | local only |
 |---|---|---|
-| graph | 3,146 nodes / 4,021 edges, projected 2026-09-18 | merged public **8,507 / 42,741** |
+| graph | 3,146 nodes / 4,021 edges, `projected_at` **2026-09-20 11:00:22Z** (see below) | merged public **8,507 / 42,741** |
 | UI | the old bounded ~60-node overview | structure view, panels, matrix, timeline, filters |
 | database | migrations through **0016** | local PostgreSQL 17 with **0017, 0018, 0019 applied** |
 | connections | one per request | one per warm instance (cold-start fixes) |
@@ -46,6 +47,15 @@ this session has been deployed or applied.
 
 `public/stats.json` still describes production (3,146 / 4,021) and was
 deliberately not overwritten by local projections.
+
+**Production's `projected_at` is 2026-09-20, not 2026-09-18** as this table
+first said. Read 2026-09-29 from `projection_meta` in a read-only transaction:
+same counts (3,146 / 4,021 / 30,658 sources), re-projected at 16:30 IST on
+2026-09-20 — between two commits of that day's session, **before this
+branch's merge-base (2026-09-21)**, so nothing in the row-B work touched it.
+Cause not recorded; it is the shape of a test-suite run with production's env
+loaded (`test_db_migration_verification` re-projects), which is exactly the
+hazard §I now refuses.
 
 ## Graph counts
 
@@ -175,7 +185,24 @@ Deploy from a **`.git`-less `/tmp` copy** → verify `/api/config` 200,
 security headers, and `drive_dom.mjs` against the live site →
 `measure_signed_in.py --phase post` (before/after against the baseline,
 including a first-request-after-idle cold-start figure on the live `icn1`
-function) → document rollback (restore from the Phase C backup, redeploy the
+function) → **run the `production_only` tests against production, read-only**:
+
+```bash
+set -a && . ~/.config/np-autopilot/env && set +a
+NP_ALLOW_PROD_TESTS=1 python3 -m pytest tests -m production_only -rs
+```
+
+They are the 7 tests that assert on production's own rows (real Google
+identities, the live projection vs `public/stats.json`). Each runs under
+`default_transaction_read_only=on`, verified before it starts
+(`tests/db_guard.py`), so a write fails the test instead of landing. **Only
+with `-m production_only`**: the opt-in lifts the refusal for the whole suite,
+and the rest of it writes. The auth/RLS tests need no production run — they
+already run against Supabase's real stack locally (§I), not a shim. **Expect
+`test_the_landing_page_describes_the_projection_not_the_pipeline_graph` to
+fail after Phase C**: it asserts `stats.json` nodes `< 5048`, and the merged
+public half is 8,507 — fix that assertion in Phase C, before this run.
+→ document rollback (restore from the Phase C backup, redeploy the
 previous build) → tell the owner exactly what to click to see API Design's full
 chain, the matrix and the single-type views.
 
@@ -262,6 +289,26 @@ rows above. They existed only in conversation. They are recorded now.
 ---
 
 # G · OPEN ISSUES AND RISKS (none are blockers)
+
+**Found 2026-09-29 by the first run of the DB tests against Supabase's real
+stack — both are the migrations relying on the environment, and both fail
+`tests/` today:**
+
+- **`auth_hook_refusals` has RLS disabled — in production too**
+  (`relrowsecurity = false`, read-only check). Migration 0016 creates it
+  without `enable row level security`. Not exposed today: `anon` and
+  `authenticated` hold no privilege on it in production, and it has 0 rows.
+  `test_rls_is_enabled_on_every_table` fails.
+- **The migrations do not stop `anon` executing the sign-in hook.** 0007
+  revokes EXECUTE from `anon`, `authenticated` but not from `PUBLIC`.
+  Production's function ACL happens to carry no `PUBLIC` grant; a fresh apply
+  on Supabase's own image does (`=X/postgres`). Safe in production by
+  environment, not by migration. `test_the_hook_is_callable_by_the_role_gotrue_uses`
+  fails.
+- **Proposed, not written:** one migration (0020) — `alter table
+  auth_hook_refusals enable row level security` and `revoke execute … from
+  public` on both hook functions. Needs the owner's go-ahead; it would go to
+  production in Phase C with 0017–0019.
 
 - **`interview-kickstart.com` (hyphen): 185 files.** IT confirmation still
   pending. Included in the main externally-owned list by owner decision.
@@ -356,28 +403,34 @@ python3 eval/measure_signed_in.py --phase pre       # before the deploy
 python3 eval/measure_signed_in.py --phase post      # after; /api/structure REQUIRED
 python3 eval/measure_signed_in.py --phase pre --wait-for-enter
 
-# --- local PostgreSQL (the B2/B3 workbench) ----------------------------
-export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
-PGDATA=<scratch>/pgdata; PGSOCK=<scratch>/pgsock
-initdb -D "$PGDATA" -U np --auth=trust
-pg_ctl -D "$PGDATA" -o "-k $PGSOCK -h 127.0.0.1 -p 55432" -l <scratch>/pg.log start
-psql -h 127.0.0.1 -p 55432 -U np -d postgres -c "create database np_b2;"
-# the Supabase surface the migrations expect:
-psql "$DSN" -c "create role anon; create role authenticated; create role service_role;"
-psql "$DSN" -c "create schema if not exists auth;"
-psql "$DSN" -c "create table if not exists auth.users (id uuid primary key default gen_random_uuid(), email text, raw_app_meta_data jsonb default '{}'::jsonb, raw_user_meta_data jsonb default '{}'::jsonb);"
-psql "$DSN" -c "create or replace function auth.uid() returns uuid language sql stable as \$\$ select nullif(coalesce(nullif(current_setting('request.jwt.claims', true),'')::jsonb->>'sub',''),'')::uuid \$\$;"
-psql "$DSN" -c "grant usage on schema public, auth to authenticated, anon;"
-psql "$DSN" -c "grant select on all tables in schema public to authenticated;"
-psql "$DSN" -c "grant execute on all functions in schema auth to authenticated, anon;"
-DSN="postgresql://np@127.0.0.1:55432/np_b2"
-SUPABASE_DB_URL_SESSION="$DSN" SUPABASE_DB_URL_TRANSACTION="$DSN" python3 pipeline/migrate.py up
-SUPABASE_DB_URL_SESSION="$DSN" NP_LANDING_STATS=<scratch>/stats.json \
-  NP_BUILD_LOG=<scratch>/BUILD_LOG.md python3 pipeline/project_graph.py
-#  ^ ALWAYS redirect those two, or a local run overwrites public/stats.json
+# --- the local database: Supabase CLI stack (tests, B3, screenshots) ---
+#  Supabase's own images — Postgres 17.6.1.171 (production: 17.6), GoTrue
+#  v2.197.0, Supavisor transaction pooler on 6543 — so auth, roles and RLS
+#  behave as in production. Its DATA is not production's. Config: db/local/.
+colima start                                       # Docker, if not running
+db/local/setup.sh                                  # start, migrate, project, seed
+db/local/setup.sh --stop                           # data kept in the volume
+#  CLI pinned in setup.sh: supabase@2.118.0 (via npx, no global install)
+LOCAL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"   # fixed local default
+
+# --- running the tests SAFELY ------------------------------------------
+python3 -m pytest tests -q         # DB tests go to the local stack if it is up,
+                                   # and skip if it is not
+#  NEVER load ~/.config/np-autopilot/env before pytest: that env IS production,
+#  and the DB tests insert, delete and re-project. tests/conftest.py refuses a
+#  production DSN (Supabase host or project ref) with a usage error unless
+#  NP_ALLOW_PROD_TESTS=1 — and that opt-in is for Phase D's read-only
+#  production_only run ONLY (§D.7):  pytest tests -m production_only
+#  The report header's first line says which database the run used.
+#  Other targets: NP_TEST_DSN / NP_TEST_DSN_TRANSACTION (still refused if prod).
 
 # --- screenshots (local harness; stubs ONLY guard.identify) ------------
-SUPABASE_DB_URL_SESSION="$DSN" python3 eval/screenshot_views.py
+SUPABASE_DB_URL_SESSION="$LOCAL" python3 eval/screenshot_views.py
+
+#  The hand-built plain-PostgreSQL workbench (port 55432, `np_b2`) used for
+#  B2/B2.5 is SUPERSEDED: its shim lacked auth.identities, the postgres and
+#  supabase_auth_admin roles, and a non-superuser owner, so 24 DB tests
+#  failed there for reasons production does not have.
 
 # --- deploy (Phase D) ---------------------------------------------------
 #  copy to /tmp WITHOUT .git, deploy from there, then check the live URL.

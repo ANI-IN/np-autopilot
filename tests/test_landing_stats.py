@@ -38,6 +38,7 @@ def test_stats_json_exists_and_is_servable():
     json.loads(STATS.read_text(encoding="utf-8"))
 
 
+@pytest.mark.production_only
 def test_stats_json_matches_the_projection():
     """DRIFT CHECK. Regenerates from the database and compares."""
     sys.path.insert(0, str(REPO / "pipeline"))
@@ -61,6 +62,7 @@ def test_stats_json_matches_the_projection():
                     for k, (a, b) in sorted(drifted.items())))
 
 
+@pytest.mark.production_only
 def test_the_landing_page_describes_the_projection_not_the_pipeline_graph():
     """The two-graphs trap, asserted rather than hoped for.
 
