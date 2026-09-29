@@ -641,11 +641,37 @@ mutation-verified.
 
 - [x] **When it became private** — bounded by observation to 18:58:55Z–19:06:50Z
   on 2026-09-29; confirmed by the anonymous check, not by the settings page.
-- [ ] **Whether the 81 non-CI clones include the owner's own fetches** — any
-  local clone or fresh checkout 2026-09-17…23.
-- [ ] **Disclosure.** 1,915 named external instructors and 43 named staff were
-  publicly readable for 13 days, a second time. R18 put the question to legal;
-  it returns here unchanged, and it is not the pipeline's to answer.
+- [x] **Whether the 81 non-CI clones include the owner's own fetches — NO.**
+  Owner answer, 2026-09-30 (Animesh Kumar, origin: hand): no one on our side
+  cloned or pulled the repository. **So the 81 non-CI clones — 12 of them on
+  days with no CI run — are unexplained and external.** R21 is therefore not
+  "exposed, not demonstrably accessed": the repository was **cloned by parties
+  outside the project**, at least 81 times, and those copies are outside
+  anyone's control. How many distinct parties cannot be derived: GitHub's 47
+  "unique cloners" does not separate CI runners from anyone else.
+- [ ] **Disclosure — ESCALATED 2026-09-30, and now sits alongside R18's.**
+  1,915 named external instructors and 43 named staff were publicly readable
+  for 13 days, a second time — and unlike R18, whose traffic counters read
+  zero, **here there is positive evidence of external copies.** R18 put the
+  question to legal; R21 goes to the same place with a stronger fact pattern,
+  and it is not the pipeline's to answer.
+
+### Public archives — checked read-only 2026-09-30, nothing submitted
+
+| archive | result |
+|---|---|
+| **Software Heritage** | **No copy.** `origin/https://github.com/ANI-IN/np-autopilot/get/` → 404 "not found"; origin search for `np-autopilot` → empty |
+| **Internet Archive (Wayback)** | **No copy.** Availability API: no snapshots; CDX index for every URL under the repository: empty |
+| **GH Archive** (public event log) | **Not found** in any of the 9 hour files covering the repository's public events (by name and by repo id). GH Archive samples GitHub's public event feed and is known to miss events, so this is a floor, not proof. Its records are metadata (event, actor, commit messages), not the code |
+| **Sourcegraph** | 0 matches — **inconclusive**: it may drop a repository once it turns private |
+| **grep.app** | **Not checkable** — requests are stopped at a bot checkpoint |
+
+**Removal routes, should a copy surface:** Software Heritage — its takedown
+process under its content policy; Internet Archive — a removal request to
+`info@archive.org` naming the URLs; GH Archive — an issue on
+`igrigorik/gharchive.org`. **None was needed, and none was submitted.** None
+of this reaches the 81 external clones, which is why the disclosure question
+is the live one.
 
 ---
 
@@ -673,4 +699,4 @@ mutation-verified.
 | R17 | Excluded payroll file reachable by the cloud identity — **fixed at fetch time 2026-09-17**; the account can still read it on demand | certain | high |
 | R18 | **The repository was PUBLIC for 8 days** — 277 named hiring rejections and 1,625 candidates readable by anyone. Set private on discovery | happened | high |
 | R20 | **A working copy of the repo was uploaded into the corpus folder** — DB password, `graph-sensitive.json`, `.git/`. **Removed from the folder 2026-09-30; password NOT rotated (owner choice)** | happened | high |
-| R21 | **The replacement repository was public from creation for 13 days** — 107 commits, 1,915 instructor names, 43 staff. Private, verified 2026-09-29 19:06:50Z | happened | high |
+| R21 | **The replacement repository was public from creation for 13 days** — 107 commits, 1,915 instructor names, 43 staff; **81 external clones**. Private, verified 2026-09-29 19:06:50Z. Disclosure escalated with R18 | happened | high |

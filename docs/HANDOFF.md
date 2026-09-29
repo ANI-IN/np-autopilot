@@ -305,7 +305,9 @@ rows above. They existed only in conversation. They are recorded now.
 **R21 — the GitHub repository was PUBLIC from creation (2026-09-17) for 13
 days**, found 2026-09-29 before a push. **Private, verified 2026-09-29
 19:06:50Z** (anonymous 404, authenticated `private: true`); last seen public
-18:58:55Z.
+18:58:55Z. **81 clones were external** (owner: nobody on our side cloned
+or pulled), so the disclosure question is escalated alongside R18's. No copy
+found in Software Heritage or the Wayback Machine (checked read-only).
 Recorded in `07-risks.md` R21, with the disclosure question left to the owner.
 **Nothing is pushed until `pipeline/check_repo_private.py` passes** — CI's
 `secrets` job runs it first, and `.githooks/pre-push` refuses the push.
