@@ -467,6 +467,10 @@ python3 -m pytest tests -q         # DB tests go to the local stack if it is up,
 #  production_only run ONLY (§D.7):  pytest tests -m production_only
 #  The report header's first line says which database the run used.
 #  Other targets: NP_TEST_DSN / NP_TEST_DSN_TRANSACTION (still refused if prod).
+#  Every run ends with "skips by reason (N)". CI enforces tests/ci-skips.yaml
+#  (NP_SKIP_LEDGER=enforce): a new, grown or vanished skip fails until the
+#  ledger is edited on purpose. Reproduce CI's view in a clean clone:
+#    NP_TEST_DSN=postgresql://x@127.0.0.1:1/x NP_SKIP_LEDGER=enforce pytest tests
 
 # --- screenshots (local harness; stubs ONLY guard.identify) ------------
 SUPABASE_DB_URL_SESSION="$LOCAL" python3 eval/screenshot_views.py
