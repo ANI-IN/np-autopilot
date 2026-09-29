@@ -190,6 +190,12 @@ def rows_for(graph: dict, known_files: set | None = None):
                     src.get("page"), src.get("within_cell"),
                     src.get("ordinal", 0), evidence,
                     src.get("entered_at"), prop_ordinal,
+                    # SLIDE AND TAB. Without these the projection kept the
+                    # assertion but threw away where in the file it came from,
+                    # and 1,056 distinct citations collapsed — migration 0019.
+                    src.get("slide"), src.get("tab"),
+                    src.get("owner_domain"), src.get("mime"),
+                    src.get("evidence_kind"),
                 ))
     # PROVENANCE IS NOT AN EDGE HERE. DECISIONS §A.3: moving it to its own table
     # is what makes the dangerous join impossible to write by accident, and
@@ -443,7 +449,8 @@ def main() -> int:
                     cp.write_row(row)
             with cur.copy("copy node_sources (id,node_id,prop,origin,file,sheet,"
                           "row_num,col_num,col_name,page,within_cell,ordinal,evidence,"
-                          "entered_at,prop_ordinal) from stdin") as cp:
+                          "entered_at,prop_ordinal,slide,tab,owner_domain,mime,"
+                  "evidence_kind) from stdin") as cp:
                 for row in sources:
                     cp.write_row(row)
 

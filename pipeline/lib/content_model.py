@@ -389,7 +389,12 @@ def provenance(row: dict, **extra) -> dict:
     """A source entry for one cached file. Never carries an address (D4)."""
     src = {
         "origin": "corpus",
-        "file": row["path"],
+        # RELATIVE, with no leading slash. `files.relative_path` carries
+        # `check (relative_path !~ '^/')` and `node_sources.file` is a foreign
+        # key into it, so an absolute path here means the citation either fails
+        # the key or is silently normalised somewhere downstream — and the two
+        # halves of the graph then disagree about what a path looks like.
+        "file": (row["path"] or "").lstrip("/"),
         "owner_domain": row.get("owner_domain"),
         "mime": row.get("mime"),
     }

@@ -653,6 +653,63 @@ console.log('\n=== LONG LABEL vs PANEL WIDTH ===');
 }
 
 console.log('\nstat line:', (store.get('stat')||{}).innerHTML || '(never set)');
+// ---- ONE ROW PER PERSON, ACROSS SEVERAL MODULES -------------------------
+// Robert Kreznarich teaches across Backend AND Full Stack, and carries BOTH a
+// mastersheet assignment and a legacy teaching record on the same module. That
+// is the shape the first version of the panels got wrong: it printed a block
+// per tier, so he appeared twice and read as two people.
+//
+// Driven through the SHIPPED functions rather than a reimplementation of them.
+// The page's code block was loaded with indirect eval, so its top-level
+// `const`/`function` names live in the global LEXICAL scope — reachable by
+// another indirect eval, not as properties of globalThis.
+const run = (s) => (0,eval)(s);
+console.log('\n=== ONE ROW PER PERSON (multi-module instructor) ===');
+{
+  const g = globalThis.window.__NP.data;
+  const R = 'ins_robert_test', M1 = 'mod_a_test', M2 = 'mod_b_test';
+  g.nodes.push({id:R, l:'Robert Kreznarich', t:'instructor', d:0, p:{}, loaded:true});
+  g.nodes.push({id:M1, l:'API Design', t:'module', d:0, p:{domain_slug:'backend',sequence:3}, dom:'backend', loaded:true});
+  g.nodes.push({id:M2, l:'API Design and Implementation', t:'module', d:0, p:{domain_slug:'full-stack',sequence:2}, dom:'full-stack', loaded:true});
+  // three edges, two tiers, two modules
+  g.edges.push({s:M1, t:R, r:'taught_by', p:{tier:'mastersheet', instructor_role:'primary'}});
+  g.edges.push({s:R, t:M1, r:'teaches',   p:{tier:'legacy'}});
+  g.edges.push({s:M2, t:R, r:'taught_by', p:{tier:'mastersheet', instructor_role:'backup_1'}});
+  run('recompute(true,"test")');
+
+  const panel = run('taughtRows("'+R+'")');
+  const rows = (panel.match(/class="prow"/g)||[]).length;
+  const hasM1 = panel.indexOf('API Design<') >= 0 || panel.indexOf('API Design</span>') >= 0;
+  const hasM2 = panel.indexOf('API Design and Implementation') >= 0;
+  console.log('  instructor panel rows              :', rows, '(want 2, one per module)');
+  console.log('  lists BOTH his modules             :', hasM1 && hasM2);
+  console.log('  shows both tiers on the shared one :',
+              (panel.match(/ev-mastersheet/g)||[]).length >= 1 &&
+              (panel.match(/ev-legacy/g)||[]).length >= 1);
+  if(rows !== 2) errors.push('INSTRUCTOR PANEL: expected one row per module, got '+rows);
+  if(!(hasM1 && hasM2)) errors.push('INSTRUCTOR PANEL: a module he teaches is missing');
+
+  const mp = run('peopleRows("'+M1+'")');
+  const prows = (mp.match(/class="prow"/g)||[]).length;
+  const names = (mp.match(/Robert Kreznarich/g)||[]).length;
+  console.log('  module panel rows for that module  :', prows, '(want 1)');
+  console.log('  his name appears                   :', names, 'time(s) (want 1)');
+  if(prows !== 1) errors.push('MODULE PANEL: expected one row per person, got '+prows);
+  if(names !== 1) errors.push('MODULE PANEL: the same person is listed '+names+' times');
+  const bothTiers = mp.indexOf('ev-mastersheet')>=0 && mp.indexOf('ev-legacy')>=0;
+  console.log('  both evidence tiers on that row    :', bothTiers);
+  if(!bothTiers) errors.push('MODULE PANEL: the two tiers were merged away');
+
+  // via the shipped entry point: `state` is a top-level const and is not
+  // reachable from a fresh indirect eval, but the function closes over it.
+  run('setView("matrix", false)');
+  const sheet = globalThis.document.getElementById('sheet');
+  const html = sheet ? sheet.innerHTML : '';
+  const mrows = (html.match(/Robert Kreznarich/g)||[]).length;
+  console.log('  matrix rows for him                :', mrows, '(want 1)');
+  if(mrows !== 1) errors.push('MATRIX: expected one row per person, got '+mrows);
+}
+
 console.log('\n=== RESULT ===');
 if(errors.length){ console.log('  FAILURES:'); errors.forEach(e=>console.log('   - '+e)); }
 else console.log('  all checks passed');

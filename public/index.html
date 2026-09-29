@@ -247,6 +247,13 @@ align-items:flex-start;justify-content:center;overflow:auto}
   font-size:10.5px;color:#6e7681}
 #fresh b{color:#8b949e;font-weight:600}
 
+.prow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:3px 0;
+      border-bottom:1px solid #161b22}
+.pname{font-size:12px;color:#e6edf3;min-width:150px}
+.ev{font-size:10px;border-radius:3px;padding:1px 6px;border:1px solid #30363d;color:#c9d1d9}
+.ev em{font-style:normal;color:#8b949e;margin-left:3px}
+.ev-mastersheet{border-color:#3fb950}
+.ev-legacy{border-color:#8957e5}
 /* ---- B2 views ---------------------------------------------------------- */
 .tier{margin:8px 0}
 .tier .tk{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8b949e;margin-bottom:4px}
@@ -1064,27 +1071,79 @@ function duplicateLabels(){
 }
 let DUPES=new Set();
 
-function tierRows(id){
-  const by={mastersheet:[],legacy:[]};
+// ONE ROW PER PERSON, TIERS AS BADGES ON THAT ROW.
+//
+// The first version printed a block per tier, so an instructor with both a
+// mastersheet assignment and a legacy teaching record appeared twice in one
+// panel and read as two people. The tiers must stay unmerged — they are
+// unreconciled claims — but that is a statement about the EVIDENCE, not about
+// the person, and rendering it as two rows said the wrong one.
+//
+// An unresolved IDENTITY is different and does stay on its own row: those are
+// two separate nodes (INS-08/30/31/32) and collapsing them would be the merge
+// the owner declined.
+const ROLE_LABEL={primary:'Primary',backup_1:'Backup 1',backup_2:'Backup 2',
+                  backup_3:'Backup 3'};
+function roleText(role,tier){
+  if(role) return (ROLE_LABEL[role]||role.replace('_',' '));
+  return tier==='legacy' ? 'teaches class' : 'assigned';
+}
+function evidenceBadges(ev){
+  const seen=new Set(); const out=[];
+  for(const e of ev){
+    const k=e.tier+'|'+(e.role||'');
+    if(seen.has(k))continue; seen.add(k);
+    out.push('<span class="ev ev-'+esc(e.tier)+'">'+esc(roleText(e.role,e.tier))+
+             ' <em>'+esc(e.tier)+'</em></span>');
+  }
+  return out.join('');
+}
+function _collect(id, wantType){
+  const by=new Map();
   for(const [e,other] of edgesTouching(id)){
     const tier=e.p&&e.p.tier; if(!tier)continue;
-    const n=idx.byId.get(other); if(!n)continue;
-    (by[tier]||(by[tier]=[])).push({label:n.l,role:(e.p&&e.p.instructor_role)||null,
-                                    legacy:n.legacy});
+    const n=idx.byId.get(other); if(!n||n.t!==wantType)continue;
+    if(!by.has(n.id))by.set(n.id,{n,ev:[]});
+    by.get(n.id).ev.push({tier,role:(e.p&&e.p.instructor_role)||null});
+  }
+  return [...by.values()];
+}
+// MODULE panel: every person once, with their role and source badges.
+function peopleRows(id){
+  const rows=_collect(id,'instructor');
+  if(!rows.length)return '';
+  rows.sort((a,b)=>a.n.l.localeCompare(b.n.l));
+  const html=rows.map(r=>'<div class="prow"><span class="pname">'+esc(r.n.l)+
+    (DUPES.has(r.n.l)?'<span class="badge">unconfirmed</span>':'')+'</span>'+
+    evidenceBadges(r.ev)+'</div>').join('');
+  return '<div class="tier"><div class="tk">people <span class="dim">one row '+
+         'each; badges are the evidence, and the two sources are never '+
+         'reconciled</span></div>'+html+'</div>';
+}
+// INSTRUCTOR panel: every module taught, grouped by role, each with its badge.
+function taughtRows(id){
+  const rows=_collect(id,'module');
+  if(!rows.length)return '';
+  const rank=r=>({primary:0,backup_1:1,backup_2:2,backup_3:3}[r]!==undefined
+                 ?{primary:0,backup_1:1,backup_2:2,backup_3:3}[r]:4);
+  const best=r=>Math.min.apply(null,r.ev.map(e=>rank(e.role)));
+  rows.sort((a,b)=>best(a)-best(b)||a.n.l.localeCompare(b.n.l));
+  const groups=new Map();
+  for(const r of rows){
+    const key=roleText(r.ev.slice().sort((x,y)=>rank(x.role)-rank(y.role))[0].role,
+                       r.ev[0].tier);
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(r);
   }
   let html='';
-  const block=(key,title,why)=>{
-    const rows=by[key]||[];
-    if(!rows.length) return '';
-    rows.sort((a,b)=>a.label.localeCompare(b.label));
-    const tags=rows.map(r=>'<span class="tag'+(r.role?' role-'+esc(r.role):'')+'">'+
-      esc(r.label)+(r.role?' <em>'+esc(r.role.replace('_',' '))+'</em>':'')+'</span>').join(' ');
-    return '<div class="tier"><div class="tk">'+esc(title)+' <span class="dim">'+
-           esc(why)+'</span></div><div class="tags">'+tags+'</div></div>';
-  };
-  html+=block('mastersheet','mastersheet','assigned in the Resource Collection Mastersheet, with a role');
-  html+=block('legacy','legacy','ran the class, per the label-keyed graph');
-  return html;
+  for(const [role,rs] of groups){
+    html+='<div class="tk">'+esc(role)+' <span class="dim">'+rs.length+
+          ' module'+(rs.length===1?'':'s')+'</span></div>';
+    html+=rs.map(r=>'<div class="prow"><span class="pname">'+esc(r.n.l)+
+      (r.n.legacy?'<span class="badge">legacy</span>':'')+'</span>'+
+      evidenceBadges(r.ev)+'</div>').join('');
+  }
+  return '<div class="tier">'+html+'</div>';
 }
 
 function unconfirmedFlag(n){
@@ -1110,9 +1169,9 @@ function moduleChain(id){
   }
   const row=(k,v)=>v?'<div class="ft"><span class="k">'+esc(k)+'</span><span class="v">'+v+'</span></div>':'';
   if(dom.length)parts.push(row('domain',esc(dom[0].l)));
-  if(wk.length)parts.push(row('programme week',esc(String(wk[0].p.number||wk[0].l))));
+  if(wk.length)parts.push(row('programme week',esc(String((wk[0].p||{}).number||wk[0].l))));
   const kinds=sess.filter(([n,e])=>!(e.p&&e.p.attached_file))
-                  .map(([n])=>n.p.session_kind).filter(Boolean);
+                  .map(([n])=>(n.p||{}).session_kind).filter(Boolean);
   if(kinds.length)parts.push(row('sessions',esc([...new Set(kinds)].sort().join(', '))));
   // NOT OFFERED, never "missing": practice problems are optional per module.
   if(kinds.length && kinds.indexOf('post_class')<0)
@@ -1183,7 +1242,8 @@ async function openNode(id){
   const pr=[];
   if(facts) pr.push('<div class="facts">'+facts+'</div>');
   if(n&&n.t==='module') pr.push(moduleChain(id));
-  const tiers=(n&&(n.t==='module'||n.t==='instructor'))?tierRows(id):'';
+  const tiers=(n&&n.t==='module')?peopleRows(id)
+             :(n&&n.t==='instructor')?taughtRows(id):'';
   if(tiers) pr.push(tiers);
   pr.push(unconfirmedFlag(n));
   pr.push(mergedNote(n));
@@ -1895,7 +1955,7 @@ function domainsInPlay(){
 function modulesFor(dom){
   return D.nodes.filter(n=>n.t==='module'&&(!dom||n.dom===dom)&&!n.legacy)
                 .sort((a,b)=>(a.dom||'').localeCompare(b.dom||'')||
-                             ((a.p.sequence||0)-(b.p.sequence||0)));
+                             (((a.p||{}).sequence||0)-((b.p||{}).sequence||0)));
 }
 
 // WHO TEACHES WHAT. Rows are instructors, columns modules, cells carry the
@@ -1923,7 +1983,7 @@ function renderMatrix(){
         ' modules</span></h2>';
   if(!list.length){ SHEET.innerHTML=h+'<p class="dim">No staffing edges match this filter.</p>'; return; }
   h+='<table><thead><tr><th>instructor</th>';
-  for(const m of mods) h+='<th title="'+esc(m.l)+'">'+esc((m.dom||'')+'/'+(m.p.sequence||''))+'</th>';
+  for(const m of mods) h+='<th title="'+esc(m.l)+'">'+esc((m.dom||'')+'/'+((m.p||{}).sequence||''))+'</th>';
   h+='</tr></thead><tbody>';
   for(const r of list){
     const unconf=DUPES.has(r.ins.l);
@@ -1948,7 +2008,7 @@ function renderMatrix(){
 // calendar week from it is refused in curriculum.py.
 function renderTimeline(){
   const weeks=new Map();
-  for(const n of D.nodes){ if(n.t==='program_week') weeks.set(n.id,n.p.number||null); }
+  for(const n of D.nodes){ if(n.t==='program_week') weeks.set(n.id,(n.p||{}).number||null); }
   const lanes=new Map();
   for(const m of modulesFor(state.fDomain)){
     let wk=null;
@@ -2031,7 +2091,7 @@ function renderFilters(){
     opts.map(o=>'<option value="'+esc(o)+'"'+(String(cur)===String(o)?' selected':'')+
       '>'+esc(o)+'</option>').join('')+'</select></label>';
   const weeks=[...new Set(D.nodes.filter(n=>n.t==='program_week')
-      .map(n=>n.p.number).filter(x=>x!=null))].sort((a,b)=>a-b);
+      .map(n=>(n.p||{}).number).filter(x=>x!=null))].sort((a,b)=>a-b);
   const box=document.createElement('div');
   box.id='filters';
   box.innerHTML='<div class="sub">filters</div>'+

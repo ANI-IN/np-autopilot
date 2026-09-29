@@ -185,7 +185,7 @@ def main() -> int:
     # -- domains -----------------------------------------------------------
     dom_id = {}
     for folder, slug in scope.IN_SCOPE_DOMAINS.items():
-        src = [{"origin": "corpus", "file": f"/{folder}"}]
+        src = [{"origin": "corpus", "file": folder}]
         dom_id[folder] = g.node(nid(T_DOMAIN, slug), T_DOMAIN,
                                 folder.split(":", 1)[1].strip(), src,
                                 label_raw=folder, slug=slug)
@@ -201,7 +201,7 @@ def main() -> int:
         slug = scope.IN_SCOPE_DOMAINS[folder]
         label, _ = labels.most_common(1)[0]
         key = cm.module_key(slug, seq)
-        src = [{"origin": "corpus", "file": f"/{folder}",
+        src = [{"origin": "corpus", "file": folder,
                 "evidence_kind": "folder-structure"}]
         mod_id[(folder, seq)] = g.node(
             key, T_MODULE, label, src, label_raw=label,
@@ -483,7 +483,7 @@ def main() -> int:
         folder = r["path"].strip("/").split("/")[0]
         if folder in scope.IN_SCOPE_DOMAINS:
             g.node(nid(T_FILE, fid), T_FILE, r["path"],
-                   [cm.provenance(r)], relative_path=r["path"],
+                   [cm.provenance(r)], relative_path=r["path"].lstrip("/"),
                    owner_domain=r.get("owner_domain"), mime=r["mime"])
 
     write_reviews(topic_rows, tab_rows, people_review, sheet_variants,

@@ -172,3 +172,98 @@ def test_component_structure_is_checked(verify, baseline):
     failed = _mismatches(verify, baseline, mutate)
     assert failed, "a rewiring that preserves every count went undetected"
     assert any("content_hash" in p or "components" in p for p in failed)
+
+
+# ---------------------------------------------------------------------------
+# B2.5 — the checker was changed to normalise three things before comparing.
+# Each normalisation is a place a real discrepancy could now hide, so each one
+# gets a mutation proving it does not.
+#
+# What was normalised, and why (pipeline/verify_migration.py has the detail):
+#   provenance edges  pass 4 materialises `sourced_from`, pass 7 does not —
+#                     DECISIONS §A.3 moved provenance out of edges. Both sides
+#                     now DERIVE the shape from `sources`.
+#   ordinal           pass 4 writes 0 explicitly, pass 7 omits it, the column
+#                     is NOT NULL DEFAULT 0. Both sides fill the default.
+#   content_hash      hashed over the normalised graph, not the raw one.
+# ---------------------------------------------------------------------------
+
+def test_a_lost_provenance_record_is_still_caught(verify, baseline):
+    """Deriving provenance edges must not make a missing citation invisible."""
+    def mutate(g):
+        for n in g["nodes"]:
+            if len(n.get("sources") or []) > 1:
+                n["sources"] = n["sources"][:-1]
+                return
+    failed = _mismatches(verify, baseline, mutate)
+    assert failed, "dropping a provenance record went undetected"
+
+
+def test_dropping_every_content_citation_is_still_caught(verify, baseline):
+    """The exact shape of the bug this normalisation was introduced around:
+    content provenance vanishing on projection."""
+    def mutate(g):
+        for n in g["nodes"]:
+            srcs = n.get("sources") or []
+            if srcs:
+                n["sources"] = [s for s in srcs
+                                if s.get("slide") is None and s.get("tab") is None]
+    failed = _mismatches(verify, baseline, mutate)
+    assert failed, "removing every slide and tab citation went undetected"
+
+
+def test_a_changed_locator_is_still_caught(verify, baseline):
+    """A slide number is the whole value of a topic citation."""
+    def mutate(g):
+        for n in g["nodes"]:
+            for s in (n.get("sources") or []):
+                if s.get("slide") is not None:
+                    s["slide"] = s["slide"] + 1000
+                    return
+    failed = _mismatches(verify, baseline, mutate)
+    assert failed, "changing a slide locator went undetected"
+
+
+def test_a_changed_owner_domain_is_still_caught(verify, baseline):
+    """D4: the file owner is recorded as a domain. Losing or altering it is
+    the thing migration 0019 exists to keep possible."""
+    def mutate(g):
+        for n in g["nodes"]:
+            for s in (n.get("sources") or []):
+                if s.get("owner_domain"):
+                    s["owner_domain"] = "mutated.example"
+                    return
+    failed = _mismatches(verify, baseline, mutate)
+    assert failed, "changing an owner_domain went undetected"
+
+
+def test_a_nonzero_ordinal_is_still_caught(verify, baseline):
+    """Filling the DEFAULT must not mean ignoring the field.
+
+    EVERY ordinal in the graph is currently 0 — measured, 41,528 of 41,528 —
+    so the first version of this test looked for a non-zero one to perturb,
+    found none, mutated nothing and passed against an unmodified graph. It
+    asserted that the checker catches a change that was never made.
+
+    So the mutation INTRODUCES a non-zero ordinal. Filling a default must not
+    become ignoring the field, and the only way to show that is to set one.
+    """
+    def mutate(g):
+        for n in g["nodes"]:
+            for s in (n.get("sources") or []):
+                s["ordinal"] = 77
+                return
+    failed = _mismatches(verify, baseline, mutate)
+    assert failed, "introducing a non-zero ordinal went undetected"
+
+
+def test_normalising_ordinal_does_not_hide_a_missing_entry(verify, baseline):
+    """An entry whose ordinal was the only difference is still an entry."""
+    def mutate(g):
+        for n in g["nodes"]:
+            srcs = n.get("sources") or []
+            if len(srcs) > 2:
+                n["sources"] = srcs[:1]
+                return
+    failed = _mismatches(verify, baseline, mutate)
+    assert failed, "truncating a node's sources went undetected"
