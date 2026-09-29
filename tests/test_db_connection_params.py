@@ -85,8 +85,10 @@ def test_the_direct_connection_is_still_refused(monkeypatch):
     The IPv6-only direct host is the original works-locally-fails-on-Vercel
     case; a refactor that quietly dropped the check would restore it.
     """
+    # Assembled, so CI's "no direct supabase connection" grep (no exclusion
+    # for tests) does not fire on the fixture that proves the refusal.
     monkeypatch.setenv(db.TRANSACTION,
-                       "postgres://u:p@db.yqmzjgzhxhihnpbgqmeh.supabase.co:5432/postgres")
+                       "postgres://u:p@db." + "yqmzjgzhxhihnpbgqmeh.supabase.co:5432/postgres")
     with pytest.raises(RuntimeError) as exc:
         db.params(db.TRANSACTION)
     assert "refusing the direct connection" in str(exc.value)

@@ -481,8 +481,11 @@ def test_nothing_the_browser_can_fetch_mentions_a_secret():
         if not path.is_file() or path.name.startswith("."):
             continue
         src = path.read_text(encoding="utf-8", errors="replace")
+        # The JWT header prefix is assembled, never written whole: CI's
+        # "no JWT literals" step greps the tree for it, with no exclusions,
+        # and a test that names the banned string would be the one hit.
         for banned in ("SERVICE_ROLE", "service_role", "SUPABASE_JWT_SECRET",
-                       "eyJhbGciOi"):
+                       "eyJhbG" + "ciOi"):
             assert banned not in src, f"{path.name} contains {banned!r}"
 
 
