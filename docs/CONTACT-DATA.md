@@ -360,3 +360,94 @@ Sensitive fields:       the three contact columns named in §R
 Public fields:          name, years of experience, current company,
                         current designation, past tier-1 companies
 ```
+
+---
+
+# §L · LABEL CHECK — narrowed from "any @ or any http" to an address and a URL
+
+**Approved by Animesh Kumar, 2026-09-29.** Implemented by
+`db/migrations/0018_label_rejects_addresses_not_words.{up,down}.sql`.
+
+## What the old check did, and why it had to change
+
+`0002_graph_schema.up.sql` constrained every node label with:
+
+```sql
+check (label !~ '@' and lower(label) !~ 'http')
+```
+
+The name says what it is for — a label must not carry contact data. The test
+was the *character* `@` and the *substring* `http`. Against the 75-file corpus
+that cost nothing: no label in it contained either, so the check never fired
+and never had to be right.
+
+The row-B content graph has 5,811 nodes and **116 fail it**:
+
+| what | count | example |
+|---|---:|---|
+| contains `http`, but it is the PROTOCOL | 104 | `HTTP Methods and Error Codes` |
+| contains `http`, and it is a real URL | 10 | `Given: https://reqres.in/api/users/2` |
+| contains `@`, and it is a MENTION | 2 | `Introduction to Cloud Testing: @Tim` |
+
+By type: 44 `file`, 31 `content_topic`, 27 `live_class`, 12 `slide_deck`.
+
+A guard in this shape does not fail safe. Under it the only ways to project the
+content graph are to drop 116 real nodes or to turn the constraint off, and
+under a deadline it is the second. That is `CLAUDE.md` §4: a threshold may rank
+or warn; it may exclude only when the shape **cannot be the thing at all**.
+`HTTP Methods and Error Codes` plainly can be a topic.
+
+## The narrowing
+
+| | before | after |
+|---|---|---|
+| address | any `@` | `local@domain.tld` |
+| link | any `http` | `https?://` |
+
+This is **narrower**, so it is recorded here as a decision rather than made as a
+refactor — the same reason §R exists.
+
+## Negative controls
+
+Verified against PostgreSQL before the migration was written, and they are the
+acceptance test for it. Still **rejected**:
+
+- `someone@example.org` — email shape
+- `profile https://example.com/in/x` — URL scheme. (A LinkedIn profile
+  URL is the case that matters in practice; it is described rather than
+  written out, because a document about keeping addresses out of the repo
+  should not be the thing that puts one in.)
+- `Given: https://reqres.in/api/users/2` — a real URL in a real topic
+
+Now **accepted**:
+
+- `HTTP Methods and Error Codes` — the protocol, not a link
+- `Common HTTP response codes used with REST:` — same
+- `Introduction to Cloud Testing: @Tim` — a mention, not an address
+- `Availability, Reliability, Scalability & Replication: @SURUCHI` — same
+
+Measured effect: content labels rejected **116 → 10**; main-graph labels
+rejected **0 → 0**.
+
+## The ten that really do carry a URL are cleaned, never dropped
+
+Pass 7 strips the URL from the label and keeps the original in provenance
+(`label_raw` and the source record). The node survives and the citation back to
+the file is intact. `CLAUDE.md` §1: a failed join is visible, a deleted node is
+not.
+
+## Three places, one rule
+
+The same test now lives in the DB constraint (0018), in `pipeline/validate.py`,
+and in pass 7's label cleaner. The constraint is the one that cannot be bypassed
+by a code path that forgets, which is why it is the one written down here.
+
+## What this does NOT approve
+
+- It does not permit an address anywhere else. `property_scopes`, the
+  node-level sensitive split and §R are all unchanged.
+- It does not permit a URL in a label. Ten labels are cleaned, not admitted.
+- It says nothing about `@` in any field other than `nodes.label`. Migration
+  0017 still forbids `@` in every provenance column, and that stays broad on
+  purpose: provenance records a file owner as a DOMAIN, so an `@` there is
+  always wrong.

@@ -1,4 +1,4 @@
-# REVIEW QUEUE — 54 decisions, answer by ID
+# REVIEW QUEUE — 86 decisions, answer by ID
 
 **Generated 2026-09-29 from the four review YAMLs. Nothing here is applied.**
 Every row is `confirmed: false` in its source file; this document is the same
@@ -16,7 +16,8 @@ picking-with-no-signal failure `lib/resolve.py` exists to refuse.
 | `TOPt` | 6 | `config/content-topic-review.yaml` |
 | `PPL` | 12 | `config/mastersheet-people-review.yaml` |
 | `DCK` | 14 | `config/deck-instructor-review.yaml` |
-| **total** | **54** | |
+| `INS` | 32 | derived: both graphs (see below) |
+| **total** | **86** | |
 
 
 ## MOD — row-B module labels that collide with an existing module node
@@ -114,3 +115,76 @@ A filename hint checked against the module's own instructors. D1 forbids people 
 | `DCK-12` | full-stack 4 | `JS and WebD - Live Class by Ashish` → `Ashish Kaila` | token `Ashish`, session class | confirm |
 | `DCK-13` | full-stack 5 | `UI System Design - Live Class Slides - A` → `Adam Toth` | token `Adam Toth`, session class | confirm |
 | `DCK-14` | testing 1 | `Fundamentals of Test Eng. Live Class Sli` → `Bill Ogden` | token `Bill Ogden`, session class | confirm |
+
+## INS — instructors with the same label in both graphs
+
+Same label, **different id**, in `knowledge/graph.json` (label-keyed, 1,915
+instructors) and `knowledge/content_graph.json` (mastersheet-keyed, 38). A
+shared label is evidence, not identity — `CLAUDE.md` §2a(iii) and
+`lib/resolve.py`. **Nothing is merged automatically.**
+
+`main graph` counts modules reached by `teaches`; `rowB` lists the mastersheet
+modules and the role the sheet gives. A person who teaches nothing in the main
+graph is not absent from it — they are present with no `teaches` edge.
+
+**Bulk confirmation is offered for exact full-name matches only** (26 rows).
+Answer `INS bulk: confirm` to take all of them, or answer any row individually
+to pull it out of the bulk set. The six marked **individual** are excluded from
+bulk by construction and each needs its own answer.
+
+| id | label | main graph | rowB (mastersheet) | recommendation |
+|---|---|---|---|---|
+| `INS-01` | `Adam Toth` | teaches 3 | SD1/5 UI System Design [backup_1]; SD2/2 UI & DOM [backup_1]; SD2/3 Frontend System Design [primary] | bulk-confirmable |
+| `INS-02` | `Ashish Kaila` | teaches 10 | SD1/4 JavaScript and Web Dev [backup_1]; SD1/5 UI System Design [backup_3]; SD2/4 Leveling Up with Advanced JavaScript and CSS [backup_1]; SD3/1 Database Design [backup_3] | bulk-confirmable |
+| `INS-03` | `Azeem Ghumman` | teaches 3 | SD4/6 Cloud Testing [backup_1] | bulk-confirmable |
+| `INS-04` | `Balaji Santhanam` | teaches 2 | SD4/6 Cloud Testing [primary] | bulk-confirmable |
+| `INS-05` | `Balaram Velaga` | teaches 0 | SD4/2 Performance Testing [backup_1] | **individual** — see note |
+| `INS-06` | `Balaram Velega` | teaches 4 | — (in the instructor table, no module row) | **individual** — see note |
+| `INS-07` | `Bharath Anand` | teaches 0 | SD4/1 Quality Engineering Foundations [backup_1]; SD4/2 Performance Testing [primary] | bulk-confirmable |
+| `INS-08` | `Bill Ogden` | teaches 2 | SD4/1 Quality Engineering Foundations [primary] | **individual** — see note |
+| `INS-09` | `Cathy Ma` | teaches 2 | SD1/4 JavaScript and Web Dev [primary]; SD1/5 UI System Design [backup_2] | bulk-confirmable |
+| `INS-10` | `Daniel Grundel` | teaches 2 | SD1/4 JavaScript and Web Dev [backup_3] | bulk-confirmable |
+| `INS-11` | `David Prorok` | teaches 2 | SD2/2 UI & DOM [primary] | bulk-confirmable |
+| `INS-12` | `Dominique Canlas` | teaches 3 | SD2/1 JS Language & Libraries [primary] | bulk-confirmable |
+| `INS-13` | `Evgeny Vinnik` | teaches 4 | SD2/1 JS Language & Libraries [backup_1]; SD2/3 Frontend System Design [backup_1]; SD2/4 Leveling Up with Advanced JavaScript and CSS [primary] | bulk-confirmable |
+| `INS-14` | `Faraaz Sareshwala` | teaches 4 | SD1/3 Cloud [primary] | bulk-confirmable |
+| `INS-15` | `Hetal Modi` | teaches 6 | SD4/2 Performance Testing [backup_2]; SD4/4 Automation Testing [primary]; SD4/5 Test Automation Design Patterns [backup_1] | bulk-confirmable |
+| `INS-16` | `Jeff Wisman` | teaches 3 | SD1/3 Cloud [backup_2]; SD3/4 Cloud Native Design [backup_1] | bulk-confirmable |
+| `INS-17` | `Konstantinos Pappas` | teaches 5 | SD1/4 JavaScript and Web Dev [backup_2] | bulk-confirmable |
+| `INS-18` | `Nikhil Kolekar` | teaches 9 | SD1/3 Cloud [backup_3]; SD3/2 Object Modeling [backup_2] | bulk-confirmable |
+| `INS-19` | `Nisarg Tanna` | teaches 0 | — (in the instructor table, no module row) | bulk-confirmable |
+| `INS-20` | `Reginald Johnson` | teaches 7 | — (in the instructor table, no module row) | bulk-confirmable |
+| `INS-21` | `Robert Kreznarich` | teaches 7 | SD1/2 API Design and Implementation [backup_1]; SD3/1 Database Design [backup_1]; SD3/2 Object Modeling [backup_1]; SD3/3 API Design [primary]; SD3/5 Concurrency [backup_1] | bulk-confirmable |
+| `INS-22` | `Rodrigo Salazar` | teaches 2 | SD4/3 API Testing [primary] | bulk-confirmable |
+| `INS-23` | `Rushi Vyas` | teaches 0 | — (in the instructor table, no module row) | bulk-confirmable |
+| `INS-24` | `Sanjay Dhar` | teaches 5 | SD3/4 Cloud Native Design [primary]; SD4/6 Cloud Testing [backup_2] | bulk-confirmable |
+| `INS-25` | `Sergey Togulev` | teaches 6 | SD4/1 Quality Engineering Foundations [backup_2]; SD4/5 Test Automation Design Patterns [primary] | bulk-confirmable |
+| `INS-26` | `Shelby Cohen` | teaches 0 | — (in the instructor table, no module row) | bulk-confirmable |
+| `INS-27` | `Sindhu Singh Dua` | teaches 0 | SD4/1 Quality Engineering Foundations [primary]; SD4/4 Automation Testing [backup_1] | bulk-confirmable |
+| `INS-28` | `Thong Tran` | teaches 2 | — (in the instructor table, no module row) | bulk-confirmable |
+| `INS-29` | `Tilo Dickopp` | teaches 12 | SD3/2 Object Modeling [primary]; SD3/3 API Design [primary] | bulk-confirmable |
+| `INS-30` | `William David Ogden` | teaches 0 | — (in the instructor table, no module row) | **individual** — see note |
+| `INS-31` | `Konstantinos` | teaches 1 | SD3/1 Database Design [primary] | **individual** — first name only |
+| `INS-32` | `Shelby` | teaches 1 | SD1/2 API Design and Implementation [primary]; SD3/1 Database Design [backup_2]; SD3/3 API Design [backup_1] | **individual** — first name only |
+
+### Notes on the six individual rows
+
+**`INS-05` / `INS-06` — `Balaram Velaga` and `Balaram Velega`.** Both labels
+exist in the MAIN graph, one letter apart. `Velaga` teaches 0 and holds the
+rowB module; `Velega` teaches 4 and holds none. This is very likely one person
+spelled two ways, which makes it a defect in the main graph that the content
+crawl exposed rather than a cross-graph join. Per `CLAUDE.md` §1 a typo is
+load-bearing and is never corrected in place — so the answer needed is which
+spelling is the person, with the other recorded as an alias.
+
+**`INS-08` / `INS-30` — `Bill Ogden` and `William David Ogden`.** Bill is a
+conventional short form of William, so these may be one person under two names.
+An exact-label match would never pair them, and a nickname table would pair
+`Bill`/`William` along with false positives. Owner knowledge decides.
+
+**`INS-31` / `INS-32` — `Konstantinos` and `Shelby`.** First-name-only forms
+that carry the rowB module rows, while the full-name nodes `Konstantinos
+Pappas` (`INS-17`) and `Shelby Cohen` (`INS-26`) carry none. The same pair is
+already open as `PPL-06` and `PPL-01`; answering those settles these, and the
+two must be answered consistently or the module rows attach to a different
+node from the instructor record.
