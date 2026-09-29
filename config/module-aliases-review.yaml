@@ -1,6 +1,6 @@
 # Row-B modules whose LABEL collides with an existing module node.
 #
-# generated: 2026-09-29T09:29:11Z
+# generated: 2026-09-29T10:54:56Z
 # collisions: 16
 #
 # A collision is NOT a match. Row-B modules are keyed on
@@ -12,80 +12,80 @@ collisions:
   - label: 'Databases'
     domain: full-stack
     sequence: 1
-    module_key: ea60b21d36bacdba0d73791acc4a4c89fb826ec1f725418cc7737825d694ea3e
+    module_key: mod_0bc009fd274eea44
     confirmed: false
   - label: 'API Design and Implementation'
     domain: full-stack
     sequence: 2
-    module_key: ff438e0d5f7c0eb872732b6a4119f5269371895970d811066c4f6b82adb0a502
+    module_key: mod_e5f708116a4b7fac
     confirmed: false
   - label: 'UI System Design'
     domain: full-stack
     sequence: 5
-    module_key: a73043732457d47cdbca17c5f2151ac0441332004e5c0226cdb04534f18c8e8c
+    module_key: mod_b591bcb07c5eb33b
     confirmed: false
   - label: 'UI & DOM'
     domain: frontend
     sequence: 2
-    module_key: 7f4acaa8f376f8cd84cea62ea8b89434a387f9b550f613e4384c3d19670170a8
+    module_key: mod_50a33a8e184e6849
     confirmed: false
   - label: 'Frontend System Design'
     domain: frontend
     sequence: 3
-    module_key: 676495a63e12cd19ef63fd7d730fbdab252409eb29194407bd4d00a2af371fda
+    module_key: mod_0d3e49f1778b9090
     confirmed: false
   - label: 'Leveling Up with Advanced JavaScript and CSS'
     domain: frontend
     sequence: 4
-    module_key: 7b40275153811b3b21823efe0aa103f72a4f87290ce377a808440c6820a4897e
+    module_key: mod_bb30095a76e9b5c6
     confirmed: false
   - label: 'Database Design'
     domain: backend
     sequence: 1
-    module_key: b3181f6d6e3e4eb5288a2d1a085796e733e5bea1c337e256bc0072a316ddc884
+    module_key: mod_36793b37f57c09a0
     confirmed: false
   - label: 'Object Modeling'
     domain: backend
     sequence: 2
-    module_key: 3adc6ec682a96a584e72c8160a1c25c749e703893e9264641ba3c04a8bd4391c
+    module_key: mod_cefc969d84e291e5
     confirmed: false
   - label: 'API Design'
     domain: backend
     sequence: 3
-    module_key: 5009b8c534ff58ff359fe1b21c4a5bd661ea7395ed8fe2c2cf94e562063c914a
+    module_key: mod_150eb79c4ec6f254
     confirmed: false
   - label: 'Cloud Native Design'
     domain: backend
     sequence: 4
-    module_key: 09c52720ba8372124c49e067ac93c624986bb7a9c5f114132455461e97acdb36
+    module_key: mod_44e86d468ffa62f5
     confirmed: false
   - label: 'Concurrency'
     domain: backend
     sequence: 5
-    module_key: f1210a86402b87cad593539a6c1daf5b5f158766a5ec3f058e353abbf1a78222
+    module_key: mod_68672ce55043c450
     confirmed: false
   - label: 'Quality Engineering Foundations'
     domain: testing
     sequence: 1
-    module_key: 516f70d388cb69ad88963fc76079424cc2556ac47677ffe5860634a3d3eb1344
+    module_key: mod_2e4842a29bc521ba
     confirmed: false
   - label: 'API Testing'
     domain: testing
     sequence: 3
-    module_key: d4dee5441f151b8114ce0b7954c7f719a386db05e5b5606eae115ba4e8d931d6
+    module_key: mod_a036b35b54865c2a
     confirmed: false
   - label: 'Automation Testing'
     domain: testing
     sequence: 4
-    module_key: 568974c8753777aac4ce130e2148434c88a9fc5565bf310ad75b996183faafb2
+    module_key: mod_e3865bea05ed325a
     confirmed: false
   - label: 'Test Automation Design Patterns'
     domain: testing
     sequence: 5
-    module_key: cfbd4618d632fd32ff154145300329cf182a150e880e5f95e4e831a320aa10f4
+    module_key: mod_1262237b9b72b360
     confirmed: false
   - label: 'Cloud Testing'
     domain: testing
     sequence: 6
-    module_key: 536aa9229105f0e08ed83470d7488470ce216f1a58054e4508257147e9251c67
+    module_key: mod_b1feb3161efd9eaa
     confirmed: false

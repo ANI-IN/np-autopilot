@@ -605,3 +605,44 @@ def topic_rank(source_kind: str | None) -> int:
 def is_historical(path: str, name: str) -> bool:
     """A superseded revamp subtree, or a deck whose own name says `Old`."""
     return bool(_HISTORICAL.search(path) or _HISTORICAL.search(name))
+
+
+# ---------------------------------------------------------------------------
+# Label hygiene — the DB constraint, applied where the label is minted
+# ---------------------------------------------------------------------------
+
+_LABEL_URL = re.compile(r"https?://\S+", re.I)
+_LABEL_EMAIL = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
+
+
+def clean_label(label: str) -> tuple[str, bool]:
+    """(label safe for `nodes.label`, whether anything was removed).
+
+    `db/migrations/0018` narrowed `label_not_contact` to reject an ADDRESS and
+    a URL SCHEME rather than the character `@` and the substring `http`. Ten
+    content topics still fail it, because they really do carry a link.
+
+    THE NODE IS NEVER DROPPED — CLAUDE.md §1, a failed join is visible and a
+    deleted node is not. The link comes out of the display label and the
+    original survives in `label_raw` and in the source record.
+
+    FIVE OF THE TEN ARE NOTHING BUT A LINK, so stripping leaves an empty
+    string and `label_nonempty` would reject them instead. Those are labelled
+    by host: `link: css-tricks.com` says what the node is, carries no scheme,
+    and does not pretend the URL was a topic title.
+    """
+    # ONLY touch labels that actually carry one. The first version stripped
+    # trailing punctuation from every label it saw, changed 315 of them and
+    # set `label_had_link` on all 315 — a flag that was false for 305.
+    if not (_LABEL_URL.search(label or "") or _LABEL_EMAIL.search(label or "")):
+        return label, False
+
+    stripped = _LABEL_EMAIL.sub("", _LABEL_URL.sub("", label or ""))
+    stripped = re.sub(r"\s{2,}", " ", stripped).strip(" :-,;|")
+    if stripped:
+        return stripped, stripped != (label or "").strip()
+    m = _LABEL_URL.search(label or "")
+    if m:
+        host = re.sub(r"^https?://(www\.)?", "", m.group(0), flags=re.I).split("/")[0]
+        return f"link: {host}", True
+    return label, False

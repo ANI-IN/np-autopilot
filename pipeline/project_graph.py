@@ -284,7 +284,10 @@ def main() -> int:
 
     # PUBLIC HALF ONLY. include_sensitive=False is the whole scope decision, in
     # one argument, rather than a filter applied later that someone can forget.
-    graph = graphio.load_graph(include_sensitive=(args.scope == "full"))
+    # BOTH GRAPHS, merged on the answered REVIEW-QUEUE rows. include_sensitive
+    # is False for the public scope, which is the only scope that reaches here
+    # — `--scope full` exits above.
+    graph = graphio.load_merged(include_sensitive=(args.scope == "full"))
     _refuse_unclassified_properties(graph)
     # SCOPE-AWARE, and it used to be a bare `assert`. An AssertionError names
     # nothing: it said "False is not False" where it meant "you asked for the

@@ -58,6 +58,43 @@ def load_graph(path: Path | None = None, *, include_sensitive: bool = True) -> d
     return g
 
 
+CONTENT_PUBLIC = KNOWLEDGE_DIR / "content_graph.json"
+CONTENT_SENSITIVE = KNOWLEDGE_DIR / "content_graph-sensitive.json"
+
+
+def load_merged(*, include_sensitive: bool = False) -> dict:
+    """Both graphs, with the answered REVIEW-QUEUE merges applied.
+
+    THE DEFAULT IS FALSE HERE AND TRUE IN `load_graph`, deliberately. This is
+    what the projection reads, and the projection's scope is a decision
+    recorded in `docs/INGEST-SCOPE-REVERSAL.md` whose approval block is blank.
+    A default of True would mean the safe path is the one the caller has to
+    remember to ask for.
+
+    The CONTENT sensitive half is 28 `instructor_contact` nodes — phone, email
+    and LinkedIn, approved into the graph by `docs/CONTACT-DATA.md` §R on the
+    condition that they never leave the gitignored file. `include_sensitive`
+    is the only thing that loads them, and nothing in the public projection
+    path passes it.
+    """
+    from . import module_merge
+
+    main = load_graph(include_sensitive=include_sensitive)
+    content = json.loads(CONTENT_PUBLIC.read_text(encoding="utf-8"))
+    content.setdefault("meta", {})["sensitive_loaded"] = False
+    if include_sensitive and CONTENT_SENSITIVE.exists():
+        s = json.loads(CONTENT_SENSITIVE.read_text(encoding="utf-8"))
+        content["nodes"] = content["nodes"] + s.get("nodes", [])
+        content["edges"] = content["edges"] + s.get("edges", [])
+        content["meta"]["sensitive_loaded"] = True
+
+    g = module_merge.merge(main, content)
+    g["meta"]["sensitive_loaded"] = bool(include_sensitive)
+    g["meta"]["content_sensitive_loaded"] = bool(
+        include_sensitive and CONTENT_SENSITIVE.exists())
+    return g
+
+
 def split_graph(nodes: list[dict], edges: list[dict]) -> tuple[dict, dict]:
     """Partition into (public, sensitive) by the `sensitive` flag.
 

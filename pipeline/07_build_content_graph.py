@@ -29,6 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from pipeline.lib import ids                                          # noqa: E402
 from pipeline.lib import content_model as cm                          # noqa: E402
 from pipeline.lib import content_scope as scope                       # noqa: E402
 from pipeline.lib import curriculum as cur                            # noqa: E402
@@ -90,9 +91,26 @@ MASTERSHEET = (REPO_ROOT / ".drive-cache" / "02-curriculum" /
                "Resource Collection Mastersheet (Software + System).xlsx")
 
 
-def nid(kind: str, *parts) -> str:
-    return hashlib.sha256(("|".join((kind,) + tuple(map(str, parts))))
-                          .encode()).hexdigest()
+#: Distinguishes row-B content ids from the label-keyed main graph.
+NAMESPACE = "rowB"
+
+
+def nid(ntype: str, *parts) -> str:
+    """An id from the SHARED minter, prefixed and 16 hex like every other node.
+
+    This used to be a bare sha256 hexdigest with no type prefix, so every node
+    pass 7 produced failed the database's `id_shape` constraint. Callers pass
+    the real NODE TYPE, not a short tag, because the type is hashed in.
+    """
+    # NAMESPACED. Without the marker, a content node and a main-graph node
+    # that happen to share a canonical string mint the SAME id — and that is
+    # not a merge, it is a merge nobody reviewed. Measured when this was
+    # missing: 34 collisions, 33 instructors and one domain where the content
+    # node was `Backend Engineering` and the main node was `Backend`.
+    #
+    # Whether a content instructor IS a main-graph instructor is exactly what
+    # the INS rows ask. A hash coincidence must never answer it.
+    return ids.compound(ntype, NAMESPACE, *parts)
 
 
 class Graph:
@@ -103,6 +121,15 @@ class Graph:
 
     def node(self, node_id: str, ntype: str, label: str, sources: list,
              **props) -> str:
+        # LABEL HYGIENE HAPPENS HERE, not at each call site. `nodes.label` may
+        # not carry a URL or an address (migration 0018); doing it centrally
+        # means a node type added later cannot forget. The original always
+        # survives in label_raw.
+        clean, changed = cm.clean_label(label)
+        if changed:
+            props.setdefault("label_raw", label)
+            props["label_had_link"] = True
+            label = clean
         if node_id in self.nodes:
             # MERGE, do not discard. The per-module instructor block creates a
             # bare node and the instructor TABLE fills it in; returning early
@@ -148,7 +175,7 @@ def main() -> int:
     dom_id = {}
     for folder, slug in scope.IN_SCOPE_DOMAINS.items():
         src = [{"origin": "corpus", "file": f"/{folder}"}]
-        dom_id[folder] = g.node(nid("domain", slug), T_DOMAIN,
+        dom_id[folder] = g.node(nid(T_DOMAIN, slug), T_DOMAIN,
                                 folder.split(":", 1)[1].strip(), src,
                                 label_raw=folder, slug=slug)
 
@@ -178,7 +205,7 @@ def main() -> int:
         else:
             wsrc = [{"origin": "hand", "evidence": wk.source_file,
                      "establishes": ["number"]}]
-            wid = g.node(nid("week", slug, wk.value), T_WEEK,
+            wid = g.node(nid(T_WEEK, slug, wk.value), T_WEEK,
                          f"Week {wk.value}", wsrc, number=wk.value)
             g.edge(R["module_week"], key, wid, wsrc,
                    source_kind=wk.source_kind, source_file=wk.source_file)
@@ -243,7 +270,7 @@ def main() -> int:
                          "mastersheet_label": mod.name})
 
                 for s in mod.sessions:
-                    sid = nid("sn", slug, mod.sequence, s.kind, s.uplevel_link)
+                    sid = nid(T_SESSION, slug, mod.sequence, s.kind, s.uplevel_link)
                     src = [dict(msrc[0], row=s.row)]
                     g.node(sid, T_SESSION, s.name, src, label_raw=s.name,
                            session_kind=s.kind, resource_type=s.resource_type,
@@ -258,7 +285,7 @@ def main() -> int:
                     for person in assign.get(role, []):
                         src = [dict(msrc[0], row=assign.get("row"),
                                     column=role)]
-                        pid = nid("tutor", cur.normalise_for_join(person))
+                        pid = nid(T_TUTOR, cur.normalise_for_join(person))
                         g.node(pid, T_TUTOR, person, src, label_raw=person,
                                cross_validated=False)
                         tutor_id[cur.normalise_for_join(person)] = pid
@@ -283,13 +310,13 @@ def main() -> int:
                          "sheet_row": row.get("row")})
                     continue
                 src = [dict(msrc[0], row=row.get("row"))]
-                pid = nid("tutor", cur.normalise_for_join(public["name"]))
+                pid = nid(T_TUTOR, cur.normalise_for_join(public["name"]))
                 g.node(pid, T_TUTOR, public["name"], src,
                        label_raw=public["name"], cross_validated=False,
                        **{k: v for k, v in public.items() if k != "name"})
                 tutor_id[cur.normalise_for_join(public["name"])] = pid
                 if private:
-                    cid = nid("tutorc", cur.normalise_for_join(public["name"]))
+                    cid = nid(T_TUTOR_CONTACT, cur.normalise_for_join(public["name"]))
                     g.node(cid, T_TUTOR_CONTACT, public["name"], src,
                            label_raw=public["name"], sensitive=True, **private)
                     g.nodes[cid]["sensitive"] = True
@@ -319,7 +346,7 @@ def main() -> int:
         # curriculum documents attach to the DOMAIN
         kind = cm.curriculum_kind(name)
         if kind:
-            cid = g.node(nid("cdoc", fid), T_CURRIC,
+            cid = g.node(nid(T_CURRIC, fid), T_CURRIC,
                          name, src, label_raw=name, kind=kind,
                          owner_domain=r.get("owner_domain"),
                          content_available=r["action"] == "export")
@@ -334,7 +361,7 @@ def main() -> int:
             seq = cm.lesson_plan_sequence(name)
             if seq is not None and (folder, seq) in mod_id:
                 ref = cm.ModuleRef(folder, seq, name)
-                g.edge(R["curriculum_module"], nid("cdoc", fid),
+                g.edge(R["curriculum_module"], nid(T_CURRIC, fid),
                        mod_id[(folder, seq)], src, source_kind=kind,
                        join="lesson-plan ordinal")
             elif r["action"] == "export":
@@ -360,7 +387,7 @@ def main() -> int:
             ntype = (T_DECK if cm.is_deck(mime)
                      else T_REPO if cm.is_repo(mime, name)
                      else T_FILE)
-            uid = g.node(nid("unavail", fid), ntype, name, src,
+            uid = g.node(nid(ntype, "unavailable", fid), ntype, name, src,
                          **{k: v for k, v in u.items()
                             if k not in ("label", "label_raw")})
             g.edge(R["module_class_file"] if ntype == T_FILE
@@ -399,11 +426,11 @@ def main() -> int:
         historical = cm.is_historical(path, name)
 
         if cm.is_repo(mime, name):
-            rid = g.node(nid("repo", fid), T_REPO, name, src,
+            rid = g.node(nid(T_REPO, fid), T_REPO, name, src,
                          owner_domain=r.get("owner_domain"))
             g.edge(R["module_repo"], m, rid, src, revision=revision)
         elif cm.is_deck(mime):
-            did = g.node(nid("deck", fid), T_DECK, name, src,
+            did = g.node(nid(T_DECK, fid), T_DECK, name, src,
                          owner_domain=r.get("owner_domain"),
                          slide_count=r.get("slide_count"))
             # The deck hangs off the MODULE. There used to be a live_class
@@ -412,22 +439,22 @@ def main() -> int:
             g.edge(R["module_deck"], m, did, src, revision=revision,
                    superseded_by=("base" if revision == "revamp" else None))
         elif role == "review":
-            aid = g.node(nid("rev", fid), T_REVIEW, name, src)
+            aid = g.node(nid(T_REVIEW, fid), T_REVIEW, name, src)
             g.edge(R["assignment_reviewed_in"], m, aid, src, revision=revision)
         elif role == "task":
-            aid = g.node(nid("task", fid), T_ASSIGN, name, src)
+            aid = g.node(nid(T_ASSIGN, fid), T_ASSIGN, name, src)
             g.edge(R["module_assignment"], m, aid, src, revision=revision)
         elif role == "class":
             # Attach the FILE NODE THAT ALREADY EXISTS rather than mint a
             # parallel one. These files were the other 443 live_class nodes.
-            g.edge(R["module_class_file"], m, nid("file", fid), src,
+            g.edge(R["module_class_file"], m, nid(T_FILE, fid), src,
                    revision=revision)
 
         # -- topics, with their locator -----------------------------------
         source_kind = "curriculum" if kind else ("deck" if cm.is_deck(mime)
                                                      else "doc")
         for t in cm.topics_from_text(text, source_kind):
-            tid = nid("topic", slug, ref.sequence,
+            tid = nid(T_TOPIC, slug, ref.sequence,
                       cm.topic_key(slug, ref.sequence, t.label))
             tsrc = [cm.provenance(r, **{t.locator_kind: t.locator})]
             g.node(tid, T_TOPIC, t.label, tsrc, label_raw=t.label,
@@ -444,7 +471,7 @@ def main() -> int:
     for fid, r in man.items():
         folder = r["path"].strip("/").split("/")[0]
         if folder in scope.IN_SCOPE_DOMAINS:
-            g.node(nid("file", fid), T_FILE, r["path"],
+            g.node(nid(T_FILE, fid), T_FILE, r["path"],
                    [cm.provenance(r)], relative_path=r["path"],
                    owner_domain=r.get("owner_domain"), mime=r["mime"])
 

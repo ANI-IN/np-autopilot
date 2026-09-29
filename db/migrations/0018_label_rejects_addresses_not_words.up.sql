@@ -52,7 +52,7 @@
 -- cannot be bypassed by a code path that forgets.
 -- ---------------------------------------------------------------------------
 
-alter table nodes drop constraint label_not_contact;
+alter table nodes drop constraint if exists label_not_contact;
 
 alter table nodes
     add constraint label_not_contact

@@ -23,6 +23,8 @@ import re
 import unicodedata
 from typing import NamedTuple
 
+from . import ids as _ids
+
 #: A curriculum document is one node type with a kind, per the owner's answer 3.
 CURRICULUM_KINDS = ("kyp", "handbook", "outline", "lesson_plan")
 
@@ -137,8 +139,10 @@ def module_key(domain_slug: str, sequence: int) -> str:
     modules with the same labels that are not provably the same things, so a
     label key here would merge them silently on the first build.
     """
-    raw = f"module|{domain_slug}|{int(sequence)}"
-    return hashlib.sha256(raw.encode()).hexdigest()
+    # Minted by the SHARED function so the id matches the DB's id_shape
+    # constraint. It used to be a bare sha256 hexdigest, which is why all
+    # 5,811 content nodes were unprojectable — see pipeline/lib/ids.py.
+    return _ids.compound("module", "rowB", domain_slug, int(sequence))
 
 
 def normalise_for_join(label: str) -> str:
