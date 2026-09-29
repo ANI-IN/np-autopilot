@@ -36,7 +36,7 @@ class Report:
         self.exercised.add(category)
 
 
-def categories_fired(graph_path: Path) -> list[str]:
+def categories_fired(graph_path: Path, candidates_path: Path | None = None) -> list[str]:
     """Run the checks on `graph_path` silently and return the categories that fired.
 
     Used by tests/test_validate_categories.py to prove each check actually works
@@ -51,10 +51,11 @@ def categories_fired(graph_path: Path) -> list[str]:
     import contextlib
     import io
     with contextlib.redirect_stdout(io.StringIO()):
-        return _run(graph_path)[0]
+        return _run(graph_path, candidates_path)[0]
 
 
-def failures(graph_path: Path, category: str | None = None) -> list[tuple[str, str]]:
+def failures(graph_path: Path, category: str | None = None,
+             candidates_path: Path | None = None) -> list[tuple[str, str]]:
     """FAIL-level findings, optionally for one category. Returns (category, message).
 
     The level-aware counterpart to categories_fired(). Added when a new category
@@ -64,12 +65,15 @@ def failures(graph_path: Path, category: str | None = None) -> list[tuple[str, s
     import contextlib
     import io
     with contextlib.redirect_stdout(io.StringIO()):
-        rows = _run(graph_path)[6]
+        rows = _run(graph_path, candidates_path)[6]
     return [(c, m) for lv, c, m in rows
             if lv == FAIL and (category is None or c == category)]
 
 
-def _run(graph_path: Path | None = None):
+def _run(graph_path: Path | None = None, candidates_path: Path | None = None):
+    """`candidates_path` defaults to the build's knowledge/candidates.json. Tests
+    pass a synthetic one: the real file is gitignored (it carries the hiring
+    funnel), and the only thing read from it here is the blank-identifier list."""
     # Validation reads BOTH halves. A rule that only ever sees the public file
     # cannot catch a defect in the withheld one, and the withheld one is the
     # half carrying judgements about named external people.
@@ -293,7 +297,8 @@ def _run(graph_path: Path | None = None):
     if dupes:
         r.add(FAIL, "duplicate-id", f"{len(dupes)} duplicate node ids")
     # blank identifiers (retained, reported)
-    cand = json.loads((KNOWLEDGE_DIR / "candidates.json").read_text(encoding="utf-8"))
+    cand = json.loads((candidates_path or KNOWLEDGE_DIR / "candidates.json")
+                      .read_text(encoding="utf-8"))
     blanks = cand.get("blank_identifiers", [])
     if blanks:
         names = sorted({b.get("name", b.get("raw", "?")) for b in blanks})

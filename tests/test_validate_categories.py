@@ -17,9 +17,22 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
 from pipeline.lib import taxonomy                                      # noqa: E402
-from pipeline.validate import categories_fired, failures                         # noqa: E402
+from pipeline import validate as _validate                                # noqa: E402
 
 GRAPH = REPO / "knowledge" / "graph.json"
+#: knowledge/candidates.json is gitignored (it carries the hiring funnel), and
+#: validate reads only its blank-identifier list. A synthetic stand-in keeps
+#: these tests running in CI instead of skipping; validate.py run on a real
+#: build still reads the real file.
+CANDIDATES = REPO / "tests" / "fixtures" / "candidates.synthetic.json"
+
+
+def categories_fired(graph_path):
+    return _validate.categories_fired(graph_path, candidates_path=CANDIDATES)
+
+
+def failures(graph_path, category=None):
+    return _validate.failures(graph_path, category, candidates_path=CANDIDATES)
 
 
 def _mutate(tmp_path: Path, fn) -> Path:
@@ -109,7 +122,7 @@ def test_all_categories_are_exercised_across_the_suite(tmp_path):
         fired |= set(categories_fired(_mutate(tmp_path / str(i), fn)))
     # index rather than unpack: _run's arity changed once already, and a
     # positional unpack turns that into a confusing ValueError in an unrelated test
-    categories = __import__("pipeline.validate", fromlist=["_run"])._run(GRAPH)[5]
+    categories = __import__("pipeline.validate", fromlist=["_run"])._run(GRAPH, CANDIDATES)[5]
     missing = sorted(set(categories) - fired)
     assert not missing, f"never exercised, even under injection: {missing}"
 

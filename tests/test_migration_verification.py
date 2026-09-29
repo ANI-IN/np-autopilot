@@ -73,6 +73,19 @@ def test_the_baseline_exists_and_is_committed():
     assert BASELINE.exists(), "no frozen reference — run verify_migration.py --freeze"
 
 
+#: The frozen baseline pins the FULL merged graph, withheld halves included —
+#: what project_graph.py would write with --scope full. Both withheld halves are
+#: gitignored (named external people), so a clone without them cannot measure
+#: the graph the baseline describes. No synthetic stand-in can: the assertion
+#: IS that the real graph still matches.
+_WITHHELD = [REPO / "knowledge" / "graph-sensitive.json",
+             REPO / "knowledge" / "content_graph-sensitive.json"]
+
+
+@pytest.mark.skipif(not all(p.exists() for p in _WITHHELD),
+                    reason="needs the gitignored withheld halves "
+                           "(knowledge/*-sensitive.json): the frozen baseline "
+                           "pins the full graph")
 def test_the_reference_graph_verifies(verify, baseline, graph):
     """It has passed at least once. That is the bar the docstring sets."""
     rows = verify.compare(_checked(baseline), verify.measure(graph))

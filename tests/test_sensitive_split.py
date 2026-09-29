@@ -143,8 +143,17 @@ def test_the_generated_readme_block_names_the_withheld_count(public):
 
 
 def test_the_content_hash_covers_both_halves():
-    """A change confined to the withheld half must still force a version bump."""
-    g = graphio.load_graph()
+    """A change confined to the withheld half must still force a version bump.
+
+    A property of content_hash, so it is proved on a SYNTHETIC two-half graph:
+    the real withheld half is gitignored, and on a clone without it there was
+    no sensitive node to edit — the test failed in CI while proving nothing."""
+    g = {"nodes": [
+            {"id": "ins_synthetic_public", "type": "instructor",
+             "label": "Synthetic Public Instructor", "sensitive": False},
+            {"id": "ins_synthetic_withheld", "type": "instructor",
+             "label": "Synthetic Withheld Instructor", "sensitive": True}],
+         "edges": [], "meta": {}}
     before = graphio.content_hash(g)
     g["nodes"] = [dict(n, label=n["label"] + "!") if n.get("sensitive") else n
                   for n in g["nodes"]]

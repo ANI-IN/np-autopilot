@@ -122,9 +122,12 @@ FIELDS = (
 
 
 def load_config() -> dict:
+    # Shown relative to the repo when it is inside it; NP_DRIVE_CONFIG may point
+    # elsewhere, and a relative_to() crash here would be a failure with no record.
+    shown = CONFIG.relative_to(ROOT) if CONFIG.is_relative_to(ROOT) else CONFIG
     if not CONFIG.exists():
-        abort(f"missing {CONFIG.relative_to(ROOT)}\n"
-              f"cp {CONFIG.relative_to(ROOT)}.example {CONFIG.relative_to(ROOT)}, "
+        abort(f"missing {shown}\n"
+              f"cp {shown}.example {shown}, "
               "then set folder_id — never hardcode it in this script.")
     cfg = yaml.safe_load(CONFIG.read_text(encoding="utf-8")) or {}
     if not cfg.get("folder_id"):
