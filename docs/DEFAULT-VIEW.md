@@ -130,6 +130,20 @@ driving the `types=` param; shareable URLs carrying focus, depth and filters.
 
 ---
 
+## D4a · The matrix load column
+
+**Owner decision, 2026-09-29.** Each instructor row carries a load: the number
+of modules taught, split Primary and Backup ("3 P · 2 B").
+
+**Counted PER NODE and never summed across an unresolved identity.** `Bill
+Ogden` is two nodes (INS-08/30, answered "leave apart"); adding their loads
+together would assert the merge the owner declined. Each row shows its own load
+with the unconfirmed marker.
+
+Only confirmed identities are counted as one person.
+
+---
+
 ## D5 · What Phase B must also fix
 
 - **Coverage counts `rel='teaches'`.** Row-B instructors are attached by
