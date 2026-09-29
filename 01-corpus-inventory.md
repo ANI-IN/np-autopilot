@@ -276,7 +276,7 @@ This is employee compensation **plus termination records**, not instructor invoi
 > `DECISIONS.md` §A.7b, "the control that never worked".
 
 
-- **The repo is private, which is necessary but not sufficient.** A private repo still ends up on laptops and in this session's context.
+- **The repo is private, which is necessary but not sufficient.** *(It was not: public 2026-09-09→17 and 2026-09-17→30 — `07-risks.md` R18, R21.)* A private repo still ends up on laptops and in this session's context.
 
 ---
 

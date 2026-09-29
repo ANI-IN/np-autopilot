@@ -300,6 +300,13 @@ rows above. They existed only in conversation. They are recorded now.
 
 # G · OPEN ISSUES AND RISKS (none are blockers)
 
+**R21 — the GitHub repository was PUBLIC from creation (2026-09-17) for 13
+days**, found 2026-09-29 before a push. The owner set it private 2026-09-30;
+the end of the window is the first anonymous request that does not return 200.
+Recorded in `07-risks.md` R21, with the disclosure question left to the owner.
+**Nothing is pushed until `pipeline/check_repo_private.py` passes** — CI's
+`secrets` job runs it first, and `.githooks/pre-push` refuses the push.
+
 **Found 2026-09-29 by the first run of the DB tests against Supabase's real
 stack — both are the migrations relying on the environment, and both fail
 `tests/` today:**
@@ -386,6 +393,8 @@ stack — both are the migrations relying on the environment, and both fail
   comparing two things that already agreed.
 - **Deploy only from a `.git`-less `/tmp` copy. Check the live URL, never
   `vercel ls`.**
+- **Never push without the visibility check passing** (R18, R21):
+  `git config core.hooksPath .githooks` once per clone makes it automatic.
 - **Keep docs in sync with code**, and fix drift the moment it is found.
 
 ---
@@ -393,6 +402,10 @@ stack — both are the migrations relying on the environment, and both fail
 # I · KEY COMMANDS
 
 ```bash
+# --- once per clone ----------------------------------------------------
+git config core.hooksPath .githooks      # pre-push refuses a public repo (R21)
+python3 pipeline/check_repo_private.py   # the same check, by hand
+
 # --- environment -------------------------------------------------------
 set -a && . ~/.config/np-autopilot/env && set +a     # DB + Drive credentials
 

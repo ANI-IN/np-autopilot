@@ -363,7 +363,7 @@ id is immutable and GitHub never reuses one:
 | `id` | **1363038448** | **1374030791** |
 | `node_id` | `R_kgDOUT5Q8A` | `R_kgDOUeYLxw` |
 | `created_at` | 2026-09-09T17:54:03Z | 2026-09-17T06:27:47Z |
-| `private` | **false** | **true** |
+| `private` | **false** | ~~**true**~~ **false — it was created public. See R21** |
 
 Different id, different node_id, created seven hours after the deletion. The
 exposed repository was not made private and was not rewritten in place — it was
@@ -547,6 +547,107 @@ cannot read who else can.*
 
 ---
 
+## R21 — The REPLACEMENT repository was public from creation, for 13 days
+
+**Likelihood: n/a, it happened · Impact: high · STATUS: OPEN — the owner set it
+private 2026-09-30; NOT YET OBSERVED (see "The window")**
+
+Found 2026-09-29 by querying the GitHub API immediately before a planned
+`git push` of the row-B branch, rather than by reading our own documentation —
+the same way, and for the same reason, R18 was found.
+
+```
+gh api repos/ANI-IN/np-autopilot  ->  "id": 1374030791, "private": false, "visibility": "public"
+curl https://api.github.com/repos/ANI-IN/np-autopilot   (no credentials)  ->  HTTP 200
+events: 2026-09-17T06:27:47Z PublicEvent ANI-IN   (the same second as created_at)
+forks 0 · stars 0 · watchers 0
+```
+
+**This is R18's remediation.** The exposed repository `1363038448` was deleted
+and `1374030791` created in its place — and the replacement was **created
+public**. R18's own table above recorded it as `private: true`; STATE.md said
+"private, repo id `1374030791`". **Nothing checked.** The push that would have
+published the whole row-B branch was stopped by the check, not by the record.
+
+### The window
+
+| | |
+|---|---|
+| **Start** | **2026-09-17T06:27:47Z** — `PublicEvent`, the second of creation. Known exactly |
+| **End** | `________` — the owner reports setting it private on 2026-09-30. **Not yet observed:** an unauthenticated request still returned **HTTP 200** at 2026-09-29T18:39:02Z and 18:45:07Z, the authenticated API still said `private: false`, and no `PrivateEvent` exists. The end is the first anonymous request that does not return 200 |
+| **Length** | ≈ 13 days, **and it cannot be called short** — R18's window was 8 |
+
+### What was exposed
+
+`main` as pushed, last on 2026-09-20T22:24Z: **107 commits**, every analysis
+and design document (`07-risks.md` itself, R17, R18, R20's description of the
+upload, `docs/CACHE-EXPOSURE.md`, `docs/STATE.md` with the Supabase project ref,
+Vercel project id and account topology), and **`knowledge/graph.json` — the
+public half: 1,915 instructor names, 43 internal staff with titles**, 922
+modules, 92 workflows.
+
+**NOT exposed — never committed to this repository, checked across all 107
+commits:** `knowledge/graph-sensitive.json` (the 277 hiring rejections and
+1,625 candidates of R18), `candidates.json`, `rejections.json`,
+`resolved.json`, any `.env` or `.vercel/` file (only `.env.example`, whose
+values are empty), and the corpus — checked by listing every tree in `main`'s
+history. **Never pushed
+at all:** the `content-crawl-rowB` branch — `content_graph.json`,
+`merged_graph.json` and everything since 2026-09-21.
+
+### Traffic — and it does NOT all match CI
+
+GitHub's traffic API, 14-day window, read 2026-09-29: **141 clones, 47 unique;
+1 view; 0 referrers.** CI checks the repository out once per job, four jobs per
+run, so each CI run is ~4 clones. Compared day by day:
+
+| day | clones | unique | CI runs | CI checkouts |
+|---|---:|---:|---:|---:|
+| 09-17 | 8 | 3 | 2 | 8 |
+| 09-18 | 35 | 15 | 3 | 12 |
+| 09-19 | 3 | 3 | 0 | 0 |
+| 09-20 | 86 | 21 | 10 | 40 |
+| 09-21 | 7 | 6 | 0 | 0 |
+| 09-22 | 1 | 1 | 0 | 0 |
+| 09-23 | 1 | 1 | 0 | 0 |
+| **total** | **141** | | **15** | **60** |
+
+**81 clones are not CI checkouts**, including 12 on four days with no CI run at
+all. Some may be this project's own `git fetch`/clone activity from the owner's
+machine; the traffic API does not say who, and **it cannot be established from
+here that any of them was someone else — or that none was.** As R18 put it:
+zero forks and zero stars is not evidence of zero copies, and here the counter
+is not even zero.
+
+### Cause
+
+Created public during R18's remediation, while every document recorded it as
+private. The same shape as R18 exactly — *an assumption about visibility,
+written down and never verified against the system that decides it* — one
+remediation later.
+
+### What now prevents it
+
+`pipeline/check_repo_private.py` passes only on positive evidence of privacy
+(authenticated `private: true`, or an anonymous request refused), and fails on
+anything else, including when it cannot reach the API. It runs as the **first
+step of CI's `secrets` job** and as a versioned **pre-push hook**
+(`.githooks/pre-push`; `git config core.hooksPath .githooks` once per clone).
+It refused the row-B push on 2026-09-29. `tests/test_repo_visibility_check.py`,
+mutation-verified.
+
+### Facts only the owner can supply
+
+- [ ] **The exact time the repository became private** — to be confirmed by the
+  anonymous check, not by the settings page.
+- [ ] **Whether the 81 non-CI clones include the owner's own fetches** — any
+  local clone or fresh checkout 2026-09-17…23.
+- [ ] **Disclosure.** 1,915 named external instructors and 43 named staff were
+  publicly readable for 13 days, a second time. R18 put the question to legal;
+  it returns here unchanged, and it is not the pipeline's to answer.
+
+---
+
 ## Summary
 
 | # | Risk | Likelihood | Impact |
@@ -571,3 +672,4 @@ cannot read who else can.*
 | R17 | Excluded payroll file reachable by the cloud identity — **fixed at fetch time 2026-09-17**; the account can still read it on demand | certain | high |
 | R18 | **The repository was PUBLIC for 8 days** — 277 named hiring rejections and 1,625 candidates readable by anyone. Set private on discovery | happened | high |
 | R20 | **A working copy of the repo was uploaded into the corpus folder** — DB password, `graph-sensitive.json`, `.git/`. **Removed from the folder 2026-09-30; password NOT rotated (owner choice)** | happened | high |
+| R21 | **The replacement repository was public from creation for 13 days** — 107 commits, 1,915 instructor names, 43 staff. Owner set private 2026-09-30, not yet observed | happened | high |

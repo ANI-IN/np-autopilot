@@ -191,6 +191,9 @@ work. Populating it is now unblocked.
 ## Distribution — single-owner, deliberately
 
 **`ANI-IN/np-autopilot`, private, no collaborators. This overrides D10 for v1.**
+*Private is the decision, not a fact anyone may assume: the repository was
+public 2026-09-09→17 (`07-risks.md` R18) and again 2026-09-17→30 (R21). CI
+and the pre-push hook now check it — `pipeline/check_repo_private.py`.*
 
 - **No teammate can install anything.** A private repo with no collaborators is
   unreachable by `/plugin marketplace add`.
