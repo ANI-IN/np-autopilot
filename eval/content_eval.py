@@ -35,7 +35,7 @@ for _e in G["edges"]:
 
 R = {r: tax.edge_for_role(r) for r in (
     "domain_module", "module_week", "module_session", "module_instructor",
-    "module_live_class", "live_class_deck", "module_topic", "module_repo",
+    "module_deck", "module_topic", "module_repo",
     "curriculum_module", "module_assignment", "domain_curriculum",
     "domain_primary", "domain_secondary")}
 
@@ -111,9 +111,7 @@ def _c3():
 @q("C4", "Which slide decks does API Design have, and what does one contain?")
 def _c4():
     m = module("backend", 3)
-    lcs = {e["target"] for e in out(m, "module_live_class")}
-    decks = [N[e["target"]] for e in G["edges"]
-             if e["rel"] == R["live_class_deck"] and e["source"] in lcs]
+    decks = [N[e["target"]] for e in out(m, "module_deck")]
     tops = [e for e in out(m, "module_topic") if e.get("slide")]
     sample = sorted({N[e["target"]]["label"] for e in tops})[:3]
     return (len(decks) >= 5 and bool(tops),

@@ -331,11 +331,6 @@ node_types:
       Design) is EXPECTED and is never used to compute one from the other:
       pipeline/lib/curriculum.py raises ArithmeticWeekRefused.
 
-  - name: live_class
-    expect: null
-    key: [module, drive_file_id]
-    properties: [label, label_raw, revision, superseded_by, sources, sensitive]
-
   - name: assignment
     expect: null
     key: [module, drive_file_id]
@@ -614,10 +609,20 @@ edge_types:
       module can sit at a different program week in a different program.
       Absent for SD3 today, and that absence is reported as a gap.
 
+  # RETIRED `live_class` AS A NODE TYPE, 2026-09-29. Pass 7 minted one
+  # live_class per FILE — 845 of them — while the mastersheet remodel had
+  # already produced 134 class_session nodes that are the real sessions. 402
+  # of the 845 were a wrapper around a slide_deck built from the same file,
+  # and the deck node already existed; the other 443 were class-role files
+  # that already had a file node. It was a duplicate layer, and it was the
+  # single largest thing in the default view.
+  #
+  # Files and decks now hang off the module directly, behind a toggle. The
+  # structure layer keeps only sessions the mastersheet actually names.
   - name: delivers
-    role: module_live_class
+    role: module_class_file
     from: module
-    to: live_class
+    to: file
     cardinality: 1:n
     expect: null
 
@@ -636,8 +641,8 @@ edge_types:
     expect: null
 
   - name: presented_with
-    role: live_class_deck
-    from: live_class
+    role: module_deck
+    from: module
     to: slide_deck
     cardinality: n:n
     expect: null

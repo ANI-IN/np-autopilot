@@ -55,8 +55,8 @@ DECK_REVIEW = CONFIG_DIR / "deck-instructor-review.yaml"
 #: truth and `tests/test_taxonomy_single_source.py` fails the build on one.
 R = {r: tax.edge_for_role(r) for r in (
     "domain_curriculum", "curriculum_module", "domain_module", "module_week",
-    "module_live_class", "module_assignment", "assignment_reviewed_in",
-    "live_class_deck", "module_topic", "module_repo", "provenance",
+    "module_class_file", "module_assignment", "assignment_reviewed_in",
+    "module_deck", "module_topic", "module_repo", "provenance",
     "module_session", "module_instructor", "contact_of")}
 
 #: Node types DERIVED from the edges' declared endpoints, never written as
@@ -76,8 +76,7 @@ T_DOMAIN = _src_of("domain_module")
 T_MODULE = _tgt_of("domain_module")
 T_CURRIC = _tgt_of("domain_curriculum")
 T_WEEK = _tgt_of("module_week")
-T_LIVE = _tgt_of("module_live_class")
-T_DECK = _tgt_of("live_class_deck")
+T_DECK = _tgt_of("module_deck")
 T_ASSIGN = _tgt_of("module_assignment")
 T_REVIEW = _tgt_of("assignment_reviewed_in")
 T_TOPIC = _tgt_of("module_topic")
@@ -360,12 +359,12 @@ def main() -> int:
             u = cm.node_for_unavailable(r)
             ntype = (T_DECK if cm.is_deck(mime)
                      else T_REPO if cm.is_repo(mime, name)
-                     else T_LIVE)
+                     else T_FILE)
             uid = g.node(nid("unavail", fid), ntype, name, src,
                          **{k: v for k, v in u.items()
                             if k not in ("label", "label_raw")})
-            g.edge(R["module_live_class"] if ntype == T_LIVE
-                   else R["live_class_deck"] if ntype == T_DECK
+            g.edge(R["module_class_file"] if ntype == T_FILE
+                   else R["module_deck"] if ntype == T_DECK
                    else R["module_repo"], m, uid, src, revision=revision)
             gaps[f"content unavailable: {r['rule']}"] += 1
             continue
@@ -407,11 +406,11 @@ def main() -> int:
             did = g.node(nid("deck", fid), T_DECK, name, src,
                          owner_domain=r.get("owner_domain"),
                          slide_count=r.get("slide_count"))
-            lid = g.node(nid("lc", fid), T_LIVE, name, src,
-                         revision=revision,
-                         superseded_by=("base" if revision == "revamp" else None))
-            g.edge(R["module_live_class"], m, lid, src, revision=revision)
-            g.edge(R["live_class_deck"], lid, did, src)
+            # The deck hangs off the MODULE. There used to be a live_class
+            # node in between, minted from this same file, and it carried no
+            # fact the deck node does not — see taxonomy.yaml `delivers`.
+            g.edge(R["module_deck"], m, did, src, revision=revision,
+                   superseded_by=("base" if revision == "revamp" else None))
         elif role == "review":
             aid = g.node(nid("rev", fid), T_REVIEW, name, src)
             g.edge(R["assignment_reviewed_in"], m, aid, src, revision=revision)
@@ -419,9 +418,10 @@ def main() -> int:
             aid = g.node(nid("task", fid), T_ASSIGN, name, src)
             g.edge(R["module_assignment"], m, aid, src, revision=revision)
         elif role == "class":
-            lid = g.node(nid("lc", fid), T_LIVE, name, src,
-                         revision=revision)
-            g.edge(R["module_live_class"], m, lid, src, revision=revision)
+            # Attach the FILE NODE THAT ALREADY EXISTS rather than mint a
+            # parallel one. These files were the other 443 live_class nodes.
+            g.edge(R["module_class_file"], m, nid("file", fid), src,
+                   revision=revision)
 
         # -- topics, with their locator -----------------------------------
         source_kind = "curriculum" if kind else ("deck" if cm.is_deck(mime)
