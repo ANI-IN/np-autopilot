@@ -44,7 +44,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pipeline.lib import approval                                      # noqa: E402
 from pipeline.lib import content_scope as scope                        # noqa: E402
 from pipeline.lib import extract_text as ex                            # noqa: E402
-from pipeline.lib import redact as rd                                  # noqa: E402
+from pipeline.lib import redact as rd  # noqa: F401  (rd.REDACTION_VERSION)                                  # noqa: E402
 from pipeline.lib.paths import REPO_ROOT, build_log                    # noqa: E402
 
 #: Its OWN subdirectory of the cache. Never the corpus folders.
@@ -137,6 +137,9 @@ def verify_cache(cache_dir: Path) -> dict:
         "missing_files": missing,
         "orphan_files": len(on_disk - declared),
         "sha256_mismatches": mismatches,
+        "mixed_redaction_versions": len(
+            {r.get("redaction_version") for r in exported}) - 1
+            if exported else 0,
         "provenance_rows_with_at": sum(
             1 for v in man.values()
             if any("@" in str(x) for x in v.values() if x is not None)),
@@ -318,7 +321,11 @@ def crawl(service, root_id: str, cache_root: Path, *, approved_domains: list,
                 continue
 
             prior = previous.get(e["id"])
+            # The redaction version is part of the resume condition, not just a
+            # label: the cache holds redacted text, so a rules change makes an
+            # otherwise-unchanged file stale.
             if (prior and prior.get("modifiedTime") == row["modifiedTime"]
+                    and prior.get("redaction_version") == rd.REDACTION_VERSION
                     and prior.get("text_path")
                     and (cache_dir / prior["text_path"]).exists()):
                 stats["unchanged"] += 1
@@ -372,6 +379,7 @@ def crawl(service, root_id: str, cache_root: Path, *, approved_domains: list,
             # Named, because a sha256 that is not of the source bytes and does
             # not say so is a hash pretending to be an integrity check.
             row["sha256_of"] = "redacted-text"
+            row["redaction_version"] = rd.REDACTION_VERSION
             stats["exported"] += 1
             if counts:
                 stats["files_with_redactions"] += 1
@@ -446,7 +454,8 @@ def _report(cache_dir, manifest, skips, stats, shortcuts, limiter, integrity) ->
     print("  people from decks: NEVER (D1). Instructors are a later phase.")
     bad = {k: v for k, v in integrity.items()
            if k in ("colliding_text_paths", "missing_files", "orphan_files",
-                    "sha256_mismatches", "provenance_rows_with_at") and v}
+                    "sha256_mismatches", "provenance_rows_with_at",
+                    "mixed_redaction_versions") and v}
     print(f"  integrity      : {'CLEAN' if not bad else 'FAILED ' + str(bad)}"
           f"  ({integrity.get('files_on_disk')} files vs "
           f"{integrity.get('exported')} exports, raw-byte hashes)")

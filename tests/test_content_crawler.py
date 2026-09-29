@@ -314,3 +314,45 @@ def test_an_ordinary_file_is_not_flagged_as_download_disabled(mod):
              "capabilities": {"canDownload": True},
              "copyRequiresWriterPermission": False}
     assert mod.download_disabled(entry) is False
+
+
+# ---------------------------------------------------------------------------
+# 1d — redaction_version is part of the cache contract
+# ---------------------------------------------------------------------------
+
+def test_every_exported_row_records_the_redaction_version(mod, tmp_path, world):
+    out = mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    exported = [r for r in out.manifest.values() if r["action"] == "export"]
+    assert exported
+    assert all(r["redaction_version"] == mod.rd.REDACTION_VERSION for r in exported)
+
+
+def test_a_redaction_version_bump_re_exports_even_when_nothing_changed(mod, tmp_path, world):
+    """The cache is redacted text, so the redaction rules are part of its
+    contract. A file unchanged in Drive is still STALE if the rules that
+    produced its text have moved — and a cache holding two versions cannot be
+    reasoned about at all.
+    """
+    mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    world.exported.clear()
+    man = tmp_path / mod.CACHE_SUBDIR / "manifest.json"
+    body = json.loads(man.read_text())
+    for r in body.values():
+        if r["action"] == "export":
+            r["redaction_version"] = mod.rd.REDACTION_VERSION - 1
+    man.write_text(json.dumps(body))
+    mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    assert world.exported, "a version bump must re-export"
+
+
+def test_an_unchanged_run_at_the_same_version_still_exports_nothing(mod, tmp_path, world):
+    """Negative control: version-awareness must not destroy resume."""
+    mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    world.exported.clear()
+    mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    assert world.exported == []
+
+
+def test_the_cache_is_never_left_at_mixed_redaction_versions(mod, tmp_path, world):
+    out = mod.crawl(world, "ROOT", tmp_path, approved_domains=APPROVED)
+    assert out.integrity["mixed_redaction_versions"] == 0

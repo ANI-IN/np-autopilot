@@ -25,13 +25,60 @@ from __future__ import annotations
 
 import re
 
+#: BUMP THIS WHENEVER A RULE BELOW CHANGES WHAT GETS REDACTED.
+#:
+#: The cache stores REDACTED text, so these rules are part of its contract: a
+#: file unchanged in Drive is still stale if the rules that produced its text
+#: have moved. The crawler re-exports on a version mismatch, which is what
+#: keeps the cache from holding two versions at once — and a cache at two
+#: versions cannot be reasoned about at all, because "why is this number
+#: still here" has two possible answers.
+#:
+#:   1  initial — six-digit phone shape, no domain exemptions
+#:   2  2026-09-29 audit: phone tightened on SHAPE (148 false positives, one
+#:      of them destroying an HTTP-status-code slide); bare digit runs made
+#:      reachable but conditioned on a phone word; RFC 2606 / RFC 6761
+#:      reserved documentation domains exempted from email redaction
+REDACTION_VERSION = 2
+
 EMAIL = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
+
+#: RFC 2606 §3 and RFC 6761 §6.3 — names the standards RESERVE for
+#: documentation and testing, so that examples cannot collide with anything
+#: real. `user@example.com` in an API-testing lesson is teaching content, and
+#: redacting it removes curriculum while protecting nobody.
+#:
+#: This is a STANDARDS-DEFINED set, which is why it is allowed to be a list:
+#: it is closed, published, and changes only when an RFC does. A list of
+#: "domains we think are fake" would be the rotting name-list this project
+#: keeps finding.
+RESERVED_SLD = ("example.com", "example.net", "example.org")
+RESERVED_TLD = (".example", ".test", ".invalid", ".localhost")
+
+
+def _is_reserved_domain(addr: str) -> bool:
+    """True for a reserved documentation name. Anchored at the END of the
+    domain, never a substring: `example.com.somereal.net` is a REAL domain
+    that merely contains a reserved one."""
+    domain = addr.rsplit("@", 1)[-1].strip().lower().rstrip(".")
+    if domain == "localhost":
+        return True
+    return domain in RESERVED_SLD or domain.endswith(RESERVED_TLD)
 LINKEDIN = re.compile(r"(?:https?://)?(?:[a-z]{2,3}\.)?linkedin\.com/[\w\-/%.]+",
                       re.IGNORECASE)
 #: Candidate shape. A MATCH HERE IS NOT A REDACTION — `_is_phone_shaped`
 #: decides, below.
 PHONE = re.compile(r"(?<![\w.])(?:(?P<intl>\+\d{1,3})[\s.\-]?)?(?:\(\d{2,4}\)[\s.\-]?)?"
-                   r"\d{2,5}(?:[\s.\-]\d{2,5}){1,4}(?![\w.])")
+                   r"(?:\d{2,5}(?:[\s.\-]\d{2,5}){1,4}|\d{10,15})(?![\w.])")
+
+# THE BARE-RUN ALTERNATIVE IS NEW, AND THE AUDIT IS WHY IT IS SAFE TO ADD.
+# The previous pattern required a separator, so `4155550134` written solid was
+# never a candidate at all — the `>= 10 digits` branch below could only ever
+# fire on a group INSIDE a separated match, which is close to unreachable.
+# Measuring the cache for bare runs found 32: 15 Unix timestamps, 1 ms
+# timestamp, 16 O'Reilly ISBNs, 0 phones. So the branch was not dangerous; it
+# was inert. It is made reachable here AND conditioned on a phone word beside
+# it, which gains the protection without the 32 false positives.
 
 #: AUDITED AGAINST THE RUN-3 CACHE, 2026-09-29, AND TIGHTENED.
 #:
@@ -60,6 +107,15 @@ PHONE = re.compile(r"(?<![\w.])(?:(?P<intl>\+\d{1,3})[\s.\-]?)?(?:\(\d{2,4}\)[\s
 _MIN_DIGITS = 7
 _MAX_DIGITS = 15
 
+#: Words that make a bare digit run a phone number rather than an identifier.
+_PHONE_WORD = re.compile(r"\b(tel|telephone|phone|mobile|cell|fax|call|whatsapp|"
+                         r"contact)\b", re.IGNORECASE)
+
+
+def _bare_run(text: str) -> bool:
+    """A single unseparated run of digits, e.g. `4155550134` or `1735689600`."""
+    return bool(re.fullmatch(r"\d{10,15}", text.strip()))
+
 
 def _is_phone_shaped(m: "re.Match") -> bool:
     text = m.group(0)
@@ -77,7 +133,16 @@ def _is_phone_shaped(m: "re.Match") -> bool:
         # an index, not a national format; the international ones that do use
         # short groups carry a `+` prefix and are accepted above.
         return True
-    return max((len(g) for g in groups), default=0) >= 10
+    if max((len(g) for g in groups), default=0) >= 10:
+        # A run of 10-15 digits with no separators. MEASURED ON THE CACHE,
+        # 2026-09-29: 32 such runs across 919 texts and NOT ONE is a phone —
+        # 15 Unix timestamps (JWT `exp`, `X-RateLimit-Reset`, inside the API
+        # Testing curriculum), 1 millisecond timestamp, 16 O'Reilly ISBNs in
+        # book URLs. So it needs a phone word beside it. The branch keeps its
+        # capability and gains a condition rather than being deleted.
+        window = m.string[max(0, m.start() - 45):m.end() + 25]
+        return bool(_PHONE_WORD.search(window))
+    return False
 
 #: Order matters: LinkedIn URLs are matched before the generic patterns so a
 #: profile URL is reported as `linkedin` rather than shredded by PHONE.
@@ -96,6 +161,12 @@ def redact(text: str) -> tuple[str, dict[str, int]]:
                 return "<phone redacted>" if _is_phone_shaped(m) else m.group(0)
             text, seen = rx.subn(_sub, text)
             n = text.count("<phone redacted>")
+        elif name == "email":
+            def _esub(m):
+                return (m.group(0) if _is_reserved_domain(m.group(0))
+                        else "<email redacted>")
+            text, _ = rx.subn(_esub, text)
+            n = text.count("<email redacted>")
         else:
             text, n = rx.subn(f"<{name} redacted>", text)
         if n:
@@ -107,8 +178,13 @@ def scan(text: str) -> dict[str, int]:
     """Counts only, never the values — for reporting on a file we do not emit."""
     out: dict[str, int] = {}
     for name, rx in CATEGORIES:
-        n = (sum(1 for m in rx.finditer(text) if _is_phone_shaped(m))
-             if name == "phone" else len(rx.findall(text)))
+        if name == "phone":
+            n = sum(1 for m in rx.finditer(text) if _is_phone_shaped(m))
+        elif name == "email":
+            n = sum(1 for m in rx.finditer(text)
+                    if not _is_reserved_domain(m.group(0)))
+        else:
+            n = len(rx.findall(text))
         if n:
             out[name] = n
     return out

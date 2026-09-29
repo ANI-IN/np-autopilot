@@ -365,3 +365,58 @@ def test_phone_redaction_still_has_no_density_threshold():
     rule — A7B's borrowed rule: one address, or one number, is enough."""
     out, counts = rd.redact("+1 415 555 0134")
     assert counts["phone"] == 1
+
+
+# --- 1b: the bare-digit-run branch, measured on the cache 2026-09-29 --------
+#
+# 32 runs of 10-15 digits exist in the 919 cached texts and NOT ONE is a phone:
+# 15 Unix timestamps (JWT `exp`, `X-RateLimit-Reset` — in the API Testing
+# curriculum), 1 millisecond timestamp, 16 O'Reilly ISBNs inside book URLs.
+# The branch kept its capability and gained a condition rather than being
+# deleted: a bare digit run needs a phone word beside it.
+
+BARE_DIGIT_CASES = [
+    ('"scope": ["read"], "exp": 1735689600, "authorities": []', False),
+    ("X-RateLimit-Reset: 1735689600 # Time when the window resets", False),
+    ("oreilly.com/library/view/learning-javascript-design/9781449334840/ch09.html", False),
+    ('{ "id": "1735689600000", "username": "testuser" }', False),
+    ("Tel: 4155550134", True),
+    ("phone 4155550134", True),
+]
+
+
+@pytest.mark.parametrize("text,is_phone", BARE_DIGIT_CASES)
+def test_a_bare_digit_run_needs_a_phone_word_beside_it(text, is_phone):
+    out, counts = rd.redact(text)
+    assert bool(counts.get("phone")) is is_phone
+
+
+# --- 1c: RFC 2606 / RFC 6761 reserved names are not real addresses ---------
+#
+# A STANDARDS-DEFINED SET, not a name list somebody maintains. RFC 2606 §3
+# reserves example.com/.net/.org and the .test/.example/.invalid/.localhost
+# TLDs precisely so documentation can use them; RFC 6761 §6.3 adds localhost.
+# Redacting them removes teaching content and protects nobody.
+
+RESERVED_CASES = [
+    ("POST /login with user@example.com", False),
+    ("admin@example.org and dev@example.net", False),
+    ("svc@api.example and qa@my.test", False),
+    ("bad@nowhere.invalid", False),
+    ("root@localhost", False),
+    ("mail ops@interviewkickstart.com for access", True),
+    ("instructor@gmail.com", True),
+]
+
+
+@pytest.mark.parametrize("text,should_redact", RESERVED_CASES)
+def test_reserved_documentation_domains_are_not_redacted(text, should_redact):
+    out, counts = rd.redact(text)
+    assert bool(counts.get("email")) is should_redact
+
+
+def test_a_reserved_name_as_a_substring_of_a_real_domain_is_still_redacted():
+    """Negative control. `example.com.attacker.net` is a REAL domain that
+    merely contains a reserved one, and a substring check would exempt it."""
+    out, counts = rd.redact("x@example.com.somereal.net")
+    assert counts.get("email") == 1
