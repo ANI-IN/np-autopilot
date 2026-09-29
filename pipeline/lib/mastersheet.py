@@ -27,6 +27,11 @@ import re
 from pathlib import Path
 from typing import NamedTuple
 
+#: The workbook this module parses. It was written out in five places;
+#: `validate.py` needed a sixth to check instructor provenance, which is
+#: the point at which a repeated literal becomes a second source of truth.
+SHEET_FILE = "Resource Collection Mastersheet (Software + System).xlsx"
+
 DOMAIN_TABS = ("Full Stack Engineering", "Frontend Engineering",
                "Backend Engineering", "Test Engineering")
 

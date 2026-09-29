@@ -257,7 +257,11 @@ def topics_from_text(text: str, source: str) -> list[Topic]:
             continue
 
         if kind == "tab":
-            cell = line.split(",", 1)[0].strip().strip('"')
+            # ` | ` FIRST: extract_text._xlsx joins cells with it, and a cell
+            # may legitimately contain a comma. Splitting on the comma first
+            # returned the whole row, header included.
+            cell = (line.split(" | ", 1)[0] if " | " in line
+                    else line.split(",", 1)[0]).strip().strip('"')
             if not header_seen and cell.lower() in _TAB_HEADERS:
                 header_seen = True          # the header row names the columns
                 continue

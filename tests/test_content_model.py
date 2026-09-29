@@ -469,3 +469,29 @@ def test_a_deck_name_with_no_person_in_it_proposes_nothing(filename):
     `- Decorator Pattern` is a topic, not a person."""
     tok = cm.deck_name_token(filename)
     assert cm.propose_deck_instructor(filename, {"primary": ["Ashish Kaila"]}) is None or tok
+
+
+def test_a_lesson_plan_row_is_split_on_the_separator_the_extractor_writes():
+    """FOUND BY RANKING THE TOPICS. `extract_text._xlsx` joins cells with
+    ` | `, and this splitter used `,` — so every lesson-plan topic came out as
+    the whole joined row, header included:
+
+        'Topic | Flow | Learning Objectives (After the segment, the ...'
+
+    The lesson plans are the FIRST topic source, so the layer this was meant
+    to privilege was the one it mangled. Ranking made it visible; the counts
+    never would have.
+    """
+    text = ("[tab Concurrency Lesson Plan]\n"
+            "Topic | Flow | Learning Objectives\n"
+            "Thread Pools | 30min | Builds on MPCQ\n"
+            "Timer | 30min | Defer execution\n")
+    got = cm.topics_from_text(text, source="curriculum")
+    assert [t.label for t in got] == ["Thread Pools", "Timer"]
+
+
+def test_a_comma_separated_tab_still_works():
+    """Negative control: csv-shaped rows must not regress."""
+    got = cm.topics_from_text("[tab X]\nTopic,Flow\nSharding,20min\n",
+                              source="curriculum")
+    assert [t.label for t in got] == ["Sharding"]

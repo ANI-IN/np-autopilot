@@ -157,6 +157,10 @@ def test_contact_data_pasted_into_a_public_column_is_moved_not_published(tabs):
     the public field is kept, and the row is FLAGGED so a human sees it.
     """
     pub, priv = ms.split_instructor_row(
+        # contact-ok: synthetic. A linkedin.com-shaped token is REQUIRED here —
+        # `_CONTACT_TOKEN` keys on that host, so a reserved domain would make
+        # the regex miss and the test would assert nothing. The claim IS that
+        # this token moves off the public side.
         {"name": "someone@example.org https://www.linkedin.com/in/x/",
          "current_company": "Acme"})
     assert "@" not in " ".join(str(v) for v in pub.values())
@@ -173,6 +177,9 @@ def test_a_clean_row_is_not_flagged_as_scrubbed(tabs):
 
 def test_a_row_left_with_no_usable_name_is_reported_not_ingested(tabs):
     pub, priv = ms.split_instructor_row(
+        # contact-ok: synthetic, same reason as above — the host must be real
+        # for `_CONTACT_TOKEN` to fire, and the assertion is that nothing
+        # publishable survives.
         {"name": "someone@example.org https://www.linkedin.com/in/x/"})
     assert ms.is_unusable(pub) is True
     assert ms.is_unusable({"name": "Robert Kreznarich"}) is False

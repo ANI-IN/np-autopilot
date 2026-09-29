@@ -225,7 +225,30 @@ def main() -> int:
         # So it now checks. It refuses again, automatically, if either piece
         # disappears — and a table with no policy denies everyone, which looks
         # exactly like it worked.
-        missing = _missing_recruiting_path()
+        try:
+            missing = _missing_recruiting_path()
+        except Exception as exc:
+            # THE CHECK ITSELF CAN BE UNAVAILABLE, and that was not handled.
+            # `_missing_recruiting_path` opens a database connection, so with no
+            # credentials it raised and the refusal below — the one that names
+            # the authorising record — never printed. The exit code was still
+            # non-zero, so this LOOKED like the guard working while the actual
+            # output was a traceback. Fail-closed was right; illegible was not.
+            #
+            # An UNVERIFIABLE path is treated as an INCOMPLETE one.
+            #
+            # Only the exception TYPE is printed. The message can carry a DSN,
+            # and a refusal that echoes a connection string is a worse leak than
+            # the one it is preventing.
+            sys.exit(
+                "--scope full is refused: the recruiting RLS path could not be "
+                "CHECKED.\n"
+                f"  the check raised {type(exc).__name__} (message withheld: it "
+                "can contain a connection string)\n"
+                "An unverifiable path is treated as an incomplete one.\n"
+                "Projecting the sensitive half is a recorded decision either "
+                "way — see\ndocs/INGEST-SCOPE-REVERSAL.md, whose approval block "
+                "is blank.")
         if missing:
             sys.exit(
                 "--scope full is refused: the recruiting RLS path is incomplete.\n"

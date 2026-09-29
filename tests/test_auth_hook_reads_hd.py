@@ -95,6 +95,10 @@ REFUSE_SHAPES = {
     "wrong hd, nested": {"claims": {"custom_claims": {"hd": "evil.com"},
                                     "email": "a@evil.com"}},
     "hd ok but email disagrees": {"claims": {"custom_claims": {"hd": IK},
+                                             # contact-ok: synthetic. A consumer-provider domain is the POINT —
+                                             # migration 0007's rule is that a Workspace `hd` claim cannot be
+                                             # trusted when the address is outside that domain, and the
+                                             # assertion is that this shape is REFUSED.
                                              "email": "a@gmail.com"}},
     "empty payload": {},
 }

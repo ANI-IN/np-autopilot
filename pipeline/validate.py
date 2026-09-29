@@ -494,13 +494,31 @@ def check_content_graph(r) -> None:
           if missing else
           f"all {len(g['nodes'])} nodes and {len(g['edges'])} edges carry provenance")
 
-    # D1 — the content graph has no person layer at all, by construction.
+    # D1 — a person may not be derived from DECK CONTENT.
+    #
+    # THIS CHECK USED TO ASSERT "no person layer at all", which was correct only
+    # while instructors were deferred. The mastersheet reversal un-deferred them
+    # (docs/CONTACT-DATA.md §R) and the check went on enforcing the superseded
+    # decision — it failed on 38 legitimate nodes and, worse, it would have said
+    # nothing new if a deck-derived person had appeared alongside them.
+    #
+    # What D1 still forbids is the DERIVATION, not the node type. So the test is
+    # provenance: every person must be citable to a mastersheet SHEET and ROW.
+    # A person lifted from slide prose cannot have those, which is exactly the
+    # difference D1 draws between a structured row and deck text.
+    from pipeline.lib import mastersheet as _ms
     people = [n for n in g["nodes"] if n["type"] in ("person", "instructor")]
-    r.add(FAIL if people else INFO, "content-no-person",
-          f"{len(people)} person/instructor nodes in the content graph — D1 "
-          "forbids extracting people from deck content and instructors are "
-          "deferred" if people else
-          "no person or instructor nodes (D1, and instructors are deferred)")
+    stray = [n["id"] for n in people
+             if not n.get("sources")
+             or not all(s.get("file", "").endswith(_ms.SHEET_FILE)
+                        and s.get("sheet") and s.get("row")
+                        for s in n["sources"])]
+    r.add(FAIL if stray else INFO, "content-no-person",
+          f"{len(stray)} of {len(people)} person/instructor nodes are not "
+          f"traceable to a mastersheet sheet+row — D1 forbids deriving a "
+          f"person from deck content" if stray else
+          f"all {len(people)} person/instructor nodes cite a mastersheet "
+          f"sheet and row; none is deck-derived (D1)")
 
     topic_rel = taxonomy.edge_for_role("module_topic")
     unlocated = [e for e in g["edges"] if e["rel"] == topic_rel

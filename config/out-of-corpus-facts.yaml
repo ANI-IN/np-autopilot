@@ -163,3 +163,37 @@ facts:
       this corpus's contact redactions sit in six folders now has an answer
       that is not "the curriculum is full of personal data".
 
+  - id: practice-problems-are-optional
+    subject: [SD1: Full Stack, SD2: Frontend, SD3: Backend Engineering, SD4: Test Engineering]
+    fact: >
+      Practice problems (the `post_class` session) are OPTIONAL per module. A
+      module without them is complete, not incomplete.
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: 2026-09-29
+    evidence: >
+      Direct statement, 2026-09-29. The corpus is consistent with it and could
+      not have established it: all six Test Engineering modules have no
+      Practice Problems row in the mastersheet, while all fourteen modules in
+      the other three domains do. Measured, that is a clean split by domain —
+      which reads equally well as "Testing is missing something" until somebody
+      says otherwise. Only the owner could.
+    consequence: >
+      `post_class` is reported as PRESENT or NOT OFFERED in the completeness
+      matrix, never as a gap. The required links are module, program week,
+      class, assignment, decks, topics and instructors.
+
+      SESSIONS COME FROM THE SHEET'S ROWS, NEVER FROM A TEMPLATE, and that is
+      already how pass 7 works: `session_for_file` is given the kinds the
+      module actually has, and returns None for any other. Verified against
+      real data 2026-09-29 — 20 modules, ZERO mismatches between the sheet's
+      rows and the graph's session nodes, and no `post_class` node exists for
+      any Testing module.
+
+      A Drive folder named `Practice Problem(s)` does NOT create one either.
+      Of 51 such files, 30 attach to a post_class session that the sheet
+      declares, 16 stay module-level, and 5 attach elsewhere on folder
+      evidence — including SD4's single case, a live-class prerequisite doc
+      inside `2. Live_Class/` that correctly became a `class` attachment in a
+      domain with no post_class session at all.
+
