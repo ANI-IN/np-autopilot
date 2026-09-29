@@ -183,10 +183,12 @@ deploy → projection**, so the OLD code never runs against the NEW data. The
 old code on the new data was assessed read-only on 2026-09-30: "7 of 42
 domains have no owner", Backend Engineering staffed by nobody, 42 of 50
 search hits undrawable, 294 of 300 nodes hidden on expanding API Design. The
-reverse overlap — new code on old data, for the projection's run time — is
-expected to be safe (a missing layout falls back to the in-browser
-simulation); the rehearsal confirms it before the window, and the run-sheet
-records the result.
+reverse overlap — new code on old data, ≈ 2–3 min — was **rehearsed and is
+safe** (2026-09-30): every endpoint 200, the page settles by the in-browser
+simulation, no console errors. The rehearsal ran every step and every rollback
+against a copy of production: migrations roll back to an identical schema; the
+restore brings back production's content hash; the projection takes 5.4 s
+locally, estimated 10–20 s in production from a measured 4.5–6.1 MB/s upload.
 
 The step-by-step run-sheet, with the rehearsal's measured times and every
 rollback: **`docs/WINDOW-RUNSHEET.md`**. In outline:
