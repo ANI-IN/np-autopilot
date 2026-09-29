@@ -46,6 +46,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # FIRST, because every other step here protects content in a repository
+      # assumed private. It was public for 8 days (R18), and its replacement was
+      # created public and stayed so for 13 (R21) while the docs said private.
+      # Passes only on the API's own private=true; anything else fails.
+      - name: the repository is private
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 pipeline/check_repo_private.py "${{ github.repository }}"
+
       # The service role key must never leave server-side code. Greps the whole
       # tree including the built web output, per the security requirements.
       - name: no service-role key anywhere
