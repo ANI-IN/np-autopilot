@@ -30,6 +30,11 @@ DEPLOYED page refuse to run its own scripts — a blank explorer and a console
 error nobody sees. Run it after any edit to the page; `--check` fails
 instead of writing, for CI.
 
+`gen_acceptance_checklist.py` regenerates `docs/ACCEPTANCE-CHECKLIST.md` —
+every module's items with their Uplevel and Drive links, for click-checking.
+Generated, never hand-written: 20 modules x 8 items goes stale on the next
+crawl and nobody notices until a link is dead.
+
 `count_registry.py` is **not a pass and never fetches anything.** It enumerates
 the scale-up registry's Drive folders and reports what is there — file and
 folder counts, depth, types, shortcuts, failures — so that the decision to

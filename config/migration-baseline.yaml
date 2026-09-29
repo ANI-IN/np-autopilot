@@ -2,7 +2,7 @@ version: 1
 note: "Frozen migration reference. Every migration-verification run asserts against THIS,\
   \ never against a live rebuild \u2014 a live rebuild would move with the corpus and prove\
   \ nothing. Re-freeze only in a commit that says why."
-frozen_at: '2026-09-29T12:44:51+00:00'
+frozen_at: '2026-09-29T13:05:39+00:00'
 built_as_of: '2026-09-09'
 plugin_version: 0.1.9
 taxonomy_version: 2
@@ -11,9 +11,9 @@ open_questions_that_will_move_these:
   \ Resolving any of them moves edge_counts and component structure."
 scopes:
   full:
-    content_hash: bab024ee574eeb6a55a4593716a2a29726b610db4a315947bf56f1974b1bb434
+    content_hash: da3f995ec7fb440ac3701be1de47915e3789a60a867102a0796b0458ebe95f0d
     totals:
-      nodes: 10438
+      nodes: 10437
       edges: 51735
     node_counts:
       assignment: 64
@@ -24,7 +24,7 @@ scopes:
       curriculum_doc: 23
       domain: 46
       file: 1957
-      instructor: 3826
+      instructor: 3825
       instructor_contact: 28
       module: 924
       person: 43
@@ -58,7 +58,7 @@ scopes:
       teaches: 2239
     duplicates:
       distinct_colliding_triples: 3930
-      extra_rows: 32026
+      extra_rows: 32027
       by_rel:
         covers_topic: 1397
         delivers_session: 74
@@ -69,17 +69,17 @@ scopes:
       entries_by_origin:
         corpus: 41493
         hand: 35
-      nodes_total: 10438
-      nodes_with_sources: 10438
+      nodes_total: 10437
+      nodes_with_sources: 10437
       nodes_with_hand_provenance: 35
     components:
       excluding_provenance: 44
-      largest: 5847
+      largest: 5846
       isolated: 2877
   public:
-    content_hash: 16c8ab5868cb7dce21721c76734d39084eba924a61c59551a5dd1e5d4724b69f
+    content_hash: 91db001ce621bfdb166ee77ea80c2f7886494a29084f1808b396d1a1c38611fe
     totals:
-      nodes: 8508
+      nodes: 8507
       edges: 49561
     node_counts:
       assignment: 64
@@ -90,7 +90,7 @@ scopes:
       curriculum_doc: 23
       domain: 46
       file: 1957
-      instructor: 1924
+      instructor: 1923
       module: 924
       person: 43
       program: 42
@@ -122,7 +122,7 @@ scopes:
       teaches: 2239
     duplicates:
       distinct_colliding_triples: 3808
-      extra_rows: 31893
+      extra_rows: 31894
       by_rel:
         covers_topic: 1397
         delivers_session: 74
@@ -132,16 +132,16 @@ scopes:
       entries_by_origin:
         corpus: 39355
         hand: 35
-      nodes_total: 8508
-      nodes_with_sources: 8508
+      nodes_total: 8507
+      nodes_with_sources: 8507
       nodes_with_hand_provenance: 35
     components:
       excluding_provenance: 41
-      largest: 5822
+      largest: 5821
       isolated: 978
-content_hash: bab024ee574eeb6a55a4593716a2a29726b610db4a315947bf56f1974b1bb434
+content_hash: da3f995ec7fb440ac3701be1de47915e3789a60a867102a0796b0458ebe95f0d
 totals:
-  nodes: 10438
+  nodes: 10437
   edges: 51735
 node_counts:
   assignment: 64
@@ -152,7 +152,7 @@ node_counts:
   curriculum_doc: 23
   domain: 46
   file: 1957
-  instructor: 3826
+  instructor: 3825
   instructor_contact: 28
   module: 924
   person: 43
@@ -186,7 +186,7 @@ edge_counts:
   teaches: 2239
 duplicates:
   distinct_colliding_triples: 3930
-  extra_rows: 32026
+  extra_rows: 32027
   by_rel:
     covers_topic: 1397
     delivers_session: 74
@@ -197,10 +197,10 @@ provenance:
   entries_by_origin:
     corpus: 41493
     hand: 35
-  nodes_total: 10438
-  nodes_with_sources: 10438
+  nodes_total: 10437
+  nodes_with_sources: 10437
   nodes_with_hand_provenance: 35
 components:
   excluding_provenance: 44
-  largest: 5847
+  largest: 5846
   isolated: 2877

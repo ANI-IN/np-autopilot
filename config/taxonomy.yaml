@@ -895,6 +895,17 @@ common_properties:
 # moving them is a data decision rather than a mechanism decision.
 property_scopes:
   public:
+    # --- SOURCE LINKS, 2026-09-29. All public: a Drive or Uplevel URL is
+    # --- where a reader goes to see the thing, and everyone at IK has view
+    # --- access to both (config/out-of-corpus-facts.yaml). None is contact
+    # --- data; `mailto:` targets are refused at the reader, not here.
+    - attached_drive_url
+    - attached_id
+    - attached_is_deck
+    - deck_drive_url
+    - drive_folder_url
+    - drive_url
+    - locator_kind
     # --- added 2026-09-29 for the merged projection (pass 8 + B1). ---------
     # All sixteen are STRUCTURAL or PROVENANCE. None is contact data; the
     # three contact fields stay under `sensitive` below and reach only the

@@ -70,6 +70,7 @@ class Tab(NamedTuple):
     modules: list
     assignments_by_sequence: dict
     instructors: list
+    drive_folder_url: str = ""
 
 
 _MODULE_RE = re.compile(r"^Week\s*(\d+)(?:\s*/\s*\d+)?\s*[-–]\s*(.+)$", re.I)
@@ -189,6 +190,11 @@ def parse_tab(path: Path, tab: str) -> Tab:
     rows = list(wb[tab].iter_rows(values_only=True))
     wb.close()
 
+    # THE REAL HYPERLINK TARGETS. A read_only workbook has no hyperlink model,
+    # so a cell whose URL lives in the target rather than the value read as no
+    # URL at all — and the session filter below drops a row with no link.
+    links = cell_links(path, tab)
+
     n = len(rows)
     drive_row = next((i for i in range(n)
                       if _cell(rows, i, 0).lower().startswith(FOLDER_ROW)), None)
@@ -206,13 +212,15 @@ def parse_tab(path: Path, tab: str) -> Tab:
         m = _MODULE_RE.match(_cell(rows, i, 0))
         if m:
             modules.append(Module(int(m.group(1)), m.group(2).strip(),
-                                  _cell(rows, i, 0), _cell(rows, i, 1), i, []))
+                                  _cell(rows, i, 0),
+                                  best_link(_cell(rows, i, 1), links.get((i, 1))),
+                                  i, []))
     for idx, mod in enumerate(modules):
         stop = modules[idx + 1].row if idx + 1 < len(modules) else end
         for i in range(mod.row, stop):
             name, type_col = _cell(rows, i, 2), _cell(rows, i, 3)
-            link = _cell(rows, i, 5)
-            if not name or not link.startswith("http"):
+            link = best_link(_cell(rows, i, 5), links.get((i, 5)))
+            if not name or not link:
                 continue
             mod.sessions.append(Session(name, session_kind(name, type_col),
                                         _cell(rows, i, 4), link, i))
@@ -264,5 +272,145 @@ def parse_tab(path: Path, tab: str) -> Tab:
                 rec[field] = _cell(rows, i, c) if c is not None else ""
             people.append(rec)
 
+    # The `Drive Folder` row's LABEL is the folder name and its TARGET is the
+    # folder URL — the case that made hyperlink reading necessary at all.
+    drive_url = links.get((drive_row, 1), "") if drive_row is not None else ""
     return Tab(tab, _cell(rows, drive_row, 1) if drive_row is not None else "",
-               modules, by_seq, people)
+               modules, by_seq, people, drive_url)
+
+
+# ---------------------------------------------------------------------------
+# Hyperlink targets — the LINK, not the label
+# ---------------------------------------------------------------------------
+
+#: Only these schemes ever become a link in the UI. `mailto:` is the reason
+#: this is an allow-list rather than a deny-list: eight cells in the Backend tab
+#: carry a real hyperlink whose target differs from its display text, and two of
+#: them are `mailto:` targets holding an instructor's personal address. A
+#: value-only read never saw them. Reading hyperlinks is what exposes them, so
+#: the read is filtered at the point it happens.
+_LINK_OK = re.compile(r"^https?://", re.I)
+
+
+class LinkCell(NamedTuple):
+    row: int
+    col: int
+    display: str
+    target: str
+    differs: bool
+
+
+def _col_to_index(ref: str) -> tuple[int, int]:
+    """`B43` -> (row 42, col 1), both 0-based to match `parse_tab`."""
+    letters = "".join(ch for ch in ref if ch.isalpha())
+    digits = "".join(ch for ch in ref if ch.isdigit())
+    col = 0
+    for ch in letters.upper():
+        col = col * 26 + (ord(ch) - 64)
+    return int(digits) - 1, col - 1
+
+
+def _raw_links(path: Path, tab: str) -> dict:
+    """{(row, col): (target, is_http)} read straight out of the .xlsx ZIP.
+
+    NOT openpyxl. `load_workbook(read_only=True)` carries no hyperlink model at
+    all, and `read_only=False` opens the workbook WRITABLE — which
+    `tests/test_documented_constraints_are_enforced.py` refuses, because
+    CLAUDE.md §1 says a corpus file is never written and the guard does not
+    take promises. An .xlsx is a zip of XML, and `zipfile` in read mode cannot
+    write to it, so the constraint is satisfied by construction rather than by
+    intent.
+
+    Hyperlinks live in two places: `<hyperlink ref="B43" r:id="rId1"/>` in the
+    sheet, and the URL behind that rId in the sheet's `.rels` part.
+    """
+    import re as _re
+    import xml.etree.ElementTree as ET
+    import zipfile
+
+    NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+          "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+          "pr": "http://schemas.openxmlformats.org/package/2006/relationships"}
+    out: dict = {}
+    with zipfile.ZipFile(path) as z:
+        wb = ET.fromstring(z.read("xl/workbook.xml"))
+        rels = ET.fromstring(z.read("xl/_rels/workbook.xml.rels"))
+        rid_to_part = {r.get("Id"): r.get("Target")
+                       for r in rels.findall("pr:Relationship", NS)}
+        part = None
+        for sh in wb.findall("m:sheets/m:sheet", NS):
+            if sh.get("name") == tab:
+                target = rid_to_part.get(sh.get(f"{{{NS['r']}}}id"), "")
+                part = "xl/" + target.lstrip("/").replace("xl/", "", 1)
+                break
+        if part is None or part not in z.namelist():
+            return out
+        sheet = ET.fromstring(z.read(part))
+        name = part.rsplit("/", 1)[-1]
+        rels_part = part.rsplit("/", 1)[0] + "/_rels/" + name + ".rels"
+        link_rels = {}
+        if rels_part in z.namelist():
+            lr = ET.fromstring(z.read(rels_part))
+            link_rels = {r.get("Id"): (r.get("Target") or "")
+                         for r in lr.findall("pr:Relationship", NS)}
+        for h in sheet.findall("m:hyperlinks/m:hyperlink", NS):
+            ref = (h.get("ref") or "").split(":")[0]
+            if not ref:
+                continue
+            tgt = link_rels.get(h.get(f"{{{NS['r']}}}id"), "") or ""
+            if not tgt:
+                # An internal link has no rId; it points inside the workbook
+                # and is never a source link.
+                continue
+            out[_col_to_index(ref)] = (tgt.strip(),
+                                       bool(_LINK_OK.match(tgt.strip())))
+    return out
+
+
+def cell_links(path: Path, tab: str) -> dict:
+    """{(row, col): target} for every http(s) hyperlink on the tab.
+
+    `parse_tab` reads values only, so a cell whose URL lives in the hyperlink
+    TARGET rather than in the cell value produced no link at all — the case
+    that made this necessary: the `Drive Folder` row displays the folder NAME
+    and links the folder.
+    """
+    return {k: v[0] for k, v in _raw_links(path, tab).items() if v[1]}
+
+
+def link_mismatches(path: Path, tab: str, rows: list | None = None) -> list:
+    """Cells whose display text is not their link target.
+
+    REPORTED, NOT SILENTLY PREFERRED. The owner asked for the real target to be
+    used and for any disagreement surfaced: a label that reads like one resource
+    and points at another is a defect in the sheet, and the graph should not be
+    the only thing that knows.
+
+    A non-http target is reported with the TARGET WITHHELD. Two of them are
+    `mailto:` links carrying an instructor's personal address, and a report
+    about contact data does not need the contact data to make its point.
+    """
+    if rows is None:
+        import openpyxl
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        rows = list(wb[tab].iter_rows(values_only=True))
+        wb.close()
+    out = []
+    for (r, c), (tgt, is_http) in sorted(_raw_links(path, tab).items()):
+        disp = _cell(rows, r, c)
+        if not is_http:
+            out.append(LinkCell(r, c, disp, "<non-http target withheld>", True))
+        elif disp != tgt:
+            out.append(LinkCell(r, c, disp, tgt, True))
+    return out
+
+
+def best_link(value: str, target: str | None) -> str:
+    """The link for a cell: its hyperlink TARGET, else its value if that is a URL.
+
+    Never the display text when a target exists, and never a non-http scheme.
+    """
+    if target and _LINK_OK.match(target):
+        return target.strip()
+    v = (value or "").strip()
+    return v if _LINK_OK.match(v) else ""

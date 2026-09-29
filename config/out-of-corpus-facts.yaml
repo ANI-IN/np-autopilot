@@ -7,6 +7,27 @@
 version: 1
 
 facts:
+  - id: ik-has-view-access-to-drive-and-uplevel
+    subject: [{IK: everyone with an @interviewkickstart.com account}]
+    fact: >-
+      Everyone at Interview Kickstart has VIEW access to the row-B Drive
+      folders and to Uplevel. A link in the explorer therefore resolves for
+      any signed-in reader, and the UI shows no access warning beside one.
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: 2026-09-29
+    evidence: >-
+      Direct statement, 2026-09-29, given as the final source-links
+      specification.
+    consequence: >-
+      Source links are rendered without an "you may not have access" caveat.
+      This is NOT a statement that every link works: a file whose export was
+      refused still gets its Drive link because canDownload false stops an
+      export, not a human opening it (docs/DOWNLOAD-DISABLED-FILES.md), and a
+      link that 404s is a broken link, not a permission problem. Where a link
+      is ABSENT the UI says which kind is missing and why, rather than
+      implying access.
+
   - id: android-ios-no-instructors
     subject: [Android, iOS]
     fact: >

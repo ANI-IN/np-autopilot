@@ -253,8 +253,15 @@ def merge(main: dict, content: dict, spec: dict | None = None,
         if len(group) < 2:
             continue
         canon = min(group, key=lambda n: n["id"])      # deterministic
-        canon["label"] = ident["canonical"]
         canon.setdefault("merged_label_raw", [])
+        # THE CANONICAL NODE'S OWN LABEL SURVIVES TOO. `canon` is chosen by id,
+        # so it is often the node carrying the ALIAS spelling — and overwriting
+        # its label before recording it threw that spelling away. PPL-11 lost
+        # `Bharath` exactly this way. §1: the original is the citation key.
+        _own = canon.get("label_raw") or canon.get("label")
+        if _own and _own != ident["canonical"] and _own not in canon["merged_label_raw"]:
+            canon["merged_label_raw"].append(_own)
+        canon["label"] = ident["canonical"]
         canon.setdefault("merged_from", [])
         canon.setdefault("merge_ids", [])
         for other in group:
@@ -305,8 +312,12 @@ def merge(main: dict, content: dict, spec: dict | None = None,
                                  "canonical": pair["canonical"], "reason": why})
                 continue
             canon = min(group, key=lambda n: n["id"])
-            canon["label"] = pair["canonical"]
             canon.setdefault("merged_label_raw", [])
+            _own = canon.get("label_raw") or canon.get("label")
+            if _own and _own != pair["canonical"] \
+                    and _own not in canon["merged_label_raw"]:
+                canon["merged_label_raw"].append(_own)
+            canon["label"] = pair["canonical"]
             canon.setdefault("merged_from", [])
             canon.setdefault("merge_ids", [])
             for other in group:

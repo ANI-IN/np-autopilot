@@ -247,6 +247,13 @@ align-items:flex-start;justify-content:center;overflow:auto}
   font-size:10.5px;color:#6e7681}
 #fresh b{color:#8b949e;font-weight:600}
 
+.item{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;padding:3px 0;
+      border-bottom:1px solid #161b22;font-size:11px}
+.ik{min-width:150px;color:#8b949e}
+.lnk{color:#58a6ff;text-decoration:none;border-bottom:1px solid #1f6feb55}
+.lnk:hover{border-bottom-color:#58a6ff}
+.nolnk{color:#6e7681;font-style:italic}
+.loc{color:#8b949e}
 .prow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:3px 0;
       border-bottom:1px solid #161b22}
 .pname{font-size:12px;color:#e6edf3;min-width:150px}
@@ -278,6 +285,8 @@ align-items:flex-start;justify-content:center;overflow:auto}
        white-space:nowrap;color:#c9d1d9}
 #sheet th{position:sticky;top:0;background:#161b22;color:#8b949e;font-weight:400}
 #sheet td.on{background:#1f6feb33}
+#sheet td.load{color:#8b949e;white-space:nowrap}
+#sheet td.load.unconf{color:#f0883e}
 #sheet td.unconf{background:repeating-linear-gradient(45deg,#f0883e22,#f0883e22 3px,transparent 3px,transparent 6px)}
 #sheet .lane{display:flex;gap:2px;align-items:center;margin:3px 0}
 #sheet .cell{min-width:78px;font-size:10px;border:1px solid #21262d;border-radius:4px;
@@ -1154,33 +1163,130 @@ function unconfirmedFlag(n){
     'owner decision (REVIEW-QUEUE INS-08/30/31/32), not by oversight.</div>';
 }
 
-// THE FULL CHAIN for a module: domain, programme week, every session by kind,
-// and the instructors by tier. Built from node TYPES, not relation names.
+// ---- SOURCE LINKS --------------------------------------------------------
+// Every item shows ALL of its direct links. The mastersheet is NEVER an item's
+// link — it is the citation, and it appears under Provenance. Where a kind of
+// link is absent the reason is stated; nothing is guessed and nothing falls
+// back to the sheet.
+//
+// Everyone at IK has view access to these folders and to Uplevel (owner fact,
+// config/out-of-corpus-facts.yaml), so no access caveat is shown. That is not a
+// claim every link resolves: a download-disabled file still gets its Drive link
+// because canDownload false stops an EXPORT, not a person opening it.
+const HTTP=/^https?:\/\//i;
+function lnk(url,label,title){
+  if(!url||!HTTP.test(String(url)))return '';
+  return '<a class="lnk" href="'+esc(url)+'" target="_blank" '+
+         'rel="noopener noreferrer"'+(title?' title="'+esc(title)+'"':'')+'>'+
+         esc(label)+'</a>';
+}
+function nolnk(kind,reason){
+  return '<span class="nolnk">no '+esc(kind)+': '+esc(reason)+'</span>';
+}
+
+//: What each session kind should carry, and what to say when it does not.
+const WANTS={
+  pre_class:        ['Drive files',    'no file matched at session level'],
+  class:            ['slide deck',     'no deck matched at session level'],
+  alternate_class:  ['slide deck',     'no deck matched at session level'],
+  task:             ['assignment doc', 'no document matched at session level'],
+  review:           ['deck or solutions', 'no file matched at session level'],
+  alternate_review: ['deck or solutions', 'no file matched at session level'],
+  post_class:       ['Drive files',    'no file matched at session level'],
+};
+const KIND_ORDER=['pre_class','class','alternate_class','task','review',
+                  'alternate_review','post_class'];
+const KIND_LABEL={pre_class:'Pre-class (foundation material)',class:'Class',
+  alternate_class:'Alternate Class',task:'Assignment',
+  review:'Assignment Review Class',alternate_review:'Alternate Assignment Review Class',
+  post_class:'Practice problems'};
+
 function moduleChain(id){
-  const parts=[];
-  const dom=[],wk=[],sess=[],asg=[],rev=[];
+  const m=idx.byId.get(id); if(!m)return '';
+  const sessions=new Map(), attached=new Map(), extras=[];
+  let dom=null, wk=null;
   for(const [e,other] of edgesTouching(id)){
     const n=idx.byId.get(other); if(!n)continue;
-    if(n.t==='domain')dom.push(n);
-    else if(n.t==='program_week')wk.push(n);
-    else if(n.t==='class_session')sess.push([n,e]);
-    else if(n.t==='assignment')asg.push(n);
-    else if(n.t==='assignment_review')rev.push(n);
+    if(n.t==='domain'){dom=n;continue}
+    if(n.t==='program_week'){wk=n;continue}
+    if(n.t==='assignment'||n.t==='assignment_review'){extras.push(n);continue}
+    if(n.t!=='class_session')continue;
+    const p=e.p||{};
+    if(p.attached_file){
+      const k=p.session_kind||'';
+      if(!attached.has(k))attached.set(k,[]);
+      attached.get(k).push({name:p.attached_file,url:p.attached_drive_url,
+                            deck:!!p.attached_is_deck});
+    }else{
+      sessions.set((n.p||{}).session_kind||'?',n);
+    }
   }
-  const row=(k,v)=>v?'<div class="ft"><span class="k">'+esc(k)+'</span><span class="v">'+v+'</span></div>':'';
-  if(dom.length)parts.push(row('domain',esc(dom[0].l)));
-  if(wk.length)parts.push(row('programme week',esc(String((wk[0].p||{}).number||wk[0].l))));
-  const kinds=sess.filter(([n,e])=>!(e.p&&e.p.attached_file))
-                  .map(([n])=>(n.p||{}).session_kind).filter(Boolean);
-  if(kinds.length)parts.push(row('sessions',esc([...new Set(kinds)].sort().join(', '))));
-  // NOT OFFERED, never "missing": practice problems are optional per module.
-  if(kinds.length && kinds.indexOf('post_class')<0)
-    parts.push(row('practice problems','<span class="dim">not offered \u2014 optional per module (owner fact)</span>'));
-  if(asg.length)parts.push(row('assignment',esc(asg[0].l)));
-  if(rev.length)parts.push(row('assignment review',esc(rev[0].l)));
-  const attached=sess.filter(([n,e])=>e.p&&e.p.attached_file).length;
-  if(attached)parts.push(row('files attached at session level',String(attached)));
-  return parts.length?'<div class="facts chain">'+parts.join('')+'</div>':'';
+  const out=[];
+  // --- the module itself ---
+  const mp=m.p||{};
+  out.push('<div class="item"><span class="ik">Module</span>'+
+    (lnk(mp.uplevel_link,'Uplevel module')||nolnk('Uplevel link','not in the mastersheet row'))+
+    (lnk((dom&&(dom.p||{}).drive_folder_url),'Drive: '+(dom?dom.l:'domain')+' folder',
+         'the domain folder; pass 6 records file ids, not folder ids, so the '+
+         'module subfolder has no direct link')
+      || nolnk('Drive folder','pass 6 records file ids, not folder ids'))+
+    '</div>');
+  // --- each session, in teaching order ---
+  for(const k of KIND_ORDER){
+    const n=sessions.get(k);
+    const want=WANTS[k]||['file','no file matched'];
+    if(!n){
+      // NOT OFFERED is a fact about the module, not a missing link.
+      out.push('<div class="item"><span class="ik">'+esc(KIND_LABEL[k])+'</span>'+
+        nolnk('session', k==='post_class'
+          ? 'not offered \u2014 practice problems are optional per module'
+          : 'not in the mastersheet for this module')+'</div>');
+      continue;
+    }
+    const files=attached.get(k)||[];
+    out.push('<div class="item"><span class="ik">'+esc(KIND_LABEL[k])+'</span>'+
+      (lnk((n.p||{}).uplevel_link,'Uplevel')||nolnk('Uplevel link','no link in the sheet row'))+
+      (files.length
+        ? files.map(f=>lnk(f.url,(f.deck?'Deck: ':'Drive: ')+f.name.slice(0,42),f.name)).join('')
+        : nolnk(want[0],want[1]))+
+      '</div>');
+  }
+  // --- assignment / review artefacts found in Drive but not on a session ---
+  for(const n of extras.slice(0,6))
+    out.push('<div class="item"><span class="ik">'+esc(n.t.replace('_',' '))+'</span>'+
+      (lnk((n.p||{}).drive_url,'Drive: '+n.l.slice(0,42),n.l)||nolnk('Drive link','no file id recorded'))+
+      '</div>');
+  const head=[];
+  if(dom)head.push('<div class="ft"><span class="k">domain</span><span class="v">'+esc(dom.l)+'</span></div>');
+  if(wk)head.push('<div class="ft"><span class="k">programme week</span><span class="v">'+
+                  esc(String((wk.p||{}).number||wk.l))+'</span></div>');
+  return (head.length?'<div class="facts chain">'+head.join('')+'</div>':'')+
+         '<div class="tier"><div class="tk">source links <span class="dim">'+
+         'every item, all of its links; the mastersheet is the citation, never '+
+         'the link</span></div>'+out.join('')+'</div>';
+}
+
+// TOPICS open the deck AT THE SLIDE. A page-object-id deep link needs the
+// Slides API, which this read-only client does not call, so the link is the
+// deck and the slide number is stated beside it — the fallback the spec allows.
+function topicLinks(id,limit){
+  const rows=[];
+  for(const [e,other] of edgesTouching(id)){
+    const n=idx.byId.get(other); if(!n||n.t!=='content_topic')continue;
+    const p=e.p||{};
+    const loc=p.slide!==undefined?('slide '+p.slide)
+             :p.page!==undefined?('page '+p.page)
+             :p.tab!==undefined?('tab '+p.tab):null;
+    if(!loc)continue;
+    rows.push({label:n.l,loc:loc,url:p.deck_drive_url||null,rank:p.rank});
+    if(rows.length>=(limit||10))break;
+  }
+  if(!rows.length)return '';
+  return '<div class="tier"><div class="tk">topics <span class="dim">deck plus '+
+    'the slide number; a page-object deep link needs the Slides API</span></div>'+
+    rows.map(r=>'<div class="item"><span class="ik">'+esc(r.label.slice(0,44))+
+      '</span><span class="loc">'+esc(r.loc)+'</span>'+
+      (r.url?lnk(r.url,'open deck'):'')+'</div>').join('')+'</div>';
 }
 
 function mergedNote(n){
@@ -1241,7 +1347,7 @@ async function openNode(id){
   const note=TYPE_NOTE[n&&n.t];
   const pr=[];
   if(facts) pr.push('<div class="facts">'+facts+'</div>');
-  if(n&&n.t==='module') pr.push(moduleChain(id));
+  if(n&&n.t==='module'){ pr.push(moduleChain(id)); pr.push(topicLinks(id,10)); }
   const tiers=(n&&n.t==='module')?peopleRows(id)
              :(n&&n.t==='instructor')?taughtRows(id):'';
   if(tiers) pr.push(tiers);
@@ -1982,12 +2088,25 @@ function renderMatrix(){
         ' <span class="dim">'+list.length+' instructors \u00d7 '+mods.length+
         ' modules</span></h2>';
   if(!list.length){ SHEET.innerHTML=h+'<p class="dim">No staffing edges match this filter.</p>'; return; }
-  h+='<table><thead><tr><th>instructor</th>';
+  h+='<table><thead><tr><th>instructor</th><th title="modules taught: '+
+     'Primary and Backup">load</th>';
   for(const m of mods) h+='<th title="'+esc(m.l)+'">'+esc((m.dom||'')+'/'+((m.p||{}).sequence||''))+'</th>';
   h+='</tr></thead><tbody>';
   for(const r of list){
     const unconf=DUPES.has(r.ins.l);
-    h+='<tr><td>'+esc(r.ins.l)+(unconf?'<span class="badge">unconfirmed</span>':'')+'</td>';
+    // LOAD IS COUNTED PER NODE, so it is never summed across an unresolved
+    // identity: `Bill Ogden` is two nodes and gets two loads, each marked.
+    // Adding them would assert the merge the owner declined (INS-08/30).
+    let P=0,B=0;
+    for(const c of r.cells.values()){
+      if(c.role==='primary')P++;
+      else if(c.role&&c.role.indexOf('backup')===0)B++;
+    }
+    const load=P+'\u00a0P\u00a0\u00b7\u00a0'+B+'\u00a0B';
+    h+='<tr><td>'+esc(r.ins.l)+(unconf?'<span class="badge">unconfirmed</span>':'')+
+       '</td><td class="load'+(unconf?' unconf':'')+'" title="'+
+       (unconf?'this row only \u2014 not summed across an unresolved identity'
+              :'modules taught')+'">'+load+(unconf?'&nbsp;<span class="dim">?</span>':'')+'</td>';
     for(const m of mods){
       const c=r.cells.get(m.id);
       h+='<td class="'+(c?(unconf?'unconf':'on'):'')+'" title="'+
@@ -1996,7 +2115,10 @@ function renderMatrix(){
     }
     h+='</tr>';
   }
-  h+='</tbody></table><p class="dim">Hatched = the instructor identity is an '+
+  h+='</tbody></table><p class="dim">Load counts modules per ROW. Where an '+
+     'identity is unresolved the load is shown per row and never summed '+
+     'across the rows \u2014 that would assert a merge the owner declined. '+
+     'Hatched = the instructor identity is an '+
      'open REVIEW-QUEUE row (INS-08/30/31/32); the cell is shown, not hidden. '+
      'Cell text is the mastersheet role; \u2022 is a legacy `teaches` edge.</p>';
   SHEET.innerHTML=h;

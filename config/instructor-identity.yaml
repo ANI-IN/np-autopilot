@@ -99,6 +99,23 @@ identities:
       keeps its module rows, marked unconfirmed.
     resolves: [INS-32, PPL-01]
 
+  # ---- PPL-11 ----------------------------------------------------------
+  # A first-name-only cell in Test Engineering, confirmed by the owner. Unlike
+  # INS-31/32 (`Konstantinos`, `Shelby`) the full name here IS known, so this
+  # one merges and those two do not — the difference is a confirmation, not a
+  # rule about first names.
+  - slug: bharath-anand
+    canonical: Bharath Anand
+    aliases: [Bharath]
+    status: confirmed
+    origin: hand
+    evidence: >-
+      Owner decision 2026-09-29 (Animesh Kumar), answering REVIEW-QUEUE PPL-11:
+      `Bharath` in the Test Engineering tab, on Automation Testing, is Bharath
+      Anand. `Bharath` stays in label_raw and in provenance — CLAUDE.md §1, the
+      cell is the citation key and is never rewritten.
+    resolves: [PPL-11]
+
 # ---------------------------------------------------------------------------
 # INS BULK — the 26 exact full-name matches, confirmed 2026-09-29.
 #

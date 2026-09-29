@@ -127,8 +127,13 @@ def test_every_touched_edge_records_the_merge_that_moved_it(merged):
     assert not untagged, (
         f"{len(untagged)} retargeted edges carry no review id, so the merge "
         "that moved them cannot be reversed")
+    # Any answered REVIEW-QUEUE group, not just the two that existed when this
+    # was written. PPL-11 ("Bharath" is Bharath Anand) is a confirmed identity
+    # and moves edges exactly as an INS row does.
+    GROUPS = ("MOD-", "INS-", "PPL-", "TOPv-", "TOPm-", "TOPt-", "DCK-")
     for e in moved:
-        assert (e.get("mod_id") or e.get("ins_id")).startswith(("MOD-", "INS-"))
+        rid = e.get("mod_id") or e.get("ins_id")
+        assert rid.startswith(GROUPS), f"unrecognised review id on an edge: {rid}"
 
 
 def test_provenance_is_unioned_not_replaced(graphs, merged):

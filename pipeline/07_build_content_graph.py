@@ -95,6 +95,21 @@ MASTERSHEET = (REPO_ROOT / ".drive-cache" / "02-curriculum" /
 NAMESPACE = "rowB"
 
 
+def drive_url(file_id: str) -> str | None:
+    """A Drive link for a crawled file. The manifest key IS the file id.
+
+    `open?id=` rather than `/file/d/<id>/view` because the corpus holds several
+    Drive types and only the generic form resolves all of them — the same
+    decision project_graph.py already made for the 75-file corpus.
+
+    A DOWNLOAD-DISABLED FILE STILL GETS ONE. `capabilities.canDownload: false`
+    stops an export, not a human opening it in a browser, and 46 files are in
+    that state. Withholding the link would present "we could not export it" as
+    "you cannot see it".
+    """
+    return f"https://drive.google.com/open?id={file_id}" if file_id else None
+
+
 def nid(ntype: str, *parts) -> str:
     """An id from the SHARED minter, prefixed and 16 hex like every other node.
 
@@ -261,6 +276,11 @@ def main() -> int:
                 gaps[f"mastersheet tab {tab_name}: no row-B folder match"] += 1
                 continue
             slug = scope.IN_SCOPE_DOMAINS[folder]
+            # THE DOMAIN'S DRIVE FOLDER, from the `Drive Folder` row's
+            # hyperlink TARGET. Its display text is the folder NAME, so a
+            # value-only read of that cell produced no link at all.
+            if tab.drive_folder_url and folder in dom_id:
+                g.nodes[dom_id[folder]]["drive_folder_url"] = tab.drive_folder_url
             msrc = [{"origin": "corpus",
                      "file": "02-curriculum/Resource Collection Mastersheet "
                              "(Software + System).xlsx",
@@ -360,6 +380,7 @@ def main() -> int:
             cid = g.node(nid(T_CURRIC, fid), T_CURRIC,
                          name, src, label_raw=name, kind=kind,
                          owner_domain=r.get("owner_domain"),
+                         drive_url=drive_url(fid),
                          content_available=r["action"] == "export")
             g.edge(R["domain_curriculum"], dom_id[folder], cid, src, kind=kind)
             if ref and (folder, ref.sequence) in mod_id:
@@ -399,6 +420,7 @@ def main() -> int:
                      else T_REPO if cm.is_repo(mime, name)
                      else T_FILE)
             uid = g.node(nid(ntype, "unavailable", fid), ntype, name, src,
+                         drive_url=drive_url(fid),
                          **{k: v for k, v in u.items()
                             if k not in ("label", "label_raw")})
             g.edge(R["module_class_file"] if ntype == T_FILE
@@ -417,9 +439,17 @@ def main() -> int:
         if match:
             sid = sess_id.get((slug, ref.sequence, match.kind))
             if sid:
+                # THE FILE'S ID AND LINK, not just its name. The UI has to
+                # show "Class -> the matched slide deck", and joining on a
+                # label client-side is a name match with guaranteed misses —
+                # the thing lib/resolve.py exists to refuse.
                 g.edge(R["module_session"], m, sid, src,
                        session_kind=match.kind, match_evidence=match.evidence,
-                       attached_file=name)
+                       attached_file=name,
+                       attached_id=nid(T_DECK, fid) if cm.is_deck(mime)
+                                   else nid(T_FILE, fid),
+                       attached_drive_url=drive_url(fid),
+                       attached_is_deck=cm.is_deck(mime) or None)
                 stats_join[f"session ({match.evidence})"] += 1
         else:
             stats_join["module level only"] += 1
@@ -438,22 +468,26 @@ def main() -> int:
 
         if cm.is_repo(mime, name):
             rid = g.node(nid(T_REPO, fid), T_REPO, name, src,
-                         owner_domain=r.get("owner_domain"))
+                         owner_domain=r.get("owner_domain"),
+                         drive_url=drive_url(fid))
             g.edge(R["module_repo"], m, rid, src, revision=revision)
         elif cm.is_deck(mime):
             did = g.node(nid(T_DECK, fid), T_DECK, name, src,
                          owner_domain=r.get("owner_domain"),
-                         slide_count=r.get("slide_count"))
+                         slide_count=r.get("slide_count"),
+                         drive_url=drive_url(fid))
             # The deck hangs off the MODULE. There used to be a live_class
             # node in between, minted from this same file, and it carried no
             # fact the deck node does not — see taxonomy.yaml `delivers`.
             g.edge(R["module_deck"], m, did, src, revision=revision,
                    superseded_by=("base" if revision == "revamp" else None))
         elif role == "review":
-            aid = g.node(nid(T_REVIEW, fid), T_REVIEW, name, src)
+            aid = g.node(nid(T_REVIEW, fid), T_REVIEW, name, src,
+                         drive_url=drive_url(fid))
             g.edge(R["assignment_reviewed_in"], m, aid, src, revision=revision)
         elif role == "task":
-            aid = g.node(nid(T_ASSIGN, fid), T_ASSIGN, name, src)
+            aid = g.node(nid(T_ASSIGN, fid), T_ASSIGN, name, src,
+                         drive_url=drive_url(fid))
             g.edge(R["module_assignment"], m, aid, src, revision=revision)
         elif role == "class":
             # Attach the FILE NODE THAT ALREADY EXISTS rather than mint a
@@ -470,9 +504,14 @@ def main() -> int:
             tsrc = [cm.provenance(r, **{t.locator_kind: t.locator})]
             g.node(tid, T_TOPIC, t.label, tsrc, label_raw=t.label,
                    locator_kind=t.locator_kind)
+            # THE LINK TO THE FILE THE TOPIC CAME FROM, on the edge, so the
+            # panel can offer "open the deck" beside the slide number without
+            # a name join. A page-object deep link would need the Slides API;
+            # the deck plus the slide is the fallback the spec allows.
             g.edge(R["module_topic"], m, tid, tsrc,
                    **{t.locator_kind: t.locator, "from": source_kind},
                    rank=cm.topic_rank(match.kind if match else source_kind),
+                   deck_drive_url=drive_url(fid),
                    historical=historical or None)
 
         # D1, at the point it would be violated.
@@ -484,6 +523,7 @@ def main() -> int:
         if folder in scope.IN_SCOPE_DOMAINS:
             g.node(nid(T_FILE, fid), T_FILE, r["path"],
                    [cm.provenance(r)], relative_path=r["path"].lstrip("/"),
+                   drive_url=drive_url(fid),
                    owner_domain=r.get("owner_domain"), mime=r["mime"])
 
     write_reviews(topic_rows, tab_rows, people_review, sheet_variants,
