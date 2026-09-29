@@ -188,3 +188,18 @@ Pappas` (`INS-17`) and `Shelby Cohen` (`INS-26`) carry none. The same pair is
 already open as `PPL-06` and `PPL-01`; answering those settles these, and the
 two must be answered consistently or the module rows attach to a different
 node from the instructor record.
+
+---
+
+## ANSWERED — 2026-09-29, Animesh Kumar (origin: hand)
+
+Recorded in `config/instructor-identity.yaml`. Hand-entered facts emit no
+`sourced_from` edge and must never be presented as though a scan produced them.
+
+| ids | answer |
+|---|---|
+| `INS-05` `INS-06` | **One person.** Canonical `Balaram Velaga` (the mastersheet spelling); `Balaram Velega` is an alias. Both spellings stay in `label_raw` and provenance — neither source is edited (§1). The merged instructor shows both modules. |
+| `INS-08` `INS-30` | **Unresolved by decision.** `Bill Ogden` / `William David Ogden` stay separate nodes, rendered **unconfirmed** in the matrix. Not a gap in review. |
+| `INS-31` `INS-32` (with `PPL-06`, `PPL-01`) | **Full names unknown.** `Konstantinos` and `Shelby` remain open review items and **keep their module attachments**, marked unconfirmed. Moving real modules onto an unconfirmed full name would attach them to a guess. |
+
+Remaining open: 78 of 86.
