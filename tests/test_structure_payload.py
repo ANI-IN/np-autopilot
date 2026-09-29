@@ -189,7 +189,8 @@ def test_compression_honours_accept_encoding():
 
 
 def test_only_structure_opts_into_caching():
-    """Every other read stays `private, no-store` — the default did not move."""
+    """Every other read stays `private, no-store` — the default did not move.
+    Compression is separate from caching: /api/node compresses, never caches."""
     import index
     for name in index.READ_NAMES:
         index.endpoint_for(f"/api/{name}")
@@ -198,7 +199,9 @@ def test_only_structure_opts_into_caching():
             assert opts["cache"] == "private, max-age=300, must-revalidate"
             assert opts["etag"] and opts["compress"]
         else:
-            assert not opts, f"/api/{name} opted into caching: {opts}"
+            assert not opts.get("cache") and not opts.get("etag"), \
+                f"/api/{name} opted into caching: {opts}"
+            assert set(opts) <= {"compress"}, opts
 
 
 # --- against the local database ------------------------------------------------
@@ -240,7 +243,9 @@ def test_the_payload_is_complete_laid_out_and_small(two_roles):
     xy = struct.unpack(f"<{2 * p['n']}f", base64.b64decode(p["xy"]))
     assert all(math.isfinite(v) for v in xy)
     import brotli
-    size = len(brotli.compress(json.dumps(p, separators=(",", ":")).encode(), quality=11))
+    import index
+    size = len(brotli.compress(json.dumps(p, separators=(",", ":")).encode(),
+                               quality=index.BROTLI_QUALITY))     # what is SERVED
     assert size <= 150 * 1024, f"{size} B brotli, over the 150 KB target"
 
 

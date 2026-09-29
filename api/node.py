@@ -24,4 +24,6 @@ def _node(conn, identity, params):
 
 #: (endpoint name, read function). The HTTP shell lives in api/index.py:
 #: one entry point, so there is no route that can forget the guard.
-ENDPOINT = ("node", _node)
+#: Compressed (B3): with ?detail=1 a heavy module's panel is ~75 KB of JSON.
+#: NOT cached — no etag, no cache option, so it stays `private, no-store`.
+ENDPOINT = ("node", _node, {"compress": True})

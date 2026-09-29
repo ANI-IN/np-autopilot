@@ -59,14 +59,14 @@ def get(base, path, extra=None):
     t0 = time.perf_counter()
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
-            body, status, headers = r.read(), r.status, dict(r.headers)
+            body, status, headers = r.read(), r.status, {k.lower(): v for k, v in r.headers.items()}
     except urllib.error.HTTPError as e:
-        body, status, headers = e.read(), e.code, dict(e.headers)
+        body, status, headers = e.read(), e.code, {k.lower(): v for k, v in e.headers.items()}
     return (time.perf_counter() - t0) * 1000, status, body, headers
 
 
 def decoded(body, headers):
-    enc = (headers.get("Content-Encoding") or "").lower()
+    enc = (headers.get("content-encoding") or "").lower()
     if enc == "br":
         return brotli.decompress(body)
     if enc == "gzip":
@@ -99,8 +99,8 @@ def endpoints(base, node_id):
             raise SystemExit(f"{name}: HTTP {status} — refusing to time an error")
         out[name] = {"p50": round(statistics.median(samples), 1),
                      "p95": round(pct(samples, .95), 1), "bytes_wire": wire,
-                     "encoding": headers.get("Content-Encoding") or "identity"}
-        etag = headers.get("ETag")
+                     "encoding": headers.get("content-encoding") or "identity"}
+        etag = headers.get("etag")
         if etag:
             s304 = []
             for _ in range(20):
@@ -119,7 +119,7 @@ def payload(base):
     obj = json.loads(raw)
     n = obj.get("n") or len(obj.get("nodes") or obj.get("ids") or [])
     out = {"nodes": n, "wire_bytes": len(body),
-           "encoding": headers.get("Content-Encoding") or "identity",
+           "encoding": headers.get("content-encoding") or "identity",
            "json_bytes": len(raw), "gzip9_bytes": len(gzip.compress(raw, 9))}
     if brotli:
         out["brotli11_bytes"] = len(brotli.compress(raw, quality=11))

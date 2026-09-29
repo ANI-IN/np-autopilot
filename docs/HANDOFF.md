@@ -119,18 +119,21 @@ in a CSP-hashed inline script, so it is corrected with B3's next edit there).
 
 ---
 
-# C · IN PROGRESS — B3
+# C · B3 — DONE LOCALLY 2026-09-30, one item not shipped (owner's call)
 
 | item | state |
 |---|---|
 | cold-start investigation | **DONE** — `42af286` |
-| precomputed layout | **not started** |
-| columnar brotli payload for `/api/structure` | **not started** |
-| ETag with private caching | **not started** |
-| lazy panels | **not started** |
-| `pg_trgm` search index | **not started** |
+| connection-drop recovery | **DONE** — `87d49e0`; a dropped idle connection no longer fails the next request |
+| precomputed layout | **DONE** — `baf3f35`; migration **0021** `node_layout`, computed by `project_graph.py` |
+| columnar brotli `/api/structure` | **DONE** — `bbf6b2c`; 2,591,861 B → 127,261 B |
+| ETag with private caching | **DONE** — `bbf6b2c`; 304 in ~2 ms |
+| lazy panels | **DONE** — `bbf6b2c`; `/api/node?detail=1` on open |
+| `pg_trgm` search index | **NOT SHIPPED** — unusable under RLS; see §G |
 
-Nothing is half-written. The tree is clean and there is no WIP commit.
+Local before/after: `docs/PERF-BASELINE.md` §"B3 — LOCAL before/after".
+Settled layout **6,450 → 135 ms**; wire bytes per node **784 → 38.5**. Nothing
+deployed, nothing applied to production.
 
 ---
 
@@ -147,7 +150,7 @@ already built (`topicLinks()` in `public/index.html`). Measured 2026-09-30 in
 deck's Drive link, with **3,626** a slide number, **952** a page number (PDFs)
 and **1,693** a sheet tab.
 
-## 1 · Finish B3 (speed)
+## 1 · Finish B3 (speed) — DONE LOCALLY 2026-09-30, see §C (`pg_trgm` open, §G)
 The five remaining items: precomputed layout; columnar brotli
 `/api/structure`; ETag + private caching; lazy panels; `pg_trgm` index.
 
@@ -167,7 +170,7 @@ itself is refused while the repository is public (R21).
 
 ## 3 · Phase C (database)
 `pg_dump` of exactly the tables `project_graph.py` replaces, to a gitignored
-path (report size and row counts) → apply **0017, 0018, 0019, 0020** to production
+path (report size and row counts) → apply **0017, 0018, 0019, 0020, 0021** to production
 (`migrate.py status` before and after) → project the merged public half →
 `verify_migration.py` and `curation.py check` → confirm the curation tables
 (people, aliases, workflow owners, notes, audit) are untouched, with row counts
@@ -316,6 +319,29 @@ rows above. They existed only in conversation. They are recorded now.
 ---
 
 # G · OPEN ISSUES AND RISKS (none are blockers)
+
+**Found during B3, 2026-09-30 — two accuracy bugs FIXED, one decision OPEN:**
+
+- **FIXED — 675 of the structure view's 4,970 edges never reached the
+  browser.** `mergeGraph` keyed edges on (source, rel, target), and a module
+  joins a session once per attached file: 653 of 727 attached-file links and
+  22 `expert_in` claims were dropped. B2's API Design panel said *"no slide
+  deck: no deck matched at session level"* for a Class session that has 13
+  decks — a false absence, the thing `docs/ACCURACY-STANDARD.md` §2 forbids.
+  Edges are keyed on their database id now; the regenerated
+  `docs/screenshots/02-module-api-design.png` lists all 13. **The owner
+  acceptance checklist (§D.4) should be read against this build, not B2's.**
+- **FIXED — the matrix load column (D4a) depended on edge order.** Where a
+  pair has a legacy `teaches` edge AND a mastersheet role, the cell showed
+  whichever came last; two loads were under-counted in B2's screenshot. Now
+  explicit: the mastersheet role wins, then the stronger role. Checked in both
+  orders.
+- **OPEN, owner's decision — `pg_trgm` was not shipped.** As the table owner a
+  trigram index cut substring search 18.5 → 1.4 ms; for a real caller the
+  planner can never use it, because `ILIKE` is not LEAKPROOF and RLS applies
+  the policy first (verified with sequential scans disabled). Options: leave
+  it (search is ~9 ms p50 locally), or a `SECURITY DEFINER` search that
+  re-implements the visibility rules — not recommended: a second copy of RLS.
 
 **R21 — the GitHub repository was PUBLIC from creation (2026-09-17) for 13
 days**, found 2026-09-29 before a push. **Private, verified 2026-09-29

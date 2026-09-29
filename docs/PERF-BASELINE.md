@@ -151,6 +151,77 @@ be reported as a new-view figure, not as an improvement.
 
 ---
 
+# B3 — LOCAL before/after, 2026-09-30
+
+`eval/measure_local.py`, the same instrument both times: the real app
+(`eval/local_server.py`, only `guard.identify` stubbed) over the local Supabase
+stack, headless Chromium. **Local means laptop-to-Docker — no network — so
+these milliseconds are NOT comparable with the production baseline above.**
+The comparison is before vs after on this machine. Raw results:
+`docs/perf/b3-local-{before,before-rerun,after}.json`. The before state was
+re-measured from a worktree at `6cce681` just before the after run, under the
+same machine load, and reproduced the first baseline.
+
+| | before | before, re-run | **after** |
+|---|---:|---:|---:|
+| **settled** (layout frozen), median of 5 | 6,450 ms | 6,280 ms | **135 ms** |
+| simulation frames | 366 | 366 | **0** |
+| first graph frame | 303 ms | 201 ms | **135 ms** |
+| first contentful paint | 136 ms | 52 ms | 36 ms |
+| TTFB | 12.2 ms | 3.4 ms | 1.3 ms |
+| **cold start**: first `/api/structure` on a new process | 98 ms | 80 ms | 87 ms |
+| **cold-start premium** over warm | 13.5 ms | 10.9 ms | 19.2 ms |
+
+### `/api/structure` bytes — 3,307 nodes
+
+| | before | **after** |
+|---|---:|---:|
+| on the wire | 2,591,861 B (uncompressed) | **127,261 B** (brotli q5) |
+| **bytes per node, wire** | **783.7** | **38.5** |
+| JSON body | 2,591,861 B | 504,596 B |
+| gzip-9 equivalent | 250,512 B | 145,296 B |
+| brotli-11 equivalent | 173,252 B | 109,626 B |
+| `If-None-Match` revalidation | — | **304, 0 B body** |
+
+Target was ≤ 150 KB brotli: met at 127 KB. The production transport of the
+"before" is unknown — if Vercel compressed it, the wire figure was nearer
+250 KB (gzip) than 2.6 MB. Phase D's `--phase post` measures the live figure.
+
+### Latency, p50 / p95 over 20 samples
+
+| endpoint | before | before, re-run | **after** |
+|---|---:|---:|---:|
+| `/api/structure` | 79.4 / 96.6 | 72.0 / 79.2 | **70.1 / 109.2** |
+| `/api/structure` If-None-Match | — | — | **2.0 / 2.3** (304) |
+| `/api/node` | 2.6 / 3.6 | 3.3 / 3.5 | 2.7 / 2.9 (now brotli) |
+| `/api/node?detail=1` (heaviest module) | — | — | 9.7 / 10.6, 7,608 B br (75,748 B raw) |
+| `/api/search?q=api` | 8.9 / 10.5 | 9.1 / 10.5 | 8.7 / 9.9 |
+| `/api/overview` | 4.1 / 4.5 | 4.6 / 5.2 | 4.0 / 5.0 |
+| `/api/me` | 3.0 / 4.2 | 3.4 / 5.9 | 2.8 / 3.1 |
+| `/api/config` | 0.2 / 0.4 | 0.2 / 0.3 | 0.2 / 0.3 |
+
+### Read honestly
+
+- **The win is the settle and the bytes, not server time.** `/api/structure`
+  is ~72 ms p50 before and after: the query and serialisation cost about the
+  same; what changed is 20x fewer bytes to move and parse, and no simulation.
+  Its p95 rose (79 → 109 ms) — compression on the request path, which the
+  304 path skips entirely.
+- **The cold-start premium rose, 11–14 → 19 ms**, from compressing the
+  payload once per process. Brotli **quality 11 first shipped and pushed it to
+  578 ms** (550 ms to compress); quality 5 is 7 ms for 14% more bytes. The
+  production cold start (first request after idle on `icn1`) is Phase D's to
+  measure.
+- **A panel now costs one request** (`/api/node?detail=1`, ~10 ms locally),
+  where it used to cost the whole panel's data in every page load.
+- **`pg_trgm` was NOT shipped.** As the table owner a trigram index cut search
+  from 18.5 ms to 1.4 ms; for a real caller it is never used, because `ILIKE`
+  is not LEAKPROOF and RLS must apply the policy first — even with sequential
+  scans disabled the planner cannot use it. Search stays ~9 ms p50. Owner's
+  call (HANDOFF §G).
+
+---
+
 # COLD STARTS — investigated, measured, mostly fixed
 
 The 5.5 s settled outlier and the earlier ~1.2 s TTFB both look like serverless

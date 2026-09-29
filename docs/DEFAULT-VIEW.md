@@ -98,6 +98,13 @@ two graphs** — `Bill Ogden` / `William David Ogden` (INS-08/30) and
 
 ## D3 · Speed plan — approved
 
+**Status 2026-09-30 (B3, local only):** items 1, 2, 3 and 5 DONE; item 6
+(`pg_trgm`) NOT shipped — the index cannot be used under RLS (HANDOFF §G);
+item 4 unchanged — the canvas is 2D and no WebGL path was built, since B3's
+scope was the other five. Locally: settled 135 ms, default-view payload
+127,261 B brotli (target ≤ 150 KB). Production figures are Phase D's
+(`docs/PERF-BASELINE.md`).
+
 Targets, against a measured ~360 ms Vercel cold-start + RTT floor:
 
 | target | value |

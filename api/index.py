@@ -126,10 +126,15 @@ def _respond(start_response, status: int, body: dict, *, no_store: bool = False,
 #: Compressed bodies, keyed by the SHA-256 of the exact bytes and the encoding.
 #: The payload is still built from a query under the caller's RLS on every
 #: request — only the compression of IDENTICAL bytes is reused, so nothing one
-#: caller was allowed to see can reach another. Brotli at quality 11 costs
-#: ~hundreds of ms for the structure payload; once per warm instance, not per
-#: request.
+#: caller was allowed to see can reach another.
 _COMPRESSED: dict = {}
+
+#: QUALITY 5, NOT 11. Measured on the 504,596 B structure payload: q11 is
+#: 109,626 B in 550 ms, q5 is 127,261 B in 7 ms. Quality 11 first shipped and
+#: raised the local cold-start premium from 13.5 ms to 578 ms — every new
+#: instance paid it before its memo was warm. 14% smaller is not worth that,
+#: and q5 is still well under the 150 KB target.
+BROTLI_QUALITY = 5
 
 
 def _compress(raw: bytes, accept_encoding: str) -> tuple[bytes, str | None]:
@@ -151,7 +156,7 @@ def _compress(raw: bytes, accept_encoding: str) -> tuple[bytes, str | None]:
     if hit is None:
         if enc == "br":
             import brotli
-            hit = brotli.compress(raw, quality=11)
+            hit = brotli.compress(raw, quality=BROTLI_QUALITY)
         else:
             import gzip
             hit = gzip.compress(raw, compresslevel=9)
