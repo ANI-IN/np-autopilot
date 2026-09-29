@@ -429,8 +429,13 @@ def test_every_endpoint_module_is_registered():
     # only about READS would report a registered write route as dead code —
     # or, worse, stay quiet about a genuinely unregistered one because the
     # author "fixed" the test by widening the exception list.
-    registered = {fn.__module__ for _name, fn in index.READS.values()}
-    registered |= {fn.__module__ for fn in index.WRITES.values()}
+    #
+    # The tables are now sets of PATHS, not dicts of loaded functions: the
+    # router imports an endpoint's module when it serves it, so nothing is
+    # loaded at import time to read a __module__ off. The route NAME is the
+    # module name — tests/test_lazy_route_table.py is what holds that — so the
+    # registry is read from the paths.
+    registered = {p[len("/api/"):] for p in (index.READS | index.WRITES)}
     declared = set()
     for path in _api_modules():
         src = path.read_text(encoding="utf-8")

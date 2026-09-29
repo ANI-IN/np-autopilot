@@ -24,7 +24,6 @@ import json
 import sys
 import time
 import traceback
-from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 
 # Vercel discovers Python functions at /api in the project root, so this

@@ -144,3 +144,77 @@ The relaxation is scoped to the unshipped endpoint and to nothing else: in
 
 `/api/structure` does not exist in production, so it has no "before". It will
 be reported as a new-view figure, not as an improvement.
+
+---
+
+# COLD STARTS — investigated, measured, mostly fixed
+
+The 5.5 s settled outlier and the earlier ~1.2 s TTFB both look like serverless
+cold starts. Four candidate causes were measured; two were real.
+
+## 1. Every request opened a new database connection — THE BIG ONE
+
+`request_connection` called `db.connect()` per request and closed it in the
+`finally:`. Measured from a laptop to `ap-northeast-2`:
+
+| | median | range |
+|---|---:|---|
+| new connection each request | **1,624 ms** | 1,590–2,119 |
+| reused connection | **712 ms** | 705–1,574 |
+| after collapsing the setup to one round trip | **591 ms** | 583–598 |
+
+**1,624 → 591 ms, a 64% cut.** Those are laptop-to-Seoul numbers; the function
+runs in `icn1`, next to the database, so the absolute figures will be far
+smaller — but the structure is the point: one connect amortised over a warm
+instance instead of one per request. The cold-start premium (the first request
+on a new instance, which still pays the connect) measured **1,131 ms**.
+
+A Vercel Python function serves one request at a time per instance, so a
+module-level connection is not shared concurrently.
+
+**What makes it safe is the rollback, not the caching.** Both pieces of
+per-request state are transaction-local, so the `finally:` rollback is the only
+thing between one caller and the next.
+`tests/test_warm_connection_isolation.py` asserts a second request cannot
+inherit the first's identity, that an *unidentified* request sees nothing after
+an identified one, that the error path still clears, and that the reset is a
+rollback and never a commit.
+
+## 2. Two round trips before any query ran
+
+`set_config('request.jwt.claims', …)` then `SET LOCAL ROLE` — two statements,
+two round trips, on every request. `set_config('role', …, true)` is what `SET
+LOCAL ROLE` does, so both now go in one statement. Worth ~120 ms per request
+from here; one RTT in-region.
+
+## 3. The router imported every endpoint at cold start
+
+A cold start serving `/api/overview` also paid for `session` → `gotrue` →
+`urllib.request`, and for `curate`. The route table is now a set of names and
+the module is imported when it is served.
+
+| | median | range |
+|---|---:|---|
+| before | 80.9 ms | 79.5–144.4 |
+| after | **56.2 ms** | 54.9–60.9 |
+
+A dead `from http.server import BaseHTTPRequestHandler` in `api/session.py`,
+unused since the per-file handler shells were removed, accounted for ~4 ms of
+that.
+
+`tests/test_lazy_route_table.py` asserts, in a fresh interpreter, that
+importing the router loads none of them and that serving one route loads only
+that one — and that `identify()` still runs BEFORE the module is loaded, which
+it did not after the first attempt.
+
+## 4. Bundle size and region — NOT the problem, no action
+
+- Deployed bundle after `excludeFiles`: **1.43 MB**. Not a cold-start factor.
+- `regions: ["icn1"]` is already co-located with Supabase's `ap-northeast-2`.
+
+## Not done, and it is the owner's call
+
+Raising the function's `memory` setting gives a Vercel function proportionally
+more CPU, which shortens interpreter start and connection setup. It is a
+billing decision, not a technical one, so it is recorded here rather than
+applied.

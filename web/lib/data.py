@@ -47,6 +47,21 @@ class DepthExceeded(Exception):
     """Asked for a traversal deeper than the cap."""
 
 
+#: ONE CONNECTION PER WARM FUNCTION INSTANCE, reused across invocations.
+#:
+#: Opening a connection to Supabase measured 1.3 s from a laptop to
+#: ap-northeast-2 — in-region from Vercel it is far less, but it was being paid
+#: on EVERY request, warm or cold. A Vercel Python function handles one request
+#: at a time per instance, so a module-level connection is not shared
+#: concurrently.
+#:
+#: WHAT MAKES THIS SAFE IS THE ROLLBACK, not the caching. See the finally:
+#: block below, and tests/test_warm_connection_isolation.py, which asserts that
+#: a second request on a reused connection cannot see the first one's identity.
+_WARM = None
+
+
+
 @contextmanager
 def request_connection(identity_subject: str | None):
     """A connection scoped to one caller, for one request.
@@ -57,19 +72,42 @@ def request_connection(identity_subject: str | None):
     than impossible, because "impossible" would be an exception a route could
     catch and work around.
     """
-    conn = _db.connect(_db.TRANSACTION)
+    global _WARM
+    conn = _WARM
+    if conn is None or getattr(conn, "closed", True):
+        conn = _db.connect(_db.TRANSACTION)
+        _WARM = conn
     try:
         with conn.cursor() as cur:
             claims = {"role": "authenticated"}
             if identity_subject:
                 claims["sub"] = str(identity_subject)
-            cur.execute("select set_config('request.jwt.claims', %s, true)",
-                        (json.dumps(claims),))
-            cur.execute('set local role "authenticated"')
+            # ONE ROUND TRIP, not two. `set_config('role', ..., true)` is what
+            # `SET LOCAL ROLE` does, and both settings are still
+            # transaction-LOCAL — which is the property the reset depends on.
+            # Two statements meant two network round trips on every request,
+            # paid before any query ran.
+            cur.execute(
+                "select set_config('request.jwt.claims', %s, true),"
+                "       set_config('role', 'authenticated', true)",
+                (json.dumps(claims),))
         yield conn
     finally:
-        conn.rollback()
-        conn.close()
+        # ROLLBACK, NOT CLOSE. Both settings above are transaction-LOCAL —
+        # `set_config(..., true)` and `SET LOCAL ROLE` — so the rollback is
+        # what clears this request's identity, and it is the only thing
+        # standing between one caller and the next. Never weaken it to a
+        # commit, and never skip it on a path that returns early.
+        #
+        # If the rollback itself fails the connection is not in a state anyone
+        # should inherit, so it is dropped rather than reused.
+        try:
+            conn.rollback()
+        except Exception:
+            try:
+                conn.close()
+            finally:
+                _WARM = None
 
 
 def _rows(cur) -> list[dict]:
