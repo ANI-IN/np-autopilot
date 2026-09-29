@@ -136,46 +136,36 @@ Nothing is half-written. The tree is clean and there is no WIP commit.
 
 # D · NEXT PLAN — each step ends with a STOP for the owner
 
+**Reordered 2026-09-30 — owner decision (origin: hand, Animesh Kumar): the
+fastest ACCURATE launch.** B3 speed → merge → Phase C → acceptance → Phase D.
+Exact-slide deep links and B3.5 move to the first release after launch. **No
+change to the accuracy standard (`docs/ACCURACY-STANDARD.md`) or to any STOP.**
+
+**For launch, topics link to the deck with the locator shown beside it** —
+already built (`topicLinks()` in `public/index.html`). Measured 2026-09-30 in
+`knowledge/merged_graph.json`: all **6,271** `covers_topic` edges carry the
+deck's Drive link, with **3,626** a slide number, **952** a page number (PDFs)
+and **1,693** a sheet tab.
+
 ## 1 · Finish B3 (speed)
-Precomputed layout; columnar brotli `/api/structure`; ETag + private caching;
-lazy panels; `pg_trgm` index.
+The five remaining items: precomputed layout; columnar brotli
+`/api/structure`; ETag + private caching; lazy panels; `pg_trgm` index.
 
 **Also:** verify the reused database connection recovers when the pooler or the
 network drops it while idle — the next request must reconnect transparently
 rather than fail. **Write a test that kills the connection between two
-requests.**
+requests** — run only against the local Supabase stack (§I).
 
 Report LOCAL before/after against `docs/PERF-BASELINE.md`: settled time,
 cold-start time, bytes per node, p50/p95 per endpoint.
 
-## 2 · Exact-slide deep links
-Google documents `https://www.googleapis.com/auth/drive.readonly` among the
-accepted scopes for Slides API `presentations.get`, so **no scope widening is
-needed**.
-
-First check whether the Slides API is **enabled in the service account's Google
-Cloud project**. If not: tell the owner exactly what to enable and where, and
-**pause this item**. If enabled: report the call count (~238 native decks),
-fetch page object ids, store `slide_number → page_object_id`, and link topics to
-`/presentation/d/<id>/edit#slide=id.<page_object_id>`. `.pptx` and `.pdf` keep
-the file link plus the slide/page number. Test: a topic from a native deck links
-to its exact slide.
-
-## 3 · B3.5 — UI features
-Specified in full in **`docs/UI-BACKLOG.md`**. Display only, no new data, CSP
-stays strict, self-hosted only. Header stat chips; type filter chips;
-single-type view; focus mode; breadcrumb; module panel header; Files · Open
-list; hint bar; one colour legend; and the explicit "do better than the B2B
-version" list (no overlapping labels, generic names always with parent context,
-grouped search with keyboard nav, URL-held state, readable dimmed nodes).
-
-## 4 · Push and merge
+## 2 · Merge to `main`
 Push `content-crawl-rowB` → show all four CI jobs green **on the branch's own
 run** → merge into `main` **only when green**. Main's current red is the known
 pre-existing failures (owner ruling 2026-09-30, §G), not the bar. The push
 itself is refused while the repository is public (R21).
 
-## 5 · Phase C (database)
+## 3 · Phase C (database)
 `pg_dump` of exactly the tables `project_graph.py` replaces, to a gitignored
 path (report size and row counts) → apply **0017, 0018, 0019, 0020** to production
 (`migrate.py status` before and after) → project the merged public half →
@@ -183,13 +173,13 @@ path (report size and row counts) → apply **0017, 0018, 0019, 0020** to produc
 (people, aliases, workflow owners, notes, audit) are untouched, with row counts
 before and after.
 
-## 6 · Owner acceptance
+## 4 · Owner acceptance
 Regenerate `docs/ACCEPTANCE-CHECKLIST.md` — one block per module: domain,
 programme week, sessions with links, instructors with roles, assignment, deck
 count, top 5 topics with locators, every link. **The owner ticks each module
 against the mastersheet. Phase D does not start until they confirm.**
 
-## 7 · Phase D (deploy)
+## 5 · Phase D (deploy)
 Deploy from a **`.git`-less `/tmp` copy** → verify `/api/config` 200,
 `/api/me` and `/api/overview` 401 unauthenticated, `stats.json` counts, the
 security headers, and `drive_dom.mjs` against the live site →
@@ -214,9 +204,34 @@ fail after Phase C**: it asserts `stats.json` nodes `< 5048`, and the merged
 public half is 8,507 — fix that assertion in Phase C, before this run.
 → document rollback (restore from the Phase C backup, redeploy the
 previous build) → tell the owner exactly what to click to see API Design's full
-chain, the matrix and the single-type views.
+chain and the matrix. (The single-type views are B3.5 — after launch, §6.)
 
-## 8 · After launch — each its own phase
+## 6 · First release AFTER launch
+
+Moved here by the 2026-09-30 decision; specified exactly as before.
+
+### 6a · Exact-slide deep links
+Google documents `https://www.googleapis.com/auth/drive.readonly` among the
+accepted scopes for Slides API `presentations.get`, so **no scope widening is
+needed**.
+
+First check whether the Slides API is **enabled in the service account's Google
+Cloud project**. If not: tell the owner exactly what to enable and where, and
+**pause this item**. If enabled: report the call count (~238 native decks),
+fetch page object ids, store `slide_number → page_object_id`, and link topics to
+`/presentation/d/<id>/edit#slide=id.<page_object_id>`. `.pptx` and `.pdf` keep
+the file link plus the slide/page number. Test: a topic from a native deck links
+to its exact slide.
+
+### 6b · B3.5 — UI features
+Specified in full in **`docs/UI-BACKLOG.md`**. Display only, no new data, CSP
+stays strict, self-hosted only. Header stat chips; type filter chips;
+single-type view; focus mode; breadcrumb; module panel header; Files · Open
+list; hint bar; one colour legend; and the explicit "do better than the B2B
+version" list (no overlapping labels, generic names always with parent context,
+grouped search with keyboard nav, URL-held state, readable dimmed nodes).
+
+### 6c · Later releases — each its own phase
 a. **Release 2, topic categories** — `config/topic-categories.yaml`, proposals
    only until confirmed. See `docs/UI-BACKLOG.md`.
 b. **Release 2, tools/tech** — closed list in `config/tools.yaml`, new `tool`
@@ -356,7 +371,7 @@ stack — both are the migrations relying on the environment, and both fail
   NOT rotated. Re-list the folder read-only and record which is current.
 - **CI has been red on `main` since at least 2026-09-20** — `test`, `payroll`
   and `secrets` fail, `renderer` passes; no successful run in the last 40.
-  **Owner ruling 2026-09-30 (Animesh Kumar, origin: hand):** §D.4's "all four
+  **Owner ruling 2026-09-30 (Animesh Kumar, origin: hand):** §D.2's "all four
   jobs green" applies to the **`content-crawl-rowB` branch's own CI run**;
   main's red state is the known pre-existing failures this branch fixes.
 - **Registry drift**: the hardcoded registry in `count_registry.py` versus the
@@ -464,7 +479,7 @@ python3 -m pytest tests -q         # DB tests go to the local stack if it is up,
 #  and the DB tests insert, delete and re-project. tests/conftest.py refuses a
 #  production DSN (Supabase host or project ref) with a usage error unless
 #  NP_ALLOW_PROD_TESTS=1 — and that opt-in is for Phase D's read-only
-#  production_only run ONLY (§D.7):  pytest tests -m production_only
+#  production_only run ONLY (§D.5):  pytest tests -m production_only
 #  The report header's first line says which database the run used.
 #  Other targets: NP_TEST_DSN / NP_TEST_DSN_TRANSACTION (still refused if prod).
 #  Every run ends with "skips by reason (N)". CI enforces tests/ci-skips.yaml

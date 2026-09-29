@@ -41,7 +41,7 @@ _TARGET_IS_PRODUCTION = False
 PRODUCTION_ONLY_SKIP = (
     "production_only: asserts on production's own rows (real identities, the "
     "live projection) — run read-only with NP_ALLOW_PROD_TESTS=1 against "
-    "production, HANDOFF.md §D.7")
+    "production, HANDOFF.md §D.5")
 
 
 def pytest_configure(config):

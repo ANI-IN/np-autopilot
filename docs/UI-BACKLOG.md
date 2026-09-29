@@ -10,7 +10,11 @@ CSP stays strict; self-hosted libraries only.
 
 ---
 
-# B3.5 — after B3, before Phase C
+# B3.5 — first release AFTER launch
+
+*Moved 2026-09-30 (owner decision, Animesh Kumar, origin: hand): fastest
+accurate launch. Was "after B3, before Phase C". Specification unchanged;
+see `docs/HANDOFF.md` §D.6.*
 
 ## a · Header stat chips
 Domains · Modules · Sessions · Instructors · Decks · Topics. Labelled as
