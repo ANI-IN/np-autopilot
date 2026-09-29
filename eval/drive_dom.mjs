@@ -665,7 +665,20 @@ console.log('\nstat line:', (store.get('stat')||{}).innerHTML || '(never set)');
 // another indirect eval, not as properties of globalThis.
 const run = (s) => (0,eval)(s);
 console.log('\n=== ONE ROW PER PERSON (multi-module instructor) ===');
-{
+// HOSTED ONLY, like the other PORTED blocks. The per-person panels and the
+// matrix are B2 features of public/index.html; the offline build was never
+// given them. This block ran against both builds from B2.5 (683fb9b) on and
+// threw in the offline one, so "drive_dom.mjs passed" meant the hosted build.
+// On the offline build it is not skipped silently: it asserts the functions
+// really are absent, so porting them there turns this block back on.
+const HOSTED_ONLY = ['taughtRows', 'peopleRows', 'setView'];
+if(!PORTED){
+  const present = HOSTED_ONLY.filter(f => run('typeof '+f) === 'function');
+  console.log('  hosted-only (B2 panels, matrix)    : not in this build');
+  if(present.length) errors.push('OFFLINE BUILD NOW DEFINES '+present.join(', ')
+    + ' — un-scope the ONE ROW PER PERSON block so it is tested here too');
+}
+if(PORTED){
   const g = globalThis.window.__NP.data;
   const R = 'ins_robert_test', M1 = 'mod_a_test', M2 = 'mod_b_test';
   g.nodes.push({id:R, l:'Robert Kreznarich', t:'instructor', d:0, p:{}, loaded:true});

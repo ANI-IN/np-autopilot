@@ -29,7 +29,7 @@ recalled.
 | `eval/content_eval_all.py` | **103/103**, 0 fabrications (§D2 excluded as unfailable) |
 | `eval/mastersheet_rederive.py` | **0 unexplained differences** across 20 modules |
 | `verify_migration.py --source supabase` | **54/54 VERIFIED** (against the LOCAL database) |
-| `eval/drive_dom.mjs` | all checks passed |
+| `eval/drive_dom.mjs` | all checks passed — **hosted build only.** From B2.5 (`683fb9b`) the offline `knowledge/graph.html` threw (`taughtRows is not defined`); CI caught it on the first branch push. Fixed 2026-09-30 by scoping the B2 block to the hosted build, with an assertion that the offline build lacks those functions. Both builds pass since |
 | `pipeline/check_no_payroll_committed.py` | clean |
 
 ## LIVE IN PRODUCTION vs LOCAL ONLY
