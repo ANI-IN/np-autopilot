@@ -62,6 +62,12 @@ magnitude apart — so the project's own record of why the file is excluded does
 not trip the guard that enforces it. Run by CI; usable as a pre-commit hook with
 `--staged`.
 
+`check_repo_private.py` fails unless GitHub positively reports the repository
+private — the authenticated API's `private: true`, or an anonymous request
+refused. It could not look = it fails. The repository was public twice while
+every document said private (`07-risks.md` R18, R21). First step of CI's
+`secrets` job, and `.githooks/pre-push`.
+
 `gen_landing_stats.py` regenerates `public/stats.json`, the counts and build
 date the explorer's landing page shows. It reads `projection_meta` and the
 projected tables — **the projection, not `graph.json`** — because the pipeline
