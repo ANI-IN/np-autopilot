@@ -103,6 +103,9 @@ function jsonResponse(body, ok=true, status=200){
 globalThis.fetch=async(url,opts)=>{
   REQUESTS.push({url:String(url), method:(opts&&opts.method)||'GET'});
   const u=String(url);
+  // B3: the lazy-panel detail response, set by the COLUMNAR block below.
+  if(globalThis.__DETAIL_SHIM && u.includes('detail=1'))
+    return jsonResponse(globalThis.__DETAIL_SHIM);
   if(u.startsWith('/api/neighbourhood')){
     // n3 returns a LARGER neighbourhood than anything fetched before it, so the
     // idempotence check downstream has something to add on its first call and
@@ -721,6 +724,69 @@ if(PORTED){
   const mrows = (html.match(/Robert Kreznarich/g)||[]).length;
   console.log('  matrix rows for him                :', mrows, '(want 1)');
   if(mrows !== 1) errors.push('MATRIX: expected one row per person, got '+mrows);
+}
+
+// ---- B3: THE COLUMNAR PAYLOAD, AS THE SERVER ENCODES IT -------------------
+// eval/fixtures/structure-columnar.json is web/lib/data.py::pack_structure()
+// applied to synthetic rows; tests/test_structure_payload.py fails if it stops
+// matching the encoder. Decoded here by the page's OWN decodeStructure(), so
+// encoder and decoder cannot drift apart unnoticed.
+if(PORTED){
+  console.log('\n=== B3: COLUMNAR STRUCTURE PAYLOAD ===');
+  const col=JSON.parse(readFileSync(new URL('./fixtures/structure-columnar.json',
+                                            import.meta.url),'utf8'));
+  globalThis.__COL=col;
+  const dec=run('decodeStructure(globalThis.__COL)');
+  const byId=Object.fromEntries(dec.nodes.map(n=>[n.id,n]));
+  const mod=byId['mod_synthetic'], ses=byId['ses_synthetic'], wk=byId['wk_synthetic'];
+  console.log('  nodes / edges decoded              :', dec.nodes.length, '/', dec.edges.length);
+  if(dec.nodes.length!==3||dec.edges.length!==3) errors.push('COLUMNAR: wrong counts');
+  if(!mod||mod.x!==-30||mod.y!==40) errors.push('COLUMNAR: coordinates lost');
+  if(!wk||wk.x!==undefined) errors.push('COLUMNAR: a node with no layout was given one');
+  if(dec.laidOut!==false) errors.push('COLUMNAR: laidOut must be false when any node lacks a layout');
+  if(!ses||ses.raw!=='Class ') errors.push('COLUMNAR: label_raw lost');
+  if(!mod||mod.dom!=='synthetic'||mod.legacy) errors.push('COLUMNAR: bulk props not carried into adaptNode');
+  if(mod&&mod.p.uplevel_link!==undefined) errors.push('COLUMNAR: a panel-only prop arrived in bulk');
+  if(!mod||mod.partial!==true) errors.push('COLUMNAR: decoded nodes must be marked partial');
+  const same=dec.edges.filter(e=>e.s==='mod_synthetic'&&e.t==='ses_synthetic');
+  console.log('  same-triple edges, distinct ids    :', same.map(e=>e.id).join(','));
+  if(same.length!==2||same[0].id===same[1].id) errors.push('COLUMNAR: same-triple edges not both decoded');
+
+  // mergeGraph must KEEP both — the triple dedupe dropped 675 real edges.
+  const G={nodes:[],edges:[]};
+  run('mergeGraph')(G,{nodes:dec.nodes,edges:dec.edges});
+  const kept=G.edges.filter(e=>e.s==='mod_synthetic'&&e.t==='ses_synthetic').length;
+  console.log('  same-triple edges kept by merge    :', kept, '(want 2)');
+  if(kept!==2) errors.push('MERGE: edges sharing (source, rel, target) were collapsed');
+  const again=run('mergeGraph')(G,{nodes:dec.nodes,edges:dec.edges});
+  if(again.addedEdges!==0) errors.push('MERGE: re-merging the same edges added '+again.addedEdges);
+
+  // Lazy panels: detail replaces partial props in place, and moves nothing.
+  const g=globalThis.window.__NP.data;
+  run('mergeGraph')(g,{nodes:dec.nodes,edges:dec.edges});
+  run('recompute(false,"columnar test")');
+  const before=[mod.x,mod.y];
+  const full=(id,props)=>({id, type:byId[id].t, label:byId[id].l, label_raw:null, props});
+  globalThis.__DETAIL_SHIM={
+    node:full('mod_synthetic',{domain_slug:'synthetic',sequence:1,
+                               uplevel_link:'https://example.invalid/uplevel'}),
+    provenance:{corpus:[],hand:[]},
+    neighbours:[full('ses_synthetic',{session_kind:'class',status:'current'})],
+    edges:[{id:101,rel:same[0].r,source_id:'mod_synthetic',target_id:'ses_synthetic',
+            props:{attached_file:'synthetic-a.pptx',session_kind:'class',tier:'mastersheet'}},
+           {id:102,rel:same[0].r,source_id:'mod_synthetic',target_id:'ses_synthetic',
+            props:{attached_file:'synthetic-b.pptx',session_kind:'class',tier:'mastersheet'}}]};
+  await run('ensureDetail("mod_synthetic")');
+  globalThis.__DETAIL_SHIM=null;
+  const m2=g.nodes.find(n=>n.id==='mod_synthetic'), s2=g.nodes.find(n=>n.id==='ses_synthetic');
+  const files=g.edges.filter(e=>e.s==='mod_synthetic'&&e.p&&e.p.attached_file).map(e=>e.p.attached_file);
+  console.log('  detail: panel prop on the node     :', !!(m2&&m2.p.uplevel_link));
+  console.log('  detail: both attached files        :', files.sort().join(', '));
+  if(!(m2&&m2.p.uplevel_link)) errors.push('DETAIL: the node did not receive its panel props');
+  if(!(s2&&s2.p.session_kind==='class')) errors.push('DETAIL: a neighbour did not receive its panel props');
+  if(files.length!==2) errors.push('DETAIL: an attached-file edge did not receive its props');
+  if(!m2||m2.partial!==false) errors.push('DETAIL: the node is still marked partial');
+  if(!m2||m2.x!==before[0]||m2.y!==before[1]) errors.push('DETAIL: fetching detail moved the node');
 }
 
 console.log('\n=== RESULT ===');

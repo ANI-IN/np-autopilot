@@ -15,7 +15,11 @@ def _node(conn, identity, params):
         # Saying "forbidden" would confirm the row exists, which for a withheld
         # hiring rejection is the disclosure itself.
         return {"error": "not_found"}, 0
-    return {"node": n, "provenance": data.provenance(conn, node_id)}, 1
+    out = {"node": n, "provenance": data.provenance(conn, node_id)}
+    # B3, lazy panels: what the bulk /api/structure left out, on click.
+    if str(params.get("detail") or "") == "1":
+        out.update(data.node_detail(conn, node_id))
+    return out, 1
 
 
 #: (endpoint name, read function). The HTTP shell lives in api/index.py:

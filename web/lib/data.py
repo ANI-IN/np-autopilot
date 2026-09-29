@@ -31,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from pipeline.lib import db as _db                                    # noqa: E402
 from pipeline.lib import taxonomy as _tax                              # noqa: E402
+from pipeline.lib import layout as _layout                             # noqa: E402
 
 #: Depth cap for neighbourhood expansion. Fails LOUDLY rather than truncating:
 #: a silently truncated neighbourhood looks like a sparse graph, and this
@@ -226,7 +227,7 @@ def neighbourhood(conn, node_id: str, depth: int = 1,
         nodes = _rows(cur)
         ids = [n["id"] for n in nodes]
         cur.execute(
-            "select rel, source_id, target_id, props from edges "
+            "select id, rel, source_id, target_id, props from edges "
             "where source_id = any(%s) and target_id = any(%s)", (ids, ids))
         edges = _rows(cur)
     return {"nodes": nodes, "edges": edges,
@@ -300,7 +301,7 @@ def overview(conn) -> dict:
     """
     with conn.cursor() as cur:
         cur.execute(
-            "select rel, source_id, target_id, props from edges "
+            "select id, rel, source_id, target_id, props from edges "
             "where rel = any(%s) and (source_id in "
             "  (select id from nodes where type = %s) or target_id in "
             "  (select id from nodes where type = %s))",
@@ -384,27 +385,122 @@ def provenance(conn, node_id: str) -> dict:
 
 #: The STRUCTURE LAYER: what the default view shows without a toggle. Derived
 #: from edge endpoints, never written out — B2, the same rule pass 7 follows.
+#: Defined in pipeline/lib/layout.py since B3, because the projection lays out
+#: exactly these nodes and the two must not drift.
 #:
 #: `file` is deliberately absent. 1,443 of them carry no edge at all (they exist
 #: to be cited), so including them would put two thirds of the payload on screen
 #: as unconnected dots.
-def _structure_types() -> tuple[set, set]:
-    def tgt(role):
-        return _tax.edge_endpoints(_tax.edge_for_role(role))[1]
+STRUCTURE_TYPES, DEFERRED_TYPES = _layout.structure_types()
 
-    def src(role):
-        return _tax.edge_endpoints(_tax.edge_for_role(role))[0]
+#: The wire format of /api/structure. Part of the ETag, so changing the shape
+#: invalidates every cached copy. Bump it on ANY change to pack_structure().
+STRUCTURE_FORMAT = "columnar-1"
 
-    core = {"domain", "program", "module", "person", "instructor", "theme",
-            "workflow",
-            tgt("module_week"), tgt("module_session"),
-            tgt("module_assignment"), tgt("assignment_reviewed_in")}
-    deferred = {"file", tgt("module_topic"), tgt("module_deck"),
-                src("curriculum_module"), tgt("module_repo")}
-    return core, deferred
+#: PANEL-ONLY PROPERTIES (B3, lazy panels). Read by the side panel and nowhere
+#: else in the client, so the bulk payload leaves them out and
+#: /api/node?detail=1 brings them, whole, when a node is opened.
+#:
+#: A BLACKLIST, NOT A WHITELIST, deliberately. The adapter rule in
+#: public/index.html is "carry props whole; do not pick from it", because a
+#: property added upstream and silently absent downstream raises no error. So a
+#: NEW property still reaches the bulk by default; only these, each one proved
+#: panel-only, are held back. tests/test_structure_payload.py scans the client
+#: and fails if any of them is read outside the panel functions.
+PANEL_ONLY_NODE_PROPS = frozenset({
+    # TYPE_FACTS — the facts block at the top of a panel
+    "cadence", "decline_rate", "doctype", "family", "file_count",
+    "first_seen_quarter", "granularity", "last_seen_quarter", "parsed",
+    "pipeline_status", "requests_to", "roster_count", "seniority",
+    "sheet_count", "stage", "steps", "team", "title", "tools",
+    # crossVal, reviewFlag, mergedNote
+    "cross_validated", "review", "merged_label_raw",
+    # moduleChain — the source links
+    "drive_url", "drive_folder_url", "uplevel_link", "session_kind",
+})
+PANEL_ONLY_EDGE_PROPS = frozenset({
+    # relDetail — per-relationship detail in the panel
+    "basis", "class_dates", "classes", "inferred", "avg_rating", "rank",
+    "via_alias",
+    # moduleChain — attached files per session
+    "attached_file", "attached_drive_url", "attached_is_deck", "session_kind",
+    # never read by the client at all; they arrive with the detail
+    "provenance", "sources", "subject_raw", "join_basis", "attached_id",
+})
 
 
-STRUCTURE_TYPES, DEFERRED_TYPES = _structure_types()
+def _b64(fmt: str, values) -> str:
+    import base64
+    import struct
+    values = list(values)
+    return base64.b64encode(struct.pack(f"<{len(values)}{fmt}", *values)).decode()
+
+
+def pack_structure(nodes: list, edges: list) -> dict:
+    """Rows -> the columnar wire format. Pure, so it is testable offline.
+
+    nodes: (id, type, label, label_raw, props, x, y)   ordered by id
+    edges: (id, rel, source_id, target_id, props)       ordered by id
+
+    Positions are Float32 pairs (NaN where no layout exists — the client then
+    simulates, as it always did). Edges are Uint16 (source, target, rel)
+    index triples plus their database ids as Uint32: several edges can join
+    the same two nodes under the same relation (a module and a session, once
+    per attached file), so an edge's identity is its id, not its endpoints.
+    """
+    ids = [n[0] for n in nodes]
+    if len(ids) > 0xFFFF:
+        raise RuntimeError(f"{len(ids)} structure nodes exceed the Uint16 edge "
+                           "index; widen the format (and bump STRUCTURE_FORMAT)")
+    ix = {v: i for i, v in enumerate(ids)}
+    types = sorted({n[1] for n in nodes})
+    tix = {v: i for i, v in enumerate(types)}
+    rels = sorted({e[1] for e in edges})
+    rix = {v: i for i, v in enumerate(rels)}
+    nan = float("nan")
+    kept = [e for e in edges if e[2] in ix and e[3] in ix]
+    if kept and max(e[0] for e in kept) > 0xFFFFFFFF:
+        raise RuntimeError("an edge id exceeds Uint32; widen the format")
+
+    def bulk(props, drop):
+        return {k: v for k, v in (props or {}).items() if k not in drop}
+
+    np_, ep_ = {}, {}
+    for i, n in enumerate(nodes):
+        b = bulk(n[4], PANEL_ONLY_NODE_PROPS)
+        if b:
+            np_[str(i)] = b
+    for j, e in enumerate(kept):
+        b = bulk(e[4], PANEL_ONLY_EDGE_PROPS)
+        if b:
+            ep_[str(j)] = b
+    legacy = sum(1 for n in nodes
+                 if n[1] == "module" and not (n[4] or {}).get("domain_slug"))
+    return {
+        "format": STRUCTURE_FORMAT,
+        "n": len(ids),
+        "ids": ids,
+        "types": types,
+        "t": [tix[n[1]] for n in nodes],
+        "labels": [n[2] for n in nodes],
+        "raw": {str(i): n[3] for i, n in enumerate(nodes)
+                if n[3] is not None and n[3] != n[2]},
+        "xy": _b64("f", (c for n in nodes
+                         for c in ((n[5], n[6]) if n[5] is not None else (nan, nan)))),
+        "rels": rels,
+        "m": len(kept),
+        "e": _b64("H", (v for e in kept for v in (ix[e[2]], ix[e[3]], rix[e[1]]))),
+        "eid": _b64("I", (e[0] for e in kept)),
+        "np": np_,
+        "ep": ep_,
+        "partial": {"node": sorted(PANEL_ONLY_NODE_PROPS),
+                    "edge": sorted(PANEL_ONLY_EDGE_PROPS)},
+        "deferred_types": sorted(DEFERRED_TYPES),
+        "legacy_modules": legacy,
+        "note": ("The structure layer. Topics, decks, curriculum docs, repos "
+                 "and files are behind a toggle and load on demand — they are "
+                 "5,200 more nodes and 37,771 more edges."),
+    }
 
 
 def structure(conn) -> dict:
@@ -422,6 +518,11 @@ def structure(conn) -> dict:
     edges. docs/DEFAULT-VIEW.md D1/D2 is the owner decision, and the reason is
     that a capped landing view showed a shape the graph does not have.
 
+    B3: COLUMNAR, LAID OUT, AND WITHOUT THE PANEL. Coordinates come from
+    node_layout (computed at projection); panel-only properties are left for
+    /api/node?detail=1. 2.59 MB of JSON became a few hundred KB — see
+    docs/perf/.
+
     PROVENANCE IS STILL UNREACHABLE HERE. `sourced_from` is excluded, so the
     degree-18,134 file hubs cannot enter the payload.
     """
@@ -429,28 +530,69 @@ def structure(conn) -> dict:
     prov = _tax.edge_for_role("provenance")
     with conn.cursor() as cur:
         cur.execute(
-            "select id, type, label, label_raw, props from nodes "
-            "where type = any(%s)", (types,))
-        nodes = _rows(cur)
+            "select n.id, n.type, n.label, n.label_raw, n.props, l.x, l.y "
+            "from nodes n left join node_layout l on l.node_id = n.id "
+            "where n.type = any(%s) order by n.id", (types,))
+        nodes = cur.fetchall()
         cur.execute(
-            "select rel, source_id, target_id, props from edges "
+            "select id, rel, source_id, target_id, props from edges "
             "where rel <> %s "
             "  and source_id in (select id from nodes where type = any(%s)) "
-            "  and target_id in (select id from nodes where type = any(%s))",
+            "  and target_id in (select id from nodes where type = any(%s)) "
+            "order by id",
             (prov, types, types))
+        edges = cur.fetchall()
+    return pack_structure(nodes, edges)
+
+
+def structure_etag(conn) -> str | None:
+    """A validator for /api/structure that costs one small query, not the payload.
+
+    Changes when the projection changes (content_hash, projected_at — edge ids
+    and coordinates are rebuilt on every projection), when the wire format
+    changes, and when the CALLER'S ROLE changes: RLS decides what the payload
+    holds, and a member and a recruiter must never share a validator. None when
+    the caller can see no projection at all, so nothing is cached.
+    """
+    import hashlib
+    with conn.cursor() as cur:
+        cur.execute("select content_hash, projected_at::text, (select np_role()) "
+                    "from projection_meta where id = 1")
+        row = cur.fetchone()
+    if not row or row[2] in (None, "none"):
+        return None
+    h = hashlib.sha256("|".join([STRUCTURE_FORMAT, *map(str, row)]).encode())
+    return '"' + h.hexdigest()[:32] + '"'
+
+
+def node_detail(conn, node_id: str) -> dict:
+    """Everything a panel reads that the bulk payload left out (B3, lazy panels).
+
+    The node's full props, its structure-layer edges with full props, and those
+    neighbours with full props — one hop, which is as far as any panel reads
+    (moduleChain, peopleRows, taughtRows, relDetail). Content-layer neighbours
+    are not included: the bulk never held them, and when the content toggle
+    loads them they arrive whole.
+    """
+    types = sorted(STRUCTURE_TYPES)
+    prov = _tax.edge_for_role("provenance")
+    with conn.cursor() as cur:
+        cur.execute(
+            "select e.id, e.rel, e.source_id, e.target_id, e.props "
+            "from edges e where e.rel <> %s "
+            "  and (e.source_id = %s or e.target_id = %s)",
+            (prov, node_id, node_id))
         edges = _rows(cur)
-    legacy = sum(1 for n in nodes
-                 if n["type"] == "module" and not (n["props"] or {}).get("domain_slug"))
-    return {
-        "nodes": nodes,
-        "edges": edges,
-        "types": types,
-        "deferred_types": sorted(DEFERRED_TYPES),
-        "legacy_modules": legacy,
-        "note": ("The structure layer. Topics, decks, curriculum docs, repos "
-                 "and files are behind a toggle and load on demand — they are "
-                 "5,200 more nodes and 37,771 more edges."),
-    }
+        others = sorted({e["target_id"] if e["source_id"] == node_id
+                         else e["source_id"] for e in edges})
+        cur.execute(
+            "select id, type, label, label_raw, props from nodes "
+            "where id = any(%s) and type = any(%s)", (others, types))
+        nbrs = _rows(cur)
+    keep = {n["id"] for n in nbrs} | {node_id}
+    return {"edges": [e for e in edges
+                      if e["source_id"] in keep and e["target_id"] in keep],
+            "neighbours": nbrs}
 
 
 def coverage(conn) -> dict:

@@ -19,7 +19,14 @@ from lib import data                                                   # noqa: E
 
 def _structure(conn, identity, params):
     out = data.structure(conn)
-    return out, len(out["nodes"])
+    return out, out["n"]
 
 
-ENDPOINT = ("structure", _structure)
+#: B3. The router answers If-None-Match with a 304 from `etag` alone — one
+#: small query instead of the payload — and compresses the body. `private`
+#: because the graph is behind auth: a browser may keep it, a shared cache may
+#: not. Five minutes, then revalidate (docs/DEFAULT-VIEW.md D3).
+ENDPOINT = ("structure", _structure,
+            {"etag": data.structure_etag,
+             "cache": "private, max-age=300, must-revalidate",
+             "compress": True})

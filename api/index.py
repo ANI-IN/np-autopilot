@@ -81,7 +81,13 @@ def endpoint_for(path: str):
                 f"/api/{name} to the module of the same name, so this route "
                 f"would 404 while looking present")
         _ENDPOINTS[name] = ep
-    return _ENDPOINTS[name]
+    return _ENDPOINTS[name][:2]
+
+
+def endpoint_options(name: str) -> dict:
+    """The optional third ENDPOINT element: etag / cache / compress (B3)."""
+    ep = _ENDPOINTS.get(name) or ()
+    return ep[2] if len(ep) > 2 else {}
 
 MAX_BODY = 16 * 1024
 
@@ -94,16 +100,82 @@ BASE_HEADERS = [
 ]
 
 
-def _respond(start_response, status: int, body: dict, *, no_store: bool = False):
-    raw = json.dumps(body, default=str).encode()
+def _respond(start_response, status: int, body: dict, *, no_store: bool = False,
+             cache: str | None = None, etag: str | None = None,
+             accept_encoding: str | None = None):
+    raw = json.dumps(body, default=str, separators=(",", ":") if cache else None).encode()
     headers = list(BASE_HEADERS)
     # A session response carries refresh tokens; authorised data must not sit in
-    # a shared cache either.
-    headers.append(("cache-control",
-                    "no-store, private" if no_store else "private, no-store"))
+    # a shared cache either. An endpoint may opt into PRIVATE caching (B3):
+    # `private` still keeps it out of every shared cache.
+    headers.append(("cache-control", cache if cache and not no_store else
+                    ("no-store, private" if no_store else "private, no-store")))
+    if etag:
+        headers.append(("etag", etag))
+    if cache:
+        headers.append(("vary", "Authorization, Accept-Encoding"))
+    if accept_encoding is not None:
+        raw, enc = _compress(raw, accept_encoding)
+        if enc:
+            headers.append(("content-encoding", enc))
     headers.append(("content-length", str(len(raw))))
     start_response(f"{status} {'OK' if status == 200 else 'ERROR'}", headers)
     return [raw]
+
+
+#: Compressed bodies, keyed by the SHA-256 of the exact bytes and the encoding.
+#: The payload is still built from a query under the caller's RLS on every
+#: request — only the compression of IDENTICAL bytes is reused, so nothing one
+#: caller was allowed to see can reach another. Brotli at quality 11 costs
+#: ~hundreds of ms for the structure payload; once per warm instance, not per
+#: request.
+_COMPRESSED: dict = {}
+
+
+def _compress(raw: bytes, accept_encoding: str) -> tuple[bytes, str | None]:
+    import hashlib
+    offered = {t.split(";")[0].strip().lower() for t in accept_encoding.split(",")}
+    enc = None
+    if "br" in offered:
+        try:
+            import brotli                                             # noqa: F401
+            enc = "br"
+        except ImportError:
+            enc = None
+    if enc is None and "gzip" in offered:
+        enc = "gzip"
+    if enc is None:
+        return raw, None
+    key = (hashlib.sha256(raw).digest(), enc)
+    hit = _COMPRESSED.get(key)
+    if hit is None:
+        if enc == "br":
+            import brotli
+            hit = brotli.compress(raw, quality=11)
+        else:
+            import gzip
+            hit = gzip.compress(raw, compresslevel=9)
+        if len(_COMPRESSED) >= 4:
+            _COMPRESSED.pop(next(iter(_COMPRESSED)))
+        _COMPRESSED[key] = hit
+    return hit, enc
+
+
+def _not_modified(start_response, etag: str, cache: str):
+    start_response("304 Not Modified",
+                   [("etag", etag), ("cache-control", cache),
+                    ("vary", "Authorization, Accept-Encoding"),
+                    ("x-content-type-options", "nosniff"),
+                    ("referrer-policy", "no-referrer")])
+    return [b""]
+
+
+def _etag_matches(header: str | None, etag: str) -> bool:
+    if not header:
+        return False
+    if header.strip() == "*":
+        return True
+    return etag in {t.strip().removeprefix("W/") for t in header.split(",")}
 
 
 def _serve_read(path: str, params: dict, environ, start_response):
@@ -119,8 +191,18 @@ def _serve_read(path: str, params: dict, environ, start_response):
         return _respond(start_response, 401,
                         {"error": "unauthorised", "reason": str(exc)})
     name, fn = endpoint_for(path)
+    opts = endpoint_options(name)
+    etag = None
     try:
         with data.request_connection(identity.subject) as conn:
+            # CONDITIONAL GET, before the payload query (B3). The validator is
+            # derived from the projection and the caller's role; on a match the
+            # browser keeps its own private copy and nothing is rebuilt.
+            if opts.get("etag"):
+                etag = opts["etag"](conn)
+                if etag and _etag_matches(environ.get("HTTP_IF_NONE_MATCH"), etag):
+                    audit(identity, name, params, 0, started)
+                    return _not_modified(start_response, etag, opts["cache"])
             payload, rows = fn(conn, identity, params)
     except data.DepthExceeded as exc:
         return _respond(start_response, 400,
@@ -130,7 +212,10 @@ def _serve_read(path: str, params: dict, environ, start_response):
         print(traceback.format_exc(), file=sys.stderr)
         return _respond(start_response, 500, {"error": "internal"})
     audit(identity, name, params, rows, started)
-    return _respond(start_response, 200, payload)
+    return _respond(start_response, 200, payload, cache=opts.get("cache"),
+                    etag=etag,
+                    accept_encoding=(environ.get("HTTP_ACCEPT_ENCODING", "")
+                                     if opts.get("compress") else None))
 
 
 def _serve_write(path: str, environ, start_response):

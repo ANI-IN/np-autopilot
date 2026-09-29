@@ -173,7 +173,8 @@ def main() -> int:
             page.wait_for_timeout(1200)
             path = OUT / f"{name}.png"
             page.screenshot(path=str(path))
-            print(f"  {path.relative_to(REPO)}  — {caption}")
+            shown = path.relative_to(REPO) if path.is_relative_to(REPO) else path
+            print(f"  {shown}  — {caption}")
         b.close()
     srv.shutdown()
     # The Google Sign-In script rejects the placeholder client id. That is the

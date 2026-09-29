@@ -569,7 +569,12 @@ function neighboursOf(index,id,cap,expanded){
 const EDGE_SEP=String.fromCharCode(1);
 function mergeGraph(D,incoming,budget){
   const have=new Set(D.nodes.map(n=>n.id));
-  const edgeKey=e=>e.s+EDGE_SEP+e.r+EDGE_SEP+e.t;
+  // AN EDGE'S IDENTITY IS ITS DATABASE ID. Keying on (source, rel, target)
+  // silently dropped 675 of the structure view's 4,970 edges: a module joins
+  // the same session once PER ATTACHED FILE, so 653 of 727 attached-file links
+  // never reached a panel, and 22 expert_in claims sharing endpoints collapsed.
+  // The triple is only the fallback for a shape that carries no id.
+  const edgeKey=e=>(e.id!==undefined&&e.id!==null)?'#'+e.id:e.s+EDGE_SEP+e.r+EDGE_SEP+e.t;
   const haveEdges=new Set(D.edges.map(edgeKey));
   let added=0, refused=0;
   for(const n of (incoming.nodes||[])){
@@ -623,7 +628,80 @@ function adaptNode(r){
           merged:Array.isArray(p.merge_ids)?p.merge_ids:null};
 }
 function adaptEdge(r){
-  return {s:r.source_id, t:r.target_id, r:r.rel, p:r.props||{}};
+  return {id:(r.id===undefined?null:r.id), s:r.source_id, t:r.target_id,
+          r:r.rel, p:r.props||{}};
+}
+
+// ---- B3: THE COLUMNAR STRUCTURE PAYLOAD ----------------------------------
+// /api/structure ships columns (web/lib/data.py::pack_structure): ids, a type
+// table, labels, Float32 positions computed at projection time, Uint16
+// (source, target, rel) triples, Uint32 edge ids, and props WITHOUT the
+// panel-only keys — openNode() fetches those. Decoded here into exactly the
+// shapes adaptNode/adaptEdge produce, so nothing downstream changes. Typed
+// arrays read little-endian, which is what the server packs.
+function _b64bytes(s){
+  const bin=atob(s||''); const u=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+  return u;
+}
+function decodeStructure(o){
+  if(o.format!=='columnar-1')          // the pre-B3 shape still decodes
+    return {nodes:(o.nodes||[]).map(adaptNode),edges:(o.edges||[]).map(adaptEdge),
+            laidOut:false};
+  const xy=new Float32Array(_b64bytes(o.xy).buffer);
+  const ev=new Uint16Array(_b64bytes(o.e).buffer);
+  const eid=new Uint32Array(_b64bytes(o.eid).buffer);
+  // adapt-drop: partial — names the held-back keys for other API readers; this client marks every decoded node partial itself
+  // adapt-drop: deferred_types — the content toggle uses this page's own CONTENT_TYPES
+  const np=o.np||{}, ep=o.ep||{}, raw=o.raw||{};
+  const nodes=[], edges=[];
+  let laidOut=o.n>0;
+  for(let i=0;i<o.n;i++){
+    const a=adaptNode({id:o.ids[i], type:o.types[o.t[i]], label:o.labels[i],
+                       label_raw:(raw[i]!==undefined?raw[i]:null), props:np[i]||{}});
+    a.partial=true;                    // panel-only props arrive on open
+    const x=xy[2*i], y=xy[2*i+1];
+    if(Number.isFinite(x)&&Number.isFinite(y)){a.x=x;a.y=y;a.vx=0;a.vy=0}
+    else laidOut=false;
+    nodes.push(a);
+  }
+  for(let j=0;j<o.m;j++)
+    edges.push({id:eid[j], s:o.ids[ev[3*j]], t:o.ids[ev[3*j+1]],
+                r:o.rels[ev[3*j+2]], p:ep[j]||{}});
+  return {nodes,edges,laidOut};
+}
+
+// ---- B3: LAZY PANELS -----------------------------------------------------
+// The bulk payload leaves out what only a panel reads. Opening a node fetches
+// /api/node?detail=1 once: the node, its structure edges and its neighbours,
+// all with FULL props, which replace the partial ones in place. Positions,
+// degree and selection are untouched — this is data, not layout.
+// The PROMISE is cached, not the result: two opens of the same node in flight
+// (a click and the hash route it sets) share one request.
+const DETAIL=new Map();
+function ensureDetail(id){
+  if(!DETAIL.has(id))DETAIL.set(id,_fetchDetail(id));
+  return DETAIL.get(id);
+}
+async function _fetchDetail(id){
+  let out=null;
+  try{ out=await api('/node?id='+encodeURIComponent(id)+'&detail=1'); }
+  catch(e){ DETAIL.delete(id); return null; }  // a failure may be retried
+  if(!out||out.error)return out;
+  const whole=r=>{
+    const n=idx.byId.get(r.id); if(!n)return;
+    const a=adaptNode(r);
+    for(const k of ['p','st','th','wid','eff','al','raw','dom','merged','legacy'])n[k]=a[k];
+  };
+  if(out.node)whole(out.node);
+  for(const r of (out.neighbours||[]))whole(r);
+  const byId=new Map();
+  for(const e of D.edges)if(e.id!==null&&e.id!==undefined)byId.set(String(e.id),e);
+  for(const r of (out.edges||[])){
+    const e=byId.get(String(r.id)); if(e)e.p=r.props||{};
+  }
+  const n=idx.byId.get(id); if(n)n.partial=false;
+  return out;
 }
 
 // ---- RESTART DIAGNOSTIC (ported) ---------------------------------------
@@ -1342,6 +1420,11 @@ async function openNode(id){
   document.getElementById('right').style.display='block';
   document.getElementById('nl').textContent=n?n.l:id;
   document.getElementById('nt').textContent=n?n.t:'';
+  if(n&&n.partial){
+    document.getElementById('nprops').innerHTML='<div class="src">loading details…</div>';
+    await ensureDetail(id);
+    if(state.sel!==id)return;          // another node was opened meanwhile
+  }
   const props=(n&&n.p)||{};
   const facts=(TYPE_FACTS[n&&n.t]||(()=>''))(props);
   const note=TYPE_NOTE[n&&n.t];
@@ -1447,9 +1530,11 @@ function groupByFile(rows){
 async function renderProvenance(id){
   const box=document.getElementById('files');
   box.innerHTML='<div class="src">loading provenance…</div>';
-  let out;
-  try{ out=await api('/node?id='+encodeURIComponent(id)); }
-  catch(e){ box.innerHTML='<div class="src">provenance unavailable</div>'; return; }
+  let out=DETAIL.has(id)?await DETAIL.get(id):null;
+  if(!out){
+    try{ out=await api('/node?id='+encodeURIComponent(id)); }
+    catch(e){ box.innerHTML='<div class="src">provenance unavailable</div>'; return; }
+  }
   if(out.error){ box.innerHTML='<div class="src">'+esc(out.error)+'</div>'; return; }
   const n=idx.byId.get(id);
   if(n&&out.node){ n.st=(out.node.props||{}).status||n.st;
@@ -1882,8 +1967,8 @@ async function loadStructure(){
   let out;
   try{ out=await api('/structure'); }
   catch(e){ return false; }
-  const res=mergeGraph(D,{nodes:(out.nodes||[]).map(adaptNode),
-                          edges:(out.edges||[]).map(adaptEdge)},BUDGET);
+  const dec=decodeStructure(out);
+  const res=mergeGraph(D,{nodes:dec.nodes,edges:dec.edges},BUDGET);
   window.__NP.structureNote=out.note||'';
   let msg='';
   if(res.refused) msg='<b>'+res.refused+' nodes were not loaded</b> \u2014 this '+
@@ -1894,6 +1979,17 @@ async function loadStructure(){
         'mastersheet. Nothing is hidden \u2014 see docs/REVIEW-QUEUE.md.';
   banner(msg, res.refused?'err':'');
   recompute(true,'structure view');
+  // B3: THE LAYOUT WAS COMPUTED AT PROJECTION (pipeline/lib/layout.py — this
+  // page's own step(), run once). Start frozen and fitted rather than spend
+  // 366 frames recomputing coordinates that are already here. Anything that
+  // later adds nodes still calls recompute() and simulates, as before.
+  if(dec.laidOut && !res.refused){
+    frozen=true; alpha=0; settle=0;
+    fit();
+    window.__NP_STATE={settle:settle,alpha:alpha,frozen:frozen,precomputed:true,
+                       recomputes:window.__NP_RECOMPUTES,nodes:D.nodes.length};
+    console.log('[np] precomputed layout: '+D.nodes.length+' nodes, frozen at load');
+  }
   try{ afterStructure(); }catch(e){ console.warn('view setup', e); }
   return true;
 }
