@@ -114,7 +114,7 @@ this table.
 
 | Thing | Lives under | Identifier |
 |---|---|---|
-| **GitHub** | `ANI-IN` (personal) | `ANI-IN/np-autopilot`, repo id `1374030791` — **was PUBLIC from creation 2026-09-17 until the owner's change 2026-09-30** (`07-risks.md` R21). Private is what it must be; `pipeline/check_repo_private.py` is what says whether it is |
+| **GitHub** | `ANI-IN` (personal) | `ANI-IN/np-autopilot`, repo id `1374030791` — **was PUBLIC from creation 2026-09-17 until 2026-09-29 18:58–19:06Z; private, verified 19:06:50Z** (`07-risks.md` R21). Private is what it must be; `pipeline/check_repo_private.py` is what says whether it is |
 | **Vercel** | `b2c-courses-new-programs@interviewkickstart.com` (shared) | project `np-autopilot`, `prj_Imn4VGzZLPgeRH0TaOiyJAGxrzNZ`, scope `b2c-courses-new-programs-4557s-projects` |
 | **Supabase** | same shared account | ref `yqmzjgzhxhihnpbgqmeh`, region **ap-northeast-2 (Seoul)** |
 | **Google Cloud OAuth** | same shared account | consent screen **Internal** |

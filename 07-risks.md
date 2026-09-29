@@ -549,8 +549,9 @@ cannot read who else can.*
 
 ## R21 — The REPLACEMENT repository was public from creation, for 13 days
 
-**Likelihood: n/a, it happened · Impact: high · STATUS: OPEN — the owner set it
-private 2026-09-30; NOT YET OBSERVED (see "The window")**
+**Likelihood: n/a, it happened · Impact: high · STATUS: CLOSED 2026-09-29
+19:06:50Z — private, verified anonymously and authenticated; the disclosure
+question stays open**
 
 Found 2026-09-29 by querying the GitHub API immediately before a planned
 `git push` of the row-B branch, rather than by reading our own documentation —
@@ -574,7 +575,7 @@ published the whole row-B branch was stopped by the check, not by the record.
 | | |
 |---|---|
 | **Start** | **2026-09-17T06:27:47Z** — `PublicEvent`, the second of creation. Known exactly |
-| **End** | `________` — the owner reports setting it private on 2026-09-30. **Not yet observed:** an unauthenticated request still returned **HTTP 200** at 2026-09-29T18:39:02Z and 18:45:07Z, the authenticated API still said `private: false`, and no `PrivateEvent` exists. The end is the first anonymous request that does not return 200 |
+| **End** | **Between 2026-09-29T18:58:55Z and 19:06:50Z** (00:28–00:36 IST on 2026-09-30). Last observed public at 18:58:55Z (anonymous API 200, and at 18:39:02Z and 18:45:07Z before it — the owner's first attempt had not taken). First observed private at **19:06:50Z**: anonymous API **404**, web page **404**, git endpoint **401**, authenticated `private: true`, `pipeline/check_repo_private.py` passing both ways. Made private by the owner with `gh repo edit --visibility private`. No `PrivateEvent` had appeared in the events feed at that time |
 | **Length** | ≈ 13 days, **and it cannot be called short** — R18's window was 8 |
 
 ### What was exposed
@@ -638,8 +639,8 @@ mutation-verified.
 
 ### Facts only the owner can supply
 
-- [ ] **The exact time the repository became private** — to be confirmed by the
-  anonymous check, not by the settings page.
+- [x] **When it became private** — bounded by observation to 18:58:55Z–19:06:50Z
+  on 2026-09-29; confirmed by the anonymous check, not by the settings page.
 - [ ] **Whether the 81 non-CI clones include the owner's own fetches** — any
   local clone or fresh checkout 2026-09-17…23.
 - [ ] **Disclosure.** 1,915 named external instructors and 43 named staff were
@@ -672,4 +673,4 @@ mutation-verified.
 | R17 | Excluded payroll file reachable by the cloud identity — **fixed at fetch time 2026-09-17**; the account can still read it on demand | certain | high |
 | R18 | **The repository was PUBLIC for 8 days** — 277 named hiring rejections and 1,625 candidates readable by anyone. Set private on discovery | happened | high |
 | R20 | **A working copy of the repo was uploaded into the corpus folder** — DB password, `graph-sensitive.json`, `.git/`. **Removed from the folder 2026-09-30; password NOT rotated (owner choice)** | happened | high |
-| R21 | **The replacement repository was public from creation for 13 days** — 107 commits, 1,915 instructor names, 43 staff. Owner set private 2026-09-30, not yet observed | happened | high |
+| R21 | **The replacement repository was public from creation for 13 days** — 107 commits, 1,915 instructor names, 43 staff. Private, verified 2026-09-29 19:06:50Z | happened | high |

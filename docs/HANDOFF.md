@@ -303,8 +303,9 @@ rows above. They existed only in conversation. They are recorded now.
 # G · OPEN ISSUES AND RISKS (none are blockers)
 
 **R21 — the GitHub repository was PUBLIC from creation (2026-09-17) for 13
-days**, found 2026-09-29 before a push. The owner set it private 2026-09-30;
-the end of the window is the first anonymous request that does not return 200.
+days**, found 2026-09-29 before a push. **Private, verified 2026-09-29
+19:06:50Z** (anonymous 404, authenticated `private: true`); last seen public
+18:58:55Z.
 Recorded in `07-risks.md` R21, with the disclosure question left to the owner.
 **Nothing is pushed until `pipeline/check_repo_private.py` passes** — CI's
 `secrets` job runs it first, and `.githooks/pre-push` refuses the push.
