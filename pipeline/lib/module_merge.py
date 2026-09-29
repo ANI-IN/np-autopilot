@@ -353,4 +353,51 @@ def merge(main: dict, content: dict, spec: dict | None = None,
     meta.update(merged=True, merges_applied=applied,
                 absorbed_nodes=len(absorbed), excluded_pairs=excluded,
                 nodes=len(out_nodes), edges=len(edges))
-    return {"meta": meta, "nodes": out_nodes, "edges": edges}
+    out = {"meta": meta, "nodes": out_nodes, "edges": edges}
+    # Here, not in pass 8: the projection and every reader call merge() in
+    # memory (graphio.load_merged) and never read merged_graph.json.
+    meta["not_a_topic"] = len(mark_person_name_topics(out))
+    return out
+
+
+# ---------------------------------------------------------------------------
+# D1 — A PERSON'S NAME IS NOT A TOPIC
+# ---------------------------------------------------------------------------
+#
+# Pass 7 takes a deck's slide titles as topics, and an instructor's intro slide
+# is titled with their name: "Robert Kreznarich" was API Design's topic #2.
+# That is not a person extracted from content — no person node exists — but a
+# name presented as a subject is D1's failure in a softer form.
+#
+# MARKED, NOT DELETED. The node, its edge and its provenance stay: the slide
+# really says it, and deleting would make the graph disagree with the file.
+# `not_a_topic: person_name` takes it out of ranking and panels, and every
+# consumer states how many it held back rather than dropping them silently
+# (CLAUDE.md §4). The names come from the PUBLIC graph's own person and
+# instructor labels — never from the slide — so nothing is inferred about who
+# is a person; a topic is only recognised as a name the graph already holds.
+# Exact after case and whitespace folding: no fuzzy match, no guessing.
+NOT_A_TOPIC = "not_a_topic"
+PERSON_NAME = "person_name"
+
+
+def _fold(s: str) -> str:
+    return " ".join(str(s or "").split()).casefold()
+
+
+def mark_person_name_topics(g: dict) -> list[str]:
+    """Flag topic nodes whose label is a known person's. Returns their ids."""
+    topic_type = taxonomy.edge_endpoints(taxonomy.edge_for_role("module_topic"))[1]
+    people_types = {taxonomy.edge_endpoints(taxonomy.edge_for_role("module_instructor"))[1],
+                    taxonomy.edge_endpoints(taxonomy.edge_for_role("domain_primary"))[1]}
+    # PUBLIC people only, so the marks are the same whichever scope is loaded:
+    # a withheld name must never change what the public projection holds.
+    names = {_fold(n.get("label")) for n in g["nodes"]
+             if n["type"] in people_types and not n.get("sensitive")}
+    names.discard("")
+    marked = []
+    for n in g["nodes"]:
+        if n["type"] == topic_type and _fold(n.get("label")) in names:
+            n[NOT_A_TOPIC] = PERSON_NAME
+            marked.append(n["id"])
+    return sorted(marked)

@@ -966,6 +966,7 @@ property_scopes:
     - locator_kind
     - mime
     - normalised_label
+    - not_a_topic        # D1 (2026-09-30): a topic whose label is a known person's
     - number
     - owner_domain
     - parsed
