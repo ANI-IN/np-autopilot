@@ -73,6 +73,24 @@ def collect(conn) -> dict:
         "provenance_records": sources,
         "files": files,
         "by_type": by_type,
+        # WHICH GRAPH, SAID ON THE PAGE. STATE.md §1 records three wrong
+        # figures produced by confusing the pipeline graph with the
+        # projection. The landing page reads the projection; that is now a
+        # field rather than a fact a reader has to already know.
+        "describes": ("the PROJECTION — knowledge/graph.json merged with "
+                      "knowledge/content_graph.json on the answered "
+                      "REVIEW-QUEUE rows, public half only. Not the pipeline "
+                      "graph, whose node count is different and larger."),
+        "counts_are_floors": (
+            "person, instructor and module counts are FLOORS, not totals: "
+            "127 of 374 worksheets have been read by an entity scan. A number "
+            "here can only go up when coverage widens."),
+        "module_caveat": (
+            "Modules come from two populations — keyed (domain, sequence) "
+            "from the Resource Collection Mastersheet, and keyed on their "
+            "label in the legacy graph. 16 collisions were merged on answered "
+            "review rows; the rest are unreconciled, so this is not a count "
+            "of distinct courses."),
         "built_as_of": str(as_of),
         "projected_at": projected_at.astimezone(timezone.utc)
                         .strftime("%Y-%m-%dT%H:%M:%SZ"),

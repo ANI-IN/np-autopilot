@@ -581,7 +581,18 @@ window.__NP_RECOMPUTES=0;
 const D=window.__NP.data, C=window.__NP.colors;
 const EXPERT=window.__NP.expert, LEFT=300, RIGHT=330, CAP=8;
 const API=window.__NP.api, BUDGET=window.__NP.nodeBudget;
-const TYPES=['domain','program','module','person','instructor','workflow','theme'];
+// STRUCTURE first, then the content layer. The list was seven types and the
+// content graph adds nine; a type absent from here has no filter chip, so it
+// is reachable only by search and looks like it was not projected.
+// `file` stays out on purpose: 1,443 of them are provenance-only and carry no
+// edge, which is why coverage's isolated CTE excludes them too.
+const TYPES=['domain','program','module','program_week','class_session',
+             'assignment','assignment_review','person','instructor',
+             'workflow','theme',
+             'slide_deck','content_topic','curriculum_doc','code_repo'];
+// Everything after `theme` is the content layer, hidden behind a toggle in the
+// default view (docs/DEFAULT-VIEW.md D1).
+const CONTENT_TYPES=['slide_deck','content_topic','curriculum_doc','code_repo'];
 let idx=buildIndex(D);
 
 // ---- ESCAPING. New in the port, and not cosmetic. ------------------------

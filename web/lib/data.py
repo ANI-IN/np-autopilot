@@ -326,15 +326,27 @@ def coverage(conn) -> dict:
               (select count(*) from nodes m where m.type='module' and not exists
                  (select 1 from edges e where e.rel='contains' and e.target_id=m.id))
                 as modules_without_program,
-              (select count(*) from nodes m where m.type='module' and not exists
-                 (select 1 from edges e where e.rel='teaches' and e.target_id=m.id))
+              -- BOTH STAFFING TIERS. The legacy graph attaches an instructor
+              -- with `teaches` (instructor -> module); the mastersheet uses
+              -- `taught_by` (module -> instructor). Counting only the first
+              -- reported every module staffed solely by the mastersheet as
+              -- unstaffed — measured at 158 against a true 152. The two are
+              -- deliberately separate edges (they are unreconciled evidence,
+              -- config/module-merges.yaml), so coverage must ask for both.
+              (select count(*) from nodes m where m.type='module'
+                 and not exists (select 1 from edges e
+                                 where e.rel=%s and e.target_id=m.id)
+                 and not exists (select 1 from edges e
+                                 where e.rel=%s and e.source_id=m.id))
                 as modules_without_instructor,
               (select count(*) from nodes d where d.type='domain' and not exists
                  (select 1 from edges e where e.source_id=d.id
                     and e.rel = any(%s)))
                 as domains_without_owner,
               (select count(*) from isolated) as isolated_records
-        """, ([_tax.edge_for_role(r) for r in DOMAIN_ATTACHMENT_ROLES],))
+        """, (_tax.edge_for_role("instructor_module"),
+              _tax.edge_for_role("module_instructor"),
+              [_tax.edge_for_role(r) for r in DOMAIN_ATTACHMENT_ROLES]))
         row = _rows(cur)[0]
     row["workflow_ownership"] = (
         "OUT OF SCOPE — ownership in New Programs attaches to domains, not "
@@ -342,6 +354,16 @@ def coverage(conn) -> dict:
     row["counts_are_floors"] = (
         "person, instructor and module counts are floors over 127 of 374 "
         "worksheets, not totals.")
+    row["two_module_populations"] = (
+        "This graph holds 924 modules from two sources: 20 keyed "
+        "(domain, sequence) from the Resource Collection Mastersheet, and the "
+        "rest keyed on their label. 16 collisions were merged on answered "
+        "REVIEW-QUEUE rows; the remainder have not been reconciled, so a "
+        "module count is not a count of distinct courses.")
+    row["modules_without_program_caveat"] = (
+        "724 of the legacy modules carry no programme edge at all, so this "
+        "number is dominated by a structural gap in the legacy layer rather "
+        "than by missing data about any one module.")
     return row
 
 
@@ -377,4 +399,26 @@ def domain_subgraph(conn, domain_label: str) -> dict:
             where e.rel = %s and e.target_id = %s
         """, (_tax.edge_for_role("instructor_domain"), dom["id"]))
         declared = _rows(cur)
-    return {"domain": dom, "taught": taught, "declared": declared}
+
+        # THE MASTERSHEET TIER. Row-B modules hang off a domain by `offers`
+        # and name their instructors by `taught_by`, so the join above — which
+        # walks domain -> programme -> module -> teaches — cannot see any of
+        # them. Before this query /staffing reported four domains as having no
+        # row-B instructors at all, which read as absence and was invisibility.
+        #
+        # It is returned SEPARATELY for the same reason `declared` is: a
+        # roster row and a delivered class are different kinds of evidence,
+        # and the caller is the thing that must not merge them.
+        cur.execute("""
+            select i.id, i.label, e.props as edge_props,
+                   m.label as module, e.props->>'instructor_role' as role
+            from edges dm
+            join nodes m on m.id = dm.target_id and m.type = 'module'
+            join edges e on e.source_id = m.id and e.rel = %s
+            join nodes i on i.id = e.target_id
+            where dm.rel = %s and dm.source_id = %s
+        """, (_tax.edge_for_role("module_instructor"),
+              _tax.edge_for_role("domain_module"), dom["id"]))
+        sheet = _rows(cur)
+    return {"domain": dom, "taught": taught, "declared": declared,
+            "sheet": sheet}

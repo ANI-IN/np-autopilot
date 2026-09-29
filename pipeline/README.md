@@ -23,6 +23,13 @@ Helpers: `gen_index.py` regenerates `knowledge/INDEX.md` from `graph.json` —
 never hand-write a count there. `gen_workflow_owners.py` regenerates the 92-row
 ownership stub; every suggestion lands `confirmed: false`.
 
+`gen_csp_hashes.py` recomputes the two inline-script sha256 hashes in
+`vercel.json` from `public/index.html`. `script-src` has no
+`'unsafe-inline'`, so editing the page without recomputing makes the
+DEPLOYED page refuse to run its own scripts — a blank explorer and a console
+error nobody sees. Run it after any edit to the page; `--check` fails
+instead of writing, for CI.
+
 `count_registry.py` is **not a pass and never fetches anything.** It enumerates
 the scale-up registry's Drive folders and reports what is there — file and
 folder counts, depth, types, shortcuts, failures — so that the decision to

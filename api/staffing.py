@@ -64,14 +64,33 @@ def _staffing(conn, identity, params):
         key = props.get("basis", "unknown") + ("+via_alias" if props.get("via_alias") else "")
         tiers.setdefault(key, []).append({"name": row["label"],
                                           "subject_raw": props.get("subject_raw")})
+    # THIRD TIER, and it is not merged into either of the other two. A
+    # mastersheet row says who is ASSIGNED to a module and in what role; it is
+    # not a delivered class and it is not a self-declared subject.
+    sheet: dict[str, dict] = {}
+    for row in sub.get("sheet", []):
+        rec = sheet.setdefault(row["label"], {"name": row["label"],
+                                              "modules": set(), "roles": set()})
+        rec["modules"].add(row["module"])
+        if row.get("role"):
+            rec["roles"].add(row["role"])
+    sheet_rows = sorted(
+        ({"name": r["name"], "modules": sorted(r["modules"]),
+          "roles": sorted(r["roles"])} for r in sheet.values()),
+        key=lambda r: r["name"])
+
     return {
         "domain": sub["domain"]["label"],
         "taught": tier1,
         "declared": {k: sorted(v, key=lambda r: r["name"]) for k, v in tiers.items()},
-        "tier_note": ("Taught = ran the class. Declared = a subject field, mostly "
-                      "a Google Form response, and NOT evidence of capability. "
-                      "These are never merged."),
-    }, len(tier1)
+        "mastersheet": sheet_rows,
+        "tier_note": ("Taught = ran the class. Mastersheet = assigned to a "
+                      "module in the Resource Collection Mastersheet, with a "
+                      "role. Declared = a subject field, mostly a Google Form "
+                      "response, and NOT evidence of capability. THESE THREE "
+                      "ARE NEVER MERGED — they are different kinds of claim "
+                      "from sources that have not been reconciled."),
+    }, len(tier1) + len(sheet_rows)
 
 
 #: (endpoint name, read function). The HTTP shell lives in api/index.py:
