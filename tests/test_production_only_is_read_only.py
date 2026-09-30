@@ -88,16 +88,22 @@ def test_reads_still_work():
 
 
 def test_a_target_that_ignores_the_option_is_refused_not_trusted(monkeypatch):
-    """If the server does not come up read-only, the test must not run."""
+    """If the server does not come up read-only, the test must not run.
+
+    Simulated by defeating BOTH mechanisms — the startup option (which the
+    pooler drops anyway) and the after-connect SET — as a target that ignored
+    them would. Defeating only PGOPTIONS stopped proving anything once
+    db.connect set read-only itself (2026-09-30)."""
     monkeypatch.setattr(db_guard, "READ_ONLY_OPTION",
                         "-c default_transaction_read_only=off")
+    monkeypatch.setattr(db, "_enforce_read_only", lambda conn, var, port: None)
     with pytest.raises(RuntimeError, match="refusing to run it unguarded"):
         with db_guard.read_only_database():
             pass
 
 
 def test_the_environment_is_restored_afterwards():
-    before = {k: os.environ.get(k) for k in ("PGOPTIONS", db.TRANSACTION)}
+    before = {k: os.environ.get(k) for k in ("PGOPTIONS", db.TRANSACTION, db.READ_ONLY_ENV)}
     with db_guard.read_only_database():
         pass
     assert {k: os.environ.get(k) for k in before} == before

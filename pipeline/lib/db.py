@@ -121,6 +121,35 @@ def params(var: str = SESSION) -> dict:
     return out
 
 
+#: Set by tests/db_guard.py for `production_only` tests (and inherited by any
+#: subprocess they spawn). Every connection then goes read-only AFTER it is
+#: open, and proves it, because the pooler in front of production does not
+#: forward libpq's startup options — PGOPTIONS alone reached the server as
+#: `default_transaction_read_only=off` (window step 6, 2026-09-30).
+READ_ONLY_ENV = "NP_DB_READ_ONLY"
+#: Supabase's transaction pooler. A session setting does not persist there —
+#: the next transaction may run on another backend — so read-only mode refuses it.
+TRANSACTION_POOLER_PORT = 6543
+
+
+def _enforce_read_only(conn, var: str, port) -> None:
+    if port == TRANSACTION_POOLER_PORT:
+        conn.close()
+        raise RuntimeError(
+            f"read-only mode refuses {var}: port {port} is the TRANSACTION pooler, "
+            "where a session setting does not persist between transactions")
+    # Committed, not merely executed: a session SET made inside a transaction
+    # that is then rolled back is undone with it.
+    conn.execute("set default_transaction_read_only = on")
+    conn.commit()
+    state = conn.execute("show default_transaction_read_only").fetchone()[0]
+    conn.rollback()
+    if state != "on":
+        conn.close()
+        raise RuntimeError(f"read-only mode could not be set on {var} "
+                           f"(default_transaction_read_only={state})")
+
+
 def connect(var: str = SESSION, **kw):
     """A psycopg connection. Import is local so the pipeline runs without it."""
     import psycopg
@@ -131,7 +160,11 @@ def connect(var: str = SESSION, **kw):
         # fails with "prepared statement already exists" under the pooler — the
         # single most common works-locally-fails-on-Vercel cause.
         kw.setdefault("prepare_threshold", None)
-    return psycopg.connect(**params(var), **kw)
+    p = params(var)
+    conn = psycopg.connect(**p, **kw)
+    if os.environ.get(READ_ONLY_ENV) == "1":
+        _enforce_read_only(conn, var, p["port"])
+    return conn
 
 
 def available() -> bool:

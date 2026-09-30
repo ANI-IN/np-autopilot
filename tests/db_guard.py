@@ -2,10 +2,17 @@
 
 A `production_only` test asserts on production's own rows, so it runs against
 production — and it must be unable to write there. Not "is written not to":
-UNABLE. The enforcement is server-side, `default_transaction_read_only=on`
-passed through libpq's PGOPTIONS, so it covers every connection the test opens,
-autocommit ones, and any subprocess it spawns. A write raises
+UNABLE to write by accident. The enforcement is server-side,
+`default_transaction_read_only=on`, set by `db.connect` on every connection
+after it opens (NP_DB_READ_ONLY — the pooler drops libpq's PGOPTIONS, which is
+kept as well for direct connections), so it covers every connection the test
+opens, autocommit ones, and any subprocess it spawns. A write raises
 `ReadOnlySqlTransaction` and the test fails.
+
+WHAT IT DOES NOT STOP: a session setting is a default, so a test that
+deliberately runs `SET TRANSACTION READ WRITE` first can still write
+(tests/read_only_canaries.py, canary 5 — pinned as a known gap). Refusing that
+needs a database role without write privileges: HANDOFF §D post-launch.
 
 It is VERIFIED before the test runs, never assumed: a pooler that dropped the
 startup option would otherwise leave the test running unguarded while looking
@@ -32,8 +39,12 @@ def guard_for(node):
 
 @contextmanager
 def read_only_database():
-    saved = {k: os.environ.get(k) for k in ("PGOPTIONS", db.TRANSACTION)}
+    saved = {k: os.environ.get(k) for k in ("PGOPTIONS", db.TRANSACTION, db.READ_ONLY_ENV)}
     os.environ["PGOPTIONS"] = f"{saved['PGOPTIONS'] or ''} {READ_ONLY_OPTION}".strip()
+    # PGOPTIONS alone is dropped by the pooler (window step 6, 2026-09-30):
+    # db.connect sets read-only AFTER connecting, on every connection this
+    # process or a subprocess opens, and refuses the transaction pooler.
+    os.environ[db.READ_ONLY_ENV] = "1"
     # Route transaction-pooler connections through the session URL, the one
     # the check below verifies — a transaction pooler may not forward options.
     if os.environ.get(db.SESSION):

@@ -270,6 +270,17 @@ withheld hiring data.
    data and are handled like R18's — withheld from the public half, the same
    `recruiting` treatment. The live sheet's copy of this tab is excluded
    (`config/mastersheet-scope.yaml`) and is not read.
+5. **A dedicated read-only database role for the production tests** (owner
+   request, 2026-09-30; no action before then). Today read-only is a SESSION
+   SETTING (`db.connect`, NP_DB_READ_ONLY — the pooler drops PGOPTIONS), which
+   refuses INSERT/UPDATE/DELETE/TRUNCATE but NOT a test that first runs
+   `SET TRANSACTION READ WRITE` (canary 5, pinned by a strict xfail in
+   `tests/test_read_only_through_pooler.py`). A LOGIN role with read access
+   that bypasses RLS and holds no write privileges makes the database itself
+   refuse. `pg_read_all_data` is not it (no BYPASSRLS: every table reads 0
+   rows); Supabase's `supabase_read_only_user` has the right shape but
+   `postgres` cannot `SET ROLE` to it. Rehearse on the local stack, then flip
+   the strict xfail.
 
 ## 6 · First release AFTER launch
 
