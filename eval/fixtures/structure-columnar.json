@@ -3,20 +3,21 @@
   "code_repo",
   "content_topic",
   "curriculum_doc",
-  "file",
-  "slide_deck"
+  "file"
  ],
  "e": "AAABAAAAAAABAAAAAAACAAEA",
  "eid": "ZQAAAGYAAABnAAAA",
  "ep": {
   "0": {
+   "session_kind": "class",
    "tier": "mastersheet"
   },
   "1": {
+   "session_kind": "class",
    "tier": "mastersheet"
   }
  },
- "format": "columnar-1",
+ "format": "columnar-3",
  "ids": [
   "mod_synthetic",
   "ses_synthetic",
@@ -37,6 +38,7 @@
    "sequence": 1
   },
   "1": {
+   "session_kind": "class",
    "status": "current"
   },
   "2": {
@@ -47,7 +49,7 @@
   "edge": [
    "attached_drive_url",
    "attached_file",
-   "attached_id",
+   "attached_historical",
    "attached_is_deck",
    "avg_rating",
    "basis",
@@ -57,7 +59,6 @@
    "join_basis",
    "provenance",
    "rank",
-   "session_kind",
    "sources",
    "subject_raw",
    "via_alias"
@@ -68,6 +69,7 @@
    "decline_rate",
    "doctype",
    "drive_folder_url",
+   "drive_folders",
    "drive_url",
    "family",
    "file_count",
@@ -81,7 +83,6 @@
    "review",
    "roster_count",
    "seniority",
-   "session_kind",
    "sheet_count",
    "stage",
    "steps",

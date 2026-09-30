@@ -38,6 +38,7 @@ const ctx=new Proxy({}, {get:(t,k)=>{
   if(k==='moveTo'||k==='lineTo')return ()=>{};
   if(k==='stroke')return ()=>{painted.lines++};
   if(k==='beginPath'||k==='fill'||k==='clearRect'||k==='setLineDash')return ()=>{};
+  if(k==='setTransform')return (...m)=>{painted.transform=m};
   return ()=>{};
 }, set:()=>true});
 
@@ -310,6 +311,14 @@ console.log('\n=== SELECTION vs LAYOUT ===');
 function runFrames(n){ for(let i=0;i<n && rafFn;i++){ const f=rafFn; rafFn=null;
   painted={arcs:0,lines:0,arcPts:[]}; f(); } }
 runFrames(600);
+// B4: on the MAP a domain, a module or a group OPENS when clicked — that is a
+// deliberate layout change, checked below. The invariant here is about
+// SELECTION, so it is tested where every click is a pure selection: a
+// single-type view of people.
+if(PORTED){
+  try{ (0,eval)('onlyType("person")'); }catch(e){ errors.push('onlyType THREW: '+e.message); }
+  runFrames(600);
+}
 const st0 = globalThis.window.__NP_STATE || {};
 console.log('  after 600 frames    : settle=' + st0.settle +
             ' alpha=' + (st0.alpha||0).toFixed(4) + ' frozen=' + st0.frozen);
@@ -347,6 +356,39 @@ console.log('  drift moves the PAINT           :', paintA !== paintB);
 console.log('  drift leaves node.x/y UNTOUCHED :', dataA === dataB);
 if(paintA === paintB) errors.push('DRIFT IS DEAD: paint identical across time');
 if(dataA !== dataB) errors.push('DRIFT WROTE TO node.x — the frozen layout moved');
+
+// B4: clicking a domain on the map OPENS it — a deliberate place change.
+if(PORTED){
+  try{
+    (0,eval)('toggleType("*")'); runFrames(600);
+    const opened=(0,eval)(`(()=>{const d=window.__NP.data.nodes.find(n=>n.t==='domain');
+      if(!d)return 'no domain loaded'; activate(d); const p=window.__NP_PLACE;
+      return p&&p.kind==='domain'&&p.id===d.id?'ok':'did not open';})()`);
+    runFrames(600);
+    console.log('  clicking a domain opens it       :', opened);
+    if(opened!=='ok') errors.push('CLICKING A DOMAIN DID NOT OPEN IT: '+opened);
+    const st=globalThis.window.__NP_STATE||{};
+    if(!st.frozen) errors.push('OPENING A DOMAIN NEVER SETTLED');
+    (0,eval)('goPlace(null,"back")'); runFrames(600);
+  }catch(e){ errors.push('DOMAIN OPEN THREW: '+e.message); }
+}
+
+// SHARP ON RETINA (owner review 2026-09-30): the backing store is CSS size x
+// devicePixelRatio and the context is scaled back, at DPR 1 and at DPR 2.
+if(PORTED){
+  try{
+    for(const dpr of [2,1]){
+      globalThis.window.devicePixelRatio=dpr;
+      (0,eval)('size()');
+      const c=store.get('c'), t=painted.transform||[];
+      const good=c.width===1600*dpr&&c.height===900*dpr&&c.style.width==='1600px'&&
+                 c.style.height==='900px'&&t[0]===dpr&&t[3]===dpr&&t[4]===0&&t[5]===0;
+      console.log('  canvas at DPR '+dpr+'                  :', good?'ok':'WRONG',
+                  c.width+'x'+c.height, 'transform', JSON.stringify(t));
+      if(!good) errors.push('CANVAS NOT SCALED FOR DPR '+dpr);
+    }
+  }catch(e){ errors.push('DPR CHECK THREW: '+e.message); }
+}
 
 // a legitimate recompute MAY restart the sim — prove the distinction holds
 const rc = store.get('iso');
@@ -501,13 +543,16 @@ if(PORTED){
     const ph = store.get('files').innerHTML;
     // 1. The FILE COUNT leads. 152 rows is not the judgement a reader needs;
     //    "cited in N files" is, because that is the cross_validated signal.
-    const leads = /cited in <b>2<\/b> files/.test(ph);
+    const leads = /Named in <b>2<\/b> files/.test(ph);           // B4 wording
     console.log('  leads with the file count           :', leads);
     if(!leads) errors.push('THE PANEL DOES NOT LEAD WITH THE DISTINCT-FILE COUNT');
 
     // 2. Every row is still present — grouping is PRESENTATIONAL, and nothing
     //    may be collapsed in the data. §A.4: the duplicates are the evidence.
-    const allRows = (ph.match(/ r\d+/g)||[]).length;
+    // B4: count the rendered ROWS inside each file group (the plain wording
+    // says "row 12", and a single-row group also names it in its header).
+    const rowsHtml = (ph.match(/class="pfrows"[^>]*>[\s\S]*?<\/div><\/div>/g)||[]).join('');
+    const allRows = (rowsHtml.match(/class="src"/g)||[]).length;
     console.log('  every source row still rendered     :', allRows===4, '('+allRows+' of 4)');
     if(allRows!==4) errors.push('PROVENANCE ROWS WERE DROPPED BY THE GROUPING — §A.4');
 
@@ -518,7 +563,7 @@ if(PORTED){
 
     // 4. The Drive link opens the FILE, and says so.
     const link = ph.includes('drive.google.com/open?id=TESTID');
-    const saysFile = /Opens the FILE in Drive, not this row/.test(ph);
+    const saysFile = /Opens the whole file in Drive, not this row/.test(ph);
     console.log('  drive link present                  :', link);
     console.log('  and says it opens the file          :', saysFile);
     if(!link) errors.push('NO DRIVE LINK ON A FILE THAT HAS ONE');

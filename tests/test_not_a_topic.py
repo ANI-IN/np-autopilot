@@ -68,7 +68,27 @@ REVIEWED_PERSON_NAME = {
     "Availability, Reliability, Scalability & Replication: @SURUCHI",
     "Load Balancer: SURUCHI", "Proxies: HETAL",
     "Messages - Pub-sub, Polling, Streaming: HETAL",
-    "Compute: BALAJI", "Storage: BALAJI", "Caching: BALAJI", "Databases: BALAJI"}
+    "Compute: BALAJI", "Storage: BALAJI", "Caching: BALAJI", "Databases: BALAJI",
+    # a known first name as a POSSESSIVE (owner review, Animesh Kumar,
+    # 2026-09-30: "Tilo’s Introduction"): the instructor's own note pages
+    'Tilo’s API Design Class - October 8, 2023.',
+    'Tilo’s Introduction',
+    'Tilo’s page 1 notes Agenda / Outline',
+    'Tilo’s page 10 notes for Case Study - Online Shop - Design API Endpoints - Categories',
+    'Tilo’s page 11 notes for Case Study - Online Shop - Design API Endpoints - Shopping Cart',
+    'Tilo’s page 12 notes for Case Study - Online Shop - Design API Endpoints - Checkout',
+    'Tilo’s page 13 notes on Authorization',
+    'Tilo’s page 14 notes on Versioning',
+    'Tilo’s page 16 notes for HTTP is just not Enough',
+    'Tilo’s page 16 notes on Complex Queries',
+    'Tilo’s page 2 notes for “Possible Technologies for APIs”',
+    'Tilo’s page 3 notes for “REST Architectural Style”',
+    'Tilo’s page 4 notes for “Development Process”',
+    'Tilo’s page 5 notes for Open API Example',
+    'Tilo’s page 6 notes on API Design Tradeoffs',
+    'Tilo’s page 7 notes - Case Study - Online Shop - Requirements',
+    'Tilo’s page 8 notes Case Study - Online Shop - Resources',
+    'Tilo’s page 9 notes for Case Study - Online Shop - Design API Endpoints',}
 REVIEWED_PERSON_BIO = {"Worked at Amazon, Apple, among others, as a software engineer"}
 
 
@@ -101,3 +121,21 @@ def test_the_checklist_never_lists_a_name_as_a_topic():
     listed = [l for b in text.split("**Top")[1:] for l in b.split("\n\n", 2)[1].split("\n")]
     assert not [l for l in listed for n in names if l.split(". ", 1)[-1].startswith(n + " —")]
     assert "held back as a person's name" in text
+
+
+def test_a_possessive_first_name_is_marked_and_ordinary_possessives_are_not():
+    """Owner review 2026-09-30: "Tilo’s Introduction" is a person's slide.
+    Only a KNOWN person's first name, straight or curly apostrophe; a
+    company, a word or an algorithm in the possessive stays a topic."""
+    g = _g({"id": "i1", "type": T_INS, "label": "Synthetic Instructor"},
+           {"id": "p1", "type": T_PERSON, "label": "Teammate Person"},
+           {"id": "t1", "type": T_TOPIC, "label": "Synthetic\u2019s Introduction"},
+           {"id": "t2", "type": T_TOPIC, "label": "Synthetic's page 3 notes"},
+           {"id": "t3", "type": T_TOPIC, "label": "TEAMMATE’S onboarding"},
+           {"id": "t4", "type": T_TOPIC, "label": "Today\u2019s Agenda"},
+           {"id": "t5", "type": T_TOPIC, "label": "Twitter’s API Rate Limiting"},
+           {"id": "t6", "type": T_TOPIC, "label": "Dijkstra's algorithm"},
+           {"id": "t7", "type": T_TOPIC, "label": "Let’s Talk Scaling"},
+           {"id": "t8", "type": T_TOPIC, "label": "Synthetics’ data"},
+           {"id": "t9", "type": T_TOPIC, "label": "Synthetic’st"})
+    assert mm.mark_person_name_topics(g) == ["t1", "t2", "t3"]

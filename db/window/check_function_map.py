@@ -9,13 +9,18 @@ before any deploy:
 
   - every map entry exists in the artifact;
   - no map entry is excluded by the artifact's .vercelignore (git's matcher);
-  - the pulled production env file is neither on disk nor in the map.
+  - the pulled production env file is neither on disk nor in the map;
+  - NO FILE THE UPLOAD CARRIES holds the local review stub or an identity
+    bypass (owner requirement 2026-09-30): the stub lives only in
+    eval/local_server.py, which .vercelignore excludes, and this proves it
+    stayed there.
 
-Exit 0 only when all three hold.
+Exit 0 only when all four hold.
 """
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -23,6 +28,48 @@ from pathlib import Path
 
 VC_CONFIG = Path(".vercel/output/functions/python.func/.vc-config.json")
 ENV_FILE = ".vercel/.env.production.local"
+#: What only the LOCAL review stub (eval/local_server.py) contains: its marker,
+#: its placeholder config, and replacing the identity check. None of these may
+#: reach an uploaded file.
+STUB_PATTERNS = (
+    re.compile(r"NP-LOCAL-PREVIEW-STUB"),
+    re.compile(r"local-harness"),
+    re.compile(r"\bguard\.identify\s*=(?!=)"),
+    re.compile(r"LOCAL PREVIEW, not production"),
+)
+#: the build's own Python runtime is third-party code, not ours
+_SKIP_DIRS = (".vercel/python/", ".git/")
+
+
+def uploaded_files(artifact: Path) -> list[str]:
+    """Every file `vercel deploy --prebuilt` would upload: all of them, minus
+    what .vercelignore excludes (git's matcher, as Vercel applies it)."""
+    ignore = artifact / ".vercelignore"
+    files = sorted(str(p.relative_to(artifact)) for p in artifact.rglob("*")
+                   if p.is_file() and not any(str(p.relative_to(artifact)).startswith(d)
+                                              for d in _SKIP_DIRS))
+    if not ignore.exists():
+        return files
+    gone = set(excluded_by(ignore, files))
+    return [f for f in files if f not in gone]
+
+
+def stub_hits(artifact: Path, files: list[str] | None = None) -> list[str]:
+    """Uploaded files that carry the local stub or an identity bypass."""
+    hits = []
+    for rel in (files if files is not None else uploaded_files(artifact)):
+        p = artifact / rel
+        try:
+            if p.stat().st_size > 8_000_000:
+                continue
+            text = p.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue                                   # binary: not code we wrote
+        for rx in STUB_PATTERNS:
+            if rx.search(text):
+                hits.append(f"{rel} ({rx.pattern})")
+                break
+    return hits
 
 
 def excluded_by(ignore_file: Path, paths: list[str]) -> list[str]:
@@ -64,6 +111,10 @@ def check(artifact: Path) -> list[str]:
                             f"from the upload by .vercelignore, e.g. {bad[:5]}")
     if (artifact / ENV_FILE).exists() or ENV_FILE in fmap:
         problems.append(f"{ENV_FILE} is present — it holds production secrets")
+    hits = stub_hits(artifact)
+    if hits:
+        problems.append(f"{len(hits)} uploaded files carry the LOCAL review stub or an "
+                        f"identity bypass, e.g. {hits[:5]}")
     return problems
 
 
@@ -80,7 +131,8 @@ def main(argv) -> int:
             print(f"  - {p}")
         return 1
     print(f"function map OK: {len(fmap)} entries, all present, none excluded by "
-          ".vercelignore, no env file")
+          f".vercelignore, no env file; no local stub in "
+          f"{len(uploaded_files(artifact))} uploaded files")
     return 0
 
 

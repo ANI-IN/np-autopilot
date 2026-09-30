@@ -110,3 +110,8 @@ _uv/
 # token for np-autopilot.vercel.app. The script deletes it when it finishes;
 # this line is what covers a run that is interrupted before it can.
 .measure/
+
+# B4 review screenshots: large retina PNGs, regenerated every review round.
+# Kept on disk (eval/screenshot_views.py writes them), never in history:
+# 24 MiB of them broke the 15 MiB packed-repo budget (DECISIONS E.1a).
+docs/screenshots/b4/

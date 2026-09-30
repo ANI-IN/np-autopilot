@@ -2856,3 +2856,10 @@ document of ours. Final hash `a53462823ca26466fc5e6b3bf18615ec51bb96ed003249a866
 ## 2026-09-30 05:30:08Z — validate
 
 - validate: 0 FAIL, 19 WARN, 20/27 categories exercised, 5048 nodes, 36677 edges
+
+## 2026-09-30 07:42:48Z — list_folders
+
+- Account: `np-autopilot-drive-reader@np-autopilot.iam.gserviceaccount.com`
+- Folders: 479 (metadata only)
+- Skips: {'out-of-scope-domain': 8}
+- Seconds: 231

@@ -218,8 +218,11 @@ projection was restored (old data, 0021); the owner then rejected the new UI on
 live and the CODE was rolled back to `dpl_5wWZ…`. Production today = old code,
 old data, migration 0021. Next: B4 (UI) approved on a preview, then a new window
 from step 4 — **promoted**, not auto-assigned (WINDOW-RUNSHEET "After a Hobby
-rollback"). The read-only guard now works through the pooler (canaries 1–4
-refused through the local session pooler); canary 5 is the §D.5 role.
+rollback"). The read-only guard now works through the pooler: canaries 1–4
+(INSERT, UPDATE, DELETE, TRUNCATE) refused through the local session pooler
+AND against production through its session pooler (2026-09-30, merge
+`210e84e`; production counts and hash unchanged after); canary 5 is the §D.5
+role and is never run against production.
 
 **Re-rehearsed 2026-09-30 from `main` `694c323`** (after checklist review
 parts 1–3): migrate 0016→0021, projection 7.0 s with the live-sheet freshness
@@ -291,6 +294,16 @@ withheld hiring data.
    rows); Supabase's `supabase_read_only_user` has the right shape but
    `postgres` cannot `SET ROLE` to it. Rehearse on the local stack, then flip
    the strict xfail.
+6. **The `Agentic AI - SWE` schedule tab's dates are never read** (owner
+   request, 2026-09-30; no action before then). In `05-operations/New Combined
+   Schedule.xlsx` that tab heads its date column `Dat`, not `Date`, so the
+   schedule reader (`SCHEDULE_DATE_COL = "Date"`) takes its instructors and
+   topics but no `class_dates` — a key-dependent extraction miss (CLAUDE.md
+   §2a ii), found by the next-phase inventory (`docs/NEXT-PHASE.md` §1.B).
+   `Machine Learning DTC` and `MLSwitchUp DTC` have a BLANK date header — the
+   same miss. Fix by matching the date column by shape or an explicit
+   per-tab header map, never by renaming the corpus file (§1); report any tab
+   whose date column cannot be found instead of silently reading none.
 
 ## 6 · First release AFTER launch
 
@@ -617,6 +630,21 @@ db/local/setup.sh                                  # start, migrate, project, se
 db/local/setup.sh --stop                           # data kept in the volume
 #  CLI pinned in setup.sh: supabase@2.118.0 (via npx, no global install)
 LOCAL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"   # fixed local default
+
+# --- the local REVIEW server (click through the app on the local data) ---
+#  Signs the browser in as a local stub user (member) and shows a red
+#  "LOCAL PREVIEW, not production" banner; open http://127.0.0.1:8765/ .
+#  The stub exists ONLY in eval/local_server.py (excluded by .vercelignore);
+#  db/window/check_function_map.py fails any artifact that would upload it,
+#  and tests/test_local_stub_never_ships.py holds both. Refuses a production DSN.
+nohup python3 -u eval/local_server.py 8765 > /tmp/np-local-server.log 2>&1 &
+
+# --- the 3D map (default view; 2D behind the toggle) --------------------------
+#  public/vendor/np3d.min.js is three@0.186.1 + 3d-force-graph@1.80.1, vendored,
+#  eval-free (ngraph stubbed), loaded only when the 3D view is shown. CI cannot
+#  render WebGL: run the GPU check against the review server before a release.
+eval/build_np3d.sh                                 # rebuild the vendored bundle
+python3 eval/check_3d.py                           # 3D under the production CSP: load, chips, focus, fallback, fps
 
 # --- running the tests SAFELY ------------------------------------------
 python3 -m pytest tests -q         # DB tests go to the local stack if it is up,

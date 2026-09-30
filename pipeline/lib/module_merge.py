@@ -36,7 +36,7 @@ from typing import Any
 import yaml
 
 from . import taxonomy
-from .paths import CONFIG_DIR
+from .paths import CONFIG_DIR, KNOWLEDGE_DIR
 
 MERGES_FILE = CONFIG_DIR / "module-merges.yaml"
 IDENTITY_FILE = CONFIG_DIR / "instructor-identity.yaml"
@@ -377,6 +377,37 @@ def merge(main: dict, content: dict, spec: dict | None = None,
         if x and n.get("type") == taxonomy.edge_endpoints(taxonomy.edge_for_role("provenance"))[1]:
             n["superseded_by"] = _ms.LIVE_CITATION
             meta["superseded_files"].append(n["relative_path"])
+    # EVERY FILE NODE GETS ITS OPEN LINK (B4 (i), 2026-09-30). The 74 corpus
+    # files carry their Drive id in knowledge/files.json; it reached only the
+    # provenance panel, so their own nodes had no link.
+    files_json = KNOWLEDGE_DIR / "files.json"
+    if files_json.exists():
+        import json as _json
+        rows = _json.loads(files_json.read_text(encoding="utf-8"))
+        ids = {r["path"]: r.get("drive_file_id")
+               for r in rows.get("files", []) + rows.get("failures", [])}
+        file_type = taxonomy.edge_endpoints(taxonomy.edge_for_role("provenance"))[1]
+        for n in out["nodes"]:
+            if n.get("type") == file_type and not n.get("drive_url"):
+                fid = ids.get(n.get("relative_path") or n.get("label"))
+                if fid:
+                    n["drive_url"] = f"https://drive.google.com/open?id={fid}"
+    # CORROBORATION IS COUNTED AFTER THE MERGES (owner review 2026-09-30).
+    # Pass 3 counted each spelling's files on its own and pass 7 wrote False,
+    # and the survivor of a merge is whichever node has the lowest id — so
+    # Robert Kreznarich (4 files) and Konstantinos Pappas (6) read "named in
+    # one file only". Counted here over the merged sources, with the
+    # superseded corpus copy of the mastersheet and the live sheet as ONE
+    # source: they are the same workbook, and counting it twice would
+    # corroborate a name with itself.
+    same_as = {x["path"]: _ms.LIVE_CITATION for x in _ms.SUPERSEDED}
+    for n in out["nodes"]:
+        if n.get("type") != "instructor" or not n.get("sources"):
+            continue
+        files = {same_as.get(s["file"], s["file"])
+                 for s in n["sources"] if s.get("file")}
+        n["file_count"] = len(files)
+        n["cross_validated"] = len(files) >= 2
     marks = classify_topics(out)
     meta["not_a_topic"] = len(marks[PERSON_NAME]) + len(marks[PERSON_BIO])
     meta["topic_marks"] = {k: len(v) for k, v in marks.items()}
@@ -399,8 +430,8 @@ def merge(main: dict, content: dict, spec: dict | None = None,
 # what it held back. Names come from the PUBLIC graph's own person and
 # instructor labels (label, label_raw, merged_label_raw) — never from a slide —
 # so nothing is inferred about who is a person. Containment is whole-word and
-# only for MULTI-word names; a single first name counts only as an @mention
-# or as a trailing ": NAME" presenter tag,
+# only for MULTI-word names; a single first name counts only as an @mention,
+# a trailing ": NAME" presenter tag or a possessive ("Tilo’s Introduction"),
 # because 209 one-word labels would otherwise match ordinary words. Bio and
 # boilerplate patterns are a reviewed list with examples,
 # config/topic-quality.yaml, held by tests/test_topic_quality.py.
@@ -455,6 +486,11 @@ def classify_topics(g: dict, rules: dict | None = None) -> dict:
         # "Caching: BALAJI" — a lesson plan's presenter tag, the same thing as
         # an @mention without the @. Only as the LAST token after a colon.
         mentions += re.findall(r":\s*([^\W\d_][\w.-]*)\s*$", f)
+        # "Tilo’s Introduction" — a POSSESSIVE first name is a person's slide,
+        # the same thing again (owner review 2026-09-30). Straight or curly
+        # apostrophe; only a known person's first name, so "Today's agenda"
+        # and "Dijkstra's algorithm" stay topics.
+        mentions += re.findall(r"(?<!\w)([^\W\d_][\w-]*)['\u2019]s(?!\w)", f)
         if f in names or (contains and contains.search(f)) or \
                 any(m.rstrip(".") in firsts for m in mentions):
             n[NOT_A_TOPIC] = PERSON_NAME

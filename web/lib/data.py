@@ -169,7 +169,12 @@ def search(conn, query: str, types: list[str] | None = None,
            limit: int = 50) -> list[dict]:
     """Label search. Paginated by construction — never ships the whole graph."""
     limit = max(1, min(int(limit), 200))
-    sql = ["select id, type, label from nodes where label ilike %s"]
+    # A HELD-BACK TOPIC IS NOT SEARCHABLE (owner review 2026-09-30): a slide
+    # title that is a person's name or bio ("Introduction – Konstantinos
+    # Pappas") is marked not_a_topic by the merge and must never be listed
+    # under Topics. It is still in the graph, and its own panel says why.
+    sql = ["select id, type, label from nodes where label ilike %s",
+           "and (props->>'not_a_topic') is null"]
     args: list = [f"%{query}%"]
     if types:
         sql.append("and type = any(%s)")
@@ -395,7 +400,7 @@ STRUCTURE_TYPES, DEFERRED_TYPES = _layout.structure_types()
 
 #: The wire format of /api/structure. Part of the ETag, so changing the shape
 #: invalidates every cached copy. Bump it on ANY change to pack_structure().
-STRUCTURE_FORMAT = "columnar-1"
+STRUCTURE_FORMAT = "columnar-3"   # B4: decks are core, attached_id carried (was -2: session_kind, counts)
 
 #: PANEL-ONLY PROPERTIES (B3, lazy panels). Read by the side panel and nowhere
 #: else in the client, so the bulk payload leaves them out and
@@ -415,17 +420,21 @@ PANEL_ONLY_NODE_PROPS = frozenset({
     "sheet_count", "stage", "steps", "team", "title", "tools",
     # crossVal, reviewFlag, mergedNote
     "cross_validated", "review", "merged_label_raw",
-    # moduleChain — the source links
-    "drive_url", "drive_folder_url", "uplevel_link", "session_kind",
+    # moduleChain, domainLinks, nodeLinks — the links. `session_kind` is NOT
+    # here since B4: the map labels a session by it ("Class · API Design").
+    "drive_url", "drive_folder_url", "uplevel_link", "drive_folders",
 })
 PANEL_ONLY_EDGE_PROPS = frozenset({
     # relDetail — per-relationship detail in the panel
     "basis", "class_dates", "classes", "inferred", "avg_rating", "rank",
     "via_alias",
-    # moduleChain — attached files per session
-    "attached_file", "attached_drive_url", "attached_is_deck", "session_kind",
+    # moduleChain — attached files per session (session_kind is carried: B4)
+    "attached_file", "attached_drive_url", "attached_is_deck",
+    "attached_historical",
     # never read by the client at all; they arrive with the detail
-    "provenance", "sources", "subject_raw", "join_basis", "attached_id",
+    # attached_id is NOT panel-only since 2026-09-30: the map links each deck
+    # to the session it was attached to (owner review: decks on the map)
+    "provenance", "sources", "subject_raw", "join_basis",
 })
 
 
@@ -542,7 +551,14 @@ def structure(conn) -> dict:
             "order by id",
             (prov, types, types))
         edges = cur.fetchall()
-    return pack_structure(nodes, edges)
+        # HEADER CHIPS (B4): how many of each type the graph holds — the
+        # deferred types included, which this payload does not carry. Public
+        # rows only; RLS already scopes what this connection can count.
+        cur.execute("select type, count(*) from nodes where not sensitive group by type")
+        counts = {t: c for t, c in cur.fetchall()}
+    out = pack_structure(nodes, edges)
+    out["counts"] = counts
+    return out
 
 
 def structure_etag(conn) -> str | None:

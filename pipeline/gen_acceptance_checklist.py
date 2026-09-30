@@ -62,6 +62,32 @@ def link(label, url, view_only=False) -> str:
     return out + (" · _view only_" if view_only else "")
 
 
+def folder_links(folders, none_text: str) -> str:
+    """A module's or session's Drive folder links (pipeline/list_folders.py)."""
+    if not folders:
+        return f"_{none_text}_"
+    return " · ".join(link("Drive folder" if f.get("where") == "content"
+                           else 'Drive folder: "Uplevel shared"', f.get("url"))
+                      for f in folders)
+
+
+def link_counts(g) -> dict:
+    """(linked, total) for the link kinds a test holds to 100%."""
+    ftype = tax.edge_endpoints(tax.edge_for_role("provenance"))[1]
+    files = [n for n in g["nodes"] if n["type"] == ftype]
+    mods = [n for n in g["nodes"] if n["type"] == "module" and n.get("domain_slug")]
+    doms = [n for n in g["nodes"] if n["type"] == "domain" and n.get("uplevel_link")]
+    return {"files": (sum(bool(n.get("drive_url")) for n in files), len(files)),
+            "modules": (sum(bool(n.get("drive_folders")) for n in mods), len(mods)),
+            "domains": (sum(bool(n.get("drive_folder_url")) for n in doms), len(doms))}
+
+
+def historical_group(files) -> str:
+    """Superseded files (content_model.is_historical), collapsed, all linked."""
+    body = ", ".join(link(*f) for f in files)
+    return f"<details><summary>Historical ({len(files)})</summary> {body}</details>"
+
+
 def artefact_group(files) -> str:
     """Test-run output and recorder config (content_model.is_build_artefact),
     collapsed but EVERY ONE still linked — display only, nothing dropped."""
@@ -171,7 +197,7 @@ def main() -> int:
     ]
     summary_at = len(lines)
 
-    tot = ok = confirmed = 0
+    tot = ok = confirmed = sfold = sfold_ok = 0
     conf = load_confirmations()
     for m in mods:
         tag = f"{DOMAIN.get(m['domain_slug'], m['domain_slug'])}/{m.get('sequence')}"
@@ -208,7 +234,8 @@ def main() -> int:
                      if dom and dom.get("uplevel_link") else "")
                   + (f" · {link('Drive folder', folder)}" if folder else "") + " |",
                   f"| Programme week | {week_txt} |",
-                  f"| Module | {link('Uplevel module', m.get('uplevel_link'))} |",
+                  f"| Module | {link('Uplevel module', m.get('uplevel_link'))} · "
+                  + folder_links(m.get("drive_folders"), "No Drive folder recorded") + " |",
                   f"| Decks | {len(decks)}"
                   + (f" ({len(superseded)} superseded)" if superseded else "") + " |",
                   f"| Topics | {len(current_topics)} current"
@@ -226,16 +253,18 @@ def main() -> int:
             n = N[e["target"]]
             if e.get("attached_file"):
                 attached[e.get("session_kind") or ""].append(
-                    (e["attached_file"], e.get("attached_drive_url") or ""))
+                    (e["attached_file"], e.get("attached_drive_url") or "",
+                     bool(e.get("attached_historical"))))
             else:
                 sessions[n.get("session_kind") or "?"] = n
-        lines += ["**Sessions**", "", "| session | Uplevel | Drive |", "|---|---|---|"]
+        lines += ["**Sessions**", "", "| session | Uplevel | Folder | Drive files |",
+                  "|---|---|---|---|"]
         for k in KIND_ORDER:
             n = sessions.get(k)
             if not n:
                 why = ("not offered — optional per module" if k == "post_class"
                        else "not in the mastersheet for this module")
-                lines.append(f"| {KIND_LABEL[k]} | _{why}_ | — |")
+                lines.append(f"| {KIND_LABEL[k]} | _{why}_ | — | — |")
                 continue
             tot += 1
             u = n.get("uplevel_link") or ""
@@ -243,14 +272,22 @@ def main() -> int:
             files = sorted(attached.get(k, []))
             # EVERY FILE, BY ITS FULL NAME: a cap here once listed 193 of 653.
             # Build/recording artefacts are collapsed, still linked (display only).
-            real = [f for f in files if not cm.is_build_artefact(f[0])]
-            junk = [f for f in files if cm.is_build_artefact(f[0])]
+            # HISTORICAL files (a superseded revamp, or named Old) get their own
+            # collapsed group, never mixed with current ones (owner review 2026-09-30).
+            real = [f[:2] for f in files if not cm.is_build_artefact(f[0]) and not f[2]]
+            old = [f[:2] for f in files if not cm.is_build_artefact(f[0]) and f[2]]
+            junk = [f[:2] for f in files if cm.is_build_artefact(f[0])]
             drive = (f"**{len(files)}:** " + ", ".join(
                 link(nm, url) for nm, url in real)
+                + (" " + historical_group(old) if old else "")
                 + (" " + artefact_group(junk) if junk else "")) \
                 if files else "_no file matched at session level_"
+            sfold += 1
+            sfold_ok += bool(n.get("drive_folders"))
             lines.append(f"| {KIND_LABEL[k]} | "
-                         f"{link('open', u) if u else '_no Uplevel link_'} | {drive} |")
+                         f"{link('open', u) if u else '_no Uplevel link_'} | "
+                         f"{folder_links(n.get('drive_folders'), 'No folder for this session')} | "
+                         f"{drive} |")
         lines.append("")
 
         # --- instructors ------------------------------------------------------
@@ -375,6 +412,20 @@ def main() -> int:
     lines.insert(summary_at, f"**{len(mods)} modules, {confirmed} confirmed by the owner. "
                              f"{ok} of {tot} linkable items carry an Uplevel link; the "
                              "rest state a reason.**\n")
+    c = link_counts(g)
+    lines.insert(summary_at + 1, "\n".join([
+        "**Links** _(every count from the graph this checklist is built from)_", "",
+        "| | linked | of | the rest |", "|---|---:|---:|---|",
+        f"| file nodes — Open link | {c['files'][0]} | {c['files'][1]} | "
+        + ("—" if c['files'][0] == c['files'][1] else "**missing — a defect**") + " |",
+        f"| current modules — Drive folder | {c['modules'][0]} | {c['modules'][1]} | "
+        + ("—" if c['modules'][0] == c['modules'][1] else "**missing — a defect**") + " |",
+        f"| current domains — Drive folder | {c['domains'][0]} | {c['domains'][1]} | "
+        + ("—" if c['domains'][0] == c['domains'][1] else "**missing — a defect**") + " |",
+        f"| sessions — Drive folder | {sfold_ok} | {sfold} | "
+        "_No folder for this session_ (no matching subfolder in Drive) |",
+        f"| modules and sessions — Uplevel link | {ok} | {tot} | "
+        + ("—" if ok == tot else "stated per row") + " |", ""]))
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"  -> {OUT.relative_to(REPO_ROOT)}  ({len(mods)} modules, "
           f"{ok}/{tot} items linked)")
