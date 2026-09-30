@@ -9,7 +9,9 @@
 # checkout CI gets. Almost all are DB tests (no database in CI — they run
 # against the local Supabase stack, HANDOFF.md §I) or need gitignored
 # corpus / withheld / build files that must never be committed.
-# Total: 181. (21 moved on 2026-09-30, part 3 step 6: the mastersheet tests read
+# Total: 187. (+6 on 2026-09-30, window step 6: the read-only write canaries
+# run through a REAL pooler, which CI has not.)
+# Was 181. (21 moved on 2026-09-30, part 3 step 6: the mastersheet tests read
 # the LIVE sheet, fetched outside the repo and never in CI; same tests, new reason.)
 # (-1 on 2026-09-30, part 3: the re-derivation's independence check
 # no longer needs the sheet; its two data tests read the LIVE sheet.)
@@ -18,6 +20,8 @@
 # structure-payload DB tests — local stack only, like every DB test.)
 
 skips:
+  "set NP_TEST_SESSION_POOLER_DSN to a session pooler to run the write canaries": 5
+  "set NP_TEST_TRANSACTION_POOLER_DSN to a transaction pooler": 1
   "the live mastersheet is not fetched; run pipeline/fetch_mastersheet.py": 21
   "no SUPABASE_DB_URL_SESSION / psycopg — database tests skipped": 97
   "needs the Supabase connection": 16
