@@ -639,6 +639,13 @@ LOCAL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"   # fixed local 
 #  and tests/test_local_stub_never_ships.py holds both. Refuses a production DSN.
 nohup python3 -u eval/local_server.py 8765 > /tmp/np-local-server.log 2>&1 &
 
+# --- the 3D map (default view; 2D behind the toggle) --------------------------
+#  public/vendor/np3d.min.js is three@0.186.1 + 3d-force-graph@1.80.1, vendored,
+#  eval-free (ngraph stubbed), loaded only when the 3D view is shown. CI cannot
+#  render WebGL: run the GPU check against the review server before a release.
+eval/build_np3d.sh                                 # rebuild the vendored bundle
+python3 eval/check_3d.py                           # 3D under the production CSP: load, chips, focus, fallback, fps
+
 # --- running the tests SAFELY ------------------------------------------
 python3 -m pytest tests -q         # DB tests go to the local stack if it is up,
                                    # and skip if it is not

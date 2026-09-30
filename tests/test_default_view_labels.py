@@ -142,3 +142,46 @@ def test_a_dragged_node_pulls_its_neighbours_and_all_settle_home(views):
     s = views["springs"]
     assert s["neighbours"] > 0 and s["pulled"] > 5, s
     assert s["home"] and s["settledIn"] < 600, s
+
+
+# ---- THE 3D MAP (owner review 2026-09-30) -----------------------------------
+# The real rendering needs WebGL, which CI lacks; eval/check_3d.py drives it in
+# a GPU browser (load, chips, focus, fallback, CSP) and is run for each review.
+# Here: what does not need a GPU — the fallback, and the 3D view's data.
+
+def test_without_webgl_the_map_falls_back_to_2d(views):
+    f = views["fallback"]
+    assert f["dim"] == "2d" and f["on"] is False, f
+    assert f["failed"] and "WebGL" in f["failed"], f
+
+
+def test_the_3d_graph_holds_what_the_map_holds(views):
+    d = views["data3d"]
+    for t in ("domain", "module", SESSION, DECK, "instructor", "person", "theme", "workflow"):
+        assert d["types"].get(t), f"the 3D graph has no {t}: {d['types']}"
+    assert not d["types"].get(TOPIC), d["types"]
+    assert d["depthLayers"] >= 5, "the 3D graph must use depth, not a flat sheet"
+
+
+def test_3d_focus_lights_a_modules_things(views):
+    lit = views["data3d"]["focus"]["lit"]
+    assert lit.get(SESSION, 0) >= 5 and lit.get(DECK, 0) >= 5 and lit.get("instructor", 0) >= 3, lit
+
+
+def test_3d_chips_keep_ghost_anchors(views):
+    d = views["data3dSessions"]
+    assert set(d["visible"]) == {SESSION}, d
+    assert d["ghosts"].get("module") == 20 and d["clusterNames"] == 20, d
+    assert d["links"] >= d["visible"][SESSION], d
+
+
+def test_the_3d_bundle_is_self_hosted_lazy_and_eval_free():
+    page = (REPO / "public" / "index.html").read_text(encoding="utf-8")
+    bundle = (REPO / "public" / "vendor" / "np3d.min.js").read_text(encoding="utf-8")
+    assert '<script src="/vendor/np3d.min.js"' not in page, "the 3D bundle must load lazily"
+    assert "s.src='/vendor/np3d.min.js'" in page
+    assert "new Function" not in bundle and "eval(" not in bundle.replace(".eval(", "")
+    import json
+    csp = [h["value"] for r in json.loads((REPO / "vercel.json").read_text())["headers"]
+           for h in r["headers"] if h["key"].lower() == "content-security-policy"][0]
+    assert "unsafe-eval" not in csp and "script-src 'self'" in csp, csp

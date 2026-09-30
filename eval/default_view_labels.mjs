@@ -61,7 +61,7 @@ globalThis.window.__NP_NO_BOOT = true;
 // The page's top-level const/let (D, state, cam) are invisible to a later
 // indirect eval; an accessor appended to the SAME evaluation reaches them.
 // Harness only — the page is not changed.
-(0,eval)(blocks[1]+'\n;globalThis.__T={get D(){return D},get state(){return state},get cam(){return cam},get TYPES(){return TYPES},get DEFAULT_TYPES(){return DEFAULT_TYPES},get A(){return A},get idx(){return idx},get VIEWMETA(){return VIEWMETA},get SPRING(){return SPRING},get DRAGGED(){return DRAGGED},set DRAGGED(v){DRAGGED=v},get E(){return E},get FITMODE(){return FITMODE}};');
+(0,eval)(blocks[1]+'\n;globalThis.__T={get D(){return D},get state(){return state},get cam(){return cam},get TYPES(){return TYPES},get DEFAULT_TYPES(){return DEFAULT_TYPES},get A(){return A},get V3(){return V3},get idx(){return idx},get VIEWMETA(){return VIEWMETA},get SPRING(){return SPRING},get DRAGGED(){return DRAGGED},set DRAGGED(v){DRAGGED=v},get E(){return E},get FITMODE(){return FITMODE}};');
 const run = (src)=>(0,eval)(src);
 
 // the real payload, decoded by the page's own decoder, merged by its own merge
@@ -139,5 +139,18 @@ out.springs=run(`(()=>{
   let frames=0; while(__T.SPRING.size&&frames<600){springStep();frames++;}
   return {neighbours:nb.length,pulled:+pulled.toFixed(1),settledIn:frames,
           home:Math.hypot(o.x-home[0],o.y-home[1])<0.3&&Math.hypot(m.x-m.tx,m.y-m.ty)<0.3};})()`);
+// THE 3D MAP, without WebGL (this harness has none): the FALLBACK must have
+// switched to 2D with a note, and the 3D view's data and focus are pure
+out.fallback=run(`({dim:__T.state.dim, failed:__T.V3.failed||null, on:__T.V3.on})`);
+run(`__T.state.types=new Set(__T.DEFAULT_TYPES); __T.state.sel=null; recompute(true,'3d data')`);
+out.data3d=run(`(()=>{const d=build3D(); const t={};for(const n of d.nodes)if(!n.ghost)t[n.t]=(t[n.t]||0)+1;
+  const byId=new Map(d.nodes.map(n=>[n.id,n]));
+  const m=d.nodes.find(n=>n.t==='module'&&__T.idx.byId.get(n.id).l==='API Design');
+  const plan=focusPlan3D(m.id,byId); const lit={};for(const x of plan.lit){const o=__T.idx.byId.get(x);if(o)lit[o.t]=(lit[o.t]||0)+1;}
+  return {nodes:d.nodes.length,links:d.links.length,types:t,depthLayers:new Set(d.nodes.map(n=>Math.round(n.hz/50))).size,
+          focus:{lit:lit,distance:plan.distance}};})()`);
+run(`__T.state.types=new Set(['class_session']); recompute(true,'3d sessions')`);
+out.data3dSessions=run(`(()=>{const d=build3D();const g={},v={};for(const n of d.nodes)(n.ghost?g:v)[n.t]=((n.ghost?g:v)[n.t]||0)+1;
+  return {visible:v,ghosts:g,links:d.links.length,clusterNames:d.nodes.filter(n=>n.cl).length};})()`);
 console.log = quiet;
 console.log(JSON.stringify(out));

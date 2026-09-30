@@ -104,27 +104,26 @@ def _serve():
 
 
 #: The owner's list, 2026-09-30: taken at a 1440px-wide window at DPR 2.
+FOCUS3D = ("([slug,seq])=>{const n=D.nodes.find(x=>x.t==='module'&&x.dom===slug&&"
+           "String((x.p||{}).sequence)===seq); if(n)focus3D(n.id);}")
+ONLY3D = "(t)=>{state.types=new Set([t]); recompute(true,'shot'); renderChips(); renderCrumbs();}"
+#: 3D shots open the default view; every other shot is the 2D map (?dim=2d).
 SHOTS = [
-    ("01-default-map", None,
-     "the default map: every current type on one network, legacy as groups"),
-    ("02-sessions-only", "types:class_session:",
-     "only Sessions on: modules stay as ghost anchors named on their clusters"),
-    ("02b-decks-and-modules", "types:slide_deck,module:",
-     "only Decks + Modules on: decks hang off ghost sessions, which join their modules"),
-    ("03-focus-api-design", "mapfocus:module:backend:3",
-     "focus on API Design: its sessions, decks, week, assignments and instructors"),
-    ("04-focus-robert-kreznarich", "mapfocus:instructor:Robert Kreznarich",
-     "focus on Robert Kreznarich: his modules in SD1 and SD3"),
-    ("05-api-design-opened", "module:backend:3",
-     "API Design opened in its domain (double-click): sessions, links, Historical collapsed"),
-    ("06-instructors-list", "list:instructor",
-     "the List toggle: instructors, the 25 current first, the older sheets collapsed"),
+    ("01-3d-default", "3d:", "the 3D default view: every current type floating in depth"),
+    ("02-3d-focus-api-design", "3d:focus-module:backend:3",
+     "3D focus on API Design: its sessions, decks and instructors gathered and lit"),
+    ("03-3d-sessions-only", "3d:types:class_session",
+     "3D with only Sessions on: ghost modules as anchors, edges visible"),
+    ("04-2d-default", None, "the 2D map, for comparison"),
+    ("05-2d-sessions-only", "types:class_session:",
+     "2D with only Sessions on: modules as ghost anchors named on their clusters"),
+    ("06-2d-focus-api-design", "mapfocus:module:backend:3", "2D focus on API Design"),
     ("07-matrix-backend", "view:matrix:backend", "who teaches what — SD3 Backend Engineering"),
     ("08-matrix-testing", "view:matrix:testing", "who teaches what — SD4 Test Engineering"),
     ("09-timeline", "view:timeline", "the programme timeline"),
 ]
 #: the same default map at DPR 1, to compare sharpness
-DPR1_SHOT = ("10-default-map-dpr1", None, "the default map at DPR 1")
+DPR1_SHOT = ("10-2d-default-dpr1", None, "the 2D map at DPR 1")
 
 
 def main() -> int:
@@ -145,7 +144,9 @@ def main() -> int:
 
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
-        b = p.chromium.launch()
+        # the 3D view needs a real GPU (software GL renders it at ~6 fps)
+        b = p.chromium.launch(args=["--use-angle=metal", "--enable-gpu"] if sys.platform == "darwin"
+                              else ["--enable-gpu"])
         ctx = b.new_context(viewport={"width": 1440, "height": 900},
                             device_scale_factor=2)
         INIT = """
@@ -164,7 +165,22 @@ def main() -> int:
                 if m.type == "error" else None)
 
         for name, action, caption in SHOTS:
-            page.goto(base + "/", wait_until="networkidle")
+            is3d = bool(action and action.startswith("3d:"))
+            page.goto(base + ("/" if is3d else "/?dim=2d"), wait_until="networkidle")
+            if is3d:
+                page.wait_for_function("window.__NP_3D&&window.__NP_3D.on&&window.__NP_3D.nodes>0", timeout=30000)
+                page.wait_for_timeout(3000)
+                sub = action[3:]
+                if sub.startswith("focus-module:"):
+                    _, slug, seq = sub.split(":")
+                    page.evaluate(FOCUS3D, [slug, seq])
+                    page.wait_for_timeout(2600)
+                elif sub.startswith("types:"):
+                    page.evaluate(ONLY3D, sub.split(":", 1)[1])
+                    page.wait_for_timeout(2600)
+                page.screenshot(path=str(OUT / f"{name}.png"))
+                print(f"  {OUT.name}/{name}.png  — {caption}")
+                continue
             page.wait_for_timeout(2500)
             if action and action.startswith("module:"):
                 # what a double-click on the map does: open it in its domain
@@ -224,7 +240,7 @@ def main() -> int:
         ctx1 = b.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=1)
         ctx1.add_init_script(INIT)
         p1 = ctx1.new_page()
-        p1.goto(base + "/", wait_until="networkidle")
+        p1.goto(base + "/?dim=2d", wait_until="networkidle")
         p1.wait_for_timeout(3000)
         name, _, caption = DPR1_SHOT
         p1.screenshot(path=str(OUT / f"{name}.png"))

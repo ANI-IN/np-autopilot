@@ -344,6 +344,11 @@ body.panel #hdr{right:342px} body.panel #tools{right:342px} body.panel #hint{rig
 #hint kbd{font:10px ui-monospace,Menlo,monospace;border:1px solid #30363d;border-radius:3px;
   padding:0 4px;color:#c9d1d9}
 #legend{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px}
+#g3{position:fixed;top:0;left:300px;display:none;z-index:1}
+#g3l{position:fixed;top:0;left:300px;display:none;z-index:2;pointer-events:none}
+#dimtog{display:inline-flex;margin-right:6px;border:1px solid #30363d;border-radius:6px;overflow:hidden}
+#dimtog button{border:0;border-radius:0;margin:0;padding:3px 9px}
+#dimtog button[aria-pressed="true"]{background:#1f6feb;color:#fff}
 #legend div{display:flex;gap:6px;align-items:center;font-size:11px;color:#c9d1d9}
 #legend i{width:10px;height:10px;border-radius:50%;flex:none}
 #pcrumb{font-size:11px;margin-bottom:6px;min-height:14px}
@@ -391,6 +396,7 @@ details.legacy summary{cursor:pointer;color:#8b949e;font-size:11px;margin:6px 0}
 
 <div id="tools">
   <button type="button" id="curbtn" hidden>curation</button>
+  <span id="dimtog" role="group" aria-label="2D or 3D map"><button type="button" data-dim="2d" aria-pressed="false">2D</button><button type="button" data-dim="3d" aria-pressed="true">3D</button></span>
   <button type="button" id="fit" title="Fit the view to the screen">fit</button>
   <button type="button" id="zin" title="Zoom in">+</button>
   <button type="button" id="zout" title="Zoom out">&minus;</button>
@@ -855,6 +861,7 @@ addEventListener('resize',()=>{
   _rt=setTimeout(()=>{
     const before={k:cam.k,tx:cam.tx,ty:cam.ty};
     size();                       // canvas backing store only
+    try{ size3D(); }catch(e){}
     cam.k=before.k;cam.tx=before.tx;cam.ty=before.ty;
     console.log('[np] resize: viewport kept, simulation untouched (frozen='+frozen+')');
   },150);
@@ -887,7 +894,7 @@ function colsFit(colW,max){ return Math.max(1, Math.min(max||99, Math.floor(layo
 //: true while the camera is where fit() put it; panning or zooming clears it,
 //: and a panel opening or closing re-fits only a camera nobody has moved.
 let camFitted=true;
-function panelChanged(){ if(camFitted&&state.view==='graph')fit(); }
+function panelChanged(){ if(V3.on){size3D();return;} if(camFitted&&state.view==='graph')fit(); }
 // The header WRAPS to more lines when the panel narrows it (or the chips
 // change): the canvas area shrinks under a view already fitted. Re-fit then
 // too, for a camera nobody has moved.
@@ -949,7 +956,7 @@ function centreOn(n,k){
 // nothing in that view is isolated (all 42 have a deliverer, which is why the
 // unowned three are reported by name instead; see data.overview), so this costs
 // nothing now and prevents a silent drop later.
-const state={types:new Set(['domain','module','program_week','class_session','assignment',
+const state={dim:'3d',types:new Set(['domain','module','program_week','class_session','assignment',
   'assignment_review','slide_deck','instructor','person','theme','workflow']),listMode:false,showIso:true,showDash:true,separate:false,
   place:null,open:new Set(),hist:[],
   sel:null,expanded:new Set(),depth:1,
@@ -968,6 +975,9 @@ let settle=0, alpha=1, frozen=false;
 // Paint-time ONLY. It never writes to n.x/n.y, never touches the simulation,
 // and hit-testing uses the true settled coordinates. Raising the force floor
 // instead would re-introduce the never-settling bug.
+// the 3D map's state (declared here: the 2D loop reads V3.on from its first frame)
+const V3={on:false,ready:false,loading:false,G:null,el:null,lab:null,lctx:null,nodes:new Map(),
+  idle:0,key:'',failed:null,raf:0,frame:{mean:0,n:0},home:new Map()};
 // A LIVING MAP (owner review 2026-09-30): every node drifts gently round its
 // home — the precomputed position — by a couple of SCREEN pixels whatever the
 // zoom, so labels never collide. Off under prefers-reduced-motion.
@@ -1884,7 +1894,9 @@ function recompute(refit, why){
   E=v.links.filter(([a,b])=>ids.has(a)&&ids.has(b)).map(([a,b,c,minor])=>({s:a,t:b,r:'_view',p:{},c:c||null,minor:!!minor}));
   FRAMES=v.frames; FITMODE=v.fit||'all';
   const hint=document.getElementById('hint');
-  if(hint)hint.innerHTML=FITMODE==='width'
+  if(hint)hint.innerHTML=want3D()&&!(V3.failed)
+    ?'Drag to rotate &middot; right-drag to pan &middot; scroll to zoom &middot; drag a node to pull it &middot; click to focus &middot; <kbd>/</kbd> search &middot; <kbd>Esc</kbd> returns'
+    :FITMODE==='width'
     ?'Scroll to move down the list &middot; Ctrl + scroll to zoom &middot; click for details &middot; <kbd>/</kbd> search &middot; <kbd>Esc</kbd> clears'
     :'Drag the canvas to pan &middot; scroll to zoom &middot; click for details &middot; click a group to open it &middot; <kbd>/</kbd> search &middot; <kbd>Esc</kbd> clears';
   renderDiag();
@@ -1895,6 +1907,7 @@ function recompute(refit, why){
   cam.k=keepCam.k;cam.tx=keepCam.tx;cam.ty=keepCam.ty;
   state.sel=keepSel;
   document.getElementById('right').style.display=keepPanel;
+  try{ if(typeof sync3D==='function'){ renderDim(); sync3D(); } }catch(e){ console.error('[np] 3D', e); }
 }
 let _fitPending=false;
 
@@ -1932,6 +1945,7 @@ function labelOf(n){ const it=VIEWMETA.get(n.id);
   if(it&&it.label)return it.label;
   return n.t==='group'?n.l:contextLabel(n); }
 function draw(){
+  if(V3.on)return;                      // the 3D view paints itself
   ctx.clearRect(0,0,W,H);
   const now=performance.now();
   const lit=state.sel?litSet(state.sel):null;
@@ -2202,16 +2216,18 @@ cv.addEventListener('mousemove',ev=>{
   const n=hit(ev.clientX,ev.clientY);
   const hid=n?n.id:null; if(hid!==HOVER){HOVER=hid;}
   cv.style.cursor=n?'pointer':'grab';
-  if(n){tip.style.display='block';tip.style.left=(ev.clientX+12)+'px';
-    tip.style.top=(ev.clientY+12)+'px';
-    const d=n.t==='group'?null:domainOf(n);
-    tip.innerHTML='<b>'+esc(labelOf(n))+'</b>'+(badgeOf(n)?' '+LEGACY_BADGE:'')+'<br>'+esc(typeLabel(n.t))+
-      (d&&d.id!==n.id?' &middot; '+domainHtml(d):'')+
-      (n.t==='domain'&&countsText(n)?'<br>'+esc(countsText(n)):'')+
-      (n.legacy?'<br>Legacy module from older sheets':'')+
-      (n.t==='content_topic'?topicLocator(n):'')+
-      '<br><span class="dim">'+esc(clickHint(n))+'</span>'}
-  else tip.style.display='none'});
+  if(n)showTip(n,ev.clientX,ev.clientY); else tip.style.display='none'});
+//: one tooltip for the 2D and the 3D map
+function tipHtml(n){
+  const d=n.t==='group'?null:domainOf(n);
+  return '<b>'+esc(labelOf(n))+'</b>'+(badgeOf(n)?' '+LEGACY_BADGE:'')+'<br>'+esc(typeLabel(n.t))+
+    (d&&d.id!==n.id?' &middot; '+domainHtml(d):'')+
+    (n.t==='domain'&&countsText(n)?'<br>'+esc(countsText(n)):'')+
+    (n.legacy?'<br>Legacy module from older sheets':'')+
+    (n.t==='content_topic'?topicLocator(n):'')+
+    '<br><span class="dim">'+esc(clickHint(n))+'</span>';
+}
+function showTip(n,x,y){tip.style.display='block';tip.style.left=(x+12)+'px';tip.style.top=(y+12)+'px';tip.innerHTML=tipHtml(n);}
 //: where a topic sits: the slide, page or tab, and in what kind of file
 function topicLocator(n){
   const out=[];
@@ -2269,6 +2285,7 @@ function toggleGroup(g){
   recompute(true,'group toggled');
 }
 function clearFocus(){ state.sel=null; closePanel();
+  if(V3.on){ unfocus3D(); return; }
   if(FOCUS_MOD){FOCUS_MOD=null; if(!state.place&&!state.listMode){recompute(false,'focus cleared');settle=0;alpha=1;frozen=false;}}
   if(_framed&&!state.place&&!state.listMode){_framed=false;fit();} maybeLoadTopics(); }
 cv.addEventListener('click',ev=>{ev.preventDefault();
@@ -2289,9 +2306,11 @@ addEventListener('keydown',ev=>{
     clearFocus();
   }
 });
-document.getElementById('fit').onclick=()=>fit();
-document.getElementById('zin').onclick=()=>{cam.k=Math.min(4,cam.k*1.3)};
-document.getElementById('zout').onclick=()=>{cam.k=Math.max(0.05,cam.k/1.3)};
+document.getElementById('fit').onclick=()=>{ if(V3.on){touched3D();V3.G.zoomToFit(600,50);return;} fit(); };
+function dolly3D(f){ touched3D(); const c=V3.G.camera().position, t=V3.ctrl.target;
+  V3.G.cameraPosition({x:t.x+(c.x-t.x)*f,y:t.y+(c.y-t.y)*f,z:t.z+(c.z-t.z)*f},t,300); }
+document.getElementById('zin').onclick=()=>{ if(V3.on)return dolly3D(1/1.3); cam.k=Math.min(4,cam.k*1.3)};
+document.getElementById('zout').onclick=()=>{ if(V3.on)return dolly3D(1.3); cam.k=Math.max(0.05,cam.k/1.3)};
 
 // ---- SELECTION. Touches state.sel and the panel ONLY. (ported) -----------
 // It must never call recompute(), fit(), size() or touch node coordinates.
@@ -3699,7 +3718,7 @@ function setView(v,push){
     b.setAttribute('aria-pressed', String(b.dataset.view===v));
   SHEET.style.display = v==='graph' ? 'none' : 'block';
   try{ document.body.classList.toggle('table', v!=='graph'); }catch(e){}
-  renderCrumbs();
+  renderCrumbs(); try{ renderDim(); sync3D(); }catch(e){}
   if(v==='matrix')renderMatrix();
   if(v==='timeline')renderTimeline();
   if(push!==false)writeUrl();
@@ -3723,6 +3742,7 @@ function writeUrl(){
   if(state.sel)q.set('focus',state.sel);
   if(!allTypesOn())q.set('types',TYPES.filter(t=>state.types.has(t)).join(','));
   if(state.listMode)q.set('list','1');
+  if(state.dim==='2d')q.set('dim','2d');
   if(state.fDomain)q.set('domain',state.fDomain);
   if(state.fWeek)q.set('week',state.fWeek);
   if(state.fRole)q.set('role',state.fRole);
@@ -3738,6 +3758,7 @@ function readUrl(){
   state.fRole=q.get('role')||null;
   state.mxSort=q.get('sort')==='az'?'az':null;
   state.listMode=q.get('list')==='1';
+  state.dim=q.get('dim')==='2d'?'2d':'3d';
   const t=q.get('types');
   if(t){const want=t.split(',').filter(x=>TYPES.indexOf(x)>=0);
         if(want.length)state.types=new Set(want);}
@@ -3856,6 +3877,275 @@ function frameFocus(id){
   cam.k=k; cam.tx=P.x0+vw/2-((a+c)/2)*k; cam.ty=P.y0+vh/2-((b+d)/2)*k;
   _framed=true; camFitted=false;
 }
+
+// =============================================================================
+// THE 3D MAP (owner review 2026-09-30). The default view is a 3D FLOATING
+// graph; 2D is the network above, kept as is, behind a 2D/3D toggle.
+//  - Three.js + 3d-force-graph, VENDORED at /vendor/np3d.min.js (no CDN; eval-
+//    free, so the CSP is unchanged) and loaded only when the 3D view is shown.
+//  - It opens ORGANISED: every node starts at its home — the 2D map's position,
+//    given a depth by type — and a gentle home force keeps it there while it
+//    drifts. Links are soft springs, so a dragged node pulls its neighbours.
+//  - Same data as the 2D map (types, colours, role edges, legacy groups,
+//    chips, ghost anchors): it is BUILT from the 2D view the chips produced.
+//  - Labels are a 2D overlay: always facing the camera, never text on text.
+//  - No WebGL (or the bundle fails to load): the 2D map, with a note.
+// =============================================================================
+const Z3={domain:0,module:40,program_week:105,class_session:110,assignment:120,assignment_review:120,
+  slide_deck:175,content_topic:230,instructor:-120,person:-175,group:-160,theme:-70,workflow:-90,program:-160};
+function webglAvailable(){
+  try{ const c=document.createElement('canvas');
+       return !!(window.WebGLRenderingContext&&c&&c.getContext&&(c.getContext('webgl2')||c.getContext('webgl'))); }
+  catch(e){ return false; }
+}
+function want3D(){ return state.dim==='3d'&&state.view==='graph'&&!state.listMode&&!state.place; }
+//: PURE: the 3D graph's data, from the 2D view the chips and filters produced
+function build3D(){
+  const nodes=[], links=[];
+  for(const n of A){
+    const it=VIEWMETA.get(n.id)||{}; if(n.tx===undefined)continue;
+    const h=driftPhase(n.id)%1;
+    nodes.push({id:n.id,t:n.t,ghost:!!it.ghost,cl:!!it.clusterLabel,pri:it.pri||1,
+      hx:n.tx,hy:-n.ty,hz:(Z3[n.t]!==undefined?Z3[n.t]:0)+(h-0.5)*40});
+  }
+  const ids=new Set(nodes.map(x=>x.id));
+  for(const e of E)if(ids.has(e.s)&&ids.has(e.t))links.push({source:e.s,target:e.t,c:e.c||null,minor:!!e.minor});
+  return {nodes,links};
+}
+//: PURE: what focus lights up, and where the camera goes
+function focusPlan3D(id,byId){
+  const lit=litSet(id), me=byId.get(id); if(!me)return null;
+  let r=60;
+  for(const x of lit){const o=byId.get(x); if(o&&o!==me)r=Math.max(r,Math.hypot(o.hx-me.hx,o.hy-me.hy,o.hz-me.hz));}
+  return {lit:lit, at:{x:me.hx,y:me.hy,z:me.hz}, distance:Math.min(1400,Math.max(260,r*1.9))};
+}
+function sync3D(){
+  if(!want3D()){ if(V3.on)hide3D(); return; }
+  if(!webglAvailable()){ fallback2D('3D needs WebGL, which this browser has turned off — showing the 2D map.'); return; }
+  if(!V3.ready){ load3D(); return; }
+  show3D(); update3D();
+}
+function fallback2D(why){
+  V3.failed=why; state.dim='2d'; if(V3.on)hide3D();
+  try{ banner(esc(why)); }catch(e){}
+  renderDim(); writeUrl();
+}
+function load3D(){
+  if(V3.loading)return; V3.loading=true;
+  const t0=performance.now();
+  const s=document.createElement('script'); s.src='/vendor/np3d.min.js'; s.async=true;
+  s.onload=()=>{V3.loading=false; V3.ready=!!window.NP3D; V3.loadMs=performance.now()-t0;
+    if(V3.ready)sync3D(); else fallback2D('The 3D view could not start — showing the 2D map.');};
+  s.onerror=()=>{V3.loading=false; fallback2D('The 3D view could not be loaded — showing the 2D map.');};
+  document.head.appendChild(s);
+}
+function color3(n){
+  const base=n.t==='group'?'#8b949e':(C[n.t]||'#c9d1d9');
+  const lit=state.sel?V3.lit:null;
+  if(n.ghost)return hexA(base,(HOVER===n.id)?0.7:0.22);
+  if(lit&&!lit.has(n.id))return hexA(base,0.14);
+  return base;
+}
+function hexA(hex,a){const h=hex.replace('#','');const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+  return 'rgba('+r+','+g+','+b+','+a+')';}
+function linkColor3(l){
+  const s=typeof l.source==='object'?l.source.id:l.source, t=typeof l.target==='object'?l.target.id:l.target;
+  const lit=state.sel?V3.lit:null;
+  const hot=lit&&(s===state.sel||t===state.sel), hov=!lit&&HOVER&&(s===HOVER||t===HOVER);
+  if(l.c)return hexA(l.c,hot||hov?0.95:(lit?0.06:0.6));
+  return hot?'rgba(230,237,243,.9)':(hov?'rgba(230,237,243,.8)':(lit?'rgba(139,148,158,.05)':(l.minor?'rgba(139,148,158,.28)':'rgba(139,148,158,.45)')));
+}
+function size3(n){return n.ghost?1.2:(n.t==='domain'?16:(n.t==='group'?7:(n.t==='module'?8:(n.t==='instructor'?4.5:(n.t==='theme'?4:1.8)))));}
+function homeForce(){
+  let nodes=[];
+  function f(){
+    const t=performance.now()*0.0005, A_=(drift&&!DRAG3)?7:0;
+    for(const n of nodes){ if(n.fx!==undefined&&n.fx!==null)continue;
+      const ph=n.ph||0, o=V3.home.get(n.id), hx=o?o.x:n.hx, hy=o?o.y:n.hy, hz=o?o.z:n.hz, k=o?0.12:0.05;
+      n.vx+=(hx+A_*Math.sin(t+ph)-n.x)*k;
+      n.vy+=(hy+A_*Math.cos(t*0.9+ph)-n.y)*k;
+      n.vz+=(hz+A_*Math.sin(t*0.8+ph*1.3)-n.z)*k; }
+  }
+  f.initialize=ns=>{nodes=ns;};
+  return f;
+}
+let DRAG3=false;
+function init3D(){
+  const el=document.createElement('div'); el.id='g3'; document.body.appendChild(el); V3.el=el;
+  const lab=document.createElement('canvas'); lab.id='g3l'; document.body.appendChild(lab); V3.lab=lab; V3.lctx=lab.getContext('2d');
+  const G=window.NP3D.ForceGraph3D({controlType:'orbit'})(el)
+    .backgroundColor('#0d1117').showNavInfo(false)
+    .nodeId('id').nodeVal(size3).nodeRelSize(4).nodeResolution(12).nodeOpacity(0.95)
+    .nodeColor(color3).nodeLabel(()=>'')
+    .linkColor(linkColor3).linkOpacity(1).linkWidth(l=>{const s=typeof l.source==='object'?l.source.id:l.source,
+        t=typeof l.target==='object'?l.target.id:l.target; return state.sel&&(s===state.sel||t===state.sel)?1.4:0;})
+    .enableNodeDrag(true).cooldownTicks(Infinity).cooldownTime(Infinity)
+    .d3AlphaMin(0).d3AlphaDecay(0.03).d3VelocityDecay(0.35)
+    .onNodeHover(n=>{HOVER=n?n.id:null; el.style.cursor=n?'pointer':'grab';
+      if(n){const o=idx.byId.get(n.id)||GROUPS.get(String(n.id).slice(4)); if(o)showTip(o,V3.mx||0,V3.my||0);} else tip.style.display='none';
+      refresh3D();})
+    .onNodeClick(n=>{ const o=idx.byId.get(n.id)||GROUPS.get(String(n.id).slice(4)); if(!o)return;
+      if(o.t==='group'||o.t==='domain'){ activate(o); return; }
+      focus3D(n.id); })
+    .onBackgroundClick(()=>clearFocus())
+    .onNodeDrag(()=>{ DRAG3=true; touched3D(); G.d3ReheatSimulation(); })
+    .onNodeDragEnd(n=>{ DRAG3=false; n.fx=n.fy=n.fz=undefined; G.d3ReheatSimulation(); });
+  G.d3Force('charge',null); G.d3Force('center',null);
+  G.d3Force('link').strength(0.12).distance(l=>{const a=l.source,b=l.target;
+    return (a&&b&&a.hx!==undefined)?Math.hypot(a.hx-b.hx,a.hy-b.hy,a.hz-b.hz):40;});
+  G.d3Force('home',homeForce());
+  const ctrl=G.controls();
+  ctrl.autoRotate=drift; ctrl.autoRotateSpeed=0.35;
+  ctrl.addEventListener('start',()=>touched3D());
+  el.addEventListener('mousemove',ev=>{V3.mx=ev.clientX;V3.my=ev.clientY;});
+  el.addEventListener('wheel',()=>touched3D(),{passive:true});
+  V3.G=G; V3.ctrl=ctrl;
+  // AUTO-ROTATE stops the moment you touch the map and resumes after a pause
+  setInterval(()=>{ if(!V3.on||!drift||state.sel)return;
+    if(!ctrl.autoRotate&&performance.now()-V3.idle>9000)ctrl.autoRotate=true; },1000);
+}
+function touched3D(){ V3.idle=performance.now(); if(V3.ctrl)V3.ctrl.autoRotate=false; }
+function size3D(){
+  if(!V3.G)return;
+  // THE CANVAS AREA ONLY: between the sidebar and the panel, below the
+  // header, above the view switch — nothing drawn under the chips
+  const CA=clipArea(), w=Math.max(200,CA.x1-CA.x0), h=Math.max(200,CA.y1-CA.y0);
+  for(const e of [V3.el,V3.lab]){e.style.left=CA.x0+'px';e.style.top=CA.y0+'px';e.style.width=w+'px';e.style.height=h+'px';}
+  V3.G.width(w).height(h);
+  const d=window.devicePixelRatio||1;
+  V3.lab.width=Math.round(w*d); V3.lab.height=Math.round(h*d); V3.lctx.setTransform(d,0,0,d,0,0);
+  V3.w=w; V3.h=h;
+}
+function show3D(){
+  if(!V3.G)init3D();
+  if(!V3.on){ V3.on=true; V3.el.style.display='block'; V3.lab.style.display='block'; cv.style.display='none';
+    size3D(); if(V3.G.resumeAnimation)V3.G.resumeAnimation(); V3.raf=requestAnimationFrame(labels3D); V3.firstFit=true; }
+}
+function hide3D(){
+  if(!V3.on)return; V3.on=false;
+  V3.el.style.display='none'; V3.lab.style.display='none'; cv.style.display='';
+  if(V3.G&&V3.G.pauseAnimation)V3.G.pauseAnimation(); cancelAnimationFrame(V3.raf);
+}
+function update3D(){
+  const data=build3D();
+  const key=data.nodes.length+':'+data.links.length+':'+window.__NP_RECOMPUTES;
+  if(key===V3.key)return; V3.key=key;
+  const keep=V3.nodes, next=new Map();
+  const nodes=data.nodes.map(d=>{let o=keep.get(d.id);
+    if(!o){o={id:d.id,x:d.hx,y:d.hy,z:d.hz,ph:driftPhase(d.id)};}
+    Object.assign(o,{t:d.t,ghost:d.ghost,cl:d.cl,pri:d.pri,hx:d.hx,hy:d.hy,hz:d.hz}); next.set(d.id,o); return o;});
+  V3.nodes=next;
+  V3.G.graphData({nodes:nodes,links:data.links});
+  // a CHIP change re-frames the graph; a focus or a hover never does
+  const tk=[...state.types].sort().join(',')+'|'+(state.fDomain||'')+'|'+(state.fWeek||'')+'|'+(state.fRole||'');
+  if(V3.typesKey&&tk!==V3.typesKey&&!state.sel)setTimeout(()=>{ if(V3.on)V3.G.zoomToFit(600,30); },80);
+  V3.typesKey=tk;
+  if(V3.firstFit){ V3.firstFit=false;
+    // fit once the renderer has its size, and again once the nodes are home
+    for(const ms of [120,700])setTimeout(()=>{ if(V3.on&&!state.sel)V3.G.zoomToFit(ms<200?0:500,30); },ms); }
+}
+function refresh3D(){ if(V3.G){ V3.G.nodeColor(color3); V3.G.linkColor(linkColor3); V3.G.linkWidth(V3.G.linkWidth()); } }
+//: a FOCUSED MODULE gathers its own things round it — sessions, week and
+//: assignments on an inner sphere, decks on an outer one — and its instructors
+//: float in beside it; everything drifts home again when the focus clears
+function gather3D(id){
+  V3.home=new Map();
+  const m=V3.nodes.get(id); if(!m||m.t!=='module')return 0;
+  const kids=[], ins=[];
+  for(const l of V3.G.graphData().links){
+    const s=typeof l.source==='object'?l.source.id:l.source, t=typeof l.target==='object'?l.target.id:l.target;
+    const o=s===id?t:(t===id?s:null); if(!o)continue;
+    const n=V3.nodes.get(o); if(!n||n.ghost)continue;
+    if(n.t==='instructor')ins.push(n); else if(n.t!=='domain')kids.push(n);
+    if(n.t==='class_session')for(const l2 of V3.G.graphData().links){      // its decks too
+      const a=typeof l2.source==='object'?l2.source.id:l2.source, b=typeof l2.target==='object'?l2.target.id:l2.target;
+      if(a===n.id){const d=V3.nodes.get(b); if(d&&d.t==='slide_deck')kids.push(d);} }
+  }
+  const inner=kids.filter(n=>n.t!=='slide_deck'), outer=kids.filter(n=>n.t==='slide_deck');
+  const sphere=(list,r)=>list.forEach((n,i)=>{const k=list.length, y=1-2*(i+0.5)/k, rr=Math.sqrt(1-y*y), th=i*2.39996;
+    V3.home.set(n.id,{x:m.hx+r*rr*Math.cos(th),y:m.hy+r*y,z:m.hz+r*rr*Math.sin(th)});});
+  sphere(inner,95); sphere(outer,170);
+  ins.forEach((n,i)=>{const a=Math.PI*(0.75+0.5*i/Math.max(ins.length-1,1));
+    V3.home.set(n.id,{x:m.hx+230*Math.cos(a),y:m.hy+230*Math.sin(a),z:m.hz+60});});
+  return 230;                      // no reheat: the home pull alone moves them, quickly
+}
+function focus3D(id){
+  const plan=focusPlan3D(id,V3.nodes); if(!plan)return;
+  touched3D(); V3.lit=plan.lit; openNode(id); state.sel=id; refresh3D();
+  const g=gather3D(id); if(g)plan.distance=620;
+  const cam=V3.G.camera().position, a=plan.at;
+  let dx=cam.x-a.x, dy=cam.y-a.y, dz=cam.z-a.z; const L=Math.hypot(dx,dy,dz)||1;
+  V3.G.cameraPosition({x:a.x+dx/L*plan.distance,y:a.y+dy/L*plan.distance,z:a.z+dz/L*plan.distance},a,1100);
+}
+function unfocus3D(){ V3.lit=null; V3.home=new Map(); refresh3D();
+  if(V3.G)V3.G.zoomToFit(900,30); }
+//: LABELS, a 2D overlay over the WebGL canvas: domains, modules, instructors
+//: always; sessions, assignments, decks and weeks when near or hovered; in
+//: focus, the lit neighbourhood. Placed without text on text, every frame.
+function labels3D(){
+  if(!V3.on)return;
+  V3.raf=requestAnimationFrame(labels3D);
+  if(document.hidden)return;
+  const t0=performance.now(), g=V3.lctx, G=V3.G; if(!G)return;
+  g.clearRect(0,0,V3.w,V3.h);
+  const cam=G.camera().position, lit=state.sel?V3.lit:null;
+  const cand=[];
+  for(const n of V3.nodes.values()){
+    if(n.x===undefined)continue;
+    const must=(n.t==='domain'||n.t==='module'||n.t==='group'||n.cl||(n.t==='instructor'&&CURRENT_INS.has(n.id)))&&!(n.ghost&&!n.cl);
+    const d=Math.hypot(n.x-cam.x,n.y-cam.y,n.z-cam.z);
+    const near=!n.ghost&&d<420, inFocus=lit&&lit.has(n.id);
+    // themes are labelled when there is room (never at the cost of the above)
+    if(!(must||near||inFocus||n.t==='theme'||HOVER===n.id||state.sel===n.id))continue;
+    const p=G.graph2ScreenCoords(n.x,n.y,n.z);
+    if(!p||p.x<-50||p.y<-50||p.x>V3.w+50||p.y>V3.h+50)continue;
+    // behind the camera?
+    const v=new window.NP3D.THREE.Vector3(n.x,n.y,n.z).project(G.camera()); if(v.z>1)continue;
+    const o=idx.byId.get(n.id)||GROUPS.get(String(n.id).slice(4)); if(!o)continue;
+    const rank=(state.sel===n.id?100:0)+(inFocus?40:0)+(n.t==='domain'?30:n.t==='module'?25:n.t==='group'?22:n.t==='instructor'?20:n.cl?18:5)-d/1000;
+    cand.push({n,o,p,must,rank,big:n.t==='domain'||n.t==='module'});
+  }
+  cand.sort((a,b)=>b.rank-a.rank);
+  const boxes=[];
+  const hitB=b=>boxes.some(o=>b.x0<o.x1&&b.x1>o.x0&&b.y0<o.y1&&b.y1>o.y0);
+  const top=0;                                      // the overlay IS the canvas area
+  let placed=0;
+  for(const c of cand){
+    g.font=(c.big?'600 12.5px ':'11px ')+'-apple-system,Segoe UI,sans-serif';
+    const text=c.n.t==='domain'?domainName(c.o):labelOf(c.o);
+    const w=g.measureText(text).width, h=c.big?15:13, r=6;
+    const {x,y}=c.p; let got=null;
+    const C_=[[x+r,y+4],[x-r-w,y+4],[x-w/2,y-r-3],[x-w/2,y+r+h]];
+    if(c.must)for(const k of [1,-1,2,-2,3,-3])C_.push([x+r,y+4+k*h],[x-r-w,y+4+k*h],[x-w/2,y-r-3+k*h]);
+    for(const [lx,ly] of C_){
+      const b={x0:lx-2,y0:ly-h+3,x1:lx+w+2,y1:ly+3};
+      if(b.y0<top||b.x0<0||b.x1>V3.w||b.y1>V3.h)continue;
+      if(!hitB(b)){got=[lx,ly,b];break;}
+    }
+    if(!got)continue;                               // never text on text
+    boxes.push(got[2]); placed++;
+    g.globalAlpha=(lit&&!lit.has(c.n.id))?0.25:1;
+    g.fillStyle=c.n.ghost?'#8b949e':(c.big?'#e6edf3':'#c9d1d9');
+    g.fillText(text,got[0],got[1]);
+  }
+  g.globalAlpha=1;
+  V3.placed=placed; V3.dropped=cand.filter(c=>c.must).length-boxes.length;
+  const dt=performance.now()-t0, F=V3.frame; F.n++; F.mean+=(dt-F.mean)/Math.min(F.n,120);
+  try{ window.__NP_3D={on:V3.on,nodes:V3.nodes.size,links:(G.graphData().links||[]).length,
+    labelsPlaced:placed,labelMs:F.mean,loadMs:V3.loadMs,sel:state.sel||null,lit:lit?lit.size:0,failed:V3.failed}; }catch(e){}
+}
+try{ document.addEventListener('visibilitychange',()=>{ if(!V3.G)return;
+  if(document.hidden){ if(V3.G.pauseAnimation)V3.G.pauseAnimation(); }
+  else if(V3.on&&V3.G.resumeAnimation)V3.G.resumeAnimation(); }); }catch(e){}
+//: the 2D / 3D toggle, beside fit
+function renderDim(){
+  const t=document.getElementById('dimtog'); if(!t)return;
+  for(const b of t.querySelectorAll('button'))b.setAttribute('aria-pressed',String(b.dataset.dim===state.dim));
+  const inMap=state.view==='graph'&&!state.listMode&&!state.place;
+  t.style.display=inMap?'':'none';
+}
+function setDim(d){ state.dim=d==='2d'?'2d':'3d'; renderDim(); writeUrl(); if(state.dim==='2d'){hide3D();recompute(true,'2D');} else sync3D(); }
+for(const b of document.querySelectorAll('#dimtog button'))b.onclick=()=>setDim(b.dataset.dim);
 
 // Called once the structure payload has landed.
 function afterStructure(){
