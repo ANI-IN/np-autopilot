@@ -162,3 +162,22 @@ def test_the_guard_refuses_to_run_through_the_transaction_pooler(monkeypatch):
     with pytest.raises(RuntimeError, match="TRANSACTION pooler"):
         with db_guard.read_only_database():
             pass
+
+
+def test_the_production_form_can_never_run_canary_5():
+    import read_only_canaries as rc
+    assert "SET TRANSACTION READ WRITE, then INSERT" not in rc.PRODUCTION_SAFE
+    seen = []
+
+    class Conn:
+        autocommit = False
+        def cursor(self): return self
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def execute(self, q): seen.append(q)
+        def rollback(self): pass
+        def close(self): pass
+    rc.canaries(lambda: Conn(), only=rc.PRODUCTION_SAFE)
+    assert not any("read write" in q for q in seen)
+    src = (REPO / "tests" / "read_only_canaries.py").read_text(encoding="utf-8")
+    assert "only=PRODUCTION_SAFE" in src.split('if __name__ == "__main__":', 1)[1]

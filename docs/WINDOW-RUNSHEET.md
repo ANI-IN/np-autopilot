@@ -9,6 +9,39 @@ changed parts (projection, verify, restore) **re-rehearsed the same day from
 `main` `694c323`** — the graph after checklist review parts 1–3. Times are
 **measured** in the rehearsal (local) or by read-only probes of production.
 
+## STATE — window PAUSED, 2026-09-30 (owner decision)
+
+| | |
+|---|---|
+| production code | **`dpl_5wWZxv7ed1Bhq1fvCMSMVPgnfmxg`** — the OLD UI, restored by `vercel rollback` after the owner rejected the new UI on live. The new build `dpl_FCvYhM6qQMY7nJVNhWxRmHpfdwys` stays in the project, unassigned |
+| production database | migration **0021**, the **old data** (`eba7c479…`, 3,146 nodes) — restored at step 6 when the production_only tests could not be guarded through the pooler; the old code serves it (rehearsed, and verified live) |
+| backup | `~/.config/np-autopilot/window-20260930-1133` — kept until the owner says otherwise |
+| next | B4 (the UI), judged on a PREVIEW with the new data, never on production; then a new window from step 4 |
+
+### After a Hobby rollback, the next deploy must be PROMOTED
+
+`vercel rollback` turned OFF automatic assignment of the production domain.
+From now on `vercel deploy --prebuilt --prod` creates a production deployment
+that does **not** take `np-autopilot.vercel.app`. The next window's step 4 is
+therefore:
+
+1. `python3 db/window/check_function_map.py "$ART"` — `function map OK`.
+2. Preview first (`vercel deploy --prebuilt`, no `--prod`), checked through
+   `vercel curl` as on 2026-09-30.
+3. `cd "$ART" && vercel deploy --prebuilt --prod` → note the new `dpl_…`;
+   `vercel inspect np-autopilot.vercel.app` must STILL show `dpl_5wWZ…` —
+   if the domain moved, auto-assignment was not off; say so, do not guess.
+4. Check the new deployment on its own URL (`vercel curl … --deployment <url>`):
+   `/api/config` 200, protected endpoints 401 with our body, six headers.
+5. `vercel promote <new dpl id> --yes` — assigns `np-autopilot.vercel.app`
+   and turns automatic assignment back on. `vercel inspect` the live URL:
+   it must show the new id.
+6. The rollback target is then the deployment that was current before the
+   promote — `dpl_5wWZ…`.
+
+Steps 3 and 5 have not yet been exercised against Vercel (R23's lesson): the
+first time they run is the first place to expect a surprise.
+
 ## Figures this plan rests on
 
 | | measured | production estimate |

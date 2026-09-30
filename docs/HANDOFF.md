@@ -211,6 +211,16 @@ against a copy of production: migrations roll back to an identical schema; the
 restore brings back production's content hash; the projection takes 5.4 s
 locally, estimated 10–20 s in production from a measured 4.5–6.1 MB/s upload.
 
+**WINDOW PAUSED 2026-09-30 (owner decision).** Steps 0–3 passed; step 4
+failed once (R23 — fixed, redeployed); step 5 projected the new graph; step 6's
+production_only tests could not be guarded through the pooler, so the
+projection was restored (old data, 0021); the owner then rejected the new UI on
+live and the CODE was rolled back to `dpl_5wWZ…`. Production today = old code,
+old data, migration 0021. Next: B4 (UI) approved on a preview, then a new window
+from step 4 — **promoted**, not auto-assigned (WINDOW-RUNSHEET "After a Hobby
+rollback"). The read-only guard now works through the pooler (canaries 1–4
+refused through the local session pooler); canary 5 is the §D.5 role.
+
 **Re-rehearsed 2026-09-30 from `main` `694c323`** (after checklist review
 parts 1–3): migrate 0016→0021, projection 7.0 s with the live-sheet freshness
 check passing for real, `verify_migration` 54/54, curation IN SYNC, restore
