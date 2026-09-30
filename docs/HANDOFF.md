@@ -38,7 +38,7 @@ this session has been deployed or applied.
 
 | | production today | local only |
 |---|---|---|
-| graph | 3,146 nodes / 4,021 edges, `projected_at` **2026-09-20 11:00:22Z** (see below) | merged public **8,507 / 42,741** |
+| graph | 3,146 nodes / 4,021 edges, `projected_at` **2026-09-20 11:00:22Z** (see below) | merged public **8,496 / 42,743** (`694c323`) |
 | UI | the old bounded ~60-node overview | structure view, panels, matrix, timeline, filters |
 | database | migrations through **0016** | local Supabase stack with **0017–0020 applied** |
 | connections | one per request | one per warm instance (cold-start fixes) |
@@ -60,9 +60,9 @@ hazard §I now refuses.
 
 | | nodes | edges |
 |---|---:|---:|
-| merged, public half | **8,507** | 42,741 |
-| merged, full (incl. 28 `instructor_contact`) | 10,437 | 44,879 |
-| **default structure view** | **3,307** | **4,970** |
+| merged, public half (`694c323`) | **8,496** | 42,743 |
+| merged, full (incl. 28 `instructor_contact`) | 10,426 | 44,881 |
+| **default structure view** (`node_layout`, re-rehearsal `694c323`) | **3,295** | — |
 | of which legacy modules, faded | 904 | |
 
 **3,307 / 4,970 is the one structure-view figure**, re-measured 2026-09-30 two
@@ -210,6 +210,13 @@ simulation, no console errors. The rehearsal ran every step and every rollback
 against a copy of production: migrations roll back to an identical schema; the
 restore brings back production's content hash; the projection takes 5.4 s
 locally, estimated 10–20 s in production from a measured 4.5–6.1 MB/s upload.
+
+**Re-rehearsed 2026-09-30 from `main` `694c323`** (after checklist review
+parts 1–3): migrate 0016→0021, projection 7.0 s with the live-sheet freshness
+check passing for real, `verify_migration` 54/54, curation IN SYNC, restore
+2 s back to production's hash, migrations down to 0016. Artifact
+`/tmp/np-deploy-694c323/`; production still `dpl_5wWZxv7ed1Bhq1fvCMSMVPgnfmxg`
+(re-checked after the merge). 43 old ids stop resolving, all merged.
 
 The step-by-step run-sheet, with the rehearsal's measured times and every
 rollback: **`docs/WINDOW-RUNSHEET.md`**. In outline:
