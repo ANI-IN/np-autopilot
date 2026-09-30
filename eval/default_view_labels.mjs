@@ -42,8 +42,15 @@ globalThis.document = {
   createElement:(tag)=>el('created-'+tag), head:{appendChild(){}}, body:el('body'),
   querySelectorAll:()=>[], addEventListener(){}, readyState:'complete', activeElement:null};
 globalThis.window = {devicePixelRatio:1};
+// a HISTORY with real push/replace/back/forward semantics, over `location`
 globalThis.location = {search:'', pathname:'/', hash:''};
-globalThis.history = {replaceState(){}, pushState(){}};
+const HIST = {entries:[''], i:0, pushes:0};
+const qOf = u => { const k=String(u).indexOf('?'); return k<0?'':String(u).slice(k); };
+globalThis.history = {
+  pushState(s,t,u){ HIST.entries=HIST.entries.slice(0,HIST.i+1); HIST.entries.push(qOf(u)); HIST.i++; HIST.pushes++;
+                    location.search=qOf(u); },
+  replaceState(s,t,u){ HIST.entries[HIST.i]=qOf(u); location.search=qOf(u); }};
+globalThis.queueMicrotask = globalThis.queueMicrotask || (f=>Promise.resolve().then(f));
 globalThis.addEventListener = ()=>{};
 globalThis.performance = {now:()=>Date.now()};
 let rafFn = null; globalThis.requestAnimationFrame = (f)=>{rafFn=f};
@@ -152,5 +159,77 @@ out.data3d=run(`(()=>{const d=build3D(); const t={};for(const n of d.nodes)if(!n
 run(`__T.state.types=new Set(['class_session']); recompute(true,'3d sessions')`);
 out.data3dSessions=run(`(()=>{const d=build3D();const g={},v={};for(const n of d.nodes)(n.ghost?g:v)[n.t]=((n.ghost?g:v)[n.t]||0)+1;
   return {visible:v,ghosts:g,links:d.links.length,clusterNames:d.nodes.filter(n=>n.cl).length};})()`);
+// ---- THE URL (owner review 2026-09-30): one view, never a pile -------------
+const tick = () => new Promise(r=>setTimeout(r,0));
+const consistency = () => run(`(()=>{
+  const bad=[];
+  const tc=document.getElementById('tchips').innerHTML||'';
+  const pressed=new Set([...tc.matchAll(/data-t="([^"]+)" aria-pressed="true"/g)].map(m=>m[1]).filter(t=>t!=='*'&&t!=='#list'));
+  const want=new Set(__T.TYPES.filter(t=>__T.state.types.has(t)));
+  if(pressed.size!==want.size||[...want].some(t=>!pressed.has(t)))bad.push('chips '+[...pressed]+' vs types '+[...want]);
+  const allOn=tc.indexOf('data-t="*" aria-pressed="true"')>=0;
+  if(allOn!==allTypesOn())bad.push('All chip '+allOn+' vs default '+allTypesOn());
+  const cr=document.getElementById('crumbs').innerHTML||'';
+  const showing=/Showing: |List: /.test(cr);
+  if(__T.state.view==='graph'&&showing===allTypesOn())bad.push('breadcrumb says '+(showing?'Showing':'the map')+' but types default='+allTypesOn());
+  const st=(document.getElementById('stat').innerHTML||'').match(/<b>([0-9,]+)<.b> things shown/);
+  if(__T.state.view==='graph'&&(!st||Number(st[1].replace(/,/g,''))!==__T.A.length))bad.push('count '+(st&&st[1])+' vs drawn '+__T.A.length);
+  return bad;})()`);
+const urlOk = u => { const q=new URLSearchParams(u); return !q.has('open')&&q.getAll('focus').length<=1&&q.getAll('at').length<=1
+  &&!(q.get('focus')||'').includes(',')&&!(q.get('at')||'').includes(','); };
+const sig = () => run(`JSON.stringify({ids:__T.A.map(n=>n.id).sort().join('|').length+':'+__T.A.length,sel:__T.state.sel||null,
+  place:__T.state.place?(__T.state.place.id||__T.state.place.key):null,view:__T.state.view,types:[...__T.state.types].sort().join(',')})`);
+run(`__T.state.place=null; __T.state.sel=null; __T.state.types=new Set(__T.DEFAULT_TYPES); __T.state.view='graph';
+     __T.state.listMode=false; recompute(true,'url test')`);
+history.replaceState(null,'','?'+run('urlFor()')); HIST.entries=[location.search]; HIST.i=0; HIST.pushes=0;
+const pick = run(`(()=>{const mods=__T.D.nodes.filter(n=>n.t==='module'&&!n.legacy).map(n=>n.id);
+  const ins=[...currentInstructors()].filter(id=>{const o=__T.idx.byId.get(id);return o&&o.t==='instructor'}).slice(0,6);
+  const dom=__T.D.nodes.filter(n=>n.t==='domain'&&(model().cur.get(n.id)||[]).length).map(n=>n.id);
+  return {mods, ins, dom};})()`);
+const clicks = [
+  ['module 0', `activate(__T.idx.byId.get(${JSON.stringify(pick.mods[0])}))`],
+  ['module 1', `activate(__T.idx.byId.get(${JSON.stringify(pick.mods[1])}))`],
+  ['Esc', `clearFocus()`],
+  ['instructor 0', `activate(__T.idx.byId.get(${JSON.stringify(pick.ins[0])}))`],
+  ['module 5', `activate(__T.idx.byId.get(${JSON.stringify(pick.mods[5])}))`],
+  ['chip decks off', `toggleType('slide_deck')`],
+  ['module 7', `activate(__T.idx.byId.get(${JSON.stringify(pick.mods[7])}))`],
+  ['All (the map)', `toggleType('*')`],
+  ['legacy domains group', `activate([...__T.VIEWMETA.values()].map(i=>i.n).find(n=>n.t==='group'&&/Legacy domains/.test(n.l)))`],
+  ['crumb: Map', `goPlace(null,'crumb')`],
+  ['domain hub', `activate(__T.idx.byId.get(${JSON.stringify(pick.dom[0])}))`],
+  ['module in domain', `activate(__T.idx.byId.get(${JSON.stringify(pick.mods[0])}))`],
+  ['another module in domain', `activate(__T.idx.byId.get(${JSON.stringify(pick.mods[1])}))`],
+  ['crumb: Map', `goPlace(null,'crumb')`],
+  ['only instructors', `onlyType('instructor')`],
+  ['instructor 1', `activate(__T.idx.byId.get(${JSON.stringify(pick.ins[1])}))`],
+  ['All (the map)', `toggleType('*')`],
+  ['who teaches what', `setView('matrix',true)`],
+  ['back to the map', `setView('graph',true)`],
+  ['module 9', `activate(__T.idx.byId.get(${JSON.stringify(pick.mods[9])}))`],
+];
+out.url={steps:[],back:[],forward:[],fresh:[],oldLink:null};
+const recorded=new Map();
+for(const [name,js] of clicks){
+  run(js); await tick(); settle();
+  const u=location.search, s_=sig();
+  recorded.set(u,s_);
+  out.url.steps.push({name,url:u,ok:urlOk(u),bad:consistency(),roundTrip:('?'+run('urlFor()'))===u||(u===''&&run('urlFor()')==='')});
+}
+out.url.pushes=HIST.pushes; out.url.entries=HIST.entries.length;
+// BACK through every step, then FORWARD again
+const back=()=>{HIST.i--; location.search=HIST.entries[HIST.i]; run('applyUrl()'); settle();};
+const fwd=()=>{HIST.i++; location.search=HIST.entries[HIST.i]; run('applyUrl()'); settle();};
+while(HIST.i>0){ back(); const u=location.search;
+  out.url.back.push({url:u,bad:consistency(),same:recorded.has(u)?recorded.get(u)===sig():null,ok:urlOk(u)}); }
+while(HIST.i<HIST.entries.length-1){ fwd(); const u=location.search;
+  out.url.forward.push({url:u,bad:consistency(),same:recorded.has(u)?recorded.get(u)===sig():null}); }
+// A SHARED LINK: each URL applied from scratch reproduces the same view
+for(const [u,s0] of recorded){ run(`__T.state.sel=null; __T.state.place=null; __T.state.types=new Set(['module']); recompute(true,'reset')`);
+  location.search=u; run('applyUrl()'); settle(); out.url.fresh.push({url:u,same:sig()===s0,bad:consistency()}); }
+// AN OLD LINK: ?open=a,b,c keeps only the last item and is rewritten
+location.search='?open='+[pick.mods[0],'map:legacy-domains',pick.mods[3]].join(',')+'&focus=';
+run('applyUrl()'); settle();
+out.url.oldLink={url:location.search,sel:run('__T.state.sel'),want:pick.mods[3],ok:urlOk(location.search)};
 console.log = quiet;
 console.log(JSON.stringify(out));

@@ -185,3 +185,40 @@ def test_the_3d_bundle_is_self_hosted_lazy_and_eval_free():
     csp = [h["value"] for r in json.loads((REPO / "vercel.json").read_text())["headers"]
            for h in r["headers"] if h["key"].lower() == "content-security-policy"][0]
     assert "unsafe-eval" not in csp and "script-src 'self'" in csp, csp
+
+
+# ---- THE URL IS ONE VIEW, NEVER A PILE (owner review 2026-09-30) --------------
+# 20 real clicks through the page's own handlers (modules, instructors, a domain,
+# a group, chips, Esc, the matrix and back), with a history that really pushes,
+# replaces, goes Back and Forward.
+
+def test_twenty_clicks_leave_at_most_one_item_in_the_url(views):
+    steps = views["url"]["steps"]
+    assert len(steps) == 20
+    for s in steps:
+        assert s["ok"], f"after '{s['name']}' the URL piles up: {s['url']}"
+        assert s["roundTrip"], f"after '{s['name']}' the URL is not the state: {s['url']}"
+
+
+def test_breadcrumb_chips_and_count_agree_after_every_step(views):
+    for s in views["url"]["steps"]:
+        assert not s["bad"], f"after '{s['name']}': {s['bad']}"
+
+
+def test_back_and_forward_restore_each_view(views):
+    u = views["url"]
+    assert u["pushes"] >= 10, "opening items and switching views must push history"
+    for step in u["back"] + u["forward"]:
+        assert not step["bad"], step
+        assert step["same"] is not False, f"Back/Forward to {step['url']} did not restore that view"
+
+
+def test_a_shared_link_reproduces_the_same_view(views):
+    for f in views["url"]["fresh"]:
+        assert f["same"] and not f["bad"], f
+
+
+def test_an_old_open_list_keeps_only_its_last_item(views):
+    o = views["url"]["oldLink"]
+    assert o["ok"] and o["sel"] == o["want"], o
+    assert "open=" not in o["url"], o

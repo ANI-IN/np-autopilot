@@ -22,6 +22,7 @@ background:rgba(13,17,23,.96);border-color:#21262d;z-index:5}
    width, so it refuses to shrink below its longest token no matter what
    overflow-wrap says. */
 #right,#right *{min-width:0}
+#right a.lnk{overflow-wrap:anywhere}
 #nl,#right .src,#right h1,#right h2,.pfname,.prov-corpus,.prov-hand{
   overflow-wrap:anywhere;word-break:normal}
 h1{font-size:15px;margin:0 0 2px}
@@ -978,6 +979,8 @@ let settle=0, alpha=1, frozen=false;
 // the 3D map's state (declared here: the 2D loop reads V3.on from its first frame)
 const V3={on:false,ready:false,loading:false,G:null,el:null,lab:null,lctx:null,nodes:new Map(),
   idle:0,key:'',failed:null,raf:0,frame:{mean:0,n:0},home:new Map()};
+// the URL writer's state (declared early: the first recompute can already write)
+let _applying=false, _pushedThisTick=false;
 // A LIVING MAP (owner review 2026-09-30): every node drifts gently round its
 // home — the precomputed position — by a couple of SCREEN pixels whatever the
 // zoom, so labels never collide. Off under prefers-reduced-motion.
@@ -1833,11 +1836,12 @@ function computeView(){
   state.place=null; return layoutMap();
 }
 let FRAMES=[], VIEWMETA=new Map(), FITMODE='all';
-function goPlace(pl,why){
-  state.place=pl; for(const n of D.nodes)delete n._v;
+function goPlace(pl,why,open){
+  // a place REPLACES the last: what it opens is set, never added to
+  state.place=pl; state.open=new Set(open||[]); for(const n of D.nodes)delete n._v;
   // published like __NP_STATE, so a harness can see where the view is
   try{ window.__NP_PLACE=pl?{kind:pl.kind,id:pl.id||pl.key}:null; }catch(e){}
-  recompute(true,why||'place'); renderCrumbs(); writeUrl();
+  recompute(true,why||'place'); renderCrumbs(); writeUrl('push');
 }
 function renderCrumbs(){
   const c=document.getElementById('crumbs'); if(!c)return;
@@ -1907,9 +1911,12 @@ function recompute(refit, why){
   cam.k=keepCam.k;cam.tx=keepCam.tx;cam.ty=keepCam.ty;
   state.sel=keepSel;
   document.getElementById('right').style.display=keepPanel;
+  // the chips, the breadcrumb and the count ALWAYS describe what was just
+  // laid out (owner review 2026-09-30: "Showing: Modules" with ten chips lit)
+  try{ renderChips(); renderCrumbs(); }catch(e){}
   try{ if(typeof sync3D==='function'){ renderDim(); sync3D(); } }catch(e){ console.error('[np] 3D', e); }
 }
-let _fitPending=false;
+let _fitPending=false, _frameAfter=null;
 
 function step(){
   if(frozen)return;                     // no motion once the view has arrived
@@ -1920,7 +1927,8 @@ function step(){
   }
   settle++;
   alpha*=0.88;
-  if(_fitPending&&settle===1){fit();_fitPending=false}
+  if(_fitPending&&settle===1){fit();_fitPending=false;
+    if(_frameAfter){const f=_frameAfter;_frameAfter=null;frameFocus(f);}}
   if(alpha<ALPHA_MIN && !frozen){
     for(const n of A){n.x=n.tx;n.y=n.ty}
     frozen=true;
@@ -2258,9 +2266,12 @@ function activate(n){
   if(n.t==='module'&&!n.legacy){
     const d=domainOf(n);
     const inDomain=state.place&&state.place.kind==='domain'&&d&&state.place.id===d.id;
-    if(state.open.has(n.id)&&inDomain)state.open.delete(n.id); else state.open.add(n.id);
-    if(!inDomain&&d)goPlace({kind:'domain',id:d.id},'module opened');
-    else recompute(true,'module opened');
+    // ONE module open at a time: opening another replaces it
+    if(!inDomain&&d){ goPlace({kind:'domain',id:d.id},'module opened',[n.id]); openNode(n.id); return; }
+    const was=state.open.has(n.id);
+    for(const k of [...state.open]){const o=idx.byId.get(k); if(o&&o.t==='module')state.open.delete(k);}
+    if(!was)state.open.add(n.id);
+    recompute(true,'module opened');
     openNode(n.id); return;
   }
   if(n.t==='domain'&&M.domains.indexOf(n)>=0&&
@@ -2280,11 +2291,12 @@ function toggleGroup(g){
   const where=state.place;
   // a group opens where it stands in a domain or a module; on the map it
   // opens as a place of its own, because a map cluster has no room for 700
-  if(!where&&g.members.length>12){ state.open.add(g.key); goPlace({kind:'group',key:g.key},'group opened'); return; }
-  if(!where&&p&&p.t==='domain'){ state.open.add(g.key); goPlace({kind:'domain',id:p.id},'group opened'); return; }
+  if(!where&&g.members.length>12){ goPlace({kind:'group',key:g.key},'group opened'); return; }
+  if(!where&&p&&p.t==='domain'){ goPlace({kind:'domain',id:p.id},'group opened',[g.key]); return; }
   recompute(true,'group toggled');
 }
-function clearFocus(){ state.sel=null; closePanel();
+function clearFocus(){ const had=!!state.sel; state.sel=null; closePanel();
+  if(had&&!_applying)writeUrl('push');
   if(V3.on){ unfocus3D(); return; }
   if(FOCUS_MOD){FOCUS_MOD=null; if(!state.place&&!state.listMode){recompute(false,'focus cleared');settle=0;alpha=1;frozen=false;}}
   if(_framed&&!state.place&&!state.listMode){_framed=false;fit();} maybeLoadTopics(); }
@@ -2295,8 +2307,8 @@ cv.addEventListener('click',ev=>{ev.preventDefault();
   if(n)activate(n); else clearFocus();});
 cv.addEventListener('dblclick',ev=>{ev.preventDefault();const n=hit(ev.clientX,ev.clientY);
   if(n&&n.t==='module'&&!n.legacy&&!state.place){       // open the module in its domain
-    const d=domainOf(n); state.open.add(n.id);
-    if(d){goPlace({kind:'domain',id:d.id},'module opened');openNode(n.id);} return;}
+    const d=domainOf(n);
+    if(d){goPlace({kind:'domain',id:d.id},'module opened',[n.id]);openNode(n.id);} return;}
   if(n&&n.t!=='group'&&idx.byId.get(n.id)){goPlace({kind:'node',id:n.id},'node place');openNode(n.id);}});
 addEventListener('keydown',ev=>{
   const q=document.getElementById('q');
@@ -2598,6 +2610,14 @@ function unconfirmedFlag(n){
 // shown. A download-disabled file still gets its link: that stops an export,
 // not a person opening it.
 const HTTP=/^https?:\/\//i;
+//: A NAME IS NEVER CUT MID-WORD (owner review 2026-09-30: "…Timed Tes"). It
+//: wraps; only a very long one is shortened, at a word boundary, and its full
+//: text is on hover.
+function wordCut(t,max){
+  t=String(t||''); if(t.length<=max)return t;
+  const c=t.slice(0,max), sp=Math.max(c.lastIndexOf(' '),c.lastIndexOf('-'),c.lastIndexOf('_'),c.lastIndexOf('.'));
+  return (sp>max*0.6?c.slice(0,sp):c).replace(/[\s\-_.,:;]+$/,'')+'…';
+}
 function lnk(url,label,title){
   if(!url||!HTTP.test(String(url)))return '';
   return '<a class="lnk" href="'+esc(url)+'" target="_blank" '+
@@ -2695,7 +2715,7 @@ function moduleChain(id){
     // collapsed group, never mixed with the current ones (owner review 2026-09-30).
     const junk=files.filter(f=>isArtefact(f.name));
     const real=files.filter(f=>!isArtefact(f.name)&&!f.hist), hist=files.filter(f=>!isArtefact(f.name)&&f.hist);
-    const fl=f=>lnk(f.url,(f.deck?'Deck: ':'File: ')+f.name.slice(0,48),f.name);
+    const fl=f=>lnk(f.url,(f.deck?'Deck: ':'File: ')+wordCut(f.name,110),f.name);
     const np=n.p||{};
     out.push('<div class="item"><span class="ik"><a class="nbl" data-id="'+esc(n.id)+'">'+
       esc(KIND_LABEL[k])+'</a></span>'+
@@ -2711,7 +2731,7 @@ function moduleChain(id){
         : nolnk('No file found for this session'))+'</div></div>');
   }
   const ex=n=>'<div class="item"><span class="ik">'+esc(typeLabel(n.t))+'</span>'+
-      (lnk((n.p||{}).drive_url,n.l.slice(0,48),n.l)||nolnk('No link recorded'))+'</div>';
+      (lnk((n.p||{}).drive_url,wordCut(n.l,110),n.l)||nolnk('No link recorded'))+'</div>';
   const exOld=extras.filter(n=>(n.p||{}).historical);
   for(const n of extras.filter(n=>!(n.p||{}).historical))out.push(ex(n));
   if(exOld.length)out.push('<details class="historical"><summary>Historical assignments ('+
@@ -2751,7 +2771,7 @@ function topicLinks(id,limit){
   if(!rows.length)return '';
   return '<div class="tier"><div class="tk">Topics <span class="dim">the deck and the '+
     'slide it is on</span></div>'+
-    rows.map(r=>'<div class="item"><span class="ik">'+esc(r.label.slice(0,44))+
+    rows.map(r=>'<div class="item"><span class="ik" title="'+esc(r.label)+'">'+esc(wordCut(r.label,60))+
       '</span><span class="loc">'+esc(r.loc)+'</span> '+
       (r.url?lnk(r.url,'Open deck'):'')+'</div>').join('')+'</div>';
 }
@@ -2802,7 +2822,7 @@ function subtitle(n){
 function pcrumb(){
   const el=document.getElementById('pcrumb'); if(!el)return;
   const prev=state.hist.length?idx.byId.get(state.hist[state.hist.length-1]):null;
-  el.innerHTML=prev?'<a id="pback">← Back to '+esc(labelOf(prev).slice(0,40))+'</a>':'';
+  el.innerHTML=prev?'<a id="pback" title="'+esc(labelOf(prev))+'">← Back to '+esc(wordCut(labelOf(prev),48))+'</a>':'';
   const b=document.getElementById('pback');
   if(b)b.onclick=()=>{const id=state.hist.pop();openNode(id,{back:true});};
 }
@@ -2817,7 +2837,6 @@ async function openNode(id,opt){
     state.hist.push(state.sel); if(state.hist.length>30)state.hist.shift();
   }
   select(id);
-  routeTo(id);
   const n=idx.byId.get(id);
   const wasOpen=document.getElementById('right').style.display==='block';
   document.getElementById('right').style.display='block';
@@ -2826,6 +2845,7 @@ async function openNode(id,opt){
   document.getElementById('nl').textContent=n?labelOf(n):id;
   document.getElementById('nt').textContent=n?subtitle(n):'';
   pcrumb();
+  if(!(opt&&opt.fromUrl)&&!_applying)writeUrl('push');         // one focused item
   if(n&&n.partial){
     document.getElementById('nprops').innerHTML='<div class="src">loading details…</div>';
     await ensureDetail(id);
@@ -2991,7 +3011,7 @@ function closePanel(){state.sel=null;
   document.getElementById('right').style.display='none';
   try{document.body.classList.remove('panel');}catch(e){}
   if(wasOpen)panelChanged();}
-document.getElementById('close').onclick=closePanel;
+document.getElementById('close').onclick=()=>clearFocus();
 
 // ---- search --------------------------------------------------------------
 // B4: current (mastersheet) modules first, then everything else grouped by
@@ -3053,7 +3073,7 @@ async function pickHit(r){
   const n=idx.byId.get(id);
   if(n&&!VIEWMETA.has(id)){
     const d=domainOf(n);
-    if(n.t==='module'&&!n.legacy&&d){state.open.add(id);goPlace({kind:'domain',id:d.id},'search');}
+    if(n.t==='module'&&!n.legacy&&d){goPlace({kind:'domain',id:d.id},'search',[id]);}
     else if(n.t==='domain'&&model().domains.indexOf(n)>=0)goPlace({kind:'domain',id:id},'search');
     else{ if(!n.loaded)await expand(id); goPlace({kind:'node',id:id},'search'); }
   }
@@ -3527,28 +3547,10 @@ recompute(true,'initial');
 // cannot honour — the subgraph depends on what you expanded to, and a link that
 // silently restored a different one would be worse than a link that restored
 // nothing.
-let _routing=false;
-function routeTo(id){
-  if(_routing) return;
-  _routing=true;
-  try{ if(location.hash!=='#/node/'+id) location.hash='#/node/'+id; }
-  catch(e){}
-  _routing=false;
-}
-async function openRoute(){
-  const m=/^#\/node\/(.+)$/.exec(location.hash||'');
-  if(!m) return false;
-  const id=decodeURIComponent(m[1]);
-  // The hash this page just wrote for the node already open is an echo, not a
-  // navigation: re-opening and re-centring on it threw the camera to wherever
-  // the node was mid-animation (B4: an empty canvas after opening a module).
-  if(state.sel===id) return true;
-  if(!idx.byId.get(id)) await expand(id);   // arrive cold: fetch it first
-  openNode(id);
-  const o=idx.byId.get(id); if(o&&o.x!==undefined) centreOn(o,1.6);
-  return true;
-}
-addEventListener('hashchange',()=>{ if(!_routing) openRoute(); });
+// (the #/node/<id> router is gone: the query string is the one URL; parseUrl
+// still reads an old #/node/<id> link once, then rewrites it)
+function routeTo(id){}
+
 
 
 // ==========================================================================
@@ -3671,7 +3673,7 @@ function renderMatrix(){
   SHEET.innerHTML=h;
   for(const el of SHEET.querySelectorAll('.nbl'))el.onclick=()=>openNode(el.dataset.id);
   for(const b of SHEET.querySelectorAll('.mxs'))
-    b.onclick=()=>{state.mxSort=b.dataset.s==='az'?'az':null;writeUrl();renderMatrix();};
+    b.onclick=()=>{state.mxSort=b.dataset.s==='az'?'az':null;writeUrl('replace');renderMatrix();};
 }
 
 // PROGRAMME TIMELINE. Modules on their programme week, one lane per domain.
@@ -3721,7 +3723,7 @@ function setView(v,push){
   renderCrumbs(); try{ renderDim(); sync3D(); }catch(e){}
   if(v==='matrix')renderMatrix();
   if(v==='timeline')renderTimeline();
-  if(push!==false)writeUrl();
+  if(push!==false)writeUrl('push');
 }
 for(const b of VBAR.querySelectorAll('button'))
   b.onclick=()=>setView(b.dataset.view,true);
@@ -3729,47 +3731,99 @@ for(const b of VBAR.querySelectorAll('button'))
 // SHAREABLE URLS. The view, the place on the map, the selected item, the
 // chosen types and every filter live in the query string, so a link shows the
 // recipient what the sender was looking at.
-let _writing=false;
-function writeUrl(){
-  if(_writing)return; _writing=true;
+// THE URL IS THE CURRENT VIEW, NOTHING MORE (owner review 2026-09-30: it used
+// to pile every opened module and group into ?open=, and the page reopened
+// the pile). It holds: the view, 2D|3D, the chips (only when not the default),
+// the list toggle, the filters, at most ONE place (a domain or a group opened
+// as a view) and at most ONE focused item. Opening an item, clearing it and
+// switching view PUSH (Back and Forward step through them); chips, filters and
+// sorting REPLACE. Back/Forward rebuild the whole state from the URL.
+function typesAreDefault(){return DEFAULT_TYPES.length===state.types.size&&DEFAULT_TYPES.every(t=>state.types.has(t));}
+//: PURE: the URL's query for the current state
+function urlFor(){
   const q=new URLSearchParams();
   if(state.view!=='graph')q.set('view',state.view);
-  if(state.place){
-    if(state.place.kind==='group')q.set('group',state.place.key);
-    else q.set(state.place.kind==='domain'?'domain_at':'at',state.place.id);
-  }
-  if(state.open.size)q.set('open',[...state.open].join(','));
-  if(state.sel)q.set('focus',state.sel);
-  if(!allTypesOn())q.set('types',TYPES.filter(t=>state.types.has(t)).join(','));
-  if(state.listMode)q.set('list','1');
   if(state.dim==='2d')q.set('dim','2d');
+  if(!typesAreDefault())q.set('types',TYPES.filter(t=>state.types.has(t)).join(','));
+  if(state.listMode)q.set('list','1');
   if(state.fDomain)q.set('domain',state.fDomain);
   if(state.fWeek)q.set('week',state.fWeek);
   if(state.fRole)q.set('role',state.fRole);
   if(state.mxSort==='az')q.set('sort','az');
-  const s=q.toString();
-  try{ history.replaceState(null,'',s?('?'+s):location.pathname); }catch(e){}
-  _writing=false;
+  const pl=state.place;
+  if(pl)q.set('at',pl.kind==='group'?'group:'+pl.key:pl.kind+':'+pl.id);
+  if(state.sel)q.set('focus',state.sel);
+  return q.toString();
 }
-function readUrl(){
-  const q=new URLSearchParams(location.search);
-  state.fDomain=q.get('domain')||null;
-  state.fWeek=q.get('week')||null;
-  state.fRole=q.get('role')||null;
-  state.mxSort=q.get('sort')==='az'?'az':null;
-  state.listMode=q.get('list')==='1';
-  state.dim=q.get('dim')==='2d'?'2d':'3d';
+function writeUrl(mode){
+  if(_applying)return;
+  try{
+    const s=urlFor(), cur=(location.search||'').replace(/^\?/,'');
+    if(s===cur&&!location.hash)return;                      // nothing changed
+    const u=s?'?'+s:location.pathname;
+    // ONE history step per interaction: a click that changes the place AND
+    // opens an item pushes once; the second write replaces the first
+    if(mode==='push'&&!_pushedThisTick){history.pushState(null,'',u);_pushedThisTick=true;
+      queueMicrotask(()=>{_pushedThisTick=false;});}
+    else history.replaceState(null,'',u);
+  }catch(e){}
+}
+//: PURE: what a URL asks for. OLD LINKS still open: ?open=a,b,c keeps only its
+//: LAST item; domain_at=, group=, at=<id> and #/node/<id> are read as before.
+function parseUrl(search,hash){
+  const q=new URLSearchParams(search||''), o={view:q.get('view')||'graph',dim:q.get('dim')==='2d'?'2d':'3d',
+    list:q.get('list')==='1',types:null,domain:q.get('domain')||null,week:q.get('week')||null,
+    role:q.get('role')||null,sort:q.get('sort')==='az'?'az':null,place:null,focus:q.get('focus')||null,old:false};
   const t=q.get('types');
-  if(t){const want=t.split(',').filter(x=>TYPES.indexOf(x)>=0);
-        if(want.length)state.types=new Set(want);}
-  const o=q.get('open'); if(o)for(const k of o.split(','))if(k)state.open.add(k);
-  if(q.get('domain_at')&&idx.byId.get(q.get('domain_at')))state.place={kind:'domain',id:q.get('domain_at')};
-  else if(q.get('at')&&idx.byId.get(q.get('at')))state.place={kind:'node',id:q.get('at')};
-  else if(q.get('group'))state.place={kind:'group',key:q.get('group')};
-  recompute(true,'from the link');
-  const v=q.get('view'); if(v)setView(v,false);
-  const f=q.get('focus'); if(f&&idx.byId.get(f))openNode(f);
+  if(t){const want=t.split(',').filter(x=>TYPES.indexOf(x)>=0); if(want.length)o.types=want;}
+  const at=q.get('at');
+  if(at){const k=at.indexOf(':'), kind=at.slice(0,k), rest=at.slice(k+1);
+    if(kind==='domain'||kind==='node')o.place={kind:kind,id:rest};
+    else if(kind==='group')o.place={kind:'group',key:rest};
+    else{o.place={kind:'node',id:at};o.old=true;}}                 // old: at=<node id>
+  if(q.get('domain_at')){o.place={kind:'domain',id:q.get('domain_at')};o.old=true;}
+  if(q.get('group')){o.place={kind:'group',key:q.get('group')};o.old=true;}
+  const open=q.get('open');
+  if(open){ o.old=true;
+    const last=open.split(',').filter(Boolean).pop();
+    if(last){ if(idx.byId.get(last)){ if(!o.focus)o.focus=last; }
+              else if(!o.place)o.place={kind:'group',key:last}; } }
+  const m=/^#\/node\/(.+)$/.exec(hash||'');
+  if(m){o.old=true; if(!o.focus)o.focus=decodeURIComponent(m[1]);}
+  return o;
 }
+//: rebuild EVERYTHING from the URL — at load, and on Back/Forward
+function applyUrl(){
+  let o; try{ o=parseUrl(location.search,location.hash); }catch(e){ return; }
+  _applying=true;
+  try{
+    state.view=['graph','matrix','timeline'].indexOf(o.view)>=0?o.view:'graph';
+    state.dim=V3.failed?'2d':o.dim; state.listMode=o.list;     // no WebGL: stay 2D
+    state.types=new Set(o.types||DEFAULT_TYPES);
+    state.fDomain=o.domain; state.fWeek=o.week; state.fRole=o.role; state.mxSort=o.sort;
+    state.place=null; state.open=new Set(); state.sel=null; FOCUS_MOD=null; TOPIC_MODS=new Set();
+    V3.lit=null; V3.home=new Map(); V3.pendingFocus=null;
+    closePanel();
+    if(o.place){
+      if(o.place.kind==='group'&&!GROUPS.has(o.place.key))recompute(false,'groups for the link');
+      if(o.place.kind==='group'?GROUPS.has(o.place.key):!!idx.byId.get(o.place.id))state.place=o.place;
+    }
+    const f=o.focus&&idx.byId.get(o.focus)?o.focus:null;
+    if(f&&state.place&&state.place.kind==='domain'){const n=idx.byId.get(f); if(n&&n.t==='module')state.open.add(f);}
+    const onMap=!state.place&&!state.listMode&&state.view==='graph';
+    if(f&&onMap&&state.dim==='2d'){const n=idx.byId.get(f); if(n&&n.t==='module'&&!n.legacy)FOCUS_MOD=f;}
+    if(f&&onMap&&state.dim==='2d')_frameAfter=f;
+    recompute(true,'from the URL');
+    renderFilters(); renderChips(); renderCrumbs(); renderDim();
+    setView(state.view,false);
+    if(f){ openNode(f,{fromUrl:true}); if(onMap&&state.dim==='3d')V3.pendingFocus=f; }
+  }finally{ _applying=false; }
+  if(o.old)writeUrl('replace');                             // old links: the new form
+  if(V3.failed){ try{ banner(esc(V3.failed)); }catch(e){} }    // the fallback keeps saying why
+  try{ if(V3.on&&V3.pendingFocus&&V3.nodes.has(V3.pendingFocus)){const id=V3.pendingFocus;V3.pendingFocus=null;focus3D(id,true);} }catch(e){}
+}
+function readUrl(){ applyUrl(); }
+try{ addEventListener('popstate',()=>applyUrl()); }catch(e){}
 
 // FILTERS for the two table views, rendered once the structure has said which
 // domains exist.
@@ -3797,7 +3851,7 @@ function renderFilters(){
   on('frole',e=>{state.fRole=e.target.value||null;refreshView()});
 }
 function refreshView(){
-  writeUrl();
+  writeUrl('replace');
   if(state.view==='matrix')renderMatrix();
   else if(state.view==='timeline')renderTimeline();
   else recompute(true,'filters');        // the MAP follows the filters too
@@ -3848,7 +3902,7 @@ function renderChips(){
 function onlyType(t){
   state.types=new Set([t]); state.sel=null; closePanel();
   if(state.place&&!state.listMode)state.place=null;
-  recompute(true,'one type'); renderChips(); renderCrumbs(); writeUrl();
+  recompute(true,'one type'); renderChips(); renderCrumbs(); writeUrl('replace');
 }
 function toggleType(t){
   if(t==='#list'){state.listMode=!state.listMode;}
@@ -3856,7 +3910,7 @@ function toggleType(t){
   else{ if(state.types.has(t))state.types.delete(t); else state.types.add(t);
         if(!state.types.size)state.types=new Set(DEFAULT_TYPES); }
   if(!state.listMode&&state.place&&state.place.kind!=='domain')state.place=null;
-  recompute(true,'type chips'); renderChips(); renderCrumbs(); writeUrl();
+  recompute(true,'type chips'); renderChips(); renderCrumbs(); writeUrl('replace');
   maybeLoadTopics();
 }
 //: FOCUS ON THE MAP FRAMES THE NEIGHBOURHOOD: a module's sessions and decks
@@ -3928,7 +3982,7 @@ function sync3D(){
 function fallback2D(why){
   V3.failed=why; state.dim='2d'; if(V3.on)hide3D();
   try{ banner(esc(why)); }catch(e){}
-  renderDim(); writeUrl();
+  renderDim(); writeUrl('replace');
 }
 function load3D(){
   if(V3.loading)return; V3.loading=true;
@@ -4036,10 +4090,11 @@ function update3D(){
     Object.assign(o,{t:d.t,ghost:d.ghost,cl:d.cl,pri:d.pri,hx:d.hx,hy:d.hy,hz:d.hz}); next.set(d.id,o); return o;});
   V3.nodes=next;
   V3.G.graphData({nodes:nodes,links:data.links});
-  // a CHIP change re-frames the graph; a focus or a hover never does
-  const tk=[...state.types].sort().join(',')+'|'+(state.fDomain||'')+'|'+(state.fWeek||'')+'|'+(state.fRole||'');
-  if(V3.typesKey&&tk!==V3.typesKey&&!state.sel)setTimeout(()=>{ if(V3.on)V3.G.zoomToFit(600,30); },80);
-  V3.typesKey=tk;
+  // EVERY data change re-frames the graph on what is drawn (chips, filters, a
+  // link): the content is never left in a corner. A focus flies instead.
+  if(V3.pendingFocus&&V3.nodes.has(V3.pendingFocus)){const id=V3.pendingFocus;V3.pendingFocus=null;
+    setTimeout(()=>{ if(V3.on)focus3D(id,true); },150);}
+  else if(!state.sel&&!V3.firstFit)setTimeout(()=>{ if(V3.on&&!state.sel)V3.G.zoomToFit(500,30); },80);
   if(V3.firstFit){ V3.firstFit=false;
     // fit once the renderer has its size, and again once the nodes are home
     for(const ms of [120,700])setTimeout(()=>{ if(V3.on&&!state.sel)V3.G.zoomToFit(ms<200?0:500,30); },ms); }
@@ -4069,9 +4124,9 @@ function gather3D(id){
     V3.home.set(n.id,{x:m.hx+230*Math.cos(a),y:m.hy+230*Math.sin(a),z:m.hz+60});});
   return 230;                      // no reheat: the home pull alone moves them, quickly
 }
-function focus3D(id){
+function focus3D(id,fromUrl){
   const plan=focusPlan3D(id,V3.nodes); if(!plan)return;
-  touched3D(); V3.lit=plan.lit; openNode(id); state.sel=id; refresh3D();
+  touched3D(); V3.lit=plan.lit; if(!fromUrl)openNode(id); state.sel=id; refresh3D();
   const g=gather3D(id); if(g)plan.distance=620;
   const cam=V3.G.camera().position, a=plan.at;
   let dx=cam.x-a.x, dy=cam.y-a.y, dz=cam.z-a.z; const L=Math.hypot(dx,dy,dz)||1;
@@ -4144,7 +4199,7 @@ function renderDim(){
   const inMap=state.view==='graph'&&!state.listMode&&!state.place;
   t.style.display=inMap?'':'none';
 }
-function setDim(d){ state.dim=d==='2d'?'2d':'3d'; renderDim(); writeUrl(); if(state.dim==='2d'){hide3D();recompute(true,'2D');} else sync3D(); }
+function setDim(d){ state.dim=d==='2d'?'2d':'3d'; renderDim(); writeUrl('push'); if(state.dim==='2d'){hide3D();recompute(true,'2D');} else sync3D(); }
 for(const b of document.querySelectorAll('#dimtog button'))b.onclick=()=>setDim(b.dataset.dim);
 
 // Called once the structure payload has landed.
