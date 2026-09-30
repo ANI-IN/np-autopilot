@@ -9,7 +9,26 @@ changed parts (projection, verify, restore) **re-rehearsed the same day from
 `main` `694c323`** — the graph after checklist review parts 1–3. Times are
 **measured** in the rehearsal (local) or by read-only probes of production.
 
-## STATE — window PAUSED, 2026-09-30 (owner decision)
+## STATE — window COMPLETE, 2026-09-30 21:06 IST (steps 4–6); step 7 with the owner
+
+| | |
+|---|---|
+| production code | **`dpl_3HZSPGpQEsz9gogu9WofSGQdJR8r`** — `main` `b1c8329`, artifact `/tmp/np-deploy-b1c8329`, deployed and **promoted by the owner in their own terminal** (Claude Code's permissions block production deploys) |
+| code rollback | `vercel rollback dpl_5wWZxv7ed1Bhq1fvCMSMVPgnfmxg` (the deployment current before the promote) |
+| production database | migration **0021**, content hash **`9af6d9db…`**, 8,496 nodes / 12,189 edges / 39,414 sources, layout for 3,707 nodes; `verify_migration` 54/54; curation IN SYNC; 7 production_only passed |
+| data rollback | `db/window/restore_projection.sh ~/.config/np-autopilot/window-20260930-2105` (fresh backup taken before step 5: old data `eba7c479…`, 3,146 nodes) |
+| mastersheet | live sheet version **2742**; the empty diff from 2736 was **accepted by the owner** (origin: hand, 2026-09-30) |
+| backups | `window-20260930-1133` and `window-20260930-2105` — **kept until the owner says** |
+| still open | step 7: the owner's click-through results; `measure_signed_in.py --phase post` — `docs/HANDOFF.md` §C |
+
+**Measured in this window:** preview `dpl_ECsTs345MrvKjBCEFwVCFDfTdda4`
+passed first; `vercel deploy --prebuilt --prod` did NOT take the domain (auto-
+assignment off after the Hobby rollback, as predicted) but DID move the
+team-scoped project alias `np-autopilot-b2c-courses-new-programs-4557s-projects.vercel.app`;
+`vercel promote` then assigned `np-autopilot.vercel.app`. Projection 18.9 s in
+its transaction (25 s wall).
+
+## Earlier state — window PAUSED, 2026-09-30 (owner decision)
 
 | | |
 |---|---|

@@ -1,8 +1,10 @@
 # STATE — working brief for a session with no memory
 
 > **Resuming after a cleared session? Start with [docs/HANDOFF.md](HANDOFF.md)** —
-> where things stand, what is done, what is next, every owner decision, and
-> the working agreement. Written 2026-09-29.
+> where things stand (LIVE since the 2026-09-30 window), what shipped, what is
+> still open from the window (do those first), the deploy procedure, the next
+> phase, every owner decision, risks, the working agreement and key commands.
+> Rewritten 2026-09-30 after the launch.
 
 You are continuing `np-autopilot`: a knowledge graph over Interview Kickstart's
 New Programs corpus, projected into Supabase Postgres, served by a Vercel web

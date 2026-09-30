@@ -177,3 +177,37 @@ Only confirmed identities are counted as one person.
   instructor table with no module row — a real finding awaiting an `INS`
   answer, so it should be reported as that rather than as isolation.
 - **Staffing** mixes both module populations; it stays blocked on `MOD-01…16`.
+
+---
+
+## D6 · B4 — the explorer as shipped (owner review rounds and approval, 2026-09-30)
+
+**Owner decisions, Animesh Kumar, 2026-09-30 (origin: hand).** Given in the
+B4 review rounds and the approval message. Until this section they were
+recorded only in commit messages (`ee47ccc`, `befa170`, `9945fb1`,
+`714f5c1`) and code comments; they are recorded here, each with what holds it.
+Live since the window of 2026-09-30 (`dpl_3HZSPGpQEsz9gogu9WofSGQdJR8r`).
+
+| decision | held by |
+|---|---|
+| **Launch the curriculum release now; expand the scope next** (`docs/NEXT-PHASE.md`) | — (order of work) |
+| **Old and new domains stay SEPARATE**, never merged; current domains wear their code (`SD1 · Full Stack`, SD1–SD4); legacy carries a **legacy badge everywhere** it appears | `public/index.html` (domain labels, badges); `tests/test_default_view_labels.py` |
+| **The map is THE default for every type**: one network of every current type (domain hubs, modules, weeks, sessions, assignments, reviews, current decks, instructors with role-coloured edges, people, themes, workflows); topics, files, repos, curriculum docs and programmes stay behind their chips; legacy as collapsed groups | `test_the_default_map_holds_every_current_type` |
+| **Chips filter the map, not a list** (List is its own toggle); a filtered-out parent stays as a **ghost anchor**, so nothing is a bare dot | `test_a_chip_filters_the_map_not_a_list`, `test_sessions_alone_are_never_bare_dots`, `test_3d_chips_keep_ghost_anchors` |
+| Labels of current domains, modules and instructors are **never dropped or shortened**; an overlap is resolved by moving the label | `test_every_current_label_is_shown_in_full` (6 window sizes) |
+| **The 3D floating graph is the default view; 2D is one toggle away** (reconfirmed after the approval, 2026-09-30). Three.js vendored and self-hosted, lazy-loaded, eval-free; CSP not widened | `eval/check_3d.py` (GPU), `test_the_3d_bundle_is_self_hosted_lazy_and_eval_free` |
+| **Slow machines fall back to 2D**: under 30 fps in every second of 3 s → 2D with "Switched to 2D for smoother performance. Try 3D anyway"; the button forces 3D and is remembered per viewer | `test_a_throttled_3d_view_switches_to_2d_with_the_note` and three more; `eval/check_3d.py` case 8 |
+| **No WebGL → the 2D map with a note** | `test_without_webgl_the_map_falls_back_to_2d`, `eval/check_3d.py` |
+| **Floating and drag**: nodes drift round a home position, a dragged node pulls its neighbours on springs and all settle home; `prefers-reduced-motion` = no drift, no auto-rotate; paused when the tab is hidden; 60 fps | `test_a_dragged_node_pulls_its_neighbours_and_all_settle_home`, `eval/check_3d.py` |
+| **Focus**: clicking a module spreads and frames its things (sessions, decks, instructors, topics); Esc returns to the whole graph | `test_3d_focus_lights_a_modules_things`, `eval/check_3d.py` |
+| **Role order and colours everywhere**: Primary (green) → Backup 1 (blue) → Backup 2 (amber) → Backup 3 (grey), then week, code, cell; the owner's Backend and Testing orders are the test cases | `tests/test_role_order.py` (`ROLE ORDER: begin/end` in `public/index.html`) |
+| **Who teaches what** (matrix) and **Programme timeline** as their own views | `eval/drive_dom.mjs` |
+| **Historical files are grouped** (collapsed "Historical (N)"), never mixed with current ones; build/recording artefacts collapse into their own group | `public/index.html::moduleChain`; `tests/test_corroboration_after_merge.py` |
+| **Plain language** in panels and notes; **crisp rendering** on high-DPI screens (canvas at device pixel ratio) | `public/index.html` |
+| **The URL is the current view**: one place, at most ONE focused item; opening pushes history, adjustments replace it; Back/Forward restore each view; old links keep only their last item | `test_twenty_clicks_leave_at_most_one_item_in_the_url` and four more |
+| **Search never lists a held-back (`not_a_topic`) topic** | `tests/test_search_holds_back_topics.py` |
+| **A possessive first name of a known person is not a topic** ("Tilo’s Introduction"): 18 titles, all Tilo Dickopp's note pages | `tests/test_not_a_topic.py` (`REVIEWED_PERSON_NAME`) |
+| **Decks are core structure** (on the map, hung off their session) | `pipeline/lib/layout.py`; `STRUCTURE_FORMAT = "columnar-3"` |
+| **The local review mode**: the local server signs in a stub member with a "LOCAL PREVIEW, not production" banner, and the stub can **never ship** | `tests/test_local_stub_never_ships.py`; `db/window/check_function_map.py` |
+| **Landing "What it answers well" for this release** (a module's full picture; who teaches what, by role; the programme timeline; the map); "Where a fact came from" and "What it will not tell you" kept | `public/index.html` (CSP-hashed) |
+| **Review screenshots are not committed** (they broke the 15 MiB repo budget); regenerated by `eval/screenshot_views.py` | `.gitignore` (`docs/screenshots/b4/`) |

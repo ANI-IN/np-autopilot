@@ -20,6 +20,29 @@ reproduced here — only headers, counts and shapes.
 
 ---
 
+## Owner direction, 2026-09-30 (origin: hand, Animesh Kumar) — after the launch
+
+Stated in the handoff request after the window; **direction for the plan, not
+answers to §4.4**, which stay open. Where it goes beyond §1–§4 below, it wins.
+
+- **Team & ownership**: internal **`team_member`** nodes, sourced from a
+  **Keka export or a maintained sheet** (neither is in the corpus today);
+  **`reports_to`** between team members; **`owns` with a role** (what a person
+  owns, and in what capacity). The UI gains a **Team tab** and a **"who owns
+  what" matrix**, the ownership counterpart of Who teaches what.
+- **All pods, with `pod` as the top level** of the graph. Order: **System Pod
+  next**, then **Agentic AI**, then **Data & Management**. (Today's release
+  covers row B only: SD1–SD4.)
+- **Workflows & SOPs, programme operations, metrics & feedback (always with
+  N)** — as §1.A, §1.B, §1.D.
+- **The MCP query layer plus four job plugins**: Staff a class · Prep a
+  module · Run a workflow · Program/ops answers — as §3.
+- **Distribution via a GitHub org and a separate, clean plugins repo** — as
+  §3.4.
+- **Improvement by observation** (the team reports issues and ideas; weekly
+  triage; small releases through preview → promote; a changelog on the site):
+  `docs/HANDOFF.md` §F.
+
 ## 0 · Where we start
 
 | | today |

@@ -1,582 +1,411 @@
 # HANDOFF
 
-**Written 2026-09-29 at the end of a long session, so a fresh one can resume
-with nothing lost.** Every number below was measured when this was written, not
-recalled.
+**Written 2026-09-30, right after the launch window, so a fresh session can
+resume with nothing lost.** Every number in §A was measured when this was
+written, not recalled. The previous handoff (2026-09-29, A–I) is in git
+history at `b1c8329:docs/HANDOFF.md`; anything from it that is still true is
+carried below.
+
+**Section letters changed.** Code comments still cite the old ones:
+
+| old | now |
+|---|---|
+| §A where things stand | §A |
+| §B, §C completed work, B3 | §B |
+| §D.1–§D.4 plan and the window | §B (done) and `docs/WINDOW-RUNSHEET.md` |
+| §D.5 "immediately after launch" (R22, Indian Instructors, read-only role, `Dat` header) | §G (post-launch items) and §I (R22) |
+| §D.6 first release after launch, §D.7 live sheet, §D.8 Interview Repo | §G |
+| §E open review items | §G |
+| §F owner decisions | §H |
+| §G open issues and risks | §I |
+| §H working agreement | §J |
+| §I key commands, the local stack, running tests safely | §K |
 
 ---
 
-# A · WHERE THINGS STAND
+# A · WHERE THINGS STAND (measured 2026-09-30, after the window)
 
-## Repository
+## Production — LIVE: the new code on the new data
 
 | | |
 |---|---|
-| `main` | **`0f0c78f`** — `content-crawl-rowB` merged 2026-09-30, unsquashed; CI green on all four jobs |
-| working branch | `phase-cd-prep` — pre-window work (checklist, D1, R22, this plan) |
-| repository | **private** since 2026-09-29 19:06Z (R21); pushes pass `.githooks/pre-push` |
-| production | still the OLD system — nothing deployed, nothing applied (see below) |
+| site | `np-autopilot.vercel.app` → **`dpl_3HZSPGpQEsz9gogu9WofSGQdJR8r`** (target production, Ready, created 2026-09-30 20:57 IST); `/api/config` 200; `/api/me`, `/api/overview`, `/api/structure` 401 with our body; all six security headers; `index.html` byte-identical to the artifact |
+| built from | `main` **`b1c8329`**, artifact `/tmp/np-deploy-b1c8329` (function map OK, no stub, no env file) |
+| **code rollback** | `vercel rollback dpl_5wWZxv7ed1Bhq1fvCMSMVPgnfmxg` — the deployment current before the promote |
+| **data rollback** | `db/window/restore_projection.sh ~/.config/np-autopilot/window-20260930-2105` — the ONLY way back after 0021 (never re-project the old graph) |
+| also moved | the team-scoped alias `np-autopilot-b2c-courses-new-programs-4557s-projects.vercel.app` follows each `--prod` deploy |
 
-## Verification, all green
+## Database (production, read at the time of writing)
+
+| migration | content hash | nodes | edges | node_sources | files | node_types | edge_rels | node_layout |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| **0021** | **`9af6d9dbeb623e84…`** | **8,496** | **12,189** | **39,414** | 1,524 | 17 | 24 | **3,707** |
+
+`projected_at` 2026-09-30 15:36:33Z. `verify_migration --source supabase`
+**54/54 VERIFIED**; `curation.py check` **IN SYNC**. Curation tables
+unchanged by the window: people 20, people_aliases 48, domain_aliases 21,
+workflow_owners 92, curation_notes 45, curation_audit 0. profiles 6,
+shared_accounts 1.
+
+## Mastersheet
+
+The live sheet `1setMmRvBUNu9_85nT4xvvUFySodB6kiWb7bQ8qLEqAQ` (Resource
+Collection Mastersheet (Software + System)): **version 2742**, Drive modified
+2026-09-30T11:46:31Z, fetched 14:59:29Z to `~/.config/np-autopilot/mastersheet/`.
+Freshness guard: fresh. Version 2736's copy is kept at
+`~/.config/np-autopilot/mastersheet-prev-20260930-2029/`. The 2736 → 2742 diff
+had **0 changed facts** and the owner accepted it (§H).
+
+## Git
+
+| | |
+|---|---|
+| branch | `main` |
+| HEAD at measurement | **`b1c8329`** (merge of `b4-ui-2`); this handoff's commit follows it |
+| main CI | **green** on `b1c8329` — `test`, `payroll`, `secrets`, `renderer` (run 36734801749) |
+| working tree at measurement | one change: **`public/stats.json`**, production's figures copied at window step 6 (differs from the deployed copy only in `projected_at`). **Committed with this handoff**, so the tree is clean |
+| remote branches | `b4-ui` **deleted** (owner decision); `b4-ui-2` kept (merged); older merged branches remain |
+| repository | **private**; pushes pass `.githooks/pre-push` |
+
+## Verification
 
 | check | result |
 |---|---|
-| test suite, no database (what CI sees) | **581 passed**, 130 skipped, 0 failed — 2026-09-30, after step 0 (was 559 / 120) |
-| test suite, local Supabase stack (§I) | **699 passed, 2 FAILED**, 10 skipped — the 2 are real migration gaps, §G; 7 skips are `production_only` |
-| `pipeline/validate.py` | **0 FAIL**, 19 WARN, 20/27 categories exercised |
-| `eval/content_eval.py` | **14/14**, 0 fabrications |
-| `eval/content_eval_all.py` | **103/103**, 0 fabrications (§D2 excluded as unfailable) |
-| `eval/mastersheet_rederive.py` | **0 unexplained differences** across 20 modules |
-| `verify_migration.py --source supabase` | **54/54 VERIFIED** (against the LOCAL database) |
-| `eval/drive_dom.mjs` | all checks passed — **hosted build only.** From B2.5 (`683fb9b`) the offline `knowledge/graph.html` threw (`taughtRows is not defined`); CI caught it on the first branch push. Fixed 2026-09-30 by scoping the B2 block to the hosted build, with an assertion that the offline build lacks those functions. Both builds pass since |
-| `pipeline/check_no_payroll_committed.py` | clean |
+| local suite (local Supabase stack), `714f5c1` | **1,075 passed**, 16 skipped |
+| `eval/check_3d.py` (GPU, production CSP) | all 11 checks passed — 60 fps, label overlay 0.27 ms/frame, the throttled slow-machine case |
+| `eval/mastersheet_rederive.py` on version 2742 | **0 unexplained** across 20 modules |
+| `docs/ACCEPTANCE-CHECKLIST.md` | 20/20 confirmed; 154/154 linkable items carry an Uplevel link |
+| `node eval/drive_dom.mjs` on the LIVE `index.html` | all checks passed |
+| production_only tests (read-only, through the session pooler) | **7 passed** |
 
-## LIVE IN PRODUCTION vs LOCAL ONLY
+## Local, still running
 
-**Production (`np-autopilot.vercel.app`) is still the OLD system.** Nothing from
-this session has been deployed or applied.
-
-| | production today | local only |
-|---|---|---|
-| graph | 3,146 nodes / 4,021 edges, `projected_at` **2026-09-20 11:00:22Z** (see below) | merged public **8,496 / 42,743** (`694c323`) |
-| UI | the old bounded ~60-node overview | structure view, panels, matrix, timeline, filters |
-| database | migrations through **0016** | local Supabase stack with **0017–0020 applied** |
-| connections | one per request | one per warm instance (cold-start fixes) |
-| `/api/structure` | **404, does not exist** | serving 3,307 nodes / 4,970 edges |
-
-`public/stats.json` still describes production (3,146 / 4,021) and was
-deliberately not overwritten by local projections.
-
-**Production's `projected_at` is 2026-09-20, not 2026-09-18** as this table
-first said. Read 2026-09-29 from `projection_meta` in a read-only transaction:
-same counts (3,146 / 4,021 / 30,658 sources), re-projected at 16:30 IST on
-2026-09-20 — between two commits of that day's session, **before this
-branch's merge-base (2026-09-21)**, so nothing in the row-B work touched it.
-Cause not recorded; it is the shape of a test-suite run with production's env
-loaded (`test_db_migration_verification` re-projects), which is exactly the
-hazard §I now refuses.
-
-## Graph counts
-
-| | nodes | edges |
-|---|---:|---:|
-| merged, public half (`694c323`) | **8,496** | 42,743 |
-| merged, full (incl. 28 `instructor_contact`) | 10,426 | 44,881 |
-| **default structure view** (`node_layout`, re-rehearsal `694c323`) | **3,295** | — |
-| of which legacy modules, faded | 904 | |
-
-**3,307 / 4,970 is the one structure-view figure**, re-measured 2026-09-30 two
-ways that agree: `web/lib/data.py::structure()` on the local projection, and
-the same type filter over `knowledge/merged_graph.json`. `DEFAULT-VIEW.md`'s
-3,355 was correct when measured, before the MOD, INS and PPL-11 merges absorbed
-48 nodes; `PERF-BASELINE.md`'s 3,308 was copied from a B2 comment written
-before PPL-11 (the comment, in `public/index.html`, still says 3,308 — it sits
-in a CSP-hashed inline script, so it is corrected with B3's next edit there).
+The local review server was left running (`eval/local_server.py` on port
+8765, pid 32345 at writing) against the local Supabase stack, which holds the
+same projection (`9af6d9db…`). Stop it with `pkill -f eval/local_server.py`.
 
 ---
 
-# B · COMPLETED WORK
+# B · WHAT SHIPPED (all live since the 2026-09-30 window)
 
-| work | commits |
+| what | commits |
 |---|---|
-| Drive-upload incident handled; `07-risks.md` R20 (first written as R19) | (pre-session baseline) |
-| Phase 0 — row B mapping, SD1–SD4, D2a drafted then approved | `b3add86`, `e358f8f` |
-| Phase 1 — 21 guards written BEFORE the crawler, each mutation-verified; D1/D3/D4/D5/D6 enforced by tests | `b4e473c` |
-| Phase 2 — the crawl: three runs, two filename-collision classes, file-id naming, binaries no longer decoded as noise, redaction v2 as a cache contract, integrity check made permanent, run summary durable | `3eaed24`, `2fa718f`, `65e1f26`, `bf205d8`, `405f9f9`, `b8d6341`, `c4b60bd` |
-| Phase 3 — content model, sessions from the mastersheet, programme weeks, instructors un-deferred, contact data in the sensitive half only | `50e965c`, `0db1afa` |
-| Phase 4 — completeness matrix, both evals, four guards repaired | `a4edaef`, `ffa3505` |
-| `live_class` retired: 845 file-derived nodes that were never sessions | `0243e41` |
-| MOD-01…16 merges | `9e202ce` |
-| INS answers (individual) and the bulk of 26 | `c4450d6`, `a87f960` |
-| PPL-11 (Bharath = Bharath Anand) and the Balaram Velaga alias | `f9b4c69`, `c4450d6` |
-| B1 — one id minter, projection merge of the public half, coverage and staffing fixes, Types panel, landing stats, migrations 0017/0018 staged and proven | `99f768b`, `ad5c458`, `3edb8f7` |
-| B2 — structure default view, faded legacy, instructor and module panels, matrix, timeline, filters, search badges, shareable URLs | `c603117`, `63df326`, `90c29f5` |
-| B2.5 — 54/54 verification; migration 0019 (slide, tab, owner_domain, mime, evidence_kind) | `683fb9b` |
-| one row per person with tier badges; the matrix load column | `683fb9b` |
-| source links — Uplevel + Drive for every item; the mastersheet only as the citation | `f9b4c69` |
-| perf baseline and measurement-script fixes (`--phase pre/post`, `--wait-for-enter`, 5 cold loads, authenticated timing) | `737c3a4`, `93b5db0`, `e7235ee`, `8f2ec96`, `c9dc329`, `65dd734` |
-| **B3 cold-start investigation** | **`42af286`** |
+| **The B4 explorer UI** — the network map as the default for every type, collapsed legacy groups, chips filter the map with ghost anchors, focus spreads and frames a module, floating nodes with springy drag, role order and colours (P/B1/B2/B3), Who teaches what, Programme timeline, historical files grouped, plain-language panels, crisp high-DPI rendering, decks as core structure, the local review mode | `ee47ccc` (review rounds 1–6, squashed from `b4-ui`) |
+| **3D floating map as the default, 2D behind a toggle** (Three.js vendored, lazy, eval-free, CSP not widened; no-WebGL falls back to 2D) | `befa170` |
+| **One-URL state** — one place, at most one focused item, real Back/Forward | `9945fb1` |
+| **Slow-machine fallback to 2D**, the possessive-name filter, the landing copy | `714f5c1` |
+| merge to `main` | `b1c8329` |
+| **Links** — Uplevel for every module and session (**154/154**), each domain's Uplevel page, Drive files and folders on every item, the mastersheet only as the citation | `f9b4c69`, `2bb8609`, `579f72f`, `ee47ccc` |
+| **Identity merges** — INS-08/30 (Bill Ogden = William David Ogden), INS-31 (Konstantinos Pappas), INS-32 (Shelby Cohen), PPL-02…05/10 (Nisarg Tanna, Cathy Ma, Faraaz Sareshwala), Robert K; PPL-11 (Bharath Anand); PPL-13 (Reginald Johnson); MOD-01…16 applied, MOD-17/18 kept separate | `cb3522f`, `579f72f`, `80dc2e8` (earlier: `9e202ce`, `a87f960`, `f9b4c69`) |
+| **The pooler read-only guard** — production tests run read-only through the session pooler, proven by canaries 1–4 | `470ab48`, `94d25e8`, merge `210e84e` |
+| **The live mastersheet as the source** — scope file, read-only fetch, freshness guard, fail-loud parsing, diff, pass 7 on the live sheet | `34cb5c6`, `80dc2e8`, `579f72f`, merge `694c323` |
+| **The deploy artifact fix (R23)** — built from a `.vercelignore`-pruned tree, function map checked | `433f5f3`, merge `f4cd274` |
+| **Landing copy** for this release | `714f5c1` |
+| **The window** — migrations 0017–0021 (earlier sitting), the prebuilt deploy and **promote**, the projection, verification | run-sheet `3c37c9b`, `94d25e8`; deployment `dpl_3HZSPGpQEsz9gogu9WofSGQdJR8r` |
 
-## B3 cold-start findings (`42af286`) — the detail
-
-- **Connection reuse.** One database connection per warm instance instead of one
-  per request. Laptop→Seoul: **1,624 ms → 712 ms median (−64%)**.
-  **Safety comes from the transaction-local state plus a `finally:` ROLLBACK,
-  never a commit** — held by 8 tests, including *"an unidentified request after
-  an identified one sees nothing"* and the error path clearing state.
-- **Setup collapsed to one round trip.** `set_config(...)` and `SET LOCAL ROLE`
-  merged into a single statement → **591 ms median** (~120 ms saved).
-- **Lazy endpoint imports** in the router: **80.9 ms → 56.2 ms**. The dead
-  `http.server` import removed from `api/session.py`. The guard-order regression
-  this caused — an import running before `identify()` — was caught by a test,
-  fixed and asserted.
-- **Ruled out, no action:** bundle size after `excludeFiles` (**1.43 MB**),
-  region (`icn1` is already co-located with Supabase `ap-northeast-2`).
-- **Remaining cold-start premium** (first request on a new instance, still
-  paying the connect): **1,131 ms** — the likely shape of the 5.5 s settled
-  outlier.
+Before today (still true, detail in history): the row-B crawl and content
+graph, B1 projection merge, B2 structure view, B2.5 verification, B3 speed
+(cold starts, connection reuse and drop recovery, precomputed layout,
+columnar brotli `/api/structure`, ETag, lazy panels; `pg_trgm` not shipped by
+decision).
 
 ---
 
-# C · B3 — DONE LOCALLY 2026-09-30, one item not shipped (owner's call)
+# C · STILL OPEN FROM THE WINDOW — DO THESE FIRST
 
-| item | state |
-|---|---|
-| cold-start investigation | **DONE** — `42af286` |
-| connection-drop recovery | **DONE** — `87d49e0`; a dropped idle connection no longer fails the next request |
-| precomputed layout | **DONE** — `baf3f35`; migration **0021** `node_layout`, computed by `project_graph.py` |
-| columnar brotli `/api/structure` | **DONE** — `bbf6b2c`; 2,591,861 B → 127,261 B |
-| ETag with private caching | **DONE** — `bbf6b2c`; 304 in ~2 ms |
-| lazy panels | **DONE** — `bbf6b2c`; `/api/node?detail=1` on open |
-| `pg_trgm` search index | **NOT SHIPPED, owner decision 2026-09-30** — unusable under RLS; see §G |
-
-Local before/after: `docs/PERF-BASELINE.md` §"B3 — LOCAL before/after".
-Settled layout **6,450 → 135 ms**; wire bytes per node **784 → 38.5**. Nothing
-deployed, nothing applied to production.
-
----
-
-# D · NEXT PLAN — each step ends with a STOP for the owner
-
-**Reordered 2026-09-30 — owner decision (origin: hand, Animesh Kumar): the
-fastest ACCURATE launch.** B3 speed → merge → Phase C → acceptance → Phase D.
-Exact-slide deep links and B3.5 move to the first release after launch. **No
-change to the accuracy standard (`docs/ACCURACY-STANDARD.md`) or to any STOP.**
-
-**For launch, topics link to the deck with the locator shown beside it** —
-already built (`topicLinks()` in `public/index.html`). Measured 2026-09-30 in
-`knowledge/merged_graph.json`: all **6,271** `covers_topic` edges carry the
-deck's Drive link, with **3,626** a slide number, **952** a page number (PDFs)
-and **1,693** a sheet tab.
-
-## 1 · Finish B3 (speed) — DONE LOCALLY 2026-09-30, see §C (`pg_trgm` not shipped by decision, §G)
-The five remaining items: precomputed layout; columnar brotli
-`/api/structure`; ETag + private caching; lazy panels; `pg_trgm` index.
-
-**Also:** verify the reused database connection recovers when the pooler or the
-network drops it while idle — the next request must reconnect transparently
-rather than fail. **Write a test that kills the connection between two
-requests** — run only against the local Supabase stack (§I).
-
-Report LOCAL before/after against `docs/PERF-BASELINE.md`: settled time,
-cold-start time, bytes per node, p50/p95 per endpoint.
-
-## 2 · Merge to `main` — DONE 2026-09-30 (`0f0c78f`; main CI green, all four jobs)
-Push `content-crawl-rowB` → show all four CI jobs green **on the branch's own
-run** → merge into `main` **only when green**. Main's current red is the known
-pre-existing failures (owner ruling 2026-09-30, §G), not the bar. The push
-itself is refused while the repository is public (R21).
-
-## 3 · Owner acceptance — BEFORE the window
-`docs/ACCEPTANCE-CHECKLIST.md`, generated from `knowledge/merged_graph.json`
-(the graph the window projects), full §D.4 spec: per module the domain,
-programme week (owner fact), sessions with every file, instructors by
-mastersheet role (legacy and unconfirmed shown separately), assignment, decks,
-the top 5 of N topics with locators, and every link. **The owner ticks each
-module against the mastersheet; the window does not start until they
-confirm.** (Moved ahead of the window 2026-09-30 so the owner checks against the
-local build before production changes.)
-
-**State, 2026-09-30 (checklist review part 3): 20 of 20 confirmed** —
-recorded in `config/owner-confirmations.yaml` (origin: hand), each bound to a
-fingerprint of its block's mastersheet facts so a later change takes the tick
-off. SD3/4 was re-bound once, recorded in the file: its only change was the
-owner's own PPL-13 rename (`Reginald` → `Reginald Johnson`).
-
-**SD1/1 Databases — CORRECTED 2026-09-30 (part 3).** It was first reported
-here as "the live sheet is a different Drive file; a re-fetch cannot fix this".
-**That diagnosis was wrong.** The corpus copy always held SD1/1's instructors
-(Konstantinos Pappas · Ashish Kaila · Nikhil Kolekar) in a row written
-`Week 1/5: Databases`; the parser accepted only `-`/`–` after the week, skipped
-the row silently, and the "independent" re-derivation — which had copied the
-same regex — agreed. CLAUDE.md §6, a sixth time. Fixed: `:` accepted, and any
-instructor row that does not map now fails the build (tests on the exact live
-cells, mutation-tested). SD1/1 is ticked once the rebuilt block shows the three.
-
-**Freshness guard** (`pipeline/lib/freshness.py`): `project_graph.py` and
-`eval/mastersheet_rederive.py` refuse when the cached mastersheet is older than
-Drive or differs from it, naming both times; could-not-look is a refusal.
-Run-sheet step 0. Since part 3 it checks the LIVE sheet (§7).
-
-## 4 · The window — Phase C and Phase D in ONE sitting
-**Owner decision, Animesh Kumar, 2026-09-30 (origin: hand): migrations →
-deploy → projection**, so the OLD code never runs against the NEW data. The
-old code on the new data was assessed read-only on 2026-09-30: "7 of 42
-domains have no owner", Backend Engineering staffed by nobody, 42 of 50
-search hits undrawable, 294 of 300 nodes hidden on expanding API Design. The
-reverse overlap — new code on old data, ≈ 2–3 min — was **rehearsed and is
-safe** (2026-09-30): every endpoint 200, the page settles by the in-browser
-simulation, no console errors. The rehearsal ran every step and every rollback
-against a copy of production: migrations roll back to an identical schema; the
-restore brings back production's content hash; the projection takes 5.4 s
-locally, estimated 10–20 s in production from a measured 4.5–6.1 MB/s upload.
-
-**WINDOW PAUSED 2026-09-30 (owner decision).** Steps 0–3 passed; step 4
-failed once (R23 — fixed, redeployed); step 5 projected the new graph; step 6's
-production_only tests could not be guarded through the pooler, so the
-projection was restored (old data, 0021); the owner then rejected the new UI on
-live and the CODE was rolled back to `dpl_5wWZ…`. Production today = old code,
-old data, migration 0021. Next: B4 (UI) approved on a preview, then a new window
-from step 4 — **promoted**, not auto-assigned (WINDOW-RUNSHEET "After a Hobby
-rollback"). The read-only guard now works through the pooler: canaries 1–4
-(INSERT, UPDATE, DELETE, TRUNCATE) refused through the local session pooler
-AND against production through its session pooler (2026-09-30, merge
-`210e84e`; production counts and hash unchanged after); canary 5 is the §D.5
-role and is never run against production.
-
-**Re-rehearsed 2026-09-30 from `main` `694c323`** (after checklist review
-parts 1–3): migrate 0016→0021, projection 7.0 s with the live-sheet freshness
-check passing for real, `verify_migration` 54/54, curation IN SYNC, restore
-2 s back to production's hash, migrations down to 0016. Artifact
-`/tmp/np-deploy-694c323/`; production still `dpl_5wWZxv7ed1Bhq1fvCMSMVPgnfmxg`
-(re-checked after the merge). 43 old ids stop resolving, all merged.
-
-The step-by-step run-sheet, with the rehearsal's measured times and every
-rollback: **`docs/WINDOW-RUNSHEET.md`**. In outline:
-
-1. backup (pg_dump of the projection's tables + curation) → 2. migrations
-0017–0021 → 3. owner Google sign-in (0020 touches the sign-in hook) →
-4. deploy the prebuilt artifact → 5. projection → 6. verify → 7. live checks,
-the owner opens API Design and the matrix, **and tells the team to reload open
-tabs**.
-
-**Rollback is by restore, never by re-projection:** after 0021 the OLD
-`project_graph.py` cannot TRUNCATE (node_layout's foreign key), so the only way
-back to the old graph is the step-1 backup.
-
-The `production_only` tests, read-only, at step 6:
-
-```bash
-set -a && . ~/.config/np-autopilot/env && set +a
-NP_ALLOW_PROD_TESTS=1 python3 -m pytest tests -m production_only -rs
-```
-
-They are the 7 tests that assert on production's own rows (real Google
-identities, the live projection vs `public/stats.json`). Each runs under
-`default_transaction_read_only=on`, verified before it starts
-(`tests/db_guard.py`), so a write fails the test instead of landing. **Only
-with `-m production_only`**: the opt-in lifts the refusal for the whole suite,
-and the rest of it writes. The auth/RLS tests need no production run — they
-already run against Supabase's real stack locally (§I), not a shim. (The landing-stats test's old `< 5048` assertion is fixed — it now derives
-the projected count, `cf6acb0`.)
-
-## 5 · Immediately after launch — R22, deferred by the owner
-**Accepted by the owner and deferred until after launch (2026-09-30), not
-dismissed.** `07-risks.md` R22: the repository folder syncs to iCloud and to a
-Google Drive "Computers" backup, including the database password and the
-withheld hiring data.
-
-1. Move the repository out of `~/Desktop` (e.g. `~/src/np-autopilot`); update
-   `NP_CORPUS_PATH` if the corpus mirror moves with it.
-2. Remove the cloud copies: the Drive "Computers" backup of `Desktop/
-   NP-Autopilot-Corpus` and the iCloud copy — including version history and
-   trash. Confirm which Google account held the backup.
-3. **Rotate the database password, then redeploy** — so that every rollback
-   target (the new production deployment, and the one before it) carries the
-   new password, and none still holds the leaked one.
-4. **Review the "Indian Instructors" names the OLD graph reads** (owner request,
-   2026-09-30; no action before then). Passes 2–4 read the corpus copy's
-   `Indian Instructors` tab by its `Indian SME Name` column
-   (`pipeline/lib/sources.py`, a roster source), and the tab also holds an
-   "Indian SME hiring" section. Decide, name by name, which are **active
-   instructors** and which are **hiring candidates**; candidates are hiring
-   data and are handled like R18's — withheld from the public half, the same
-   `recruiting` treatment. The live sheet's copy of this tab is excluded
-   (`config/mastersheet-scope.yaml`) and is not read.
-5. **A dedicated read-only database role for the production tests** (owner
-   request, 2026-09-30; no action before then). Today read-only is a SESSION
-   SETTING (`db.connect`, NP_DB_READ_ONLY — the pooler drops PGOPTIONS), which
-   refuses INSERT/UPDATE/DELETE/TRUNCATE but NOT a test that first runs
-   `SET TRANSACTION READ WRITE` (canary 5, pinned by a strict xfail in
-   `tests/test_read_only_through_pooler.py`). A LOGIN role with read access
-   that bypasses RLS and holds no write privileges makes the database itself
-   refuse. `pg_read_all_data` is not it (no BYPASSRLS: every table reads 0
-   rows); Supabase's `supabase_read_only_user` has the right shape but
-   `postgres` cannot `SET ROLE` to it. Rehearse on the local stack, then flip
-   the strict xfail.
-6. **The `Agentic AI - SWE` schedule tab's dates are never read** (owner
-   request, 2026-09-30; no action before then). In `05-operations/New Combined
-   Schedule.xlsx` that tab heads its date column `Dat`, not `Date`, so the
-   schedule reader (`SCHEDULE_DATE_COL = "Date"`) takes its instructors and
-   topics but no `class_dates` — a key-dependent extraction miss (CLAUDE.md
-   §2a ii), found by the next-phase inventory (`docs/NEXT-PHASE.md` §1.B).
-   `Machine Learning DTC` and `MLSwitchUp DTC` have a BLANK date header — the
-   same miss. Fix by matching the date column by shape or an explicit
-   per-tab header map, never by renaming the corpus file (§1); report any tab
-   whose date column cannot be found instead of silently reading none.
-
-## 6 · First release AFTER launch
-
-Moved here by the 2026-09-30 decision; specified exactly as before.
-
-### 6a · Exact-slide deep links
-Google documents `https://www.googleapis.com/auth/drive.readonly` among the
-accepted scopes for Slides API `presentations.get`, so **no scope widening is
-needed**.
-
-First check whether the Slides API is **enabled in the service account's Google
-Cloud project**. If not: tell the owner exactly what to enable and where, and
-**pause this item**. If enabled: report the call count (~238 native decks),
-fetch page object ids, store `slide_number → page_object_id`, and link topics to
-`/presentation/d/<id>/edit#slide=id.<page_object_id>`. `.pptx` and `.pdf` keep
-the file link plus the slide/page number. Test: a topic from a native deck links
-to its exact slide.
-
-### 6b · B3.5 — UI features
-Specified in full in **`docs/UI-BACKLOG.md`**. Display only, no new data, CSP
-stays strict, self-hosted only. Header stat chips; type filter chips;
-single-type view; focus mode; breadcrumb; module panel header; Files · Open
-list; hint bar; one colour legend; and the explicit "do better than the B2B
-version" list (no overlapping labels, generic names always with parent context,
-grouped search with keyboard nav, URL-held state, readable dimmed nodes).
-
-### 6c · Later releases — each its own phase
-a. **Release 2, topic categories** — `config/topic-categories.yaml`, proposals
-   only until confirmed. See `docs/UI-BACKLOG.md`.
-b. **Release 2, tools/tech** — closed list in `config/tools.yaml`, new `tool`
-   node type, `uses_tool` edge. D1 unchanged.
-c. **`docs/EXTERNALLY-OWNED-FILES.md`** — 389 files, ONE list including the 185
-   hyphen-domain files, owner domain shown (never an address), videos separate,
-   grouped by domain and module, noting Drive cannot transfer ownership from a
-   personal account.
-d. **Shared export map** between pass 0 and the crawler — one native-type
-   vocabulary with a per-pass rule table; tests for type parity and
-   `[tab]`-marker count == xlsx tab count; add the Drive drawing → PDF entry.
-e. **Plugin `/module` command** (e.g. `/module API Design`) answering the full
-   chain with citations; bump `plugin.json`.
-f. **Extend to other row-B domains** — scope change, re-run from Phase 2.
-
-## 7 · Mastersheet source: the LIVE sheet (owner decision, 2026-09-30)
-
-The live Google Sheet the team maintains (Drive
-`1setMmRvBUNu9_85nT4xvvUFySodB6kiWb7bQ8qLEqAQ`, shared Viewer with the
-service account) replaces the corpus copy as the source of every
-mastersheet-derived fact. The corpus copy (`1f4T6u2m…`) stays in the graph as
-a **superseded** source — not deleted, not read for facts.
-`config/mastersheet-scope.yaml` declares it all: the four domain tabs and the
-four `Uplevel Resources` rows are read; nine tabs are excluded by name with a
-reason; an undeclared tab fails the build (`tests/test_mastersheet_scope.py`).
-
-- Fetch: `python3 pipeline/fetch_mastersheet.py` exports .xlsx (cell fills
-  survive) to `~/.config/np-autopilot/mastersheet/` — OUTSIDE the repo: the
-  export carries contact data, pass 1 walks `.drive-cache/`, and the repo sits
-  under a synced folder (R22). A fetch record beside it holds Drive
-  modifiedTime, version and sha256; the freshness guard compares against it.
-- Diff before any rebuild: `python3 eval/mastersheet_diff.py OLD NEW` — every
-  mastersheet fact; contact columns as counts only.
-- **Done (part 3 §6, 2026-09-30):** pass 7 and its readers read the live
-  export and cite it as `live-sheet/Resource Collection Mastersheet (Software
-  + System).xlsx` (a `files` row the projection registers); the corpus copy
-  is kept and marked `superseded_by`; each domain carries its Uplevel link
-  from `Uplevel Resources`; the re-derivation against the live sheet shows 0
-  unexplained differences; all 20 checklist blocks ticked.
-- **OWNER DECISION PENDING — the main graph still reads the corpus copy.**
-  Passes 2–4 (`pipeline/lib/sources.py`) read it for legacy-tier facts:
-  `Indian Instructors` names (a tab now excluded as contact-bearing),
-  `Instructor(FullStack)` roles and `teaches` grid (excluded as superseded),
-  and `Module Name` on eight tabs including the four out-of-scope domains.
-  "Not read for facts" was applied to row B as instructed; removing these
-  reads would drop legacy people and the legacy modules 16 MOD merges are
-  keyed to (CLAUDE.md §2a, §4), so it is the owner's call, not a default.
-
-## 8 · Candidate for a later release — `Interview Repo`
-
-The live sheet's `Interview Repo` tab maps modules to question-bank links. Owner
-decision 2026-09-30: a candidate for a later release; **not ingested** now
-(excluded in `config/mastersheet-scope.yaml`). When taken up: declare its
-columns (never the whole tab), check each link column for contact data first,
-and give it its own diff and review.
+1. **Step 7 click-through results from the owner.** Not yet reported. The
+   list given to the owner: sign in → 3D map; search `API Design` (Backend
+   Engineering, Week 11) → the chain (Module row: Uplevel module + Drive
+   folder; Pre-class, Class, Alternate class, Task, Review, Alternate review,
+   Post-class, each with its own Uplevel link; under Class 8 `Deck:` links, 1
+   `File:`, a collapsed `Historical (4)`; instructors Robert Kreznarich and
+   Tilo Dickopp primary, Shelby Cohen backup 1; no "Tilo’s …" topic); the
+   Class row's **Uplevel** link; **Deck: IK-API-Design-presentation-RK-v3.pptx**;
+   **Who teaches what** (Robert and Tilo green, Shelby blue); **Programme
+   timeline** (API Design in Week 11, legacy apart); **Back** returns to the
+   previous view. The owner was told to have the team **reload open tabs as
+   soon as sign-in works**. A failure → §K rollbacks.
+2. **`python3 eval/measure_signed_in.py --phase post --wait-for-enter`**
+   (opens a browser; the owner signs in once), then before/after against
+   `docs/PERF-BASELINE.md`, recorded there.
+3. **Post-window cleanup.** `public/stats.json` — **done** (committed with
+   this handoff). Still to do: delete the rehearsal copy
+   (`rm -rf ~/.config/np-autopilot/rehearsal`), the rehearsal database
+   (`psql postgresql://supabase_admin:postgres@127.0.0.1:54322/postgres -c "drop database rehearsal"`),
+   and every `/tmp/np-deploy-*` artifact, preview copy and build log. **Keep** both window backups
+   (`window-20260930-1133`, `window-20260930-2105`) and
+   `mastersheet-prev-20260930-2029` until the owner says.
+4. **Fix the deploy-check gap.** Building the preview sibling with
+   `vercel pull --environment=preview` left `.vercel/.env.preview.local` in
+   the copy (a zsh glob error aborted the cleanup line), and
+   `db/window/check_function_map.py` still printed "no env file" and counted
+   it among 90 uploaded files. It was deleted before any upload (re-check: 89
+   files). Fix: the check must look under `.vercel/` for `.env*`, with a test
+   on a synthetic artifact that fails before the fix.
 
 ---
 
-# E · OPEN REVIEW ITEMS AND PENDING OWNER DECISIONS
+# D · DEPLOY PROCEDURE — as it actually works now
 
-`docs/REVIEW-QUEUE.md` holds **89 rows: 68 answered, 21 open** (checklist
-review, 2026-09-30). Answered = the owner has decided the row, "leave
-unresolved" included (convention stated at the top of `REVIEW-QUEUE.md`, same
-in both files).
+Production deploys and promotes are **run by the owner in their own
+terminal**: Claude Code's permission classifier blocks
+`vercel deploy --prebuilt --prod` (observed 2026-09-30). In the owner's own
+terminal there is **no `!`** — `!` is only for commands typed inside Claude
+Code.
+
+1. **Build the artifact** (Claude): `db/window/build_artifact.sh main <stats.json>`
+   → `/tmp/np-deploy-<sha>`; it must print `function map OK … no local stub`.
+2. **Preview** (Claude): the artifact is built for production, so build a
+   preview-target sibling: copy it without `.vercel/output` and
+   `.vercel/python`, `vercel pull --yes --environment=preview`,
+   `vercel build`, **delete every `.vercel/.env*` file** (check with `find`,
+   not a glob), re-run `check_function_map.py`, then `vercel deploy --prebuilt --yes`.
+   Check with `vercel curl <path> --deployment <url>`: `/api/config` 200;
+   `/api/me`, `/api/overview`, `/api/structure` 401 with our JSON body; six
+   headers. The preview appends Vercel's feedback-toolbar tag to `index.html`
+   (production does not; our CSP blocks it).
+3. **Production deploy** (owner): `cd /tmp/np-deploy-<sha> && vercel deploy --prebuilt --prod --yes`
+   → send the new `dpl_…` id.
+4. **Checks** (Claude): `vercel inspect np-autopilot.vercel.app` must still
+   show the previous id; on the new deployment's own URL: config 200, the
+   three 401s, the six headers, CSP == `vercel.json`, `index.html`
+   byte-identical to the artifact, `/vendor/np3d.min.js` served, `stats.json`.
+5. **Promote** (owner): `vercel promote <dpl id> --yes`.
+6. **Confirm** (Claude): the live URL shows the new id; re-check it. The
+   rollback target is now the previous id.
+
+A data change goes through `docs/WINDOW-RUNSHEET.md` (fresh backup →
+freshness check → projection → verification); never `vercel ls`.
+
+---
+
+# E · NEXT PHASE — `docs/NEXT-PHASE.md` (a plan only, awaiting the owner)
+
+Nothing is built. The owner's direction of 2026-09-30 is recorded at the top
+of that file:
+
+- **Team & ownership**: internal `team_member` nodes from a **Keka export or
+  a maintained sheet**; `reports_to`; `owns` with a role; a **Team tab** and a
+  **"who owns what" matrix**.
+- **All pods**, `pod` as the top level: **System Pod next**, then **Agentic
+  AI**, then **Data & Management**.
+- **Workflows & SOPs, programme operations, metrics & feedback (always with
+  N).**
+- **The MCP query layer plus four job plugins**: Staff a class · Prep a
+  module · Run a workflow · Program/ops answers.
+- **Distribution via a GitHub org and a separate, clean plugins repo.**
+
+**What is needed from the owner** (`NEXT-PHASE.md` §5, §4.4):
+
+- files shared to the service account: **the "NP Autopilot" spreadsheet**
+  (Automations / All Tasks / To-Do & Working Notes — not in the corpus
+  folder); **live P1/P2** poll sheets; **the live New Combined Schedule**; a
+  Keka export or the maintained team sheet;
+- **a GitHub org** (named, with the assistant's account as an owner) and the
+  first team's members;
+- **a Google Cloud OAuth client** for the MCP sign-in (project `np-autopilot`,
+  Internal consent screen);
+- **the §4.4 decisions**, items 1–4 before Phase 0: distribution, MCP sign-in,
+  who sees what, metrics audience; items 5–10 before their phase.
+
+---
+
+# F · IMPROVEMENT BY OBSERVATION (new, 2026-09-30)
+
+The owner's requirement: the site improves from what the team actually sees.
+
+- **Intake — one place, two kinds.** A Slack channel (proposed
+  `#np-autopilot-feedback`) or a short form with three fields: *what I was
+  trying to do*, *what I saw* (a screenshot or the page URL — the URL now IS
+  the view, so it reproduces exactly), *issue or idea*. The channel and its
+  name are the owner's choice; nothing is set up yet.
+- **Weekly triage** (owner + assistant, ~30 min): each item becomes a
+  **fix** (a wrong or missing fact, a broken link, a UI bug), a **review row**
+  (an identity or label question → `docs/REVIEW-QUEUE.md`), a **backlog
+  item** (`docs/UI-BACKLOG.md` or `NEXT-PHASE.md`), or **declined with a
+  reason**. An accuracy report always starts from CLAUDE.md §6: name the
+  sheets read before concluding "not in the corpus".
+- **Small releases through the same path**: branch → CI green → merge → §D
+  (preview → owner's `--prod` → checks → owner's promote). A data change adds
+  the run-sheet's backup, freshness check and verification.
+- **A short changelog on the site**: dated, plain-language entries ("Decks now
+  hang off their session"), newest first — proposed as a static page linked
+  from the landing footer, generated from a `CHANGELOG.md`, so it stays in
+  the CSP-hashed build. Not built.
+
+---
+
+# G · OPEN REVIEW ITEMS AND POST-LAUNCH WORK
+
+## Review queue — `docs/REVIEW-QUEUE.md`, 106 rows: 68 answered, 38 open
 
 | prefix | rows | state |
 |---|---:|---|
-| `MOD` | 18 | **all answered** — 16 applied; MOD-17/18 kept separate by decision (2026-09-30) |
-| `INS` | 32 | **all answered and applied** — INS-08/30/31/32 merged 2026-09-30 |
-| `PPL` | 13 | **12 answered** — PPL-01…11 and PPL-13 merged (PPL-13: Reginald = Reginald Johnson, superseding PPL-09's "unresolved"); **PPL-12 open** |
-| `DCK` | 14 | **open** — deck filename → instructor proposals |
-| `TOPv` | 3 | **answered and applied** — mastersheet name is the label, folder name is `label_raw` |
-| `TOPm` | 3 | **answered and applied** — same answer |
+| `MOD` | 18 | all answered — 16 applied; MOD-17/18 kept separate |
+| `INS` | 32 | all answered and applied |
+| `PPL` | 13 | 12 answered (PPL-13 = Reginald Johnson); **PPL-12 open** |
+| `TOPv` / `TOPm` | 3 / 3 | answered and applied |
 | `TOPt` | 6 | **open** — lesson-plan tab → module |
+| `DCK` | 14 | **open** — deck filename → instructor |
+| `NAM` | 16 | **open, queued for later** — instructor labels that are not one person's name (`2- Prateek`, `Robert/Shelby/`, `Indian SME hiring` …) |
+| `DUP` | 1 | **open, queued** — DUP-01 `Anshaj` · `Anshaj Khare` |
 
-**Deliberately unresolved identities: none** since PPL-13 (2026-09-30).
+**There is no `REM` prefix.** The handoff request named "REM-16 legacy names";
+nothing in the repo uses `REM`. The 16 legacy-name rows are **NAM-01…16**,
+taken to be what was meant.
 
-Answer the remaining 21 before Phase C where possible.
+**Tilo’s note pages — not a queue row, flagged.** The possessive rule holds
+back 18 titles, all Tilo Dickopp's ("Tilo’s page 13 notes on Authorization"
+…), so API Design's topics went 238 → 220 current. Some of those titles name a
+real subject. The owner asked for the rule; whether those subjects should
+come back as topics (e.g. with the prefix stripped) is an open question for
+the owner, not decided.
 
-**PENDING — billing decision, the owner's:** raising the Vercel function
-`memory` setting buys proportionally more CPU, shortening interpreter start-up
-and connection setup on cold starts. Proposed: one step up, measure the
-cold-start premium before and after, keep it only if the gain justifies the
-cost. **Not applied.**
+## Post-launch items (deferred by the owner, no action before)
+
+1. **`Agentic AI - SWE` date header** — `05-operations/New Combined
+   Schedule.xlsx` heads that tab's date column `Dat`, so no `class_dates` are
+   read; `Machine Learning DTC` and `MLSwitchUp DTC` have a blank header. Match
+   by shape or a per-tab header map; never rename the corpus file; report any
+   tab whose date column cannot be found.
+2. **Indian Instructors review** — passes 2–4 read the corpus copy's `Indian
+   Instructors` tab (`Indian SME Name`, `pipeline/lib/sources.py`); decide name
+   by name which are active instructors and which are hiring candidates
+   (candidates are withheld like R18's).
+3. **A dedicated read-only database role** for the production tests — today
+   read-only is a session setting that canary 5 (`SET TRANSACTION READ WRITE`)
+   defeats; pinned by a strict xfail in `tests/test_read_only_through_pooler.py`.
+   Rehearse locally, then flip the xfail.
+4. **Topic categories and tool tags** (Release 2) — `config/topic-categories.yaml`
+   and a closed `config/tools.yaml` with a `tool` node type; proposals only
+   until confirmed. `docs/UI-BACKLOG.md`.
+5. **Exact-slide deep links need the Slides API** — `drive.readonly` is
+   enough scope; first check whether the Slides API is enabled in the service
+   account's project (if not, tell the owner what to enable and pause);
+   ~238 native decks; `.pptx`/`.pdf` keep the file link plus the number.
+6. **Move the repository to the org** (with §E's distribution) — and off the
+   synced Desktop (§I R22).
+7. **The main graph still reads the corpus-copy mastersheet** for legacy-tier
+   facts (`Indian Instructors`, `Instructor(FullStack)`, `Module Name` on eight
+   tabs). Removing those reads would drop legacy people and the modules 16 MOD
+   merges are keyed to — **owner decision pending** (`NEXT-PHASE.md` §4.4
+   item 10).
+8. **`Interview Repo`** tab — a candidate for a later release; not ingested.
+9. **Billing decision pending**: one step up in the Vercel function `memory`
+   setting, measured before/after on the cold-start premium (~1,131 ms).
+10. Also specified earlier and still open: `docs/EXTERNALLY-OWNED-FILES.md`;
+    a shared export map between pass 0 and the crawler; a plugin `/module`
+    command (superseded by §E's plugins); other row-B domains (superseded by
+    §E's pods).
 
 ---
 
-# F · EVERY OWNER DECISION FROM THIS SESSION
+# H · EVERY OWNER DECISION FROM TODAY
 
-All `origin: hand`, **Animesh Kumar, 2026-09-29**. Each was verified present in
-the file named.
+All **origin: hand, Animesh Kumar, 2026-09-30**. Each was checked present in
+the file named while writing this. The 2026-09-29 decisions are in the
+previous handoff's §F (`b1c8329:docs/HANDOFF.md`) and the files it names.
 
 | decision | recorded in |
 |---|---|
-| D2a approved: row B only, SD1 Full Stack / SD2 Frontend / SD3 Backend / SD4 Test Engineering; rows A and C out of scope; P1/P2 (ratings) deferred | `docs/PRE-CRAWL-DECISIONS.md` |
-| Folder `Week N` is LOCAL sequencing only; programme weeks come from curriculum docs or owner facts, never computed | `docs/PRE-CRAWL-DECISIONS.md`, `pipeline/lib/curriculum.py` (`ArithmeticWeekRefused`) |
-| Programme weeks, explicit per module: Full Stack 9–13, Frontend 9–12, Backend 9–13, Testing 9–14 (after DSA 1–5 and Systems Design 6–8) | `config/out-of-corpus-facts.yaml` → `rowb-program-weeks` |
-| Base versions current; Revamp 2024 / Q4 2024 / New Material Aug 2023 non-current (`superseded_by`); "Updated Content - Aug 2023" (SD3 Concurrency) stays ambiguous | `config/out-of-corpus-facts.yaml` → `rowb-revamp-base-is-current` |
-| Resume files are fictional templates (redaction stays on) | `config/out-of-corpus-facts.yaml` → `rowb-resume-folders-are-fictional-templates` |
-| Roland Kunkel is an instructor; 3 speaker-notes/solutions files included by Drive file id; learner content otherwise excluded | `pipeline/lib/content_scope.py` → `INCLUDE_DESPITE_LEARNER_RULE` |
-| Practice problems are optional per module — shown as "not offered", never as a gap | `config/out-of-corpus-facts.yaml` → `practice-problems-are-optional` |
-| Instructors un-deferred, from the Resource Collection Mastersheet only (D1 unchanged); roles primary / backup_1 / backup_2 / backup_3; `A/B` cells split into two people | `docs/CONTACT-DATA.md` §R, `pipeline/lib/mastersheet.py` |
-| Contact-data reversal: all instructor-table columns ingested, but contact #, email and LinkedIn ONLY in the sensitive half (gitignored, admin-only via RLS when projected), never in a git-tracked file | `docs/CONTACT-DATA.md` §R |
-| `label_not_contact` narrowed to email-shaped strings and `https?://` | `docs/CONTACT-DATA.md` §L, `db/migrations/0018_*` |
-| MOD-01…16, including MOD-04 (legacy Full-Stack edges kept but unconfirmed) and MOD-15 (mapped to SD4/5's sessions) | `config/module-merges.yaml` |
-| INS bulk of 26; INS-05/06 (Balaram Velaga canonical, Velega alias); INS-08/30/31/32 left unresolved | `config/instructor-identity.yaml` |
-| PPL-11: `Bharath` = Bharath Anand; `Bharath` kept in `label_raw` | `config/instructor-identity.yaml` |
-| Default view = the whole structure layer; legacy modules faded, not hidden; the no-programme legacy cluster labelled as such | `docs/DEFAULT-VIEW.md` D1/D2 |
-| Source-links spec: every item shows all of its own links (Uplevel + Drive); the mastersheet only as the provenance citation; all IK staff have view access, so no access warnings | `docs/ACCEPTANCE-CHECKLIST.md`, `config/out-of-corpus-facts.yaml` → `ik-has-view-access-to-drive-and-uplevel` |
-| **The matrix load column** (Primary / Backup, per node, never summed across unresolved identities) | `docs/DEFAULT-VIEW.md` **D4a** — *added while writing this handoff* |
-| The speed plan, including the cold-start fixes | `docs/DEFAULT-VIEW.md` D3, `docs/PERF-BASELINE.md` |
-| **The accuracy standard** (1 faithful to source; 2 nothing guessed; 3 re-derivation diff = 0; 4 owner acceptance before deploy) | **`docs/ACCURACY-STANDARD.md`** — *added while writing this handoff* |
-| **The B2B-style UI features** (B3.5: single-type view, focus mode, files list, label and context improvements) | **`docs/UI-BACKLOG.md`** — *added while writing this handoff* |
-| **Release 2: topic categories as graph nodes** (proposals until confirmed) | **`docs/UI-BACKLOG.md`** — *added while writing this handoff* |
-| **Release 2: tools/tech as graph nodes** (closed curated list, `uses_tool`) | **`docs/UI-BACKLOG.md`** — *added while writing this handoff* |
+| Plan reordered: the fastest ACCURATE launch (B3 → merge → acceptance → window); deep links and B3.5 after launch | `docs/UI-BACKLOG.md` (top) |
+| `pg_trgm` not shipped (unusable under RLS) | `docs/DEFAULT-VIEW.md` D3 status, `docs/PERF-BASELINE.md` §B3 |
+| CI "all four green" applies to the branch's own run | previous handoff §G (`b1c8329`) — resolved: main is green |
+| Window order: migrations → deploy → projection | `docs/WINDOW-RUNSHEET.md` |
+| R22 accepted and deferred until after launch | `07-risks.md` R22 |
+| Post-launch: Indian Instructors review; a read-only DB role; the `Dat` header | this file §G; `tests/test_read_only_through_pooler.py` (xfail) |
+| The LIVE mastersheet replaces the corpus copy as the source; declared tabs only; `Interview Repo` a later candidate | `config/mastersheet-scope.yaml` |
+| Checklist review 1–3 answers: identities (INS-08/30/31/32, PPL-02…05/10, Robert K), module labels = mastersheet names (TOPv/TOPm), MOD-17/18 kept separate, PPL-13 = Reginald Johnson | `docs/REVIEW-QUEUE.md` ("Checklist review" sections), `config/instructor-identity.yaml`, `config/module-merges.yaml` (`kept_separate`) |
+| Daniel Grundel (SD1/4 Backup 3, red cell) no longer teaches it | `config/mastersheet-owner-facts.yaml` |
+| Topic quality: person names and bios are not topics; housekeeping ranked last, never removed | `config/topic-quality.yaml`, `tests/test_not_a_topic.py` |
+| 20 of 20 modules confirmed | `config/owner-confirmations.yaml` |
+| Window paused; the new UI rejected on live; code rolled back to `dpl_5wWZ…`; next deploy by **promote** | `docs/WINDOW-RUNSHEET.md` ("Earlier state") |
+| NAM and DUP rows queued for later, not changed now | `docs/REVIEW-QUEUE.md` (NAM, DUP) |
+| The next-phase plan (plan only); **launch now, expand scope next** | `docs/NEXT-PHASE.md` |
+| **B4 UI decisions**: separate old/new domains, SD labels, legacy badge; the map as the default; chips filter the map; ghost anchors; labels never dropped; floating and drag; focus; role order and colours; historical grouping; plain language; crisp rendering; one-URL state; search holds back not_a_topic; decks core; the local review mode; screenshots not committed | **`docs/DEFAULT-VIEW.md` D6** — *recorded while writing this handoff* |
+| **UI approved; 3D default, 2D one toggle away** (reconfirmed after the approval) | **`docs/DEFAULT-VIEW.md` D6** — *recorded while writing this handoff* |
+| **Slow-machine fallback to 2D** with "Try 3D anyway" | `docs/DEFAULT-VIEW.md` D6, `tests/test_default_view_labels.py` |
+| **Possessive first names** of known people are not topics | `docs/DEFAULT-VIEW.md` D6, `tests/test_not_a_topic.py` |
+| **Landing "What it answers well"** for this release | `docs/DEFAULT-VIEW.md` D6, `public/index.html` |
+| **Delete the remote `b4-ui` branch** after the merge | this file §A (done) |
+| **Accept the empty mastersheet diff** (2736 → 2742, 0 facts changed, 0 unexplained, 20 ticks hold) | **`docs/WINDOW-RUNSHEET.md` STATE** — *recorded while writing this handoff* |
+| **Go-ahead for window steps 5–6** with a FRESH backup first | `docs/WINDOW-RUNSHEET.md` STATE |
+| **Keep the window backups until the owner says** | `docs/WINDOW-RUNSHEET.md` STATE, this file §C.3 |
+| **Production deploys and promotes are run by the owner** in their own terminal | this file §D |
+| **Next-phase direction**: team_member from Keka or a sheet, `reports_to`, `owns` with a role, Team tab, who-owns-what matrix; pods top-level (System Pod, then Agentic AI, then Data & Management) | **`docs/NEXT-PHASE.md` "Owner direction"** — *recorded while writing this handoff* |
+| **Improvement-by-observation loop** | **this file §F** — *recorded while writing this handoff* |
 
-**Five of these were NOT recorded anywhere before this handoff** — the last five
-rows above. They existed only in conversation. They are recorded now.
-
----
-
-# G · OPEN ISSUES AND RISKS (none are blockers)
-
-**Found during B3, 2026-09-30 — two accuracy bugs FIXED, one decision OPEN:**
-
-- **FIXED — 675 of the structure view's 4,970 edges never reached the
-  browser.** `mergeGraph` keyed edges on (source, rel, target), and a module
-  joins a session once per attached file: 653 of 727 attached-file links and
-  22 `expert_in` claims were dropped. B2's API Design panel said *"no slide
-  deck: no deck matched at session level"* for a Class session that has 13
-  decks — a false absence, the thing `docs/ACCURACY-STANDARD.md` §2 forbids.
-  Edges are keyed on their database id now; the regenerated
-  `docs/screenshots/02-module-api-design.png` lists all 13. **The owner
-  acceptance checklist (§D.4) should be read against this build, not B2's.**
-- **FIXED — the matrix load column (D4a) depended on edge order.** Where a
-  pair has a legacy `teaches` edge AND a mastersheet role, the cell showed
-  whichever came last; two loads were under-counted in B2's screenshot. Now
-  explicit: the mastersheet role wins, then the stronger role. Checked in both
-  orders.
-- **DECIDED — `pg_trgm` not shipped** (owner, Animesh Kumar, 2026-09-30,
-  origin: hand). The index sped up search only for the table owner (18.5 →
-  1.4 ms); under RLS the planner can never use it, because `ILIKE` is not
-  LEAKPROOF. Search is ~9 ms p50 under RLS, and a `SECURITY DEFINER` search
-  would duplicate the visibility rules. `docs/PERF-BASELINE.md` §B3.
-
-**R21 — the GitHub repository was PUBLIC from creation (2026-09-17) for 13
-days**, found 2026-09-29 before a push. **Private, verified 2026-09-29
-19:06:50Z** (anonymous 404, authenticated `private: true`); last seen public
-18:58:55Z. **81 clones were external** (owner: nobody on our side cloned
-or pulled), so the disclosure question is escalated alongside R18's. No copy
-found in Software Heritage or the Wayback Machine (checked read-only).
-Recorded in `07-risks.md` R21, with the disclosure question left to the owner.
-**Nothing is pushed until `pipeline/check_repo_private.py` passes** — CI's
-`secrets` job runs it first, and `.githooks/pre-push` refuses the push.
-
-**Found 2026-09-29 by the first run of the DB tests against Supabase's real
-stack — both are the migrations relying on the environment, and both fail
-`tests/` today:**
-
-- **`auth_hook_refusals` has RLS disabled — in production too**
-  (`relrowsecurity = false`, read-only check). Migration 0016 creates it
-  without `enable row level security`. Not exposed today: `anon` and
-  `authenticated` hold no privilege on it in production, and it has 0 rows.
-  `test_rls_is_enabled_on_every_table` fails.
-- **The migrations do not stop `anon` executing the sign-in hook.** 0007
-  revokes EXECUTE from `anon`, `authenticated` but not from `PUBLIC`.
-  Production's function ACL happens to carry no `PUBLIC` grant; a fresh apply
-  on Supabase's own image does (`=X/postgres`). Safe in production by
-  environment, not by migration. `test_the_hook_is_callable_by_the_role_gotrue_uses`
-  fails.
-- **Fixed by migration 0020 — written and tested LOCALLY only** (owner approval
-  2026-09-30). RLS on `auth_hook_refusals` with one insert policy for
-  `supabase_auth_admin`; EXECUTE on the hook and `_hook_pick` revoked from
-  PUBLIC, anon, authenticated and service_role, granted to
-  `supabase_auth_admin` only. Up, down and up again on the local stack; both
-  failing tests green; new tests call the hook AS `supabase_auth_admin` under
-  RLS (allow, and refuse-with-recorded-row) and as each client role (denied).
-  The down restores production's pre-0020 ACLs, never the fresh-apply PUBLIC
-  grant. **Goes to production in Phase C with 0017–0019.**
-
-- **`interview-kickstart.com` (hyphen): 185 files.** IT confirmation still
-  pending. Included in the main externally-owned list by owner decision.
-- **204 files owned by personal accounts** — content-continuity risk. Drive
-  cannot transfer ownership from a personal account; the fix is an IK-owned
-  copy.
-- **49 download-disabled files** — metadata-only nodes, still linked, marked
-  "view only". `docs/DOWNLOAD-DISABLED-FILES.md`.
-- **The Drive-upload incident**: the database password was **NOT rotated**, by
-  owner choice. The uploaded copies were moved out of the corpus folder.
-- **R19/R20 numbering — RESOLVED 2026-09-30.** The Drive-upload incident is
-  `07-risks.md` **R20**; `docs/CACHE-EXPOSURE.md` §0a keeps R19 for the
-  folder-visibility question.
-- **`07-risks.md` R20 disagrees with this file on two facts, not reconciled
-  here because only the owner knows them:** it says both uploaded artefacts
-  were *still present* 2026-09-29 and that the password rotation was *stated as
-  done* 2026-09-28; the incident bullet above says the copies were moved out and the password was
-  NOT rotated. Re-list the folder read-only and record which is current.
-- **CI has been red on `main` since at least 2026-09-20** — `test`, `payroll`
-  and `secrets` fail, `renderer` passes; no successful run in the last 40.
-  **Owner ruling 2026-09-30 (Animesh Kumar, origin: hand):** §D.2's "all four
-  jobs green" applies to the **`content-crawl-rowB` branch's own CI run**;
-  main's red state is the known pre-existing failures this branch fixes.
-- **Registry drift**: the hardcoded registry in `count_registry.py` versus the
-  live folder.
-- **Registry row C is shared "anyone with the link"** — out of scope, but the
-  sharing state is a finding.
-- **~100 legacy "session rows wearing a module label"** (62 `… Class`, 37
-  `… Assignment Review Class`, 1 `… Assignment`) — recorded in
-  `config/module-merges.yaml` findings, not fixed.
-- **724 of 922 legacy modules have no programme edge** — the default view puts
-  them in one faded cluster labelled "Legacy — no programme recorded".
-- **Cold starts**: ~1,131 ms first-request premium remains after the fixes; a
-  5.5 s settled outlier was seen once. The `memory` decision is pending (§E),
-  and the reused connection must be proven to survive idle drops (§D.1).
-- **30 instructor labels were duplicated before the INS bulk; 4 remain**, all by
-  owner decision.
-- **`/api/structure` is unbounded by design** (3,307 nodes). It is parameterless
-  so it cannot become an arbitrary-subgraph endpoint, but it IS a bulk download
-  and the anti-bulk reasoning in `web/lib/data.py::overview` still applies to
-  everything else.
+**Not recorded anywhere before this handoff** (only in commit messages or
+conversation): the B4 UI decisions and the 3D default (now `DEFAULT-VIEW.md`
+D6), acceptance of the empty mastersheet diff (now the run-sheet STATE), the
+next-phase direction (now `NEXT-PHASE.md`), and the improvement loop (now
+§F).
 
 ---
 
-# H · WORKING AGREEMENT FOR THE NEXT SESSION
+# I · RISKS AND DEFERRED ITEMS
 
-- **Step by step. STOP after every phase.** Nothing pushed, projected, deployed
-  or applied to production without the owner's explicit go-ahead.
-- **Never print a secret or a token**, even partially. The measurement script
-  reads the session token inside the page and it never reaches Python.
-- **Ambiguity is returned, never guessed** (`lib/resolve.py`). **Thresholds rank
-  or warn, never silently exclude** (`CLAUDE.md` §4).
-- **Every owner decision is recorded** as `origin: hand`, with the owner's name
-  and the date.
-- **Verify by measurement, never by status output. Every check must be able to
-  fail — mutation-test it.** This session found four checks that could not:
-  eval C12, `q_instructor`, a vacuous ordinal test, and `verify_migration`
-  comparing two things that already agreed.
-- **Deploy only from a `.git`-less `/tmp` copy. Check the live URL, never
-  `vercel ls`.**
-- **Never push without the visibility check passing** (R18, R21):
-  `git config core.hooksPath .githooks` once per clone makes it automatic.
-- **Keep docs in sync with code**, and fix drift the moment it is found.
+- **R22 — the repository folder syncs to iCloud and a Google Drive
+  "Computers" backup**, including the database password and withheld hiring
+  data. Accepted, deferred until after launch — **now due**: (1) move the
+  repo out of `~/Desktop` (e.g. `~/src/np-autopilot`); (2) remove the cloud
+  copies, with version history and trash, and confirm which Google account
+  held the backup; (3) **rotate the database password, then redeploy** (§D),
+  so no rollback target holds the old one — after which the rollback target
+  is the new build, not `dpl_5wWZ…`.
+- **R20 — the Drive-upload incident.** The password was NOT rotated, by owner
+  choice (so R22's rotation covers it). `07-risks.md` R20 disagrees with this
+  on two facts (whether the copies are still present; whether rotation was
+  done) — only the owner knows; re-list the folder read-only and record which
+  is current.
+- **R21 — the repository was public for 13 days** (to 2026-09-29); 81 external
+  clones; the disclosure question is the owner's, alongside R18's. Private
+  since; `pipeline/check_repo_private.py` gates every push.
+- **Shared accounts**: `shared_accounts` has 1 row. A shared Google account
+  signs in as `member` (migration 0014), but nothing can say which person used
+  it (`docs/AUTH.md`: no technical answer).
+- **`interview-kickstart.com` (hyphen): 185 files** — IT confirmation still
+  pending; included in the externally-owned list.
+- **Externally owned files**: 389 in all, **204 owned by personal accounts**
+  (Drive cannot transfer ownership from a personal account; the fix is an
+  IK-owned copy); **49 download-disabled** files are metadata-only, linked,
+  marked "view only".
+- **Coverage**: 127 of 374 worksheets have been read by an entity scan; every
+  person / instructor / module count is a floor (CLAUDE.md §2). Widening
+  coverage is also what removes the contact-data protection — read CLAUDE.md
+  §2 first.
+- Carried: registry drift (`count_registry.py` vs the live folder); registry
+  row C shared "anyone with the link"; ~100 legacy "session rows wearing a
+  module label"; 724 of 922 legacy modules with no programme edge (one faded
+  cluster); a ~1,131 ms cold-start premium; `/api/structure` is a bulk
+  download by design (parameterless).
 
 ---
 
-# I · KEY COMMANDS
+# J · WORKING AGREEMENT (unchanged)
+
+- **Step by step; STOP after each step** for the owner.
+- **Nothing to production without the owner's explicit go-ahead** — no push to
+  production data, projection, migration or deploy. Production deploys and
+  promotes are the owner's (§D). Never touch the production database for
+  previews.
+- **Never print a secret, token or DSN**, even partially. The window env helper
+  sources `~/.config/np-autopilot/env` — never echo it.
+- **Ambiguity is returned, never guessed** (`lib/resolve.py`). **Thresholds
+  rank or warn, never silently exclude** (CLAUDE.md §4).
+- **Every owner decision is recorded** as `origin: hand`, with name and date,
+  in a file.
+- **Verify by measurement, never by status output; every check must be able
+  to fail** — mutation-test it.
+- A failed window step: stop, run that step's rollback from the run-sheet, and
+  ask before anything else.
+- Merge with a merge commit, one command at a time.
+- The corpus is read-only; Drive access is `drive.readonly`; workbooks open
+  `read_only=True`; contact columns are never printed or declared.
+
+---
+
+# K · KEY COMMANDS
 
 ```bash
 # --- once per clone ----------------------------------------------------
@@ -584,92 +413,72 @@ git config core.hooksPath .githooks      # pre-push refuses a public repo (R21)
 python3 pipeline/check_repo_private.py   # the same check, by hand
 
 # --- environment -------------------------------------------------------
-set -a && . ~/.config/np-autopilot/env && set +a     # DB + Drive credentials
+#  ~/.config/np-autopilot/env IS PRODUCTION. Load it only for a window step
+#  or a read-only check; never before pytest (below).
+set -a && . ~/.config/np-autopilot/env && set +a
+export NP_DRIVE_SA_KEY=~/.config/np-autopilot/drive-sa.json   # a PATH, never the key
+
+# --- mastersheet (the live sheet) ---------------------------------------
+python3 -c "import sys; sys.path.insert(0,'.'); from pipeline.lib import freshness as f; f.require_fresh('check')"
+python3 pipeline/fetch_mastersheet.py                 # read-only export, outside the repo
+python3 eval/mastersheet_diff.py OLD.xlsx NEW.xlsx    # every fact; contact columns as counts
+python3 eval/mastersheet_rederive.py                  # must be 0 unexplained
 
 # --- pipeline ----------------------------------------------------------
-python3 pipeline/00_fetch_drive.py                  # needs NP_DRIVE_SA_KEY
-python3 pipeline/01_parse.py                        # 1..5 build the main graph
-python3 pipeline/05_render_html.py
-python3 pipeline/06_crawl_content.py                # row B crawl (Drive)
-python3 pipeline/07_build_content_graph.py          # content graph, no network
-python3 pipeline/08_merge_graphs.py                 # apply answered REVIEW-QUEUE rows
-python3 pipeline/refresh.py                         # end-to-end refresh
+python3 pipeline/00_fetch_drive.py                    # needs NP_DRIVE_SA_KEY
+python3 pipeline/07_build_content_graph.py            # content graph (reads the live export)
+python3 pipeline/08_merge_graphs.py                   # answered REVIEW-QUEUE rows, topic marks
+python3 pipeline/refresh.py                           # end-to-end refresh
 python3 pipeline/validate.py
-
-# --- evals and accuracy ------------------------------------------------
-python3 eval/content_eval.py                        # 14/14
-python3 eval/content_eval_all.py                    # 103/103, all 20 modules
-python3 eval/mastersheet_rederive.py                # must be 0 differences
-node   eval/drive_dom.mjs public/index.html
-
-# --- database ----------------------------------------------------------
-python3 pipeline/migrate.py status
-python3 pipeline/migrate.py up
-python3 pipeline/project_graph.py                   # public half only
-python3 pipeline/project_graph.py --scope full      # REFUSES, by design
-python3 pipeline/verify_migration.py --source supabase      # 54/54
-python3 pipeline/verify_migration.py --freeze --scope full  # deliberate re-freeze
-python3 pipeline/curation.py check
-
-# --- generated docs ----------------------------------------------------
 python3 pipeline/gen_acceptance_checklist.py
-python3 pipeline/gen_csp_hashes.py                  # after ANY edit to index.html
-python3 pipeline/gen_csp_hashes.py --check          # CI form
+python3 pipeline/gen_csp_hashes.py                    # after ANY edit to public/index.html
 
-# --- performance -------------------------------------------------------
-python3 eval/measure_signed_in.py --phase pre       # before the deploy
-python3 eval/measure_signed_in.py --phase post      # after; /api/structure REQUIRED
-python3 eval/measure_signed_in.py --phase pre --wait-for-enter
+# --- local database: Supabase CLI stack --------------------------------
+colima start && db/local/setup.sh                     # start, migrate, project, seed
+LOCAL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+POOL="postgresql://postgres.pooler-dev:postgres@127.0.0.1:6543/postgres"
+#  project locally WITHOUT touching tracked public/stats.json:
+SUPABASE_DB_URL_SESSION="$LOCAL" SUPABASE_DB_URL_TRANSACTION="$POOL" \
+  NP_LANDING_STATS=/tmp/stats-scratch.json python3 pipeline/project_graph.py
+SUPABASE_DB_URL_SESSION="$LOCAL" python3 pipeline/verify_migration.py --freeze   # only content hashes should move
+python3 tests/test_structure_payload.py --write      # regenerate the payload fixture
 
-# --- the local database: Supabase CLI stack (tests, B3, screenshots) ---
-#  Supabase's own images — Postgres 17.6.1.171 (production: 17.6), GoTrue
-#  v2.197.0, Supavisor transaction pooler on 6543 — so auth, roles and RLS
-#  behave as in production. Its DATA is not production's. Config: db/local/.
-colima start                                       # Docker, if not running
-db/local/setup.sh                                  # start, migrate, project, seed
-db/local/setup.sh --stop                           # data kept in the volume
-#  CLI pinned in setup.sh: supabase@2.118.0 (via npx, no global install)
-LOCAL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"   # fixed local default
+# --- tests -------------------------------------------------------------
+python3 -m pytest tests -q        # DB tests go to the local stack; refuses a production DSN
+#  production_only, read-only, ONLY at a window step:
+#    NP_ALLOW_PROD_TESTS=1 python3 -m pytest tests -m production_only -rs
+node eval/drive_dom.mjs public/index.html              # renderer harness
 
-# --- the local REVIEW server (click through the app on the local data) ---
-#  Signs the browser in as a local stub user (member) and shows a red
-#  "LOCAL PREVIEW, not production" banner; open http://127.0.0.1:8765/ .
-#  The stub exists ONLY in eval/local_server.py (excluded by .vercelignore);
-#  db/window/check_function_map.py fails any artifact that would upload it,
-#  and tests/test_local_stub_never_ships.py holds both. Refuses a production DSN.
-nohup python3 -u eval/local_server.py 8765 > /tmp/np-local-server.log 2>&1 &
+# --- the local REVIEW server -------------------------------------------
+#  Stub member sign-in + "LOCAL PREVIEW, not production" banner; can never ship
+#  (tests/test_local_stub_never_ships.py). Restart after server-side changes.
+nohup python3 -u eval/local_server.py 8765 > /tmp/np-local-server.log 2>&1 < /dev/null & disown
+#  open http://127.0.0.1:8765/   (2D: /?dim=2d)
 
-# --- the 3D map (default view; 2D behind the toggle) --------------------------
-#  public/vendor/np3d.min.js is three@0.186.1 + 3d-force-graph@1.80.1, vendored,
-#  eval-free (ngraph stubbed), loaded only when the 3D view is shown. CI cannot
-#  render WebGL: run the GPU check against the review server before a release.
-eval/build_np3d.sh                                 # rebuild the vendored bundle
-python3 eval/check_3d.py                           # 3D under the production CSP: load, chips, focus, fallback, fps
-
-# --- running the tests SAFELY ------------------------------------------
-python3 -m pytest tests -q         # DB tests go to the local stack if it is up,
-                                   # and skip if it is not
-#  NEVER load ~/.config/np-autopilot/env before pytest: that env IS production,
-#  and the DB tests insert, delete and re-project. tests/conftest.py refuses a
-#  production DSN (Supabase host or project ref) with a usage error unless
-#  NP_ALLOW_PROD_TESTS=1 — and that opt-in is for Phase D's read-only
-#  production_only run ONLY (§D.4):  pytest tests -m production_only
-#  The report header's first line says which database the run used.
-#  Other targets: NP_TEST_DSN / NP_TEST_DSN_TRANSACTION (still refused if prod).
-#  Every run ends with "skips by reason (N)". CI enforces tests/ci-skips.yaml
-#  (NP_SKIP_LEDGER=enforce): a new, grown or vanished skip fails until the
-#  ledger is edited on purpose. Reproduce CI's view in a clean clone:
-#    NP_TEST_DSN=postgresql://x@127.0.0.1:1/x NP_SKIP_LEDGER=enforce pytest tests
-
-# --- screenshots (local harness; stubs ONLY guard.identify) ------------
+# --- the 3D map --------------------------------------------------------
+eval/build_np3d.sh                  # rebuild the vendored bundle (three + 3d-force-graph)
+python3 eval/check_3d.py            # GPU: CSP, fps, chips, focus, Esc, pause, fallback,
+                                    # reduced motion, slow machine -> 2D
 SUPABASE_DB_URL_SESSION="$LOCAL" python3 eval/screenshot_views.py
 
-#  The hand-built plain-PostgreSQL workbench (port 55432, `np_b2`) used for
-#  B2/B2.5 is SUPERSEDED: its shim lacked auth.identities, the postgres and
-#  supabase_auth_admin roles, and a non-superuser owner, so 24 DB tests
-#  failed there for reasons production does not have.
+# --- deploy (§D; production steps are the OWNER's, no `!` in their terminal)
+db/window/build_artifact.sh main /path/to/stats.json  # -> /tmp/np-deploy-<sha>, map checked
+python3 db/window/check_function_map.py /tmp/np-deploy-<sha>
+cd /tmp/np-deploy-<sha> && vercel deploy --prebuilt --prod --yes   # OWNER
+vercel promote <dpl id> --yes                                      # OWNER
+vercel inspect np-autopilot.vercel.app                # never `vercel ls`
+vercel curl /api/config --deployment <url>
 
-# --- deploy (Phase D) ---------------------------------------------------
-#  copy to /tmp WITHOUT .git, deploy from there, then check the live URL.
-#  Never `vercel ls`.
+# --- window data steps (docs/WINDOW-RUNSHEET.md) -------------------------
+db/window/backup.sh "$B"                              # before any projection
+psql "$WINDOW_DSN" -At -F '	' -f db/window/counts.sql
+python3 pipeline/verify_migration.py --source supabase   # 54/54
+python3 pipeline/curation.py check                        # IN SYNC
+
+# --- rollbacks ---------------------------------------------------------
+vercel rollback dpl_5wWZxv7ed1Bhq1fvCMSMVPgnfmxg                              # code
+db/window/restore_projection.sh ~/.config/np-autopilot/window-20260930-2105   # data
+
+# --- performance -------------------------------------------------------
+python3 eval/measure_signed_in.py --phase post --wait-for-enter   # the owner signs in once
 ```
