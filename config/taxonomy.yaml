@@ -902,8 +902,11 @@ property_scopes:
     - attached_drive_url
     - attached_id
     - attached_is_deck
+    - attached_historical  # the attached file is historical (cm.is_historical)
+    - cell_order           # a person's place in a mastersheet role cell (joint roles keep sheet order)
     - deck_drive_url
     - drive_folder_url
+    - drive_folders        # B4 (i): [{url, name, where}] — a module's or session's Drive folders, from pipeline/list_folders.py
     - drive_url
     - locator_kind
     # --- added 2026-09-29 for the merged projection (pass 8 + B1). ---------

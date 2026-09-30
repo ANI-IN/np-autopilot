@@ -36,7 +36,7 @@ from typing import Any
 import yaml
 
 from . import taxonomy
-from .paths import CONFIG_DIR
+from .paths import CONFIG_DIR, KNOWLEDGE_DIR
 
 MERGES_FILE = CONFIG_DIR / "module-merges.yaml"
 IDENTITY_FILE = CONFIG_DIR / "instructor-identity.yaml"
@@ -377,6 +377,37 @@ def merge(main: dict, content: dict, spec: dict | None = None,
         if x and n.get("type") == taxonomy.edge_endpoints(taxonomy.edge_for_role("provenance"))[1]:
             n["superseded_by"] = _ms.LIVE_CITATION
             meta["superseded_files"].append(n["relative_path"])
+    # EVERY FILE NODE GETS ITS OPEN LINK (B4 (i), 2026-09-30). The 74 corpus
+    # files carry their Drive id in knowledge/files.json; it reached only the
+    # provenance panel, so their own nodes had no link.
+    files_json = KNOWLEDGE_DIR / "files.json"
+    if files_json.exists():
+        import json as _json
+        rows = _json.loads(files_json.read_text(encoding="utf-8"))
+        ids = {r["path"]: r.get("drive_file_id")
+               for r in rows.get("files", []) + rows.get("failures", [])}
+        file_type = taxonomy.edge_endpoints(taxonomy.edge_for_role("provenance"))[1]
+        for n in out["nodes"]:
+            if n.get("type") == file_type and not n.get("drive_url"):
+                fid = ids.get(n.get("relative_path") or n.get("label"))
+                if fid:
+                    n["drive_url"] = f"https://drive.google.com/open?id={fid}"
+    # CORROBORATION IS COUNTED AFTER THE MERGES (owner review 2026-09-30).
+    # Pass 3 counted each spelling's files on its own and pass 7 wrote False,
+    # and the survivor of a merge is whichever node has the lowest id — so
+    # Robert Kreznarich (4 files) and Konstantinos Pappas (6) read "named in
+    # one file only". Counted here over the merged sources, with the
+    # superseded corpus copy of the mastersheet and the live sheet as ONE
+    # source: they are the same workbook, and counting it twice would
+    # corroborate a name with itself.
+    same_as = {x["path"]: _ms.LIVE_CITATION for x in _ms.SUPERSEDED}
+    for n in out["nodes"]:
+        if n.get("type") != "instructor" or not n.get("sources"):
+            continue
+        files = {same_as.get(s["file"], s["file"])
+                 for s in n["sources"] if s.get("file")}
+        n["file_count"] = len(files)
+        n["cross_validated"] = len(files) >= 2
     marks = classify_topics(out)
     meta["not_a_topic"] = len(marks[PERSON_NAME]) + len(marks[PERSON_BIO])
     meta["topic_marks"] = {k: len(v) for k, v in marks.items()}

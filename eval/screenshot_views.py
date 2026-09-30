@@ -34,7 +34,7 @@ sys.path.insert(0, str(REPO / "web"))
 sys.path.insert(0, str(REPO / "api"))
 
 PUBLIC = REPO / "public"
-OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO / "docs" / "screenshots"
+OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO / "docs" / "screenshots" / "b4"
 
 
 class _Identity:
@@ -103,17 +103,28 @@ def _serve():
     return srv, srv.server_address[1]
 
 
+#: The owner's list, 2026-09-30: taken at a 1440px-wide window at DPR 2.
 SHOTS = [
-    ("01-structure-default", None,
-     "the whole structure layer, legacy modules faded"),
-    ("02-module-api-design", "module:backend:3",
-     "API Design module panel — the full chain"),
-    ("03-instructor-panel", "instructor:first",
-     "instructor panel — roles by evidence tier"),
-    ("04-matrix-testing", "view:matrix:testing",
-     "who-teaches-what, filtered to Test Engineering"),
-    ("05-timeline", "view:timeline", "programme timeline"),
+    ("01-default-map", None,
+     "the default map: every current type on one network, legacy as groups"),
+    ("02-sessions-only", "types:class_session:",
+     "only Sessions on: modules stay as ghost anchors named on their clusters"),
+    ("02b-decks-and-modules", "types:slide_deck,module:",
+     "only Decks + Modules on: decks hang off ghost sessions, which join their modules"),
+    ("03-focus-api-design", "mapfocus:module:backend:3",
+     "focus on API Design: its sessions, decks, week, assignments and instructors"),
+    ("04-focus-robert-kreznarich", "mapfocus:instructor:Robert Kreznarich",
+     "focus on Robert Kreznarich: his modules in SD1 and SD3"),
+    ("05-api-design-opened", "module:backend:3",
+     "API Design opened in its domain (double-click): sessions, links, Historical collapsed"),
+    ("06-instructors-list", "list:instructor",
+     "the List toggle: instructors, the 25 current first, the older sheets collapsed"),
+    ("07-matrix-backend", "view:matrix:backend", "who teaches what — SD3 Backend Engineering"),
+    ("08-matrix-testing", "view:matrix:testing", "who teaches what — SD4 Test Engineering"),
+    ("09-timeline", "view:timeline", "the programme timeline"),
 ]
+#: the same default map at DPR 1, to compare sharpness
+DPR1_SHOT = ("10-default-map-dpr1", None, "the default map at DPR 1")
 
 
 def main() -> int:
@@ -135,16 +146,17 @@ def main() -> int:
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         b = p.chromium.launch()
-        ctx = b.new_context(viewport={"width": 1500, "height": 950},
+        ctx = b.new_context(viewport={"width": 1440, "height": 900},
                             device_scale_factor=2)
-        ctx.add_init_script("""
+        INIT = """
           try{
             const k=(window.__NP&&window.__NP.sessionKey)||'np_session';
             localStorage.setItem(k, JSON.stringify({
               access_token:'local', refresh_token:'local',
               expires_at: Math.floor(Date.now()/1000)+86400}));
           }catch(e){}
-        """)
+        """
+        ctx.add_init_script(INIT)
         page = ctx.new_page()
         errors = []
         page.on("pageerror", lambda e: errors.append(str(e)))
@@ -155,26 +167,68 @@ def main() -> int:
             page.goto(base + "/", wait_until="networkidle")
             page.wait_for_timeout(2500)
             if action and action.startswith("module:"):
+                # what a double-click on the map does: open it in its domain
                 _, slug, seq = action.split(":")
                 page.evaluate(
                     """([slug,seq])=>{const n=D.nodes.find(x=>x.t==='module'&&
-                        x.dom===slug&&String(x.p.sequence)===seq);
-                       if(n){openNode(n.id);centreOn(n,1.8);}}""", [slug, seq])
-            elif action == "instructor:first":
+                        x.dom===slug&&String((x.p||{}).sequence)===seq);
+                       if(n){state.open.add(n.id);goPlace({kind:'domain',id:domainOf(n).id},'shot');
+                             openNode(n.id);}}""", [slug, seq])
+            elif action and action.startswith("instructor:"):
                 page.evaluate(
-                    """()=>{const n=D.nodes.find(x=>x.t==='instructor'&&
-                        E.some(e=>(e.s===x.id||e.t===x.id)&&e.p&&e.p.tier==='mastersheet'));
-                       if(n){openNode(n.id);centreOn(n,1.8);}}""")
+                    """(name)=>{const n=D.nodes.find(x=>x.t==='instructor'&&x.l===name);
+                       if(n){goPlace({kind:'node',id:n.id},'shot');openNode(n.id);}}""",
+                    action.split(":", 1)[1])
             elif action and action.startswith("view:matrix"):
                 dom = action.split(":")[2] if action.count(":") > 1 else None
-                page.evaluate("""(d)=>{state.fDomain=d; setView('matrix',true);}""", dom)
+                page.evaluate("""(d)=>{state.fDomain=d; renderFilters(); setView('matrix',true);}""", dom)
             elif action == "view:timeline":
                 page.evaluate("""()=>setView('timeline',true)""")
+            elif action and action.startswith("mapfocus:instructor:"):
+                page.evaluate("""(name)=>{const n=D.nodes.find(x=>x.t==='instructor'&&x.l===name);
+                                  if(n)activate(n);}""", action.split(":", 2)[2])
+            elif action and action.startswith("mapfocus:module:"):
+                _, _, slug, seq = action.split(":")
+                page.evaluate(
+                    """([slug,seq])=>{const n=D.nodes.find(x=>x.t==='module'&&
+                        x.dom===slug&&String((x.p||{}).sequence)===seq);
+                       if(n)activate(n);}""", [slug, seq])
+            elif action and action.startswith("list:"):
+                page.evaluate("""(t)=>{state.types=new Set([t]); state.listMode=true;
+                    recompute(true,'shot'); renderChips(); renderCrumbs(); writeUrl();}""",
+                              action.split(":", 1)[1])
+            elif action and action.startswith("types:"):
+                spec, dom = action.split(":", 1)[1].rsplit(":", 1)
+                page.evaluate("""([ts,d])=>{state.fDomain=d||null; renderFilters();
+                    state.types=new Set(ts.split(',')); recompute(true,'shot');
+                    renderChips(); renderCrumbs(); writeUrl();}""", [spec, dom])
+            elif action and action.startswith("only:"):
+                page.evaluate("""(t)=>onlyType(t)""", action.split(":", 1)[1])
+            elif action and action.startswith("focus:"):
+                _, slug, who = action.split(":", 2)
+                page.evaluate(
+                    """([slug,name])=>{
+                       const mods=D.nodes.filter(x=>x.t==='module'&&x.dom===slug&&!x.legacy);
+                       for(const m of mods)state.open.add(m.id);
+                       const d=domainOf(mods[0]);
+                       goPlace({kind:'domain',id:d.id},'shot');
+                       const n=D.nodes.find(x=>x.t==='instructor'&&x.l===name);
+                       if(n)openNode(n.id);}""", [slug, who])
             page.wait_for_timeout(1200)
             path = OUT / f"{name}.png"
             page.screenshot(path=str(path))
             shown = path.relative_to(REPO) if path.is_relative_to(REPO) else path
             print(f"  {shown}  — {caption}")
+        # the same map at DPR 1 (the renderer harness checks the backing store
+        # at DPR 1 and 2; this is the picture to compare sharpness by eye)
+        ctx1 = b.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=1)
+        ctx1.add_init_script(INIT)
+        p1 = ctx1.new_page()
+        p1.goto(base + "/", wait_until="networkidle")
+        p1.wait_for_timeout(3000)
+        name, _, caption = DPR1_SHOT
+        p1.screenshot(path=str(OUT / f"{name}.png"))
+        print(f"  {OUT.name}/{name}.png  — {caption}")
         b.close()
     srv.shutdown()
     # The Google Sign-In script rejects the placeholder client id. That is the

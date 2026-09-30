@@ -679,6 +679,7 @@
    "target": "cla_5faf39ad14afb1c0"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_0bc009fd274eea44",
@@ -694,6 +695,7 @@
    "target": "ins_3ba3964184d6332f"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_0bc009fd274eea44",
@@ -709,6 +711,7 @@
    "target": "ins_1c6b316a16b31ba9"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_2",
    "rel": "taught_by",
    "source": "mod_0bc009fd274eea44",
@@ -822,6 +825,7 @@
    "target": "cla_5384f4ef9a2960a4"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_e5f708116a4b7fac",
@@ -837,6 +841,7 @@
    "target": "ins_7d5b432b04df5d13"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_e5f708116a4b7fac",
@@ -852,6 +857,7 @@
    "target": "ins_30f246594b8e08b0"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_2",
    "rel": "taught_by",
    "source": "mod_e5f708116a4b7fac",
@@ -965,6 +971,7 @@
    "target": "cla_8b54fc9b32e2bbd3"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_ab9e5ee393195cf2",
@@ -980,6 +987,7 @@
    "target": "ins_7ac87e39682af9e0"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_ab9e5ee393195cf2",
@@ -995,6 +1003,7 @@
    "target": "ins_7253416c9a49548a"
   },
   {
+   "cell_order": 1,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_ab9e5ee393195cf2",
@@ -1010,6 +1019,7 @@
    "target": "ins_7e5bd1315d9df646"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_2",
    "rel": "taught_by",
    "source": "mod_ab9e5ee393195cf2",
@@ -1025,6 +1035,7 @@
    "target": "ins_7c1961b0e4158881"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_3",
    "rel": "taught_by",
    "source": "mod_ab9e5ee393195cf2",
@@ -1138,6 +1149,7 @@
    "target": "cla_a9dffe4b81f18867"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_00ee7c30fff3dc36",
@@ -1153,6 +1165,7 @@
    "target": "ins_c8317159ba08919f"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_00ee7c30fff3dc36",
@@ -1168,6 +1181,7 @@
    "target": "ins_1c6b316a16b31ba9"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_2",
    "rel": "taught_by",
    "source": "mod_00ee7c30fff3dc36",
@@ -1281,6 +1295,7 @@
    "target": "cla_b0abf01a1df4bf44"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_b591bcb07c5eb33b",
@@ -1296,6 +1311,7 @@
    "target": "ins_7253416c9a49548a"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_b591bcb07c5eb33b",
@@ -1311,6 +1327,7 @@
    "target": "ins_6ddbd76f4b6efb30"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_2",
    "rel": "taught_by",
    "source": "mod_b591bcb07c5eb33b",
@@ -1326,6 +1343,7 @@
    "target": "ins_c8317159ba08919f"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_3",
    "rel": "taught_by",
    "source": "mod_b591bcb07c5eb33b",
@@ -1439,6 +1457,7 @@
    "target": "cla_a7993d3c9450da20"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_7af5a48eabe4adb6",
@@ -1454,6 +1473,7 @@
    "target": "ins_734aec7d1d57e62e"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_7af5a48eabe4adb6",
@@ -1567,6 +1587,7 @@
    "target": "cla_83e1b97663a4b688"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_50a33a8e184e6849",
@@ -1582,6 +1603,7 @@
    "target": "ins_3231ad1eb02fb068"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_50a33a8e184e6849",
@@ -1695,6 +1717,7 @@
    "target": "cla_fa2d296277d04308"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_0d3e49f1778b9090",
@@ -1710,6 +1733,7 @@
    "target": "ins_6ddbd76f4b6efb30"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_0d3e49f1778b9090",
@@ -1823,6 +1847,7 @@
    "target": "cla_8eb02a2f7be00968"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_bb30095a76e9b5c6",
@@ -1838,6 +1863,7 @@
    "target": "ins_297b39d617b13001"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_bb30095a76e9b5c6",
@@ -1951,6 +1977,7 @@
    "target": "cla_28e90536f8e7c5fc"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_36793b37f57c09a0",
@@ -1966,6 +1993,7 @@
    "target": "ins_6377ba484a48b01a"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_36793b37f57c09a0",
@@ -1981,6 +2009,7 @@
    "target": "ins_30f246594b8e08b0"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_2",
    "rel": "taught_by",
    "source": "mod_36793b37f57c09a0",
@@ -1996,6 +2025,7 @@
    "target": "ins_7d5b432b04df5d13"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_3",
    "rel": "taught_by",
    "source": "mod_36793b37f57c09a0",
@@ -2109,6 +2139,7 @@
    "target": "cla_c4758bf81ce83f71"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_cefc969d84e291e5",
@@ -2124,6 +2155,7 @@
    "target": "ins_e22deef278f14896"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_cefc969d84e291e5",
@@ -2139,6 +2171,7 @@
    "target": "ins_30f246594b8e08b0"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_2",
    "rel": "taught_by",
    "source": "mod_cefc969d84e291e5",
@@ -2252,6 +2285,7 @@
    "target": "cla_0e74292200d4ee2b"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_150eb79c4ec6f254",
@@ -2267,6 +2301,7 @@
    "target": "ins_30f246594b8e08b0"
   },
   {
+   "cell_order": 1,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_150eb79c4ec6f254",
@@ -2282,6 +2317,7 @@
    "target": "ins_e22deef278f14896"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_150eb79c4ec6f254",
@@ -2395,6 +2431,7 @@
    "target": "cla_c5107ded0c324052"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_44e86d468ffa62f5",
@@ -2410,6 +2447,7 @@
    "target": "ins_c120d6ce4742253b"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_44e86d468ffa62f5",
@@ -2425,6 +2463,7 @@
    "target": "ins_7c1961b0e4158881"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_2",
    "rel": "taught_by",
    "source": "mod_44e86d468ffa62f5",
@@ -2538,6 +2577,7 @@
    "target": "cla_c226d18b653008a9"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_68672ce55043c450",
@@ -2553,6 +2593,7 @@
    "target": "ins_77eaf40a9b06b1c1"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_68672ce55043c450",
@@ -2652,6 +2693,7 @@
    "target": "cla_ad5f50e0885bca46"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_2e4842a29bc521ba",
@@ -2667,6 +2709,7 @@
    "target": "ins_747a09929590183a"
   },
   {
+   "cell_order": 1,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_2e4842a29bc521ba",
@@ -2682,6 +2725,7 @@
    "target": "ins_459b9d0fbfd2b701"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_2e4842a29bc521ba",
@@ -2697,6 +2741,7 @@
    "target": "ins_fba675cf2dd9d5bc"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_2",
    "rel": "taught_by",
    "source": "mod_2e4842a29bc521ba",
@@ -2796,6 +2841,7 @@
    "target": "cla_85ca97f0a3af8f5b"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_3b8af36fddf1b226",
@@ -2811,6 +2857,7 @@
    "target": "ins_fba675cf2dd9d5bc"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_3b8af36fddf1b226",
@@ -2826,6 +2873,7 @@
    "target": "ins_632f97fe7b7b2bc1"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_2",
    "rel": "taught_by",
    "source": "mod_3b8af36fddf1b226",
@@ -2925,6 +2973,7 @@
    "target": "cla_88da14199c523e67"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_a036b35b54865c2a",
@@ -3024,6 +3073,7 @@
    "target": "cla_633e06a9dfc4741a"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_e3865bea05ed325a",
@@ -3039,6 +3089,7 @@
    "target": "ins_17a0f3c40b4bf4fa"
   },
   {
+   "cell_order": 1,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_e3865bea05ed325a",
@@ -3054,6 +3105,7 @@
    "target": "ins_0914f216e7304361"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_e3865bea05ed325a",
@@ -3153,6 +3205,7 @@
    "target": "cla_4fd5f5e8b8b91281"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_1262237b9b72b360",
@@ -3168,6 +3221,7 @@
    "target": "ins_07fc46ceb073ed3c"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_1262237b9b72b360",
@@ -3267,6 +3321,7 @@
    "target": "cla_ea5c006daa2fe2bb"
   },
   {
+   "cell_order": 0,
    "instructor_role": "primary",
    "rel": "taught_by",
    "source": "mod_b1feb3161efd9eaa",
@@ -3282,6 +3337,7 @@
    "target": "ins_e3edf7b011df3d55"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_1",
    "rel": "taught_by",
    "source": "mod_b1feb3161efd9eaa",
@@ -3297,6 +3353,7 @@
    "target": "ins_59b24c23587f9826"
   },
   {
+   "cell_order": 0,
    "instructor_role": "backup_2",
    "rel": "taught_by",
    "source": "mod_b1feb3161efd9eaa",
@@ -5070,6 +5127,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1-dnrK70b_vBNMOdSWiHUcBeqIp0GPhuM",
    "attached_file": "Old API Design.pptx",
+   "attached_historical": true,
    "attached_id": "sli_232419994f136a98",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -7619,6 +7677,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1-lXh1aQUBLXrAYRA8UDpPTGsycquAazAUaze4MTwFTc",
    "attached_file": "[DO NOT USE] IK Frontend - Module 2 - UI & DOM - Jakob",
+   "attached_historical": true,
    "attached_id": "sli_c14e361e4a14d23d",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -7732,6 +7791,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=10TRhpGlyh5RHvuFR-PARX2mOYjSQ1-P0Tr_O-lKerSY",
    "attached_file": "JavaScript and Web Development Assignment",
+   "attached_historical": true,
    "attached_id": "fil_bd84978e284cd931",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -10475,6 +10535,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=10ionI2eD58mwuKXKzew11cX5o13vNZJr",
    "attached_file": "Concurrency Super Set Slides.pptx",
+   "attached_historical": true,
    "attached_id": "sli_9d2cb050fecaf027",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -15145,6 +15206,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=12N91tJs5vD9jpd-O0Mhh68e1Ba06-ZjW",
    "attached_file": "API Design and Implementation- third.pptx",
+   "attached_historical": true,
    "attached_id": "sli_55efa0ed61eda89f",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -16934,6 +16996,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1394K9wvPIyYrK-weB4jpo6DS_SEPZc5daAcE7MhJz0U",
    "attached_file": "JS and WebD - Live Class by JD",
+   "attached_historical": true,
    "attached_id": "sli_a83ef1dbe9ccbc9e",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -18085,6 +18148,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=14ZpsUmLvk6cw_HMke39xOwZp1lTpionU",
    "attached_file": "Design Patterns.pptx",
+   "attached_historical": true,
    "attached_id": "sli_b326a313b73b383f",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -19854,6 +19918,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=15m6F2FVza1jBbdFf2UJR7CUgeVb7Wdnk",
    "attached_file": "PreRead - API Design and Implementation-second.docx",
+   "attached_historical": true,
    "attached_id": "fil_3001d2b3b2816c0d",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -22261,6 +22326,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=16GRSZurqkKQLPBZYoEnG_UAKpRFSxb8vpOrXKIMB_CQ",
    "attached_file": "Design Patterns",
+   "attached_historical": true,
    "attached_id": "sli_038d90e7166ca414",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -28169,6 +28235,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=182Yxna2KNJQSgnU9yv8DXuy8cBdpd6n7",
    "attached_file": "API design - Krish.pptx",
+   "attached_historical": true,
    "attached_id": "sli_bfffd03a96779ad6",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -32358,6 +32425,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=18BfMIMex5yB8g0k75u_U-AvRRE_g7H45",
    "attached_file": "JavaScript and Web Development Assignment.docx",
+   "attached_historical": true,
    "attached_id": "fil_b709afa33335a675",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -32603,6 +32671,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=18PL7KpSZm9JJbqRj5jtnyHriB-5c2h9QTxzwETWnVnk",
    "attached_file": "Old Copy of FM: Automation Testing: Foundations - 13 February, 22:31",
+   "attached_historical": true,
    "attached_id": "fil_07e9f1a3e20ab13c",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -33630,6 +33699,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=19V9bFJyXHpsPZ5pITqjPfY_jg-60bicA",
    "attached_file": "BoundedHashSet.pdf",
+   "attached_historical": true,
    "attached_id": "fil_3edfc5cb53dc5030",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -38498,6 +38568,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1ArPSdz_-3nkn-UqIHX7_3lXltr60QpcO",
    "attached_file": "The _this_ keyword.pptx",
+   "attached_historical": true,
    "attached_id": "sli_bc9ec27ba39f6d45",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -38907,6 +38978,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1AwJzKm_mFuVaP0NdKb9k6h5-0gKpImo8lBC8hc-wWaM",
    "attached_file": "Basics of Event Handling",
+   "attached_historical": true,
    "attached_id": "sli_10455ef34c2b27b7",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -40172,6 +40244,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1BKx9IPF10ZrIyjXjvT_B_HvAuCV_6U6c",
    "attached_file": "ConcurrentHashmap.pdf",
+   "attached_historical": true,
    "attached_id": "fil_6997fa2a30269254",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -43212,6 +43285,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1EQwKDlS5IhV8k-G2S89DMf2oNOHZd6p1lh2PCpiKT0g",
    "attached_file": "SOLID Principles",
+   "attached_historical": true,
    "attached_id": "sli_9d012dac51974d69",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -51022,6 +51096,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1GtPLwE7NhgeD6gLyiDnN6t4chcFS866n",
    "attached_file": "API Design and Implementation.pptx",
+   "attached_historical": true,
    "attached_id": "sli_74d1498916954e1a",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -52651,6 +52726,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1Gyd9zTgPt4cKJVGmbtmhreq-GZBqxUjk",
    "attached_file": "API design.pptx",
+   "attached_historical": true,
    "attached_id": "sli_6d4f96fffd1b78c0",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -58785,6 +58861,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1JLgHvCh3ibNrt-9Y_Yuc4R8oLOXbiVuf",
    "attached_file": "Practice Problems.docx",
+   "attached_historical": true,
    "attached_id": "fil_bda65209be2a653c",
    "match_evidence": "name",
    "rel": "delivers_session",
@@ -58906,6 +58983,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1JYJqugt8OaQ2XLAgJa8xIDLrb0hIXlgz",
    "attached_file": "iFrames.pptx",
+   "attached_historical": true,
    "attached_id": "sli_d3741dd2e2ae83f4",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -59363,6 +59441,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1JuT_0TQaRKSiHHT_j1qSe71XXslxNXmUMhNn8BK7Mio",
    "attached_file": "Copy of JS and WebD - Live Class by JD",
+   "attached_historical": true,
    "attached_id": "sli_36227bd2b3b7bcd9",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -71304,6 +71383,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1QhvulvEBC0zmH-_Q6BYiBzTqv-9XsMoT",
    "attached_file": "mcq.docx",
+   "attached_historical": true,
    "attached_id": "fil_16335426550e19a1",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -71415,6 +71495,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1R0cg6urKK9H_JJvMIB4uYr5nn8-MAeSo",
    "attached_file": "Basics of Event Handling.pptx",
+   "attached_historical": true,
    "attached_id": "sli_cec7249c0020f75f",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -80884,6 +80965,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1VT1gdET9sAwhbPu4KX2Zu-wZA_K1XLPYOcZlwRA-dYY",
    "attached_file": "Getting Started with React",
+   "attached_historical": true,
    "attached_id": "fil_db8eb6e6aa6a700d",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -86637,6 +86719,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1Z2rmcJL5PQzYCv-vAbcMokn34YTy3j_p",
    "attached_file": "Getting Started with React.docx",
+   "attached_historical": true,
    "attached_id": "fil_09c0ccea256cb77e",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -87078,6 +87161,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1ZWGPuCgp7JKlxg4Uh9x70ukPGLrJ9566",
    "attached_file": "API Development Assignment.docx",
+   "attached_historical": true,
    "attached_id": "fil_a59cd320d49a4e41",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -88881,6 +88965,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1cKV-nq0ktH2g3j0jcR82zQttKDCcaNYM",
    "attached_file": "API Design and Implementation- second.pptx",
+   "attached_historical": true,
    "attached_id": "sli_3b9b9a946857060b",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -94239,6 +94324,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1et49w_Ts3OWtn2N-9r93QF4TSfEF7i7g3xo_gvQ_0_Y",
    "attached_file": "Practice Problems",
+   "attached_historical": true,
    "attached_id": "fil_44315ee44194fde3",
    "match_evidence": "name",
    "rel": "delivers_session",
@@ -94740,6 +94826,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1fEIZFIWW9FzVdHeUWCWiGWJj6zXlfJ4H",
    "attached_file": "API Development MCQ and Freeform.docx",
+   "attached_historical": true,
    "attached_id": "fil_3c30d284baf4e33b",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -104300,6 +104387,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1jMI9z6Bf8PHp0DZF3EzTu0hkFO19eDGrakM8ssdzcnk",
    "attached_file": "[Old] Databases Live Class - Ashish",
+   "attached_historical": true,
    "attached_id": "sli_7e82084636348d7b",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -108789,6 +108877,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1jiik2Ql1GXPjJ3cupPPTUdhU6QU7y0gvVIHfJJtzIrk",
    "attached_file": "Databases Live Class - 2024",
+   "attached_historical": true,
    "attached_id": "sli_1512c0a8ab43c9a7",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -112251,6 +112340,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1m-to_4SKZXLAyLpyxwOz0W7ojX6Reekx",
    "attached_file": "PreRead - API Design and Implementation.docx",
+   "attached_historical": true,
    "attached_id": "fil_3af051fd00dedc71",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -113406,6 +113496,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1md94iZKTu5wo6Ob1__ArK1T6WcQzn3bd",
    "attached_file": "SOLID Principles.pptx",
+   "attached_historical": true,
    "attached_id": "sli_e6a25e231b4b4f3c",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -113923,6 +114014,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1mvxaXiYFopP88J9e_gfP_hlUh4fLwrLU",
    "attached_file": "JS and WebD - Live Class by JD.pptx",
+   "attached_historical": true,
    "attached_id": "sli_ba07fa700fc7a589",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -127933,6 +128025,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1sEim2ZackUXyCTvOv4_vkGMeAcEWAjTO",
    "attached_file": "API design - Krish.pptx.pdf",
+   "attached_historical": true,
    "attached_id": "fil_fd189ef62d2fe4d2",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -133004,6 +133097,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1u3jwJgpIOMGNcPdHdK_1Lpzws31B61KVWMrZtERoUEA",
    "attached_file": "threadsafe_pubsub",
+   "attached_historical": true,
    "attached_id": "fil_3c941cd3860522ea",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -135421,6 +135515,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1vmI1dKIlBgcKDwxXc1nNyEi3UW98Oe8Hbzj5kxHru-Y",
    "attached_file": "Old FM: Automation Testing: Foundations",
+   "attached_historical": true,
    "attached_id": "fil_04b2aad098f963dc",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -135439,6 +135534,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1vnV14CFuqGVql1rfJIImKBM8dk98UTW8A3fBia2gCsg",
    "attached_file": "rate_limiter",
+   "attached_historical": true,
    "attached_id": "fil_2cbea3117f6b42bd",
    "match_evidence": "folder",
    "rel": "delivers_session",
@@ -135471,6 +135567,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1voDRCI_kQMJUdo6ziJqqEhg3YoGf3qrVwcbTuKSQzvA",
    "attached_file": "The \"this\" keyword",
+   "attached_historical": true,
    "attached_id": "sli_56dd1a5f3b7ef618",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -138467,6 +138564,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1xTbp43pXcjAVpldKErAQTIjQrkx_uBVMu6K18vVQIDY",
    "attached_file": "iFrames",
+   "attached_historical": true,
    "attached_id": "sli_898ec2cbf42be5ab",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -138722,6 +138820,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1xspjmIyRc-bCnWuqildNTiygVw99EArf4zBNtIik7BI",
    "attached_file": "[OLD] Front-end Module 4 - Patterns, Tools, and Techniques - Slides by Laura",
+   "attached_historical": true,
    "attached_id": "sli_6cbdebbdb11132c2",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -138755,6 +138854,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1y2Y2ffqMPMAcFijQ_SfcJH2ELgfmU4GvlynBK2qy5ek",
    "attached_file": "Concurrency Super Set Slides",
+   "attached_historical": true,
    "attached_id": "sli_88c53700c4726d34",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -140553,6 +140653,7 @@
   {
    "attached_drive_url": "https://drive.google.com/open?id=1yfSYC2Ne1JvNPbt7wf8cUcrXHPl67osq",
    "attached_file": "Cloud Native Architecture Live Class Slide.pptx",
+   "attached_historical": true,
    "attached_id": "sli_2b1e2c027ecf6a63",
    "attached_is_deck": true,
    "match_evidence": "folder",
@@ -144601,7 +144702,7 @@
   }
  ],
  "meta": {
-  "built_at": "2026-09-30T05:25:34Z",
+  "built_at": "2026-09-30T09:46:55Z",
   "caveat": "Every count is a floor over 4 of 12 domain folders in 1 of 5 registry rows. Instructors and owners are DEFERRED and no person node exists. D1: no people from deck content.",
   "edge_counts": {
    "assessed_by": 64,
@@ -144768,6 +144869,18 @@
   },
   {
    "domain_slug": "full-stack",
+   "drive_folders": [
+    {
+     "name": "1. Module - Databases - Content",
+     "url": "https://drive.google.com/drive/folders/1lYE2m5rbEl4pJ1nA2yrsAcrq4iGw5bJw",
+     "where": "content"
+    },
+    {
+     "name": "Week 1/5: Databases",
+     "url": "https://drive.google.com/drive/folders/1YfALzLbcQ6_MKC3ZlH9GdNnqLHpOtdtV",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_0bc009fd274eea44",
    "label": "Databases",
    "label_raw": "Databases",
@@ -144802,6 +144915,18 @@
   },
   {
    "domain_slug": "full-stack",
+   "drive_folders": [
+    {
+     "name": "2. Module - API Design and Implementation - Content",
+     "url": "https://drive.google.com/drive/folders/1IwShk88UomQeL4pqPNsMvx9OADWp3hif",
+     "where": "content"
+    },
+    {
+     "name": "Week 2/5 - API Design and Implementation",
+     "url": "https://drive.google.com/drive/folders/1vlKSsec3KlSfM-RipG_AVbpXjLhyS1kY",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_e5f708116a4b7fac",
    "label": "API Design and Implementation",
    "label_raw": "API Design and Implementation",
@@ -144836,6 +144961,18 @@
   },
   {
    "domain_slug": "full-stack",
+   "drive_folders": [
+    {
+     "name": "3. Module - Cloud - Content",
+     "url": "https://drive.google.com/drive/folders/1EMWw-x6RrZtxCTNCdtlPs14fPCNsAf-V",
+     "where": "content"
+    },
+    {
+     "name": "Week 3/5 - Cloud Infrastructure",
+     "url": "https://drive.google.com/drive/folders/1ybFGMKmJlaqcuQrIg_xtHBa_UYNHo2BG",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_ab9e5ee393195cf2",
    "label": "Cloud Infrastructure",
    "label_raw": "Cloud",
@@ -144874,6 +145011,18 @@
   },
   {
    "domain_slug": "full-stack",
+   "drive_folders": [
+    {
+     "name": "4. Module - JavaScript and Web Dev - Content",
+     "url": "https://drive.google.com/drive/folders/1XDnwhe8cimiqx7-sd5D0a-kakQ0xhHWf",
+     "where": "content"
+    },
+    {
+     "name": "Week 4/5 - JavaScript and Web Development",
+     "url": "https://drive.google.com/drive/folders/1FhnFFkO-pJAQ3etbMTrCFS61zVJB91Hf",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_00ee7c30fff3dc36",
    "label": "JavaScript and Web Development",
    "label_raw": "JavaScript and Web Dev",
@@ -144912,6 +145061,18 @@
   },
   {
    "domain_slug": "full-stack",
+   "drive_folders": [
+    {
+     "name": "5. Module - UI System Design - Content",
+     "url": "https://drive.google.com/drive/folders/1qWvH1uFLPfTMBervPMgk1lwAnWzbXZBn",
+     "where": "content"
+    },
+    {
+     "name": "Week 5/5 - UI System Design",
+     "url": "https://drive.google.com/drive/folders/1HfBdOWBsEJ6BzwJsKpMyLsIND0rOcXOp",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_b591bcb07c5eb33b",
    "label": "UI System Design",
    "label_raw": "UI System Design",
@@ -144946,6 +145107,18 @@
   },
   {
    "domain_slug": "frontend",
+   "drive_folders": [
+    {
+     "name": "Week 1/4 - JS Language & Libraries",
+     "url": "https://drive.google.com/drive/folders/1Al_6L40hN1bQmV5XjWbjGZE--W3G8Qag",
+     "where": "content"
+    },
+    {
+     "name": "Week 1/4 - JS Language & Libraries",
+     "url": "https://drive.google.com/drive/folders/14dOuLcDnq_pvjFgyibl2_xAPztA6kESC",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_7af5a48eabe4adb6",
    "label": "JS Language & Libraries",
    "label_raw": "JS Language & Libraries",
@@ -144980,6 +145153,18 @@
   },
   {
    "domain_slug": "frontend",
+   "drive_folders": [
+    {
+     "name": "Week 2/4 - UI & DOM",
+     "url": "https://drive.google.com/drive/folders/11EkSeDPX0BTAvxk4nAul4kFAov1gU5Pq",
+     "where": "content"
+    },
+    {
+     "name": "Week 2/4 - UI & DOM",
+     "url": "https://drive.google.com/drive/folders/1jNIMbbcBkyiY5sHSxgJB8F6AEeN-6zhz",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_50a33a8e184e6849",
    "label": "UI & DOM",
    "label_raw": "UI & DOM",
@@ -145014,6 +145199,18 @@
   },
   {
    "domain_slug": "frontend",
+   "drive_folders": [
+    {
+     "name": "Week 3/4 - Frontend System Design",
+     "url": "https://drive.google.com/drive/folders/19pFuCGw7ObN2rR5U7Jg38I8HwOUBQcyL",
+     "where": "content"
+    },
+    {
+     "name": "Week 3/4 - Frontend System Design",
+     "url": "https://drive.google.com/drive/folders/1Z0lMM2uuvFN69-J8DQIQ9zvBil_F3o4g",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_0d3e49f1778b9090",
    "label": "Frontend System Design",
    "label_raw": "Frontend System Design",
@@ -145048,6 +145245,18 @@
   },
   {
    "domain_slug": "frontend",
+   "drive_folders": [
+    {
+     "name": "Week 4/4 - Leveling Up with Advanced JavaScript and CSS",
+     "url": "https://drive.google.com/drive/folders/1gtGLo5T_zMJnU1gg7nOt3ICH0vfavOWn",
+     "where": "content"
+    },
+    {
+     "name": "Week 4/4 - Leveling Up with Advanced JavaScript and CSS",
+     "url": "https://drive.google.com/drive/folders/143eFfOE7cjIHEiXp_0-1fgqn9A1zvYO-",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_bb30095a76e9b5c6",
    "label": "Leveling Up with Advanced JavaScript and CSS",
    "label_raw": "Leveling Up with Advanced JavaScript and CSS",
@@ -145082,6 +145291,13 @@
   },
   {
    "domain_slug": "backend",
+   "drive_folders": [
+    {
+     "name": "Module-1: Database Design",
+     "url": "https://drive.google.com/drive/folders/1v8PbPMHiy1lKbL0XUu6V8sBjBvcJ1TYE",
+     "where": "content"
+    }
+   ],
    "id": "mod_36793b37f57c09a0",
    "label": "Database Design",
    "label_raw": "Database Design",
@@ -145116,6 +145332,18 @@
   },
   {
    "domain_slug": "backend",
+   "drive_folders": [
+    {
+     "name": "Module-2: Object Modeling",
+     "url": "https://drive.google.com/drive/folders/16AIVXclGheIjXzGtO50p1TTCgn7Jjm1r",
+     "where": "content"
+    },
+    {
+     "name": "Week 2/5 - Object Modeling",
+     "url": "https://drive.google.com/drive/folders/1y5Ax9792bYJiHUG_uWhCJTYm0l1jMLf1",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_cefc969d84e291e5",
    "label": "Object Modeling",
    "label_raw": "Object Modeling",
@@ -145150,6 +145378,18 @@
   },
   {
    "domain_slug": "backend",
+   "drive_folders": [
+    {
+     "name": "Module-3: API Design",
+     "url": "https://drive.google.com/drive/folders/1uGKsqsDsPhTzXs7jb1nLxNigQ_KRGAhd",
+     "where": "content"
+    },
+    {
+     "name": "Week 3/5 - API Design",
+     "url": "https://drive.google.com/drive/folders/17WIN3TweNlBtgt_lcUfFxTyrZzB6j2NC",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_150eb79c4ec6f254",
    "label": "API Design",
    "label_raw": "API Design",
@@ -145184,6 +145424,18 @@
   },
   {
    "domain_slug": "backend",
+   "drive_folders": [
+    {
+     "name": "Module-4: Cloud Native Design",
+     "url": "https://drive.google.com/drive/folders/1LBTCeL8YLHB4lvpA-vE4sYc_C4y1LsCt",
+     "where": "content"
+    },
+    {
+     "name": "Week 4/5 - Cloud Native Design",
+     "url": "https://drive.google.com/drive/folders/1oIFJA7nQo4xo9pRDub1qjdbmBINGNBtE",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_44e86d468ffa62f5",
    "label": "Cloud Native Design",
    "label_raw": "Cloud Native Design",
@@ -145218,6 +145470,18 @@
   },
   {
    "domain_slug": "backend",
+   "drive_folders": [
+    {
+     "name": "Module-5: Concurrency",
+     "url": "https://drive.google.com/drive/folders/1TuncV-R-kUgQP8qgC7gICpunXdatKWDx",
+     "where": "content"
+    },
+    {
+     "name": "Week 5/5 - Concurrency",
+     "url": "https://drive.google.com/drive/folders/1n8Qj76YQqh5D14fAViwF8IBlFRmEV_55",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_68672ce55043c450",
    "label": "Concurrency",
    "label_raw": "Concurrency",
@@ -145252,6 +145516,18 @@
   },
   {
    "domain_slug": "testing",
+   "drive_folders": [
+    {
+     "name": "Week 1/6 - Quality Engineering Foundations",
+     "url": "https://drive.google.com/drive/folders/1q9GMx-N7ptpTdVVMOfZM6chQ7QgUNs0f",
+     "where": "content"
+    },
+    {
+     "name": "Week 1/6 - Quality Engineering Foundations",
+     "url": "https://drive.google.com/drive/folders/1o0JsDF2wtv-fYte0Q543AnJct-CkLCXg",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_2e4842a29bc521ba",
    "label": "Quality Engineering Foundations",
    "label_raw": "Quality Engineering Foundations",
@@ -145286,6 +145562,18 @@
   },
   {
    "domain_slug": "testing",
+   "drive_folders": [
+    {
+     "name": "Week 2/6 - Performance Testing",
+     "url": "https://drive.google.com/drive/folders/1AfprwwwK1gZMIuLNR0Zz9TBV9eitB90H",
+     "where": "content"
+    },
+    {
+     "name": "Week 2/6 - Performance Testing",
+     "url": "https://drive.google.com/drive/folders/1a3bCi-SyIh-DWs1eIgyBW4zmoHyGwTZU",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_3b8af36fddf1b226",
    "label": "Performance Testing",
    "label_raw": "Performance Testing",
@@ -145320,6 +145608,18 @@
   },
   {
    "domain_slug": "testing",
+   "drive_folders": [
+    {
+     "name": "Week 3/6 - API Testing",
+     "url": "https://drive.google.com/drive/folders/1cUqXyfMvQTzW7lyvz_Lw7F1doE23Vn-y",
+     "where": "content"
+    },
+    {
+     "name": "Week 3/6 - API Testing",
+     "url": "https://drive.google.com/drive/folders/1ERqqsR25sJKV17WKsNNp1oYNGCAW0g0g",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_a036b35b54865c2a",
    "label": "API Testing",
    "label_raw": "API Testing",
@@ -145354,6 +145654,18 @@
   },
   {
    "domain_slug": "testing",
+   "drive_folders": [
+    {
+     "name": "Week 4/6 - Automation Testing",
+     "url": "https://drive.google.com/drive/folders/17GXdnd7_cjsraa6mjZUGBdTDea5w7X1B",
+     "where": "content"
+    },
+    {
+     "name": "Week 4/6 - Automation Testing",
+     "url": "https://drive.google.com/drive/folders/1TPbvVjw8YcMzYxFwVgRz5xbv7HH0_Gqn",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_e3865bea05ed325a",
    "label": "Automation Testing",
    "label_raw": "Automation Testing",
@@ -145388,6 +145700,18 @@
   },
   {
    "domain_slug": "testing",
+   "drive_folders": [
+    {
+     "name": "Week 5/6 - Test Automation Design Patterns",
+     "url": "https://drive.google.com/drive/folders/1_1gjLkQGxyR7M5vHnPqYulYR-DCHfXji",
+     "where": "content"
+    },
+    {
+     "name": "Week 5/6 - Test Automation",
+     "url": "https://drive.google.com/drive/folders/1rSESjmsk34UzOOTvO69_FkZOrikL9xtQ",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_1262237b9b72b360",
    "label": "Test Automation",
    "label_raw": "Test Automation Design Patterns",
@@ -145426,6 +145750,18 @@
   },
   {
    "domain_slug": "testing",
+   "drive_folders": [
+    {
+     "name": "Week 6/6 - Cloud Testing",
+     "url": "https://drive.google.com/drive/folders/1YqmAmKzPAlTClhYESmadwMy76-bqnJ7D",
+     "where": "content"
+    },
+    {
+     "name": "Week 6/6 - Cloud Testing",
+     "url": "https://drive.google.com/drive/folders/1FDnSF3LQNxpeb7w1ALbi_0Q0ilMcWkwm",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "mod_b1feb3161efd9eaa",
    "label": "Cloud Testing",
    "label_raw": "Cloud Testing",
@@ -145476,6 +145812,13 @@
    "type": "file"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation Material",
+     "url": "https://drive.google.com/drive/folders/13kdqyvabZ8IG42ZBH9HCLornpGzTlY4t",
+     "where": "content"
+    }
+   ],
    "id": "cla_c20975bbcad83f16",
    "label": "Databases - Foundation Material",
    "label_raw": "Databases - Foundation Material",
@@ -145494,6 +145837,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1077/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1KHpSVOnMJlVXdztehudqWcXqK_4Bo8dZ",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1X6eO7ANsqJbG3Ta9JFtI_qsoRH9aHQJN",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_891b0f281e5c019a",
    "label": "Databases - Class",
    "label_raw": "Databases - Class",
@@ -145512,6 +145867,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75405/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1KHpSVOnMJlVXdztehudqWcXqK_4Bo8dZ",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1X6eO7ANsqJbG3Ta9JFtI_qsoRH9aHQJN",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_01300fba94f355fe",
    "label": "Databases - Alternate Class",
    "label_raw": "Databases - Alternate Class",
@@ -145530,6 +145897,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75406/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "4. Assignment Problem",
+     "url": "https://drive.google.com/drive/folders/1qPAs8kHRNSiog9ohCD587GNHnXSblrtS",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1CaL9IC06FJSarUWTIGjLw1RCeKCkr7JC",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_e26110a16e984525",
    "label": "Databases - Timed Test",
    "label_raw": "Databases - Timed Test",
@@ -145548,6 +145927,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1078/"
   },
   {
+   "drive_folders": [],
    "id": "cla_6ee63c10555222e3",
    "label": "Databases - Assignment Review Class",
    "label_raw": "Databases - Assignment Review Class",
@@ -145566,6 +145946,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75407/"
   },
   {
+   "drive_folders": [],
    "id": "cla_da8aa8269d205bda",
    "label": "Databases - Alternate Assignment Review Class",
    "label_raw": "Databases - Alternate Assignment Review Class",
@@ -145584,6 +145965,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75408/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Practice Problem",
+     "url": "https://drive.google.com/drive/folders/1u-U2LvbD3wiVfMkMkmbzx2ldiOoMFT46",
+     "where": "content"
+    }
+   ],
    "id": "cla_5faf39ad14afb1c0",
    "label": "Databases - Practice Problems",
    "label_raw": "Databases - Practice Problems",
@@ -145756,6 +146144,13 @@
    "years_experience": "20+ years"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation Material",
+     "url": "https://drive.google.com/drive/folders/1oNjyEPbkBy-Kt-moVouo4QuLV17pD9J4",
+     "where": "content"
+    }
+   ],
    "id": "cla_f4e11e925223f981",
    "label": "API Design and Implementation - Foundation Material",
    "label_raw": "API Design and Implementation - Foundation Material",
@@ -145774,6 +146169,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1082/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1NSv0okT8__Thbh_kdpUNYy-TBzGtRMWo",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1MvEui8_SmrWiQVRNBz_8mr_YfhulEe-5",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_0242db9270661392",
    "label": "API Design and Implementation - Class",
    "label_raw": "API Design and Implementation - Class",
@@ -145792,6 +146199,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75411/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1NSv0okT8__Thbh_kdpUNYy-TBzGtRMWo",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1MvEui8_SmrWiQVRNBz_8mr_YfhulEe-5",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_30eb625cdc77e4ed",
    "label": "API Design and Implementation - Alternate Class",
    "label_raw": "API Design and Implementation - Alternate Class",
@@ -145810,6 +146229,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75412/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "4. Assignment / Timed Test",
+     "url": "https://drive.google.com/drive/folders/16Fqx6U3iOe02otQ6NKRPNAVB2TfGQyKc",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1K6n7Ho1n86pFl-rH7Iw2mzm9gXrFGIbM",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_ab8f88c9f4b82dac",
    "label": "API Design and Implementation - Timed Test",
    "label_raw": "API Design and Implementation - Timed Test",
@@ -145828,6 +146259,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1119/"
   },
   {
+   "drive_folders": [],
    "id": "cla_b6f47122960d3056",
    "label": "API Design and Implementation - Assignment Review Class",
    "label_raw": "API Design and Implementation - Assignment Review Class",
@@ -145846,6 +146278,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75414/"
   },
   {
+   "drive_folders": [],
    "id": "cla_f0db47f99aee26d0",
    "label": "API Design and Implementation - Alternate Assignment Review Class",
    "label_raw": "API Design and Implementation - Alternate Assignment Review Class",
@@ -145864,6 +146297,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75413/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Practice Problem",
+     "url": "https://drive.google.com/drive/folders/1ryEB2tlcr4B1fm6pHK3G5aO5loI5yfKD",
+     "where": "content"
+    }
+   ],
    "id": "cla_5384f4ef9a2960a4",
    "label": "API Design and Implementation - Practice Problems",
    "label_raw": "API Design and Implementation - Practice Problems",
@@ -146005,6 +146445,13 @@
    "type": "instructor"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation Material",
+     "url": "https://drive.google.com/drive/folders/1ZKBCq-to__Xbuc3HpzXbbs1My3Ox8bNH",
+     "where": "content"
+    }
+   ],
    "id": "cla_1fc93337c829e711",
    "label": "Cloud Infrastructure - Foundation Material",
    "label_raw": "Cloud Infrastructure - Foundation Material",
@@ -146023,6 +146470,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1085/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1MlAhbNrWKUJBL_p0Me7hNokUS_wvhaW1",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1_ER47ZIWkDI51MZMdsxj_6ACOaekC5qm",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_63b4db3e5e2d57d1",
    "label": "Cloud Infrastructure - Class",
    "label_raw": "Cloud Infrastructure - Class",
@@ -146041,6 +146500,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75415/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1MlAhbNrWKUJBL_p0Me7hNokUS_wvhaW1",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1_ER47ZIWkDI51MZMdsxj_6ACOaekC5qm",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_e04d4d165d2fced4",
    "label": "Cloud Infrastructure - Alternate Class",
    "label_raw": "Cloud Infrastructure - Alternate Class",
@@ -146059,6 +146530,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75416/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "4. Assignment / Timed - Test",
+     "url": "https://drive.google.com/drive/folders/1klu3zL0fTB5NL8SQLklgl-gv2-RiDSi_",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1dIW1LZZZn-ymF4_YLJwDIuVlWUhbXSk8",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_16d272a12124c472",
    "label": "Cloud Infrastructure - Timed Test",
    "label_raw": "Cloud Infrastructure - Timed Test",
@@ -146077,6 +146560,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1104/"
   },
   {
+   "drive_folders": [],
    "id": "cla_e296ee7dc0b02e75",
    "label": "Cloud Infrastructure - Assignment Review Class",
    "label_raw": "Cloud Infrastructure - Assignment Review Class",
@@ -146095,6 +146579,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75418/"
   },
   {
+   "drive_folders": [],
    "id": "cla_70455141cf13ff1d",
    "label": "Cloud Infrastructure - Alternate Assignment Review Class",
    "label_raw": "Cloud Infrastructure - Alternate Assignment Review Class",
@@ -146113,6 +146598,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75417/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Practice Problems",
+     "url": "https://drive.google.com/drive/folders/1J3jfDqp9itdzIhKmOOUox_7200SCEBog",
+     "where": "content"
+    }
+   ],
    "id": "cla_8b54fc9b32e2bbd3",
    "label": "Cloud Infrastructure - Practice Problems",
    "label_raw": "Cloud Infrastructure - Practice Problems",
@@ -146215,6 +146707,18 @@
    "years_experience": "20+ years"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation Material",
+     "url": "https://drive.google.com/drive/folders/1Ee0flLg7kl5VpYWXR9B0LEL-hgDqheh0",
+     "where": "content"
+    },
+    {
+     "name": "foundation Material",
+     "url": "https://drive.google.com/drive/folders/1Hpx6R4GSMaVrdEs2WvPVb7VIWF8zU9rz",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_04bcc760c10f3401",
    "label": "JavaScript and Web Development - Foundation Material",
    "label_raw": "JavaScript and Web Development - Foundation Material",
@@ -146233,6 +146737,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1088/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1i7v5qiPTVgHPlGzoAVJ0E3tivGLFit3P",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1_-eqQMpAc8_Tp-ep5Orto54gWYbw1zRW",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_5cea4324f8ec7565",
    "label": "JavaScript and Web Development - Class",
    "label_raw": "JavaScript and Web Development - Class",
@@ -146251,6 +146767,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75419/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1i7v5qiPTVgHPlGzoAVJ0E3tivGLFit3P",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1_-eqQMpAc8_Tp-ep5Orto54gWYbw1zRW",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_4334ac8f6fc9f4df",
    "label": "JavaScript and Web Development - Alternate Class",
    "label_raw": "JavaScript and Web Development - Alternate Class",
@@ -146269,6 +146797,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75421/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "4. Assignment / Timed - Test",
+     "url": "https://drive.google.com/drive/folders/12VyBDFJBntOLFrnaRxLrKsTfJL6fxga6",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1aX-XgBAkBmgE29gHWSkfs5e-eWHUQA39",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_1f19ca82a4b9b6c2",
    "label": "JavaScript and Web Development - Timed Test",
    "label_raw": "JavaScript and Web Development - Timed Test",
@@ -146287,6 +146827,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1105/"
   },
   {
+   "drive_folders": [],
    "id": "cla_936f373b3f3e1779",
    "label": "JavaScript and Web Development - Assignment Review Class",
    "label_raw": "JavaScript and Web Development - Assignment Review Class",
@@ -146305,6 +146846,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75420/"
   },
   {
+   "drive_folders": [],
    "id": "cla_8a9afafc3d2471bb",
    "label": "JavaScript and Web Development - Alternate Assignment Review Class",
    "label_raw": "JavaScript and Web Development - Alternate Assignment Review Class",
@@ -146323,6 +146865,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75422/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Practice Problem",
+     "url": "https://drive.google.com/drive/folders/1dt0hgn5OsxqmRvHbaeqrNWvX9o7pCKtd",
+     "where": "content"
+    }
+   ],
    "id": "cla_a9dffe4b81f18867",
    "label": "JavaScript and Web Development - Practice Problems",
    "label_raw": "JavaScript and Web Development - Practice Problems",
@@ -146413,6 +146962,13 @@
    "years_experience": "10+"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation Material",
+     "url": "https://drive.google.com/drive/folders/1XfLsnJsH0UAADBLEjs4e6GJYAGOYCo6y",
+     "where": "content"
+    }
+   ],
    "id": "cla_913d190dd66f97f2",
    "label": "UI System Design - Foundation Material",
    "label_raw": "UI System Design - Foundation Material",
@@ -146431,6 +146987,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1091/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1KvlDkAfYgyr7zWU8vO2oLPiZAD2l6Ql5",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1OkIrWxrlU-JVZ1acacoe4XD5jMX1psxM",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_c157291a69223c4b",
    "label": "UI System Design - Class",
    "label_raw": "UI System Design - Class",
@@ -146449,6 +147017,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75423/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1KvlDkAfYgyr7zWU8vO2oLPiZAD2l6Ql5",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1OkIrWxrlU-JVZ1acacoe4XD5jMX1psxM",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_8d0aa185fedc8ebc",
    "label": "UI System Design - Alternate Class",
    "label_raw": "UI System Design - Alternate Class",
@@ -146467,6 +147047,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75425/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "4. Assignment / Timed - test",
+     "url": "https://drive.google.com/drive/folders/1ZunfBxAwoZ905_k4xyyPiiRQkSsCXcQT",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/15csGOhf3T8fcUs4gTKElqUFqScE2C8do",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_e1f8cdc29c2ef597",
    "label": "UI System Design - Timed Test",
    "label_raw": "UI System Design - Timed Test",
@@ -146485,6 +147077,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1106/"
   },
   {
+   "drive_folders": [],
    "id": "cla_ebae586b1a41e6d3",
    "label": "UI System Design - Assignment Review Class",
    "label_raw": "UI System Design - Assignment Review Class",
@@ -146503,6 +147096,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75424/"
   },
   {
+   "drive_folders": [],
    "id": "cla_6b666ef63ba52904",
    "label": "UI System Design - Alternate Assignment Review Class",
    "label_raw": "UI System Design - Alternate Assignment Review Class",
@@ -146521,6 +147115,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75427/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Practice Problem",
+     "url": "https://drive.google.com/drive/folders/1Evh4c0Ap7BtRoraydt1FEqVVEOJ7WMjm",
+     "where": "content"
+    }
+   ],
    "id": "cla_b0abf01a1df4bf44",
    "label": "UI System Design - Practice Problems",
    "label_raw": "UI System Design - Practice Problems",
@@ -146645,6 +147246,13 @@
    "years_experience": "9+ years"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundational Material",
+     "url": "https://drive.google.com/drive/folders/1mHAqmX-bhiytmZrkQNtBfT6SpfzNewSl",
+     "where": "content"
+    }
+   ],
    "id": "cla_15c19a5f76f09567",
    "label": "Foundation Material - JS Language & Libraries",
    "label_raw": "Foundation Material - JS Language & Libraries",
@@ -146663,6 +147271,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/372/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class",
+     "url": "https://drive.google.com/drive/folders/1DVZsyDdJw0AybnzUukc1DfDsCzZT2QC2",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1qob7almFAq67YFi-Z867b-WtlbueeMOl",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_1ea818d2478c99d8",
    "label": "JS Language & Libraries - Class",
    "label_raw": "JS Language & Libraries - Class",
@@ -146681,6 +147301,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75486/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class",
+     "url": "https://drive.google.com/drive/folders/1DVZsyDdJw0AybnzUukc1DfDsCzZT2QC2",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1qob7almFAq67YFi-Z867b-WtlbueeMOl",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_6d2df14b702ca114",
    "label": "JS Language & Libraries - Alternate Class",
    "label_raw": "JS Language & Libraries - Alternate Class",
@@ -146699,6 +147331,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75488/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "4. Assignment",
+     "url": "https://drive.google.com/drive/folders/13ZAWid0ESlr5ynndDuysyvCkhWMmk0b6",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1k6nwGzHIu2hareUeaTFoEcmZhzDyx70J",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_fad19d9c9beb8dff",
    "label": "Assignment - Javascript Language & Libraries",
    "label_raw": "Assignment - Javascript Language & Libraries",
@@ -146717,6 +147361,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/371/"
   },
   {
+   "drive_folders": [],
    "id": "cla_e89ce1d220b0235f",
    "label": "JS Language & Libraries - Assignment Review Class",
    "label_raw": "JS Language & Libraries - Assignment Review Class",
@@ -146735,6 +147380,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75487/"
   },
   {
+   "drive_folders": [],
    "id": "cla_5d5d15cd7d835cb1",
    "label": "JS Language & Libraries - Alternate Assignment Review Class",
    "label_raw": "JS Language & Libraries - Alternate Assignment Review Class",
@@ -146753,6 +147399,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75489/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Practice Problem",
+     "url": "https://drive.google.com/drive/folders/1HNot6b7uPy5QpNZkMrkr5nVsggAuS3gJ",
+     "where": "content"
+    }
+   ],
    "id": "cla_a7993d3c9450da20",
    "label": "JS Language & Libraries - Practice Problems",
    "label_raw": "JS Language & Libraries - Practice Problems",
@@ -146834,6 +147487,13 @@
    "years_experience": "10.0"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundational Material",
+     "url": "https://drive.google.com/drive/folders/1RWowtksKxsRHtdPixQ9_734fp3qsGeyC",
+     "where": "content"
+    }
+   ],
    "id": "cla_786d8f13b39de798",
    "label": "Foundation Material - UI & DOM",
    "label_raw": "Foundation Material - UI & DOM",
@@ -146852,6 +147512,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/375"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1MpYMUSqgbae_i0Pg7w-fm1mIQOh50urO",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1qll6wkcl9BX_AUv5w7NpVFTkiFrd788p",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_2961fafb73e547d4",
    "label": "UI & DOM - Class",
    "label_raw": "UI & DOM - Class",
@@ -146870,6 +147542,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75494/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1MpYMUSqgbae_i0Pg7w-fm1mIQOh50urO",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1qll6wkcl9BX_AUv5w7NpVFTkiFrd788p",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_df3e3ce165cfcb74",
    "label": "UI & DOM - Alternate Class",
    "label_raw": "UI & DOM - Alternate Class",
@@ -146888,6 +147572,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75493/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "4. UI & DOM - Timed Test/ Assignment",
+     "url": "https://drive.google.com/drive/folders/1KfdUJQbKemO4g_s28rP0tGo8jMp_feEN",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1AIOFJ7BUQKSuZjvHCUj4yFSzIoMkUibe",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_f81da7e4b2ba64d1",
    "label": "Assignment - UI & DOM",
    "label_raw": "Assignment - UI & DOM",
@@ -146906,6 +147602,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/374/"
   },
   {
+   "drive_folders": [],
    "id": "cla_ac1fb14617ca2c08",
    "label": "UI & DOM - Assignment Review Class",
    "label_raw": "UI & DOM - Assignment Review Class",
@@ -146924,6 +147621,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75500/"
   },
   {
+   "drive_folders": [],
    "id": "cla_9dbeb807823b70e2",
    "label": "UI & DOM - Alternate Assignment Review Class",
    "label_raw": "UI & DOM - Alternate Assignment Review Class",
@@ -146942,6 +147640,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75499/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. UI & DOM - Practice Problems",
+     "url": "https://drive.google.com/drive/folders/1iUK_ywp5uGygY_5YcgEChJzB3YbCdinM",
+     "where": "content"
+    }
+   ],
    "id": "cla_83e1b97663a4b688",
    "label": "UI & DOM - Practice Problems",
    "label_raw": "UI & DOM - Practice Problems",
@@ -146985,6 +147690,13 @@
    "years_experience": "17.0"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundational Material",
+     "url": "https://drive.google.com/drive/folders/1ussDGH-OvZjUsw7U_5GnV5Mf_VT6VYSw",
+     "where": "content"
+    }
+   ],
    "id": "cla_080a2e5148d3f587",
    "label": "Foundation Material - Frontend System Design",
    "label_raw": "Foundation Material - Frontend System Design",
@@ -147003,6 +147715,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/378/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1cGrSCrfRI7oefs0L-vEqEcKjOwHoK2rS",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1oK2iZbDIQ4GQSpNCr0UazHGGGU5Fy66b",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_1408941be0760f38",
    "label": "Frontend System Design - Class",
    "label_raw": "Frontend System Design - Class",
@@ -147021,6 +147745,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75501/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1cGrSCrfRI7oefs0L-vEqEcKjOwHoK2rS",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1oK2iZbDIQ4GQSpNCr0UazHGGGU5Fy66b",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_214130f9c4b29c61",
    "label": "Frontend System Design - Alternate Class",
    "label_raw": "Frontend System Design - Alternate Class",
@@ -147039,6 +147775,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75502/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "4. Assignment",
+     "url": "https://drive.google.com/drive/folders/1dBhjUf7absT6O0VgXQG79pb1sS7qoq6o",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/13rNzGRf-Ly-SVgpho815-lhuPkkbj2Nw",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_71ddda2b51dc892d",
    "label": "Assignment - Frontend System Design",
    "label_raw": "Assignment - Frontend System Design",
@@ -147057,6 +147805,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/377/"
   },
   {
+   "drive_folders": [],
    "id": "cla_04b4639041f792d5",
    "label": "Frontend System Design - Assignment Review Class",
    "label_raw": "Frontend System Design - Assignment Review Class",
@@ -147075,6 +147824,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75504/"
   },
   {
+   "drive_folders": [],
    "id": "cla_6b2489e807f6bf6e",
    "label": "Frontend System Design - Alternate Assignment Review Class",
    "label_raw": "Frontend System Design - Alternate Assignment Review Class",
@@ -147093,6 +147843,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75503/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Practice Problems",
+     "url": "https://drive.google.com/drive/folders/1R3VEq8C95pTdSbkA8_wLcc5mMZlZENyg",
+     "where": "content"
+    }
+   ],
    "id": "cla_fa2d296277d04308",
    "label": "Frontend System Design - Practice Problems",
    "label_raw": "Frontend System Design - Practice Problems",
@@ -147111,6 +147868,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/376/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundational Material",
+     "url": "https://drive.google.com/drive/folders/1DUXlMytVeC_31PR3NIejG4YOKQkX9vAC",
+     "where": "content"
+    }
+   ],
    "id": "cla_76aef749fb50736b",
    "label": "Foundation Material - Leveling Up with Advanced JavaScript and CSS",
    "label_raw": "Foundation Material - Leveling Up with Advanced JavaScript and CSS",
@@ -147129,6 +147893,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/488/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1TGsCGodEKNV0oURz3hKp0H2zJ89S8o3K",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/10Ze8Pt71ZxV2VzP4o8DKVSyI8rkSyDQA",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_7b1903f6f389d0d4",
    "label": "Leveling Up with Advanced JavaScript and CSS - Class",
    "label_raw": "Leveling Up with Advanced JavaScript and CSS - Class",
@@ -147147,6 +147923,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75505/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1TGsCGodEKNV0oURz3hKp0H2zJ89S8o3K",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/10Ze8Pt71ZxV2VzP4o8DKVSyI8rkSyDQA",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_c643e8c5e23e5ea5",
    "label": "Leveling Up with Advanced JavaScript and CSS - Alternate Class",
    "label_raw": "Leveling Up with Advanced JavaScript and CSS - Alternate Class",
@@ -147165,6 +147953,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75507/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "4. Assignment / Timed Test",
+     "url": "https://drive.google.com/drive/folders/1r6avWB03l6XMejcmVV7dMKHiMmLOEuTM",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1sxkihtrtNV3lfqhq6gM2u3HgmcVKjYTQ",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_90addafd7b6ef533",
    "label": "Assignment - Leveling Up with Advanced JavaScript and CSS",
    "label_raw": "Assignment - Leveling Up with Advanced JavaScript and CSS",
@@ -147183,6 +147983,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/490"
   },
   {
+   "drive_folders": [],
    "id": "cla_24f9183a632108d5",
    "label": "Leveling Up with Advanced JavaScript and CSS - Assignment Review Class",
    "label_raw": "Leveling Up with Advanced JavaScript and CSS - Assignment Review Class",
@@ -147201,6 +148002,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75506/"
   },
   {
+   "drive_folders": [],
    "id": "cla_16014b48ca741fc0",
    "label": "Leveling Up with Advanced JavaScript and CSS - Alternate Assignment Review Class",
    "label_raw": "Leveling Up with Advanced JavaScript and CSS - Alternate Assignment Review Class",
@@ -147219,6 +148021,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75508/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Practice Problems",
+     "url": "https://drive.google.com/drive/folders/1PADgvB6brhMWliQozLRcbNKmU7YtGH3a",
+     "where": "content"
+    }
+   ],
    "id": "cla_8eb02a2f7be00968",
    "label": "Leveling Up with Advanced JavaScript and CSS - Practice Problems",
    "label_raw": "Leveling Up with Advanced JavaScript and CSS - Practice Problems",
@@ -147237,6 +148046,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/489/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation materials",
+     "url": "https://drive.google.com/drive/folders/1qkw5kWMZJkzlM5c80QgNxfpfHrEJPF6n",
+     "where": "content"
+    }
+   ],
    "id": "cla_27708e67d16bb3fc",
    "label": "Database Design Foundation Material",
    "label_raw": "Database Design Foundation Material",
@@ -147255,6 +148071,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1038/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1v8NgAvEhHHEQ1WXFKkWtQSDkUd4TCLsa",
+     "where": "content"
+    }
+   ],
    "id": "cla_6bac3dcd761c8041",
    "label": "Database Design \u2013 Class",
    "label_raw": "Database Design \u2013 Class",
@@ -147273,6 +148096,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75224/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1v8NgAvEhHHEQ1WXFKkWtQSDkUd4TCLsa",
+     "where": "content"
+    }
+   ],
    "id": "cla_66da11cdcd626e8e",
    "label": "Database Design \u2013 Alternate Class",
    "label_raw": "Database Design \u2013 Alternate Class",
@@ -147291,6 +148121,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75226/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Assignment",
+     "url": "https://drive.google.com/drive/folders/1230qSkHmm76ruscwgHjyph44w41MndiF",
+     "where": "content"
+    }
+   ],
    "id": "cla_9ea222783b3c67ff",
    "label": "Database Design Assignment",
    "label_raw": "Database Design Assignment",
@@ -147309,6 +148146,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1059/"
   },
   {
+   "drive_folders": [],
    "id": "cla_96ce88720dadeeef",
    "label": "Database Design \u2013 Assignment Review Class",
    "label_raw": "Database Design \u2013 Assignment Review Class",
@@ -147327,6 +148165,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75225/"
   },
   {
+   "drive_folders": [],
    "id": "cla_a48e108aecdb2974",
    "label": "Database Design \u2013 Alternate Assignment Review Class",
    "label_raw": "Database Design \u2013 Alternate Assignment Review Class",
@@ -147345,6 +148184,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75227/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "Practice Problem Solution",
+     "url": "https://drive.google.com/drive/folders/1ebSGe7dkb2jQGI5bQ7yc8RNs2zbdgm-z",
+     "where": "content"
+    }
+   ],
    "id": "cla_28e90536f8e7c5fc",
    "label": "Database Design Practice Problem",
    "label_raw": "Database Design Practice Problem",
@@ -147380,6 +148226,13 @@
    "type": "instructor"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation Materials",
+     "url": "https://drive.google.com/drive/folders/1DOofYNgvPVJ2ADMOAe2KBAcKmJSivYrS",
+     "where": "content"
+    }
+   ],
    "id": "cla_86615b279ece5859",
    "label": "Object Modeling Foundation Material",
    "label_raw": "Object Modeling Foundation Material",
@@ -147398,6 +148251,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1063/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1JbLotSqiiCuCgWY8w59DXnhnxtwTBFaJ",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1rm68UemRdIrOXf_XfYMIxf8WYr9Q-djC",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_33225edebb758471",
    "label": "Object Modeling \u2013 Class",
    "label_raw": "Object Modeling \u2013 Class",
@@ -147416,6 +148281,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75229/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1JbLotSqiiCuCgWY8w59DXnhnxtwTBFaJ",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1rm68UemRdIrOXf_XfYMIxf8WYr9Q-djC",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_eaf13d64b52278f9",
    "label": "Object Modeling \u2013 Alternate Class",
    "label_raw": "Object Modeling \u2013 Alternate Class",
@@ -147434,6 +148311,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75231/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "4. Assignment",
+     "url": "https://drive.google.com/drive/folders/1NgbUvmyubt3-T-uNhiEhAy862ptHk_h8",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1vz02iAScQXUmCMVNMVerd5yOjlLmUKpF",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_b4f54a35a10d4f80",
    "label": "Object Modeling Assignment",
    "label_raw": "Object Modeling Assignment",
@@ -147452,6 +148341,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1067/"
   },
   {
+   "drive_folders": [],
    "id": "cla_6762f53f0357166b",
    "label": "Object Modeling \u2013 Assignment Review Class",
    "label_raw": "Object Modeling \u2013 Assignment Review Class",
@@ -147470,6 +148360,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75230/"
   },
   {
+   "drive_folders": [],
    "id": "cla_92abf000efa5f4af",
    "label": "Object Modeling \u2013 Alternate Assignment Review Class",
    "label_raw": "Object Modeling \u2013 Alternate Assignment Review Class",
@@ -147488,6 +148379,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75232/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Practice Problems",
+     "url": "https://drive.google.com/drive/folders/1hICU-5mSdoQLiHGip6t50UZQgjYnhh9q",
+     "where": "content"
+    }
+   ],
    "id": "cla_c4758bf81ce83f71",
    "label": "Object Modeling Practice Problem",
    "label_raw": "Object Modeling Practice Problem",
@@ -147540,6 +148438,13 @@
    "years_experience": "20+ years"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundational Material",
+     "url": "https://drive.google.com/drive/folders/16YwbTm4hks592SNDQbeT5AXFtLpXfoB1",
+     "where": "content"
+    }
+   ],
    "id": "cla_ecffe3a484352763",
    "label": "API Design Foundation Material",
    "label_raw": "API Design Foundation Material",
@@ -147558,6 +148463,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1039/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1K8b81Ea0wkOL1HkAh3k4V_WS5-BXf8UJ",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1AlbSFs29G2rE2-i1Y72BR2oxkx013lyG",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_52a8059420ac71ac",
    "label": "API Design \u2013 Class",
    "label_raw": "API Design \u2013 Class",
@@ -147576,6 +148493,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75235/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1K8b81Ea0wkOL1HkAh3k4V_WS5-BXf8UJ",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1AlbSFs29G2rE2-i1Y72BR2oxkx013lyG",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_858a3926c2207a2b",
    "label": "API Design \u2013 Alternate Class",
    "label_raw": "API Design \u2013 Alternate Class",
@@ -147594,6 +148523,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75237/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Assignments",
+     "url": "https://drive.google.com/drive/folders/1i7qU978FSkFNqanDW1v_OSyizpZAb2nP",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1rhOdTFzkmCBMHT_eZK-8tmBtvh77oxcD",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_462303c4b22d8291",
    "label": "API Design Assignment",
    "label_raw": "API Design Assignment",
@@ -147612,6 +148553,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1066/"
   },
   {
+   "drive_folders": [],
    "id": "cla_367962a164bce5d2",
    "label": "API Design \u2013 Assignment Review Class",
    "label_raw": "API Design \u2013 Assignment Review Class",
@@ -147630,6 +148572,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75236/"
   },
   {
+   "drive_folders": [],
    "id": "cla_20a41e6cb342ae72",
    "label": "API Design \u2013 Alternate Assignment Review Class",
    "label_raw": "API Design \u2013 Alternate Assignment Review Class",
@@ -147648,6 +148591,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75238/"
   },
   {
+   "drive_folders": [],
    "id": "cla_0e74292200d4ee2b",
    "label": "API Design Practice Problem",
    "label_raw": "API Design Practice Problem",
@@ -147666,6 +148610,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1064/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation Materials",
+     "url": "https://drive.google.com/drive/folders/1MDmJfFopQGqYmpQwMQupRPyQmC9jYRmg",
+     "where": "content"
+    }
+   ],
    "id": "cla_02d89696ecd7ad10",
    "label": "Cloud Native Design Foundation Material",
    "label_raw": "Cloud Native Design Foundation Material",
@@ -147684,6 +148635,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1068/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1v6inyH3lIJRtpAEUpdNhXuOoOh_FJLjP",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1tDphmqkt1MWb4Uz8j89cqgzOsZ9-rSi1",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_010a6d2ab759550c",
    "label": "Cloud Native Design \u2013 Class",
    "label_raw": "Cloud Native Design \u2013 Class",
@@ -147702,6 +148665,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75242/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1v6inyH3lIJRtpAEUpdNhXuOoOh_FJLjP",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1tDphmqkt1MWb4Uz8j89cqgzOsZ9-rSi1",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_3a19898490c181f8",
    "label": "Cloud Native Design \u2013 Alternate Class",
    "label_raw": "Cloud Native Design \u2013 Alternate Class",
@@ -147720,6 +148695,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75239/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1Bn4_V7Q407st-uk8vCUBGCqnF-_btDap",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/19fQi_Tq-5pClHn9J2qBJihMcedOpmDej",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_af74bb399a1f3331",
    "label": "Cloud Native Design Assignment",
    "label_raw": "Cloud Native Design Assignment",
@@ -147738,6 +148725,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1070/"
   },
   {
+   "drive_folders": [],
    "id": "cla_3fe503ac53b08a62",
    "label": "Cloud Native Design \u2013 Assignment Review Class",
    "label_raw": "Cloud Native Design \u2013 Assignment Review Class",
@@ -147756,6 +148744,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75243/"
   },
   {
+   "drive_folders": [],
    "id": "cla_257ed55d78501ba8",
    "label": "Cloud Native Design \u2013 Alternate Assignment Review Class",
    "label_raw": "Cloud Native Design \u2013 Alternate Assignment Review Class",
@@ -147774,6 +148763,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75241/"
   },
   {
+   "drive_folders": [],
    "id": "cla_c5107ded0c324052",
    "label": "Cloud Native Design Practice Problem",
    "label_raw": "Cloud Native Design Practice Problem",
@@ -147849,6 +148839,13 @@
    "type": "instructor"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation Materials",
+     "url": "https://drive.google.com/drive/folders/1bQj2_dC0nd_yTIq9JOO1luyxVy2GhSKC",
+     "where": "content"
+    }
+   ],
    "id": "cla_97bd3f9e6da22e17",
    "label": "Concurrency Foundation Material",
    "label_raw": "Concurrency Foundation Material",
@@ -147867,6 +148864,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/219/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1t7KgzUREJvk66sp20K1-ld7keqpJlIIv",
+     "where": "content"
+    },
+    {
+     "name": "Slide",
+     "url": "https://drive.google.com/drive/folders/1NjbgGE_cwaMEYlStFEMsSGiQwf0l96q5",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_4e489dc80dffdb1b",
    "label": "Concurrency \u2013 Class",
    "label_raw": "Concurrency \u2013 Class",
@@ -147885,6 +148894,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75272/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1t7KgzUREJvk66sp20K1-ld7keqpJlIIv",
+     "where": "content"
+    },
+    {
+     "name": "Slide",
+     "url": "https://drive.google.com/drive/folders/1NjbgGE_cwaMEYlStFEMsSGiQwf0l96q5",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_f1b083a041ab0476",
    "label": "Concurrency \u2013 Alternate Class",
    "label_raw": "Concurrency \u2013 Alternate Class",
@@ -147903,6 +148924,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75274/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1vs4avBVwUqtK0RywVLJ9Feb86Nl3AVqH",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1YzXR51HFoFzFzMdTN3Mkdd0mP0IB5sHz",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_c7e9a2c00653a641",
    "label": "Concurrency Assignment",
    "label_raw": "Concurrency Assignment",
@@ -147921,6 +148954,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/125/"
   },
   {
+   "drive_folders": [],
    "id": "cla_c196cff5841f994e",
    "label": "Concurrency \u2013 Assignment Review Class",
    "label_raw": "Concurrency \u2013 Assignment Review Class",
@@ -147939,6 +148973,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75273/"
   },
   {
+   "drive_folders": [],
    "id": "cla_404d6d3b62b45430",
    "label": "Concurrency \u2013 Alternate Assignment Review Class",
    "label_raw": "Concurrency \u2013 Alternate Assignment Review Class",
@@ -147957,6 +148992,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/75275/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Practice Problem",
+     "url": "https://drive.google.com/drive/folders/175QXSsLGtS8mkz3On9bFR4vkdLIy6Gls",
+     "where": "content"
+    }
+   ],
    "id": "cla_c226d18b653008a9",
    "label": "Concurrency Practice Problem",
    "label_raw": "Concurrency Practice Problem",
@@ -148032,6 +149074,13 @@
    "years_experience": "15+ years"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation Materials",
+     "url": "https://drive.google.com/drive/folders/1yExcYvybFXU1AXF5smRdHZqCwzgG0TW3",
+     "where": "content"
+    }
+   ],
    "id": "cla_4839f4fbb9505237",
    "label": "Foundation Material - Quality Engineering Foundations",
    "label_raw": "Foundation Material - Quality Engineering Foundations",
@@ -148050,6 +149099,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/532/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1RDCPvu_k6f3GepSHwuS-C6fhjByefrL7",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1oXSBGf2In-FfDD4yFelmtkkibmZgQrW2",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_5a9b27fdba9d6210",
    "label": "Quality Engineering Foundations - Class",
    "label_raw": "Quality Engineering Foundations - Class",
@@ -148068,6 +149129,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76429/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1RDCPvu_k6f3GepSHwuS-C6fhjByefrL7",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1oXSBGf2In-FfDD4yFelmtkkibmZgQrW2",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_25f84d949950591d",
    "label": "Quality Engineering Foundations - Alternate Class",
    "label_raw": "Quality Engineering Foundations - Alternate Class",
@@ -148086,6 +149159,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76431/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Assignments",
+     "url": "https://drive.google.com/drive/folders/1E9nYhdyxg1EMQEGpoAQvDwGPd3Z8zpe6",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/17d8bfH-6DWl_BQpI7Aoq4X_ThwGNccdh",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_e54ac391cb3bf56e",
    "label": "Assignment - Quality Engineering Foundations",
    "label_raw": "Assignment - Quality Engineering Foundations",
@@ -148104,6 +149189,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/850/"
   },
   {
+   "drive_folders": [],
    "id": "cla_da2b4d7537fe42ed",
    "label": "Quality Engineering Foundations - Assignment Review Class",
    "label_raw": "Quality Engineering Foundations - Assignment Review Class",
@@ -148122,6 +149208,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76430/"
   },
   {
+   "drive_folders": [],
    "id": "cla_ad5f50e0885bca46",
    "label": "Quality Engineering Foundations - Alternate Assignment Review Class",
    "label_raw": "Quality Engineering Foundations - Alternate Assignment Review Class",
@@ -148253,6 +149340,13 @@
    "type": "instructor"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation Materials",
+     "url": "https://drive.google.com/drive/folders/1qsCnT3ip0dHK4pDp4Z533-gYraQNeWdl",
+     "where": "content"
+    }
+   ],
    "id": "cla_d7fe0c3150eea8c0",
    "label": "Foundation Material - Performance Testing",
    "label_raw": "Foundation Material - Performance Testing",
@@ -148271,6 +149365,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/928/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1KJNsqmdskKHBe6YygaIcZiHlDILBRgYn",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1BlT0TCc0nNVTTpUAIgDvs5zfq3AO-pMu",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_37fb1dd7a9c7d328",
    "label": "Performance Testing - Class",
    "label_raw": "Performance Testing - Class",
@@ -148289,6 +149395,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76448/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1KJNsqmdskKHBe6YygaIcZiHlDILBRgYn",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/1BlT0TCc0nNVTTpUAIgDvs5zfq3AO-pMu",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_5ca7e5156fcb2080",
    "label": "Performance Testing - Alternate Class",
    "label_raw": "Performance Testing - Alternate Class",
@@ -148307,6 +149425,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76458/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Assignments",
+     "url": "https://drive.google.com/drive/folders/1lxCGUY9RGkxAKuJ3uw6m7DOejKcVv0a3",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1pAIb5005BeecrJI5NRQvWoW5zep1GPin",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_e0cb341453e3ec7d",
    "label": "Assignment - Performance Testing",
    "label_raw": "Assignment - Performance Testing",
@@ -148325,6 +149455,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/752/"
   },
   {
+   "drive_folders": [],
    "id": "cla_d47977144cc4f3ae",
    "label": "Performance Testing - Assignment Review Class",
    "label_raw": "Performance Testing - Assignment Review Class",
@@ -148343,6 +149474,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76449/"
   },
   {
+   "drive_folders": [],
    "id": "cla_85ca97f0a3af8f5b",
    "label": "Performance Testing - Alternate Assignment Review Class",
    "label_raw": "Performance Testing - Alternate Assignment Review Class",
@@ -148419,6 +149551,13 @@
    "years_experience": "16+"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation Materials",
+     "url": "https://drive.google.com/drive/folders/1gTlOYnxrGSJVzRkYxBeNcwrW5Ulb18We",
+     "where": "content"
+    }
+   ],
    "id": "cla_59403aae56e2c421",
    "label": "Foundation Material - API Testing",
    "label_raw": "Foundation Material - API Testing",
@@ -148437,6 +149576,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/646/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/14JmxTUyYAqLzOP4pIBZKUDdpwLRBe251",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/116Rfo3vYAQJ-1cxVc3diwTYD3GxggwJ2",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_acf1b0b46b54d339",
    "label": "API Testing - Class",
    "label_raw": "API Testing - Class",
@@ -148455,6 +149606,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76460/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/14JmxTUyYAqLzOP4pIBZKUDdpwLRBe251",
+     "where": "content"
+    },
+    {
+     "name": "Slides",
+     "url": "https://drive.google.com/drive/folders/116Rfo3vYAQJ-1cxVc3diwTYD3GxggwJ2",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_0fe199944cce912d",
    "label": "API Testing - Alternate Class",
    "label_raw": "API Testing - Alternate Class",
@@ -148473,6 +149636,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76462/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Assignment",
+     "url": "https://drive.google.com/drive/folders/10C63M_3zJ0k0nW-DYsISgGWBfw6UEraN",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1utK8IGt7zQFqGniOKEZwK_mDPtc0pOKj",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_026a7304fcab7a69",
    "label": "Assignment - API Testing",
    "label_raw": "Assignment - API Testing",
@@ -148491,6 +149666,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/398/"
   },
   {
+   "drive_folders": [],
    "id": "cla_eef38198aa2c275f",
    "label": "API Testing - Assignment Review Class",
    "label_raw": "API Testing - Assignment Review Class",
@@ -148509,6 +149685,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76461/"
   },
   {
+   "drive_folders": [],
    "id": "cla_88da14199c523e67",
    "label": "API Testing - Alternate Assignment Review Class",
    "label_raw": "API Testing - Alternate Assignment Review Class",
@@ -148554,6 +149731,13 @@
    "years_experience": "17.0"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundational Material",
+     "url": "https://drive.google.com/drive/folders/1Qk4un-_qE2nVIj1Sv3tAtO0F50quyR8c",
+     "where": "content"
+    }
+   ],
    "id": "cla_9143b6045ec7adcd",
    "label": "Foundation Material - Automation Testing",
    "label_raw": "Foundation Material - Automation Testing",
@@ -148572,6 +149756,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/956/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class",
+     "url": "https://drive.google.com/drive/folders/1Hr_WQZsyE21vEO0GefDDZHgjmO6r9Gec",
+     "where": "content"
+    },
+    {
+     "name": "Slide",
+     "url": "https://drive.google.com/drive/folders/1d2mSBpih9C7fIAJZqmRQv0GhAfKmbyJl",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_f9d8957b5cc02dfd",
    "label": "Automation Testing - Class",
    "label_raw": "Automation Testing - Class",
@@ -148590,6 +149786,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76464/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class",
+     "url": "https://drive.google.com/drive/folders/1Hr_WQZsyE21vEO0GefDDZHgjmO6r9Gec",
+     "where": "content"
+    },
+    {
+     "name": "Slide",
+     "url": "https://drive.google.com/drive/folders/1d2mSBpih9C7fIAJZqmRQv0GhAfKmbyJl",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_8f0142af8ec006f4",
    "label": "Automation Testing - Alternate Class",
    "label_raw": "Automation Testing - Alternate Class",
@@ -148608,6 +149816,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76465/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Assignment",
+     "url": "https://drive.google.com/drive/folders/1I_Us4S6uOqVU_Ef3QMqJ9Q-jTrVmiMKC",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1pth8MY-kdlqDPy_hLhoiULX3dXaj6EOd",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_3495e0bd21513ca9",
    "label": "Assignment - Automation Testing",
    "label_raw": "Assignment - Automation Testing",
@@ -148626,6 +149846,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/400/"
   },
   {
+   "drive_folders": [],
    "id": "cla_629d38ec7a7ce138",
    "label": "Automation Testing - Assignment Review Class",
    "label_raw": "Automation Testing - Assignment Review Class",
@@ -148644,6 +149865,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76466/"
   },
   {
+   "drive_folders": [],
    "id": "cla_633e06a9dfc4741a",
    "label": "Automation Testing - Alternate Assignment Review Class",
    "label_raw": "Automation Testing - Alternate Assignment Review Class",
@@ -148679,6 +149901,13 @@
    "type": "instructor"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundational Material",
+     "url": "https://drive.google.com/drive/folders/1q2jRoEN2Ld3Ub4QIULIDk8nf3CB13M7t",
+     "where": "content"
+    }
+   ],
    "id": "cla_9f61e9edbc62c601",
    "label": "Foundation Material - Test Automation",
    "label_raw": "Foundation Material - Test Automation",
@@ -148697,6 +149926,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/722/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live_Class",
+     "url": "https://drive.google.com/drive/folders/1eGDYdTJag4W8MyFMrw-dU0ds6AEaRZB0",
+     "where": "content"
+    },
+    {
+     "name": "Slide",
+     "url": "https://drive.google.com/drive/folders/1HKfrPGoU7wmB0DZGmh6-WnEguAaTYj3f",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_f2e029b9ee04abc6",
    "label": "Test Automation Design Patterns - Class",
    "label_raw": "Test Automation Design Patterns - Class",
@@ -148715,6 +149956,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76469/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live_Class",
+     "url": "https://drive.google.com/drive/folders/1eGDYdTJag4W8MyFMrw-dU0ds6AEaRZB0",
+     "where": "content"
+    },
+    {
+     "name": "Slide",
+     "url": "https://drive.google.com/drive/folders/1HKfrPGoU7wmB0DZGmh6-WnEguAaTYj3f",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_f8549947d557e79c",
    "label": "Test Automation Design Patterns - Alternate Class",
    "label_raw": "Test Automation Design Patterns - Alternate Class",
@@ -148733,6 +149986,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76472/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Assignment",
+     "url": "https://drive.google.com/drive/folders/1qDxuvwHWyg-o7WNaeC5cEeTOJLs62qSg",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1SRDqK2xlg2lu9Rpo4vIavvBZbsKMO9fF",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_1ab8b7f026556677",
    "label": "Assignment - Test Automation",
    "label_raw": "Assignment - Test Automation",
@@ -148751,6 +150016,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/407/"
   },
   {
+   "drive_folders": [],
    "id": "cla_0eec30ac7f4a5a09",
    "label": "Test Automation Design Patterns - Assignment Review Class",
    "label_raw": "Test Automation Design Patterns - Assignment Review Class",
@@ -148769,6 +150035,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76471/"
   },
   {
+   "drive_folders": [],
    "id": "cla_4fd5f5e8b8b91281",
    "label": "Test Automation Design Patterns - Alternate Assignment Review Class",
    "label_raw": "Test Automation Design Patterns - Alternate Assignment Review Class",
@@ -148787,6 +150054,13 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76473/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "1. Foundation Materials",
+     "url": "https://drive.google.com/drive/folders/1ig2mZP7XndKUZ6IbuvFruz17ri47eJwK",
+     "where": "content"
+    }
+   ],
    "id": "cla_03525e034436d302",
    "label": "Foundation Material - Cloud Testing",
    "label_raw": "Foundation Material - Cloud Testing",
@@ -148805,6 +150079,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1006/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1_nbJvFPOLwPjof98lg3-6x6mxK51WWCF",
+     "where": "content"
+    },
+    {
+     "name": "Slide",
+     "url": "https://drive.google.com/drive/folders/1vO_9qzc-9FuYgU6SjO3VZEBfjZGcuNGT",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_70c33a899c51330b",
    "label": "Cloud Testing - Class",
    "label_raw": "Cloud Testing - Class",
@@ -148823,6 +150109,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76474/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "2. Live Class Slides",
+     "url": "https://drive.google.com/drive/folders/1_nbJvFPOLwPjof98lg3-6x6mxK51WWCF",
+     "where": "content"
+    },
+    {
+     "name": "Slide",
+     "url": "https://drive.google.com/drive/folders/1vO_9qzc-9FuYgU6SjO3VZEBfjZGcuNGT",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_3bb7f11ce89ec82f",
    "label": "Cloud Testing - Alternate Class",
    "label_raw": "Cloud Testing - Alternate Class",
@@ -148841,6 +150139,18 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76476/"
   },
   {
+   "drive_folders": [
+    {
+     "name": "3. Assignments",
+     "url": "https://drive.google.com/drive/folders/1S2iIFW2sjq8Sbw7_ZCiFZbEy24T7FoFB",
+     "where": "content"
+    },
+    {
+     "name": "Assignment",
+     "url": "https://drive.google.com/drive/folders/1IvpuPtSgOkat3jZE88lfw3gXPo-9jKDQ",
+     "where": "uplevel shared"
+    }
+   ],
    "id": "cla_71231feed04a43f8",
    "label": "Assignment - Cloud Testing",
    "label_raw": "Assignment - Cloud Testing",
@@ -148859,6 +150169,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1108/"
   },
   {
+   "drive_folders": [],
    "id": "cla_f24eceb6b9994272",
    "label": "Cloud Testing - Assignment Review Class",
    "label_raw": "Cloud Testing - Assignment Review Class",
@@ -148877,6 +150188,7 @@
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_video/76475/"
   },
   {
+   "drive_folders": [],
    "id": "cla_ea5c006daa2fe2bb",
    "label": "Cloud Testing - Alternate Assignment Review Class",
    "label_raw": "Cloud Testing - Alternate Assignment Review Class",
@@ -150815,6 +152127,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1-dnrK70b_vBNMOdSWiHUcBeqIp0GPhuM",
+   "historical": true,
    "id": "sli_232419994f136a98",
    "label": "Old API Design.pptx",
    "label_raw": "Old API Design.pptx",
@@ -153085,6 +154398,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1-lXh1aQUBLXrAYRA8UDpPTGsycquAazAUaze4MTwFTc",
+   "historical": true,
    "id": "sli_c14e361e4a14d23d",
    "label": "[DO NOT USE] IK Frontend - Module 2 - UI & DOM - Jakob",
    "label_raw": "[DO NOT USE] IK Frontend - Module 2 - UI & DOM - Jakob",
@@ -153157,6 +154471,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=10TRhpGlyh5RHvuFR-PARX2mOYjSQ1-P0Tr_O-lKerSY",
+   "historical": true,
    "id": "ass_551c03718c9b5c53",
    "label": "JavaScript and Web Development Assignment",
    "label_raw": "JavaScript and Web Development Assignment",
@@ -154271,6 +155586,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=10ionI2eD58mwuKXKzew11cX5o13vNZJr",
+   "historical": true,
    "id": "sli_9d2cb050fecaf027",
    "label": "Concurrency Super Set Slides.pptx",
    "label_raw": "Concurrency Super Set Slides.pptx",
@@ -159247,6 +160563,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=12N91tJs5vD9jpd-O0Mhh68e1Ba06-ZjW",
+   "historical": true,
    "id": "sli_55efa0ed61eda89f",
    "label": "API Design and Implementation- third.pptx",
    "label_raw": "API Design and Implementation- third.pptx",
@@ -161606,6 +162923,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1394K9wvPIyYrK-weB4jpo6DS_SEPZc5daAcE7MhJz0U",
+   "historical": true,
    "id": "sli_a83ef1dbe9ccbc9e",
    "label": "JS and WebD - Live Class by JD",
    "label_raw": "JS and WebD - Live Class by JD",
@@ -162835,6 +164153,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=14ZpsUmLvk6cw_HMke39xOwZp1lTpionU",
+   "historical": true,
    "id": "sli_b326a313b73b383f",
    "label": "Design Patterns.pptx",
    "label_raw": "Design Patterns.pptx",
@@ -167716,6 +169035,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=16GRSZurqkKQLPBZYoEnG_UAKpRFSxb8vpOrXKIMB_CQ",
+   "historical": true,
    "id": "sli_038d90e7166ca414",
    "label": "Design Patterns",
    "label_raw": "Design Patterns",
@@ -174323,6 +175643,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=182Yxna2KNJQSgnU9yv8DXuy8cBdpd6n7",
+   "historical": true,
    "id": "sli_bfffd03a96779ad6",
    "label": "API design - Krish.pptx",
    "label_raw": "API design - Krish.pptx",
@@ -178708,6 +180029,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=18BfMIMex5yB8g0k75u_U-AvRRE_g7H45",
+   "historical": true,
    "id": "ass_f0719d3fcbf74045",
    "label": "JavaScript and Web Development Assignment.docx",
    "label_raw": "JavaScript and Web Development Assignment.docx",
@@ -179744,6 +181066,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=19V9bFJyXHpsPZ5pITqjPfY_jg-60bicA",
+   "historical": true,
    "id": "ass_9bd7c39ab52902db",
    "label": "BoundedHashSet.pdf",
    "label_raw": "BoundedHashSet.pdf",
@@ -183914,6 +185237,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1ArPSdz_-3nkn-UqIHX7_3lXltr60QpcO",
+   "historical": true,
    "id": "sli_bc9ec27ba39f6d45",
    "label": "The _this_ keyword.pptx",
    "label_raw": "The _this_ keyword.pptx",
@@ -184369,6 +185693,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1AwJzKm_mFuVaP0NdKb9k6h5-0gKpImo8lBC8hc-wWaM",
+   "historical": true,
    "id": "sli_10455ef34c2b27b7",
    "label": "Basics of Event Handling",
    "label_raw": "Basics of Event Handling",
@@ -185379,6 +186704,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1BKx9IPF10ZrIyjXjvT_B_HvAuCV_6U6c",
+   "historical": true,
    "id": "ass_41a18318ccba0901",
    "label": "ConcurrentHashmap.pdf",
    "label_raw": "ConcurrentHashmap.pdf",
@@ -188634,6 +189960,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1EQwKDlS5IhV8k-G2S89DMf2oNOHZd6p1lh2PCpiKT0g",
+   "historical": true,
    "id": "sli_9d012dac51974d69",
    "label": "SOLID Principles",
    "label_raw": "SOLID Principles",
@@ -195570,6 +196897,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1GtPLwE7NhgeD6gLyiDnN6t4chcFS866n",
+   "historical": true,
    "id": "sli_74d1498916954e1a",
    "label": "API Design and Implementation.pptx",
    "label_raw": "API Design and Implementation.pptx",
@@ -195814,6 +197142,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1Gyd9zTgPt4cKJVGmbtmhreq-GZBqxUjk",
+   "historical": true,
    "id": "sli_6d4f96fffd1b78c0",
    "label": "API design.pptx",
    "label_raw": "API design.pptx",
@@ -200108,6 +201437,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1JYJqugt8OaQ2XLAgJa8xIDLrb0hIXlgz",
+   "historical": true,
    "id": "sli_d3741dd2e2ae83f4",
    "label": "iFrames.pptx",
    "label_raw": "iFrames.pptx",
@@ -200243,6 +201573,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1JuT_0TQaRKSiHHT_j1qSe71XXslxNXmUMhNn8BK7Mio",
+   "historical": true,
    "id": "sli_36227bd2b3b7bcd9",
    "label": "Copy of JS and WebD - Live Class by JD",
    "label_raw": "Copy of JS and WebD - Live Class by JD",
@@ -210216,6 +211547,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1R0cg6urKK9H_JJvMIB4uYr5nn8-MAeSo",
+   "historical": true,
    "id": "sli_cec7249c0020f75f",
    "label": "Basics of Event Handling.pptx",
    "label_raw": "Basics of Event Handling.pptx",
@@ -217128,6 +218460,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1WzelL3jH870yv4FITwaVWhasOM1ia_FE1akOldOFIEo",
+   "historical": true,
    "id": "sli_4f9a4c6be79252ca",
    "label": "Databases Live Class - 2024/25",
    "label_raw": "Databases Live Class - 2024/25",
@@ -217252,6 +218585,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1X8dnWDwxV_wHlk_O19RtZ8Ax-fEr9mtpNdwhMw2o8ks",
+   "historical": true,
    "id": "sli_2dee49fc4140ecec",
    "label": "Live Class Slide Template ",
    "label_raw": "Live Class Slide Template ",
@@ -218253,6 +219587,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1ZWGPuCgp7JKlxg4Uh9x70ukPGLrJ9566",
+   "historical": true,
    "id": "ass_a9c64fd63414dbc7",
    "label": "API Development Assignment.docx",
    "label_raw": "API Development Assignment.docx",
@@ -219514,6 +220849,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1cKV-nq0ktH2g3j0jcR82zQttKDCcaNYM",
+   "historical": true,
    "id": "sli_3b9b9a946857060b",
    "label": "API Design and Implementation- second.pptx",
    "label_raw": "API Design and Implementation- second.pptx",
@@ -225933,6 +227269,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1jMI9z6Bf8PHp0DZF3EzTu0hkFO19eDGrakM8ssdzcnk",
+   "historical": true,
    "id": "sli_7e82084636348d7b",
    "label": "[Old] Databases Live Class - Ashish",
    "label_raw": "[Old] Databases Live Class - Ashish",
@@ -226660,6 +227997,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1jiik2Ql1GXPjJ3cupPPTUdhU6QU7y0gvVIHfJJtzIrk",
+   "historical": true,
    "id": "sli_1512c0a8ab43c9a7",
    "label": "Databases Live Class - 2024",
    "label_raw": "Databases Live Class - 2024",
@@ -227940,6 +229278,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1md94iZKTu5wo6Ob1__ArK1T6WcQzn3bd",
+   "historical": true,
    "id": "sli_e6a25e231b4b4f3c",
    "label": "SOLID Principles.pptx",
    "label_raw": "SOLID Principles.pptx",
@@ -228467,6 +229806,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1mvxaXiYFopP88J9e_gfP_hlUh4fLwrLU",
+   "historical": true,
    "id": "sli_ba07fa700fc7a589",
    "label": "JS and WebD - Live Class by JD.pptx",
    "label_raw": "JS and WebD - Live Class by JD.pptx",
@@ -233574,6 +234914,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1u3jwJgpIOMGNcPdHdK_1Lpzws31B61KVWMrZtERoUEA",
+   "historical": true,
    "id": "ass_14f4351e7b0c96e5",
    "label": "threadsafe_pubsub",
    "label_raw": "threadsafe_pubsub",
@@ -234073,6 +235414,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1vnV14CFuqGVql1rfJIImKBM8dk98UTW8A3fBia2gCsg",
+   "historical": true,
    "id": "ass_817278bb403e855e",
    "label": "rate_limiter",
    "label_raw": "rate_limiter",
@@ -234089,6 +235431,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1voDRCI_kQMJUdo6ziJqqEhg3YoGf3qrVwcbTuKSQzvA",
+   "historical": true,
    "id": "sli_56dd1a5f3b7ef618",
    "label": "The \"this\" keyword",
    "label_raw": "The \"this\" keyword",
@@ -234843,6 +236186,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1xTbp43pXcjAVpldKErAQTIjQrkx_uBVMu6K18vVQIDY",
+   "historical": true,
    "id": "sli_898ec2cbf42be5ab",
    "label": "iFrames",
    "label_raw": "iFrames",
@@ -235029,6 +236373,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1xspjmIyRc-bCnWuqildNTiygVw99EArf4zBNtIik7BI",
+   "historical": true,
    "id": "sli_6cbdebbdb11132c2",
    "label": "[OLD] Front-end Module 4 - Patterns, Tools, and Techniques - Slides by Laura",
    "label_raw": "[OLD] Front-end Module 4 - Patterns, Tools, and Techniques - Slides by Laura",
@@ -235046,6 +236391,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1y2Y2ffqMPMAcFijQ_SfcJH2ELgfmU4GvlynBK2qy5ek",
+   "historical": true,
    "id": "sli_88c53700c4726d34",
    "label": "Concurrency Super Set Slides",
    "label_raw": "Concurrency Super Set Slides",
@@ -235258,6 +236604,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1yfSYC2Ne1JvNPbt7wf8cUcrXHPl67osq",
+   "historical": true,
    "id": "sli_2b1e2c027ecf6a63",
    "label": "Cloud Native Architecture Live Class Slide.pptx",
    "label_raw": "Cloud Native Architecture Live Class Slide.pptx",
@@ -238223,6 +239570,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1-dnrK70b_vBNMOdSWiHUcBeqIp0GPhuM",
+   "historical": true,
    "id": "fil_79f12c8b0416a680",
    "label": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/2. Live Class Slides/Old API Design.pptx",
    "label_raw": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/2. Live Class Slides/Old API Design.pptx",
@@ -238375,6 +239723,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1-lXh1aQUBLXrAYRA8UDpPTGsycquAazAUaze4MTwFTc",
+   "historical": true,
    "id": "fil_b9142ecdcf63a029",
    "label": "/SD2: Frontend/IK: Frontend Content Repo/Week 2/4 - UI & DOM/2. Live Class Slides/[DO NOT USE] IK Frontend - Module 2 - UI & DOM - Jakob",
    "label_raw": "/SD2: Frontend/IK: Frontend Content Repo/Week 2/4 - UI & DOM/2. Live Class Slides/[DO NOT USE] IK Frontend - Module 2 - UI & DOM - Jakob",
@@ -238508,6 +239857,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=10TRhpGlyh5RHvuFR-PARX2mOYjSQ1-P0Tr_O-lKerSY",
+   "historical": true,
    "id": "fil_bd84978e284cd931",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/4. Assignment/JavaScript and Web Development Assignment",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/4. Assignment/JavaScript and Web Development Assignment",
@@ -238565,6 +239915,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=10XVuitERPXdiaGTjdR8xQBMgU4pPND_s",
+   "historical": true,
    "id": "fil_dbd1b191e001f4e2",
    "label": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/Module - API Development.xlsx",
    "label_raw": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/Module - API Development.xlsx",
@@ -238679,6 +240030,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=10ionI2eD58mwuKXKzew11cX5o13vNZJr",
+   "historical": true,
    "id": "fil_ca59d671bad63dff",
    "label": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/2. Live Class Content/Concurrency Super Set Slides.pptx",
    "label_raw": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/2. Live Class Content/Concurrency Super Set Slides.pptx",
@@ -238717,6 +240069,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=10lDFGfTDc1XsHnQEIUokVCwTDmiIxiEZ",
+   "historical": true,
    "id": "fil_1fca2373ba96d51f",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/3. Assignment/API-main.zip",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/3. Assignment/API-main.zip",
@@ -239287,6 +240640,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=12N91tJs5vD9jpd-O0Mhh68e1Ba06-ZjW",
+   "historical": true,
    "id": "fil_79c4dab32b2e4281",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/2. Live Class Slides/API Design and Implementation- third.pptx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/2. Live Class Slides/API Design and Implementation- third.pptx",
@@ -239515,6 +240869,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1394K9wvPIyYrK-weB4jpo6DS_SEPZc5daAcE7MhJz0U",
+   "historical": true,
    "id": "fil_8cd157c16ad8313b",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/2. Live Class Slides/JS and WebD - Live Class by JD",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/2. Live Class Slides/JS and WebD - Live Class by JD",
@@ -240104,6 +241459,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=14ZpsUmLvk6cw_HMke39xOwZp1lTpionU",
+   "historical": true,
    "id": "fil_a85ff00589e882e5",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/2. Live Class Slides/Design Patterns.pptx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/2. Live Class Slides/Design Patterns.pptx",
@@ -240693,6 +242049,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=15m6F2FVza1jBbdFf2UJR7CUgeVb7Wdnk",
+   "historical": true,
    "id": "fil_3001d2b3b2816c0d",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/1. Foundation Material/PreRead - API Design and Implementation-second.docx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/1. Foundation Material/PreRead - API Design and Implementation-second.docx",
@@ -240826,6 +242183,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=16GRSZurqkKQLPBZYoEnG_UAKpRFSxb8vpOrXKIMB_CQ",
+   "historical": true,
    "id": "fil_9c92e7b11aa97f5a",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/2. Live Class Slides/Design Patterns",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/2. Live Class Slides/Design Patterns",
@@ -240902,6 +242260,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=16MQSdaGPPUr9Grh8GTgoIKqNwl3kP8Df0BcEARA9gLc",
+   "historical": true,
    "id": "fil_c8c4d88c09c3ebd5",
    "label": "/SD2: Frontend/Additional Documents/Internal Use/DO NOT USE: FE Module Analysis",
    "label_raw": "/SD2: Frontend/Additional Documents/Internal Use/DO NOT USE: FE Module Analysis",
@@ -241491,6 +242850,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=182Yxna2KNJQSgnU9yv8DXuy8cBdpd6n7",
+   "historical": true,
    "id": "fil_427e6e764ebd754a",
    "label": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/2. Live Class Slides/API design - Krish.pptx",
    "label_raw": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/2. Live Class Slides/API design - Krish.pptx",
@@ -241548,6 +242908,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=18BfMIMex5yB8g0k75u_U-AvRRE_g7H45",
+   "historical": true,
    "id": "fil_b709afa33335a675",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/4. Assignment/JavaScript and Web Development Assignment.docx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/4. Assignment/JavaScript and Web Development Assignment.docx",
@@ -241586,6 +242947,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=18PL7KpSZm9JJbqRj5jtnyHriB-5c2h9QTxzwETWnVnk",
+   "historical": true,
    "id": "fil_07e9f1a3e20ab13c",
    "label": "/SD4: Test Engineering/IK Test Engineering: Content Repo/Week 4/6 - Automation Testing/1. Foundational Material /Old Copy of FM: Automation Testing: Foundations - 13 February, 22:31",
    "label_raw": "/SD4: Test Engineering/IK Test Engineering: Content Repo/Week 4/6 - Automation Testing/1. Foundational Material /Old Copy of FM: Automation Testing: Foundations - 13 February, 22:31",
@@ -242042,6 +243404,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=19V9bFJyXHpsPZ5pITqjPfY_jg-60bicA",
+   "historical": true,
    "id": "fil_3edfc5cb53dc5030",
    "label": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/3. Assignment/BoundedHashSet.pdf",
    "label_raw": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/3. Assignment/BoundedHashSet.pdf",
@@ -242802,6 +244165,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1ArPSdz_-3nkn-UqIHX7_3lXltr60QpcO",
+   "historical": true,
    "id": "fil_962853de6884a492",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/1. Foundation Material/The _this_ keyword.pptx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/1. Foundation Material/The _this_ keyword.pptx",
@@ -242840,6 +244204,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1AwJzKm_mFuVaP0NdKb9k6h5-0gKpImo8lBC8hc-wWaM",
+   "historical": true,
    "id": "fil_ab3c47568d66e997",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/1. Foundation Material/Basics of Event Handling",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/1. Foundation Material/Basics of Event Handling",
@@ -243068,6 +244433,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1BKx9IPF10ZrIyjXjvT_B_HvAuCV_6U6c",
+   "historical": true,
    "id": "fil_6997fa2a30269254",
    "label": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/3. Assignment/ConcurrentHashmap.pdf",
    "label_raw": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/3. Assignment/ConcurrentHashmap.pdf",
@@ -243486,6 +244852,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1CWUxdBZZpNkX5x1YON5POJiknFUPXRsZ",
+   "historical": true,
    "id": "fil_b05921e6fbc6e60e",
    "label": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/1. Pre-Class Content/concurrency_essentials_2.mp4",
    "label_raw": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/1. Pre-Class Content/concurrency_essentials_2.mp4",
@@ -243961,6 +245328,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1DvmVb4vhM1h5SH-FN79TygLXYYNtaXGj",
+   "historical": true,
    "id": "fil_ac95e19958185383",
    "label": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/1. Pre-Class Content/M5.2 - Concurrency-foundation.pdf",
    "label_raw": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/1. Pre-Class Content/M5.2 - Concurrency-foundation.pdf",
@@ -244227,6 +245595,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1EQwKDlS5IhV8k-G2S89DMf2oNOHZd6p1lh2PCpiKT0g",
+   "historical": true,
    "id": "fil_134abe82e95824aa",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/2. Live Class Slides/SOLID Principles",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/2. Live Class Slides/SOLID Principles",
@@ -244816,6 +246185,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1Fi6CQUjzvOn1A2Yk3Yob6vOl7ddiL0QCLTeTQhE0mEw",
+   "historical": true,
    "id": "fil_b6f0fa50bfc58924",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/[Revamp] Lesson Plan 4 - JavaScript and Web Development",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/[Revamp] Lesson Plan 4 - JavaScript and Web Development",
@@ -245348,6 +246718,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1GnBIUcRxAKMFbec-oW0U7IOTAkd7Bnui",
+   "historical": true,
    "id": "fil_32bd4d25669a9f51",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/3. Module - Cloud - Content/1. Foundation Material/Foundation Videos/Archive/[OLD]Scaling.mp4",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/3. Module - Cloud - Content/1. Foundation Material/Foundation Videos/Archive/[OLD]Scaling.mp4",
@@ -245367,6 +246738,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1GtPLwE7NhgeD6gLyiDnN6t4chcFS866n",
+   "historical": true,
    "id": "fil_cf914c76382c0a14",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/2. Live Class Slides/API Design and Implementation.pptx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/2. Live Class Slides/API Design and Implementation.pptx",
@@ -245405,6 +246777,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1Gyd9zTgPt4cKJVGmbtmhreq-GZBqxUjk",
+   "historical": true,
    "id": "fil_a626426e9225231b",
    "label": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/2. Live Class Slides/API design.pptx",
    "label_raw": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/2. Live Class Slides/API design.pptx",
@@ -246393,6 +247766,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1JLgHvCh3ibNrt-9Y_Yuc4R8oLOXbiVuf",
+   "historical": true,
    "id": "fil_bda65209be2a653c",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/3. Practice Problems/Practice Problems.docx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/3. Practice Problems/Practice Problems.docx",
@@ -246412,6 +247786,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1JMvJP_JXT0zLFkhz97y4Kl0G-7WMPZtMZ_I-BLUNmmM",
+   "historical": true,
    "id": "fil_faa3903cdd0537d9",
    "label": "/SD2: Frontend/Additional Documents/Internal Use/[DO NOT USE] Live Lecture Recordings",
    "label_raw": "/SD2: Frontend/Additional Documents/Internal Use/[DO NOT USE] Live Lecture Recordings",
@@ -246564,6 +247939,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1JYJqugt8OaQ2XLAgJa8xIDLrb0hIXlgz",
+   "historical": true,
    "id": "fil_f332deb82457d2c8",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/1. Foundation Material/iFrames.pptx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/1. Foundation Material/iFrames.pptx",
@@ -246754,6 +248130,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1JuT_0TQaRKSiHHT_j1qSe71XXslxNXmUMhNn8BK7Mio",
+   "historical": true,
    "id": "fil_e0325f70a53f6ae0",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/2. Live Class Slides/Copy of JS and WebD - Live Class by JD",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/2. Live Class Slides/Copy of JS and WebD - Live Class by JD",
@@ -249072,6 +250449,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1Q6O-PCSzuBccfqkxpEkoblbfrvxFDbgn",
+   "historical": true,
    "id": "fil_527012445cdf9b43",
    "label": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/1. Pre-Class Content/CAP theorm.pdf",
    "label_raw": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/1. Pre-Class Content/CAP theorm.pdf",
@@ -249509,6 +250887,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1QhvulvEBC0zmH-_Q6BYiBzTqv-9XsMoT",
+   "historical": true,
    "id": "fil_16335426550e19a1",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/4. Practice Problems/mcq.docx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/4. Practice Problems/mcq.docx",
@@ -249642,6 +251021,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1R0cg6urKK9H_JJvMIB4uYr5nn8-MAeSo",
+   "historical": true,
    "id": "fil_56892de7fede3867",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/1. Foundation Material/Basics of Event Handling.pptx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/1. Foundation Material/Basics of Event Handling.pptx",
@@ -251105,6 +252485,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1TrVFlRKK3_calhyqwYRPCQBsFOqYq-ueWqFhPC-9OFY",
+   "historical": true,
    "id": "fil_823e96555d6960c2",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/1. Module - Databases - Content/Revamp 2024/Revised Lesson Plan 2024",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/1. Module - Databases - Content/Revamp 2024/Revised Lesson Plan 2024",
@@ -251789,6 +253170,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1VT1gdET9sAwhbPu4KX2Zu-wZA_K1XLPYOcZlwRA-dYY",
+   "historical": true,
    "id": "fil_db8eb6e6aa6a700d",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/1. Foundation Material/Getting Started with React",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/1. Foundation Material/Getting Started with React",
@@ -252397,6 +253779,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1WzelL3jH870yv4FITwaVWhasOM1ia_FE1akOldOFIEo",
+   "historical": true,
    "id": "fil_8005e4b2aefe0aa6",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/1. Module - Databases - Content/Revamp 2024/Databases Live Class - 2024/25",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/1. Module - Databases - Content/Revamp 2024/Databases Live Class - 2024/25",
@@ -252473,6 +253856,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1X8dnWDwxV_wHlk_O19RtZ8Ax-fEr9mtpNdwhMw2o8ks",
+   "historical": true,
    "id": "fil_4ff0c1488d0c1f6a",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/Live Class Slide Template ",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/Live Class Slide Template ",
@@ -252530,6 +253914,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1XOjFMi71-x-9eO8VekbGcFqW-EUE2J9kovKgSK0PuFQ",
+   "historical": true,
    "id": "fil_ecc59ae87bb7efeb",
    "label": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/1. Pre-Class Content/concurrency",
    "label_raw": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/1. Pre-Class Content/concurrency",
@@ -253214,6 +254599,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1Z2rmcJL5PQzYCv-vAbcMokn34YTy3j_p",
+   "historical": true,
    "id": "fil_09c0ccea256cb77e",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/1. Foundation Material/Getting Started with React.docx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/1. Foundation Material/Getting Started with React.docx",
@@ -253404,6 +254790,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1ZWGPuCgp7JKlxg4Uh9x70ukPGLrJ9566",
+   "historical": true,
    "id": "fil_a59cd320d49a4e41",
    "label": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/4. Assignment/API Development Assignment.docx",
    "label_raw": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/4. Assignment/API Development Assignment.docx",
@@ -255038,6 +256425,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1cKV-nq0ktH2g3j0jcR82zQttKDCcaNYM",
+   "historical": true,
    "id": "fil_dd7cbb5ca736fd8a",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/2. Live Class Slides/API Design and Implementation- second.pptx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/2. Live Class Slides/API Design and Implementation- second.pptx",
@@ -256102,6 +257490,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1et49w_Ts3OWtn2N-9r93QF4TSfEF7i7g3xo_gvQ_0_Y",
+   "historical": true,
    "id": "fil_44315ee44194fde3",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/3. Practice Problems/Practice Problems",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/3. Practice Problems/Practice Problems",
@@ -256178,6 +257567,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1fEIZFIWW9FzVdHeUWCWiGWJj6zXlfJ4H",
+   "historical": true,
    "id": "fil_3c30d284baf4e33b",
    "label": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/3. Practice Problems/API Development MCQ and Freeform.docx",
    "label_raw": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/3. Practice Problems/API Development MCQ and Freeform.docx",
@@ -257812,6 +259202,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1jMI9z6Bf8PHp0DZF3EzTu0hkFO19eDGrakM8ssdzcnk",
+   "historical": true,
    "id": "fil_72b1b6ae5efa9d8e",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/1. Module - Databases - Content/2. Live Class Slides/[Old] Databases Live Class - Ashish",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/1. Module - Databases - Content/2. Live Class Slides/[Old] Databases Live Class - Ashish",
@@ -258040,6 +259431,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1jZ-Jh-gQdL-D-iDOp0wlJbLiwRqrjp3NptyiaIMSpXk",
+   "historical": true,
    "id": "fil_9e71630e0d9adaac",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/API Design and Implementation - Updated Lesson Plan",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/API Design and Implementation - Updated Lesson Plan",
@@ -258097,6 +259489,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1jiik2Ql1GXPjJ3cupPPTUdhU6QU7y0gvVIHfJJtzIrk",
+   "historical": true,
    "id": "fil_f3e4afeebfbfeade",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/1. Module - Databases - Content/Revamp 2024/2. Live Class Slides/Databases Live Class - 2024",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/1. Module - Databases - Content/Revamp 2024/2. Live Class Slides/Databases Live Class - 2024",
@@ -258914,6 +260307,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1m-to_4SKZXLAyLpyxwOz0W7ojX6Reekx",
+   "historical": true,
    "id": "fil_3af051fd00dedc71",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/1. Foundation Material/PreRead - API Design and Implementation.docx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/1. Foundation Material/PreRead - API Design and Implementation.docx",
@@ -259180,6 +260574,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1md94iZKTu5wo6Ob1__ArK1T6WcQzn3bd",
+   "historical": true,
    "id": "fil_bdb78f37ce55e86e",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/2. Live Class Slides/SOLID Principles.pptx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/2. Live Class Slides/SOLID Principles.pptx",
@@ -259389,6 +260784,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1mvxaXiYFopP88J9e_gfP_hlUh4fLwrLU",
+   "historical": true,
    "id": "fil_61e7fe02ceb1d38c",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/2. Live Class Slides/JS and WebD - Live Class by JD.pptx",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/2. Live Class Slides/JS and WebD - Live Class by JD.pptx",
@@ -259636,6 +261032,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1ndLL-KxyJ6wh6nBqwAB3QjqSMAyp_EAE",
+   "historical": true,
    "id": "fil_70da211c3f08461e",
    "label": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/1. Pre-Class Content/concurrency.pdf",
    "label_raw": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/1. Pre-Class Content/concurrency.pdf",
@@ -260472,6 +261869,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1pU5fapmSG3_ue1jc80yeRJwTD-7LV-MB",
+   "historical": true,
    "id": "fil_a80d5e1cb00877e2",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/3. Assignment/API-main- second.zip",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/2. Module - API Design and Implementation - Content/Revamp 2024/3. Assignment/API-main- second.zip",
@@ -261517,6 +262915,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1rQ3Fw7PeaTtb9vFHTPYVgI-LR-8WbSRlpB7cxK4n-pU",
+   "historical": true,
    "id": "fil_3406b2da19369ea7",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/1. Module - Databases - Content/New Material Aug 2023/Databases Module for FS & BE: Project Plan",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/1. Module - Databases - Content/New Material Aug 2023/Databases Module for FS & BE: Project Plan",
@@ -261802,6 +263201,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1sEim2ZackUXyCTvOv4_vkGMeAcEWAjTO",
+   "historical": true,
    "id": "fil_fd189ef62d2fe4d2",
    "label": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/2. Live Class Slides/API design - Krish.pptx.pdf",
    "label_raw": "/SD3: Backend Engineering/Module-3: API Design/Revamp 2024/2. Live Class Slides/API design - Krish.pptx.pdf",
@@ -262638,6 +264038,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1u3jwJgpIOMGNcPdHdK_1Lpzws31B61KVWMrZtERoUEA",
+   "historical": true,
    "id": "fil_3c941cd3860522ea",
    "label": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/3. Assignment/threadsafe_pubsub",
    "label_raw": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/3. Assignment/threadsafe_pubsub",
@@ -263341,6 +264742,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1vmI1dKIlBgcKDwxXc1nNyEi3UW98Oe8Hbzj5kxHru-Y",
+   "historical": true,
    "id": "fil_04b2aad098f963dc",
    "label": "/SD4: Test Engineering/IK Test Engineering: Content Repo/Week 4/6 - Automation Testing/1. Foundational Material /Old FM: Automation Testing: Foundations",
    "label_raw": "/SD4: Test Engineering/IK Test Engineering: Content Repo/Week 4/6 - Automation Testing/1. Foundational Material /Old FM: Automation Testing: Foundations",
@@ -263360,6 +264762,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1vnV14CFuqGVql1rfJIImKBM8dk98UTW8A3fBia2gCsg",
+   "historical": true,
    "id": "fil_2cbea3117f6b42bd",
    "label": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/3. Assignment/rate_limiter",
    "label_raw": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/3. Assignment/rate_limiter",
@@ -263379,6 +264782,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1voDRCI_kQMJUdo6ziJqqEhg3YoGf3qrVwcbTuKSQzvA",
+   "historical": true,
    "id": "fil_6aaa0b0a60863802",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/1. Foundation Material/The \"this\" keyword",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/1. Foundation Material/The \"this\" keyword",
@@ -263417,6 +264821,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1vsQy7F-fSPy5ES5f2nLQjBPmTTG1hjSYfuntuTJ2p9M",
+   "historical": true,
    "id": "fil_1c9cb3c76a82941d",
    "label": "/SD2: Frontend/Additional Documents/Internal Use/DO NOT USE: Frontend Schedule",
    "label_raw": "/SD2: Frontend/Additional Documents/Internal Use/DO NOT USE: Frontend Schedule",
@@ -264158,6 +265563,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1xTbp43pXcjAVpldKErAQTIjQrkx_uBVMu6K18vVQIDY",
+   "historical": true,
    "id": "fil_fa958c7c83f43e87",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/1. Foundation Material/iFrames",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/4. Module - JavaScript and Web Dev - Content/Revamp - 2024/Deprecated/1. Foundation Material/iFrames",
@@ -264367,6 +265773,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1xspjmIyRc-bCnWuqildNTiygVw99EArf4zBNtIik7BI",
+   "historical": true,
    "id": "fil_e77c9cde9aca4ae9",
    "label": "/SD2: Frontend/IK: Frontend Content Repo/Week 4/4 - Leveling Up with Advanced JavaScript and CSS/2. Live Class Slides/[OLD] Live Class Slides/[OLD] Front-end Module 4 - Patterns, Tools, and Techniques - Slides by Laura",
    "label_raw": "/SD2: Frontend/IK: Frontend Content Repo/Week 4/4 - Leveling Up with Advanced JavaScript and CSS/2. Live Class Slides/[OLD] Live Class Slides/[OLD] Front-end Module 4 - Patterns, Tools, and Techniques - Slides by Laura",
@@ -264405,6 +265812,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1y2Y2ffqMPMAcFijQ_SfcJH2ELgfmU4GvlynBK2qy5ek",
+   "historical": true,
    "id": "fil_6e2823f30d922d48",
    "label": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/2. Live Class Content/Concurrency Super Set Slides",
    "label_raw": "/SD3: Backend Engineering/Module-5: Concurrency/Q4 2024: Revamp/2. Live Class Content/Concurrency Super Set Slides",
@@ -264671,6 +266079,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1yfSYC2Ne1JvNPbt7wf8cUcrXHPl67osq",
+   "historical": true,
    "id": "fil_cdd64203a42bef0b",
    "label": "/SD3: Backend Engineering/Module-4: Cloud Native Design/Q4 2024: Revamp/2. Live Class Slides/Cloud Native Architecture Live Class Slide.pptx",
    "label_raw": "/SD3: Backend Engineering/Module-4: Cloud Native Design/Q4 2024: Revamp/2. Live Class Slides/Cloud Native Architecture Live Class Slide.pptx",
@@ -265184,6 +266593,7 @@
   },
   {
    "drive_url": "https://drive.google.com/open?id=1zilk4RpghBfATOj0qa7iTb1WZzQK59n7",
+   "historical": true,
    "id": "fil_dbfe27c8d9e8d63a",
    "label": "/SD1: Full Stack/IK: Full Stack: Content Repo/1. Module - Databases - Content/New Material Aug 2023/public/Databases Live Class - Ashish.pdf",
    "label_raw": "/SD1: Full Stack/IK: Full Stack: Content Repo/1. Module - Databases - Content/New Material Aug 2023/public/Databases Live Class - Ashish.pdf",

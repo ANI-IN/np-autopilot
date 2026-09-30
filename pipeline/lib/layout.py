@@ -45,11 +45,16 @@ def structure_types() -> tuple[set, set]:
     def src(role):
         return _tax.edge_endpoints(_tax.edge_for_role(role))[0]
 
+    # DECKS ARE CORE since the owner review of 2026-09-30: the default map
+    # shows current decks linked to their session or module, and a Decks chip
+    # that read 0 until a module was opened was reporting the payload, not
+    # the graph. Topics, files, repos and curriculum docs stay deferred.
     core = {"domain", "program", "module", "person", "instructor", "theme",
             "workflow",
             tgt("module_week"), tgt("module_session"),
-            tgt("module_assignment"), tgt("assignment_reviewed_in")}
-    deferred = {"file", tgt("module_topic"), tgt("module_deck"),
+            tgt("module_assignment"), tgt("assignment_reviewed_in"),
+            tgt("module_deck")}
+    deferred = {"file", tgt("module_topic"),
                 src("curriculum_module"), tgt("module_repo")}
     return core, deferred
 

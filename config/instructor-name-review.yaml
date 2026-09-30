@@ -1,0 +1,151 @@
+# Instructor labels that are not one person's name (NAM).
+# Owner review 2026-09-30: queued for later, NOT changed now.
+generated: '2026-09-30T09:00:58Z'
+rule: pipeline/lib/name_review.py — reported only, never applied
+rows:
+- id: NAM-01
+  label: 2- Prateek
+  node: ins_96f281e83b394fd3
+  reasons:
+  - enumerated
+  recommend: strip the list number; keep label_raw
+  files:
+  - 03-instructors/AgenticAI Instructors Training Plan.xlsx
+  answer: null
+- id: NAM-02
+  label: Agentic IP Instructors
+  node: ins_4e119af58860a93f
+  reasons:
+  - collective
+  recommend: 'not a person: take it out of the instructor type'
+  files:
+  - 03-instructors/AgenticAI Instructors Training Plan.xlsx
+  answer: null
+- id: NAM-03
+  label: Akshat Gupta (Aksh Tech Solutions LLP)
+  node: ins_757fd3247fe68025
+  reasons:
+  - annotated
+  recommend: move the note out of the name; keep label_raw
+  files:
+  - 03-instructors/SME database (For Ops + NP).xlsx
+  answer: null
+- id: NAM-04
+  label: Amrita Ray, Hemanth Pugaliya
+  node: ins_98f0660e1d8f0aec
+  reasons:
+  - several
+  recommend: split into one instructor per name; keep label_raw
+  files:
+  - 03-instructors/AgenticAI Instructors Training Plan.xlsx
+  answer: null
+- id: NAM-05
+  label: Ashish Kaila / JD Kelby
+  node: ins_334c6c3bf3608ef7
+  reasons:
+  - several
+  recommend: split into one instructor per name; keep label_raw
+  files:
+  - 02-curriculum/Resource Collection Mastersheet (Software + System).xlsx
+  answer: null
+- id: NAM-06
+  label: Indian SME hiring
+  node: ins_dcda33fd58ca22ce
+  reasons:
+  - collective
+  recommend: 'not a person: take it out of the instructor type'
+  files:
+  - 02-curriculum/Resource Collection Mastersheet (Software + System).xlsx
+  answer: null
+- id: NAM-07
+  label: Instructor
+  node: ins_43360a86ecd6c65d
+  reasons:
+  - collective
+  recommend: 'not a person: take it out of the instructor type'
+  files:
+  - 02-curriculum/Data and Management.xlsx
+  answer: null
+- id: NAM-08
+  label: Itamar, Reza S
+  node: ins_0b6b9f95c5b33eb4
+  reasons:
+  - several
+  recommend: split into one instructor per name; keep label_raw
+  files:
+  - 03-instructors/AgenticAI Instructors Training Plan.xlsx
+  answer: null
+- id: NAM-09
+  label: Lekshmi Pillai, Tania
+  node: ins_f6c3244694885db8
+  reasons:
+  - several
+  recommend: split into one instructor per name; keep label_raw
+  files:
+  - 03-instructors/AgenticAI Instructors Training Plan.xlsx
+  answer: null
+- id: NAM-10
+  label: Nazeer Ahmed (yet to be trained)
+  node: ins_9f6bdc9f4fed2285
+  reasons:
+  - annotated
+  recommend: move the note out of the name; keep label_raw
+  files:
+  - 03-instructors/AgenticAI Instructors Training Plan.xlsx
+  answer: null
+- id: NAM-11
+  label: PMs/TPMs
+  node: ins_dd77d788549f9b99
+  reasons:
+  - collective
+  - several
+  recommend: 'not a person: take it out of the instructor type; split into one instructor
+    per name; keep label_raw'
+  files:
+  - 03-instructors/AgenticAI Instructors Training Plan.xlsx
+  answer: null
+- id: NAM-12
+  label: Prashant Patel (Software Solution Hub)
+  node: ins_15c9285a7a041d96
+  reasons:
+  - annotated
+  recommend: move the note out of the name; keep label_raw
+  files:
+  - 03-instructors/SME database (For Ops + NP).xlsx
+  answer: null
+- id: NAM-13
+  label: Robert/Shelby/
+  node: ins_bd57494b3a92ba1c
+  reasons:
+  - several
+  recommend: split into one instructor per name; keep label_raw
+  files:
+  - 02-curriculum/Resource Collection Mastersheet (Software + System).xlsx
+  answer: null
+- id: NAM-14
+  label: Thong/Alex
+  node: ins_74a0921ca6f45a29
+  reasons:
+  - several
+  recommend: split into one instructor per name; keep label_raw
+  files:
+  - 02-curriculum/Resource Collection Mastersheet (Software + System).xlsx
+  answer: null
+- id: NAM-15
+  label: Udit Mehrotra(Old content)
+  node: ins_4e1acd45de448c4d
+  reasons:
+  - annotated
+  recommend: move the note out of the name; keep label_raw
+  files:
+  - 03-instructors/AgenticAI Instructors Training Plan.xlsx
+  answer: null
+- id: NAM-16
+  label: Yan Xu, Sean Zhu
+  node: ins_ee67d643ffe55f74
+  reasons:
+  - several
+  recommend: split into one instructor per name; keep label_raw
+  files:
+  - 03-instructors/AgenticAI Instructors Training Plan.xlsx
+  answer: null

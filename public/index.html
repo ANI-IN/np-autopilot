@@ -287,6 +287,23 @@ details.artefacts summary{cursor:pointer}
        white-space:nowrap;color:#c9d1d9}
 #sheet th{position:sticky;top:0;background:#161b22;color:#8b949e;font-weight:400}
 #sheet td.on{background:#1f6feb33}
+#sheet td.r-primary,.sw.r-primary{background:#3fb95040;color:#e6edf3}
+#sheet td.r-backup_1,.sw.r-backup_1{background:#58a6ff40;color:#e6edf3}
+#sheet td.r-backup_2,.sw.r-backup_2{background:#d2992240;color:#e6edf3}
+#sheet td.r-backup_3,.sw.r-backup_3{background:#8b949e40;color:#e6edf3}
+#sheet td.leg,.sw.leg{background:transparent;color:#8b949e}
+#sheet tr.grp td{border:0;border-top:1px solid #30363d;padding:6px 6px 2px;font-size:10px;
+  font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.mxbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 10px;font-size:11px}
+.mxbar .mxs{background:#161b22;border:1px solid #30363d;color:#c9d1d9;border-radius:6px;padding:2px 8px;cursor:pointer}
+.mxbar .mxs[aria-pressed="true"]{border-color:#58a6ff;color:#e6edf3}
+.mxleg{display:inline-flex;gap:4px;align-items:center;margin-left:14px;color:#8b949e}
+.mxleg .sw{display:inline-block;min-width:22px;text-align:center;border-radius:3px;padding:0 3px;
+  margin-left:8px;border:1px solid #30363d;font-weight:600}
+.ev.r-primary{border-color:#3fb950}.ev.r-backup_1{border-color:#58a6ff}
+.ev.r-backup_2{border-color:#d29922}.ev.r-backup_3{border-color:#8b949e}
+#sheet table.tl td,#sheet table.tl th{white-space:normal;width:150px;vertical-align:top}
+#sheet table.tl a{color:#e6edf3;cursor:pointer}
 #sheet td.load{color:#8b949e;white-space:nowrap}
 #sheet td.load.unconf{color:#f0883e}
 #sheet td.unconf{background:repeating-linear-gradient(45deg,#f0883e22,#f0883e22 3px,transparent 3px,transparent 6px)}
@@ -296,17 +313,72 @@ details.artefacts summary{cursor:pointer}
 #sheet .cell.faded{opacity:.35}
 .badge{font-size:9px;text-transform:uppercase;letter-spacing:.04em;background:#21262d;
        border-radius:3px;padding:1px 4px;margin-left:5px;color:#8b949e}
+/* ---- B4: header, chips, legend, hint, breadcrumbs ---------------------- */
+#hdr{position:fixed;left:312px;right:12px;top:10px;transition:right .15s;z-index:6;display:flex;flex-direction:column;
+  gap:6px;pointer-events:none}
+#hdr>*{pointer-events:auto}
+#crumbs{font-size:13px;color:#c9d1d9;display:flex;gap:6px;align-items:center;flex-wrap:wrap;
+  margin-right:120px}
+#crumbs a{color:#58a6ff;cursor:pointer;text-decoration:none}
+#crumbs a:hover{text-decoration:underline}
+#crumbs .sep{color:#6e7681}
+#chips,#tchips{display:flex;gap:5px;flex-wrap:wrap;margin-right:120px}
+.chip{font-size:11px;border:1px solid #30363d;border-radius:12px;padding:2px 9px;
+  background:#0d1117dd;color:#c9d1d9;cursor:pointer;display:inline-flex;gap:5px;align-items:center;
+  font-family:inherit;margin:0}
+.chip:hover{border-color:#58a6ff}
+.chip b{font-variant-numeric:tabular-nums;color:#e6edf3}
+.chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.chip[aria-pressed="false"]{opacity:.45}
+.chip.stat{cursor:pointer}
+.chip .q{color:#8b949e}
+#chips .floor{font-size:10.5px;color:#8b949e;align-self:center}
+#vbar{top:auto;bottom:40px}
+#tools{left:auto;right:12px;top:10px}
+body.table #tchips,body.table #hint,body.table #tools{display:none}
+body.table #sheet{top:92px}
+body.panel #hdr{right:342px} body.panel #tools{right:342px} body.panel #hint{right:342px}
+.files{flex-basis:100%;padding-left:120px;display:flex;flex-direction:column;gap:2px}
+#hint{position:fixed;left:312px;right:12px;bottom:10px;z-index:6;font-size:11px;color:#8b949e;
+  text-align:center;pointer-events:none}
+#hint kbd{font:10px ui-monospace,Menlo,monospace;border:1px solid #30363d;border-radius:3px;
+  padding:0 4px;color:#c9d1d9}
+#legend{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px}
+#legend div{display:flex;gap:6px;align-items:center;font-size:11px;color:#c9d1d9}
+#legend i{width:10px;height:10px;border-radius:50%;flex:none}
+#pcrumb{font-size:11px;margin-bottom:6px;min-height:14px}
+#pcrumb a{color:#58a6ff;cursor:pointer}
+.hitgroup{font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;
+  color:#8b949e;margin:8px 0 3px}
+.hit.cur{background:#161b22}
+.bdg{font-size:9.5px;border:1px solid #30363d;border-radius:3px;padding:0 4px;color:#8b949e;
+  margin-left:4px;flex:none}
+.bdg.legacy{border-color:rgba(210,153,34,.7);color:#d29922;background:rgba(210,153,34,.12)}
+details.historical summary{color:#8b949e;cursor:pointer;font-size:11px;margin:4px 0}
+details.legacy summary{cursor:pointer;color:#8b949e;font-size:11px;margin:6px 0}
+.linksec .item .ik{min-width:120px}
+.plain{font-size:11.5px;line-height:1.55;color:#c9d1d9;margin:6px 0}
+.empty{color:#8b949e;font-size:12px;padding:10px 0}
+.sec-h{font-size:11px;color:#8b949e;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.06em}
 </style></head><body>
 
 <canvas id="c"></canvas>
+<!-- B4: the header. Where you are, what the graph holds, which types show. -->
+<div id="hdr">
+  <div id="crumbs"></div>
+  <div id="chips" aria-label="What this graph holds"></div>
+  <div id="tchips" aria-label="Show types"></div>
+</div>
 <div id="vbar">
-  <button type="button" data-view="graph" aria-pressed="true">graph</button>
-  <button type="button" data-view="matrix" aria-pressed="false">who teaches what</button>
-  <button type="button" data-view="timeline" aria-pressed="false">programme timeline</button>
+  <button type="button" data-view="graph" aria-pressed="true">Map</button>
+  <button type="button" data-view="matrix" aria-pressed="false">Who teaches what</button>
+  <button type="button" data-view="timeline" aria-pressed="false">Programme timeline</button>
 </div>
 <div id="sheet"></div>
 <div id="tip"></div>
 <div id="diag"></div>
+<div id="hint">Drag the canvas to pan &middot; scroll to zoom &middot; click for details &middot;
+  click a group to open it &middot; <kbd>/</kbd> search &middot; <kbd>Esc</kbd> clears</div>
 
 <div id="cur"><div id="curbox">
   <div id="curhead">
@@ -319,9 +391,9 @@ details.artefacts summary{cursor:pointer}
 
 <div id="tools">
   <button type="button" id="curbtn" hidden>curation</button>
-  <button type="button" id="fit">fit</button>
-  <button type="button" id="zin">+</button>
-  <button type="button" id="zout">&minus;</button>
+  <button type="button" id="fit" title="Fit the view to the screen">fit</button>
+  <button type="button" id="zin" title="Zoom in">+</button>
+  <button type="button" id="zout" title="Zoom out">&minus;</button>
 </div>
 
 <div class="pane" id="left">
@@ -329,37 +401,31 @@ details.artefacts summary{cursor:pointer}
   <div class="sub" id="who">&nbsp;</div>
   <div id="banner"></div>
 
-  <h2>Search <span>the graph</span></h2>
-  <input type="search" id="q" placeholder="person, domain, module, workflow&hellip;" autocomplete="off">
+  <h2>Search</h2>
+  <input type="search" id="q" placeholder="module, instructor, domain&hellip;  ( / )" autocomplete="off">
   <div id="res"></div>
 
-  <h2>Expansion</h2>
-  <label class="ck"><span>depth</span>
-    <select id="depth"><option value="1" selected>1</option><option value="2">2</option>
-    <option value="3">3</option></select></label>
-  <label class="ck"><input type="checkbox" id="iso" checked> show unconnected</label>
-  <label class="ck"><input type="checkbox" id="dash" checked> show declared expertise</label>
-  <label class="ck"><input type="checkbox" id="drift" checked> decorative drift</label>
-  <label class="ck"><input type="checkbox" id="sep"> separate components</label>
-  <label class="ck"><input type="checkbox" id="diagck"> restart diagnostic</label>
-
-  <h2>Types</h2>
+  <h2>Filters</h2>
   <div id="types"></div>
 
-  <h2>Loaded</h2>
+  <h2>Colours</h2>
+  <div id="legend"></div>
+
+  <h2>This view</h2>
   <div id="stat" class="src"></div>
   <button type="button" id="signout">sign out</button>
 </div>
 
 <div class="pane" id="right">
+  <div id="pcrumb"></div>
   <button type="button" id="close" style="float:right">close</button>
   <h1 id="nl"></h1>
   <div class="sub" id="nt"></div>
   <div id="nprops"></div>
-  <h2>Relationships <span>(<b id="ncount">0</b>)</span></h2>
+  <h2>Connections <span>(<b id="ncount">0</b>)</span></h2>
   <div id="nbrs"></div>
   <div id="more"></div>
-  <h2>Provenance <span>&mdash; where this came from</span></h2>
+  <h2>Sources <span>&mdash; where this came from</span></h2>
   <div id="files"></div>
 </div>
 
@@ -432,8 +498,14 @@ details.artefacts summary{cursor:pointer}
 // at a time, so nothing below may assume it holds the graph.
 window.__NP = {
   data: {nodes: [], edges: []},
-  colors: {domain:'#4c8dff', program:'#3fb950', module:'#a371f7', person:'#f0883e',
-           instructor:'#00c2d1', workflow:'#db61a2', theme:'#d29922', file:'#8a94a6'},
+  // B4: EVERY TYPE HAS ITS OWN COLOUR (no grey types). Chosen for contrast
+  // against the dark ground and for separation between neighbours that sit
+  // together on the map (module / session / instructor / deck).
+  colors: {domain:'#4c8dff', program:'#3fb950', module:'#b083f0', person:'#ff7b72',
+           instructor:'#f0883e', workflow:'#db61a2', theme:'#bf8700', file:'#8b949e',
+           program_week:'#e3b341', class_session:'#39d0d8', assignment:'#ffa198',
+           assignment_review:'#d29922', slide_deck:'#7ee787', content_topic:'#a5d6ff',
+           curriculum_doc:'#79c0ff', code_repo:'#d2a8ff', group:'#c9d1d9'},
   expert: 'expert_in',
   api: '/api',
   // ONE source of truth for the storage key. The pre-paint gate check below
@@ -647,7 +719,7 @@ function _b64bytes(s){
   return u;
 }
 function decodeStructure(o){
-  if(o.format!=='columnar-1')          // the pre-B3 shape still decodes
+  if(o.format!=='columnar-1'&&o.format!=='columnar-2'&&o.format!=='columnar-3')   // the pre-B3 shape still decodes
     return {nodes:(o.nodes||[]).map(adaptNode),edges:(o.edges||[]).map(adaptEdge),
             laidOut:false};
   const xy=new Float32Array(_b64bytes(o.xy).buffer);
@@ -752,8 +824,28 @@ function esc(s){return String(s===null||s===undefined?'':s)
   .replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 
 const cv=document.getElementById('c'),ctx=cv.getContext('2d'),tip=document.getElementById('tip');
-let W,H;function size(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+// SHARP ON RETINA (owner review 2026-09-30). The backing store is the CSS size
+// times devicePixelRatio and the context is scaled back, so every coordinate
+// below stays in CSS pixels while nodes, edges and text are drawn at the
+// display's own resolution. W and H are CSS pixels.
+let W,H,DPR=1;
+function size(){
+  DPR=window.devicePixelRatio||1;
+  W=innerWidth; H=innerHeight;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  cv.style.width=W+'px'; cv.style.height=H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
 size();
+// Browser zoom changes devicePixelRatio and fires resize; moving the window to
+// another display changes it WITHOUT a resize. A media query on the current
+// ratio catches both, and re-arms itself for the next ratio.
+(function watchDpr(){
+  if(!window.matchMedia)return;
+  let mq; try{ mq=matchMedia('(resolution: '+(window.devicePixelRatio||1)+'dppx)'); }catch(e){ return; }
+  const on=()=>{ size(); watchDpr(); };
+  if(mq&&mq.addEventListener)mq.addEventListener('change',on,{once:true});
+})();
 // Debounced, and it never restarts the simulation. (Ported: opening the detail
 // panel changes page layout and can add or remove a scrollbar, which fires
 // resize; undebounced that cleared the canvas and jumped the camera on a click.)
@@ -772,28 +864,82 @@ addEventListener('resize',()=>{
 const cam={k:1,tx:0,ty:0};
 const toScreen=(x,y)=>[x*cam.k+cam.tx, y*cam.k+cam.ty];
 const toWorld=(sx,sy)=>[(sx-cam.tx)/cam.k, (sy-cam.ty)/cam.k];
-function usable(){
+//: THE CANVAS AREA: between the left sidebar and the side panel, below the
+//: header and above the view switch. Everything is CLIPPED to it — nothing
+//: draws under a sidebar or off the right edge (owner review 2026-09-30).
+function clipArea(){
   const rightOpen=document.getElementById('right').style.display==='block';
-  return {x0:LEFT+20, x1:W-(rightOpen?RIGHT:0)-20, y0:20, y1:H-20};
+  const bottomOf=(id,dflt)=>{try{const r=document.getElementById(id).getBoundingClientRect();
+    return (r&&r.bottom>0)?r.bottom:dflt;}catch(e){return dflt;}};
+  const topOf=(id,dflt)=>{try{const r=document.getElementById(id).getBoundingClientRect();
+    return (r&&r.top>0)?r.top:dflt;}catch(e){return dflt;}};
+  return {x0:LEFT+1, x1:W-(rightOpen?RIGHT:0), y0:bottomOf('hdr',100)+4, y1:topOf('vbar',H-76)-6};
 }
+function usable(){
+  const c=clipArea();
+  return {x0:c.x0+20, x1:c.x1-24, y0:c.y0+14, y1:c.y1-8};
+}
+//: The width a layout may use for columns: the canvas area WITH the side
+//: panel open, so opening the panel never pushes a column off the edge.
+function layoutWidth(){ return Math.max(300, W-LEFT-RIGHT-64); }
+//: How many columns of `colW` fit, at a zoom that keeps labels readable.
+function colsFit(colW,max){ return Math.max(1, Math.min(max||99, Math.floor(layoutWidth()/(colW*0.92)))); }
+//: true while the camera is where fit() put it; panning or zooming clears it,
+//: and a panel opening or closing re-fits only a camera nobody has moved.
+let camFitted=true;
+function panelChanged(){ if(camFitted&&state.view==='graph')fit(); }
+// The header WRAPS to more lines when the panel narrows it (or the chips
+// change): the canvas area shrinks under a view already fitted. Re-fit then
+// too, for a camera nobody has moved.
+try{
+  let _hh=0;
+  new ResizeObserver(es=>{const h=es[0]&&es[0].contentRect?es[0].contentRect.height:0;
+    if(h&&Math.abs(h-_hh)>2){_hh=h;panelChanged();}}).observe(document.getElementById('hdr'));
+}catch(e){}
 function fit(pad){
   const P=usable(), nodes=A.filter(n=>n.x!==undefined);
   if(!nodes.length)return;
   let a=1e9,b=1e9,c=-1e9,d=-1e9;
-  for(const n of nodes){a=Math.min(a,n.x);b=Math.min(b,n.y);c=Math.max(c,n.x);d=Math.max(d,n.y)}
+  const X=n=>(n.tx!==undefined?n.tx:n.x), Y=n=>(n.ty!==undefined?n.ty:n.y);
+  for(const n of nodes){a=Math.min(a,X(n));b=Math.min(b,Y(n));c=Math.max(c,X(n));d=Math.max(d,Y(n))}
+  let right=-1e9;                           // the widest thing that is NOT a label
+  for(const f of (FRAMES||[])){const r=f.r||0, fw=f.kind==='card'?f.w:(f.w||0), fh=f.kind==='card'?f.h:0;
+    a=Math.min(a,f.x-r);b=Math.min(b,f.y-r);d=Math.max(d,f.y+r+fh);
+    if(f.kind==='circle'||f.kind==='card')right=Math.max(right,f.x+r+fw);
+    else c=Math.max(c,f.x+Math.min(fw,300))}
+  // room for the labels, which sit to the right: what their layout gave them
+  let lab=0; for(const it of VIEWMETA.values())lab=Math.max(lab,it.x+(it.maxw||180));
+  c=Math.max(c+180,lab,right);
   const gw=Math.max(c-a,1), gh=Math.max(d-b,1);
   const vw=P.x1-P.x0, vh=P.y1-P.y0;
-  cam.k=Math.min(vw/gw, vh/gh)*(pad||0.92);
-  cam.k=Math.max(0.05,Math.min(cam.k,4));
-  cam.tx=P.x0+vw/2-((a+c)/2)*cam.k;
-  cam.ty=P.y0+vh/2-((b+d)/2)*cam.k;
+  // a LIST is read from the top: width-fitted views always start there
+  const byWidth=FITMODE==='width';
+  cam.k=(byWidth?vw/gw:Math.min(vw/gw, vh/gh))*(pad||0.92);
+  cam.k=Math.max(0.05,Math.min(cam.k,byWidth?1.1:1.6));
+  // A heading is drawn at a fixed pixel size, so it can outgrow the width the
+  // nodes needed: shrink until the widest one fits (a few passes converge).
+  for(let i=0;i<4;i++){
+    const tx=byWidth?P.x0+8-a*cam.k:P.x0+vw/2-((a+c)/2)*cam.k;
+    let over=0;
+    ctx.font='600 10.5px -apple-system,Segoe UI,sans-serif';
+    for(const f of (FRAMES||[]))if(f.kind==='head'){
+      const tw=textW(String(f.label).toUpperCase()), w=f.w?Math.min(tw,f.w*cam.k):tw;
+      const need=f.x*cam.k+tx+w-P.x1; if(need>over)over=need;}
+    if(over<=1)break;
+    cam.k*=Math.max(0.5,(vw-over)/vw);
+  }
+  cam.tx=byWidth?P.x0+8-a*cam.k:P.x0+vw/2-((a+c)/2)*cam.k;
+  cam.ty=byWidth?P.y0+30-b*cam.k:P.y0+vh/2-((b+d)/2)*cam.k;
+  camFitted=true;
 }
 function centreOn(n,k){
-  if(n.x===undefined)return;
+  // Where the node is GOING, not where it is mid-animation.
+  const x=n.tx!==undefined?n.tx:n.x, y=n.ty!==undefined?n.ty:n.y;
+  if(x===undefined)return;
   const P=usable();
   cam.k=k||Math.max(cam.k,1.1);
-  cam.tx=P.x0+(P.x1-P.x0)/2-n.x*cam.k;
-  cam.ty=P.y0+(P.y1-P.y0)/2-n.y*cam.k;
+  cam.tx=P.x0+(P.x1-P.x0)/2-x*cam.k;
+  cam.ty=P.y0+(P.y1-P.y0)/2-y*cam.k;
 }
 
 // showIso DEFAULTS ON, deliberately (STATE 8.2 asked for this to be decided,
@@ -803,7 +949,9 @@ function centreOn(n,k){
 // nothing in that view is isolated (all 42 have a deliverer, which is why the
 // unowned three are reported by name instead; see data.overview), so this costs
 // nothing now and prevents a silent drop later.
-const state={types:new Set(TYPES),showIso:true,showDash:true,separate:false,
+const state={types:new Set(['domain','module','program_week','class_session','assignment',
+  'assignment_review','slide_deck','instructor','person','theme','workflow']),listMode:false,showIso:true,showDash:true,separate:false,
+  place:null,open:new Set(),hist:[],
   sel:null,expanded:new Set(),depth:1,
   // B2 additions. `hideLegacy` is an opt-out, never a default.
   hideLegacy:false,view:'graph',fDomain:null,fWeek:null,fRole:null,
@@ -820,17 +968,55 @@ let settle=0, alpha=1, frozen=false;
 // Paint-time ONLY. It never writes to n.x/n.y, never touches the simulation,
 // and hit-testing uses the true settled coordinates. Raising the force floor
 // instead would re-introduce the never-settling bug.
+// A LIVING MAP (owner review 2026-09-30): every node drifts gently round its
+// home — the precomputed position — by a couple of SCREEN pixels whatever the
+// zoom, so labels never collide. Off under prefers-reduced-motion.
 let drift=true;
-const DRIFT_AMP=1.6, DRIFT_SPEED=0.0007;
+const DRIFT_PX=2.2, DRIFT_SPEED=0.0009;
+try{
+  const rm=matchMedia('(prefers-reduced-motion: reduce)');
+  drift=!rm.matches;
+  if(rm.addEventListener)rm.addEventListener('change',()=>{drift=!rm.matches;});
+}catch(e){}
 function driftPhase(id){            // deterministic, so it is stable per node
   let h=0; for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))|0;
   return (h%628)/100;
 }
-function paintPos(n,now){
-  if(!drift) return [n.x,n.y];
+function driftOffset(n,now){       // in SCREEN pixels
+  if(!drift||n===DRAGGED) return [0,0];
   const ph=n._ph!==undefined?n._ph:(n._ph=driftPhase(n.id));
-  return [n.x+DRIFT_AMP*Math.sin(now*DRIFT_SPEED+ph),
-          n.y+DRIFT_AMP*Math.cos(now*DRIFT_SPEED*0.87+ph)];
+  return [DRIFT_PX*Math.sin(now*DRIFT_SPEED+ph), DRIFT_PX*Math.cos(now*DRIFT_SPEED*0.87+ph)];
+}
+function paintPos(n,now){
+  const [dx,dy]=driftOffset(n,now);
+  return [n.x+dx/cam.k, n.y+dy/cam.k];
+}
+// SPRINGS: dragging a node pulls its neighbours along; on release everything
+// settles back HOME (the layout's target, tx/ty). Only nodes that moved take
+// part, so a still map costs nothing.
+let DRAGGED=null, HOVER=null; const SPRING=new Map();      // id -> {vx,vy}
+function springStep(){
+  if(!SPRING.size&&!DRAGGED)return;
+  const moved=new Set();
+  if(DRAGGED){
+    const ox=DRAGGED.x-DRAGGED.tx, oy=DRAGGED.y-DRAGGED.ty;
+    for(const e of E){
+      const other=e.s===DRAGGED.id?e.t:(e.t===DRAGGED.id?e.s:null); if(!other)continue;
+      const o=idx.byId.get(other); if(!o||o.tx===undefined)continue;
+      if(!SPRING.has(o.id))SPRING.set(o.id,{vx:0,vy:0});
+      SPRING.get(o.id).pull=[ox*0.42,oy*0.42];
+    }
+  }
+  for(const [id,v] of SPRING){
+    const n=idx.byId.get(id); if(!n||n===DRAGGED){SPRING.delete(id);continue;}
+    const [px,py]=(DRAGGED&&v.pull)?v.pull:[0,0];
+    v.vx=(v.vx+((n.tx+px)-n.x)*0.12)*0.78; v.vy=(v.vy+((n.ty+py)-n.y)*0.12)*0.78;
+    n.x+=v.vx; n.y+=v.vy; moved.add(id);
+    if(!DRAGGED){ v.pull=null;
+      if(Math.abs(n.x-n.tx)+Math.abs(n.y-n.ty)<0.2&&Math.abs(v.vx)+Math.abs(v.vy)<0.05){
+        n.x=n.tx;n.y=n.ty;SPRING.delete(id);} }
+  }
+  if(moved.size||DRAGGED)LABELS_DIRTY=true;
 }
 // Cooling schedule. `alpha` decays to zero and the simulation FREEZES.
 // (Ported: K used to floor at 0.35, so forces applied on every frame forever
@@ -855,6 +1041,822 @@ function renderDiag(){
     :'';
 }
 
+// ==========================================================================
+// B4 — THE MAP. A deterministic, readable layout (owner review 2026-09-30).
+// ==========================================================================
+// The structure layer drawn as a force layout was a hairball: 3,295 dots and
+// no labels. The map is computed, not simulated. It starts from domains as
+// clusters (the four current ones prominent, their modules around them), keeps
+// every other kind of thing behind a group that shows its count ("Legacy
+// modules (183)"), and opens places on demand: a domain, a module's sessions
+// and people, a group's members. Nothing is hidden — everything is either on
+// the canvas or behind a group that says how many.
+//
+// PLAIN WORDS. Types and relations have reader-facing names here; internal
+// names never reach the screen.
+const TYPE_LABEL={domain:'Domain',program:'Programme',module:'Module',person:'Person',
+  instructor:'Instructor',workflow:'Workflow',theme:'Theme',file:'File',
+  program_week:'Programme week',class_session:'Session',assignment:'Assignment',
+  assignment_review:'Assignment review',slide_deck:'Deck',content_topic:'Topic',
+  curriculum_doc:'Curriculum document',code_repo:'Code repository',group:'Group'};
+const TYPE_PLURAL={domain:'Domains',program:'Programmes',module:'Modules',person:'People',
+  instructor:'Instructors',workflow:'Workflows',theme:'Themes',file:'Files',
+  program_week:'Programme weeks',class_session:'Sessions',assignment:'Assignments',
+  assignment_review:'Assignment reviews',slide_deck:'Decks',content_topic:'Topics',
+  curriculum_doc:'Curriculum documents',code_repo:'Code repositories'};
+//: rel -> [as seen from the source, as seen from the target]
+const REL_LABEL={
+  teaches:['Teaches (older sheets)','Taught by (older sheets)'],
+  taught_by:['Taught by (current mastersheet)','Teaches (current mastersheet)'],
+  expert_in:['Declares expertise in','Instructors declaring expertise'],
+  delivers_session:['Sessions','Session of'],
+  contains:['Contains','Part of programme'],
+  belongs_to:['Belongs to','Includes'],
+  assessed_by:['Assignments','Assignment for'],
+  reviewed_in:['Reviewed in','Review of'],
+  supported_by:['Supported by','Supports'],
+  owned_by:['Owned by','Owns'],
+  delivered_by:['Delivered by','Delivers'],
+  covers:['Covers','Covered by programme'],
+  offers:['Offers','Offered by'],
+  scheduled_in:['Scheduled in','Modules this week'],
+  presented_with:['Decks','Deck of'],
+  covers_topic:['Topics','Topic of'],
+  delivers:['Files','File of'],
+  introduces:['Curriculum documents','Introduced in'],
+  ships_with:['Code repositories','Code of']};
+function relLabel(rel,dir){
+  const p=REL_LABEL[rel];
+  if(p)return dir==='in'?p[1]:p[0];
+  return String(rel||'').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase());
+}
+function typeLabel(t){return TYPE_LABEL[t]||String(t||'').replace(/_/g,' ')}
+const DOMAIN_CODE={'full-stack':'SD1',frontend:'SD2',backend:'SD3',testing:'SD4'};
+
+// ---- the model: who belongs where ---------------------------------------
+let MODEL=null, MODEL_KEY='', MODEL_IDX=null;
+function nbrs(id,rel,type){
+  const out=[];
+  for(const x of (idx.adj.get(id)||[])){
+    if(rel&&x.r!==rel)continue;
+    const n=idx.byId.get(x.o); if(!n)continue;
+    if(type&&n.t!==type)continue;
+    out.push(n);
+  }
+  return out;
+}
+function uniq(a){const s=new Set();return a.filter(n=>!s.has(n.id)&&s.add(n.id));}
+function byLabel(a,b){return String(a.l).localeCompare(String(b.l))}
+function seqOf(m){return Number((m.p||{}).sequence)||0}
+function model(){
+  // keyed on the INDEX too: a model built from a stale index (before the
+  // data arrived, or before recompute rebuilt it) must never be reused
+  if(idx.byId.size!==D.nodes.length)idx=buildIndex(D);
+  const key=D.nodes.length+':'+D.edges.length;
+  if(MODEL&&MODEL_KEY===key&&MODEL_IDX===idx)return MODEL;
+  const M={domains:[],current:[],other:[],cur:new Map(),legacy:new Map(),progs:new Map(),
+           people:new Map(),experts:new Map(),unlinked:[],themes:[],weekOf:new Map(),
+           domOf:new Map()};
+  const doms=D.nodes.filter(n=>n.t==='domain');
+  for(const d of doms){
+    const mods=nbrs(d.id,'offers','module').filter(m=>!m.legacy).sort((a,b)=>seqOf(a)-seqOf(b));
+    M.cur.set(d.id,mods);
+    const progs=uniq(nbrs(d.id,'covers','program')).sort(byLabel);
+    M.progs.set(d.id,progs);
+    M.people.set(d.id,uniq(['owned_by','supported_by','delivered_by']
+      .flatMap(r=>nbrs(d.id,r,'person'))).sort(byLabel));
+    M.experts.set(d.id,uniq(nbrs(d.id,'expert_in','instructor')).sort(byLabel));
+    const leg=uniq(progs.flatMap(p=>nbrs(p.id,'contains','module').filter(m=>m.legacy)));
+    M.legacy.set(d.id,leg.sort(byLabel));
+    for(const m of mods)M.domOf.set(m.id,d);
+    for(const m of leg)if(!M.domOf.has(m.id))M.domOf.set(m.id,d);
+  }
+  M.current=doms.filter(d=>M.cur.get(d.id).length).sort((a,b)=>{
+    const sa=(M.cur.get(a.id)[0].dom||''), sb=(M.cur.get(b.id)[0].dom||'');
+    return (DOMAIN_CODE[sa]||sa).localeCompare(DOMAIN_CODE[sb]||sb);});
+  M.other=doms.filter(d=>!M.cur.get(d.id).length).sort(byLabel);
+  M.domains=M.current.concat(M.other);
+  M.unlinked=D.nodes.filter(n=>n.t==='module'&&n.legacy&&!M.domOf.has(n.id)).sort(byLabel);
+  M.themes=D.nodes.filter(n=>n.t==='theme').sort(byLabel);
+  for(const m of D.nodes)if(m.t==='module'){
+    const w=nbrs(m.id,'scheduled_in','program_week')[0];
+    if(w)M.weekOf.set(m.id,(w.p||{}).number||null);
+  }
+  MODEL=M; MODEL_KEY=key; MODEL_IDX=idx; return M;
+}
+function domainOf(n){
+  const M=model();
+  if(n.t==='domain')return n;
+  if(M.domOf.has(n.id))return M.domOf.get(n.id);
+  if(['class_session','assignment','assignment_review','program_week','slide_deck'].indexOf(n.t)>=0){
+    const m=nbrs(n.id,null,'module').find(x=>!x.legacy); if(m)return M.domOf.get(m.id)||null;
+  }
+  return null;
+}
+//: CURRENT domains wear their code ("SD1 · Full Stack"); every other domain
+//: is from the older sheets and carries a "legacy" badge wherever it appears —
+//: map, lists, search, filters (owner decision 2026-09-30, origin: hand).
+//: Kept separate from the current ones, never merged: two "Frontend" nodes
+//: are two domains, and the badge is what tells them apart.
+function domainName(d){
+  if(!d)return '';
+  const mods=model().cur.get(d.id)||[];
+  const code=mods.length?DOMAIN_CODE[mods[0].dom]:'';
+  return (code?code+' · ':'')+d.l;
+}
+function isLegacyDomain(d){return !!d&&d.t==='domain'&&!(model().cur.get(d.id)||[]).length;}
+//: plain text (options, tooltips' first line): the badge as a word
+function domainText(d){return d?domainName(d)+(isLegacyDomain(d)?' (legacy)':''):'';}
+//: HTML: the badge as a badge
+const LEGACY_BADGE='<span class="bdg legacy">legacy</span>';
+function domainHtml(d){return d?esc(domainName(d))+(isLegacyDomain(d)?' '+LEGACY_BADGE:''):'';}
+function badgeOf(n){return isLegacyDomain(n)?'legacy':null;}
+const BADGE_FONT='600 9.5px -apple-system,Segoe UI,sans-serif';
+function badgeW(t){const f=ctx.font;ctx.font=BADGE_FONT;const w=textW(t)+10;ctx.font=f;return w;}
+function drawBadge(t,x,y,c){
+  const f=ctx.font, fs=ctx.fillStyle; ctx.font=BADGE_FONT; c=c||'#d29922';
+  const w=textW(t)+10;
+  ctx.globalAlpha*=0.18; ctx.fillStyle=c; ctx.fillRect(x,y-10,w,13); ctx.globalAlpha/=0.18;
+  ctx.strokeStyle=c; ctx.lineWidth=1; ctx.strokeRect(x+.5,y-9.5,w-1,12);
+  ctx.fillStyle=c; ctx.fillText(t,x+5,y);
+  ctx.font=f; ctx.fillStyle=fs;
+}
+
+// ---- FILTERS: domain, programme week, role — on the MAP and the tables ----
+// (owner review 2026-09-30). A current domain is chosen by its slug, a legacy
+// one as "legacy:<node id>". Whatever a filter hides, the view SAYS so.
+function filterDomain(){
+  const v=state.fDomain; if(!v)return null;
+  if(String(v).indexOf('legacy:')===0)return idx.byId.get(String(v).slice(7))||null;
+  const m=D.nodes.find(n=>n.t==='module'&&n.dom===v&&!n.legacy);
+  return m?(model().domOf.get(m.id)||null):null;
+}
+function filtersOn(){return !!(state.fDomain||state.fWeek||state.fRole);}
+function filterText(){
+  const b=[];
+  if(state.fDomain){const d=filterDomain();b.push(d?domainText(d):String(state.fDomain));}
+  if(state.fWeek)b.push('Week '+state.fWeek);
+  if(state.fRole)b.push(ROLE_LABEL[state.fRole]||state.fRole);
+  return b.join(' · ');
+}
+function passDomain(d){if(!state.fDomain)return true; const f=filterDomain(); return !!(f&&d&&f.id===d.id);}
+function passWeek(m){return !state.fWeek||String(model().weekOf.get(m.id))===String(state.fWeek);}
+//: the current-mastersheet role an instructor holds on one module ('' if none)
+function roleOn(modId,insId){
+  for(const x of (idx.adj.get(modId)||[]))
+    if(x.o===insId&&x.p&&x.p.tier==='mastersheet')return x.p.instructor_role||'';
+  return '';
+}
+function passRoleModule(m){
+  if(!state.fRole)return true;
+  return (idx.adj.get(m.id)||[]).some(x=>x.p&&x.p.tier==='mastersheet'&&x.p.instructor_role===state.fRole);
+}
+//: every CURRENT module the three filters let through
+function filteredModules(){
+  const M=model(), f=state.fDomain?filterDomain():null;
+  return M.current.filter(d=>!f||f.id===d.id).flatMap(d=>M.cur.get(d.id)||[])
+    .filter(m=>passWeek(m)&&passRoleModule(m));
+}
+function filterNote(v,x,y,w){
+  if(!filtersOn())return;
+  v.frames.push({kind:'note',x:x,y:y,w:w||1100,
+    label:'Filtered: '+filterText()+' \u2014 change or clear them under Filters, on the left'});
+}
+//: The label a node wears on the canvas: generic names carry their parent.
+function contextLabel(n){
+  if(!n)return '';
+  if(n.t==='class_session'){
+    const k=(n.p||{}).session_kind;
+    const m=nbrs(n.id,'delivers_session','module').find(x=>!x.legacy);
+    return (KIND_LABEL[k]||n.l)+(m?' · '+m.l:'');
+  }
+  if(n.t==='program_week'){
+    // "Week 10 · SD1 Full Stack": a week means nothing without its domain
+    const m=nbrs(n.id,'scheduled_in','module')[0], d=m?model().domOf.get(m.id):null;
+    const code=d&&m?DOMAIN_CODE[m.dom]:'';
+    return 'Week '+((n.p||{}).number||n.l)+(d?' \u00b7 '+(code?code+' ':'')+d.l:'');
+  }
+  if(n.t==='assignment'||n.t==='assignment_review'){
+    const m=moduleOf(n); return n.l+(m?' \u00b7 '+m.l:'');
+  }
+  return n.l;
+}
+//: the module a session, assignment, review, week or deck belongs to
+function moduleOf(n){
+  if(!n)return null;
+  if(n.t==='module')return n;
+  const ms=nbrs(n.id,null,'module');
+  return ms.find(x=>!x.legacy)||ms[0]||null;
+}
+
+// ---- groups: synthetic nodes that stand for many -------------------------
+const GROUPS=new Map();
+function group(key,label,members,parent){
+  let g=GROUPS.get(key);
+  if(!g){g={id:'grp:'+key,key:key,t:'group',l:'',members:[],d:0,loaded:true,p:{}};GROUPS.set(key,g);}
+  g.l=label+' ('+members.length+')'; g.members=members; g.parent=parent||null;
+  return g;
+}
+function isGroup(id){return typeof id==='string'&&id.indexOf('grp:')===0}
+
+// ---- places ---------------------------------------------------------------
+//  state.place: null = the map; {kind:'domain',id}; {kind:'node',id};
+//               {kind:'group',key}.  state.open: groups and modules opened.
+function placeName(pl){
+  if(!pl)return 'Map';
+  if(pl.kind==='domain'){const d=idx.byId.get(pl.id);return d?domainName(d):'Domain';}
+  if(pl.kind==='group'){const g=GROUPS.get(pl.key);return g?g.l:'Group';}
+  const n=idx.byId.get(pl.id); return n?contextLabel(n):'';
+}
+
+// ---- layouts. Each returns {nodes:[{n,x,y,pri,side}], links:[[a,b]], frames:[...]}
+const COL=260, ROW=28;
+function V(){return {nodes:[],links:[],frames:[]}}
+function put(v,n,x,y,pri,side,label,maxw){v.nodes.push({n:n,x:x,y:y,pri:pri||1,side:side||'r',label:label||null,maxw:maxw||0});}
+function grid(v,items,x0,y0,cols,pri,maxw,labelFn){
+  items.forEach((n,i)=>put(v,n,x0+(i%cols)*COL,y0+Math.floor(i/cols)*ROW,pri||1,'r',
+                           labelFn?labelFn(n):null,maxw||COL-30));
+  return y0+Math.ceil(items.length/cols)*ROW;
+}
+function groupsFor(d){
+  const M=model(), out=[];
+  const add=(k,label,members)=>{if(members.length)out.push(group(d.id+':'+k,label,members,d));};
+  add('legacy','Legacy modules',M.legacy.get(d.id)||[]);
+  add('progs','Programmes',M.progs.get(d.id)||[]);
+  add('people','People',M.people.get(d.id)||[]);
+  add('experts','Instructors declaring expertise',M.experts.get(d.id)||[]);
+  return out;
+}
+function countsText(d){
+  const M=model(), bits=[];
+  const add=(n,one,many)=>{if(n)bits.push(n+' '+(n===1?one:many));};
+  add((M.legacy.get(d.id)||[]).length,'legacy module','legacy modules');
+  add((M.progs.get(d.id)||[]).length,'programme','programmes');
+  add((M.people.get(d.id)||[]).length,'person','people');
+  add((M.experts.get(d.id)||[]).length,'instructor declaring expertise','instructors declaring expertise');
+  return bits.join(' \u00b7 ');
+}
+//: THE DEFAULT MAP IS ONE NETWORK OF EVERYTHING CURRENT (owner review
+//: 2026-09-30): domains, modules, programme weeks, sessions, assignments,
+//: reviews, current decks, instructors (role-coloured edges), people, themes
+//: and workflows, each joined by its real edges; legacy material as collapsed
+//: groups. POSITIONS ARE COMPUTED ONCE per data load, deterministically, for
+//: every node the map can show; the type chips then only choose what is drawn,
+//: so switching a chip never moves anything.
+const MAP_SLOT={SD1:[-640,-310],SD3:[640,-310],SD2:[-640,360],SD4:[640,360]};
+const MAP_R=165;
+//: the map's default types — topics, files, repos, curriculum docs and the
+//: older sheets' programmes stay behind their chips
+const DEFAULT_TYPES=['domain','module','program_week','class_session','assignment',
+  'assignment_review','slide_deck','instructor','person','theme','workflow'];
+const PRI={domain:10,module:8,group:7,theme:6,instructor:5,person:4,workflow:3,
+  program_week:3,class_session:3,assignment:3,assignment_review:3,slide_deck:2,content_topic:2};
+let MAPPOS=null, MAPPOS_KEY='';
+function fan(cx,cy,theta,r,items,step,maxSpan){
+  // items on an arc around (cx,cy), centred on `theta`, `step` radians apart
+  const span=Math.min(maxSpan,Math.max(0,(items.length-1)*step));
+  return items.map((n,i)=>{const a=theta-span/2+(items.length>1?i*span/(items.length-1):0);
+    return [n,cx+r*Math.cos(a),cy+r*Math.sin(a)];});
+}
+function mapPositions(){
+  const M=model(), key=MODEL_KEY+':'+D.nodes.length;
+  if(MAPPOS&&MAPPOS_KEY===key)return MAPPOS;
+  const P={pos:new Map(), links:[], hub:new Map(), side:new Map(), anchor:new Map()};
+  const at=(n,x,y,side)=>{P.pos.set(n.id,[x,y]);if(side)P.side.set(n.id,side);};
+  // 1. hubs and their modules
+  const hubOf=new Map();
+  M.current.forEach((d,i)=>{
+    const mods=M.cur.get(d.id)||[], code=DOMAIN_CODE[(mods[0]||{}).dom]||'';
+    const c=MAP_SLOT[code]||[(i%2?640:-640),(i<2?-310:360)];
+    at(d,c[0],c[1],'b'); P.hub.set(d.id,c);
+    mods.forEach((m,j)=>{
+      const a=-Math.PI/2+j*2*Math.PI/Math.max(mods.length,1);
+      const x=c[0]+MAP_R*Math.cos(a), y=c[1]+MAP_R*Math.sin(a)*0.92;
+      // the label sits JUST BEYOND the module's own fan, in the fan's direction,
+      // so it never lies on its sessions and decks (a thin line joins them)
+      at(m,x,y,Math.abs(Math.cos(a))>0.35?(Math.cos(a)<0?'l':'r'):(Math.sin(a)<0?'a':'b'));
+      P.anchor.set(m.id,[Math.cos(a)*104,Math.sin(a)*104]);
+      hubOf.set(m.id,c); P.links.push([d.id,m.id,null]);
+      // 2. the module's own things, in a fan pointing away from its hub:
+      //    week, sessions, assignments and reviews close in; decks further out
+      const inner=[].concat(nbrs(m.id,'scheduled_in','program_week'),
+        uniq(nbrs(m.id,'delivers_session','class_session')).sort((p,q)=>
+          KIND_ORDER.indexOf((p.p||{}).session_kind)-KIND_ORDER.indexOf((q.p||{}).session_kind)),
+        uniq(nbrs(m.id,'assessed_by','assignment')).filter(n=>!(n.p||{}).historical).sort(byLabel),
+        uniq(nbrs(m.id,'reviewed_in','assignment_review')).sort(byLabel));
+      for(const [n,x2,y2] of fan(x,y,a,52,inner,0.24,2.7)){ if(!P.pos.has(n.id)){at(n,x2,y2);P.links.push([m.id,n.id,null,1]);} }
+      // a deck hangs off the SESSION it was attached to, else off its module
+      const sessOf=new Map();
+      // (attached_id names the deck itself; attached_is_deck is panel-only)
+      for(const z of (idx.adj.get(m.id)||[]))if(z.p&&z.p.attached_id)sessOf.set(z.p.attached_id,z.o);
+      const decks=uniq(nbrs(m.id,'presented_with','slide_deck')).filter(n=>!(n.p||{}).historical).sort(byLabel);
+      for(const [n,x2,y2] of fan(x,y,a,92,decks,0.13,2.9)){
+        if(P.pos.has(n.id))continue; at(n,x2,y2);
+        const sid=sessOf.get(n.id); P.links.push([m.id,n.id,null,1,sid||null]);
+      }
+    });
+  });
+  // 3. the current instructors, between the clusters they teach in
+  const ents=roleEntries(new Set(hubOf.keys()),null);
+  const byIns=new Map();
+  for(const e of ents){if(!byIns.has(e.ins))byIns.set(e.ins,[]);byIns.get(e.ins).push(e);}
+  const IP=[];
+  for(const [id,es] of [...byIns.entries()].sort((a,b)=>a[0]<b[0]?-1:1)){
+    const n=idx.byId.get(id); if(!n)continue;
+    let x=0,y=0; for(const e of es){const p=P.pos.get(e.mod);x+=p[0];y+=p[1];} x/=es.length; y/=es.length;
+    const hubs=[...new Set(es.map(e=>hubOf.get(e.mod)))];
+    let hx=0,hy=0; for(const h of hubs){hx+=h[0];hy+=h[1];} hx/=hubs.length; hy/=hubs.length;
+    IP.push({n,x:hubs.length===1?x:hx,y:hubs.length===1?y:hy,es,hubs,
+      key:hubs.map(h=>h.join(',')).sort().join('|'),rank:Math.min(...es.map(e=>ROLE_ORDER.indexOf(e.role)))});
+  }
+  const perHub=new Map();
+  for(const p of IP)if(p.hubs.length===1){const k=p.hubs[0].join(',');if(!perHub.has(k))perHub.set(k,[]);perHub.get(k).push(p);}
+  for(const grp of perHub.values()){
+    const h=grp[0].hubs[0], RR=MAP_R+175, gap=0.3;
+    for(const p of grp)p.ang=Math.atan2(p.y-h[1],p.x-h[0]);
+    grp.sort((a,b)=>a.ang-b.ang||(a.n.id<b.n.id?-1:1));
+    for(let it=0;it<60;it++)for(let i=0;i<grp.length;i++){
+      const a=grp[i], b=grp[(i+1)%grp.length]; let d=b.ang-a.ang; if(i===grp.length-1)d+=2*Math.PI;
+      if(grp.length>1&&d<gap){const f=(gap-d)/2;a.ang-=f;b.ang+=f;}}
+    for(const p of grp){p.x=h[0]+RR*Math.cos(p.ang);p.y=h[1]+RR*Math.sin(p.ang)*0.95;}
+  }
+  const byKey=new Map(); for(const p of IP)if(p.hubs.length>1){if(!byKey.has(p.key))byKey.set(p.key,[]);byKey.get(p.key).push(p);}
+  for(const grp of byKey.values()){
+    grp.sort((a,b)=>a.rank-b.rank||String(a.n.l).localeCompare(String(b.n.l)));
+    const h0=grp[0].hubs[0], h1=grp[0].hubs[grp[0].hubs.length-1];
+    let ux=-(h1[1]-h0[1]), uy=h1[0]-h0[0]; const L=Math.hypot(ux,uy)||1; ux/=L; uy/=L; if(uy<0){ux=-ux;uy=-uy;}
+    grp.forEach((p,i)=>{const o=(i-(grp.length-1)/2)*54; p.x+=ux*o; p.y+=uy*o;});
+  }
+  // 4. the centre row: legacy modules | legacy domains with the people who own
+  //    or deliver them | the rest of the team
+  const CY=45;
+  P.groups=[['legacy-modules',-300,CY],['legacy-domains',0,CY],['team',300,CY]];
+  const fixed=[...P.pos.values()].concat(P.groups.map(g=>[g[1],g[2]]));
+  for(let it=0;it<160;it++){
+    for(let i=0;i<IP.length;i++){
+      for(let j=i+1;j<IP.length;j++){const a=IP[i],b=IP[j]; let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+        if(d<1){dx=1;dy=0;d=1;} if(d<50){const k=(50-d)/2/d;a.x-=dx*k;a.y-=dy*k;b.x+=dx*k;b.y+=dy*k;}}
+      const a=IP[i];
+      for(const f of fixed){let dx=a.x-f[0],dy=a.y-f[1],d=Math.hypot(dx,dy);
+        if(d<1){dx=0;dy=1;d=1;} if(d<60){a.x+=dx/d*(60-d);a.y+=dy/d*(60-d);}}
+    }
+  }
+  for(const p of IP){
+    const cx=p.hubs.reduce((m,h)=>m+h[0],0)/p.hubs.length;
+    at(p.n,Math.round(p.x),Math.round(p.y),p.x<cx?'l':'r');
+    const seen=new Set();
+    for(const e of p.es){ if(seen.has(e.mod))continue; seen.add(e.mod);
+      const best=p.es.filter(x=>x.mod===e.mod).sort((a,b)=>ROLE_ORDER.indexOf(a.role)-ROLE_ORDER.indexOf(b.role))[0];
+      P.links.push([e.mod,p.n.id,ROLE_COLOR[best.role]||null]); }
+  }
+  // people: those with an edge stand round the legacy domains they own or
+  // deliver (edges drawn to that group); those with none are one Team group
+  const people=D.nodes.filter(n=>n.t==='person').sort(byLabel);
+  const linked=people.filter(n=>(idx.adj.get(n.id)||[]).some(z=>{const o=idx.byId.get(z.o);return o&&o.t==='domain';}));
+  P.teamless=people.filter(n=>linked.indexOf(n)<0);
+  linked.forEach((n,i)=>{const a=Math.PI/2+i*2*Math.PI/Math.max(linked.length,1)*0.999;
+    at(n,Math.round(Math.cos(a)*128),Math.round(CY+34+Math.sin(a)*84),Math.cos(a)<0?'l':'r');
+    P.links.push(['grp:map:legacy-domains',n.id,null,1]);});
+  // 5. operations: every theme with its workflows round it, below the clusters
+  const themes=D.nodes.filter(n=>n.t==='theme').sort((a,b)=>(Number((a.p||{}).theme_id)||0)-(Number((b.p||{}).theme_id)||0)||byLabel(a,b));
+  const TY=360+MAP_R+330, per=8, dx=250, dy=230;
+  themes.forEach((t,i)=>{const x=((i%per)-(per-1)/2)*dx, y=TY+Math.floor(i/per)*dy; at(t,x,y,'b');
+    const wfs=uniq(nbrs(t.id,'belongs_to','workflow')).sort(byLabel);
+    wfs.forEach((w,j)=>{const a=-Math.PI/2+j*2*Math.PI/Math.max(wfs.length,1);
+      if(!P.pos.has(w.id)){at(w,Math.round(x+62*Math.cos(a)),Math.round(y+62*Math.sin(a)));P.links.push([t.id,w.id,null,1]);}});
+  });
+  let wy=TY+Math.ceil(themes.length/per)*dy;           // workflows with no theme
+  D.nodes.filter(n=>n.t==='workflow'&&!P.pos.has(n.id)).sort(byLabel)
+    .forEach((w,i)=>at(w,((i%per)-(per-1)/2)*dx,wy+Math.floor(i/per)*40));
+  MAPPOS=P; MAPPOS_KEY=key; return P;
+}
+function layoutMap(){
+  const M=model(), v=V();
+  // no CURRENT curriculum loaded (an older graph, the renderer harness):
+  // whatever is loaded, as a grid, rather than an empty network
+  if(!M.current.length){
+    const rest=D.nodes.filter(n=>TYPES.indexOf(n.t)>=0&&state.types.has(n.t));
+    grid(v,rest,0,0,6,2); return v;
+  }
+  filterNote(v,-760,-560,1500);
+  const fd=state.fDomain?filterDomain():null;
+  if(fd&&isLegacyDomain(fd)){                    // a legacy domain chosen in Filters
+    put(v,fd,0,0,10,'b',fd.l,420);
+    groupsFor(fd).forEach((g,j)=>{const a=-Math.PI/2+j*Math.PI/2;
+      put(v,g,MAP_R*Math.cos(a),MAP_R*Math.sin(a),7,Math.cos(a)<-0.3?'l':'r',null,320);
+      v.links.push([fd.id,g.id,null]);});
+    return v;
+  }
+  const P=mapPositions(), on=t=>state.types.has(t);
+  // what the FILTERS let through (domain, week, role), by module
+  const mods=new Set(filteredModules().map(m=>m.id));
+  const modOf=new Map();
+  for(const [a,b,c,minor] of P.links){const A_=idx.byId.get(a);if(A_&&A_.t==='module')modOf.set(b,a);}
+  const pass=n=>{
+    if(!filtersOn())return true;
+    if(n.t==='domain')return passDomain(n)&&!isLegacyDomain(n);
+    if(n.t==='module')return mods.has(n.id);
+    if(n.t==='instructor')return (idx.adj.get(n.id)||[]).some(z=>mods.has(z.o)&&z.p&&z.p.tier==='mastersheet'&&(!state.fRole||z.p.instructor_role===state.fRole));
+    if(modOf.has(n.id))return mods.has(modOf.get(n.id));
+    return false;                                  // people, themes, workflows: not filtered by curriculum
+  };
+  // THE FOCUSED MODULE'S OWN THINGS SPREAD OUT so each can carry its label:
+  // week, sessions, assignments on a wide inner arc, decks on an outer one
+  const spread=new Map();
+  if(FOCUS_MOD&&P.pos.has(FOCUS_MOD)){
+    const at=P.pos.get(FOCUS_MOD), h=[...P.hub.values()].reduce((b,c)=>
+      Math.hypot(c[0]-at[0],c[1]-at[1])<Math.hypot(b[0]-at[0],b[1]-at[1])?c:b);
+    const th=Math.atan2(at[1]-h[1],at[0]-h[0]);
+    const kids=P.links.filter(l=>l[0]===FOCUS_MOD&&l[3]).map(l=>idx.byId.get(l[1])).filter(Boolean);
+    const inner=kids.filter(n=>n.t!=='slide_deck'&&on(n.t)), outer=kids.filter(n=>n.t==='slide_deck'&&on(n.t));
+    for(const [n,x,y] of fan(at[0],at[1],th,150,inner,0.3,3.6))spread.set(n.id,[x,y]);
+    for(const [n,x,y] of fan(at[0],at[1],th,290,outer,0.19,4.6))spread.set(n.id,[x,y]);
+    // ITS INSTRUCTORS come to it, on the free side facing its hub, in role
+    // order (P, B1, B2, B3), alternating either side of the hub's edge
+    if(on('instructor')){
+      const ro=roleSort(roleEntries(new Set([FOCUS_MOD]),null));
+      ro.forEach((o,i)=>{const k=Math.floor(i/2)+1, sgn=i%2?-1:1, a=th+Math.PI+sgn*(0.32+0.42*(k-1));
+        spread.set(o.ins,[at[0]+150*Math.cos(a),at[1]+150*Math.sin(a)]);});
+    }
+  }
+  const shown=new Set();
+  for(const [id,xy] of P.pos){
+    const [x,y]=spread.get(id)||xy;
+    const n=idx.byId.get(id); if(!n||!on(n.t)||!pass(n))continue;
+    put(v,n,x,y,PRI[n.t]||2,P.side.get(id)||'r',n.t==='domain'?domainName(n):null,
+        n.t==='module'||n.t==='domain'?320:(n.t==='theme'?230:240));
+    if(P.anchor.has(id)&&(on('class_session')||on('slide_deck')||on('program_week')||on('assignment')))
+      v.nodes[v.nodes.length-1].anchor=P.anchor.get(id);
+    shown.add(id);
+  }
+  // collapsed groups: legacy material and the rest of the team
+  if(!filtersOn()){
+    const leg=D.nodes.filter(n=>n.t==='module'&&n.legacy).sort(byLabel);
+    const G={'legacy-modules':on('module')&&group('map:legacy-modules','Legacy modules',leg,null),
+             'legacy-domains':on('domain')&&group('map:legacy-domains','Legacy domains',M.other,null),
+             'team':on('person')&&P.teamless.length&&group('map:team','Team',P.teamless,null)};
+    for(const [k,x,y] of P.groups){const g=G[k]; if(g&&g.members.length){put(v,g,x,y,7,k==='legacy-modules'?'l':'r',null,300);shown.add(g.id);}}
+    if(on('program')){const pg=D.nodes.filter(n=>n.t==='program').sort(byLabel);
+      if(pg.length){const g=group('map:programmes','Programmes (older sheets)',pg,null);put(v,g,-300,145,7,'l',null,300);shown.add(g.id);}}
+  }
+  // THE EDGES, each between its real ends (a deck hangs off its session)
+  const pairs=P.links.map(([a,b,c,minor,via])=>via?[via,b,c,minor]:[a,b,c,minor]);
+  // GHOST ANCHORS (owner review 2026-09-30): a type the chips hide leaves a
+  // faint anchor wherever a visible thing connects to it, so the edges still
+  // show WHERE they go; its name shows on hover. A filtered view is never a
+  // field of bare dots.
+  const ghost=new Set();
+  const canGhost=id=>{const n=idx.byId.get(id);return !!n&&P.pos.has(id)&&!on(n.t)&&pass(n);};
+  // only the ANCHOR side becomes a ghost — the hub, module or session a shown
+  // thing hangs off — never the things hanging off a shown node (a pair is
+  // [anchor, thing]), or "Sessions only" would be half ghost decks
+  for(const [a,b] of pairs)if(shown.has(b)&&!shown.has(a)&&canGhost(a))ghost.add(a);
+  // a module whose own sessions, assignments or decks are shown without it
+  // NAMES its cluster
+  const clusterMods=new Set();
+  if(!on('module'))for(const [a,b,c,minor] of P.links){
+    const m=idx.byId.get(a); if(m&&m.t==='module'&&minor&&shown.has(b)&&canGhost(a))clusterMods.add(a);}
+  for(const id of clusterMods)ghost.add(id);
+  for(const id of ghost){
+    const n=idx.byId.get(id), xy=spread.get(id)||P.pos.get(id);
+    put(v,n,xy[0],xy[1],0,P.side.get(id)||'r',null,280);
+    const it=v.nodes[v.nodes.length-1]; it.ghost=true;
+    if(clusterMods.has(id)){it.clusterLabel=true; if(P.anchor.has(id))it.anchor=P.anchor.get(id);}
+  }
+  const vis=id=>shown.has(id)||ghost.has(id);
+  for(const [a,b,c,minor] of pairs)
+    if(vis(a)&&vis(b)&&(shown.has(a)||shown.has(b)))v.links.push([a,b,c,minor]);
+  // TOPICS, only round the modules in focus (owner review 2026-09-30)
+  if(on('content_topic'))topicsAround(v,P,shown);
+  v.fit='all';
+  return v;
+}
+//: TOPICS round a module, only for the modules in focus: the selected one,
+//: and — once zoomed in — the few whose position is on screen. Each module's
+//: topics load with it (/api/neighbourhood); 2,770 are never drawn at once.
+let TOPIC_MODS=new Set(), FOCUS_MOD=null;
+function topicTargets(){
+  const out=new Set(TOPIC_MODS); const s=state.sel&&idx.byId.get(state.sel);
+  if(s&&s.t==='module'&&!s.legacy)out.add(s.id);
+  return out;
+}
+function topicsAround(v,P,shown){
+  for(const mid of topicTargets()){
+    const m=idx.byId.get(mid), at=P.pos.get(mid); if(!m||!at||!shown.has(mid))continue;
+    const h=[...P.hub.values()].reduce((b,c)=>Math.hypot(c[0]-at[0],c[1]-at[1])<Math.hypot(b[0]-at[0],b[1]-at[1])?c:b);
+    const theta=Math.atan2(at[1]-h[1],at[0]-h[0]);
+    const all=[];
+    for(const z of (idx.adj.get(mid)||[])){const t=idx.byId.get(z.o);
+      if(t&&t.t==='content_topic'&&!(t.p||{}).not_a_topic)all.push([t,Number(z.p&&z.p.rank)||99]);}
+    all.sort((a,b)=>a[1]-b[1]||byLabel(a[0],b[0]));
+    const top=uniq(all.map(x=>x[0])).slice(0,20);
+    for(const [n,x,y] of fan(at[0],at[1],theta,138,top,0.14,3.0)){
+      if(VIEWMETA.has&&v.nodes.some(it=>it.n.id===n.id))continue;
+      put(v,n,x,y,2,'r',null,200); v.links.push([mid,n.id,null,1]);}
+    if(all.length>top.length)v.frames.push({kind:'note',x:at[0]+Math.cos(theta)*170,y:at[1]+Math.sin(theta)*170,w:220,
+      label:'+'+(uniq(all.map(x=>x[0])).length-top.length)+' more topics \u2014 in the panel'});
+  }
+}
+let _topicTimer=null;
+function maybeLoadTopics(){
+  if(!state.types.has('content_topic')||state.listMode||state.place)return;
+  clearTimeout(_topicTimer);
+  _topicTimer=setTimeout(async ()=>{
+    const want=new Set();
+    const s=state.sel&&idx.byId.get(state.sel);
+    if(s&&s.t==='module'&&!s.legacy)want.add(s.id);
+    if(cam.k>=1.0){                                   // zoomed in: the modules on screen
+      const CA=clipArea();
+      const vis=A.filter(n=>n.t==='module'&&!n.legacy).map(n=>{const [sx,sy]=toScreen(n.x,n.y);
+        return [n,sx,sy];}).filter(([n,sx,sy])=>sx>CA.x0&&sx<CA.x1&&sy>CA.y0&&sy<CA.y1)
+        .sort((a,b)=>Math.hypot(a[1]-(CA.x0+CA.x1)/2,a[2]-(CA.y0+CA.y1)/2)-Math.hypot(b[1]-(CA.x0+CA.x1)/2,b[2]-(CA.y0+CA.y1)/2));
+      for(const [n] of vis.slice(0,3))want.add(n.id);
+    }
+    let changed=want.size!==TOPIC_MODS.size||[...want].some(x=>!TOPIC_MODS.has(x));
+    for(const id of want){const m=idx.byId.get(id);
+      if(m&&!m.loaded){try{await expand(id);changed=true;}catch(e){}}}
+    TOPIC_MODS=want;
+    if(changed&&!state.place&&!state.listMode)recompute(false,'topics in focus');
+  },350);
+}
+function moduleColumn(v,m,x,y){
+  // a module's own tree: sessions, the people who teach it, its assignments, decks
+  const col=[];
+  const ses=uniq(nbrs(m.id,'delivers_session','class_session'))
+    .sort((a,b)=>KIND_ORDER.indexOf((a.p||{}).session_kind)-KIND_ORDER.indexOf((b.p||{}).session_kind));
+  const ms=[], older=[], roleOf=new Map();
+  // Primary -> B1 -> B2 -> B3, the sheet's cell order within a role (roleSort)
+  for(const o of roleSort(roleEntries(new Set([m.id]),state.fRole||null))){
+    const n=idx.byId.get(o.ins); if(n){ms.push(n);roleOf.set(n.id,o.role);}
+  }
+  if(!state.fRole)for(const n of uniq(nbrs(m.id,'teaches','instructor')))if(ms.indexOf(n)<0)older.push(n);
+  // HISTORICAL files (a superseded revamp, or named Old) never mix with the
+  // current ones: they get their own collapsed group (owner review 2026-09-30).
+  const hist=n=>!!(n.p||{}).historical;
+  const asgAll=uniq(nbrs(m.id,'assessed_by','assignment'));
+  const decksAll=uniq(nbrs(m.id,'presented_with','slide_deck'));
+  const asg=asgAll.filter(n=>!hist(n)), decks=decksAll.filter(n=>!hist(n));
+  const old=asgAll.filter(hist).concat(decksAll.filter(hist));
+  let yy=y+34;
+  const sect=(title,items,gkey,glabel)=>{
+    if(!items.length&&!gkey)return;
+    v.frames.push({kind:'head',x:x-6,y:yy,label:title});
+    yy+=18;
+    // A node is drawn once per view. One already drawn under another module is
+    // NAMED here instead of silently missing from this list.
+    const seen=new Set(v.nodes.map(it=>it.n.id)), elsewhere=[];
+    for(const n of items){
+      const r=roleOf.get(n.id);
+      if(seen.has(n.id)){elsewhere.push(n.l+(r?' \u00b7 '+ROLE_SHORT[r]:''));continue;}
+      put(v,n,x,yy,5,'r',null,COL-40);
+      if(r)v.nodes[v.nodes.length-1].badge={t:ROLE_SHORT[r],c:ROLE_COLOR[r]};
+      yy+=ROW;
+    }
+    if(elsewhere.length){
+      v.frames.push({kind:'note',x:x,y:yy+4,label:'+ shown in another column:'});
+      yy+=ROW*0.8;
+      for(const l of elsewhere){v.frames.push({kind:'note',x:x+8,y:yy+4,label:l.length>28?l.slice(0,27)+'\u2026':l});yy+=ROW*0.8;}
+    }
+    yy+=6;
+  };
+  sect('Sessions',ses);
+  sect('Taught by',ms);
+  const gs=[];
+  if(older.length)gs.push(group(m.id+':older','Taught by, older sheets',older.sort(byLabel),m));
+  if(asg.length)gs.push(group(m.id+':asg','Assignments',asg.sort(byLabel),m));
+  const dg=group(m.id+':decks','Decks',decks.sort(byLabel),m);
+  if(!decksAll.length&&!m.loaded)dg.l='Decks \u2014 click to load them';
+  gs.push(dg);
+  if(old.length)gs.push(group(m.id+':historical','Historical',old.sort(byLabel),m));
+  v.frames.push({kind:'head',x:x-6,y:yy,label:'More'}); yy+=18;
+  for(const g of gs){
+    put(v,g,x,yy,4,'r'); yy+=ROW;
+    if(state.open.has(g.key)){for(const n of g.members){put(v,n,x+16,yy,3,'r',null,COL-56);yy+=ROW;}yy+=6;}
+  }
+  return yy;
+}
+function layoutDomain(d){
+  const M=model(), v=V();
+  put(v,d,0,-70,10,'r',domainName(d),COL*3);
+  filterNote(v,0,-40,COL*3);
+  const mods=(M.cur.get(d.id)||[]).filter(m=>passWeek(m)&&passRoleModule(m));
+  // WRAPPED, NOT WIDENED: as many module columns as fit beside an open panel,
+  // then a new row — nothing runs off the right edge (owner review 2026-09-30)
+  const per=colsFit(COL,mods.length||1);
+  let y=0, bottom=0, anyOpen=false;
+  mods.forEach((m,i)=>{
+    if(i&&i%per===0){y=bottom+36;}
+    const x=(i%per)*COL;
+    put(v,m,x,y,9,'r',null,COL-24); v.links.push([d.id,m.id]);
+    if(state.open.has(m.id)){anyOpen=true;bottom=Math.max(bottom,moduleColumn(v,m,x+14,y));}
+    else{v.frames.push({kind:'note',x:x+12,y:y+22,label:'click to open'});bottom=Math.max(bottom,y+40);}
+  });
+  if(!mods.length){v.frames.push({kind:'note',x:0,y:0,label:M.cur.get(d.id)&&M.cur.get(d.id).length
+      ?'No module of this domain matches the filters':'No module in the current mastersheet'});bottom=20;}
+  if(anyOpen)v.fit='width';
+  let yy=bottom+50;
+  for(const g of groupsFor(d)){
+    put(v,g,0,yy,6,'r',null,COL*per-30); yy+=ROW+4;
+    if(state.open.has(g.key)){yy=grid(v,g.members,24,yy,per,2)+10;}
+  }
+  return v;
+}
+function layoutGroup(g){
+  // COLUMNS AS WIDE AS THE NAMES NEED (owner review 2026-09-30: "Advanced…",
+  // "Agentic AI…"), capped, and as many as fit beside an open panel
+  const v=V(); put(v,g,0,-40,8,'r',null,COL*3);
+  let longest=0; for(const n of g.members)longest=Math.max(longest,String(labelOf(n)).length+(badgeOf(n)?8:0));
+  const colW=Math.max(COL,Math.min(460,Math.round(longest*6.6+48)));
+  const cols=g.members.length>12?Math.max(1,Math.floor(layoutWidth()/(colW*0.92))):1;
+  if(g.members.length>12)v.fit='width';
+  g.members.forEach((n,i)=>put(v,n,(i%cols)*colW,Math.floor(i/cols)*ROW,2,'r',null,colW-24));
+  return v;
+}
+function layoutNode(n){
+  // the thing on top, everything it connects to in labelled columns below
+  const v=V(); v.fit='width'; put(v,n,0,0,10,'r',null,COL*2);
+  const cols=new Map();
+  for(const x of (idx.adj.get(n.id)||[])){
+    const o=idx.byId.get(x.o); if(!o)continue;
+    const k=relLabel(x.r,x.dir)+' · '+(TYPE_PLURAL[o.t]||o.t);
+    if(!cols.has(k))cols.set(k,[]);
+    if(cols.get(k).indexOf(o)<0)cols.get(k).push(o);
+  }
+  let c=0; const placed=new Set();
+  // columns WRAP into rows of what fits beside the panel (owner review 2026-09-30)
+  const per=colsFit(COL), rowTop=[0], rowH=[0];
+  // current-mastersheet relations first, so a module taught in both shows
+  // under its current role, and the older-sheets column says how many it shares
+  const rank=k=>/current mastersheet/.test(k)?0:1;
+  for(const [k,all] of [...cols.entries()].sort((a,b)=>rank(a[0])-rank(b[0])||a[1].length-b[1].length)){
+    const items=all.filter(o=>!placed.has(o.id)), shared=all.length-items.length;
+    if(!items.length)continue;
+    const col=c%per, row=Math.floor(c/per);
+    if(rowTop[row]===undefined){rowTop[row]=rowTop[row-1]+rowH[row-1]+50;rowH[row]=0;}
+    const x=col*COL, y=rowTop[row]+60;
+    v.frames.push({kind:'head',x:x-6,y:y-18,w:COL-36,label:k+' ('+all.length+
+      (shared?', '+shared+' also shown above':'')+')'});
+    // current-mastersheet roles in the ONE order (role, week, sheet order) and
+    // colour; everything else by name
+    const M=model(), rl=o=>{for(const z of (idx.adj.get(n.id)||[]))
+        if(z.o===o.id&&z.p&&z.p.tier==='mastersheet')return z.p; return null;};
+    const mod=o=>n.t==='module'?n:(o.t==='module'?o:null);
+    const rk=o=>{const r=rl(o);return r?ROLE_ORDER.indexOf(r.instructor_role):9;};
+    const wk=o=>{const m=mod(o);return m?(Number(M.weekOf.get(m.id))||99):99;};
+    const ce=o=>{const r=rl(o);return r&&r.cell_order!=null?r.cell_order:99;};
+    items.sort((a,b)=>rk(a)-rk(b)||wk(a)-wk(b)||ce(a)-ce(b)||byLabel(a,b));
+    items.slice(0,40).forEach((o,i)=>{put(v,o,x,y+i*ROW,4,'r',null,COL-30);placed.add(o.id);
+      const r=rl(o); if(r&&ROLE_COLOR[r.instructor_role])
+        v.nodes[v.nodes.length-1].badge={t:ROLE_SHORT[r.instructor_role],c:ROLE_COLOR[r.instructor_role]};});
+    if(items.length>40){const g=group(n.id+':'+k,k,items,n);put(v,g,x,y+40*ROW,4,'r',null,COL-30);}
+    rowH[row]=Math.max(rowH[row],Math.min(items.length,41)*ROW+60);
+    c++;
+  }
+  return v;
+}
+//: Which current module a thing of a module-level type belongs to.
+const BY_MODULE={class_session:'delivers_session',assignment:'assessed_by',
+  assignment_review:'reviewed_in',program_week:'scheduled_in',slide_deck:'presented_with'};
+function currentInstructors(){
+  const s=new Set();
+  for(const e of D.edges)if(e.p&&e.p.tier==='mastersheet'){s.add(e.s);s.add(e.t);}
+  return s;
+}
+//: does a node survive the filters? (types view) — domain, week and role
+function passFilters(n){
+  if(!filtersOn())return true;
+  const mods=filteredModules(), ids=new Set(mods.map(m=>m.id));
+  if(n.t==='module')return ids.has(n.id)||(!state.fWeek&&!state.fRole&&passDomain(model().domOf.get(n.id)));
+  if(n.t==='domain')return passDomain(n)&&(!state.fWeek&&!state.fRole||!isLegacyDomain(n));
+  if(n.t==='instructor'){
+    for(const x of (idx.adj.get(n.id)||[])){
+      if(!ids.has(x.o))continue;
+      if(state.fRole){ if(x.p&&x.p.tier==='mastersheet'&&x.p.instructor_role===state.fRole)return true; }
+      else return true;
+    }
+    return false;
+  }
+  if(BY_MODULE[n.t])return nbrs(n.id,null,'module').some(m=>ids.has(m.id));
+  const d=domainOf(n); return !!d&&passDomain(d)&&!state.fWeek&&!state.fRole;
+}
+function layoutTypes(){
+  // the type chips: each chosen type as a labelled list, no edges. Fitted to
+  // the WIDTH and read by scrolling down; columns are what fits beside an open
+  // panel. Module-level things are grouped DOMAIN -> MODULE, so a generic
+  // name ("Class", "Week 10") always sits under what it belongs to.
+  const v=V(); v.fit='width'; let y=0;
+  const per=colsFit(COL), TW=per*COL;
+  filterNote(v,0,-44,TW);
+  const order=TYPES.filter(t=>state.types.has(t));
+  const hiddenBy=[];
+  for(const t of order){
+    const all=D.nodes.filter(n=>n.t===t);
+    let items=all.filter(passFilters);
+    if(all.length>items.length)hiddenBy.push((all.length-items.length)+' '+(TYPE_PLURAL[t]||t).toLowerCase());
+    if(!all.length&&t!=='module')continue;
+    const head=(TYPE_PLURAL[t]||t)+' ('+items.length+(items.length<all.length?' of '+all.length:'')+')';
+    v.frames.push({kind:'head',x:-6,y:y-20,w:TW,label:head});
+    if(t==='module'){
+      const M=model(), cur=items.filter(n=>!n.legacy), leg=items.filter(n=>n.legacy).sort(byLabel);
+      for(const d of M.current){
+        const ms=cur.filter(m=>M.domOf.get(m.id)===d).sort((a,b)=>seqOf(a)-seqOf(b));
+        if(!ms.length)continue;
+        v.frames.push({kind:'sub',x:0,y:y+4,w:TW,label:domainName(d)}); y+=24;
+        y=grid(v,ms,10,y,per,6,COL-30)+6;
+      }
+      if(leg.length){
+        const g=group('types:legacy','Legacy modules',leg,null);
+        put(v,g,0,y,5,'r',null,TW); y+=ROW;
+        if(state.open.has(g.key))y=grid(v,leg,24,y,per,5,COL-30);
+      }
+    }else if(t==='instructor'){
+      const withRole=currentInstructors();
+      const cur=items.filter(n=>withRole.has(n.id)).sort(byLabel);
+      const rest=items.filter(n=>!withRole.has(n.id)).sort(byLabel);
+      v.frames.push({kind:'sub',x:0,y:y+4,w:TW,label:'With a role in the current mastersheet ('+cur.length+')'});
+      y=grid(v,cur,10,y+24,per,6,COL-30)+10;
+      if(rest.length){
+        // the older sheets' 1,886 names COLLAPSE, as legacy modules do
+        const g=group('types:older-instructors','Instructors from the older sheets',rest,null);
+        put(v,g,0,y,5,'r',null,TW); y+=ROW;
+        if(state.open.has(g.key))y=grid(v,rest,24,y,per,4,COL-30);
+      }
+    }else if(BY_MODULE[t]){
+      const M=model(), rel=BY_MODULE[t], seen=new Set();
+      for(const d of M.current)for(const m of (M.cur.get(d.id)||[])){
+        const here=items.filter(n=>!seen.has(n.id)&&nbrs(n.id,rel,'module').some(x=>x.id===m.id));
+        if(!here.length)continue;
+        if(!v._d||v._d!==d.id){v.frames.push({kind:'sub',x:0,y:y+4,w:TW,label:domainName(d)});y+=24;v._d=d.id;}
+        v.frames.push({kind:'note',x:10,y:y+4,w:TW,label:m.l+(M.weekOf.get(m.id)?' \u00b7 Week '+M.weekOf.get(m.id):'')});
+        y+=20;
+        here.sort((a,b)=>KIND_ORDER.indexOf((a.p||{}).session_kind)-KIND_ORDER.indexOf((b.p||{}).session_kind)||byLabel(a,b));
+        for(const n of here)seen.add(n.id);
+        y=grid(v,here,20,y,per,5,COL-30,n=>t==='class_session'?(KIND_LABEL[(n.p||{}).session_kind]||n.l):
+          (t==='program_week'?'Week '+((n.p||{}).number||n.l):n.l))+6;
+      }
+      delete v._d;
+      const restT=items.filter(n=>!seen.has(n.id)).sort(byLabel);
+      if(restT.length){
+        v.frames.push({kind:'sub',x:0,y:y+4,w:TW,label:'Not under a current module ('+restT.length+')'});
+        y=grid(v,restT,10,y+24,per,4,COL-30)+6;
+      }
+    }else{
+      y=grid(v,items.sort(byLabel),0,y,per,5,COL-30);
+    }
+    y+=60;
+  }
+  if(hiddenBy.length)v.frames.push({kind:'note',x:0,y:y-30,w:TW,label:'Hidden by the filters: '+hiddenBy.join(', ')});
+  return v;
+}
+function E_ALL(){return D.edges}
+//: the map shows its default types (a chip adds or removes one from the map)
+function allTypesOn(){return !state.listMode&&DEFAULT_TYPES.length===state.types.size&&
+  DEFAULT_TYPES.every(t=>state.types.has(t))}
+function mapMode(){return !state.listMode}
+function computeView(){
+  const pl=state.place;
+  if(state.listMode)return layoutTypes();
+  if(!pl)return layoutMap();
+  if(pl.kind==='domain'){const d=idx.byId.get(pl.id);if(d)return layoutDomain(d);}
+  if(pl.kind==='group'){const g=GROUPS.get(pl.key);if(g)return layoutGroup(g);}
+  if(pl.kind==='node'){const n=idx.byId.get(pl.id);if(n)return layoutNode(n);}
+  state.place=null; return layoutMap();
+}
+let FRAMES=[], VIEWMETA=new Map(), FITMODE='all';
+function goPlace(pl,why){
+  state.place=pl; for(const n of D.nodes)delete n._v;
+  // published like __NP_STATE, so a harness can see where the view is
+  try{ window.__NP_PLACE=pl?{kind:pl.kind,id:pl.id||pl.key}:null; }catch(e){}
+  recompute(true,why||'place'); renderCrumbs(); writeUrl();
+}
+function renderCrumbs(){
+  const c=document.getElementById('crumbs'); if(!c)return;
+  const parts=['<a data-go="map">Map</a>'];
+  if(state.view&&state.view!=='graph'){
+    parts.push('<span>'+(state.view==='matrix'?'Who teaches what':'Programme timeline')+'</span>');
+    c.innerHTML=parts.join('<span class="sep">›</span>');
+    for(const a of c.querySelectorAll('a'))a.onclick=()=>setView('graph',true);
+    return;
+  }
+  const pl=state.place;
+  if(pl){
+    if(pl.kind==='domain'){const d=idx.byId.get(pl.id);parts.push('<span>'+(d?domainHtml(d):esc(placeName(pl)))+'</span>');}
+    else{
+      const n=pl.kind==='node'?idx.byId.get(pl.id):null;
+      const d=n?domainOf(n):null;
+      if(d)parts.push('<a data-go="dom" data-id="'+esc(d.id)+'">'+domainHtml(d)+'</a>');
+      parts.push('<span>'+esc(placeName(pl))+'</span>');
+    }
+  }
+  if(!allTypesOn())parts.push('<span>'+(state.listMode?'List: ':'Showing: ')+esc(TYPES.filter(t=>state.types.has(t))
+    .map(t=>TYPE_PLURAL[t]||t).join(', '))+'</span>');
+  c.innerHTML=parts.join('<span class="sep">›</span>');
+  for(const a of c.querySelectorAll('a'))a.onclick=()=>{
+    if(a.dataset.go==='map')goPlace(null,'crumb');
+    else goPlace({kind:'domain',id:a.dataset.id},'crumb');
+  };
+}
+
 function recompute(refit, why){
   // Preserved across every recompute: camera, selection, and the open panel.
   const keepCam={k:cam.k,tx:cam.tx,ty:cam.ty};
@@ -862,123 +1864,301 @@ function recompute(refit, why){
   const keepPanel=document.getElementById('right').style.display;
   window.__NP_RECOMPUTES++;
   console.log('[np] recompute #'+window.__NP_RECOMPUTES+' reason='+(why||'unspecified')+
-              ' (a recompute re-scatters the layout; it is NOT a page reload)');
+              ' (a recompute lays the view out again; it is NOT a page reload)');
   idx=buildIndex(D);
   allDeg=degreeMap(D,D.nodes.map(n=>n.id));
   for(const n of D.nodes){n.d=allDeg.get(n.id)||0;n.iso=(n.d===0)}
-  A=visible(D,{types:state.types,showIso:state.showIso,degree:allDeg});
-  const hiddenFiles=D.nodes.filter(x=>x.t==='file').length;
-  const ids=new Set(A.map(n=>n.id));
-  E=D.edges.filter(e=>ids.has(e.s)&&ids.has(e.t)&&(state.showDash||e.r!==EXPERT));
-  anchors=new Map();
-  const comps=components({nodes:A,edges:E},A.map(n=>n.id));
-  if(state.separate){
-    // Shelf-pack by component size. Equal grid cells wasted most of the canvas.
-    const sorted=comps.slice().sort((a,b)=>b.length-a.length);
-    const R=sorted.map(c=>Math.max(28,Math.sqrt(c.length)*13));
-    const targetW=Math.sqrt(R.reduce((s,r)=>s+r*r*4,0))*1.25;
-    let cx=0,cy=0,rowH=0;
-    sorted.forEach((c,i)=>{
-      const r=R[i];
-      if(cx+r*2>targetW && cx>0){cx=0;cy+=rowH+30;rowH=0}
-      for(const id of c) anchors.set(id,[cx+r,cy+r,c.length]);
-      cx+=r*2+30; rowH=Math.max(rowH,r*2);
-    });
-  } else {
-    for(const n of A) anchors.set(n.id,[0,0,A.length]);
+  // B4: THE VIEW DECIDES WHAT IS DRAWN AND WHERE. Positions are computed, not
+  // simulated; step() only animates each node to its target, then freezes.
+  CURRENT_INS=currentInstructors();
+  const v=computeView();
+  VIEWMETA=new Map(); A=[];
+  for(const it of v.nodes){
+    const n=it.n; if(VIEWMETA.has(n.id))continue;
+    VIEWMETA.set(n.id,it); n.tx=it.x; n.ty=it.y;
+    if(n.x===undefined||!Number.isFinite(n.x)){n.x=it.x;n.y=it.y;}
+    n.vx=0; n.vy=0; A.push(n);
   }
-  for(const n of A){ if(n.x===undefined){const a=anchors.get(n.id)||[0,0];
-    const s=state.separate?a[2]:A.length;
-    const rad=Math.max(30,Math.sqrt(s)*10);
-    n.x=a[0]+(Math.random()-.5)*rad;n.y=a[1]+(Math.random()-.5)*rad;n.vx=0;n.vy=0} }
+  const ids=new Set(A.map(n=>n.id));
+  // E is what is DRAWN: the view's own links. Panels read D.edges, never E.
+  E=v.links.filter(([a,b])=>ids.has(a)&&ids.has(b)).map(([a,b,c,minor])=>({s:a,t:b,r:'_view',p:{},c:c||null,minor:!!minor}));
+  FRAMES=v.frames; FITMODE=v.fit||'all';
+  const hint=document.getElementById('hint');
+  if(hint)hint.innerHTML=FITMODE==='width'
+    ?'Scroll to move down the list &middot; Ctrl + scroll to zoom &middot; click for details &middot; <kbd>/</kbd> search &middot; <kbd>Esc</kbd> clears'
+    :'Drag the canvas to pan &middot; scroll to zoom &middot; click for details &middot; click a group to open it &middot; <kbd>/</kbd> search &middot; <kbd>Esc</kbd> clears';
   renderDiag();
-  document.getElementById('stat').innerHTML=
-    '<b>'+A.length+'</b> of <b>'+D.nodes.length+'</b> fetched nodes / <b>'+
-    E.length+'</b> edges / '+comps.length+' components'+
-    // THE COUNT CARRIES ITS QUALIFIER, inline. This was a permanent sidebar
-    // panel saying the same thing, costing a third of the column on every visit
-    // to warn about a number two lines below it.
-    // FILE NODES ARE FETCHED AND NEVER DRAWN. `file` is not in TYPES, so
-    // visible() filters them out and the two counts disagree with no
-    // explanation. That is correct by §A.3 — provenance lives in node_sources
-    // and a file is cited, never traversed — but an unexplained discrepancy
-    // reads as a silent drop, which is the one thing this project will not do.
-    (hiddenFiles?'<span class="qual"> \u2014 '+hiddenFiles+' file node'+
-      (hiddenFiles>1?'s':'')+' fetched and not drawn: files are cited, never '+
-      'traversed</span>':'')+
-    '<span class="qual"> \u2014 what you have expanded to, not the whole graph</span>';
-  // A legitimate recompute restarts the simulation — and ONLY a recompute may.
-  if(refit!==false){settle=0;alpha=1;frozen=false}
+  const st=document.getElementById('stat');
+  if(st)st.innerHTML='<b>'+A.length+'</b> things shown here &middot; <b>'+
+    D.nodes.length.toLocaleString('en-US')+'</b> loaded';
+  if(refit!==false){settle=0;alpha=1;frozen=false;_fitPending=true}
   cam.k=keepCam.k;cam.tx=keepCam.tx;cam.ty=keepCam.ty;
   state.sel=keepSel;
   document.getElementById('right').style.display=keepPanel;
 }
+let _fitPending=false;
 
 function step(){
-  if(frozen)return;                     // no forces, no drift, no motion
-  const K=alpha;
-  for(const n of A){n.vx*=.85;n.vy*=.85;
-    const a=anchors.get(n.id);
-    if(a){n.vx+=(a[0]-n.x)*.006*K;n.vy+=(a[1]-n.y)*.006*K}}
-  for(let i=0;i<A.length;i++){const a=A[i];
-    for(let j=i+1;j<Math.min(A.length,i+12);j++){const b=A[j];
-      const dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy||1;
-      if(d2<5000){const f=110/d2*K;a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f}}}
-  for(const e of E){const a=idx.byId.get(e.s),b=idx.byId.get(e.t);
-    if(!a||!b||a.x===undefined||b.x===undefined)continue;
-    const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,f=(d-58)*.006*K;
-    a.vx+=dx/d*f;a.vy+=dy/d*f;b.vx-=dx/d*f;b.vy-=dy/d*f}
-  for(const n of A){n.x+=n.vx;n.y+=n.vy}
-  settle++;
-  alpha*=ALPHA_DECAY;
-  if(settle===90)fit();
-  if(alpha<ALPHA_MIN && !frozen){
-    frozen=true;
-    console.log('[np] layout FROZEN after '+settle+' frames. '+
-      'Nothing moves again until a filter or a FETCH calls recompute().');
+  if(frozen)return;                     // no motion once the view has arrived
+  for(const n of A){
+    const dx=n.tx-n.x, dy=n.ty-n.y;
+    if(Math.abs(dx)+Math.abs(dy)>0.05){n.x+=dx*0.25;n.y+=dy*0.25}
+    else{n.x=n.tx;n.y=n.ty}
   }
-  // Published AFTER frozen is set, so the reported state is the real one.
+  settle++;
+  alpha*=0.88;
+  if(_fitPending&&settle===1){fit();_fitPending=false}
+  if(alpha<ALPHA_MIN && !frozen){
+    for(const n of A){n.x=n.tx;n.y=n.ty}
+    frozen=true;
+    console.log('[np] view settled after '+settle+' frames. '+
+      'Nothing moves again until the view changes.');
+  }
   window.__NP_STATE={settle:settle,alpha:alpha,frozen:frozen,
                      recomputes:window.__NP_RECOMPUTES,nodes:D.nodes.length};
 }
+function radiusOf(n){
+  const it=VIEWMETA.get(n.id), pri=it?it.pri:1;
+  const base=n.t==='group'?6:(n.t==='domain'?(pri>=10?11:8):(pri>=8?8:(pri>=5?6:(pri>=3?4.5:3.5))));
+  return base*Math.max(.6,Math.min(cam.k,1.6));
+}
+function litSet(id){
+  const s=new Set([id]);
+  for(const x of (idx.adj.get(id)||[]))s.add(x.o);
+  for(const e of E){if(e.s===id)s.add(e.t);if(e.t===id)s.add(e.s);}
+  return s;
+}
+function labelOf(n){ const it=VIEWMETA.get(n.id);
+  if(it&&it.label)return it.label;
+  return n.t==='group'?n.l:contextLabel(n); }
 function draw(){
   ctx.clearRect(0,0,W,H);
   const now=performance.now();
-  for(const e of E){const a=idx.byId.get(e.s),b=idx.byId.get(e.t);
-    if(!a||!b||a.x===undefined)continue;
-    const [awx,awy]=paintPos(a,now),[bwx,bwy]=paintPos(b,now);
-    const [ax,ay]=toScreen(awx,awy),[bx,by]=toScreen(bwx,bwy);
-    if(Math.max(ax,bx)<LEFT-40)continue;
-    const hot=state.sel&&(e.s===state.sel||e.t===state.sel);
-    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
-    if(e.r===EXPERT){ctx.setLineDash([3,4]);
-      ctx.strokeStyle=hot?'rgba(0,194,209,.9)':'rgba(0,194,209,.22)'}
-    else{ctx.setLineDash([]);
-      ctx.strokeStyle=hot?'rgba(230,237,243,.85)':'rgba(139,148,158,.17)'}
-    ctx.lineWidth=hot?1.8:1;ctx.stroke()}
-  ctx.setLineDash([]);
+  const lit=state.sel?litSet(state.sel):null;
+  const CA=clipArea();
+  ctx.save(); ctx.beginPath(); ctx.rect(CA.x0,CA.y0,CA.x1-CA.x0,CA.y1-CA.y0); ctx.clip();
+  // cluster frames and section headings first, underneath everything
+  for(const f of FRAMES){
+    const [x,y]=toScreen(f.x,f.y);
+    if(f.kind==='circle'){
+      ctx.beginPath();ctx.arc(x,y,f.r*cam.k,0,7);
+      ctx.fillStyle=f.strong?'rgba(76,141,255,.05)':'rgba(139,148,158,.035)';ctx.fill();
+      ctx.lineWidth=1;ctx.strokeStyle=f.strong?'rgba(76,141,255,.35)':'rgba(139,148,158,.18)';ctx.stroke();
+    }else if(f.kind==='card'){
+      const [x2,y2]=toScreen(f.x+f.w,f.y+f.h);
+      ctx.fillStyle='rgba(76,141,255,.05)'; ctx.fillRect(x,y,x2-x,y2-y);
+      ctx.lineWidth=1; ctx.strokeStyle='rgba(76,141,255,.35)'; ctx.strokeRect(x+.5,y+.5,x2-x-1,y2-y-1);
+    }else if((f.kind==='head'||f.kind==='note'||f.kind==='sub')&&cam.k>0.18){
+      ctx.font=(f.kind==='head'?'600 10.5px ':f.kind==='sub'?'600 12px ':'10.5px ')+'-apple-system,Segoe UI,sans-serif';
+      ctx.fillStyle=f.kind==='head'?'#8b949e':(f.kind==='sub'?'#c9d1d9':'#8b949e');
+      // never cut by the edge: shortened to the room it has, with an ellipsis
+      let t=f.kind==='head'?String(f.label).toUpperCase():String(f.label);
+      const room=Math.min(f.w?f.w*cam.k:1e9, CA.x1-x-6);
+      if(room<40)continue;
+      if(textW(t)>room){while(t.length>4&&textW(t+'…')>room)t=t.slice(0,-1);t=t.replace(/\s+$/,'')+'…';}
+      ctx.fillText(t,x,y);
+    }
+  }
+  // the view's links, and in focus the selected node's own connections
+  for(const e of E){const a=idx.byId.get(e.s)||GROUPS.get(String(e.s).slice(4)),
+                          b=idx.byId.get(e.t)||GROUPS.get(String(e.t).slice(4));
+    if(!a||!b||a.x===undefined||b.x===undefined)continue;
+    const hot=lit&&lit.has(e.s)&&lit.has(e.t)&&(e.s===state.sel||e.t===state.sel);
+    const hov=!lit&&HOVER&&(e.s===HOVER||e.t===HOVER);
+    const [ax,ay]=toScreen(...paintPos(a,now)),[bx,by]=toScreen(...paintPos(b,now));
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.setLineDash([]);
+    // EDGES ARE VISIBLE (owner review 2026-09-30); brighter on hover, bright in
+    // focus. A ROLE edge keeps its colour (P green, B1 blue, B2 amber, B3 grey).
+    if(e.c){ ctx.globalAlpha=hot?0.95:(hov?0.95:(lit?0.07:0.62)); ctx.strokeStyle=e.c; }
+    else ctx.strokeStyle=hot?'rgba(230,237,243,.85)':(hov?'rgba(230,237,243,.75)':(lit?'rgba(139,148,158,.05)':
+      (e.minor?'rgba(139,148,158,.26)':'rgba(139,148,158,.42)')));
+    ctx.lineWidth=hot||hov?2:1.15; ctx.stroke(); ctx.globalAlpha=1;}
+  // in a thing's OWN view its columns already say how each item relates
+  const ownView=state.place&&state.place.kind==='node'&&state.place.id===state.sel;
+  if(lit&&!ownView){
+    const s=idx.byId.get(state.sel);
+    const drawn=new Set(E.filter(e=>e.s===state.sel||e.t===state.sel).map(e=>e.s===state.sel?e.t:e.s));
+    if(s&&s.x!==undefined)for(const x of (idx.adj.get(s.id)||[])){
+      const o=idx.byId.get(x.o); if(!o||!VIEWMETA.has(o.id)||o.x===undefined||drawn.has(o.id))continue;
+      const [ax,ay]=toScreen(...paintPos(s,now)),[bx,by]=toScreen(...paintPos(o,now));
+      ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
+      ctx.strokeStyle='rgba(230,237,243,.55)';ctx.lineWidth=1.2;ctx.stroke();
+    }
+  }
+  // nodes
   for(const n of A){if(n.x===undefined)continue;
     const [wx,wy]=paintPos(n,now);
     const [sx,sy]=toScreen(wx,wy);
-    if(sx<-20||sx>W+20||sy<-20||sy>H+20)continue;
-    const r=(n.iso?2:Math.min(3+Math.sqrt(n.d)*1.1,11))*Math.max(.55,Math.min(cam.k,1.6));
-    ctx.beginPath();ctx.arc(sx,sy,r,0,7);
-    ctx.fillStyle=C[n.t]||'#888';
-    // Faded, and still drawn, still clickable, still searchable.
-    // Default is FADED, not hidden. `hideLegacy` is an explicit opt-out; an
-    // undefined flag must not be the thing that hides 904 real modules.
-    ctx.globalAlpha=(n.legacy&&state.hideLegacy)?0:(n.legacy?.22:(n.iso?.4:1));
-    ctx.fill();
+    if(sx<-40||sx>W+40||sy<-40||sy>H+40)continue;
+    const it_=VIEWMETA.get(n.id)||{}, ghost=!!it_.ghost;
+    const r=ghost?Math.max(2.5,radiusOf(n)*0.8):radiusOf(n);
+    ctx.globalAlpha=(lit&&!lit.has(n.id))?.18:(ghost?(HOVER===n.id?0.7:0.28):1);
+    if(n.t==='group'){
+      ctx.beginPath();ctx.rect(sx-r,sy-r,2*r,2*r);
+      ctx.fillStyle='#21262d';ctx.fill();ctx.lineWidth=1.5;
+      ctx.strokeStyle=state.open.has(n.key)?'#58a6ff':'#8b949e';ctx.stroke();
+    }else{
+      ctx.beginPath();ctx.arc(sx,sy,r,0,7);
+      ctx.fillStyle=C[n.t]||'#c9d1d9';
+      if(n.legacy)ctx.globalAlpha*=0.7;
+      ctx.fill();
+    }
     if(state.sel===n.id){ctx.globalAlpha=1;ctx.lineWidth=2.5;ctx.strokeStyle='#fff';ctx.stroke()}
-    // A node whose neighbourhood has never been fetched is drawn hollow, so
-    // "nothing connects here" is visibly different from "not expanded yet".
-    else if(!n.loaded){ctx.globalAlpha=.9;ctx.lineWidth=1;
-      ctx.strokeStyle='#30363d';ctx.stroke()}
     ctx.globalAlpha=1}
+  drawLabels(now,lit,CA);
+  ctx.restore();
+}
+//: LABELS WITHOUT COLLISIONS. Placed in priority order in SCREEN space; a label
+//: that would overlap one already placed is skipped (hover shows every name).
+function textW(t){ const m=ctx.measureText(t);
+  return (m&&Number.isFinite(m.width))?m.width:String(t).length*6.5; }
+//: A label that MUST be shown: a current domain, a current module, a current
+//: instructor, a group on the map, and whatever is selected. Owner review
+//: 2026-09-30: every other module in a card had no label. These are never
+//: dropped and never shortened; an overlap is resolved by MOVING the label.
+function mustLabel(n){
+  if(n.id===state.sel||n.t==='group')return true;
+  if(n.t==='domain')return !isLegacyDomain(n)||!state.place;
+  if(n.t==='module')return !n.legacy;
+  if(n.t==='instructor')return CURRENT_INS.has(n.id);
+  return false;
+}
+let CURRENT_INS=new Set(), LABEL_BOXES=[];
+//: PLACED ONCE PER VIEW CHANGE, DRAWN EVERY FRAME. Placement (the costly
+//: part) reruns only when the camera, focus, hover, window or layout changes;
+//: each frame just paints the placed labels at their node's drift offset.
+let LABEL_KEY='', LABEL_ITEMS=[], LABELS_DIRTY=true;
+function drawLabels(now,lit,CA){
+  CA=CA||clipArea();
+  const key=[cam.k.toFixed(4),cam.tx.toFixed(1),cam.ty.toFixed(1),state.sel,HOVER,W,H,
+             window.__NP_RECOMPUTES,frozen,CA.x0,CA.x1,CA.y0,CA.y1].join('|');
+  if(key!==LABEL_KEY||LABELS_DIRTY){ LABEL_ITEMS=placeLabels(lit,CA); LABEL_KEY=key; LABELS_DIRTY=false; }
+  for(const L of LABEL_ITEMS){
+    const n=idx.byId.get(L.id)||GROUPS.get(String(L.id).slice(4)); if(!n)continue;
+    const [dx,dy]=driftOffset(n,now), x=L.x+dx, y=L.y+dy;
+    ctx.font=L.font;
+    ctx.globalAlpha=(lit&&!lit.has(L.id))?.16:1;
+    if(L.leader){
+      ctx.beginPath();ctx.moveTo(L.nx+dx,L.ny+dy);ctx.lineTo(L.lx+dx,L.ly+dy);
+      ctx.strokeStyle='rgba(139,148,158,.45)';ctx.lineWidth=0.8;ctx.stroke();
+    }
+    ctx.fillStyle=L.color; ctx.fillText(L.text,x,y);
+    if(L.badge)drawBadge(L.badge,x+L.w-L.bw+6,y,L.bc);
+    ctx.globalAlpha=1;
+  }
+}
+function placeLabels(lit,CA){
+  const PAD=drift?DRIFT_PX:0;                     // room for the drift
+  const cell=60, gridM=new Map(), drawnOut=[], items=[];
+  const cellsOf=b=>{const out=[];for(let gx=Math.floor(b.x0/cell);gx<=Math.floor(b.x1/cell);gx++)
+    for(let gy=Math.floor(b.y0/cell);gy<=Math.floor(b.y1/cell);gy++)out.push(gx+','+gy);return out;};
+  const overlap=b=>{let s=0;const seen=new Set();for(const k of cellsOf(b))for(const o of (gridM.get(k)||[])){
+    if(seen.has(o))continue;seen.add(o);
+    const w=Math.min(b.x1,o.x1)-Math.max(b.x0,o.x0), h=Math.min(b.y1,o.y1)-Math.max(b.y0,o.y0);
+    // covering another must-show LABEL is far worse than covering a dot
+    if(w>0&&h>0)s+=w*h*(o.must?1000:1);}return s;};
+  const add=b=>{for(const k of cellsOf(b)){if(!gridM.has(k))gridM.set(k,[]);gridM.get(k).push(b);}};
+  // every visible dot is an obstacle: a label never covers another node
+  for(const n of A){ if(n.x===undefined||(VIEWMETA.get(n.id)||{}).pri<5)continue; const [sx,sy]=toScreen(n.x,n.y);
+    if(sx<CA.x0-20||sx>CA.x1+20||sy<CA.y0-20||sy>CA.y1+20)continue;
+    const r=radiusOf(n)+1.5; add({x0:sx-r,y0:sy-r,x1:sx+r,y1:sy+r,dot:n.id}); }
+  const order=A.slice().sort((a,b)=>{
+    const pa=(a.id===state.sel?99:0)+(mustLabel(a)?40:0)+(lit&&lit.has(a.id)?20:0)+((VIEWMETA.get(a.id)||{}).pri||0);
+    const pb=(b.id===state.sel?99:0)+(mustLabel(b)?40:0)+(lit&&lit.has(b.id)?20:0)+((VIEWMETA.get(b.id)||{}).pri||0);
+    return pb-pa||(a.id<b.id?-1:1);});
+  for(const n of order){
+    if(n.x===undefined)continue;
+    const it=VIEWMETA.get(n.id)||{};
+    // a GHOST has no label (its name shows on hover) — unless it names a cluster
+    if(it.ghost&&!it.clusterLabel)continue;
+    const pri=it.pri||1, must=mustLabel(n)||!!it.clusterLabel;
+    // session/assignment/deck/week/topic labels: when zoomed in, or in focus
+    if(!must&&pri<5&&cam.k<0.75&&!(lit&&lit.has(n.id)))continue;
+    if(!must&&cam.k<0.35&&pri<5&&!(lit&&lit.has(n.id)))continue;
+    const [nx,ny]=toScreen(n.x,n.y);
+    if(nx<CA.x0-200||nx>CA.x1+200||ny<CA.y0-20||ny>CA.y1+20)continue;
+    // an ANCHORED label starts from a point beside the node (past its fan)
+    const [sx,sy]=it.anchor?toScreen(n.x+it.anchor[0],n.y+it.anchor[1]):[nx,ny];
+    const big=pri>=8;
+    ctx.font=(big?'600 12.5px ':'11px ')+'-apple-system,Segoe UI,sans-serif';
+    const full=labelOf(n); let text=full;
+    const bdg=it.badge||(badgeOf(n)?{t:badgeOf(n),c:'#d29922'}:null);
+    const badge=bdg&&bdg.t, bw=badge?badgeW(badge)+6:0, r=radiusOf(n);
+    if(!must){
+      // THE ROOM A LABEL HAS IS ITS LAYOUT'S, SCALED BY THE ZOOM
+      let maxW=(it.maxw?it.maxw:(COL-30))*cam.k;
+      if(big)maxW=Math.max(maxW,Math.min(n.t==='module'?250:320,(it.maxw||1e9)*cam.k));
+      if(it.side!=='l'&&it.side!=='b'&&it.side!=='a')maxW=Math.min(maxW,CA.x1-(sx+r+5)-6);
+      maxW-=bw;
+      if(maxW<24&&n.id!==state.sel)continue;
+      if(textW(text)>maxW){while(text.length>4&&textW(text+'…')>maxW)text=text.slice(0,-1);
+        text=text.replace(/\s+$/,'')+'…';}
+      if(text.length<=2&&full.length>2&&n.id!==state.sel)continue;
+    }
+    const w=textW(text)+bw, h=big?15:13;
+    const rr=it.anchor?2:r;
+    // CANDIDATE PLACES, preferred first: its side, then the other side, above,
+    // below, then stepped up and down. The first free one wins; a label that
+    // must be shown takes the least-covered one rather than disappearing.
+    const R_=[sx+rr+5,sy+4], L_=[sx-rr-6-w,sy+4], A_=[sx-w/2,sy-rr-5], B_=[sx-w/2,sy+rr+h];
+    const side=it.side||'r', cands=[];
+    const first=side==='l'?[L_,R_]:side==='a'?[A_,B_]:side==='b'?[B_,A_]:[R_,L_];
+    cands.push(...first, ...(side==='a'||side==='b'?[R_,L_]:[A_,B_]));
+    for(const d of [1,-1,2,-2,3,-3,4,-4,5,-5,6,-6]){
+      for(const base of [R_,L_,A_,B_])cands.push([base[0],base[1]+d*h]);}
+    // then sideways too, half a label at a time
+    for(const d of [0,1,-1,2,-2,3,-3])for(const sh of [0.5,-0.5,1,-1])
+      for(const base of [A_,B_,R_,L_])cands.push([base[0]+sh*w,base[1]+d*h]);
+    let best=null, bestO=1e18;
+    // only a label that MUST be shown is moved off its line; any other stays
+    // beside its node or waits until you scroll or zoom to it
+    if(!must&&n.id!==state.sel)cands.splice(2);
+    // first choice: free even with room for the drift; then free without it
+    // (the drift is two pixels — an overlap is not an acceptable price for it)
+    let loose=null;
+    for(const [x,y] of cands){
+      const b={x0:x-2-PAD,y0:y-h+3-PAD,x1:x+w+2+PAD,y1:y+3+PAD};
+      const outside=(b.x0<CA.x0||b.x1>CA.x1||b.y0<CA.y0||b.y1>CA.y1)?1e9:0;
+      const o=overlap(b)+outside;
+      if(o===0){best=[x,y,b];bestO=0;break;}
+      const b0={x0:x-2,y0:y-h+3,x1:x+w+2,y1:y+3};
+      const o0=overlap(b0)+outside;
+      if(o0===0&&!loose){b0.raw=true;loose=[x,y,b0];}
+      if(o<bestO){bestO=o;best=[x,y,b];}
+    }
+    if(bestO>0&&loose){best=loose;bestO=0;}
+    if(!best||(bestO>0&&!must&&n.id!==state.sel))continue;
+    const [x,y,b]=best; b.must=must; add(b); b.id=n.id;
+    const q=b.raw?0:PAD;                           // the box as drawn, without the drift room
+    drawnOut.push({id:n.id,text:text,full:text===full&&!!full,must:must,
+      x0:b.x0+q,y0:b.y0+q,x1:b.x1-q,y1:b.y1-q,clash:bestO});
+    // a label moved off its node keeps a thin leader line back to it
+    const leader=!!(it.anchor||(Math.abs((y-4)-sy)>h*0.9&&Math.abs(x-sx)>r));
+    items.push({id:n.id,text:text,x:x,y:y,w:w,bw:bw,badge:badge,bc:bdg&&bdg.c,
+      font:ctx.font, color:it.ghost?'#8b949e':(n.t==='group'?'#c9d1d9':(big?'#e6edf3':'#c9d1d9')),
+      leader:leader, nx:nx, ny:ny, lx:x+w/2<nx?x+w:(x>nx?x:x+w/2), ly:y-4});
+  }
+  LABEL_BOXES=drawnOut;
+  try{ window.__NP_LABELS=drawnOut; }catch(e){}
+  return items;
 }
 // The loop keeps PAINTING after the simulation freezes — step() returns
 // immediately once frozen, so this animates the drift without any physics.
-(function loop(){step();draw();requestAnimationFrame(loop)})();
+// PAUSED while the tab is hidden; resumed when it is shown. Frame time (the
+// work of one frame, ms) is kept as a rolling mean for measurement.
+let _loopOn=false;
+window.__NP_FRAME={mean:0,n:0,max:0};
+function loop(){
+  if(typeof document!=='undefined'&&document.hidden){_loopOn=false;return;}
+  _loopOn=true;
+  const t0=performance.now();
+  step(); springStep(); draw();
+  const dt=performance.now()-t0, F=window.__NP_FRAME;
+  F.n++; F.mean+= (dt-F.mean)/Math.min(F.n,120); if(F.n>30)F.max=Math.max(F.max,dt);
+  requestAnimationFrame(loop);
+}
+try{ document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&!_loopOn)requestAnimationFrame(loop); }); }catch(e){}
+loop();
 
 // ---- interaction (ported) ------------------------------------------------
 // Hit-testing uses the TRUE settled coordinates, never the drifted paint
@@ -986,32 +2166,129 @@ function draw(){
 function hit(sx,sy){const [wx,wy]=toWorld(sx,sy);let best=null,bd=1e9;
   for(const n of A){if(n.x===undefined)continue;
     const d=Math.hypot(n.x-wx,n.y-wy);if(d<bd){bd=d;best=n}}
-  return bd<16/cam.k?best:null}
-cv.addEventListener('wheel',ev=>{ev.preventDefault();
+  if(bd<14/cam.k)return best;
+  // the LABEL is a target too: hover shows the full name, a click selects
+  for(const b of LABEL_BOXES)if(sx>=b.x0&&sx<=b.x1&&sy>=b.y0&&sy<=b.y1)
+    return idx.byId.get(b.id)||GROUPS.get(String(b.id).slice(4))||null;
+  return null}
+cv.addEventListener('wheel',ev=>{ev.preventDefault(); camFitted=false; maybeLoadTopics();
+  // In a long list the wheel SCROLLS; Ctrl + wheel (and a pinch) still zooms.
+  if(FITMODE==='width'&&!ev.ctrlKey){ cam.ty-=ev.deltaY; cam.tx-=ev.deltaX||0; return; }
   const [wx,wy]=toWorld(ev.clientX,ev.clientY);
   cam.k=Math.max(0.05,Math.min(4,cam.k*(ev.deltaY<0?1.12:1/1.12)));
   cam.tx=ev.clientX-wx*cam.k;cam.ty=ev.clientY-wy*cam.k},{passive:false});
 let drag=null;
-cv.addEventListener('mousedown',ev=>{ev.preventDefault();drag={x:ev.clientX,y:ev.clientY,
-  tx:cam.tx,ty:cam.ty,moved:false}});
-addEventListener('mouseup',()=>{drag=null});
+let _suppressClick=false;
+cv.addEventListener('mousedown',ev=>{ev.preventDefault();
+  // on a NODE the drag moves that node (its neighbours follow on springs);
+  // on empty canvas it pans
+  const n=hit(ev.clientX,ev.clientY);
+  const node=n&&n.t!=='group'&&idx.byId.get(n.id)&&VIEWMETA.has(n.id)&&!(VIEWMETA.get(n.id)||{}).ghost?n:null;
+  drag={x:ev.clientX,y:ev.clientY,tx:cam.tx,ty:cam.ty,moved:false,node:node}});
+addEventListener('mouseup',()=>{
+  if(drag&&drag.moved){_suppressClick=true; if(!drag.node)maybeLoadTopics();}
+  if(DRAGGED){ SPRING.set(DRAGGED.id,{vx:0,vy:0}); DRAGGED=null; LABELS_DIRTY=true; }
+  drag=null});
 cv.addEventListener('mousemove',ev=>{
   if(drag){const dx=ev.clientX-drag.x,dy=ev.clientY-drag.y;
     if(Math.abs(dx)+Math.abs(dy)>3)drag.moved=true;
-    cam.tx=drag.tx+dx;cam.ty=drag.ty+dy;tip.style.display='none';return}
+    if(drag.node&&drag.moved){
+      const [wx,wy]=toWorld(ev.clientX,ev.clientY);
+      DRAGGED=drag.node; DRAGGED.x=wx; DRAGGED.y=wy; SPRING.delete(DRAGGED.id); LABELS_DIRTY=true;
+      tip.style.display='none'; return;
+    }
+    if(!drag.node){cam.tx=drag.tx+dx;cam.ty=drag.ty+dy;tip.style.display='none';camFitted=false;}
+    return}
   const n=hit(ev.clientX,ev.clientY);
+  const hid=n?n.id:null; if(hid!==HOVER){HOVER=hid;}
   cv.style.cursor=n?'pointer':'grab';
   if(n){tip.style.display='block';tip.style.left=(ev.clientX+12)+'px';
     tip.style.top=(ev.clientY+12)+'px';
-    tip.innerHTML='<b>'+esc(n.l)+'</b><br>'+esc(n.t)+
-      '<br>'+n.d+' loaded relationships'+
-      (n.loaded?'':' &middot; <b>not expanded</b>')+
-      '<br>click to open, double-click to expand'}
+    const d=n.t==='group'?null:domainOf(n);
+    tip.innerHTML='<b>'+esc(labelOf(n))+'</b>'+(badgeOf(n)?' '+LEGACY_BADGE:'')+'<br>'+esc(typeLabel(n.t))+
+      (d&&d.id!==n.id?' &middot; '+domainHtml(d):'')+
+      (n.t==='domain'&&countsText(n)?'<br>'+esc(countsText(n)):'')+
+      (n.legacy?'<br>Legacy module from older sheets':'')+
+      (n.t==='content_topic'?topicLocator(n):'')+
+      '<br><span class="dim">'+esc(clickHint(n))+'</span>'}
   else tip.style.display='none'});
-cv.addEventListener('click',ev=>{ev.preventDefault();if(drag&&drag.moved)return;
-  const n=hit(ev.clientX,ev.clientY);if(n)openNode(n.id);else closePanel()});
+//: where a topic sits: the slide, page or tab, and in what kind of file
+function topicLocator(n){
+  const out=[];
+  for(const z of (idx.adj.get(n.id)||[])){
+    const m=idx.byId.get(z.o); if(!m||m.t!=='module'||!z.p)continue;
+    const p=z.p, where=p.slide!=null?'slide '+p.slide:p.page!=null?'page '+p.page:p.tab?'tab \u201c'+p.tab+'\u201d':'';
+    if(where)out.push(esc(where)+(p.from?' of a '+esc(p.from):'')+' \u00b7 '+esc(m.l)+(p.historical?' (historical)':''));
+  }
+  return out.length?'<br>'+out.slice(0,3).join('<br>'):'';
+}
+function clickHint(n){
+  if(n.t==='group')return state.open.has(n.key)?'click to close this group':'click to open this group';
+  if(n.t==='module'&&!n.legacy)return 'click to open its sessions, instructors and decks';
+  if(n.t==='domain')return 'click to open this domain';
+  return 'click for details';
+}
+//: B4 CLICK. A module, a domain or a group OPENS (that is what they are for);
+//: anything else is SELECTED — focus mode — and never moves the layout.
+function activate(n){
+  if(n.t==='group'){ toggleGroup(n); return; }
+  const M=model();
+  // ON THE MAP a module or an instructor is FOCUSED where it stands: its
+  // neighbourhood lit, its panel open. Double-click a module to open it.
+  if(!state.place&&mapMode()&&n.t!=='domain'){
+    const was=FOCUS_MOD; FOCUS_MOD=(n.t==='module'&&!n.legacy)?n.id:null;
+    if(was!==FOCUS_MOD){recompute(false,'focus spread');settle=0;alpha=1;frozen=false;}
+    openNode(n.id); frameFocus(n.id); maybeLoadTopics(); return; }
+  if(n.t==='module'&&!n.legacy){
+    const d=domainOf(n);
+    const inDomain=state.place&&state.place.kind==='domain'&&d&&state.place.id===d.id;
+    if(state.open.has(n.id)&&inDomain)state.open.delete(n.id); else state.open.add(n.id);
+    if(!inDomain&&d)goPlace({kind:'domain',id:d.id},'module opened');
+    else recompute(true,'module opened');
+    openNode(n.id); return;
+  }
+  if(n.t==='domain'&&M.domains.indexOf(n)>=0&&
+     !(state.place&&state.place.kind==='domain'&&state.place.id===n.id)){
+    goPlace({kind:'domain',id:n.id},'domain opened'); openNode(n.id); return;
+  }
+  openNode(n.id);
+}
+function toggleGroup(g){
+  const p=g.parent;
+  if(g.key.endsWith(':decks')&&p&&!p.loaded&&!state.open.has(g.key)){
+    state.open.add(g.key);
+    expand(p.id).then(()=>{ if(state.place)recompute(true,'decks loaded'); });
+    return;
+  }
+  if(state.open.has(g.key))state.open.delete(g.key); else state.open.add(g.key);
+  const where=state.place;
+  // a group opens where it stands in a domain or a module; on the map it
+  // opens as a place of its own, because a map cluster has no room for 700
+  if(!where&&g.members.length>12){ state.open.add(g.key); goPlace({kind:'group',key:g.key},'group opened'); return; }
+  if(!where&&p&&p.t==='domain'){ state.open.add(g.key); goPlace({kind:'domain',id:p.id},'group opened'); return; }
+  recompute(true,'group toggled');
+}
+function clearFocus(){ state.sel=null; closePanel();
+  if(FOCUS_MOD){FOCUS_MOD=null; if(!state.place&&!state.listMode){recompute(false,'focus cleared');settle=0;alpha=1;frozen=false;}}
+  if(_framed&&!state.place&&!state.listMode){_framed=false;fit();} maybeLoadTopics(); }
+cv.addEventListener('click',ev=>{ev.preventDefault();
+  if(_suppressClick){_suppressClick=false;return;}          // that was a drag
+  if(drag&&drag.moved)return;
+  const n=hit(ev.clientX,ev.clientY);
+  if(n)activate(n); else clearFocus();});
 cv.addEventListener('dblclick',ev=>{ev.preventDefault();const n=hit(ev.clientX,ev.clientY);
-  if(n){centreOn(n,1.6);openNode(n.id);expand(n.id)}});
+  if(n&&n.t==='module'&&!n.legacy&&!state.place){       // open the module in its domain
+    const d=domainOf(n); state.open.add(n.id);
+    if(d){goPlace({kind:'domain',id:d.id},'module opened');openNode(n.id);} return;}
+  if(n&&n.t!=='group'&&idx.byId.get(n.id)){goPlace({kind:'node',id:n.id},'node place');openNode(n.id);}});
+addEventListener('keydown',ev=>{
+  const q=document.getElementById('q');
+  if(ev.key==='/'&&document.activeElement!==q){ev.preventDefault();if(q&&q.focus)q.focus();return;}
+  if(ev.key==='Escape'){
+    if(document.activeElement===q&&q){q.value='';res.innerHTML='';if(q.blur)q.blur();return;}
+    clearFocus();
+  }
+});
 document.getElementById('fit').onclick=()=>fit();
 document.getElementById('zin').onclick=()=>{cam.k=Math.min(4,cam.k*1.3)};
 document.getElementById('zout').onclick=()=>{cam.k=Math.max(0.05,cam.k/1.3)};
@@ -1096,60 +2373,63 @@ function fact(k, v){ return v===undefined||v===null||v===''||(Array.isArray(v)&&
          esc(Array.isArray(v)?v.join(', '):String(v))+'</span></div>'; }
 
 function reviewFlag(p){
-  // PRESENT-ONLY. Absence is never rendered — see above.
+  // PRESENT-ONLY. Absence is never rendered — see the note above TYPE_FACTS.
   return p.review ? '<div class="flag">Flagged for review: '+esc(p.review)+
-    '<span class="dim"> — retained and shown, not excluded (§4)</span></div>' : '';
+    '. It is kept and shown, not left out.</div>' : '';
 }
 
 function crossVal(p){
   if(p.cross_validated===undefined) return '';
   return p.cross_validated===true||p.cross_validated==='true'
-    ? '<div class="ft"><span class="k">corroboration</span><span class="v ok">cited in more than one file</span></div>'
-    : '<div class="ft"><span class="k">corroboration</span><span class="v warn2">single source</span>'+
-      '<span class="dim"> — 61% of instructors are</span></div>';
+    ? '<div class="ft"><span class="k">Corroboration</span><span class="v ok">named in more than one file</span></div>'
+    : '<div class="ft"><span class="k">Corroboration</span><span class="v warn2">named in one file only</span></div>';
 }
 
 //: type -> the facts that type leads with. Order is the answer's order.
+// The coverage of these fields decides how they render: a field that is often
+// missing is shown where present and LEFT OUT where absent — never as a dash or
+// a zero, which would read as "none" when it means "not recorded".
 const TYPE_FACTS = {
-  instructor: p => crossVal(p) + fact('pipeline status', p.pipeline_status) +
-    fact('on rosters', p.roster_count) + fact('cited in files', p.file_count) +
-    // Availability, NOT performance. A decline rate is how often someone was
-    // unavailable; reading it as quality is the misuse this label exists to stop.
-    (p.decline_rate!==undefined ? fact('declined (availability, not performance)',
+  instructor: p => crossVal(p) + fact('Status', p.pipeline_status) +
+    fact('On rosters', p.roster_count) + fact('Named in files', p.file_count) +
+    // Availability, NOT performance: a decline rate is how often someone was
+    // unavailable, and reading it as quality is the misuse this label prevents.
+    (p.decline_rate!==undefined ? fact('Declined (availability, not performance)',
        p.decline_rate+'% of '+(p.requests_to||'?')+' requests') : ''),
-  module: p => fact('granularity', p.granularity) + fact('cited in files', p.file_count),
-  program: p => fact('family', p.family) + fact('document type', p.doctype) +
-    fact('cited in files', p.file_count),
-  domain: p => fact('cadence', p.cadence) + fact('stage', p.stage) +
-    fact('cited in files', p.file_count),
-  workflow: p => fact('effort', p.effort) + fact('theme', p.theme_id) +
-    fact('tools', p.tools) + fact('steps', p.steps) + fact('alerts', p.alerts),
-  person: p => fact('team', p.team) + fact('title', p.title) +
-    fact('seniority', p.seniority) + fact('first seen', p.first_seen_quarter) +
-    fact('last seen', p.last_seen_quarter),
-  file: p => fact('sheets', p.sheet_count) + fact('parsed', p.parsed),
+  module: p => fact('Named in files', p.file_count),
+  program: p => fact('Family', p.family) + fact('Document type', p.doctype) +
+    fact('Named in files', p.file_count),
+  domain: p => fact('Cadence', p.cadence) + fact('Stage', p.stage) +
+    fact('Named in files', p.file_count),
+  workflow: p => fact('Effort', p.effort) + fact('Tools', p.tools) +
+    fact('Steps', p.steps) + fact('Alerts', p.alerts),
+  person: p => fact('Team', p.team) + fact('Title', p.title) +
+    fact('Seniority', p.seniority) + fact('First seen', p.first_seen_quarter) +
+    fact('Last seen', p.last_seen_quarter),
+  file: p => fact('Sheets', p.sheet_count),
+  // HELD BACK: kept in the graph, never listed as a topic or found by search
+  content_topic: p => p.not_a_topic ? '<div class="flag">Held back: '+
+    (p.not_a_topic==='person_bio'?'an instructor\u2019s bio line':'a person\u2019s name')+
+    ' \u2014 not listed under Topics and not found by search.</div>' : '',
 };
 
-// ---- B2 PANELS -----------------------------------------------------------
-// EVIDENCE TIERS ARE RENDERED APART. A legacy `teaches` edge and a mastersheet
-// `taught_by` edge are two claims by two sources that have not been reconciled;
-// showing them in one list would manufacture agreement that does not exist.
-// The tier is read off the EDGE (`p.tier`), not from the relation name, so a
-// renamed relation cannot silently collapse the distinction.
-// NOT `neighboursOf` — that name is already taken by the CAP-limited traversal
-// the expand panel uses, and shadowing it made openNode throw on every click.
-// Caught by eval/drive_dom.mjs, which is exactly the class of bug it exists for.
+// ---- PANELS: the facts a node leads with ---------------------------------
+// EVIDENCE IS NEVER MERGED. A role from the current mastersheet and a teaching
+// record from the older sheets are two claims by two sources; they are shown
+// as two badges on ONE row per person, never collapsed into one claim and never
+// split into two people.
 function edgesTouching(id){
+  // B4: D.edges, not E. E is what the VIEW draws (layout links); a panel must
+  // see every loaded relationship, drawn or not.
   const out=[];
-  for(const e of E){
+  for(const e of D.edges){
     if(e.s===id) out.push([e,e.t,'out']);
     else if(e.t===id) out.push([e,e.s,'in']);
   }
   return out;
 }
 
-// A label shared by more than one node is an OPEN identity question, not a
-// merge. The four that remain are INS-08/30/31/32, answered "leave apart".
+// A label shared by more than one instructor node is an OPEN identity question.
 function duplicateLabels(){
   const seen=new Map();
   for(const n of D.nodes){ if(n.t!=='instructor')continue;
@@ -1160,30 +2440,63 @@ function duplicateLabels(){
 }
 let DUPES=new Set();
 
-// ONE ROW PER PERSON, TIERS AS BADGES ON THAT ROW.
-//
-// The first version printed a block per tier, so an instructor with both a
-// mastersheet assignment and a legacy teaching record appeared twice in one
-// panel and read as two people. The tiers must stay unmerged — they are
-// unreconciled claims — but that is a statement about the EVIDENCE, not about
-// the person, and rendering it as two rows said the wrong one.
-//
-// An unresolved IDENTITY is different and does stay on its own row: those are
-// two separate nodes (INS-08/30/31/32) and collapsing them would be the merge
-// the owner declined.
 const ROLE_LABEL={primary:'Primary',backup_1:'Backup 1',backup_2:'Backup 2',
                   backup_3:'Backup 3'};
 function roleText(role,tier){
   if(role) return (ROLE_LABEL[role]||role.replace('_',' '));
-  return tier==='legacy' ? 'teaches class' : 'assigned';
+  return tier==='legacy' ? 'taught it' : 'assigned';
+}
+const TIER_WORD={mastersheet:'current mastersheet',legacy:'older sheets'};
+
+// ---- ROLE ORDER AND COLOURS (owner requirement 2026-09-30: sequence matters)
+// ONE rule, used by the matrix, both panels and the map's "Taught by" lists:
+// best role first (Primary, Backup 1, Backup 2, Backup 3); within a role, the
+// programme week of the first module where they hold THAT role; then the
+// domain; then the sheet's own cell order (joint primaries keep it); then name.
+// tests/test_role_order.py runs this exact function on the real graph.
+// ROLE ORDER: begin
+const ROLE_ORDER=['primary','backup_1','backup_2','backup_3'];
+function roleSort(entries){
+  // entries: [{ins, label, role, week, code, cell}] — one per role held
+  const by=new Map();
+  const key=e=>({rank:ROLE_ORDER.indexOf(e.role), week:e.week==null?99:Number(e.week),
+                 code:String(e.code||''), cell:e.cell==null?99:Number(e.cell)});
+  const cmp=(a,b)=>a.rank-b.rank||a.week-b.week||
+    (a.code<b.code?-1:a.code>b.code?1:0)||a.cell-b.cell;
+  for(const e of entries){
+    const k=key(e); if(k.rank<0)continue;
+    const cur=by.get(e.ins);
+    if(!cur||cmp(k,cur)<0)by.set(e.ins,Object.assign({ins:e.ins,label:e.label,role:e.role},k));
+  }
+  return [...by.values()].sort((a,b)=>cmp(a,b)||String(a.label).localeCompare(String(b.label)));
+}
+// ROLE ORDER: end
+const ROLE_SHORT={primary:'P',backup_1:'B1',backup_2:'B2',backup_3:'B3'};
+//: P green, B1 blue, B2 amber, B3 grey; the letters stay (colour is never the
+//: only signal). The older sheets' "taught it" stays neutral.
+const ROLE_COLOR={primary:'#3fb950',backup_1:'#58a6ff',backup_2:'#d29922',backup_3:'#8b949e'};
+//: every current-mastersheet role in `modIds` (a Set, or null for all)
+function roleEntries(modIds,roleOnly){
+  const M=model(), out=[];
+  for(const e of D.edges){
+    if(!e.p||e.p.tier!=='mastersheet')continue;
+    const a=idx.byId.get(e.s), b=idx.byId.get(e.t); if(!a||!b)continue;
+    const mod=a.t==='module'?a:(b.t==='module'?b:null), ins=a.t==='instructor'?a:(b.t==='instructor'?b:null);
+    if(!mod||!ins||(modIds&&!modIds.has(mod.id)))continue;
+    if(roleOnly&&e.p.instructor_role!==roleOnly)continue;
+    out.push({ins:ins.id,label:ins.l,role:e.p.instructor_role,week:M.weekOf.get(mod.id),
+              code:DOMAIN_CODE[mod.dom]||'',cell:e.p.cell_order,mod:mod.id});
+  }
+  return out;
 }
 function evidenceBadges(ev){
   const seen=new Set(); const out=[];
   for(const e of ev){
     const k=e.tier+'|'+(e.role||'');
     if(seen.has(k))continue; seen.add(k);
-    out.push('<span class="ev ev-'+esc(e.tier)+'">'+esc(roleText(e.role,e.tier))+
-             ' <em>'+esc(e.tier)+'</em></span>');
+    out.push('<span class="ev ev-'+esc(e.tier)+(e.tier==='mastersheet'&&e.role?' r-'+esc(e.role):'')+'">'+
+             esc(roleText(e.role,e.tier))+
+             ' <em>'+esc(TIER_WORD[e.tier]||e.tier)+'</em></span>');
   }
   return out.join('');
 }
@@ -1193,42 +2506,54 @@ function _collect(id, wantType){
     const tier=e.p&&e.p.tier; if(!tier)continue;
     const n=idx.byId.get(other); if(!n||n.t!==wantType)continue;
     if(!by.has(n.id))by.set(n.id,{n,ev:[]});
-    by.get(n.id).ev.push({tier,role:(e.p&&e.p.instructor_role)||null});
+    by.get(n.id).ev.push({tier,role:(e.p&&e.p.instructor_role)||null,
+                          cell:e.p&&e.p.cell_order!=null?e.p.cell_order:99});
   }
   return [...by.values()];
 }
-// MODULE panel: every person once, with their role and source badges.
+const _rk=r=>({primary:0,backup_1:1,backup_2:2,backup_3:3}[r]!==undefined
+              ?{primary:0,backup_1:1,backup_2:2,backup_3:3}[r]:4);
+// MODULE panel: every person once, with their role and where it comes from.
 function peopleRows(id){
   const rows=_collect(id,'instructor');
-  if(!rows.length)return '';
-  rows.sort((a,b)=>a.n.l.localeCompare(b.n.l));
-  const html=rows.map(r=>'<div class="prow"><span class="pname">'+esc(r.n.l)+
-    (DUPES.has(r.n.l)?'<span class="badge">unconfirmed</span>':'')+'</span>'+
+  if(!rows.length)return '<div class="tier"><div class="tk">Instructors</div>'+
+    '<div class="empty">No instructor recorded for this module.</div></div>';
+  // Primary -> B1 -> B2 -> B3 (the sheet's cell order within a role), then
+  // the older sheets' "taught it" by name — the same rule as the matrix
+  const best=r=>Math.min.apply(null,r.ev.map(e=>e.tier==='mastersheet'?_rk(e.role):9));
+  const cell=r=>Math.min.apply(null,r.ev.filter(e=>e.tier==='mastersheet'&&_rk(e.role)===best(r)).map(e=>e.cell).concat([99]));
+  rows.sort((a,b)=>best(a)-best(b)||cell(a)-cell(b)||a.n.l.localeCompare(b.n.l));
+  const html=rows.map(r=>'<div class="prow"><span class="pname"><a class="nbl" data-id="'+
+    esc(r.n.id)+'">'+esc(r.n.l)+'</a>'+
+    (isUnconfirmed(r.n)?'<span class="badge">not confirmed</span>':'')+'</span>'+
     evidenceBadges(r.ev)+'</div>').join('');
-  return '<div class="tier"><div class="tk">people <span class="dim">one row '+
-         'each; badges are the evidence, and the two sources are never '+
-         'reconciled</span></div>'+html+'</div>';
+  return '<div class="tier"><div class="tk">Instructors <span class="dim">one row '+
+         'each; the badges say where each role comes from</span></div>'+html+'</div>';
 }
 // INSTRUCTOR panel: every module taught, grouped by role, each with its badge.
 function taughtRows(id){
   const rows=_collect(id,'module');
   if(!rows.length)return '';
-  const rank=r=>({primary:0,backup_1:1,backup_2:2,backup_3:3}[r]!==undefined
-                 ?{primary:0,backup_1:1,backup_2:2,backup_3:3}[r]:4);
-  const best=r=>Math.min.apply(null,r.ev.map(e=>rank(e.role)));
-  rows.sort((a,b)=>best(a)-best(b)||a.n.l.localeCompare(b.n.l));
+  // Primary modules first, then B1, B2, B3, then "taught it"; each group in
+  // programme-week order (the same rule as the matrix)
+  const best=r=>Math.min.apply(null,r.ev.map(e=>_rk(e.role)));
+  const M=model(), wk=r=>Number(M.weekOf.get(r.n.id))||99,
+        code=r=>DOMAIN_CODE[r.n.dom]||'~';
+  rows.sort((a,b)=>best(a)-best(b)||wk(a)-wk(b)||code(a).localeCompare(code(b))||a.n.l.localeCompare(b.n.l));
   const groups=new Map();
   for(const r of rows){
-    const key=roleText(r.ev.slice().sort((x,y)=>rank(x.role)-rank(y.role))[0].role,
+    const key=roleText(r.ev.slice().sort((x,y)=>_rk(x.role)-_rk(y.role))[0].role,
                        r.ev[0].tier);
     if(!groups.has(key))groups.set(key,[]);
     groups.get(key).push(r);
   }
-  let html='';
+  let html='<div class="tk">Teaches</div>';
   for(const [role,rs] of groups){
-    html+='<div class="tk">'+esc(role)+' <span class="dim">'+rs.length+
-          ' module'+(rs.length===1?'':'s')+'</span></div>';
-    html+=rs.map(r=>'<div class="prow"><span class="pname">'+esc(r.n.l)+
+    const rk=ROLE_ORDER[best(rs[0])];
+    html+='<div class="sec-h"'+(rk?' style="color:'+ROLE_COLOR[rk]+'"':'')+'>'+esc(role)+' &middot; '+rs.length+
+          ' module'+(rs.length===1?'':'s')+'</div>';
+    html+=rs.map(r=>'<div class="prow"><span class="pname"><a class="nbl" data-id="'+
+      esc(r.n.id)+'">'+esc(r.n.l)+'</a>'+
       (r.n.legacy?'<span class="badge">legacy</span>':'')+'</span>'+
       evidenceBadges(r.ev)+'</div>').join('');
   }
@@ -1241,48 +2566,33 @@ function isUnconfirmed(n){
 function unconfirmedFlag(n){
   if(!n||n.t!=='instructor')return '';
   if(!isUnconfirmed(n))return '';
-  return '<div class="flag">UNCONFIRMED IDENTITY \u2014 who this is has not been '+
-    'confirmed (for example a first name with no surname anywhere, or a label '+
-    'another node also carries). Left unresolved by owner decision, not by '+
-    'oversight \u2014 see docs/REVIEW-QUEUE.md.</div>';
+  return '<div class="flag">Identity not confirmed: this may be the same person as '+
+    'another entry (for example a first name with no surname anywhere). It is '+
+    'kept apart until someone confirms who it is.</div>';
 }
 
-// ---- SOURCE LINKS --------------------------------------------------------
-// Every item shows ALL of its direct links. The mastersheet is NEVER an item's
-// link — it is the citation, and it appears under Provenance. Where a kind of
-// link is absent the reason is stated; nothing is guessed and nothing falls
-// back to the sheet.
-//
-// Everyone at IK has view access to these folders and to Uplevel (owner fact,
-// config/out-of-corpus-facts.yaml), so no access caveat is shown. That is not a
-// claim every link resolves: a download-disabled file still gets its Drive link
-// because canDownload false stops an EXPORT, not a person opening it.
+// ---- LINKS ---------------------------------------------------------------
+// Every item shows ALL of its direct links. The mastersheet is never an item's
+// link — it is the source, shown under Sources. Where a link is absent, a plain
+// sentence says so; nothing is guessed and nothing falls back to the sheet.
+// Everyone at IK can open these folders and Uplevel, so no access caveat is
+// shown. A download-disabled file still gets its link: that stops an export,
+// not a person opening it.
 const HTTP=/^https?:\/\//i;
 function lnk(url,label,title){
   if(!url||!HTTP.test(String(url)))return '';
   return '<a class="lnk" href="'+esc(url)+'" target="_blank" '+
          'rel="noopener noreferrer"'+(title?' title="'+esc(title)+'"':'')+'>'+
-         esc(label)+'</a>';
+         esc(label)+' ↗</a>';
 }
-function nolnk(kind,reason){
-  return '<span class="nolnk">no '+esc(kind)+': '+esc(reason)+'</span>';
+function nolnk(text){
+  return '<span class="nolnk">'+esc(text)+'</span>';
 }
-
-//: What each session kind should carry, and what to say when it does not.
-const WANTS={
-  pre_class:        ['Drive files',    'no file matched at session level'],
-  class:            ['slide deck',     'no deck matched at session level'],
-  alternate_class:  ['slide deck',     'no deck matched at session level'],
-  task:             ['assignment doc', 'no document matched at session level'],
-  review:           ['deck or solutions', 'no file matched at session level'],
-  alternate_review: ['deck or solutions', 'no file matched at session level'],
-  post_class:       ['Drive files',    'no file matched at session level'],
-};
 const KIND_ORDER=['pre_class','class','alternate_class','task','review',
                   'alternate_review','post_class'];
-const KIND_LABEL={pre_class:'Pre-class (foundation material)',class:'Class',
-  alternate_class:'Alternate Class',task:'Assignment',
-  review:'Assignment Review Class',alternate_review:'Alternate Assignment Review Class',
+const KIND_LABEL={pre_class:'Pre-class',class:'Class',
+  alternate_class:'Alternate class',task:'Assignment',
+  review:'Assignment review',alternate_review:'Alternate assignment review',
   post_class:'Practice problems'};
 
 // content_model.ARTEFACT_NAME, verbatim (tests/test_artefact_group.py): test-run
@@ -1290,15 +2600,41 @@ const KIND_LABEL={pre_class:'Pre-class (foundation material)',class:'Class',
 const ARTEFACT_NAME=new RegExp(String.raw`(\.pyc$|\.log$|^CACHEDIR\.TAG$|^(lastfailed|nodeids|stepwise)$|^recording\.conf$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-(result|container|attachment)(\.\w+)?$)`,'i');
 function isArtefact(name){return ARTEFACT_NAME.test(String(name||'').replace(/\/+$/,'').split('/').pop());}
 
-// A DOMAIN's own links: its Uplevel page (the live mastersheet's "Uplevel
-// Resources" row, owner decision 2026-09-30) and its Drive folder.
+function folderLinks(folders,noneText){
+  if(!folders||!folders.length)return nolnk(noneText);
+  // "Uplevel shared" is a DRIVE folder's name, not the Uplevel platform
+  return folders.map(f=>lnk(f.url,f.where==='content'?'Drive folder':'Drive folder: \u201cUplevel shared\u201d',
+                            f.name)).join(' ');
+}
+// A DOMAIN's own links: its Uplevel page and its Drive folder.
 function domainLinks(n){
   const p=n.p||{};
-  return '<div class="tier"><div class="tk">source links</div><div class="item">'+
+  const M=model(), mods=M.cur.get(n.id)||[];
+  let h='<div class="tier linksec"><div class="tk">Links</div><div class="item">'+
     '<span class="ik">Domain</span>'+
-    (lnk(p.uplevel_link,'Uplevel domain')||nolnk('Uplevel link','not in the Uplevel Resources rows'))+
-    (lnk(p.drive_folder_url,'Drive folder')||nolnk('Drive folder','no folder link in the mastersheet'))+
+    (lnk(p.uplevel_link,'Uplevel')||nolnk('No Uplevel link recorded'))+' '+
+    (lnk(p.drive_folder_url,'Drive folder')||nolnk('No Drive folder recorded'))+
     '</div></div>';
+  if(mods.length){
+    h+='<div class="tier"><div class="tk">Modules in the current mastersheet</div>'+
+      mods.map(m=>'<div class="item"><span class="ik">Week '+esc(String(M.weekOf.get(m.id)||'?'))+
+        '</span><a class="nbl" data-id="'+esc(m.id)+'">'+esc(m.l)+'</a></div>').join('')+'</div>';
+  }
+  return h;
+}
+// B4: files, decks, sessions and anything else with its own links.
+function nodeLinks(n){
+  const p=n.p||{}, out=[];
+  if(n.t==='class_session'){
+    out.push('<div class="item"><span class="ik">Uplevel</span>'+
+      (lnk(p.uplevel_link,'Open in Uplevel')||nolnk('No Uplevel link recorded'))+'</div>');
+    out.push('<div class="item"><span class="ik">Folder</span>'+
+      folderLinks(p.drive_folders,'No folder for this session')+'</div>');
+  }
+  if(p.drive_url)out.push('<div class="item"><span class="ik">'+esc(typeLabel(n.t))+'</span>'+
+    lnk(p.drive_url,'Open')+(p.content_available===false?' <span class="dim">view only</span>':'')+'</div>');
+  if(!out.length)return '';
+  return '<div class="tier linksec"><div class="tk">Links</div>'+out.join('')+'</div>';
 }
 
 function moduleChain(id){
@@ -1316,73 +2652,64 @@ function moduleChain(id){
       const k=p.session_kind||'';
       if(!attached.has(k))attached.set(k,[]);
       attached.get(k).push({name:p.attached_file,url:p.attached_drive_url,
-                            deck:!!p.attached_is_deck});
+                            deck:!!p.attached_is_deck,hist:!!p.attached_historical});
     }else{
       sessions.set((n.p||{}).session_kind||'?',n);
     }
   }
   const out=[];
-  // --- the module itself ---
   const mp=m.p||{};
   out.push('<div class="item"><span class="ik">Module</span>'+
-    (lnk(mp.uplevel_link,'Uplevel module')||nolnk('Uplevel link','not in the mastersheet row'))+
-    (lnk((dom&&(dom.p||{}).uplevel_link),'Uplevel: '+(dom?dom.l:'domain'))||'')+
-    (lnk((dom&&(dom.p||{}).drive_folder_url),'Drive: '+(dom?dom.l:'domain')+' folder',
-         'the domain folder; pass 6 records file ids, not folder ids, so the '+
-         'module subfolder has no direct link')
-      || nolnk('Drive folder','pass 6 records file ids, not folder ids'))+
-    '</div>');
-  // --- each session, in teaching order ---
+    (lnk(mp.uplevel_link,'Uplevel module')||nolnk('No Uplevel link recorded'))+' '+
+    folderLinks(mp.drive_folders,'No Drive folder recorded')+'</div>');
   for(const k of KIND_ORDER){
     const n=sessions.get(k);
-    const want=WANTS[k]||['file','no file matched'];
     if(!n){
-      // NOT OFFERED is a fact about the module, not a missing link.
       out.push('<div class="item"><span class="ik">'+esc(KIND_LABEL[k])+'</span>'+
-        nolnk('session', k==='post_class'
-          ? 'not offered \u2014 practice problems are optional per module'
-          : 'not in the mastersheet for this module')+'</div>');
+        nolnk(k==='post_class'?'Not offered for this module'
+             :'Not in the mastersheet for this module')+'</div>');
       continue;
     }
     const files=attached.get(k)||[];
     // Build/recording artefacts collapse into one group, every one still linked.
-    const real=files.filter(f=>!isArtefact(f.name)), junk=files.filter(f=>isArtefact(f.name));
-    const fl=f=>lnk(f.url,(f.deck?'Deck: ':'Drive: ')+f.name.slice(0,42),f.name);
-    out.push('<div class="item"><span class="ik">'+esc(KIND_LABEL[k])+'</span>'+
-      (lnk((n.p||{}).uplevel_link,'Uplevel')||nolnk('Uplevel link','no link in the sheet row'))+
+    // Historical files (a superseded revamp, or named Old) get their own
+    // collapsed group, never mixed with the current ones (owner review 2026-09-30).
+    const junk=files.filter(f=>isArtefact(f.name));
+    const real=files.filter(f=>!isArtefact(f.name)&&!f.hist), hist=files.filter(f=>!isArtefact(f.name)&&f.hist);
+    const fl=f=>lnk(f.url,(f.deck?'Deck: ':'File: ')+f.name.slice(0,48),f.name);
+    const np=n.p||{};
+    out.push('<div class="item"><span class="ik"><a class="nbl" data-id="'+esc(n.id)+'">'+
+      esc(KIND_LABEL[k])+'</a></span>'+
+      (lnk(np.uplevel_link,'Uplevel')||nolnk('No Uplevel link recorded'))+' '+
+      folderLinks(np.drive_folders,'No folder for this session')+
+      '<div class="files">'+
       (files.length
-        ? real.map(fl).join('')+
-          (junk.length?'<details class="artefacts"><summary>Build/recording artefacts ('+
-            junk.length+')</summary>'+junk.map(fl).join('')+'</details>':'')
-        : nolnk(want[0],want[1]))+
-      '</div>');
+        ? (real.length?real.map(fl).join(' '):nolnk('No current file; see Historical'))+
+          (hist.length?' <details class="historical"><summary>Historical ('+hist.length+
+            ')</summary>'+hist.map(fl).join(' ')+'</details>':'')+
+          (junk.length?' <details class="artefacts"><summary>Build/recording artefacts ('+
+            junk.length+')</summary>'+junk.map(fl).join(' ')+'</details>':'')
+        : nolnk('No file found for this session'))+'</div></div>');
   }
-  // --- assignment / review artefacts found in Drive but not on a session ---
-  for(const n of extras.slice(0,6))
-    out.push('<div class="item"><span class="ik">'+esc(n.t.replace('_',' '))+'</span>'+
-      (lnk((n.p||{}).drive_url,'Drive: '+n.l.slice(0,42),n.l)||nolnk('Drive link','no file id recorded'))+
-      '</div>');
-  const head=[];
-  if(dom)head.push('<div class="ft"><span class="k">domain</span><span class="v">'+esc(dom.l)+'</span></div>');
-  if(wk)head.push('<div class="ft"><span class="k">programme week</span><span class="v">'+
-                  esc(String((wk.p||{}).number||wk.l))+'</span></div>');
-  return (head.length?'<div class="facts chain">'+head.join('')+'</div>':'')+
-         '<div class="tier"><div class="tk">source links <span class="dim">'+
-         'every item, all of its links; the mastersheet is the citation, never '+
-         'the link</span></div>'+out.join('')+'</div>';
+  const ex=n=>'<div class="item"><span class="ik">'+esc(typeLabel(n.t))+'</span>'+
+      (lnk((n.p||{}).drive_url,n.l.slice(0,48),n.l)||nolnk('No link recorded'))+'</div>';
+  const exOld=extras.filter(n=>(n.p||{}).historical);
+  for(const n of extras.filter(n=>!(n.p||{}).historical))out.push(ex(n));
+  if(exOld.length)out.push('<details class="historical"><summary>Historical assignments ('+
+    exOld.length+')</summary>'+exOld.map(ex).join('')+'</details>');
+  return '<div class="tier linksec"><div class="tk">Links</div>'+out.join('')+'</div>';
 }
 
-// TOPICS open the deck AT THE SLIDE. A page-object-id deep link needs the
-// Slides API, which this read-only client does not call, so the link is the
-// deck and the slide number is stated beside it — the fallback the spec allows.
+// TOPICS: the deck, with the slide number beside it. A link straight to the
+// slide needs the Google Slides API, which is not enabled for this project yet.
 function topicLinks(id,limit){
-  // Same order as pipeline/lib/module_merge.py::rank_topics, so the panel,
-  // the checklist and the eval agree: current first, housekeeping slides last
-  // (never removed), source rank, source, locator; a repeated title once.
+  // Same order as the checklist and the eval: current first, housekeeping
+  // slides last (never removed), source rank, source, locator; a repeated
+  // title once.
   const all=[];
   for(const [e,other] of edgesTouching(id)){
     const n=idx.byId.get(other); if(!n||n.t!=='content_topic')continue;
-    // D1: a person's name or bio is not a topic — marked by pass 8, never listed.
+    // A person's name or biography is not a topic — marked upstream, never listed.
     if(n.p&&n.p.not_a_topic)continue;
     const p=e.p||{};
     const loc=p.slide!==undefined?('slide '+p.slide)
@@ -1403,66 +2730,83 @@ function topicLinks(id,limit){
     if(rows.length>=(limit||10))break;
   }
   if(!rows.length)return '';
-  return '<div class="tier"><div class="tk">topics <span class="dim">deck plus '+
-    'the slide number; a page-object deep link needs the Slides API</span></div>'+
+  return '<div class="tier"><div class="tk">Topics <span class="dim">the deck and the '+
+    'slide it is on</span></div>'+
     rows.map(r=>'<div class="item"><span class="ik">'+esc(r.label.slice(0,44))+
-      '</span><span class="loc">'+esc(r.loc)+'</span>'+
-      (r.url?lnk(r.url,'open deck'):'')+'</div>').join('')+'</div>';
+      '</span><span class="loc">'+esc(r.loc)+'</span> '+
+      (r.url?lnk(r.url,'Open deck'):'')+'</div>').join('')+'</div>';
 }
 
 function mergedNote(n){
   if(!n||!n.merged||!n.merged.length)return '';
   const raws=(n.p&&n.p.merged_label_raw)||[];
-  return '<div class="tnote">Merged on '+esc(n.merged.join(', '))+
-    (raws.length?' \u2014 also known as '+esc(raws.join('; ')):'')+
-    '. Every absorbed label is kept as a citation key.</div>';
+  return raws.length?'<div class="tnote">Also written as: '+esc(raws.join('; '))+
+    '. Every spelling is kept.</div>':'';
 }
 
 //: A standing note per type, where the ABSENCE of something is the answer.
 const TYPE_NOTE = {
-  workflow: 'Ownership is domain-level at New Programs, so a workflow has no '+
-            'owner. Ninety-two without one is the correct final state, not a gap.',
-  file: 'A file is cited, never traversed. Its provenance links are held '+
-        'separately so a file cited by thousands of rows cannot be walked '+
-        'through as if it connected them.',
+  workflow: 'Workflows have no owner: at New Programs, ownership belongs to domains. '+
+            'That is the correct state, not a gap.',
+  file: 'A file is a source. It is shown with the things that cite it, and is never '+
+        'used to connect them to each other.',
 };
 
 // How one relationship reads, given the edge's own properties.
 function relDetail(x){
   const p = x.p || {};
   const bits = [];
-  // basis is on 100% of expert_in, so it is stated every time. Rendering a
-  // self-declared claim identically to an HR record is the single worst thing
-  // this panel used to do: 92% of expertise is a claim that looked like a finding.
+  // A self-declared claim must never look like an HR record.
   if(p.basis) bits.push(p.basis==='hr_record'
     ? '<span class="ok">HR record</span>' : '<span class="warn2">self-declared</span>');
-  if(p.via_alias) bits.push('<span class="warn2">via alias</span>');
-  // inferred is on 100% of contains. Displayed as fact, it was a fact it is not.
+  if(p.via_alias) bits.push('<span class="warn2">matched through an alias</span>');
   if(p.inferred) bits.push('<span class="warn2">inferred</span>');
-  if(p.rank) bits.push('rank '+esc(String(p.rank)));
   const dates = p.class_dates;
   if(Array.isArray(dates) && dates.length){
     const sorted = dates.slice().sort();
     bits.push(dates.length+' class'+(dates.length>1?'es':'')+
       ' · latest '+esc(String(sorted[sorted.length-1]).slice(0,10)));
   }
-  // avg_rating is on 1.7% of teaches edges. Shown where present, and ABSENT
-  // where absent — not dashed, not zeroed, because an empty rating field reads
-  // as "unrated" when it means "never extracted".
   if(p.avg_rating!==undefined&&p.avg_rating!==null)
     bits.push('rated '+esc(String(p.avg_rating))+
       (p.classes?' over '+esc(String(p.classes)):''));
   return bits.length ? '<div class="reld">'+bits.join(' · ')+'</div>' : '';
 }
 
-async function openNode(id){
-  const before=settle;
+function subtitle(n){
+  if(!n)return '';
+  const bits=[typeLabel(n.t)];
+  const d=n.t==='domain'?null:domainOf(n); if(d)bits.push(domainName(d));
+  if(n.t==='module'){const w=model().weekOf.get(n.id); if(w)bits.push('Programme week '+w);}
+  return bits.join(' · ');
+}
+function pcrumb(){
+  const el=document.getElementById('pcrumb'); if(!el)return;
+  const prev=state.hist.length?idx.byId.get(state.hist[state.hist.length-1]):null;
+  el.innerHTML=prev?'<a id="pback">← Back to '+esc(labelOf(prev).slice(0,40))+'</a>':'';
+  const b=document.getElementById('pback');
+  if(b)b.onclick=()=>{const id=state.hist.pop();openNode(id,{back:true});};
+}
+
+async function openNode(id,opt){
+  if(isGroup(id)){ const g=GROUPS.get(id.slice(4)); if(g)toggleGroup(g); return; }
+  // Opening a panel must never lay the view out again. Checked by counting
+  // recomputes, not by the animation clock: a click that deliberately opens a
+  // place animates the view WHILE the panel loads, and that is not a bug.
+  const before=window.__NP_RECOMPUTES;
+  if(!(opt&&opt.back)&&state.sel&&state.sel!==id){
+    state.hist.push(state.sel); if(state.hist.length>30)state.hist.shift();
+  }
   select(id);
   routeTo(id);
   const n=idx.byId.get(id);
+  const wasOpen=document.getElementById('right').style.display==='block';
   document.getElementById('right').style.display='block';
-  document.getElementById('nl').textContent=n?n.l:id;
-  document.getElementById('nt').textContent=n?n.t:'';
+  try{document.body.classList.add('panel');}catch(e){}
+  if(!wasOpen)panelChanged();
+  document.getElementById('nl').textContent=n?labelOf(n):id;
+  document.getElementById('nt').textContent=n?subtitle(n):'';
+  pcrumb();
   if(n&&n.partial){
     document.getElementById('nprops').innerHTML='<div class="src">loading details…</div>';
     await ensureDetail(id);
@@ -1472,91 +2816,80 @@ async function openNode(id){
   const facts=(TYPE_FACTS[n&&n.t]||(()=>''))(props);
   const note=TYPE_NOTE[n&&n.t];
   const pr=[];
-  if(facts) pr.push('<div class="facts">'+facts+'</div>');
-  if(n&&n.t==='module'){ pr.push(moduleChain(id)); pr.push(topicLinks(id,10)); }
-  if(n&&n.t==='domain') pr.push(domainLinks(n));
-  const tiers=(n&&n.t==='module')?peopleRows(id)
-             :(n&&n.t==='instructor')?taughtRows(id):'';
-  if(tiers) pr.push(tiers);
+  if(n&&n.legacy){
+    pr.push('<div class="plain">Legacy module from older sheets, not in the current mastersheet.</div>');
+    if(facts) pr.push('<div class="facts">'+facts+'</div>');
+  }else{
+    if(facts) pr.push('<div class="facts">'+facts+'</div>');
+    if(n&&n.t==='module'){ pr.push(moduleChain(id)); pr.push(peopleRows(id)); pr.push(topicLinks(id,10)); }
+    if(n&&n.t==='domain') pr.push(domainLinks(n));
+    if(n&&n.t!=='module'&&n.t!=='domain') pr.push(nodeLinks(n));
+    if(n&&n.t==='instructor') pr.push(taughtRows(id));
+  }
   pr.push(unconfirmedFlag(n));
   pr.push(mergedNote(n));
   pr.push(reviewFlag(props));
   if(note) pr.push('<div class="tnote">'+esc(note)+'</div>');
-  pr.push('<div class="acts"><button type="button" id="goto">centre</button>');
-  // A file has nothing to expand to — see below. Offering the button anyway
-  // is a control that cannot work.
-  if(!n||n.t!=='file')
-    pr.push('<button type="button" id="exp2">expand from here</button>');
+  pr.push('<div class="acts"><button type="button" id="goto">Show on the canvas</button>');
+  if(n&&n.t!=='file')
+    pr.push('<button type="button" id="exp2">Show its connections</button>');
   pr.push('</div>');
   document.getElementById('nprops').innerHTML=pr.join('');
-  const g=document.getElementById('goto'); if(g&&n)g.onclick=()=>centreOn(n,1.6);
-  const x2=document.getElementById('exp2'); if(x2)x2.onclick=()=>expand(id);
+  const g=document.getElementById('goto');
+  if(g&&n)g.onclick=()=>{ if(!VIEWMETA.has(n.id))goPlace({kind:'node',id:n.id},'show');
+                          centreOn(n,1.4); };
+  const x2=document.getElementById('exp2');
+  if(x2)x2.onclick=async ()=>{ await expand(id); goPlace({kind:'node',id:id},'connections'); };
 
+  // CONNECTIONS, grouped by what the relationship means, in plain words.
   const nb=neighboursOf(idx,id,CAP,state.expanded.has(id));
   document.getElementById('ncount').textContent=nb.total;
-  // GROUPED BY RELATION. A flat list of "teaches · module" six times says
-  // nothing about whether he taught it once or forty times; the edge properties
-  // that answer it were being dropped by adaptEdge entirely.
   const byRel=new Map();
-  for(const x of nb.shown){ if(!byRel.has(x.r)) byRel.set(x.r,[]); byRel.get(x.r).push(x); }
+  for(const x of nb.shown){
+    const o=idx.byId.get(x.o); if(!o)continue;
+    const k=relLabel(x.r,x.dir);
+    if(!byRel.has(k)) byRel.set(k,[]); byRel.get(k).push([x,o]);
+  }
+  // HISTORICAL files never mix with current ones: a collapsed group per list
+  const row=([x,o])=>'<div class="nb" data-id="'+esc(x.o)+'">'+esc(labelOf(o))+
+          (badgeOf(o)?' '+LEGACY_BADGE:'')+
+          '<div class="rel">'+esc(typeLabel(o.t))+'</div>'+relDetail(x)+'</div>';
+  const isHist=([x,o])=>!!(o.p||{}).historical;
   document.getElementById('nbrs').innerHTML=
-    [...byRel.entries()].map(([rel,xs])=>
-      '<div class="relgrp"><div class="relhead">'+esc(rel)+
-        '<span class="dim"> · '+xs.length+'</span></div>'+
-      xs.map(x=>{
-        const o=idx.byId.get(x.o); if(!o) return '';
-        return '<div class="nb" data-id="'+esc(x.o)+'">'+esc(o.l)+
-          '<div class="rel">'+esc(o.t)+'</div>'+relDetail(x)+'</div>';
-      }).join('')+'</div>').join('')
-    ||'<div class="src">no relationships loaded — use “expand from here”</div>';
-  // A FILE NODE HAS NO TRAVERSABLE EDGES BY CONSTRUCTION. Provenance is in
-  // node_sources, not in `edges` (§A.3), so the file hubs are unreachable —
-  // measured: 0 edges touch any of the 74 file nodes. "expand from here" would
-  // fetch a neighbourhood of exactly one node and add nothing, which looks like
-  // a broken button rather than a deliberate design.
+    [...byRel.entries()].map(([rel,xs])=>{
+      const cur=xs.filter(r=>!isHist(r)), old=xs.filter(isHist);
+      return '<div class="relgrp"><div class="relhead">'+esc(rel)+
+        '<span class="dim"> · '+xs.length+'</span></div>'+cur.map(row).join('')+
+        (old.length?'<details class="historical"><summary>Historical ('+old.length+')</summary>'+
+          old.map(row).join('')+'</details>':'')+
+      '</div>';}).join('')
+    ||'<div class="empty">Nothing connected is loaded yet. “Show its connections” fetches them.</div>';
   if(n&&n.t==='file'){
     const rel=document.getElementById('nbrs');
-    if(rel) rel.innerHTML='<div class="src">A file has no traversable '+
-      'relationships, by design. Provenance is held separately so that a file '+
-      'cited by thousands of rows cannot be walked through as if it connected '+
-      'them. Expanding from here would return nothing. What cites this file is '+
-      'below.</div>';
+    if(rel) rel.innerHTML='<div class="empty">A file is a source, not a connection: '+
+      'what it supports is listed under Sources on each item that cites it.</div>';
   }
   document.getElementById('more').innerHTML=nb.hidden>0
-    ? '<button type="button" id="exp">show '+nb.hidden+' more</button>' : '';
+    ? '<button type="button" id="exp">Show '+nb.hidden+' more</button>' : '';
   const ex=document.getElementById('exp');
-  if(ex)ex.onclick=()=>{state.expanded.add(id);openNode(id)};
-  for(const el of document.querySelectorAll('.nb'))
+  if(ex)ex.onclick=()=>{state.expanded.add(id);openNode(id,{back:true})};
+  for(const el of document.querySelectorAll('.nb, .nbl'))
     el.onclick=()=>{const o=idx.byId.get(el.dataset.id);openNode(el.dataset.id);
-      if(o&&o.x!==undefined)centreOn(o,Math.max(cam.k,1.2))};
+      if(o&&o.x!==undefined&&VIEWMETA.has(o.id))centreOn(o,Math.max(cam.k,1.2))};
 
-  if(settle!==before)
-    console.error('[np] BUG: opening a node changed the simulation clock '+
-                  before+' -> '+settle+'. Selection must not touch layout.');
+  if(window.__NP_RECOMPUTES!==before)
+    console.error('[np] BUG: opening a panel laid the view out again ('+
+                  before+' -> '+window.__NP_RECOMPUTES+' recomputes).');
   renderProvenance(id);
 }
 
-// ---- THE PROVENANCE PANEL ------------------------------------------------
-// The distinction between a SCANNED fact and a HAND-ENTERED one was invisible
-// for the whole project until the collision check surfaced it, and it must not
-// become invisible again in a UI. So the two are rendered as different things —
-// different border, different ground, their own heading — rather than one list
-// with a flag. A flag is something a renderer can forget.
-// ---- THE PROVENANCE PANEL, GROUPED BY FILE -------------------------------
-// 152 provenance rows on one instructor is CORRECT DATA. §A.4 established that
-// one assertion per source row is legitimate evidence, not duplication: the
-// same fact read from 147 schedule rows is 147 separate observations, and the
-// worst case in the corpus is a module cited 1,014 times across 2 files.
-//
-// THE GROUPING IS PRESENTATIONAL ONLY. Nothing is collapsed in the data, the
-// API returns every row, and the counts below are computed from those rows.
-// DO NOT DEDUPE AT SOURCE. The next person to see 147 near-identical lines
-// will want to, and §A.4 is why they must not: the duplicates are the evidence
-// that the claim is cross-file rather than a single sheet repeated.
-//
-// A flat list buried the thing that decides trust — how many DISTINCT FILES
-// cite this — which is the cross_validated signal. So the file count leads and
-// the rows are behind a disclosure.
+// ---- SOURCES --------------------------------------------------------------
+// A SCANNED fact and a HAND-ENTERED one are rendered as different things —
+// different border, different heading — never one list with a flag, because a
+// flag is something a renderer can forget. Rows are grouped by file: the number
+// of DISTINCT FILES is what decides trust, and one fact read from many rows of
+// a schedule is many observations, not duplication. Grouping is presentational
+// only; the data keeps every row.
 function groupByFile(rows){
   const by=new Map();
   for(const r of rows){
@@ -1565,70 +2898,66 @@ function groupByFile(rows){
                              sheet_count:r.sheet_count||null, rows:[]});
     by.get(k).rows.push(r);
   }
-  // Most-cited first. This is an ORDERING of evidence, not a ranking of
-  // candidates — the thing §F3 forbids is choosing FOR someone, and a reader
-  // needs the bulk of the evidence first.
   return [...by.values()].sort((a,b)=>b.rows.length-a.rows.length);
 }
-
+function fileName(path){
+  const base=String(path||'').replace(/\/+$/,'').split('/').pop()||String(path||'');
+  return base.replace(/\.(xlsx|xlsm|csv|docx|pdf|pptx)$/i,'');
+}
+function citeWords(r){
+  const bits=[];
+  if(r.sheet)bits.push(r.sheet+' tab');
+  if(r.row_num)bits.push('row '+r.row_num);
+  if(r.col_name)bits.push('column “'+r.col_name+'”');
+  if(r.page)bits.push('page '+r.page);
+  if(r.slide)bits.push('slide '+r.slide);
+  return bits.join(', ')||'the whole file';
+}
 async function renderProvenance(id){
   const box=document.getElementById('files');
-  box.innerHTML='<div class="src">loading provenance…</div>';
+  box.innerHTML='<div class="src">loading sources…</div>';
   let out=DETAIL.has(id)?await DETAIL.get(id):null;
   if(!out){
     try{ out=await api('/node?id='+encodeURIComponent(id)); }
-    catch(e){ box.innerHTML='<div class="src">provenance unavailable</div>'; return; }
+    catch(e){ box.innerHTML='<div class="src">Sources could not be loaded.</div>'; return; }
   }
   if(out.error){ box.innerHTML='<div class="src">'+esc(out.error)+'</div>'; return; }
   const n=idx.byId.get(id);
   if(n&&out.node){ n.st=(out.node.props||{}).status||n.st;
                    n.raw=out.node.label_raw||n.raw; }
   const p=out.provenance||{corpus:[],hand:[]};
-  const cite=r=>[r.sheet?'!'+r.sheet:'', r.row_num?' r'+r.row_num:'',
-                 r.col_name?' '+r.col_name:(r.col_num?' c'+r.col_num:''),
-                 r.page?' p'+r.page:''].join('').trim() || 'whole file';
-
   let html='';
   if(n&&n.raw&&n.raw!==n.l)
-    html+='<div class="src">as written in the corpus: <b>'+esc(n.raw)+'</b></div>';
-
+    html+='<div class="src">Written in the source as: <b>'+esc(n.raw)+'</b></div>';
   const groups=groupByFile(p.corpus);
   html+='<div class="tagline prov-corpus" style="border:0;padding:0;margin-top:6px">'+
-        'From a scan of the corpus</div>';
+        'Read from the files</div>';
   if(!groups.length){
-    html+='<div class="src">none recorded</div>';
+    html+='<div class="src">No file source recorded.</div>';
   }else{
-    // THE JUDGEMENT A READER NEEDS IS THE FILE COUNT, not the row count.
-    html+='<div class="provsum">cited in <b>'+groups.length+'</b> '+
+    html+='<div class="provsum">Named in <b>'+groups.length+'</b> '+
           (groups.length===1?'file':'files')+
-          ' <span class="dim">· '+p.corpus.length+' source rows</span></div>';
+          ' <span class="dim">· '+p.corpus.length+' places in total</span></div>';
     html+=groups.map((g,i)=>
       '<div class="pf"><div class="pfhead" data-g="'+i+'">'+
         '<span class="pfcount">'+g.rows.length+'</span>'+
-        '<span class="pfname">'+esc(g.file)+'</span>'+
-        (g.sheet_count?'<span class="dim">'+g.sheet_count+' sheets</span>':'')+
+        '<span class="pfname">Source: '+esc(fileName(g.file))+
+          (g.rows.length===1?', '+esc(citeWords(g.rows[0])):'')+'</span>'+
         (g.drive_url?'<a class="pflink" target="_blank" rel="noopener noreferrer" '+
-          'href="'+esc(g.drive_url)+'" title="Opens the FILE in Drive, not this row">'+
-          'open file ↗</a>':'')+
+          'href="'+esc(g.drive_url)+'" title="Opens the whole file in Drive, not this row">open file ↗</a>':'')+
       '</div><div class="pfrows" id="pfr-'+i+'" hidden>'+
-        g.rows.map(r=>'<div class="src">'+esc(cite(r))+
-          (r.prop?' <b>'+esc(r.prop)+'</b>':'')+'</div>').join('')+
+        g.rows.map(r=>'<div class="src">'+esc(citeWords(r))+'</div>').join('')+
       '</div></div>').join('');
   }
-
   if(p.hand.length){
     html+='<div class="tagline prov-hand" style="border:0;background:none;'+
           'padding:0;margin-top:10px">Entered by a person ('+p.hand.length+')</div>';
-    html+='<div class="src" style="color:#d29922">'+esc(p.hand_note||'')+'</div>';
-    html+=p.hand.map(r=>'<div class="prov-hand"><div class="tagline">hand-entered'+
-      (r.prop?' · '+esc(r.prop):'')+'</div><div class="src">'+
-      esc(r.evidence||'no evidence recorded')+'</div>'+
+    html+=p.hand.map(r=>'<div class="prov-hand"><div class="tagline">entered by hand</div>'+
+      '<div class="src">'+esc(r.evidence||'No evidence recorded')+'</div>'+
       (r.entered_at?'<div class="src">'+esc(String(r.entered_at).slice(0,10))+
        '</div>':'')+'</div>').join('');
   }
   box.innerHTML=html;
-
-  // Collapsed by default; the disclosure is per file.
   for(const h of box.querySelectorAll('.pfhead')){
     h.onclick=(ev)=>{
       if(ev&&ev.target&&ev.target.className==='pflink') return;  // the link is not the toggle
@@ -1638,94 +2967,124 @@ async function renderProvenance(id){
   }
 }
 
-function closePanel(){state.sel=null;document.getElementById('right').style.display='none'}
+function closePanel(){state.sel=null;
+  const wasOpen=document.getElementById('right').style.display==='block';
+  document.getElementById('right').style.display='none';
+  try{document.body.classList.remove('panel');}catch(e){}
+  if(wasOpen)panelChanged();}
 document.getElementById('close').onclick=closePanel;
 
 // ---- search --------------------------------------------------------------
+// B4: current (mastersheet) modules first, then everything else grouped by
+// type, and legacy modules last under "Legacy (N)". Each result carries its
+// domain and programme week where the graph knows them. Keyboard: / focuses,
+// up and down move, Enter opens, Esc clears.
 const res=document.getElementById('res');
-let tq=null;
-document.getElementById('q').addEventListener('input',ev=>{
+let tq=null, HITS=[], HIT_AT=-1;
+function searchBadges(r){
+  const n=idx.byId.get(r.id); if(!n)return '';
+  const out=[];
+  const d=n.t==='domain'?null:domainOf(n);
+  if(d){const mods=model().cur.get(d.id)||[];
+        out.push(mods.length?(DOMAIN_CODE[mods[0].dom]||d.l):d.l);}
+  if(n.t==='domain'&&isLegacyDomain(n)||d&&isLegacyDomain(d))out.push('legacy');
+  const w=n.t==='module'?model().weekOf.get(n.id):null;
+  if(w)out.push('Week '+w);
+  if(isUnconfirmed(n))out.push('not confirmed');
+  return out.map(x=>'<span class="bdg'+(x==='legacy'?' legacy':'')+'">'+esc(x)+'</span>').join('');
+}
+function renderHits(rows,query){
+  const legacyOf=r=>{const n=idx.byId.get(r.id);return r.type==='module'&&(!n||n.legacy);};
+  const cur=rows.filter(r=>r.type==='module'&&!legacyOf(r));
+  const leg=rows.filter(r=>legacyOf(r));
+  const rest=rows.filter(r=>r.type!=='module');
+  const groups=[];
+  if(cur.length)groups.push(['Current modules',cur]);
+  const byType=new Map();
+  for(const r of rest){if(!byType.has(r.type))byType.set(r.type,[]);byType.get(r.type).push(r);}
+  const order=[...byType.keys()].sort((a,b)=>{
+    const ia=TYPES.indexOf(a), ib=TYPES.indexOf(b);
+    return (ia<0?99:ia)-(ib<0?99:ib);});
+  for(const t of order)groups.push([TYPE_PLURAL[t]||typeLabel(t),byType.get(t)]);
+  if(leg.length)groups.push(['Legacy ('+leg.length+')',leg]);
+  HITS=[]; HIT_AT=-1;
+  let h='';
+  for(const [title,list] of groups){
+    h+='<div class="hitgroup">'+esc(title)+'</div>';
+    for(const r of list){
+      const n=idx.byId.get(r.id);
+      h+='<div class="hit" data-id="'+esc(r.id)+'" data-i="'+HITS.length+'"><i style="background:'+
+        (C[r.type]||'#c9d1d9')+'"></i><span>'+esc(n?labelOf(n):r.label)+'</span>'+
+        searchBadges(r)+'</div>';
+      HITS.push(r);
+    }
+  }
+  res.innerHTML=h||('<div class="empty"><b>No match for “'+esc(query)+'”.</b> '+
+    'Search matches the names of things in this graph. Not finding a name here does '+
+    'not mean the files do not mention it.</div>');
+  for(const el of res.querySelectorAll('.hit'))el.onclick=()=>pickHit(HITS[+el.dataset.i]);
+}
+async function pickHit(r){
+  if(!r)return;
+  const id=r.id;
+  if(!idx.byId.get(id)){
+    mergeGraph(D,{nodes:[adaptNode(r)],edges:[]},BUDGET);
+    recompute(false,'search seed');
+  }
+  const n=idx.byId.get(id);
+  if(n&&!VIEWMETA.has(id)){
+    const d=domainOf(n);
+    if(n.t==='module'&&!n.legacy&&d){state.open.add(id);goPlace({kind:'domain',id:d.id},'search');}
+    else if(n.t==='domain'&&model().domains.indexOf(n)>=0)goPlace({kind:'domain',id:id},'search');
+    else{ if(!n.loaded)await expand(id); goPlace({kind:'node',id:id},'search'); }
+  }
+  openNode(id);
+  const m=idx.byId.get(id); if(m&&m.tx!==undefined)centreOn({x:m.tx,y:m.ty},Math.max(cam.k,1.2));
+}
+function moveHit(d){
+  const els=res.querySelectorAll('.hit'); if(!els.length)return;
+  HIT_AT=Math.max(0,Math.min(els.length-1,HIT_AT+d));
+  els.forEach((el,i)=>el.classList&&el.classList.toggle('cur',i===HIT_AT));
+  if(els[HIT_AT]&&els[HIT_AT].scrollIntoView)els[HIT_AT].scrollIntoView({block:'nearest'});
+}
+const qEl=document.getElementById('q');
+qEl.addEventListener('keydown',ev=>{
+  if(ev.key==='ArrowDown'){ev.preventDefault();moveHit(1);}
+  else if(ev.key==='ArrowUp'){ev.preventDefault();moveHit(-1);}
+  else if(ev.key==='Enter'){ev.preventDefault();pickHit(HITS[HIT_AT<0?0:HIT_AT]);}
+});
+qEl.addEventListener('input',ev=>{
   clearTimeout(tq);
   const v=ev.target.value;
   tq=setTimeout(async ()=>{
-    if(!v||v.trim().length<2){res.innerHTML='';return}
+    if(!v||v.trim().length<2){res.innerHTML='';HITS=[];return}
     let out;
-    try{ out=await api('/search?q='+encodeURIComponent(v)+'&limit=40'); }
+    try{ out=await api('/search?q='+encodeURIComponent(v)+'&limit=60'); }
     catch(e){ return; }
-    const rows=out.results||[];
-    // BADGES say what KIND OF CLAIM a hit is, which the type alone does not.
-    // A legacy module and a mastersheet module are both `module`; an
-    // instructor whose identity is an open review row looks identical to one
-    // that is settled. Both distinctions matter before someone acts on a hit.
-    const badge=r=>{
-      const n=idx.byId.get(r.id);
-      const p=r.props||(n&&n.p)||{};
-      if(r.type==='module'&&p.domain_slug===undefined)
-        return '<span class="badge" title="label-keyed, not reconciled with the mastersheet">legacy</span>';
-      if(r.type==='instructor'&&DUPES.has(r.label))
-        return '<span class="badge" title="another node carries this exact label; left apart by owner decision">unconfirmed</span>';
-      if(Array.isArray(p.merge_ids)&&p.merge_ids.length)
-        return '<span class="badge" title="'+esc(p.merge_ids.join(', '))+'">merged</span>';
-      return '';
-    };
-    res.innerHTML=rows.map(r=>
-      '<div class="hit" data-id="'+esc(r.id)+'"><i style="background:'+
-      (C[r.type]||'#888')+'"></i><span>'+esc(r.label)+'</span><em>'+
-      esc(r.type)+'</em>'+badge(r)+'</div>').join('')
-      ||'<div class="src"><b>No match.</b> This is a LABEL match over the '+
-        'projected graph \u2014 a miss is not evidence the corpus lacks it, only '+
-        'that this graph does not hold that label.</div>';
-    // FILE SEARCH WAS NOT CARRIED OVER, and this is where somebody finds that
-    // out — typing a filename into a box that matches labels. It was a
-    // permanent sidebar panel; now it appears at the moment it explains
-    // something, the same principle as the landing page's limits.
-    if(/\.(xlsx|xlsm|csv|pdf|docx|md)\b|\//i.test(v))
-      res.innerHTML='<div class="src" style="color:#d29922"><b>That looks like a '+
-        'file name.</b> File search and the theme filter were not carried over '+
-        'from the offline build \u2014 both read whole-graph attributes no endpoint '+
-        'returns. Search matches node labels only. A file still appears in the '+
-        'provenance panel of any node it sourced.</div>'+res.innerHTML;
-    for(const el of res.querySelectorAll('.hit'))
-      el.onclick=async ()=>{
-        const id=el.dataset.id;
-        if(!idx.byId.get(id)){
-          // Seed the node itself, so a hit is openable even when its
-          // neighbourhood turns out to be empty.
-          const r=rows.find(x=>x.id===id);
-          if(r){mergeGraph(D,{nodes:[adaptNode(r)],edges:[]},BUDGET);
-                recompute(true,'search seed')}
-        }
-        await expand(id);
-        openNode(id);
-        const m=idx.byId.get(id); if(m&&m.x!==undefined)centreOn(m,1.6);
-      };
+    renderHits(out.results||[],v);
+    // File names are not searchable: say so at the moment it matters.
+    if(/\.(xlsx|xlsm|csv|pdf|docx|pptx|md)\b|\//i.test(v))
+      res.innerHTML='<div class="src" style="color:#d29922"><b>That looks like a file '+
+        'name.</b> Search matches the names of things, not files. A file appears under '+
+        'Sources on everything it supports.</div>'+res.innerHTML;
   },160);
 });
 
 // ---- controls ------------------------------------------------------------
-const tbox=document.getElementById('types');
-if(tbox) tbox.innerHTML=TYPES.map(t=>
-  '<label class="tf"><input type="checkbox" class="ty" value="'+t+'" checked>'+
-  '<i style="background:'+(C[t]||'#888')+'"></i>'+t+'</label>').join('');
-for(const el of document.querySelectorAll('.ty'))
-  el.onchange=()=>{state.types=new Set([...document.querySelectorAll('.ty')]
-    .filter(x=>x.checked).map(x=>x.value));recompute(true,'type-filter')};
-document.getElementById('iso').onchange=e=>{state.showIso=e.target.checked;
-  recompute(true,'iso-toggle')};
-document.getElementById('dash').onchange=e=>{state.showDash=e.target.checked;
-  recompute(false,'dash-toggle')};
-const _dr=document.getElementById('drift');
-if(_dr)_dr.onchange=e=>{drift=e.target.checked;
-  console.log('[np] decorative drift '+(drift?'on':'off')+
-              ' — paint-time only, layout untouched')};
-document.getElementById('sep').onchange=e=>{state.separate=e.target.checked;
-  for(const n of D.nodes)delete n.x;recompute(true,'separate-toggle')};
-// Display only -- it must never recompute. Showing a counter is not a reason to
-// re-run the force layout.
-const _dk=document.getElementById('diagck');
-if(_dk)_dk.onchange=e=>{showDiag=e.target.checked;renderDiag()};
-const _dp=document.getElementById('depth');
-if(_dp)_dp.onchange=e=>{state.depth=parseInt(e.target.value,10)||1};
+// B4: the type chips live in the header (renderChips). The technical toggles
+// — decorative drift, separate components, restart diagnostic, depth — are
+// gone from the page: they were developer switches, not questions a reader asks.
+function renderLegend(){
+  const el=document.getElementById('legend'); if(!el)return;
+  el.innerHTML=TYPES.map(t=>'<div><i style="background:'+(C[t]||'#c9d1d9')+'"></i>'+
+    esc(TYPE_PLURAL[t]||t)+'</div>').join('')+
+    '<div><i style="background:#21262d;border:1.5px solid #8b949e;border-radius:2px"></i>A group &mdash; click to open</div>'+
+    // the ROLE colours, on the map's edges and in the matrix cells
+    '<div style="grid-column:1/-1;margin-top:6px;color:#8b949e">Roles (edges, matrix)</div>'+
+    ROLE_ORDER.map(r=>'<div><i style="background:'+ROLE_COLOR[r]+';border-radius:1px;height:3px;margin-top:5px"></i>'+
+      esc(ROLE_SHORT[r]+' '+ROLE_LABEL[r])+'</div>').join('');
+}
+renderLegend();
 
 // ---- the auth gate -------------------------------------------------------
 const STORE=window.__NP.sessionKey;
@@ -2014,26 +3373,12 @@ async function loadStructure(){
   const dec=decodeStructure(out);
   const res=mergeGraph(D,{nodes:dec.nodes,edges:dec.edges},BUDGET);
   window.__NP.structureNote=out.note||'';
-  let msg='';
-  if(res.refused) msg='<b>'+res.refused+' nodes were not loaded</b> \u2014 this '+
-    'client holds at most '+BUDGET+'.';
-  else if(out.legacy_modules)
-    msg='<b>'+out.legacy_modules+' legacy modules</b> are shown faded: they are '+
-        'keyed on their label and have not been reconciled with the '+
-        'mastersheet. Nothing is hidden \u2014 see docs/REVIEW-QUEUE.md.';
-  banner(msg, res.refused?'err':'');
+  // adapt-drop: legacy_modules — the chips count legacy modules from the nodes themselves
+  window.__NP.counts=out.counts||{};
+  banner(res.refused?('<b>'+res.refused+' items were not loaded</b> — this page holds '+
+    'at most '+BUDGET+'. This is a limit of the page, not of the graph.'):'',
+    res.refused?'err':'');
   recompute(true,'structure view');
-  // B3: THE LAYOUT WAS COMPUTED AT PROJECTION (pipeline/lib/layout.py — this
-  // page's own step(), run once). Start frozen and fitted rather than spend
-  // 366 frames recomputing coordinates that are already here. Anything that
-  // later adds nodes still calls recompute() and simulates, as before.
-  if(dec.laidOut && !res.refused){
-    frozen=true; alpha=0; settle=0;
-    fit();
-    window.__NP_STATE={settle:settle,alpha:alpha,frozen:frozen,precomputed:true,
-                       recomputes:window.__NP_RECOMPUTES,nodes:D.nodes.length};
-    console.log('[np] precomputed layout: '+D.nodes.length+' nodes, frozen at load');
-  }
   try{ afterStructure(); }catch(e){ console.warn('view setup', e); }
   return true;
 }
@@ -2175,6 +3520,10 @@ async function openRoute(){
   const m=/^#\/node\/(.+)$/.exec(location.hash||'');
   if(!m) return false;
   const id=decodeURIComponent(m[1]);
+  // The hash this page just wrote for the node already open is an echo, not a
+  // navigation: re-opening and re-centring on it threw the camera to wherever
+  // the node was mid-animation (B4: an empty canvas after opening a module).
+  if(state.sel===id) return true;
   if(!idx.byId.get(id)) await expand(id);   // arrive cold: fetch it first
   openNode(id);
   const o=idx.byId.get(id); if(o&&o.x!==undefined) centreOn(o,1.6);
@@ -2195,19 +3544,26 @@ const SHEET=document.getElementById('sheet'), VBAR=document.getElementById('vbar
 function domainsInPlay(){
   const m=new Map();
   for(const n of D.nodes){ if(n.t==='module'&&n.dom) m.set(n.dom,true); }
-  return [...m.keys()].sort();
+  return [...m.keys()].sort((a,b)=>(DOMAIN_CODE[a]||a).localeCompare(DOMAIN_CODE[b]||b));
 }
-
+function domainTitle(slug){
+  if(String(slug).indexOf('legacy:')===0){const d=idx.byId.get(String(slug).slice(7));return d?domainText(d):slug;}
+  const m=D.nodes.find(n=>n.t==='module'&&n.dom===slug&&!n.legacy);
+  const d=m?model().domOf.get(m.id):null;
+  return d?domainName(d):slug;
+}
 function modulesFor(dom){
+  if(dom&&String(dom).indexOf('legacy:')===0)
+    return (model().legacy.get(String(dom).slice(7))||[]).slice().sort(byLabel);
   return D.nodes.filter(n=>n.t==='module'&&(!dom||n.dom===dom)&&!n.legacy)
-                .sort((a,b)=>(a.dom||'').localeCompare(b.dom||'')||
+                .sort((a,b)=>(DOMAIN_CODE[a.dom]||a.dom||'').localeCompare(DOMAIN_CODE[b.dom]||b.dom||'')||
                              (((a.p||{}).sequence||0)-((b.p||{}).sequence||0)));
 }
 
-// WHO TEACHES WHAT. Rows are instructors, columns modules, cells carry the
-// ROLE. A cell whose instructor identity is still an open review row is
-// HATCHED rather than filled: it is a claim that has not been confirmed, and
-// colouring it like the others would say it had been.
+// WHO TEACHES WHAT. Rows are instructors, columns the current modules, and a
+// cell carries the ROLE. A role from the current mastersheet outranks a
+// teaching record from the older sheets in the same cell; a cell whose
+// instructor identity is not yet confirmed is HATCHED, never coloured as if it were.
 const ROLE_RANK={primary:4,backup_1:3,backup_2:2,backup_3:1};
 function cellRank(c){
   return (c.tier==='legacy'?0:10)+(ROLE_RANK[c.role]||0);
@@ -2215,7 +3571,7 @@ function cellRank(c){
 function renderMatrix(){
   const mods=modulesFor(state.fDomain);
   const rows=new Map();
-  for(const e of E){
+  for(const e of D.edges){        // every loaded edge — E is the drawn view only
     const tier=e.p&&e.p.tier; if(!tier)continue;
     const a=idx.byId.get(e.s), b=idx.byId.get(e.t); if(!a||!b)continue;
     const mod=a.t==='module'?a:(b.t==='module'?b:null);
@@ -2225,92 +3581,116 @@ function renderMatrix(){
     const role=(e.p&&e.p.instructor_role)||(tier==='legacy'?'taught':'');
     if(state.fRole&&role!==state.fRole)continue;
     if(!rows.has(ins.id))rows.set(ins.id,{ins,cells:new Map()});
-    // ONE CELL, TWO KINDS OF EVIDENCE: a pair can carry a legacy `teaches`
-    // edge AND a mastersheet `taught_by` role. The cell used to show whichever
-    // edge came LAST, so the load column (D4a) depended on edge order — and
-    // under-counted two roles until B3 happened to reorder the edges. The rule
-    // is explicit now: the mastersheet role wins; within a tier, the stronger.
     const cells=rows.get(ins.id).cells, prev=cells.get(mod.id), next={role,tier};
     if(!prev||cellRank(next)>cellRank(prev))cells.set(mod.id,next);
   }
-  const list=[...rows.values()].sort((x,y)=>x.ins.l.localeCompare(y.ins.l)||
-    (x.ins.id<y.ins.id?-1:x.ins.id>y.ins.id?1:0));   // ties: stable, by id
-  let h='<h2>Who teaches what'+(state.fDomain?' \u2014 '+esc(state.fDomain):'')+
-        ' <span class="dim">'+list.length+' instructors \u00d7 '+mods.length+
+  const hasRole=r=>[...r.cells.values()].some(c=>c.tier==='mastersheet');
+  const az=(x,y)=>x.ins.l.localeCompare(y.ins.l)||(x.ins.id<y.ins.id?-1:x.ins.id>y.ins.id?1:0);
+  // BY ROLE (the default): the shared rule over the modules in view
+  const order=roleSort(roleEntries(new Set(mods.map(m=>m.id)),state.fRole||null));
+  const pos=new Map(order.map((o,i)=>[o.ins,o])), byRole=state.mxSort!=='az';
+  const list=[...rows.values()].sort((x,y)=>(hasRole(y)-hasRole(x))||
+    (byRole&&pos.has(x.ins.id)&&pos.has(y.ins.id)
+      ?order.indexOf(pos.get(x.ins.id))-order.indexOf(pos.get(y.ins.id)):az(x,y)));
+  let h='<h2>Who teaches what'+(state.fDomain?' — '+esc(domainTitle(state.fDomain)):'')+
+        ' <span class="dim">'+list.length+' instructors × '+mods.length+
         ' modules</span></h2>';
-  if(!list.length){ SHEET.innerHTML=h+'<p class="dim">No staffing edges match this filter.</p>'; return; }
-  h+='<table><thead><tr><th>instructor</th><th title="modules taught: '+
-     'Primary and Backup">load</th>';
-  for(const m of mods) h+='<th title="'+esc(m.l)+'">'+esc((m.dom||'')+'/'+((m.p||{}).sequence||''))+'</th>';
+  h+='<div class="mxbar"><span class="dim">Sort:</span> '+
+     '<button type="button" class="mxs" data-s="role" aria-pressed="'+byRole+'">by role</button>'+
+     '<button type="button" class="mxs" data-s="az" aria-pressed="'+(!byRole)+'">A–Z</button>'+
+     '<span class="mxleg">'+ROLE_ORDER.map(r=>'<span class="sw r-'+r+'">'+ROLE_SHORT[r]+'</span>'+
+       esc(ROLE_LABEL[r])).join('')+'<span class="sw leg">•</span>taught it (older sheets)</span></div>';
+  if(!mods.length){ SHEET.innerHTML=h+'<p class="empty">No current modules are loaded.</p>'; return; }
+  if(!list.length){ SHEET.innerHTML=h+'<p class="empty">'+(state.fRole
+    ?'No instructor holds that role in these modules.'
+    :'No mastersheet instructors loaded for these modules.')+'</p>'; return; }
+  h+='<table><thead><tr><th>Instructor</th><th title="modules taught as primary and as backup">Load</th>';
+  for(const m of mods) h+='<th title="'+esc(m.l)+'">'+esc((DOMAIN_CODE[m.dom]||m.dom||'')+'/'+((m.p||{}).sequence||''))+
+    '<br><span class="dim" style="display:inline-block;white-space:normal;max-width:130px">'+esc(m.l)+'</span></th>';
   h+='</tr></thead><tbody>';
+  let dividerShown=false, lastRole=null;
   for(const r of list){
+    // a thin labelled divider between the role groups (by-role order only)
+    const o=pos.get(r.ins.id);
+    if(byRole&&o&&o.role!==lastRole){
+      lastRole=o.role;
+      h+='<tr class="grp"><td colspan="'+(mods.length+2)+'" style="color:'+ROLE_COLOR[o.role]+'">'+
+         esc(ROLE_LABEL[o.role])+'</td></tr>';
+    }
+    if(!hasRole(r)&&!dividerShown){
+      dividerShown=true;
+      h+='<tr class="grp"><td colspan="'+(mods.length+2)+'" class="dim">From the older sheets only '+
+         '(no role in the current mastersheet)</td></tr>';
+    }
     const unconf=isUnconfirmed(r.ins);
-    // LOAD IS COUNTED PER NODE, so it is never summed across an unresolved
-    // identity: `Bill Ogden` is two nodes and gets two loads, each marked.
-    // Adding them would assert the merge the owner declined (INS-08/30).
+    // LOAD IS COUNTED PER ROW and never summed across an unconfirmed identity.
     let P=0,B=0;
     for(const c of r.cells.values()){
       if(c.role==='primary')P++;
       else if(c.role&&c.role.indexOf('backup')===0)B++;
     }
-    const load=P+'\u00a0P\u00a0\u00b7\u00a0'+B+'\u00a0B';
-    h+='<tr><td>'+esc(r.ins.l)+(unconf?'<span class="badge">unconfirmed</span>':'')+
+    const load=P+' P · '+B+' B';
+    h+='<tr><td><a class="nbl" data-id="'+esc(r.ins.id)+'">'+esc(r.ins.l)+'</a>'+
+       (unconf?'<span class="badge">not confirmed</span>':'')+
        '</td><td class="load'+(unconf?' unconf':'')+'" title="'+
-       (unconf?'this row only \u2014 not summed across an unresolved identity'
-              :'modules taught')+'">'+load+(unconf?'&nbsp;<span class="dim">?</span>':'')+'</td>';
+       (unconf?'this row only — not added to any other entry for the same name'
+              :'modules taught')+'">'+load+'</td>';
     for(const m of mods){
       const c=r.cells.get(m.id);
-      h+='<td class="'+(c?(unconf?'unconf':'on'):'')+'" title="'+
-         esc(c?(c.tier+' \u2014 '+(c.role||'')):'')+'">'+
-         (c?esc((c.role||'\u2022').replace('backup_','b')):'')+'</td>';
+      h+='<td class="'+(c?(unconf?'unconf':(c.tier==='mastersheet'&&ROLE_COLOR[c.role]?'r-'+c.role:'leg')):'')+'" title="'+
+         esc(c?((c.tier==='legacy'?'older sheets':'current mastersheet')+
+                (c.role&&ROLE_LABEL[c.role]?' — '+ROLE_LABEL[c.role]:'')):'')+'">'+
+         (c?esc(ROLE_SHORT[c.role]||'•'):'')+'</td>';
     }
     h+='</tr>';
   }
-  h+='</tbody></table><p class="dim">Load counts modules per ROW. Where an '+
-     'identity is unresolved the load is shown per row and never summed '+
-     'across the rows \u2014 that would assert a merge the owner declined. '+
-     'Hatched = the instructor identity is an '+
-     'open REVIEW-QUEUE row (INS-08/30/31/32); the cell is shown, not hidden. '+
-     'Cell text is the mastersheet role; \u2022 is a legacy `teaches` edge.</p>';
+  h+='</tbody></table><p class="dim">P = primary, B1–B3 = backups, from the current '+
+     'mastersheet, in that order: by role, then the programme week of the first module '+
+     'where the role is held, then the sheet’s own order. • = taught it, according to the older sheets. Load counts '+
+     'modules for that row only. A hatched row is an identity not yet confirmed; it is '+
+     'shown, and its load is never added to anyone else’s.</p>';
   SHEET.innerHTML=h;
+  for(const el of SHEET.querySelectorAll('.nbl'))el.onclick=()=>openNode(el.dataset.id);
+  for(const b of SHEET.querySelectorAll('.mxs'))
+    b.onclick=()=>{state.mxSort=b.dataset.s==='az'?'az':null;writeUrl();renderMatrix();};
 }
 
-// PROGRAMME TIMELINE. Modules laid on their programme week, one lane per
-// domain. The week is an OWNER FACT, not a number derived from the folder
-// sequence — `Week N` in the corpus is a local sequence and deriving a
-// calendar week from it is refused in curriculum.py.
+// PROGRAMME TIMELINE. Modules on their programme week, one lane per domain.
+// The week is the corpus owner's fact, not derived from folder names.
 function renderTimeline(){
-  const weeks=new Map();
-  for(const n of D.nodes){ if(n.t==='program_week') weeks.set(n.id,(n.p||{}).number||null); }
-  const lanes=new Map();
+  const lanes=new Map(), M=model();
   for(const m of modulesFor(state.fDomain)){
-    let wk=null;
-    for(const [e,other] of edgesTouching(m.id)){
-      const n=idx.byId.get(other);
-      if(n&&n.t==='program_week'){ wk=weeks.get(n.id); break; }
-    }
+    const wk=M.weekOf.get(m.id)||null;
     if(state.fWeek&&String(wk)!==String(state.fWeek))continue;
     if(!lanes.has(m.dom))lanes.set(m.dom,[]);
     lanes.get(m.dom).push({m,wk});
   }
   const all=[...lanes.values()].flat().map(x=>x.wk).filter(x=>x!=null);
+  let h='<h2>Programme timeline';
+  if(!all.length){ SHEET.innerHTML=h+'</h2><p class="empty">No module has a programme week '+
+    'yet, so there is nothing to place on the timeline.</p>'; return; }
   const lo=Math.min(...all,9), hi=Math.max(...all,14);
-  let h='<h2>Programme timeline <span class="dim">weeks '+lo+'\u2013'+hi+
-        ', one lane per domain</span></h2>';
-  for(const [dom,items] of [...lanes.entries()].sort()){
-    h+='<div class="lane"><div class="cell" style="min-width:110px">'+esc(dom)+'</div>';
+  h+=' <span class="dim">weeks '+lo+'–'+hi+', one lane per domain</span></h2>';
+  // a TABLE, so every week is a real column however long a module's name is
+  h+='<table class="tl"><thead><tr><th>Domain</th>';
+  for(let w=lo;w<=hi;w++)h+='<th>Week '+w+'</th>';
+  h+='</tr></thead><tbody>';
+  for(const dom of [...lanes.keys()].sort((a,b)=>(DOMAIN_CODE[a]||a).localeCompare(DOMAIN_CODE[b]||b))){
+    const items=lanes.get(dom);
+    h+='<tr><td>'+esc(domainTitle(dom))+'</td>';
     for(let w=lo;w<=hi;w++){
       const hit=items.filter(x=>x.wk===w);
-      h+='<div class="cell'+(hit.length?'':' faded')+'" title="week '+w+'">'+
-         (hit.length?esc(hit.map(x=>x.m.l).join(', ')):'<span class="dim">w'+w+'</span>')+
-         '</div>';
+      h+='<td class="'+(hit.length?'on':'')+'">'+
+         (hit.length?hit.map(x=>'<a class="nbl" data-id="'+esc(x.m.id)+'">'+esc(x.m.l)+'</a>').join('<br>')
+                    :'<span class="dim">—</span>')+'</td>';
     }
-    h+='</div>';
+    h+='</tr>';
   }
-  h+='<p class="dim">Programme weeks are an owner fact '+
-     '(config/out-of-corpus-facts.yaml). `Week N` in the corpus folders is a '+
-     'local sequence and a calendar week is never derived from it.</p>';
+  h+='</tbody></table>';
+  h+='<p class="dim">Programme weeks were set by the corpus owner. The week numbers in '+
+     'Drive folder names count modules within a domain and are not calendar weeks.</p>';
   SHEET.innerHTML=h;
+  for(const el of SHEET.querySelectorAll('.nbl'))el.onclick=()=>openNode(el.dataset.id);
 }
 
 function setView(v,push){
@@ -2318,6 +3698,8 @@ function setView(v,push){
   for(const b of VBAR.querySelectorAll('button'))
     b.setAttribute('aria-pressed', String(b.dataset.view===v));
   SHEET.style.display = v==='graph' ? 'none' : 'block';
+  try{ document.body.classList.toggle('table', v!=='graph'); }catch(e){}
+  renderCrumbs();
   if(v==='matrix')renderMatrix();
   if(v==='timeline')renderTimeline();
   if(push!==false)writeUrl();
@@ -2325,21 +3707,28 @@ function setView(v,push){
 for(const b of VBAR.querySelectorAll('button'))
   b.onclick=()=>setView(b.dataset.view,true);
 
-// SHAREABLE URLS. View, focus and every filter live in the query string, so a
-// link reproduces what the sender was looking at. Nothing is kept in
-// localStorage: a URL someone can read is the point.
+// SHAREABLE URLS. The view, the place on the map, the selected item, the
+// chosen types and every filter live in the query string, so a link shows the
+// recipient what the sender was looking at.
 let _writing=false;
 function writeUrl(){
   if(_writing)return; _writing=true;
   const q=new URLSearchParams();
   if(state.view!=='graph')q.set('view',state.view);
+  if(state.place){
+    if(state.place.kind==='group')q.set('group',state.place.key);
+    else q.set(state.place.kind==='domain'?'domain_at':'at',state.place.id);
+  }
+  if(state.open.size)q.set('open',[...state.open].join(','));
   if(state.sel)q.set('focus',state.sel);
+  if(!allTypesOn())q.set('types',TYPES.filter(t=>state.types.has(t)).join(','));
+  if(state.listMode)q.set('list','1');
   if(state.fDomain)q.set('domain',state.fDomain);
   if(state.fWeek)q.set('week',state.fWeek);
   if(state.fRole)q.set('role',state.fRole);
-  if(state.hideLegacy)q.set('legacy','hidden');
+  if(state.mxSort==='az')q.set('sort','az');
   const s=q.toString();
-  history.replaceState(null,'',s?('?'+s):location.pathname);
+  try{ history.replaceState(null,'',s?('?'+s):location.pathname); }catch(e){}
   _writing=false;
 }
 function readUrl(){
@@ -2347,51 +3736,134 @@ function readUrl(){
   state.fDomain=q.get('domain')||null;
   state.fWeek=q.get('week')||null;
   state.fRole=q.get('role')||null;
-  state.hideLegacy=q.get('legacy')==='hidden';
+  state.mxSort=q.get('sort')==='az'?'az':null;
+  state.listMode=q.get('list')==='1';
+  const t=q.get('types');
+  if(t){const want=t.split(',').filter(x=>TYPES.indexOf(x)>=0);
+        if(want.length)state.types=new Set(want);}
+  const o=q.get('open'); if(o)for(const k of o.split(','))if(k)state.open.add(k);
+  if(q.get('domain_at')&&idx.byId.get(q.get('domain_at')))state.place={kind:'domain',id:q.get('domain_at')};
+  else if(q.get('at')&&idx.byId.get(q.get('at')))state.place={kind:'node',id:q.get('at')};
+  else if(q.get('group'))state.place={kind:'group',key:q.get('group')};
+  recompute(true,'from the link');
   const v=q.get('view'); if(v)setView(v,false);
   const f=q.get('focus'); if(f&&idx.byId.get(f))openNode(f);
 }
 
-// FILTERS. Rendered into the left pane once the structure payload has told us
-// which domains exist — hardcoding four would go stale the day a fifth is
-// approved.
+// FILTERS for the two table views, rendered once the structure has said which
+// domains exist.
 function renderFilters(){
   const host=document.getElementById('types'); if(!host)return;
-  const doms=domainsInPlay(); if(!doms.length)return;
-  const sel=(id,label,opts,cur)=>
+  const doms=domainsInPlay(); if(!doms.length){host.innerHTML='';return;}
+  const opt=(v,l,cur)=>'<option value="'+esc(v)+'"'+(String(cur)===String(v)?' selected':'')+'>'+esc(l)+'</option>';
+  const sel=(id,label,opts,cur,extra)=>
     '<label class="ck" style="display:block">'+esc(label)+
-    ' <select id="'+id+'"><option value="">all</option>'+
-    opts.map(o=>'<option value="'+esc(o)+'"'+(String(cur)===String(o)?' selected':'')+
-      '>'+esc(o)+'</option>').join('')+'</select></label>';
+    ' <select id="'+id+'"><option value="">All</option>'+
+    opts.map(([v,l])=>opt(v,l,cur)).join('')+(extra||'')+'</select></label>';
+  // the legacy domains too, marked, in their own group (owner decision 2026-09-30)
+  const legs=model().other;
+  const legacyOpts=legs.length?'<optgroup label="Legacy \u2014 older sheets">'+
+    legs.map(d=>opt('legacy:'+d.id,d.l+' \u2014 legacy',state.fDomain)).join('')+'</optgroup>':'';
   const weeks=[...new Set(D.nodes.filter(n=>n.t==='program_week')
       .map(n=>(n.p||{}).number).filter(x=>x!=null))].sort((a,b)=>a-b);
-  const box=document.createElement('div');
-  box.id='filters';
-  box.innerHTML='<div class="sub">filters</div>'+
-    sel('fdom','domain',doms,state.fDomain||'')+
-    sel('fwk','programme week',weeks,state.fWeek||'')+
-    sel('frole','role',['primary','backup_1','backup_2','backup_3'],state.fRole||'')+
-    '<label class="ck"><input type="checkbox" id="flegacy"'+
-    (state.hideLegacy?' checked':'')+'> hide legacy modules</label>';
-  host.parentNode.insertBefore(box,host);
+  host.innerHTML=
+    sel('fdom','Domain',doms.map(d=>[d,domainTitle(d)]),state.fDomain||'',legacyOpts)+
+    sel('fwk','Programme week',weeks.map(w=>[w,'Week '+w]),state.fWeek||'')+
+    sel('frole','Role',Object.keys(ROLE_LABEL).map(r=>[r,ROLE_LABEL[r]]),state.fRole||'');
   const on=(id,fn)=>{const el=document.getElementById(id); if(el)el.onchange=fn;};
   on('fdom',e=>{state.fDomain=e.target.value||null;refreshView()});
   on('fwk',e=>{state.fWeek=e.target.value||null;refreshView()});
   on('frole',e=>{state.fRole=e.target.value||null;refreshView()});
-  on('flegacy',e=>{state.hideLegacy=e.target.checked;refreshView()});
 }
 function refreshView(){
   writeUrl();
   if(state.view==='matrix')renderMatrix();
   else if(state.view==='timeline')renderTimeline();
-  else draw();
+  else recompute(true,'filters');        // the MAP follows the filters too
+}
+
+// HEADER CHIPS. What the graph holds (clicking one shows only that type), and
+// which types are on. Counts are FLOORS: what this graph holds, not everything
+// the files contain.
+function renderChips(){
+  const c=window.__NP.counts||{}, M=model();
+  const n=t=>(c[t]!==undefined?c[t]:D.nodes.filter(x=>x.t===t).length);
+  const cur=D.nodes.filter(x=>x.t==='module'&&!x.legacy).length;
+  const leg=D.nodes.filter(x=>x.t==='module'&&x.legacy).length;
+  // "current" = holds a role in the current mastersheet, as for modules
+  const curIns=D.nodes.filter(x=>x.t==='instructor').length?
+    [...currentInstructors()].filter(id=>{const x=idx.byId.get(id);return x&&x.t==='instructor';}).length:0;
+  const fmt=v=>Number(v).toLocaleString('en-US');
+  const curDom=M.current.length;
+  const stat=[['domain',fmt(curDom)+' current domains <span class="q">+ '+fmt(n('domain')-curDom)+' legacy</span>'],
+              ['module',fmt(cur)+' current modules <span class="q">+ '+fmt(leg)+' legacy</span>'],
+              ['class_session',fmt(n('class_session'))+' sessions'],
+              ['instructor',fmt(curIns)+' current instructors <span class="q">+ '+
+                fmt(n('instructor')-curIns)+' from older sheets</span>'],
+              ['slide_deck',fmt(n('slide_deck'))+' decks'],
+              ['content_topic',fmt(n('content_topic'))+' topics']];
+  const el=document.getElementById('chips');
+  if(el){
+    el.innerHTML=stat.map(([t,h])=>'<button type="button" class="chip stat" data-t="'+t+'"><i style="background:'+
+      (C[t]||'#c9d1d9')+'"></i>'+h+'</button>').join('')+
+      '<span class="floor">at least — what this graph holds, not every file</span>';
+    for(const b of el.querySelectorAll('.chip'))b.onclick=()=>onlyType(b.dataset.t);
+  }
+  const tc=document.getElementById('tchips');
+  if(tc){
+    // A TYPE CHIP ADDS OR REMOVES ITS TYPE FROM THE MAP (owner review
+    // 2026-09-30); it never switches to a list. "List" is its own toggle.
+    const all=allTypesOn();
+    tc.innerHTML='<button type="button" class="chip" data-t="*" aria-pressed="'+all+'">All (the map)</button>'+
+      TYPES.map(t=>'<button type="button" class="chip" data-t="'+t+'" aria-pressed="'+
+        state.types.has(t)+'"><i style="background:'+(C[t]||'#c9d1d9')+'"></i>'+
+        esc(TYPE_PLURAL[t]||t)+'</button>').join('')+
+      '<button type="button" class="chip listbtn" data-t="#list" aria-pressed="'+!!state.listMode+
+        '" title="Show the chosen types as a list instead of the map">List</button>';
+    for(const b of tc.querySelectorAll('.chip'))b.onclick=()=>toggleType(b.dataset.t);
+  }
+}
+//: a header count chip: that type alone, ON THE MAP (the List toggle lists it)
+function onlyType(t){
+  state.types=new Set([t]); state.sel=null; closePanel();
+  if(state.place&&!state.listMode)state.place=null;
+  recompute(true,'one type'); renderChips(); renderCrumbs(); writeUrl();
+}
+function toggleType(t){
+  if(t==='#list'){state.listMode=!state.listMode;}
+  else if(t==='*'){state.types=new Set(DEFAULT_TYPES);state.listMode=false;}
+  else{ if(state.types.has(t))state.types.delete(t); else state.types.add(t);
+        if(!state.types.size)state.types=new Set(DEFAULT_TYPES); }
+  if(!state.listMode&&state.place&&state.place.kind!=='domain')state.place=null;
+  recompute(true,'type chips'); renderChips(); renderCrumbs(); writeUrl();
+  maybeLoadTopics();
+}
+//: FOCUS ON THE MAP FRAMES THE NEIGHBOURHOOD: a module's sessions and decks
+//: are too small to read at the whole-map zoom. Zooms IN only, never out;
+//: clearing the focus returns to the whole map.
+let _framed=false;
+function frameFocus(id){
+  const lit=litSet(id), me=idx.byId.get(id);
+  let pts=A.filter(n=>lit.has(n.id)&&n.tx!==undefined);
+  // a module frames its own things AND the instructors who teach it
+  if(me&&me.t==='module'&&me.tx!==undefined)pts=pts.filter(n=>Math.hypot(n.tx-me.tx,n.ty-me.ty)<420);
+  if(pts.length<2)return;
+  let a=1e9,b=1e9,c=-1e9,d=-1e9;
+  for(const n of pts){a=Math.min(a,n.tx);b=Math.min(b,n.ty);c=Math.max(c,n.tx);d=Math.max(d,n.ty);}
+  const P=usable(), vw=P.x1-P.x0, vh=P.y1-P.y0;
+  const k=Math.min(1.4,Math.min(vw/Math.max(c-a+320,1),vh/Math.max(d-b+80,1)));
+  if(k<=cam.k*1.05)return;
+  cam.k=k; cam.tx=P.x0+vw/2-((a+c)/2)*k; cam.ty=P.y0+vh/2-((b+d)/2)*k;
+  _framed=true; camFitted=false;
 }
 
 // Called once the structure payload has landed.
 function afterStructure(){
   DUPES=duplicateLabels();
   renderFilters();
+  renderChips();
   readUrl();
+  renderCrumbs();
 }
 
 if(!window.__NP_NO_BOOT){ loadStats(); boot(); }

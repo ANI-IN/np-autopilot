@@ -110,11 +110,19 @@ def test_it_cools_for_exactly_the_clients_frame_count():
     assert math.ceil(math.log(0.004) / math.log(0.985)) == 366
 
 
-def test_the_constants_are_the_clients():
-    """If the client's simulation is retuned, the precomputed one must follow."""
-    for js in ("ALPHA_DECAY=0.985", "ALPHA_MIN=0.004", "i+12", "110/d2",
-               "(d-58)*.006", "*.006*K", "n.vx*=.85"):
-        assert js in INDEX, f"public/index.html no longer contains {js!r}"
+def test_the_client_no_longer_simulates():
+    """B4 (2026-09-30) replaced the client's force simulation with deterministic
+    views: step() only eases each node toward the target its view assigned.
+    The projected positions are now a transition's starting point, nothing
+    more, so layout.py no longer has to track a client loop.
+
+    Until B4 this test pinned the simulation's constants in both places. If a
+    force simulation ever returns to the client, this fails, and the pinning
+    (and the transliteration below) has to be re-established against it."""
+    for js in ("i+12", "110/d2", "(d-58)*.006", "*.006*K", "n.vx*=.85"):
+        assert js not in INDEX, (
+            f"public/index.html simulates again ({js!r}); re-pin layout.py to it")
+    assert "n.x+=dx*0.25" in INDEX, "step() no longer eases toward the view's target"
 
 
 def test_the_same_graph_always_lays_out_the_same():

@@ -43,6 +43,12 @@ modifiedTime, version, sha256) that `lib/freshness.py` checks against Drive.
 Diff it against the previous copy with `eval/mastersheet_diff.py` before any
 rebuild.
 
+`list_folders.py` lists the row-B FOLDERS — metadata only, folders only by
+the query itself, same scope as pass 6 — into
+`.drive-cache/content-rowB/folders.json` (id, name, path, parent). Pass 7
+links each module and session to its folder from it (`lib/folder_links.py`);
+a session with no matching folder says "No folder for this session".
+
 `count_registry.py` is **not a pass and never fetches anything.** It enumerates
 the scale-up registry's Drive folders and reports what is there — file and
 folder counts, depth, types, shortcuts, failures — so that the decision to
@@ -75,6 +81,14 @@ private — the authenticated API's `private: true`, or an anonymous request
 refused. It could not look = it fails. The repository was public twice while
 every document said private (`07-risks.md` R18, R21). First step of CI's
 `secrets` job, and `.githooks/pre-push`.
+
+`gen_name_review.py` writes `config/instructor-name-review.yaml`, the NAM
+rows of `docs/REVIEW-QUEUE.md`: instructor labels from the older sheets whose
+shape cannot be one person's name (a list number, a group or role, several
+people in one cell, a note in brackets — `lib/name_review.py`). REPORTED ONLY:
+nothing is renamed, split or removed until the owner answers a row. The rules
+deliberately never match a credential, a bracketed nickname or initials
+(CLAUDE.md §4); `tests/test_name_review.py` holds both directions.
 
 `gen_landing_stats.py` regenerates `public/stats.json`, the counts and build
 date the explorer's landing page shows. It reads `projection_meta` and the

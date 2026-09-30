@@ -31,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import ids                                          # noqa: E402
 from pipeline.lib import freshness                                  # noqa: E402
+from pipeline.lib import folder_links as fl                          # noqa: E402
 from pipeline.lib import content_model as cm                          # noqa: E402
 from pipeline.lib import content_scope as scope                       # noqa: E402
 from pipeline.lib import curriculum as cur                            # noqa: E402
@@ -268,6 +269,13 @@ def main() -> int:
     red_unexplained: list = []
     excluded_tabs: list = []
     uplevel_rows: dict = {}
+    # FOLDER LINKS (B4 (i)): pipeline/list_folders.py, metadata only. Absent
+    # folders.json means "not listed", which is reported, never guessed around.
+    folders = fl.load(CACHE / "folders.json")
+    mod_folders = fl.module_folders(folders)
+    sess_folders = fl.session_folders(folders, mod_folders)
+    if not folders:
+        gaps["folders not listed — run pipeline/list_folders.py"] += 1
     if MASTERSHEET.exists():
         # Every tab of the workbook is either declared read or excluded by
         # name; an undeclared one fails here. Exclusions are LOGGED by name.
@@ -322,6 +330,9 @@ def main() -> int:
                     continue
                 m = mod_id[key]
                 g.nodes[m]["uplevel_link"] = mod.uplevel_link or None
+                g.nodes[m]["drive_folders"] = fl.public(mod_folders.get(key, []))
+                if not mod_folders.get(key) and folders:
+                    gaps[f"{folder}: module {mod.sequence} has no Drive folder"] += 1
                 if cur.normalise_for_join(mod.name) != \
                         cur.normalise_for_join(g.nodes[m]["label"]):
                     sheet_variants.append(
@@ -342,6 +353,10 @@ def main() -> int:
                     g.node(sid, T_SESSION, s.name, src, label_raw=s.name,
                            session_kind=s.kind, resource_type=s.resource_type,
                            uplevel_link=s.uplevel_link)
+                    # An EMPTY list is an answer ("No folder for this session");
+                    # a missing key would mean nobody looked.
+                    g.nodes[sid]["drive_folders"] = fl.public(
+                        sess_folders.get((*key, s.kind), []))
                     g.edge(R["module_session"], m, sid, src, session_kind=s.kind)
                     sess_id[(slug, mod.sequence, s.kind)] = sid
                     sess_kinds.setdefault((slug, mod.sequence), set()).add(s.kind)
@@ -349,7 +364,9 @@ def main() -> int:
                 assign = tab.assignments_by_sequence.get(mod.sequence, {})
                 assigns[(slug, mod.sequence)] = assign
                 for col, role in ms.ROLE_COLUMNS.items():
-                    for person in assign.get(role, []):
+                    # cell_order: the person's place in the sheet's cell, so joint
+                    # primaries keep the sheet's order (owner requirement 2026-09-30)
+                    for cell_order, person in enumerate(assign.get(role, [])):
                         src = [dict(msrc[0], row=assign.get("row"),
                                     column=role)]
                         pid = nid(T_TUTOR, cur.normalise_for_join(person))
@@ -379,7 +396,7 @@ def main() -> int:
                                 f"{tab_name} row {assign.get('row', 0) + 1} "
                                 f"{role}: {person}")
                         g.edge(R["module_instructor"], m, pid, src,
-                               instructor_role=role)
+                               instructor_role=role, cell_order=cell_order)
                         if ms.needs_people_review(person):
                             people_review.append(
                                 {"name": person, "domain": slug,
@@ -488,6 +505,11 @@ def main() -> int:
             continue
 
         text = (CACHE / r["text_path"]).read_text(encoding="utf-8")
+        # HISTORICAL: a superseded revamp subtree, or a name that says Old.
+        # Carried on the file's own node and on its session attachment so every
+        # list can put it in a collapsed "Historical" group (owner review
+        # 2026-09-30) — kept and linked, never dropped, never mixed in.
+        historical = cm.is_historical(path, name)
 
         # SESSION EDGE, ONLY WHERE EVIDENCE ALLOWS. The module edge below is
         # unconditional; this one is added when the folder or the name places
@@ -507,7 +529,8 @@ def main() -> int:
                        attached_id=nid(T_DECK, fid) if cm.is_deck(mime)
                                    else nid(T_FILE, fid),
                        attached_drive_url=drive_url(fid),
-                       attached_is_deck=cm.is_deck(mime) or None)
+                       attached_is_deck=cm.is_deck(mime) or None,
+                       attached_historical=historical or None)
                 stats_join[f"session ({match.evidence})"] += 1
         else:
             stats_join["module level only"] += 1
@@ -522,18 +545,16 @@ def main() -> int:
                             session=match.kind if match else None)
                 deck_proposals.append(prop)
 
-        historical = cm.is_historical(path, name)
-
         if cm.is_repo(mime, name):
             rid = g.node(nid(T_REPO, fid), T_REPO, name, src,
                          owner_domain=r.get("owner_domain"),
-                         drive_url=drive_url(fid))
+                         drive_url=drive_url(fid), historical=historical or None)
             g.edge(R["module_repo"], m, rid, src, revision=revision)
         elif cm.is_deck(mime):
             did = g.node(nid(T_DECK, fid), T_DECK, name, src,
                          owner_domain=r.get("owner_domain"),
                          slide_count=r.get("slide_count"),
-                         drive_url=drive_url(fid))
+                         drive_url=drive_url(fid), historical=historical or None)
             # The deck hangs off the MODULE. There used to be a live_class
             # node in between, minted from this same file, and it carried no
             # fact the deck node does not — see taxonomy.yaml `delivers`.
@@ -541,11 +562,11 @@ def main() -> int:
                    superseded_by=("base" if revision == "revamp" else None))
         elif role == "review":
             aid = g.node(nid(T_REVIEW, fid), T_REVIEW, name, src,
-                         drive_url=drive_url(fid))
+                         drive_url=drive_url(fid), historical=historical or None)
             g.edge(R["assignment_reviewed_in"], m, aid, src, revision=revision)
         elif role == "task":
             aid = g.node(nid(T_ASSIGN, fid), T_ASSIGN, name, src,
-                         drive_url=drive_url(fid))
+                         drive_url=drive_url(fid), historical=historical or None)
             g.edge(R["module_assignment"], m, aid, src, revision=revision)
         elif role == "class":
             # Attach the FILE NODE THAT ALREADY EXISTS rather than mint a
@@ -582,7 +603,8 @@ def main() -> int:
             g.node(nid(T_FILE, fid), T_FILE, r["path"],
                    [cm.provenance(r)], relative_path=r["path"].lstrip("/"),
                    drive_url=drive_url(fid),
-                   owner_domain=r.get("owner_domain"), mime=r["mime"])
+                   owner_domain=r.get("owner_domain"), mime=r["mime"],
+                   historical=cm.is_historical(r["path"], r["name"]) or None)
 
     # AN OWNER FACT THAT MATCHES NOTHING IS STALE, and a stale withdrawal would
     # silently stop withdrawing: the sheet changed under it. Refuse loudly.

@@ -93,8 +93,9 @@ def test_coordinates_round_trip_and_a_missing_layout_is_nan():
 def test_panel_only_props_are_left_out_and_the_rest_are_carried_whole():
     p = _packed()
     assert "uplevel_link" not in p["np"]["0"] and p["np"]["0"]["sequence"] == 1
-    assert p["np"]["1"] == {"status": "current"}          # session_kind held back
-    assert p["ep"]["0"] == {"tier": "mastersheet"}        # attached_* held back
+    # session_kind is CARRIED since B4 (the map labels sessions by it)
+    assert p["np"]["1"] == {"session_kind": "class", "status": "current"}
+    assert p["ep"]["0"] == {"session_kind": "class", "tier": "mastersheet"}  # attached_* held back
     assert "2" not in p["ep"], "provenance is panel data"
     assert p["raw"] == {"1": "Class "}, "label_raw only where it differs"
 
@@ -107,9 +108,13 @@ def test_too_many_nodes_for_the_format_fails_loudly():
 
 # --- the classification: panel-only means READ ONLY BY THE PANEL ---------------
 
-PANEL_FUNCTIONS = {"TYPE_FACTS", "moduleChain", "domainLinks", "relDetail", "topicLinks",
+PANEL_FUNCTIONS = {"TYPE_FACTS", "moduleChain", "domainLinks", "nodeLinks", "relDetail", "topicLinks",
                    "crossVal", "reviewFlag", "mergedNote", "raws",
-                   "renderProvenance"}
+                   "renderProvenance",
+                   # topics are never in the bulk payload: they arrive with
+                   # their module's neighbourhood (full props), and the map
+                   # ranks the ones it draws round a focused module (B4)
+                   "topicsAround"}
 READ = re.compile(r"(?:\b(?:p|props)\.|\.p\.|\.p\|\|\{\}\)\.)([a-z_][a-z0-9_]*)")
 
 
