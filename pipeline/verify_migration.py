@@ -96,7 +96,14 @@ def _normalised_nodes(nodes: list) -> list:
             out.append(n)
             continue
         m = dict(n)
-        m["sources"] = [dict(s, ordinal=s.get("ordinal", 0)) for s in srcs]
+        # A MULTISET, not a list. The database returns sources `order by
+        # node_id, ordinal, prop_ordinal` and SQL leaves ties in any order:
+        # Mohammad Ansary (every ordinal 0) came back reordered on 2026-09-30,
+        # and the hash compared Postgres's tie-breaking instead of whether the
+        # provenance survived. Sorted canonically on both sides, a lost, added
+        # or altered entry still changes the hash.
+        m["sources"] = sorted((dict(s, ordinal=s.get("ordinal", 0)) for s in srcs),
+                              key=lambda s: json.dumps(s, sort_keys=True, default=str))
         out.append(m)
     return out
 

@@ -231,3 +231,20 @@ def isolate_build_log():
             os.environ.pop("NP_BUILD_LOG", None)
         else:
             os.environ["NP_BUILD_LOG"] = previous
+
+
+@pytest.fixture(scope="session", autouse=True)
+def freshness_not_checked_in_tests():
+    """pipeline/lib/freshness.py fails closed without Drive. The suite projects
+    into the local stack (production is refused above) and has no service
+    account in CI, so it names its reason instead of silently passing. The
+    guard's own tests delete this and exercise it with a fake Drive."""
+    previous = os.environ.get("NP_FRESHNESS_SKIP")
+    os.environ["NP_FRESHNESS_SKIP"] = "test suite: local stack or synthetic fixtures, never production"
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("NP_FRESHNESS_SKIP", None)
+        else:
+            os.environ["NP_FRESHNESS_SKIP"] = previous

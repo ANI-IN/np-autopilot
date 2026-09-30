@@ -7,22 +7,23 @@ Tick each module when its block matches the mastersheet. Phase D does not start 
 - Every item shows all of its direct links. The mastersheet is never an item's link — it is the citation.
 - Everyone at IK has view access to these Drive folders and to Uplevel (`config/out-of-corpus-facts.yaml`). _view only_ marks a download-disabled file: it still opens.
 - **Programme weeks are an owner fact** (`rowb-program-weeks`, origin: hand), not read from a file, and are shown as such.
-- **Instructors**: the mastersheet role is the reviewed tier. Legacy evidence (a `teaches` record from the older sheets) and unconfirmed identities (INS-08/30/31/32, left apart by owner decision) are listed separately, never merged into it.
+- **Instructors**: the mastersheet role is the reviewed tier. Legacy evidence (a `teaches` record from the older sheets) is listed separately, never merged into it. An identity the owner has not confirmed is flagged (`docs/REVIEW-QUEUE.md`).
+- A tick is an owner confirmation (`config/owner-confirmations.yaml`, origin: hand). It holds only while the block's mastersheet facts are unchanged; if they change, the tick comes off and says so.
 - Where something is absent the reason is stated; nothing falls back to the spreadsheet.
 
-**20 modules. 154 of 154 linkable items carry an Uplevel link; the rest state a reason.**
+**20 modules, 20 confirmed by the owner. 154 of 154 linkable items carry an Uplevel link; the rest state a reason.**
 
 ## SD3/1 · Database Design
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 2 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Backend Engineering — [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
+| Domain | Backend Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4874/) · [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
 | Programme week | 9 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4642/) |
 | Decks | 7 |
-| Topics | 362 current |
+| Topics | 361 current |
 
 **Sessions**
 
@@ -40,9 +41,9 @@ Tick each module when its block matches the mastersheet. Phase D does not start 
 
 | role | instructor |
 |---|---|
-| Primary | Konstantinos · **unconfirmed identity** (owner decision: left apart) |
+| Primary | Konstantinos Pappas |
 | Backup 1 | Robert Kreznarich |
-| Backup 2 | Shelby · **unconfirmed identity** (owner decision: left apart) |
+| Backup 2 | Shelby Cohen |
 | Backup 3 | Ashish Kaila |
 
 _Legacy evidence, shown separately — a `teaches` record from the older sheets, not a mastersheet role:_ Ashish Kaila, Konstantinos Pappas
@@ -61,13 +62,17 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [[Copy Sep 2023} New Databases Live Class - Ashish](https://drive.google.com/open?id=13Tzf9yNwsAwMHI_W8spF8Cg0OBn2l-wSxA-b0jG3h6o)
 - [[Updated 14 July 2025] Database.pptx](https://drive.google.com/open?id=1guIvmdigUaWc-3Skfrq-oDVfk9vScEib)
 
-**Top 5 of 362 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 361 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
-1. Database Systems — page 1 of [/SD3: Backend Engineering/Module-1: Database Design/2. Live Class Slides/Database Design Live Class.pdf](https://drive.google.com/open?id=165xYW6sYj8Zz3M1jpBwKgN01TyrpADig)
-2. Worked at Amazon, Apple, among others, as a software engineer — page 2 of [/SD3: Backend Engineering/Module-1: Database Design/2. Live Class Slides/Database Design Live Class.pdf](https://drive.google.com/open?id=165xYW6sYj8Zz3M1jpBwKgN01TyrpADig)
-3. What are interviewers looking for? — page 3 of [/SD3: Backend Engineering/Module-1: Database Design/2. Live Class Slides/Database Design Live Class.pdf](https://drive.google.com/open?id=165xYW6sYj8Zz3M1jpBwKgN01TyrpADig)
-4. Backend Databases Introduction — page 4 of [/SD3: Backend Engineering/Module-1: Database Design/2. Live Class Slides/Database Design Live Class.pdf](https://drive.google.com/open?id=165xYW6sYj8Zz3M1jpBwKgN01TyrpADig)
-5. Backend Databases Introduction — page 5 of [/SD3: Backend Engineering/Module-1: Database Design/2. Live Class Slides/Database Design Live Class.pdf](https://drive.google.com/open?id=165xYW6sYj8Zz3M1jpBwKgN01TyrpADig)
+1. Database Systems — page 1 of [Database Design Live Class.pdf](https://drive.google.com/open?id=165xYW6sYj8Zz3M1jpBwKgN01TyrpADig)
+2. What are interviewers looking for? — page 3 of [Database Design Live Class.pdf](https://drive.google.com/open?id=165xYW6sYj8Zz3M1jpBwKgN01TyrpADig)
+3. Backend Databases Introduction — page 4 of [Database Design Live Class.pdf](https://drive.google.com/open?id=165xYW6sYj8Zz3M1jpBwKgN01TyrpADig)
+4. Backend Databases Breadth/Depth — page 6 of [Database Design Live Class.pdf](https://drive.google.com/open?id=165xYW6sYj8Zz3M1jpBwKgN01TyrpADig)
+5. Backend Databases CATFUSS — page 8 of [Database Design Live Class.pdf](https://drive.google.com/open?id=165xYW6sYj8Zz3M1jpBwKgN01TyrpADig)
+
+_254 repeated title(s) shown once; 1 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
+
+_1 extracted title(s) (1 occurrence(s)) held back as a person's name or biography, not a topic (D1; kept in the graph, marked `not_a_topic`): Worked at Amazon, Apple, among others, as a software engineer_
 
 **Other files (17)** _(module-level files, curriculum documents, repositories)_
 
@@ -93,15 +98,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ## SD3/2 · Object Modeling
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 2 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Backend Engineering — [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
+| Domain | Backend Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4874/) · [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
 | Programme week | 10 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4643/) |
 | Decks | 10 |
-| Topics | 475 current |
+| Topics | 471 current |
 
 **Sessions**
 
@@ -143,15 +148,17 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Object_Modeling_v1.5_1.pptx](https://drive.google.com/open?id=1TK__grf3TvLf9WQjnVC8-rAWvOTzvYQX)
 - [Toni's Object_Modeling_v1.5_1.pptx](https://drive.google.com/open?id=1w9i-ymI1O9OgbNXdCThkputiiUf4bf8a)
 
-**Top 5 of 475 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 471 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. Object Modeling — slide 1 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
-2. Introduction – Mike Dolt — slide 2 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
-3. Welcome to today’s class, before we begin, — slide 3 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
-4. Optimize Your Experience — slide 4 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
-5. Today’s Agenda — slide 5 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
+2. Complexity — slide 8 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
+3. Organized and Disorganized Complexity — slide 9 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
+4. Bringing Order to Chaos — slide 10 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
+5. The Object Model — slide 13 of [Object Modeling - Mike.pptx](https://drive.google.com/open?id=15BpKWwqd5QHarBlwyfbNxEfIKyQObkQj)
 
-_1 extracted title(s) held back as a person's name, not a topic (D1; kept in the graph, marked `not_a_topic`): Nikhil Kolekar_
+_345 repeated title(s) shown once; 42 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
+
+_3 extracted title(s) (5 occurrence(s)) held back as a person's name or biography, not a topic (D1; kept in the graph, marked `not_a_topic`): Introduction – Konstantinos Pappas, Introduction – Mike Dolt, Nikhil Kolekar_
 
 **Other files (0)** _(module-level files, curriculum documents, repositories)_
 
@@ -161,11 +168,11 @@ _none recorded_
 
 ## SD3/3 · API Design
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 2 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Backend Engineering — [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
+| Domain | Backend Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4874/) · [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
 | Programme week | 11 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4644/) |
 | Decks | 13 (3 superseded) |
@@ -189,7 +196,7 @@ _none recorded_
 |---|---|
 | Primary | Robert Kreznarich |
 | Primary | Tilo Dickopp |
-| Backup 1 | Shelby · **unconfirmed identity** (owner decision: left apart) |
+| Backup 1 | Shelby Cohen |
 
 _Legacy evidence, shown separately — a `teaches` record from the older sheets, not a mastersheet role:_ Robert Kreznarich
 
@@ -217,15 +224,17 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [API design.pptx](https://drive.google.com/open?id=1Gyd9zTgPt4cKJVGmbtmhreq-GZBqxUjk) · _superseded_
 - [Old API Design.pptx](https://drive.google.com/open?id=1-dnrK70b_vBNMOdSWiHUcBeqIp0GPhuM) · _superseded_
 
-**Top 5 of 837 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 837 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. Backend API Design — slide 1 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
 2. Some API Design (a little bit of theory) — slide 4 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
 3. Possible Technologies for APIs — slide 5 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
 4. APIs for Internal System Communication — slide 6 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
-5. Possible Technologies for APIs — slide 7 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
+5. REST Architectural Style — slide 8 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
 
-_4 extracted title(s) held back as a person's name, not a topic (D1; kept in the graph, marked `not_a_topic`): Krishnamoorthy Venkatraman, Robert Kreznarich_
+_502 repeated title(s) shown once; 14 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
+
+_2 extracted title(s) (4 occurrence(s)) held back as a person's name or biography, not a topic (D1; kept in the graph, marked `not_a_topic`): Krishnamoorthy Venkatraman, Robert Kreznarich_
 
 **Other files (5)** _(module-level files, curriculum documents, repositories)_
 
@@ -239,11 +248,11 @@ _4 extracted title(s) held back as a person's name, not a topic (D1; kept in the
 
 ## SD3/4 · Cloud Native Design
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 2 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Backend Engineering — [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
+| Domain | Backend Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4874/) · [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
 | Programme week | 12 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4645/) |
 | Decks | 8 (1 superseded) |
@@ -267,7 +276,7 @@ _4 extracted title(s) held back as a person's name, not a topic (D1; kept in the
 |---|---|
 | Primary | Sanjay Dhar |
 | Backup 1 | Jeff Wisman |
-| Backup 2 | Reginald |
+| Backup 2 | Reginald Johnson |
 
 _Legacy evidence, shown separately — a `teaches` record from the older sheets, not a mastersheet role:_ Sanjay Dhar
 
@@ -287,13 +296,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [[IK] Cloud native deisgn for back-end engineers.pptx](https://drive.google.com/open?id=10oQ4LAowmnWEy0WLnLl-LKRMC1NOUmqT)
 - [Cloud Native Architecture Live Class Slide.pptx](https://drive.google.com/open?id=1yfSYC2Ne1JvNPbt7wf8cUcrXHPl67osq) · _superseded_
 
-**Top 5 of 358 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 358 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. Cloud native design for back-end engineers — slide 1 of [[IK] Cloud native deisgn for back-end engineers.pptx](https://drive.google.com/open?id=10oQ4LAowmnWEy0WLnLl-LKRMC1NOUmqT)
-2. About Me — slide 2 of [[IK] Cloud native deisgn for back-end engineers.pptx](https://drive.google.com/open?id=10oQ4LAowmnWEy0WLnLl-LKRMC1NOUmqT)
-3. About you  (1 minute) — slide 3 of [[IK] Cloud native deisgn for back-end engineers.pptx](https://drive.google.com/open?id=10oQ4LAowmnWEy0WLnLl-LKRMC1NOUmqT)
-4. Agenda — slide 4 of [[IK] Cloud native deisgn for back-end engineers.pptx](https://drive.google.com/open?id=10oQ4LAowmnWEy0WLnLl-LKRMC1NOUmqT)
-5. Interview process — slide 5 of [[IK] Cloud native deisgn for back-end engineers.pptx](https://drive.google.com/open?id=10oQ4LAowmnWEy0WLnLl-LKRMC1NOUmqT)
+2. AWS interview process overview — slide 6 of [[IK] Cloud native deisgn for back-end engineers.pptx](https://drive.google.com/open?id=10oQ4LAowmnWEy0WLnLl-LKRMC1NOUmqT)
+3. Behavioral interview method – S.T.A.R. — slide 7 of [[IK] Cloud native deisgn for back-end engineers.pptx](https://drive.google.com/open?id=10oQ4LAowmnWEy0WLnLl-LKRMC1NOUmqT)
+4. Interview question 1 — slide 8 of [[IK] Cloud native deisgn for back-end engineers.pptx](https://drive.google.com/open?id=10oQ4LAowmnWEy0WLnLl-LKRMC1NOUmqT)
+5. Example STAR question 1 - discussion — slide 9 of [[IK] Cloud native deisgn for back-end engineers.pptx](https://drive.google.com/open?id=10oQ4LAowmnWEy0WLnLl-LKRMC1NOUmqT)
+
+_179 repeated title(s) shown once; 23 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
 
 **Other files (7)** _(module-level files, curriculum documents, repositories)_
 
@@ -309,11 +320,11 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ## SD3/5 · Concurrency
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 2 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Backend Engineering — [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
+| Domain | Backend Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4874/) · [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
 | Programme week | 13 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4646/) |
 | Decks | 6 (2 superseded) |
@@ -335,7 +346,7 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 | role | instructor |
 |---|---|
-| Primary | Faraaz |
+| Primary | Faraaz Sareshwala |
 | Backup 1 | Robert Kreznarich |
 
 _Legacy evidence, shown separately — a `teaches` record from the older sheets, not a mastersheet role:_ Faraaz Sareshwala, Robert Kreznarich
@@ -364,15 +375,17 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Concurrency Super Set Slides](https://drive.google.com/open?id=1y2Y2ffqMPMAcFijQ_SfcJH2ELgfmU4GvlynBK2qy5ek) · _superseded_
 - [Concurrency Super Set Slides.pptx](https://drive.google.com/open?id=10ionI2eD58mwuKXKzew11cX5o13vNZJr) · _superseded_
 
-**Top 5 of 368 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 368 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
-1. Backend — page 1 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
-2. Everyone is allowed to talk during class but please keep yourself on mute unless — page 3 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
-3. Let’s introduce ourselves! — page 4 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
-4. This course is broken down into four typical interviewing concepts and topics: — page 5 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
-5. •Most CPUs remain idle while running.  Use multithreading to utilize CPU cycles — page 6 of [/SD3: Backend Engineering/Module-5: Concurrency/2. Live Class Slides/IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
+1. Backend — page 1 of [IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
+2. This course is broken down into four typical interviewing concepts and topics: — page 5 of [IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
+3. •Most CPUs remain idle while running.  Use multithreading to utilize CPU cycles — page 6 of [IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
+4. •Most classes should be immutable after construction.  Use the builder pattern — page 7 of [IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
+5. Here are six different concurrency examples: — page 8 of [IK-backend-concurrency-presentation-v4.pdf](https://drive.google.com/open?id=14B6LCKHlC5kHw4pRZk7psndyLqJ8Cvv6)
 
-_5 extracted title(s) held back as a person's name, not a topic (D1; kept in the graph, marked `not_a_topic`): Robert Kreznarich, Zeki Sherif_
+_131 repeated title(s) shown once; 21 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
+
+_2 extracted title(s) (5 occurrence(s)) held back as a person's name or biography, not a topic (D1; kept in the graph, marked `not_a_topic`): Robert Kreznarich, Zeki Sherif_
 
 **Other files (13)** _(module-level files, curriculum documents, repositories)_
 
@@ -394,11 +407,11 @@ _5 extracted title(s) held back as a person's name, not a topic (D1; kept in the
 
 ## SD2/1 · JS Language & Libraries
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 1 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Frontend — [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
+| Domain | Frontend — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4875/) · [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
 | Programme week | 9 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4647/) |
 | Decks | 16 |
@@ -447,13 +460,15 @@ _5 extracted title(s) held back as a person's name, not a topic (D1; kept in the
 - [The "this" keyword](https://drive.google.com/open?id=1Kfo8HOc76I-Whb1DxsfLLD9sthyQWGpxzWwsj8M3ArI)
 - [Using Switch Statements](https://drive.google.com/open?id=1TDLENKCyAmxpNYuEKrOWKoMHNeNon8dHrKkE6hL1uQw)
 
-**Top 5 of 106 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 106 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. .call() and .apply() — tab 1 of [Lesson Plan 1 - JS Language and Libraries - Front-end Course](https://drive.google.com/open?id=18AIJounVSoInX3NC0BjEy4p-33G1GLDrSIYoVWER8dc)
 2. A quick note on Trees & Graphs — tab 1 of [Lesson Plan 1 - JS Language and Libraries - Front-end Course](https://drive.google.com/open?id=18AIJounVSoInX3NC0BjEy4p-33G1GLDrSIYoVWER8dc)
 3. Array.flatten — tab 1 of [Lesson Plan 1 - JS Language and Libraries - Front-end Course](https://drive.google.com/open?id=18AIJounVSoInX3NC0BjEy4p-33G1GLDrSIYoVWER8dc)
 4. Assigning a default "this" with the ES6 fat arrow => — tab 1 of [Lesson Plan 1 - JS Language and Libraries - Front-end Course](https://drive.google.com/open?id=18AIJounVSoInX3NC0BjEy4p-33G1GLDrSIYoVWER8dc)
 5. Asynchronous Code — tab 1 of [Lesson Plan 1 - JS Language and Libraries - Front-end Course](https://drive.google.com/open?id=18AIJounVSoInX3NC0BjEy4p-33G1GLDrSIYoVWER8dc)
+
+_53 repeated title(s) shown once._
 
 **Other files (2)** _(module-level files, curriculum documents, repositories)_
 
@@ -464,11 +479,11 @@ _5 extracted title(s) held back as a person's name, not a topic (D1; kept in the
 
 ## SD2/2 · UI & DOM
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 1 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Frontend — [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
+| Domain | Frontend — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4875/) · [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
 | Programme week | 10 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4648/) |
 | Decks | 19 |
@@ -523,13 +538,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [User Interface & DOM - By Steven](https://drive.google.com/open?id=1yADvuUzBWv1AI60u-wPhL73LgfXwluYpH1FCUf77LfE)
 - [[DO NOT USE] IK Frontend - Module 2 - UI & DOM - Jakob](https://drive.google.com/open?id=1-lXh1aQUBLXrAYRA8UDpPTGsycquAazAUaze4MTwFTc)
 
-**Top 5 of 68 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 68 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. 100vw & vh versus 100% — tab 1 of [Lesson Plan 2 - UI & DOM](https://drive.google.com/open?id=1MSj-bZWnYD8gyLlQrBrKV6YvcsW5OhnPe4eXwCf-Rn0)
 2. Absolute, Relative, and Fixed positioning — tab 1 of [Lesson Plan 2 - UI & DOM](https://drive.google.com/open?id=1MSj-bZWnYD8gyLlQrBrKV6YvcsW5OhnPe4eXwCf-Rn0)
 3. Accessibility using aria attributes — tab 1 of [Lesson Plan 2 - UI & DOM](https://drive.google.com/open?id=1MSj-bZWnYD8gyLlQrBrKV6YvcsW5OhnPe4eXwCf-Rn0)
 4. Align v Justify — tab 1 of [Lesson Plan 2 - UI & DOM](https://drive.google.com/open?id=1MSj-bZWnYD8gyLlQrBrKV6YvcsW5OhnPe4eXwCf-Rn0)
 5. Alternatives to a "div": article — tab 1 of [Lesson Plan 2 - UI & DOM](https://drive.google.com/open?id=1MSj-bZWnYD8gyLlQrBrKV6YvcsW5OhnPe4eXwCf-Rn0)
+
+_34 repeated title(s) shown once._
 
 **Other files (18)** _(module-level files, curriculum documents, repositories)_
 
@@ -556,11 +573,11 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ## SD2/3 · Frontend System Design
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 1 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Frontend — [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
+| Domain | Frontend — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4875/) · [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
 | Programme week | 11 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4649/) |
 | Decks | 23 |
@@ -617,13 +634,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [IK Frontend - Module 3 - System Design- Chao](https://drive.google.com/open?id=1V57M7-JAZSlylwzglsNBZDeT1m7RqrcSV4v2QrbcBxk)
 - [Shubham -  Frontend System Design.pptx](https://drive.google.com/open?id=1FYiUsihKyjQihgbIuMAaqBjSR0f9zshF)
 
-**Top 5 of 383 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 383 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. Angular 2+ — tab 1 of [Lesson Plan 3 - FE System Design](https://drive.google.com/open?id=1huVROdVGj3eOMdC0tJ3eBrwEF0zLaTklXjUhjyWtdDY)
 2. Case Study — tab 1 of [Lesson Plan 3 - FE System Design](https://drive.google.com/open?id=1huVROdVGj3eOMdC0tJ3eBrwEF0zLaTklXjUhjyWtdDY)
 3. Client Side State management — tab 1 of [Lesson Plan 3 - FE System Design](https://drive.google.com/open?id=1huVROdVGj3eOMdC0tJ3eBrwEF0zLaTklXjUhjyWtdDY)
 4. Common Components library — tab 1 of [Lesson Plan 3 - FE System Design](https://drive.google.com/open?id=1huVROdVGj3eOMdC0tJ3eBrwEF0zLaTklXjUhjyWtdDY)
-5. Common Components library — tab 1 of [Lesson Plan 3 - FE System Design](https://drive.google.com/open?id=1huVROdVGj3eOMdC0tJ3eBrwEF0zLaTklXjUhjyWtdDY)
+5. Compare between React and Angular — tab 1 of [Lesson Plan 3 - FE System Design](https://drive.google.com/open?id=1huVROdVGj3eOMdC0tJ3eBrwEF0zLaTklXjUhjyWtdDY)
+
+_242 repeated title(s) shown once; 13 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
 
 **Other files (7)** _(module-level files, curriculum documents, repositories)_
 
@@ -639,11 +658,11 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ## SD2/4 · Leveling Up with Advanced JavaScript and CSS
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 1 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Frontend — [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
+| Domain | Frontend — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4875/) · [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
 | Programme week | 12 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4650/) |
 | Decks | 28 |
@@ -706,13 +725,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Time Assignments Solutions](https://drive.google.com/open?id=1_pY7ha2IxyZitmV4lWicxDJU2_yrYZFqwf-l7mMqLHg)
 - [[OLD] Front-end Module 4 - Patterns, Tools, and Techniques - Slides by Laura](https://drive.google.com/open?id=1xspjmIyRc-bCnWuqildNTiygVw99EArf4zBNtIik7BI)
 
-**Top 5 of 85 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 85 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. == vs === and when to use each — tab 1 of [Lesson Plan 4 - Leveling Up with Advance JavaScript and CSS](https://drive.google.com/open?id=1M0flAPHzEyFOb-47HRHJZeuF5VB89Ha7CprUl2-tSNs)
 2. Advanced CSS: Media Queries — tab 1 of [Lesson Plan 4 - Leveling Up with Advance JavaScript and CSS](https://drive.google.com/open?id=1M0flAPHzEyFOb-47HRHJZeuF5VB89Ha7CprUl2-tSNs)
 3. Advanced CSS: Positioning w/ Translate — tab 1 of [Lesson Plan 4 - Leveling Up with Advance JavaScript and CSS](https://drive.google.com/open?id=1M0flAPHzEyFOb-47HRHJZeuF5VB89Ha7CprUl2-tSNs)
 4. Animate away using tab & keyboard events — tab 1 of [Lesson Plan 4 - Leveling Up with Advance JavaScript and CSS](https://drive.google.com/open?id=1M0flAPHzEyFOb-47HRHJZeuF5VB89Ha7CprUl2-tSNs)
 5. Chrome Developer Tools introduction — tab 1 of [Lesson Plan 4 - Leveling Up with Advance JavaScript and CSS](https://drive.google.com/open?id=1M0flAPHzEyFOb-47HRHJZeuF5VB89Ha7CprUl2-tSNs)
+
+_25 repeated title(s) shown once._
 
 **Other files (12)** _(module-level files, curriculum documents, repositories)_
 
@@ -733,11 +754,11 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ## SD1/1 · Databases
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 3 §7: rebuilt block shows Konstantinos Pappas, Ashish Kaila, Nikhil Kolekar; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Full Stack — [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
+| Domain | Full Stack — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4731/) · [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
 | Programme week | 9 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4611/) |
 | Decks | 13 (2 superseded) |
@@ -757,9 +778,13 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 **Instructors — mastersheet (the reviewed tier)**
 
-_no mastersheet instructor for this module_
+| role | instructor |
+|---|---|
+| Primary | Konstantinos Pappas |
+| Backup 1 | Ashish Kaila |
+| Backup 2 | Nikhil Kolekar |
 
-_Legacy evidence, shown separately — a `teaches` record from the older sheets, not a mastersheet role:_ Ashish Kaila, Konstantinos (unconfirmed identity), Nikhil Kolekar, Robert K
+_Legacy evidence, shown separately — a `teaches` record from the older sheets, not a mastersheet role:_ Ashish Kaila, Konstantinos Pappas, Nikhil Kolekar, Robert Kreznarich
 
 **Assignment**
 
@@ -783,13 +808,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Databases Live Class - 2024](https://drive.google.com/open?id=1jiik2Ql1GXPjJ3cupPPTUdhU6QU7y0gvVIHfJJtzIrk) · _superseded_
 - [Databases Live Class - 2024/25](https://drive.google.com/open?id=1WzelL3jH870yv4FITwaVWhasOM1ia_FE1akOldOFIEo) · _superseded_
 
-**Top 5 of 558 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 558 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. - ACID — tab 1 of [Lesson Plan 1 - Databases](https://drive.google.com/open?id=16_x5vOjgnwOI4ksX62UmJYMyxNv3gOCcIhN-jLB0Hzw)
 2. - ACID v/s BASE — tab 1 of [Lesson Plan 1 - Databases](https://drive.google.com/open?id=16_x5vOjgnwOI4ksX62UmJYMyxNv3gOCcIhN-jLB0Hzw)
 3. - Choose a db type(s) for various operations / entities — tab 1 of [Lesson Plan 1 - Databases](https://drive.google.com/open?id=16_x5vOjgnwOI4ksX62UmJYMyxNv3gOCcIhN-jLB0Hzw)
 4. - Clustered vs. Unclustered: Internal Structure + External Usage — tab 1 of [Lesson Plan 1 - Databases](https://drive.google.com/open?id=16_x5vOjgnwOI4ksX62UmJYMyxNv3gOCcIhN-jLB0Hzw)
 5. - Columnstore Indexes — tab 1 of [Lesson Plan 1 - Databases](https://drive.google.com/open?id=16_x5vOjgnwOI4ksX62UmJYMyxNv3gOCcIhN-jLB0Hzw)
+
+_209 repeated title(s) shown once; 1 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
 
 **Other files (10)** _(module-level files, curriculum documents, repositories)_
 
@@ -808,11 +835,11 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ## SD1/2 · API Design and Implementation
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 3 §7: verified against the live sheet; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Full Stack — [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
+| Domain | Full Stack — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4731/) · [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
 | Programme week | 10 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4612/) |
 | Decks | 23 (3 superseded) |
@@ -834,11 +861,11 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 | role | instructor |
 |---|---|
-| Primary | Shelby · **unconfirmed identity** (owner decision: left apart) |
+| Primary | Shelby Cohen |
 | Backup 1 | Robert Kreznarich |
-| Backup 2 | Nisarg |
+| Backup 2 | Nisarg Tanna |
 
-_Legacy evidence, shown separately — a `teaches` record from the older sheets, not a mastersheet role:_ Ashish Kaila, Robert, Robert Kreznarich, Shelby (unconfirmed identity), Tony
+_Legacy evidence, shown separately — a `teaches` record from the older sheets, not a mastersheet role:_ Ashish Kaila, Robert, Robert Kreznarich, Shelby Cohen, Tony
 
 **Assignment**
 
@@ -871,13 +898,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [API Design and Implementation- third.pptx](https://drive.google.com/open?id=12N91tJs5vD9jpd-O0Mhh68e1Ba06-ZjW) · _superseded_
 - [API Design and Implementation.pptx](https://drive.google.com/open?id=1GtPLwE7NhgeD6gLyiDnN6t4chcFS866n) · _superseded_
 
-**Top 5 of 537 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 537 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. - Beside GET and POST — tab 1 of [Lesson Plan 2 - API Design and Implementation](https://drive.google.com/open?id=17irawQ5OfLxm1AKZvE3kiv-Tjg_Fq_FbrV6AF2PK1wk)
 2. - Briefly explain what is a cookie. — tab 1 of [Lesson Plan 2 - API Design and Implementation](https://drive.google.com/open?id=17irawQ5OfLxm1AKZvE3kiv-Tjg_Fq_FbrV6AF2PK1wk)
 3. - Choose paths — tab 1 of [Lesson Plan 2 - API Design and Implementation](https://drive.google.com/open?id=17irawQ5OfLxm1AKZvE3kiv-Tjg_Fq_FbrV6AF2PK1wk)
 4. - Describe how OAuth works — tab 1 of [Lesson Plan 2 - API Design and Implementation](https://drive.google.com/open?id=17irawQ5OfLxm1AKZvE3kiv-Tjg_Fq_FbrV6AF2PK1wk)
 5. - Difference between Auth and AuthZ — tab 1 of [Lesson Plan 2 - API Design and Implementation](https://drive.google.com/open?id=17irawQ5OfLxm1AKZvE3kiv-Tjg_Fq_FbrV6AF2PK1wk)
+
+_364 repeated title(s) shown once; 32 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
 
 **Other files (26)** _(module-level files, curriculum documents, repositories)_
 
@@ -910,13 +939,13 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ---
 
-## SD1/3 · Cloud
+## SD1/3 · Cloud Infrastructure
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 3 §7: verified against the live sheet; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Full Stack — [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
+| Domain | Full Stack — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4731/) · [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
 | Programme week | 11 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4613/) |
 | Decks | 17 |
@@ -939,8 +968,8 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 | role | instructor |
 |---|---|
 | Primary | Faraaz Sareshwala |
-| Backup 1 | Cathy |
-| Backup 1 | Nisarg |
+| Backup 1 | Cathy Ma |
+| Backup 1 | Nisarg Tanna |
 | Backup 2 | Jeff Wisman |
 | Backup 3 | Nikhil Kolekar |
 
@@ -971,13 +1000,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Copy of [NEW] Cloud Infrastructure - Live Class Slides by Alex](https://drive.google.com/open?id=1gWYRUOarleSM4T70u0EGowuPOnirUW0ZnjfuR5aEZO4)
 - [IK's Copy Cloud Infrastructure - Live Class Slides by Matthew](https://drive.google.com/open?id=1tkHU-6ehnlwEjGTFpvOfSqkQ79kQqAhGxeyn1rE-UYk)
 
-**Top 5 of 156 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 156 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. How can I avoid infrastructure drift? (manual cloud changes not reflected in IaC) — tab 10 of [Lesson Plan 3 - Cloud Infrastructure](https://drive.google.com/open?id=1hJZFPf__Vid1rQIIBCM7tQ8AbFyu-uovnOMUv_1Dha0)
 2. How do I make sure my production shopping site is ready for the busy season? — tab 10 of [Lesson Plan 3 - Cloud Infrastructure](https://drive.google.com/open?id=1hJZFPf__Vid1rQIIBCM7tQ8AbFyu-uovnOMUv_1Dha0)
 3. How do you ensure uninterrupted service during a scaling operation? — tab 10 of [Lesson Plan 3 - Cloud Infrastructure](https://drive.google.com/open?id=1hJZFPf__Vid1rQIIBCM7tQ8AbFyu-uovnOMUv_1Dha0)
 4. How do you know if your service is ready to take increased traffic? — tab 10 of [Lesson Plan 3 - Cloud Infrastructure](https://drive.google.com/open?id=1hJZFPf__Vid1rQIIBCM7tQ8AbFyu-uovnOMUv_1Dha0)
 5. How would you migrate a stateful application to be stateless? Explain possible risks. — tab 10 of [Lesson Plan 3 - Cloud Infrastructure](https://drive.google.com/open?id=1hJZFPf__Vid1rQIIBCM7tQ8AbFyu-uovnOMUv_1Dha0)
+
+_29 repeated title(s) shown once; 1 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
 
 **Other files (9)** _(module-level files, curriculum documents, repositories)_
 
@@ -993,17 +1024,17 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ---
 
-## SD1/4 · JavaScript and Web Dev
+## SD1/4 · JavaScript and Web Development
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 3 §7: verified against the live sheet; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Full Stack — [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
+| Domain | Full Stack — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4731/) · [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
 | Programme week | 12 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4614/) |
 | Decks | 39 (14 superseded) |
-| Topics | 216 current, 339 historical |
+| Topics | 215 current, 339 historical |
 
 **Sessions**
 
@@ -1024,7 +1055,6 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 | Primary | Cathy Ma |
 | Backup 1 | Ashish Kaila |
 | Backup 2 | Konstantinos Pappas |
-| Backup 3 | Daniel Grundel |
 
 **Assignment**
 
@@ -1075,13 +1105,17 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [iFrames](https://drive.google.com/open?id=1xTbp43pXcjAVpldKErAQTIjQrkx_uBVMu6K18vVQIDY) · _superseded_
 - [iFrames.pptx](https://drive.google.com/open?id=1JYJqugt8OaQ2XLAgJa8xIDLrb0hIXlgz) · _superseded_
 
-**Top 5 of 555 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 554 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. - Describe different types of cookies and use case for each. — tab 1 of [Lesson Plan 4 - JavaScript and Web Development](https://drive.google.com/open?id=1mRWJEVtnQ-lEZMUpEgxqK3edS_GRgwB562Nkm55jii4)
 2. - Describe how OAuth works — tab 1 of [Lesson Plan 4 - JavaScript and Web Development](https://drive.google.com/open?id=1mRWJEVtnQ-lEZMUpEgxqK3edS_GRgwB562Nkm55jii4)
 3. - How can iFrame content communicate with host page and with other iFrames on the page? — tab 1 of [Lesson Plan 4 - JavaScript and Web Development](https://drive.google.com/open?id=1mRWJEVtnQ-lEZMUpEgxqK3edS_GRgwB562Nkm55jii4)
 4. - How do you bundle frontend assets? — tab 1 of [Lesson Plan 4 - JavaScript and Web Development](https://drive.google.com/open?id=1mRWJEVtnQ-lEZMUpEgxqK3edS_GRgwB562Nkm55jii4)
 5. - How do you get iframe like features when iframes aren't allowed for security reasons? — tab 1 of [Lesson Plan 4 - JavaScript and Web Development](https://drive.google.com/open?id=1mRWJEVtnQ-lEZMUpEgxqK3edS_GRgwB562Nkm55jii4)
+
+_289 repeated title(s) shown once; 25 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
+
+_1 extracted title(s) (1 occurrence(s)) held back as a person's name or biography, not a topic (D1; kept in the graph, marked `not_a_topic`): I’ll Go First - Hi, I’m JD Kilby!_
 
 **Other files (17)** _(module-level files, curriculum documents, repositories)_
 
@@ -1107,11 +1141,11 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ## SD1/5 · UI System Design
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 3 §7: verified against the live sheet; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Full Stack — [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
+| Domain | Full Stack — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4731/) · [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
 | Programme week | 13 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4615/) |
 | Decks | 20 |
@@ -1133,7 +1167,7 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 | role | instructor |
 |---|---|
-| Primary | Nisarg |
+| Primary | Nisarg Tanna |
 | Backup 1 | Adam Toth |
 | Backup 2 | Cathy Ma |
 | Backup 3 | Ashish Kaila |
@@ -1168,13 +1202,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [UI System Design - Live Class Slides - Joe Cuffney.pptx](https://drive.google.com/open?id=19jYHVYmm2TlQlnzJeCWVtHj08lPi0seN)
 - [UI System Design - Timed Test Review Agenda - Joe Cuffney.pptx](https://drive.google.com/open?id=1OHq-tu-8f0MVcQ9D6kon3gh8oYMXzaWQ)
 
-**Top 5 of 214 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 214 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. AI/ML app — tab 1 of [Lesson Plan 5 - UI System Design](https://drive.google.com/open?id=1RQqUHKErRbVe6rm_E46AZQPr2bt4-LHblm686k9Z8xQ)
 2. Architecture — tab 1 of [Lesson Plan 5 - UI System Design](https://drive.google.com/open?id=1RQqUHKErRbVe6rm_E46AZQPr2bt4-LHblm686k9Z8xQ)
 3. Assessing and making tradeoffs: memory vs compute — tab 1 of [Lesson Plan 5 - UI System Design](https://drive.google.com/open?id=1RQqUHKErRbVe6rm_E46AZQPr2bt4-LHblm686k9Z8xQ)
 4. Authentication  - Implement options for different 3rd party login — tab 1 of [Lesson Plan 5 - UI System Design](https://drive.google.com/open?id=1RQqUHKErRbVe6rm_E46AZQPr2bt4-LHblm686k9Z8xQ)
 5. Back end-consume public API (ex: GitHub) — tab 1 of [Lesson Plan 5 - UI System Design](https://drive.google.com/open?id=1RQqUHKErRbVe6rm_E46AZQPr2bt4-LHblm686k9Z8xQ)
+
+_135 repeated title(s) shown once; 7 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
 
 **Other files (16)** _(module-level files, curriculum documents, repositories)_
 
@@ -1199,21 +1235,21 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ## SD4/1 · Quality Engineering Foundations
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 1 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Test Engineering — [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
+| Domain | Test Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4876/) · [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
 | Programme week | 9 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4651/) |
 | Decks | 16 |
-| Topics | 79 current |
+| Topics | 78 current |
 
 **Sessions**
 
 | session | Uplevel | Drive |
 |---|---|---|
-| Pre-class | [open](https://uplevel.interviewkickstart.com/update_resource_collection/532/) | **13:** [Copy for Reference](https://drive.google.com/open?id=10EiaLiH9juFHn61l7FTYvM2aKPajOXAB3g1AK1ipsLM), [Copy of Quality Engineering Foundations Assignment solutions](https://drive.google.com/open?id=1Xks1XVAHx8TbqbTj2rQXms0Mxa-zXmFlQEUsR-vXc24), [Currently - Uploaded FM Content in Uplevel: Quality Engineering Foundation](https://drive.google.com/open?id=1Jgr7ktpvMfZT3gukWdPb-yvvNzRuai5yTCPArNGBE1g), [FM MCQs: Quality Engineering Foundations](https://drive.google.com/open?id=1m2MeylUNsBv7NGLUSxPwE2jyj_AN1mt9mIQM1DaER_Y), [FM Material Slides:Part1of2_Intro SDLC.pptx](https://drive.google.com/open?id=1fYbQFMkCCeRBan8PIopntZYFtKCnJerJ), [FM: Quality Engineering Foundations: Foundations](https://drive.google.com/open?id=18iFKXKlMDSI_-d8OFIh_B3lUU3s00QmoyFASsQ_FPEA), [IK Template for Videos](https://drive.google.com/open?id=1_M6ABkszbuHhdVWwz4-NB5ecYJTB6oMQ8_KTEFXgSY0), [T1: FM Test Engg: Bugs and Metrics](https://drive.google.com/open?id=1QRMLb0okLMBAZANSv5bA8LI0VF5SSGfqfR-0YEzviKg), [T2: FM Material Slides Bugs and Metrics](https://drive.google.com/open?id=1SQYpCt_r1Zusc2DXSnw1pGQFomOwsqUM35yBe0KBYwg), [Video-01 & 02: SDLC & Testing Basics](https://drive.google.com/open?id=1pdUBG9G7JdOQ1Ofl8Y3mDm12SXEQ_cK5d4CUa4dsaPk), [Video-03 & Video-04: FM Test Engg - Metrics & Troubleshooting ](https://drive.google.com/open?id=1OgFEDvoia2IQEvZae8_7pC1egcuZrv8ZeToM_dnlQ4w), [Video-03 and Video-04: FM Test Engg - Metrics & Troubleshooting ](https://drive.google.com/open?id=1788naBur9uqrxOUNI5MO4_IcxdqoBiPiUs39Jy_PKAo), [recording.conf](https://drive.google.com/open?id=14rcL-fmU86fzHKRdZhbx9sY7n3LwcvqN) |
+| Pre-class | [open](https://uplevel.interviewkickstart.com/update_resource_collection/532/) | **13:** [Copy for Reference](https://drive.google.com/open?id=10EiaLiH9juFHn61l7FTYvM2aKPajOXAB3g1AK1ipsLM), [Copy of Quality Engineering Foundations Assignment solutions](https://drive.google.com/open?id=1Xks1XVAHx8TbqbTj2rQXms0Mxa-zXmFlQEUsR-vXc24), [Currently - Uploaded FM Content in Uplevel: Quality Engineering Foundation](https://drive.google.com/open?id=1Jgr7ktpvMfZT3gukWdPb-yvvNzRuai5yTCPArNGBE1g), [FM MCQs: Quality Engineering Foundations](https://drive.google.com/open?id=1m2MeylUNsBv7NGLUSxPwE2jyj_AN1mt9mIQM1DaER_Y), [FM Material Slides:Part1of2_Intro SDLC.pptx](https://drive.google.com/open?id=1fYbQFMkCCeRBan8PIopntZYFtKCnJerJ), [FM: Quality Engineering Foundations: Foundations](https://drive.google.com/open?id=18iFKXKlMDSI_-d8OFIh_B3lUU3s00QmoyFASsQ_FPEA), [IK Template for Videos](https://drive.google.com/open?id=1_M6ABkszbuHhdVWwz4-NB5ecYJTB6oMQ8_KTEFXgSY0), [T1: FM Test Engg: Bugs and Metrics](https://drive.google.com/open?id=1QRMLb0okLMBAZANSv5bA8LI0VF5SSGfqfR-0YEzviKg), [T2: FM Material Slides Bugs and Metrics](https://drive.google.com/open?id=1SQYpCt_r1Zusc2DXSnw1pGQFomOwsqUM35yBe0KBYwg), [Video-01 & 02: SDLC & Testing Basics](https://drive.google.com/open?id=1pdUBG9G7JdOQ1Ofl8Y3mDm12SXEQ_cK5d4CUa4dsaPk), [Video-03 & Video-04: FM Test Engg - Metrics & Troubleshooting ](https://drive.google.com/open?id=1OgFEDvoia2IQEvZae8_7pC1egcuZrv8ZeToM_dnlQ4w), [Video-03 and Video-04: FM Test Engg - Metrics & Troubleshooting ](https://drive.google.com/open?id=1788naBur9uqrxOUNI5MO4_IcxdqoBiPiUs39Jy_PKAo) <details><summary>Build/recording artefacts (1)</summary> [recording.conf](https://drive.google.com/open?id=14rcL-fmU86fzHKRdZhbx9sY7n3LwcvqN)</details> |
 | Class | [open](https://uplevel.interviewkickstart.com/update_video/76429/) | **6:** [Copy of Live Class Slides: Week 1 Slides (T. Phillips)](https://drive.google.com/open?id=1rG7M1_ZJ-m4umR5H2RzWgzyAS2bSyhjxuWwOXPXT3IY), [Fundamentals of Test Eng. Live Class Slides: Week 1 Slides - Bill Ogden](https://drive.google.com/open?id=1zeSVnv6wq1ZWxuoPhzWprdD2PaNWSTM5Yr8RWtkcCYs), [Fundamentals of Test Eng. Live Class Slides: Week 1 Slides - Tariq](https://drive.google.com/open?id=1bdqwJZ5bI_P6QNUUQQqb8TYu5r-uPcy5ywPaSAsDTEQ), [Live Class Slides: Week 1 Slides](https://drive.google.com/open?id=1FLXQUkouwj3mJDZ_T7MBpA00mrHet6DHJrENwEaeIko), [Live Class Slides: Week 1 Slides (T. Phillips)](https://drive.google.com/open?id=1ZcFoAMJ8lJ-WLtUz0nq6LJrkOpeJ0U9m4rxl3JOIZQU), [Quality Engineering Foundations .pptx](https://drive.google.com/open?id=1FFkZ0rXZNzAcWWxG7lR7xU7jth2ISX_F) |
 | Alternate Class | [open](https://uplevel.interviewkickstart.com/update_video/76431/) | _no file matched at session level_ |
 | Assignment | [open](https://uplevel.interviewkickstart.com/update_resource_collection/850/) | **2:** [Live Class Assignments: Week 1](https://drive.google.com/open?id=1vlmjvsgz8zqYcSyEBQHnGvaL51duLcid5ptBK8fo1Oc), [Quality Engineering Foundations Assignment solutions](https://drive.google.com/open?id=1RAn1TZyjwe3cy80V64sGCaWMd6-8b3HOaiO7pmRbvRE) |
@@ -1225,12 +1261,12 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 | role | instructor |
 |---|---|
-| Primary | Bill Ogden · **unconfirmed identity** (owner decision: left apart) |
 | Primary | Sindhu Singh Dua |
+| Primary | William David Ogden |
 | Backup 1 | Bharath Anand |
 | Backup 2 | Sergey Togulev |
 
-_Legacy evidence, shown separately — a `teaches` record from the older sheets, not a mastersheet role:_ Bill Ogden (unconfirmed identity)
+_Legacy evidence, shown separately — a `teaches` record from the older sheets, not a mastersheet role:_ William David Ogden
 
 **Assignment**
 
@@ -1256,13 +1292,17 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Video-03 & Video-04: FM Test Engg - Metrics & Troubleshooting ](https://drive.google.com/open?id=1OgFEDvoia2IQEvZae8_7pC1egcuZrv8ZeToM_dnlQ4w)
 - [Video-03 and Video-04: FM Test Engg - Metrics & Troubleshooting ](https://drive.google.com/open?id=1788naBur9uqrxOUNI5MO4_IcxdqoBiPiUs39Jy_PKAo)
 
-**Top 5 of 79 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 78 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
-1. If you can hear me, use the raise hand feature — slide 1 of [Quality Engineering Foundations .pptx](https://drive.google.com/open?id=1FFkZ0rXZNzAcWWxG7lR7xU7jth2ISX_F)
-2. Fundamentals of Test Engineering — slide 2 of [Quality Engineering Foundations .pptx](https://drive.google.com/open?id=1FFkZ0rXZNzAcWWxG7lR7xU7jth2ISX_F)
-3. Your Instructor: Bill Ogden — slide 3 of [Quality Engineering Foundations .pptx](https://drive.google.com/open?id=1FFkZ0rXZNzAcWWxG7lR7xU7jth2ISX_F)
-4. The QA Interview — slide 4 of [Quality Engineering Foundations .pptx](https://drive.google.com/open?id=1FFkZ0rXZNzAcWWxG7lR7xU7jth2ISX_F)
-5. Why test engineering is important? — slide 5 of [Quality Engineering Foundations .pptx](https://drive.google.com/open?id=1FFkZ0rXZNzAcWWxG7lR7xU7jth2ISX_F)
+1. Fundamentals of Test Engineering — slide 2 of [Quality Engineering Foundations .pptx](https://drive.google.com/open?id=1FFkZ0rXZNzAcWWxG7lR7xU7jth2ISX_F)
+2. The QA Interview — slide 4 of [Quality Engineering Foundations .pptx](https://drive.google.com/open?id=1FFkZ0rXZNzAcWWxG7lR7xU7jth2ISX_F)
+3. Why test engineering is important? — slide 5 of [Quality Engineering Foundations .pptx](https://drive.google.com/open?id=1FFkZ0rXZNzAcWWxG7lR7xU7jth2ISX_F)
+4. Test Engineering Interviews — slide 6 of [Quality Engineering Foundations .pptx](https://drive.google.com/open?id=1FFkZ0rXZNzAcWWxG7lR7xU7jth2ISX_F)
+5. System Under Test (SUT) — slide 7 of [Quality Engineering Foundations .pptx](https://drive.google.com/open?id=1FFkZ0rXZNzAcWWxG7lR7xU7jth2ISX_F)
+
+_12 repeated title(s) shown once; 1 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
+
+_1 extracted title(s) (1 occurrence(s)) held back as a person's name or biography, not a topic (D1; kept in the graph, marked `not_a_topic`): Your Instructor: Bill Ogden_
 
 **Other files (9)** _(module-level files, curriculum documents, repositories)_
 
@@ -1280,11 +1320,11 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ## SD4/2 · Performance Testing
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 1 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Test Engineering — [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
+| Domain | Test Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4876/) · [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
 | Programme week | 10 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4652/) |
 | Decks | 13 |
@@ -1294,7 +1334,7 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 | session | Uplevel | Drive |
 |---|---|---|
-| Pre-class | [open](https://uplevel.interviewkickstart.com/update_resource_collection/928/) | **13:** [Copy for Reference](https://drive.google.com/open?id=1d2eOFi_gnfRk1_kbnQqK4SQRrDn2W25T3VPxcznnZxg), [Copy of T2: Fundamentals of Performance Testing](https://drive.google.com/open?id=18w3L9EUm5-Kp2YnC5qjaeOTT0pnjOEXKA9_29lRhOO8), [Currently - Uploaded FM Content in Uplevel: Performance Testing](https://drive.google.com/open?id=1AAruGQX7C-w1BcJ3lh25_UvP2HnbnQn8K_R9uuPkTDU), [FM MCQs: Performance Testing](https://drive.google.com/open?id=1Haqa2FApW8qKOc3K8UZXprW7Pksi8YD4od8VbukbRpg), [FM Practise Problems: Performance Testing](https://drive.google.com/open?id=1SYGg9OE3FunUb_hEnxivz0-DG-_iGBaEMLoGL6hwqJo), [FM: Performance Testing : Foundations](https://drive.google.com/open?id=17n4t9eO2M8UWtDwm84WBfn4pD7LMdh-cnqB1ckYjRO8), [FinalT1_ Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1HxRGBpyDFBLTWuiqfrGZFUgNTZxtx6D0), [T4_Performance FM Slides](https://drive.google.com/open?id=182b0DgP5wKbEot_GwVEnhXrUHAfaA01Ls0GBtSD_4mQ), [Video-01: Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1ZBp76e4BNsrYta1-t4K-Uncy7G14QSzH), [Video-02: Fundamentals of Performance Testing](https://drive.google.com/open?id=1TMSHowuF_cLMR9lN0cZuAw3h8zyb7FBNGl4UY-aTJuo), [Video-03: Jmeter: Performance Testing FM Slides](https://drive.google.com/open?id=1WzH-HqQpoS8W33fpxnvPp2__tlBTPY700jK8ieV7DZg), [old_template_T1: Fundamentals of Performance Testing](https://drive.google.com/open?id=1OyZ5lW_bmtayR10np-xdV1IapU-pDyswb44lrxMos8w), [recording.conf](https://drive.google.com/open?id=1GDhA5XUz8Tn7L64kTLba6OLmNbHQE693) |
+| Pre-class | [open](https://uplevel.interviewkickstart.com/update_resource_collection/928/) | **13:** [Copy for Reference](https://drive.google.com/open?id=1d2eOFi_gnfRk1_kbnQqK4SQRrDn2W25T3VPxcznnZxg), [Copy of T2: Fundamentals of Performance Testing](https://drive.google.com/open?id=18w3L9EUm5-Kp2YnC5qjaeOTT0pnjOEXKA9_29lRhOO8), [Currently - Uploaded FM Content in Uplevel: Performance Testing](https://drive.google.com/open?id=1AAruGQX7C-w1BcJ3lh25_UvP2HnbnQn8K_R9uuPkTDU), [FM MCQs: Performance Testing](https://drive.google.com/open?id=1Haqa2FApW8qKOc3K8UZXprW7Pksi8YD4od8VbukbRpg), [FM Practise Problems: Performance Testing](https://drive.google.com/open?id=1SYGg9OE3FunUb_hEnxivz0-DG-_iGBaEMLoGL6hwqJo), [FM: Performance Testing : Foundations](https://drive.google.com/open?id=17n4t9eO2M8UWtDwm84WBfn4pD7LMdh-cnqB1ckYjRO8), [FinalT1_ Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1HxRGBpyDFBLTWuiqfrGZFUgNTZxtx6D0), [T4_Performance FM Slides](https://drive.google.com/open?id=182b0DgP5wKbEot_GwVEnhXrUHAfaA01Ls0GBtSD_4mQ), [Video-01: Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1ZBp76e4BNsrYta1-t4K-Uncy7G14QSzH), [Video-02: Fundamentals of Performance Testing](https://drive.google.com/open?id=1TMSHowuF_cLMR9lN0cZuAw3h8zyb7FBNGl4UY-aTJuo), [Video-03: Jmeter: Performance Testing FM Slides](https://drive.google.com/open?id=1WzH-HqQpoS8W33fpxnvPp2__tlBTPY700jK8ieV7DZg), [old_template_T1: Fundamentals of Performance Testing](https://drive.google.com/open?id=1OyZ5lW_bmtayR10np-xdV1IapU-pDyswb44lrxMos8w) <details><summary>Build/recording artefacts (1)</summary> [recording.conf](https://drive.google.com/open?id=1GDhA5XUz8Tn7L64kTLba6OLmNbHQE693)</details> |
 | Class | [open](https://uplevel.interviewkickstart.com/update_video/76448/) | **3:** [Live Class Slides: Performance Testing Slides Live class](https://drive.google.com/open?id=1eCS0xuwcvzXOEvbUUtDPue2UX5Ogs9XhPAeaQ2kp38Q), [Live Class Slides: Performance Testing Slides Live class - Azeem](https://drive.google.com/open?id=1BtwYbVznb6_L5DHdQAnPBdO8ouk-uBt3F7Hn8eHH-88), [Live Class Slides: Performance Testing Slides Live class Final](https://drive.google.com/open?id=1_96NrONO0_rHpVnmJvjYUe45tedAScBClSUaaTMkvyc) |
 | Alternate Class | [open](https://uplevel.interviewkickstart.com/update_video/76458/) | _no file matched at session level_ |
 | Assignment | [open](https://uplevel.interviewkickstart.com/update_resource_collection/752/) | **7:** [Assignment Test Plan.jmx](https://drive.google.com/open?id=1WHqm8HEl4bxCTW0NMYrrTCd5G14zPBCj), [Assignment Test Plan_HeavyLoad.jmx](https://drive.google.com/open?id=18_XBlKVUALbCakfFDzCtyKmJKCkfgGK7), [Assignment-1](https://drive.google.com/open?id=1uIvXTrHHkeVrNXqL3SH1ga4wMsj5u3nLrhpRb_5LHJ4), [Instructor copy / Live Class Assignments: Performance Testing](https://drive.google.com/open?id=1ef6cboPPYCM-f05EiepgKuk_oNa6XWTiqyEK-HgN3xY), [Live Class Assignments: Performance Testing](https://drive.google.com/open?id=1OYcmOVZ2NadfshqVKVCWtnR6DSV5MuSfAt431P-zYzA), [Performance Testing: Assignment solutions](https://drive.google.com/open?id=1RjIMxUjTqARG_uZghofK0aAuPCr4Sd7EJD4bK8TONSA), [[Uplevel] Live Class Assignments: Performance Testing](https://drive.google.com/open?id=1EZNBYdO04aHjiKU08msfiXYzUBKZpvjaphWmUX1Rngo) |
@@ -1336,13 +1376,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Video-03: Jmeter: Performance Testing FM Slides](https://drive.google.com/open?id=1WzH-HqQpoS8W33fpxnvPp2__tlBTPY700jK8ieV7DZg)
 - [old_template_T1: Fundamentals of Performance Testing](https://drive.google.com/open?id=1OyZ5lW_bmtayR10np-xdV1IapU-pDyswb44lrxMos8w)
 
-**Top 5 of 34 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 34 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. Fundamentals of Performance Testing — slide 1 of [FinalT1_ Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1HxRGBpyDFBLTWuiqfrGZFUgNTZxtx6D0)
-2. Fundamentals of Performance Testing — slide 2 of [FinalT1_ Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1HxRGBpyDFBLTWuiqfrGZFUgNTZxtx6D0)
-3. Performance testing is a software testing process to determine a software application’s: — slide 3 of [FinalT1_ Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1HxRGBpyDFBLTWuiqfrGZFUgNTZxtx6D0)
-4. Types of Performance Testing — slide 5 of [FinalT1_ Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1HxRGBpyDFBLTWuiqfrGZFUgNTZxtx6D0)
-5. Types of Performance Testing — slide 6 of [FinalT1_ Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1HxRGBpyDFBLTWuiqfrGZFUgNTZxtx6D0)
+2. Performance testing is a software testing process to determine a software application’s: — slide 3 of [FinalT1_ Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1HxRGBpyDFBLTWuiqfrGZFUgNTZxtx6D0)
+3. Types of Performance Testing — slide 5 of [FinalT1_ Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1HxRGBpyDFBLTWuiqfrGZFUgNTZxtx6D0)
+4. Putting it all together: PT Types — slide 12 of [FinalT1_ Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1HxRGBpyDFBLTWuiqfrGZFUgNTZxtx6D0)
+5. The basic parameters monitored during Performance Testing include: — slide 13 of [FinalT1_ Fundamentals of Performance Testing.pptx](https://drive.google.com/open?id=1HxRGBpyDFBLTWuiqfrGZFUgNTZxtx6D0)
+
+_25 repeated title(s) shown once._
 
 **Other files (11)** _(module-level files, curriculum documents, repositories)_
 
@@ -1362,11 +1404,11 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ## SD4/3 · API Testing
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 1 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Test Engineering — [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
+| Domain | Test Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4876/) · [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
 | Programme week | 11 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4671/) |
 | Decks | 41 |
@@ -1376,7 +1418,7 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 | session | Uplevel | Drive |
 |---|---|---|
-| Pre-class | [open](https://uplevel.interviewkickstart.com/update_resource_collection/646/) | **76:** [API  Fundamentals - APIs and Web Services ](https://drive.google.com/open?id=1zJb9H93zu7nHetqV_VrWwhvkOt89fX6acMru8IFUHaU), [API Documentation](https://drive.google.com/open?id=1VbztexX7tnbPRSbwIQwiNFufSbTTK1nsbSVNelmp_oU), [API Fundamentals - APIs & Web Services.txt](https://drive.google.com/open?id=1zbD4E44kkkGoKegjU4UPH48g4D3F_-H3), [API Fundamentals - HTTP Basics](https://drive.google.com/open?id=1mNXxjaDui0mYDDlfOIfwEljv_7kHWADzrf-WF2mTOk4), [API Fundamentals - HTTP Headers](https://drive.google.com/open?id=1hKabFl1Q5B6ISRho-Y1Efxk5wTttgYbDpsEZAxr_x0s), [API Fundamentals - HTTP Methods ](https://drive.google.com/open?id=161_Uc8c-ZfixXy8P5x5gKmBNNunt8kXGDHFGEDxXgZ8), [API Fundamentals - HTTP Parameters](https://drive.google.com/open?id=123MQUivv5aXGoem6s0i8KTxp_Tdl3v-WXLC-WPAaaOc), [API Fundamentals - HTTP Requests and Responses](https://drive.google.com/open?id=1VX7FarkDzVe_-sJClUbJ3rjsZ3-P0Pw7pMmZ1U4akgQ), [API Fundamentals - REST](https://drive.google.com/open?id=1un4x9KuXdQ1nevdAK74JGNQTfCSMm8Sy2_vV0wX6SqA), [API TESTING FUNDA Time to be considered.txt](https://drive.google.com/open?id=1Po-MlKkQHsqJ5aeH2_dUVv65N8SNKL5u), [API Testing Fundamentals](https://drive.google.com/open?id=1-8xoJkboFDKSuW-89qg43c4QyzrI_n0PdqgiNWovdVg), [API_DOCUMENTATION: Time to be considered.txt](https://drive.google.com/open?id=1zU1rkQ_Adn-7dMIe_1-jGL3tJmzzZlN_), [APIs and Web Services - Speaker Notes.md](https://drive.google.com/open?id=1-3Jokbyadx2zo43MeAu9q7UjwWH5Bu3q), [CHALLENGES OF API TIME TO BE CONSIDER.txt](https://drive.google.com/open?id=1z8kaGxxUQvTaUwvQRjji7T4v9l0xzORS), [Challenges of API Testing](https://drive.google.com/open?id=1NHNNY2r0i8gmSXvfxuSLMjz62lmL8BofVZci-702w5w), [Copy for Reference](https://drive.google.com/open?id=1gNI6DqRsx54BMKmFLpZl007PIspal8Qk_1-PzZTK8Zo), [Currently Uploaded FM Content in Uplevel: API Testing](https://drive.google.com/open?id=1QCB5ertcIiDPGyZDlMrZUmrEcwEW1K7zLuVLje6ScF8), [FM MCQs: API Testing](https://drive.google.com/open?id=1-kRbpxoaHqBxxpMgO05i1Hv5MlwXPkfrudwp-a3xCDo), [FM: API Testing Foundation Material](https://drive.google.com/open?id=1zAnU2DQ5bzVH8O3_6Ng5-keBnn1bghhu7Sm15-YN32o), [Final_API_Fundamentals_0.pptx](https://drive.google.com/open?id=1WWUVmIe6OhlmGF_n2pbPV47DhOk4jZ5C), [Final_API_Fundamentals_1.pptx](https://drive.google.com/open?id=1252VMbNar41CJ7lT3CBGS5x7WroXEmfP), [Final_API_Fundamentals_2.pptx](https://drive.google.com/open?id=1FM4YfRHL85wRXyv5UEfy3YDOyW13bbtX), [Final_API_Testing_Fundamentals_2.pptx](https://drive.google.com/open?id=1JzowdLjYuNek0V07UVggEnVaS30_84-j), [Foundation Material:  API Testing Introduction](https://drive.google.com/open?id=14nIWlUZVcP3O1X2odttjC47hqp3V2elDkFlFUhrRcpc), [HTTP Basics - Speaker Notes.md](https://drive.google.com/open?id=1QKMRPUAPADOpdaNDhcydGgI4H_H5m50B), [HTTP HTTP Requests and Responses - Speaker Notes.md](https://drive.google.com/open?id=1oAa7NzsdwvNY0isaY7jnJchRg9KOeRNC), [HTTP Headers - Speaker Notes.md](https://drive.google.com/open?id=1cMi9uS3Z2tEX-kJUn14SnrnktEHB5Wql), [HTTP Methods - Speaker Notes.md](https://drive.google.com/open?id=13z29tXxT9Yf-HUAI0suz9-bcgHeGb158), [HTTP Params - Speaker Notes.md](https://drive.google.com/open?id=1M2PpE9Uin7iZ3K9LOq230E9_S_JcX7Al), [NEED FOR API : Time to be considered.txt](https://drive.google.com/open?id=1E1e2xRLBEHGqaxu9iErUpk0hIe-FRWfB), [Need for API Test Automation](https://drive.google.com/open?id=1ifATKe8GnsU7COs6SMIhYZjHcahFeWUdgyHOPmZo8fY), [REST - Speaker Notes.md](https://drive.google.com/open?id=1yPmZMIzZncmw8LjgezNBXpusQCgH2GCO), [Reference slide template](https://drive.google.com/open?id=1nJh1DW8dufZR8fXaL4cJpgPgBFze7tv1i3sYhMBoSoE), [T1_0: API Fundamentals](https://drive.google.com/open?id=1VcuPHjAhxwviJuFi5ual29jFYLzYCoubLotHCJP9Vds), [T1_1: API Fundamentals](https://drive.google.com/open?id=1uH63CVQ3ODFLUDFtmPAJ_SW8k_WfdHYC363r2qXzJBY), [T1_2: API Fundamentals](https://drive.google.com/open?id=16U8h8sEiQzGM5yb7qOpoToSYn9xvd5yF6KzjEyzg90M), [T2: API Fundamentals](https://drive.google.com/open?id=1P1SnAKrRM_ibsjkokGk7KO91sIyHnIsFZ-q2SqF6vhM), [Untitled document](https://drive.google.com/open?id=1Uzx1znyl5C3rm-NA52sFoU3LDHYrjQ94ZDR3-QUJNbc), [Video-01: API  Fundamentals - APIs and Web Services_.pptx](https://drive.google.com/open?id=1ae07EEJcJWy8Q6MBImTU3DhVbUlL1pbc), [Video-02: API Fundamentals - REST.pptx](https://drive.google.com/open?id=1A0bHNjjipL1zC11YItjttgs5qpgAJXCS), [Video-03: API Fundamentals - HTTP Basics.pptx](https://drive.google.com/open?id=1WuCG54_bBU_DHSOkj1NI92c7p9_YY_U0), [Video-04: API Fundamentals - HTTP Methods_.pptx](https://drive.google.com/open?id=12PLuszXElSexy8uDc9_tWXnNagYyJSZ4), [Video-05: API Fundamentals - HTTP Requests and Responses.pptx](https://drive.google.com/open?id=10fkEqnNJidSHb0qgUBGUbwrKmdqm0rtX), [Video-06: API Fundamentals - HTTP Headers.pptx](https://drive.google.com/open?id=1rPgz4w4YwdFnxR7V0JIP1RfmI7rpc3XO), [Video-07: API Fundamentals - HTTP Parameters.pptx](https://drive.google.com/open?id=1xLrFjxp1NEDEB83T9b7Z-70OUfh3jL8D), [Video-08: API_Fundamentals_Pegination.pptx](https://drive.google.com/open?id=1wB9AZM6twpw7Db4gjdu57cNedJRff0Cu), [Video-09: API Fundamentals: Authentication and Authorization.pptx](https://drive.google.com/open?id=1nz0z-Q4GuGG0sJQjFeIrWF8hRYHHo_Kk), [Video-10_API_Fundamentals_Session-based Authentication.pptx](https://drive.google.com/open?id=1qqv3fugAeVOhYRqIH4bRI18MvvGreDmv), [Video-11: API Testing Fundamentals.pptx](https://drive.google.com/open?id=1TNmn9gRiNM59e__ZeCt8WPqKGZWKoSzX), [Video-12: Need for API Test Automation.pptx](https://drive.google.com/open?id=1X6SUh_MfuiWrOZLWeCsTx-jxdqM5Cr10), [Video-13: Challenges of API Testing.pptx](https://drive.google.com/open?id=1tf9AbiRiScj-waoiJ-YhtjWAvoUkexIz), [Video-14: API Documentation.pptx](https://drive.google.com/open?id=1wqCyaC6lGePcboosDNs_ec7HlzxlsLN1), [Video-15: API_Testing_Fundamentals_Testing Types.pptx](https://drive.google.com/open?id=1qvpg8q9eJujw9kNs1EcsdDZxmfTFqn13), [recording.conf](https://drive.google.com/open?id=1104UOpyIiiT3ThfVvSZBVOzTk6AuJJBf), [recording.conf](https://drive.google.com/open?id=16LNM_G6f2GCKMRh1EuXPAPG1D3LZE3Y9), [recording.conf](https://drive.google.com/open?id=19dTu1kcdRDo0PZYzWZeRIt5jBEwsUF-s), [recording.conf](https://drive.google.com/open?id=19xMImPSf9UHaoQ5DX4-LtbibvSc0d6QV), [recording.conf](https://drive.google.com/open?id=1A0L2k5HF_68SsAbW_gJku4t9hG_vW6im), [recording.conf](https://drive.google.com/open?id=1Fq-PHObXTrKQjvGPtk2Rb0MbsU6aHK1X), [recording.conf](https://drive.google.com/open?id=1NLtyG7lqcr_VY4hSfGAA8yZyHEMlc_ts), [recording.conf](https://drive.google.com/open?id=1Ov5kc7dH0_xF7S6Qawz7kj4p0K4rnaoF), [recording.conf](https://drive.google.com/open?id=1QCup4MICPI6vEEwCWgbKFWdadyBWr1hv), [recording.conf](https://drive.google.com/open?id=1V8zPC9z0DyBMVIe2wfnSPzhX7l9P0QdB), [recording.conf](https://drive.google.com/open?id=1Z2D2qRLcE-CrP60CzqdhcdQ9PLn3-7pi), [recording.conf](https://drive.google.com/open?id=1ZiQcRfbYIz8ZhWS-wbxrNWTcNJ8ITFZn), [recording.conf](https://drive.google.com/open?id=1eskd2Vk2YSFDp_S9XkJmxqH7uBloeT3E), [recording.conf](https://drive.google.com/open?id=1gTHJm5KK5AeSmw5rZGDfl8MH5sEAo0sX), [recording.conf](https://drive.google.com/open?id=1jT6gSoTA2E1DlbvprIB2-hniMrbFKuR3), [recording.conf](https://drive.google.com/open?id=1jt4Bza3kUk6rHfNb7odCrAPvBM5BQtVM), [recording.conf](https://drive.google.com/open?id=1jyHMU51WL7doPv4QWYnmQ7_TGhKwUuz7), [recording.conf](https://drive.google.com/open?id=1kp_so3pYo8m_xfV2TNfcXybVtGngp2GR), [recording.conf](https://drive.google.com/open?id=1mg8XyUlOtFwYcwcLxNgyQIj8MSGTrD0L), [recording.conf](https://drive.google.com/open?id=1nVzxmsksEyQ3mu4qxV4RWlK-_DeKsage), [recording.conf](https://drive.google.com/open?id=1rP9ZK4llsrpEn363kHF-BTl6u70r_CRv), [z_API Fundamentals - APIs _ Web Services.txt](https://drive.google.com/open?id=1mMu3Z15Mw4PyhdDpTwuQhw-6Qkxj-toG), [z_Foundation Material_  API Testing Introduction.pptx](https://drive.google.com/open?id=1ztBqaZNJDKNA_dIpHs-5sIPZPaK7Kb5C) |
+| Pre-class | [open](https://uplevel.interviewkickstart.com/update_resource_collection/646/) | **76:** [API  Fundamentals - APIs and Web Services ](https://drive.google.com/open?id=1zJb9H93zu7nHetqV_VrWwhvkOt89fX6acMru8IFUHaU), [API Documentation](https://drive.google.com/open?id=1VbztexX7tnbPRSbwIQwiNFufSbTTK1nsbSVNelmp_oU), [API Fundamentals - APIs & Web Services.txt](https://drive.google.com/open?id=1zbD4E44kkkGoKegjU4UPH48g4D3F_-H3), [API Fundamentals - HTTP Basics](https://drive.google.com/open?id=1mNXxjaDui0mYDDlfOIfwEljv_7kHWADzrf-WF2mTOk4), [API Fundamentals - HTTP Headers](https://drive.google.com/open?id=1hKabFl1Q5B6ISRho-Y1Efxk5wTttgYbDpsEZAxr_x0s), [API Fundamentals - HTTP Methods ](https://drive.google.com/open?id=161_Uc8c-ZfixXy8P5x5gKmBNNunt8kXGDHFGEDxXgZ8), [API Fundamentals - HTTP Parameters](https://drive.google.com/open?id=123MQUivv5aXGoem6s0i8KTxp_Tdl3v-WXLC-WPAaaOc), [API Fundamentals - HTTP Requests and Responses](https://drive.google.com/open?id=1VX7FarkDzVe_-sJClUbJ3rjsZ3-P0Pw7pMmZ1U4akgQ), [API Fundamentals - REST](https://drive.google.com/open?id=1un4x9KuXdQ1nevdAK74JGNQTfCSMm8Sy2_vV0wX6SqA), [API TESTING FUNDA Time to be considered.txt](https://drive.google.com/open?id=1Po-MlKkQHsqJ5aeH2_dUVv65N8SNKL5u), [API Testing Fundamentals](https://drive.google.com/open?id=1-8xoJkboFDKSuW-89qg43c4QyzrI_n0PdqgiNWovdVg), [API_DOCUMENTATION: Time to be considered.txt](https://drive.google.com/open?id=1zU1rkQ_Adn-7dMIe_1-jGL3tJmzzZlN_), [APIs and Web Services - Speaker Notes.md](https://drive.google.com/open?id=1-3Jokbyadx2zo43MeAu9q7UjwWH5Bu3q), [CHALLENGES OF API TIME TO BE CONSIDER.txt](https://drive.google.com/open?id=1z8kaGxxUQvTaUwvQRjji7T4v9l0xzORS), [Challenges of API Testing](https://drive.google.com/open?id=1NHNNY2r0i8gmSXvfxuSLMjz62lmL8BofVZci-702w5w), [Copy for Reference](https://drive.google.com/open?id=1gNI6DqRsx54BMKmFLpZl007PIspal8Qk_1-PzZTK8Zo), [Currently Uploaded FM Content in Uplevel: API Testing](https://drive.google.com/open?id=1QCB5ertcIiDPGyZDlMrZUmrEcwEW1K7zLuVLje6ScF8), [FM MCQs: API Testing](https://drive.google.com/open?id=1-kRbpxoaHqBxxpMgO05i1Hv5MlwXPkfrudwp-a3xCDo), [FM: API Testing Foundation Material](https://drive.google.com/open?id=1zAnU2DQ5bzVH8O3_6Ng5-keBnn1bghhu7Sm15-YN32o), [Final_API_Fundamentals_0.pptx](https://drive.google.com/open?id=1WWUVmIe6OhlmGF_n2pbPV47DhOk4jZ5C), [Final_API_Fundamentals_1.pptx](https://drive.google.com/open?id=1252VMbNar41CJ7lT3CBGS5x7WroXEmfP), [Final_API_Fundamentals_2.pptx](https://drive.google.com/open?id=1FM4YfRHL85wRXyv5UEfy3YDOyW13bbtX), [Final_API_Testing_Fundamentals_2.pptx](https://drive.google.com/open?id=1JzowdLjYuNek0V07UVggEnVaS30_84-j), [Foundation Material:  API Testing Introduction](https://drive.google.com/open?id=14nIWlUZVcP3O1X2odttjC47hqp3V2elDkFlFUhrRcpc), [HTTP Basics - Speaker Notes.md](https://drive.google.com/open?id=1QKMRPUAPADOpdaNDhcydGgI4H_H5m50B), [HTTP HTTP Requests and Responses - Speaker Notes.md](https://drive.google.com/open?id=1oAa7NzsdwvNY0isaY7jnJchRg9KOeRNC), [HTTP Headers - Speaker Notes.md](https://drive.google.com/open?id=1cMi9uS3Z2tEX-kJUn14SnrnktEHB5Wql), [HTTP Methods - Speaker Notes.md](https://drive.google.com/open?id=13z29tXxT9Yf-HUAI0suz9-bcgHeGb158), [HTTP Params - Speaker Notes.md](https://drive.google.com/open?id=1M2PpE9Uin7iZ3K9LOq230E9_S_JcX7Al), [NEED FOR API : Time to be considered.txt](https://drive.google.com/open?id=1E1e2xRLBEHGqaxu9iErUpk0hIe-FRWfB), [Need for API Test Automation](https://drive.google.com/open?id=1ifATKe8GnsU7COs6SMIhYZjHcahFeWUdgyHOPmZo8fY), [REST - Speaker Notes.md](https://drive.google.com/open?id=1yPmZMIzZncmw8LjgezNBXpusQCgH2GCO), [Reference slide template](https://drive.google.com/open?id=1nJh1DW8dufZR8fXaL4cJpgPgBFze7tv1i3sYhMBoSoE), [T1_0: API Fundamentals](https://drive.google.com/open?id=1VcuPHjAhxwviJuFi5ual29jFYLzYCoubLotHCJP9Vds), [T1_1: API Fundamentals](https://drive.google.com/open?id=1uH63CVQ3ODFLUDFtmPAJ_SW8k_WfdHYC363r2qXzJBY), [T1_2: API Fundamentals](https://drive.google.com/open?id=16U8h8sEiQzGM5yb7qOpoToSYn9xvd5yF6KzjEyzg90M), [T2: API Fundamentals](https://drive.google.com/open?id=1P1SnAKrRM_ibsjkokGk7KO91sIyHnIsFZ-q2SqF6vhM), [Untitled document](https://drive.google.com/open?id=1Uzx1znyl5C3rm-NA52sFoU3LDHYrjQ94ZDR3-QUJNbc), [Video-01: API  Fundamentals - APIs and Web Services_.pptx](https://drive.google.com/open?id=1ae07EEJcJWy8Q6MBImTU3DhVbUlL1pbc), [Video-02: API Fundamentals - REST.pptx](https://drive.google.com/open?id=1A0bHNjjipL1zC11YItjttgs5qpgAJXCS), [Video-03: API Fundamentals - HTTP Basics.pptx](https://drive.google.com/open?id=1WuCG54_bBU_DHSOkj1NI92c7p9_YY_U0), [Video-04: API Fundamentals - HTTP Methods_.pptx](https://drive.google.com/open?id=12PLuszXElSexy8uDc9_tWXnNagYyJSZ4), [Video-05: API Fundamentals - HTTP Requests and Responses.pptx](https://drive.google.com/open?id=10fkEqnNJidSHb0qgUBGUbwrKmdqm0rtX), [Video-06: API Fundamentals - HTTP Headers.pptx](https://drive.google.com/open?id=1rPgz4w4YwdFnxR7V0JIP1RfmI7rpc3XO), [Video-07: API Fundamentals - HTTP Parameters.pptx](https://drive.google.com/open?id=1xLrFjxp1NEDEB83T9b7Z-70OUfh3jL8D), [Video-08: API_Fundamentals_Pegination.pptx](https://drive.google.com/open?id=1wB9AZM6twpw7Db4gjdu57cNedJRff0Cu), [Video-09: API Fundamentals: Authentication and Authorization.pptx](https://drive.google.com/open?id=1nz0z-Q4GuGG0sJQjFeIrWF8hRYHHo_Kk), [Video-10_API_Fundamentals_Session-based Authentication.pptx](https://drive.google.com/open?id=1qqv3fugAeVOhYRqIH4bRI18MvvGreDmv), [Video-11: API Testing Fundamentals.pptx](https://drive.google.com/open?id=1TNmn9gRiNM59e__ZeCt8WPqKGZWKoSzX), [Video-12: Need for API Test Automation.pptx](https://drive.google.com/open?id=1X6SUh_MfuiWrOZLWeCsTx-jxdqM5Cr10), [Video-13: Challenges of API Testing.pptx](https://drive.google.com/open?id=1tf9AbiRiScj-waoiJ-YhtjWAvoUkexIz), [Video-14: API Documentation.pptx](https://drive.google.com/open?id=1wqCyaC6lGePcboosDNs_ec7HlzxlsLN1), [Video-15: API_Testing_Fundamentals_Testing Types.pptx](https://drive.google.com/open?id=1qvpg8q9eJujw9kNs1EcsdDZxmfTFqn13), [z_API Fundamentals - APIs _ Web Services.txt](https://drive.google.com/open?id=1mMu3Z15Mw4PyhdDpTwuQhw-6Qkxj-toG), [z_Foundation Material_  API Testing Introduction.pptx](https://drive.google.com/open?id=1ztBqaZNJDKNA_dIpHs-5sIPZPaK7Kb5C) <details><summary>Build/recording artefacts (21)</summary> [recording.conf](https://drive.google.com/open?id=1104UOpyIiiT3ThfVvSZBVOzTk6AuJJBf), [recording.conf](https://drive.google.com/open?id=16LNM_G6f2GCKMRh1EuXPAPG1D3LZE3Y9), [recording.conf](https://drive.google.com/open?id=19dTu1kcdRDo0PZYzWZeRIt5jBEwsUF-s), [recording.conf](https://drive.google.com/open?id=19xMImPSf9UHaoQ5DX4-LtbibvSc0d6QV), [recording.conf](https://drive.google.com/open?id=1A0L2k5HF_68SsAbW_gJku4t9hG_vW6im), [recording.conf](https://drive.google.com/open?id=1Fq-PHObXTrKQjvGPtk2Rb0MbsU6aHK1X), [recording.conf](https://drive.google.com/open?id=1NLtyG7lqcr_VY4hSfGAA8yZyHEMlc_ts), [recording.conf](https://drive.google.com/open?id=1Ov5kc7dH0_xF7S6Qawz7kj4p0K4rnaoF), [recording.conf](https://drive.google.com/open?id=1QCup4MICPI6vEEwCWgbKFWdadyBWr1hv), [recording.conf](https://drive.google.com/open?id=1V8zPC9z0DyBMVIe2wfnSPzhX7l9P0QdB), [recording.conf](https://drive.google.com/open?id=1Z2D2qRLcE-CrP60CzqdhcdQ9PLn3-7pi), [recording.conf](https://drive.google.com/open?id=1ZiQcRfbYIz8ZhWS-wbxrNWTcNJ8ITFZn), [recording.conf](https://drive.google.com/open?id=1eskd2Vk2YSFDp_S9XkJmxqH7uBloeT3E), [recording.conf](https://drive.google.com/open?id=1gTHJm5KK5AeSmw5rZGDfl8MH5sEAo0sX), [recording.conf](https://drive.google.com/open?id=1jT6gSoTA2E1DlbvprIB2-hniMrbFKuR3), [recording.conf](https://drive.google.com/open?id=1jt4Bza3kUk6rHfNb7odCrAPvBM5BQtVM), [recording.conf](https://drive.google.com/open?id=1jyHMU51WL7doPv4QWYnmQ7_TGhKwUuz7), [recording.conf](https://drive.google.com/open?id=1kp_so3pYo8m_xfV2TNfcXybVtGngp2GR), [recording.conf](https://drive.google.com/open?id=1mg8XyUlOtFwYcwcLxNgyQIj8MSGTrD0L), [recording.conf](https://drive.google.com/open?id=1nVzxmsksEyQ3mu4qxV4RWlK-_DeKsage), [recording.conf](https://drive.google.com/open?id=1rP9ZK4llsrpEn363kHF-BTl6u70r_CRv)</details> |
 | Class | [open](https://uplevel.interviewkickstart.com/update_video/76460/) | **3:** [API Testing : Live Session Prerequisite](https://drive.google.com/open?id=1vFbe3-RsObWM6nsI-M32hS41P10tIaYw5DYHwCovqso), [Copy of Live Class Slides: API Testing Live Session Presentation](https://drive.google.com/open?id=1dLzvs03DcY7QqiQ5oRglQSW_aWUjuTgCioNy0hBN2BE), [Final: Live Class Slides: API Testing Live Session Presentation](https://drive.google.com/open?id=11LCKhCSu2ZmTBBgOp241poxeIfPCVyeHP6zRKaA1M0M) |
 | Alternate Class | [open](https://uplevel.interviewkickstart.com/update_video/76462/) | _no file matched at session level_ |
 | Assignment | [open](https://uplevel.interviewkickstart.com/update_resource_collection/398/) | **1:** [Live Class Assignments: API Testing Assignments after live session](https://drive.google.com/open?id=1Zyk6AVawX547GWGsKdJGqKSZBZMX4rE7oaMtyTVOktk) |
@@ -1440,13 +1482,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Video-15: API_Testing_Fundamentals_Testing Types.pptx](https://drive.google.com/open?id=1qvpg8q9eJujw9kNs1EcsdDZxmfTFqn13)
 - [z_Foundation Material_  API Testing Introduction.pptx](https://drive.google.com/open?id=1ztBqaZNJDKNA_dIpHs-5sIPZPaK7Kb5C)
 
-**Top 5 of 90 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 90 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. API Fundamentals — slide 1 of [Video-05: API Fundamentals - HTTP Requests and Responses.pptx](https://drive.google.com/open?id=10fkEqnNJidSHb0qgUBGUbwrKmdqm0rtX)
 2. HTTP Requests & Reponses — slide 3 of [Video-05: API Fundamentals - HTTP Requests and Responses.pptx](https://drive.google.com/open?id=10fkEqnNJidSHb0qgUBGUbwrKmdqm0rtX)
 3. Do you recall what these status code mean? — slide 4 of [Video-05: API Fundamentals - HTTP Requests and Responses.pptx](https://drive.google.com/open?id=10fkEqnNJidSHb0qgUBGUbwrKmdqm0rtX)
 4. Common HTTP response codes used with REST: — slide 5 of [Video-05: API Fundamentals - HTTP Requests and Responses.pptx](https://drive.google.com/open?id=10fkEqnNJidSHb0qgUBGUbwrKmdqm0rtX)
 5. Given — slide 6 of [Video-05: API Fundamentals - HTTP Requests and Responses.pptx](https://drive.google.com/open?id=10fkEqnNJidSHb0qgUBGUbwrKmdqm0rtX)
+
+_43 repeated title(s) shown once; 1 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
 
 **Other files (59)** _(module-level files, curriculum documents, repositories)_
 
@@ -1514,11 +1558,11 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ## SD4/4 · Automation Testing
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 1 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Test Engineering — [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
+| Domain | Test Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4876/) · [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
 | Programme week | 12 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4672/) |
 | Decks | 30 |
@@ -1528,7 +1572,7 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 | session | Uplevel | Drive |
 |---|---|---|
-| Pre-class | [open](https://uplevel.interviewkickstart.com/update_resource_collection/956/) | **45:** [Automation Testing - Introduction](https://drive.google.com/open?id=13odzgS9grzuBBhmdGOg-wwcd4GsLhrEc1jLs3RX7nNk), [Automation Testing - Introduction (Final Version)](https://drive.google.com/open?id=11D9dMrTXg7rFmm_Y5alE0L38VG13vX0hWtgXBJ8rvKI), [Copy for Reference](https://drive.google.com/open?id=1oUcFYcJpSz9qaC_T3sNpbeSGkiivfxGZvwp-yWSpEa8), [Currently Uploaded FM Content in Uplevel: Automation Testing](https://drive.google.com/open?id=1uslDIowiHNmmYhQvI8FXEjHHyHrKdXZdS0Y1AE-iSBY), [FM MCQs: Automation Testing](https://drive.google.com/open?id=1He0u5QyIQ1kkAVFmHJDSgDX-LNQSpiy0oUiwhDblPHk), [FM Practise Problems: Automation Testing](https://drive.google.com/open?id=1KRFSd0k-OWQoxYNndvZlfszz0LoDA6CXYbYDmFzGO9o), [FM Slides: Automation Testing](https://drive.google.com/open?id=1idZ3xdtoLYhp0neNjKfTUogCej74p7GZHr3hr8AYaA8), [Introduction: Foundation Material - Test Engineering Design Patterns](https://drive.google.com/open?id=1XcL7DoszHV0samOcFybaWN4DyBiznRGJYEW9_wHTYs0), [Introduction: Fundamentals of Automation Testing](https://drive.google.com/open?id=1lEDyHctWyzFcfLamJ4wqfWLtL_iLmkCtR2i4X7EwARo), [Old Copy of FM: Automation Testing: Foundations - 13 February, 22:31](https://drive.google.com/open?id=18PL7KpSZm9JJbqRj5jtnyHriB-5c2h9QTxzwETWnVnk), [Old FM: Automation Testing: Foundations](https://drive.google.com/open?id=1vmI1dKIlBgcKDwxXc1nNyEi3UW98Oe8Hbzj5kxHru-Y), [TestNG](https://drive.google.com/open?id=16XnQI4MFysiEi9DYjyQ8uxQ5-8nhLHRfjJvrjMI2n4g), [Video-01: Introduction: Fundamentals of Automation Testing](https://drive.google.com/open?id=16IEI8TgAkup45cghWch0u52Uj6ccI2FvQYLpx4mj1m0), [Video-01_ Introduction_ Fundamentals of Automation Testing.pptx](https://drive.google.com/open?id=1flxp5cIMxL2OT1jDCS0Wy3YZwtcMayCj), [Video-02-07: Automation Testing - Introduction (Final Version)](https://drive.google.com/open?id=1hYWmqqeNCZj3gPLRi_8Ob33cZxExcKdxA007Krz0wN4), [Video-02-07_ Automation Testing - Introduction (Final Version).pptx](https://drive.google.com/open?id=18eHdZu0dQ6BOAvR-ftv2LVr5I-MYG6K4), [Video-08 White-box/Black-box](https://drive.google.com/open?id=1XP2ZtAdL9uUcVOYvcCXzqQIJE6ypDsDV_l6W6jeDBvs), [Video-08 White-box_Black-box.pptx](https://drive.google.com/open?id=1rA_JuqStfh9UKyZvkb0t2uIcbuZY_7C3), [Video-09: CI/CD/CD](https://drive.google.com/open?id=1NmldbUyLNs9w5O6YGfj53yotLeXo_uJGiJej1m_MNaY), [Video-09: CI/CD/CD](https://drive.google.com/open?id=1qrif0zmXkRXGsTLmJOedaT3F5NcGVIOiW23y3HATL4k), [Video-09_ CI_CD_CD.pptx](https://drive.google.com/open?id=18EUnzIl8pQa1gtZ0WTyfXGKBQFUCe9XS), [Video-10 TestNG](https://drive.google.com/open?id=1x6QHVtPuFNQxSWtdEMwHbHb6A1Z2Ki0gkuUBML-yqKI), [Video-10: TestNG](https://drive.google.com/open?id=1jTrOpFmlTyRMVPYYB_4ICiZ418nULS19MBnp4qeSoYQ), [Video-10_ TestNG.pptx](https://drive.google.com/open?id=15kQijwODUbmHF9v3BT55PnAxYNrPp7G5), [Video11-14: Automation Testing - Selenium](https://drive.google.com/open?id=1TIbET-Zd_NDhg9Ug161NyNvGtSpQlRo6ra6oFjAAfbE), [Video11-14: Automation Testing - Selenium](https://drive.google.com/open?id=1ueGkZ3wQMwpUAYgjP2c6A9esA4gHpICLbVQqIVlpi3M), [Video11-14: Automation Testing - Selenium](https://drive.google.com/open?id=1zB3RGErWBqzqH4pZBtr0Fu-maxP49_s1JXLmaMXdM3c), [White-box/Black-box](https://drive.google.com/open?id=1CHwrOshhAg1ubc7pSKx0hk_MNUp80u_9rzf6mXMMx5g), [recording.conf](https://drive.google.com/open?id=11PLqKtKB-I3O6iIbp9-4fxAN7Jari-Ip), [recording.conf](https://drive.google.com/open?id=15ZK-Dn6GofGGh7A0jIww9yXM_9TtWJD6), [recording.conf](https://drive.google.com/open?id=1ELLJ3kfP51yFzYYbf72r9VZFrYSQ8zA_), [recording.conf](https://drive.google.com/open?id=1GAn1Mdw2vV9cXGWYcbzCqofUfuZksZvQ), [recording.conf](https://drive.google.com/open?id=1KRY5ZJR5_s5OuEEvECetnIwsINbQsqdI), [recording.conf](https://drive.google.com/open?id=1Km7pmKduQ7Bftr1rZnnrux34O9oMDBpf), [recording.conf](https://drive.google.com/open?id=1M0prTJhCRW02bxgai5qxJktommKS-1Ut), [recording.conf](https://drive.google.com/open?id=1OzVyv5ptMUUzzx0i6tjBj0mT-cE-VDdq), [recording.conf](https://drive.google.com/open?id=1Qktj2lv87H9Epg9_cfsWJbocqdz_LCs7), [recording.conf](https://drive.google.com/open?id=1TrSPtHf8F4yCLubder3RHHIbqpAaqxG_), [recording.conf](https://drive.google.com/open?id=1Yi5ewpHDRAFmibX750VV6R43OtcZGmLE), [recording.conf](https://drive.google.com/open?id=1_6cijMm7NvG5n8Yc6s7HCvb1lXtM_26L), [recording.conf](https://drive.google.com/open?id=1hAqIr2_bH216l6ZHbNu2V-TT3tT8Kii3), [recording.conf](https://drive.google.com/open?id=1iaLUPE5Ngk0bx9vIShnxSOghuTuhJtFe), [recording.conf](https://drive.google.com/open?id=1kLI4TwggZKcDJiEwHHaI1jc_jnFJ_IaY), [recording.conf](https://drive.google.com/open?id=1zah_feyqhQFDQWCW63Tvq5EjdKrSy74M), [test_amazon_webpage_expected_title.py](https://drive.google.com/open?id=1B71m1DCG7Vp0B1AjjMsjugqqQ_wNXLPy) |
+| Pre-class | [open](https://uplevel.interviewkickstart.com/update_resource_collection/956/) | **45:** [Automation Testing - Introduction](https://drive.google.com/open?id=13odzgS9grzuBBhmdGOg-wwcd4GsLhrEc1jLs3RX7nNk), [Automation Testing - Introduction (Final Version)](https://drive.google.com/open?id=11D9dMrTXg7rFmm_Y5alE0L38VG13vX0hWtgXBJ8rvKI), [Copy for Reference](https://drive.google.com/open?id=1oUcFYcJpSz9qaC_T3sNpbeSGkiivfxGZvwp-yWSpEa8), [Currently Uploaded FM Content in Uplevel: Automation Testing](https://drive.google.com/open?id=1uslDIowiHNmmYhQvI8FXEjHHyHrKdXZdS0Y1AE-iSBY), [FM MCQs: Automation Testing](https://drive.google.com/open?id=1He0u5QyIQ1kkAVFmHJDSgDX-LNQSpiy0oUiwhDblPHk), [FM Practise Problems: Automation Testing](https://drive.google.com/open?id=1KRFSd0k-OWQoxYNndvZlfszz0LoDA6CXYbYDmFzGO9o), [FM Slides: Automation Testing](https://drive.google.com/open?id=1idZ3xdtoLYhp0neNjKfTUogCej74p7GZHr3hr8AYaA8), [Introduction: Foundation Material - Test Engineering Design Patterns](https://drive.google.com/open?id=1XcL7DoszHV0samOcFybaWN4DyBiznRGJYEW9_wHTYs0), [Introduction: Fundamentals of Automation Testing](https://drive.google.com/open?id=1lEDyHctWyzFcfLamJ4wqfWLtL_iLmkCtR2i4X7EwARo), [Old Copy of FM: Automation Testing: Foundations - 13 February, 22:31](https://drive.google.com/open?id=18PL7KpSZm9JJbqRj5jtnyHriB-5c2h9QTxzwETWnVnk), [Old FM: Automation Testing: Foundations](https://drive.google.com/open?id=1vmI1dKIlBgcKDwxXc1nNyEi3UW98Oe8Hbzj5kxHru-Y), [TestNG](https://drive.google.com/open?id=16XnQI4MFysiEi9DYjyQ8uxQ5-8nhLHRfjJvrjMI2n4g), [Video-01: Introduction: Fundamentals of Automation Testing](https://drive.google.com/open?id=16IEI8TgAkup45cghWch0u52Uj6ccI2FvQYLpx4mj1m0), [Video-01_ Introduction_ Fundamentals of Automation Testing.pptx](https://drive.google.com/open?id=1flxp5cIMxL2OT1jDCS0Wy3YZwtcMayCj), [Video-02-07: Automation Testing - Introduction (Final Version)](https://drive.google.com/open?id=1hYWmqqeNCZj3gPLRi_8Ob33cZxExcKdxA007Krz0wN4), [Video-02-07_ Automation Testing - Introduction (Final Version).pptx](https://drive.google.com/open?id=18eHdZu0dQ6BOAvR-ftv2LVr5I-MYG6K4), [Video-08 White-box/Black-box](https://drive.google.com/open?id=1XP2ZtAdL9uUcVOYvcCXzqQIJE6ypDsDV_l6W6jeDBvs), [Video-08 White-box_Black-box.pptx](https://drive.google.com/open?id=1rA_JuqStfh9UKyZvkb0t2uIcbuZY_7C3), [Video-09: CI/CD/CD](https://drive.google.com/open?id=1NmldbUyLNs9w5O6YGfj53yotLeXo_uJGiJej1m_MNaY), [Video-09: CI/CD/CD](https://drive.google.com/open?id=1qrif0zmXkRXGsTLmJOedaT3F5NcGVIOiW23y3HATL4k), [Video-09_ CI_CD_CD.pptx](https://drive.google.com/open?id=18EUnzIl8pQa1gtZ0WTyfXGKBQFUCe9XS), [Video-10 TestNG](https://drive.google.com/open?id=1x6QHVtPuFNQxSWtdEMwHbHb6A1Z2Ki0gkuUBML-yqKI), [Video-10: TestNG](https://drive.google.com/open?id=1jTrOpFmlTyRMVPYYB_4ICiZ418nULS19MBnp4qeSoYQ), [Video-10_ TestNG.pptx](https://drive.google.com/open?id=15kQijwODUbmHF9v3BT55PnAxYNrPp7G5), [Video11-14: Automation Testing - Selenium](https://drive.google.com/open?id=1TIbET-Zd_NDhg9Ug161NyNvGtSpQlRo6ra6oFjAAfbE), [Video11-14: Automation Testing - Selenium](https://drive.google.com/open?id=1ueGkZ3wQMwpUAYgjP2c6A9esA4gHpICLbVQqIVlpi3M), [Video11-14: Automation Testing - Selenium](https://drive.google.com/open?id=1zB3RGErWBqzqH4pZBtr0Fu-maxP49_s1JXLmaMXdM3c), [White-box/Black-box](https://drive.google.com/open?id=1CHwrOshhAg1ubc7pSKx0hk_MNUp80u_9rzf6mXMMx5g), [test_amazon_webpage_expected_title.py](https://drive.google.com/open?id=1B71m1DCG7Vp0B1AjjMsjugqqQ_wNXLPy) <details><summary>Build/recording artefacts (16)</summary> [recording.conf](https://drive.google.com/open?id=11PLqKtKB-I3O6iIbp9-4fxAN7Jari-Ip), [recording.conf](https://drive.google.com/open?id=15ZK-Dn6GofGGh7A0jIww9yXM_9TtWJD6), [recording.conf](https://drive.google.com/open?id=1ELLJ3kfP51yFzYYbf72r9VZFrYSQ8zA_), [recording.conf](https://drive.google.com/open?id=1GAn1Mdw2vV9cXGWYcbzCqofUfuZksZvQ), [recording.conf](https://drive.google.com/open?id=1KRY5ZJR5_s5OuEEvECetnIwsINbQsqdI), [recording.conf](https://drive.google.com/open?id=1Km7pmKduQ7Bftr1rZnnrux34O9oMDBpf), [recording.conf](https://drive.google.com/open?id=1M0prTJhCRW02bxgai5qxJktommKS-1Ut), [recording.conf](https://drive.google.com/open?id=1OzVyv5ptMUUzzx0i6tjBj0mT-cE-VDdq), [recording.conf](https://drive.google.com/open?id=1Qktj2lv87H9Epg9_cfsWJbocqdz_LCs7), [recording.conf](https://drive.google.com/open?id=1TrSPtHf8F4yCLubder3RHHIbqpAaqxG_), [recording.conf](https://drive.google.com/open?id=1Yi5ewpHDRAFmibX750VV6R43OtcZGmLE), [recording.conf](https://drive.google.com/open?id=1_6cijMm7NvG5n8Yc6s7HCvb1lXtM_26L), [recording.conf](https://drive.google.com/open?id=1hAqIr2_bH216l6ZHbNu2V-TT3tT8Kii3), [recording.conf](https://drive.google.com/open?id=1iaLUPE5Ngk0bx9vIShnxSOghuTuhJtFe), [recording.conf](https://drive.google.com/open?id=1kLI4TwggZKcDJiEwHHaI1jc_jnFJ_IaY), [recording.conf](https://drive.google.com/open?id=1zah_feyqhQFDQWCW63Tvq5EjdKrSy74M)</details> |
 | Class | [open](https://uplevel.interviewkickstart.com/update_video/76464/) | **4:** [Azeem's Copy of Live Class Slides: Automation Testing Final](https://drive.google.com/open?id=1jfqUSCUZ_uKfuybddU8kxne6F0CQMlcJ2fplSKm5g80), [IK's Copy of Live Class Slides: Automation Testing - Hetal Modi](https://drive.google.com/open?id=1ejXIhTtPwxAzLvzwi1ySAbsFG3Lj0H_xcdohJWtzsFQ), [Live Class Slides: Automation Testing](https://drive.google.com/open?id=1XOtyQcI4Byt6NaM0iUZrAYKah3VI27oAZ3K6MOyxsmQ), [Live Class Slides: Automation Testing Final](https://drive.google.com/open?id=1QkRTR6sQr8yFRbwSQNCXkw_p0EWECKqFJ1DGxygMaOk) |
 | Alternate Class | [open](https://uplevel.interviewkickstart.com/update_video/76465/) | _no file matched at session level_ |
 | Assignment | [open](https://uplevel.interviewkickstart.com/update_resource_collection/400/) | **3:** [Hetal's Automation Testing: Assignment Solutions](https://drive.google.com/open?id=1ppdp7sngJsY7aCn_RZrY9EX8J9VeBxQeSI15tnrbYJ4), [IK's Copy of Automation Testing: Assignment Solutions](https://drive.google.com/open?id=1WQGPYYb6ptOCivsiMGlnDRxaV9nxVb4c38t20ahH-M0), [Live Class Assignments: Automation Testing](https://drive.google.com/open?id=17NETyolqBKSxRgtrLDDKYeS1Qub2dpvQDfIiO6_qBnE) |
@@ -1583,13 +1627,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Video11-14: Automation Testing - Selenium](https://drive.google.com/open?id=1zB3RGErWBqzqH4pZBtr0Fu-maxP49_s1JXLmaMXdM3c)
 - [White-box/Black-box](https://drive.google.com/open?id=1CHwrOshhAg1ubc7pSKx0hk_MNUp80u_9rzf6mXMMx5g)
 
-**Top 5 of 62 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 62 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. TestNG — slide 1 of [Video-10_ TestNG.pptx](https://drive.google.com/open?id=15kQijwODUbmHF9v3BT55PnAxYNrPp7G5)
-2. TestNG — slide 2 of [Video-10_ TestNG.pptx](https://drive.google.com/open?id=15kQijwODUbmHF9v3BT55PnAxYNrPp7G5)
-3. TestNG Features — slide 3 of [Video-10_ TestNG.pptx](https://drive.google.com/open?id=15kQijwODUbmHF9v3BT55PnAxYNrPp7G5)
-4. TestNG Installation — slide 4 of [Video-10_ TestNG.pptx](https://drive.google.com/open?id=15kQijwODUbmHF9v3BT55PnAxYNrPp7G5)
-5. TestNG Installation — slide 5 of [Video-10_ TestNG.pptx](https://drive.google.com/open?id=15kQijwODUbmHF9v3BT55PnAxYNrPp7G5)
+2. TestNG Features — slide 3 of [Video-10_ TestNG.pptx](https://drive.google.com/open?id=15kQijwODUbmHF9v3BT55PnAxYNrPp7G5)
+3. TestNG Installation — slide 4 of [Video-10_ TestNG.pptx](https://drive.google.com/open?id=15kQijwODUbmHF9v3BT55PnAxYNrPp7G5)
+4. TestNG Annotation — slide 10 of [Video-10_ TestNG.pptx](https://drive.google.com/open?id=15kQijwODUbmHF9v3BT55PnAxYNrPp7G5)
+5. TestNG Annotation Priority — slide 11 of [Video-10_ TestNG.pptx](https://drive.google.com/open?id=15kQijwODUbmHF9v3BT55PnAxYNrPp7G5)
+
+_22 repeated title(s) shown once; 1 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
 
 **Other files (33)** _(module-level files, curriculum documents, repositories)_
 
@@ -1629,13 +1675,13 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 ---
 
-## SD4/5 · Test Automation Design Patterns
+## SD4/5 · Test Automation
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 1 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Test Engineering — [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
+| Domain | Test Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4876/) · [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
 | Programme week | 13 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4673/) |
 | Decks | 29 |
@@ -1645,7 +1691,7 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 | session | Uplevel | Drive |
 |---|---|---|
-| Pre-class | [open](https://uplevel.interviewkickstart.com/update_resource_collection/722/) | **52:** [Copy for Reference](https://drive.google.com/open?id=1p9Is01rH7WqWigSMCn9QXLBDL43_5AOU1jNZ3PLMQJk), [Copy of Test Engineering Design Patterns Introduction](https://drive.google.com/open?id=1R_FTShlsZSyK6VxQ0iibpqrgIh6okcoD7oH3JeSltnA), [Currently Uploaded FM Content in Uplevel: Test Automation Design Patterns ](https://drive.google.com/open?id=1MxuzbdtHzjo2Hx-3Z7Y-lw2AEzP9TDb5jbFLUnhVwFE), [FM MCQs: Test Engineering Design Patterns](https://drive.google.com/open?id=1peMpBkLzPjXpktVidbxavPflLUSI36Bn_x2FwlEKkRA), [FM: Test Engineering Design Patterns Foundation Material](https://drive.google.com/open?id=1szLohioQqqQlrYQS4a5pgo8mPkBxpyBxvkTOUv9yN8A), [LoginPage.py](https://drive.google.com/open?id=1k-MMJ3U9U1IGz6G6Fj85BHIZb6s4J_tO), [LoginPage.py](https://drive.google.com/open?id=1p5Pqpn1idVhecErjic750rJQzPeHzgqO), [Module 0 - General Overview.pptx](https://drive.google.com/open?id=1czubcNswJGzjigHqGuEF4uPXjn79TOB5), [Most used design patterns in Test Automation - Decorator Pattern](https://drive.google.com/open?id=1f0f7KpO2QJQmVchJRvPk6nlGnCU3KUI44OEdfq0Qg7E), [Most used design patterns in Test Automation - Structural Design & POM](https://drive.google.com/open?id=15Pe9xZIBKbpKGZBwotrVowSdWWZ_is0txpG6JF2Dqd4), [Recording Notes](https://drive.google.com/open?id=1FVqg_bK7Ynj_RjI_nOiFtOZTcPWeqUhWVD8rxcbe-kk), [Recording Notes](https://drive.google.com/open?id=1UomAAnOWB3z4S5FzIdHsLMtCN6LqvNd0apFs0jp1t2Y), [Recording Notes](https://drive.google.com/open?id=1t8j-4DQwxu91Ou2qLZTB6aqORSC8x5pa9otx-d5I3Ok), [Recording notes ](https://drive.google.com/open?id=1vcVUNiFU_mJVZAbAxyLKopmgnmqbOlGMDy977YB79jg), [Singleton Pattern](https://drive.google.com/open?id=1o3NeVELN8X0thmvAy4GatSQfk8lF5EGS_hbDJAQtbnM), [Speaker Notes - General Overview.docx](https://drive.google.com/open?id=1uPVcpd2Bu_X5lzA7h_nIWm0fO82OeRTO), [Test Engineering Design Patterns - Foundation Material (Rolands Notes).docx](https://drive.google.com/open?id=1eoLT71-YNKa3F-vROc6Jzm78m8X5uDZt), [TestBase.py](https://drive.google.com/open?id=1hACsG_eozLuFD5cWnNR9gH_BkeS4th_X), [Video-01: Test Engineering Design Patterns Introduction](https://drive.google.com/open?id=1SDv7OsghLEbFds8yQtjnRoN4FLxfs1GRyJYp4nxJeHI), [Video-01: Test Engineering Design Patterns Introduction](https://drive.google.com/open?id=1q2zJTyywdTzDJoWcL2hQyENVnCrqAv4_QhyQOULLH7M), [Video-02: Most used design patterns in Test Automation - Types of Design Patterns](https://drive.google.com/open?id=1FBDbv62JOD5PRtEe_P_InfiNdYMNJnAfjUUN52ll2aM), [Video-02: Most used design patterns in Test Automation - Types of Design Patterns](https://drive.google.com/open?id=1bnf5arhmQGTrw3WxLtv2JME4t_3EhIwikOmSYy96bDs), [Video-03: Most used design patterns in Test Automation - Structural Design & POM](https://drive.google.com/open?id=1oKO5OG-tPo4a4YU-l7mZ4dUM_k-0wOZxq7zMmzw7GUE), [Video-04: Most used design patterns in Test Automation - Facade Pattern](https://drive.google.com/open?id=1HTt5swZ4I2bR9OlXxvRUOGZNPsDQsLQVr2H10rD3kjA), [Video-05 Most used design patterns in Test Automation - Decorator Pattern](https://drive.google.com/open?id=1-UlbH0-nxy3ZKv3pS85NRVa1E0IAzEvUsM9O8HmBY98), [Video-06 Composite Pattern](https://drive.google.com/open?id=1Q9-6ah6C9rKyxz0wKQw1W1QPw5kchw_BQb_yTO-UUQk), [Video-06 Composite Pattern](https://drive.google.com/open?id=1utQg7-uFLkCYEUORJgZNsxHsIKw7w4N80u-SAp7_mUo), [Video-07: Factory Method Pattern](https://drive.google.com/open?id=1F6L3ijLDVO05jx8pu2A1MBhiihua7rGDt_bKt0mlwgo), [Video-07: Factory Method Pattern](https://drive.google.com/open?id=1sMMh0CkmwFIhewJV3sWyg__P0Vu9Gz8JDc6FCcNrAhY), [Video-08: Singleton Pattern](https://drive.google.com/open?id=1xmuLLJVYZcPNhaNCOpAEbR6IngaIo8JUgCDUnuJto1E), [Video-09: Most used design patterns in Test Automation - Builder Pattern](https://drive.google.com/open?id=1KGJVdRXJLHW8WLa736PY1rxJTpOGDrD3UIL8wUHXQL0), [Video-09: Most used design patterns in Test Automation - Builder Pattern](https://drive.google.com/open?id=1_rLdo9SqCXqjxAeyfHbFo4lg8o7mOihBTzjW6oQde3o), [Video-10: Most used design patterns in Test Automation - Behavioral Patterns & Strategy Pattern](https://drive.google.com/open?id=11Te-teBF2wL3r5FdyRLEWiwQF1db3c9qnIDQUm7uGrY), [Video-10: Most used design patterns in Test Automation - Behavioral Patterns & Strategy Pattern](https://drive.google.com/open?id=1xcrfp1Mt5UzsngK1G7IWvEhnqLMXBWBh9fbXrqp5CSc), [Video-3: Most used design patterns in Test Automation - Facade Pattern](https://drive.google.com/open?id=1ZtNNHZYHtRwl8--sn_5apxsoIxJzSorY_AWNxyGyjWo), [WebDriverFacade.py](https://drive.google.com/open?id=17QJKcOt2MG28iw5-FpnKsAQRfLL7h06I), [[] SOLID  First 5 Object Oriented Design Principles](https://drive.google.com/open?id=1ZX3uNaHPDDEPfALNffK4VgqFlj7GHHxTQd0P-FCzGdc), [builder_pattern.py](https://drive.google.com/open?id=1IyTeLykwpbHIZ_CFrcHMZMpZLKzoOLKN), [decorator_pattern.py](https://drive.google.com/open?id=1Ij-QSqxWb_k5E3lAE5zQPYHWRm4sDQjs), [decorator_pattern.py](https://drive.google.com/open?id=1geGHf-L0yY5mIbz9kFckRgki139xsNMT), [main.py](https://drive.google.com/open?id=10uH3mf64YbpogYGB76w5GB8kVvA-oVbj), [recording.conf](https://drive.google.com/open?id=1--Y3NKWso3GiMEkVCBkDtPWZkt0EudDj), [recording.conf](https://drive.google.com/open?id=134hkyfOOmDSOmiktnQmnE4R74teBMEI7), [recording.conf](https://drive.google.com/open?id=158pH_hOhfLiDRJwTt-uvKtPaPPRMXDZh), [recording.conf](https://drive.google.com/open?id=1T9XG0O4lIwBqiJZ6VVVN36WDdkHmLPI4), [recording.conf](https://drive.google.com/open?id=1U6f29STi_B9iL4k6H99DWlmxaRm0K3Ww), [recording.conf](https://drive.google.com/open?id=1Xdwycqhaik8ip6zf5gPtqMD_O28GcQlM), [recording.conf](https://drive.google.com/open?id=1ad3hsIy1sUJhJgumPtnasfhR0JC6Wo6z), [recording.conf](https://drive.google.com/open?id=1fYwc24mOyJ1Lzr7e76r1OJds8i085Jka), [recording.conf](https://drive.google.com/open?id=1isyBfjMLvjr5jxjxpN865Ogzgk42KKMS), [recording.conf](https://drive.google.com/open?id=1u0BSGqprmP0XXqmTh3Ty8ZQeeXkkMBjE), [strategy_pattern.py](https://drive.google.com/open?id=1p_BofdVo9eRrkqfIbmjF4DJ8q23GIVqh) |
+| Pre-class | [open](https://uplevel.interviewkickstart.com/update_resource_collection/722/) | **52:** [Copy for Reference](https://drive.google.com/open?id=1p9Is01rH7WqWigSMCn9QXLBDL43_5AOU1jNZ3PLMQJk), [Copy of Test Engineering Design Patterns Introduction](https://drive.google.com/open?id=1R_FTShlsZSyK6VxQ0iibpqrgIh6okcoD7oH3JeSltnA), [Currently Uploaded FM Content in Uplevel: Test Automation Design Patterns ](https://drive.google.com/open?id=1MxuzbdtHzjo2Hx-3Z7Y-lw2AEzP9TDb5jbFLUnhVwFE), [FM MCQs: Test Engineering Design Patterns](https://drive.google.com/open?id=1peMpBkLzPjXpktVidbxavPflLUSI36Bn_x2FwlEKkRA), [FM: Test Engineering Design Patterns Foundation Material](https://drive.google.com/open?id=1szLohioQqqQlrYQS4a5pgo8mPkBxpyBxvkTOUv9yN8A), [LoginPage.py](https://drive.google.com/open?id=1k-MMJ3U9U1IGz6G6Fj85BHIZb6s4J_tO), [LoginPage.py](https://drive.google.com/open?id=1p5Pqpn1idVhecErjic750rJQzPeHzgqO), [Module 0 - General Overview.pptx](https://drive.google.com/open?id=1czubcNswJGzjigHqGuEF4uPXjn79TOB5), [Most used design patterns in Test Automation - Decorator Pattern](https://drive.google.com/open?id=1f0f7KpO2QJQmVchJRvPk6nlGnCU3KUI44OEdfq0Qg7E), [Most used design patterns in Test Automation - Structural Design & POM](https://drive.google.com/open?id=15Pe9xZIBKbpKGZBwotrVowSdWWZ_is0txpG6JF2Dqd4), [Recording Notes](https://drive.google.com/open?id=1FVqg_bK7Ynj_RjI_nOiFtOZTcPWeqUhWVD8rxcbe-kk), [Recording Notes](https://drive.google.com/open?id=1UomAAnOWB3z4S5FzIdHsLMtCN6LqvNd0apFs0jp1t2Y), [Recording Notes](https://drive.google.com/open?id=1t8j-4DQwxu91Ou2qLZTB6aqORSC8x5pa9otx-d5I3Ok), [Recording notes ](https://drive.google.com/open?id=1vcVUNiFU_mJVZAbAxyLKopmgnmqbOlGMDy977YB79jg), [Singleton Pattern](https://drive.google.com/open?id=1o3NeVELN8X0thmvAy4GatSQfk8lF5EGS_hbDJAQtbnM), [Speaker Notes - General Overview.docx](https://drive.google.com/open?id=1uPVcpd2Bu_X5lzA7h_nIWm0fO82OeRTO), [Test Engineering Design Patterns - Foundation Material (Rolands Notes).docx](https://drive.google.com/open?id=1eoLT71-YNKa3F-vROc6Jzm78m8X5uDZt), [TestBase.py](https://drive.google.com/open?id=1hACsG_eozLuFD5cWnNR9gH_BkeS4th_X), [Video-01: Test Engineering Design Patterns Introduction](https://drive.google.com/open?id=1SDv7OsghLEbFds8yQtjnRoN4FLxfs1GRyJYp4nxJeHI), [Video-01: Test Engineering Design Patterns Introduction](https://drive.google.com/open?id=1q2zJTyywdTzDJoWcL2hQyENVnCrqAv4_QhyQOULLH7M), [Video-02: Most used design patterns in Test Automation - Types of Design Patterns](https://drive.google.com/open?id=1FBDbv62JOD5PRtEe_P_InfiNdYMNJnAfjUUN52ll2aM), [Video-02: Most used design patterns in Test Automation - Types of Design Patterns](https://drive.google.com/open?id=1bnf5arhmQGTrw3WxLtv2JME4t_3EhIwikOmSYy96bDs), [Video-03: Most used design patterns in Test Automation - Structural Design & POM](https://drive.google.com/open?id=1oKO5OG-tPo4a4YU-l7mZ4dUM_k-0wOZxq7zMmzw7GUE), [Video-04: Most used design patterns in Test Automation - Facade Pattern](https://drive.google.com/open?id=1HTt5swZ4I2bR9OlXxvRUOGZNPsDQsLQVr2H10rD3kjA), [Video-05 Most used design patterns in Test Automation - Decorator Pattern](https://drive.google.com/open?id=1-UlbH0-nxy3ZKv3pS85NRVa1E0IAzEvUsM9O8HmBY98), [Video-06 Composite Pattern](https://drive.google.com/open?id=1Q9-6ah6C9rKyxz0wKQw1W1QPw5kchw_BQb_yTO-UUQk), [Video-06 Composite Pattern](https://drive.google.com/open?id=1utQg7-uFLkCYEUORJgZNsxHsIKw7w4N80u-SAp7_mUo), [Video-07: Factory Method Pattern](https://drive.google.com/open?id=1F6L3ijLDVO05jx8pu2A1MBhiihua7rGDt_bKt0mlwgo), [Video-07: Factory Method Pattern](https://drive.google.com/open?id=1sMMh0CkmwFIhewJV3sWyg__P0Vu9Gz8JDc6FCcNrAhY), [Video-08: Singleton Pattern](https://drive.google.com/open?id=1xmuLLJVYZcPNhaNCOpAEbR6IngaIo8JUgCDUnuJto1E), [Video-09: Most used design patterns in Test Automation - Builder Pattern](https://drive.google.com/open?id=1KGJVdRXJLHW8WLa736PY1rxJTpOGDrD3UIL8wUHXQL0), [Video-09: Most used design patterns in Test Automation - Builder Pattern](https://drive.google.com/open?id=1_rLdo9SqCXqjxAeyfHbFo4lg8o7mOihBTzjW6oQde3o), [Video-10: Most used design patterns in Test Automation - Behavioral Patterns & Strategy Pattern](https://drive.google.com/open?id=11Te-teBF2wL3r5FdyRLEWiwQF1db3c9qnIDQUm7uGrY), [Video-10: Most used design patterns in Test Automation - Behavioral Patterns & Strategy Pattern](https://drive.google.com/open?id=1xcrfp1Mt5UzsngK1G7IWvEhnqLMXBWBh9fbXrqp5CSc), [Video-3: Most used design patterns in Test Automation - Facade Pattern](https://drive.google.com/open?id=1ZtNNHZYHtRwl8--sn_5apxsoIxJzSorY_AWNxyGyjWo), [WebDriverFacade.py](https://drive.google.com/open?id=17QJKcOt2MG28iw5-FpnKsAQRfLL7h06I), [[] SOLID  First 5 Object Oriented Design Principles](https://drive.google.com/open?id=1ZX3uNaHPDDEPfALNffK4VgqFlj7GHHxTQd0P-FCzGdc), [builder_pattern.py](https://drive.google.com/open?id=1IyTeLykwpbHIZ_CFrcHMZMpZLKzoOLKN), [decorator_pattern.py](https://drive.google.com/open?id=1Ij-QSqxWb_k5E3lAE5zQPYHWRm4sDQjs), [decorator_pattern.py](https://drive.google.com/open?id=1geGHf-L0yY5mIbz9kFckRgki139xsNMT), [main.py](https://drive.google.com/open?id=10uH3mf64YbpogYGB76w5GB8kVvA-oVbj), [strategy_pattern.py](https://drive.google.com/open?id=1p_BofdVo9eRrkqfIbmjF4DJ8q23GIVqh) <details><summary>Build/recording artefacts (10)</summary> [recording.conf](https://drive.google.com/open?id=1--Y3NKWso3GiMEkVCBkDtPWZkt0EudDj), [recording.conf](https://drive.google.com/open?id=134hkyfOOmDSOmiktnQmnE4R74teBMEI7), [recording.conf](https://drive.google.com/open?id=158pH_hOhfLiDRJwTt-uvKtPaPPRMXDZh), [recording.conf](https://drive.google.com/open?id=1T9XG0O4lIwBqiJZ6VVVN36WDdkHmLPI4), [recording.conf](https://drive.google.com/open?id=1U6f29STi_B9iL4k6H99DWlmxaRm0K3Ww), [recording.conf](https://drive.google.com/open?id=1Xdwycqhaik8ip6zf5gPtqMD_O28GcQlM), [recording.conf](https://drive.google.com/open?id=1ad3hsIy1sUJhJgumPtnasfhR0JC6Wo6z), [recording.conf](https://drive.google.com/open?id=1fYwc24mOyJ1Lzr7e76r1OJds8i085Jka), [recording.conf](https://drive.google.com/open?id=1isyBfjMLvjr5jxjxpN865Ogzgk42KKMS), [recording.conf](https://drive.google.com/open?id=1u0BSGqprmP0XXqmTh3Ty8ZQeeXkkMBjE)</details> |
 | Class | [open](https://uplevel.interviewkickstart.com/update_video/76469/) | **13:** [ Test Engineering Design Patterns.pptx](https://drive.google.com/open?id=1IVyGHGYzbU_Pm7-6ZjDE-wbECt3M0eRu), [Apr 2023: Live Class Slides: Test Engineering Design Patterns](https://drive.google.com/open?id=1-6XsW-y-oBLh8f6KMJa8tlVPLCXa2kpFbmUYbgmgfdI), [Copy of Design Patterns Life Class - Speaker (Rolands Notes).docx](https://drive.google.com/open?id=1IcMKiYdMChervAC2rKpeMy6F-hqlQlNY), [Copy of Personal Copy of Test Engineering Design Patterns Live Session Presentation](https://drive.google.com/open?id=1UNnzYgJm1DHUOImkHHvL_xHdhSVP9s9hVw_fwBYlg9w), [Design Pattern - Question Bank ](https://drive.google.com/open?id=1YaN-vn2xBxQ_5VlvotMJk5ppYjWS3aixoy70OebSRIc), [Design Patterns - Concurrency and Parallel Programming ](https://drive.google.com/open?id=1QOR1AhNAnKtSF6tAuJsO9ud15TH9LW_-sugb-vDFdjs), [Design Patterns Life Class  Speaker Notes](https://drive.google.com/open?id=1WtjuMsuHgbZ6pkPXQtd22OTv2HUho3bYBrDMgh5o6lw), [Design Patterns Life Class - Speaker (Rolands Notes).docx](https://drive.google.com/open?id=13qhT8xaJnVrk-TVt-p4MYJQFwC_xG_6V), [Design Patterns: Live Class Prerequisite and Practice Problems ](https://drive.google.com/open?id=1TK_156LrTPXk0ZjAvNa4z_88S_bN0gncd40uqkL5vvI), [Live Class Assignment Session Speaker Notes.md](https://drive.google.com/open?id=1O7rKuyvlKdQZFLWAsmQe3sZS-qKOWjwc), [Live Class Slides: Test Engineering Design Patterns](https://drive.google.com/open?id=16vtGXE4NqJ_wygjd-bFGV0pNXPR4-B_RmWk-m8dGAYo), [Root Cause Analysis (RCA).pdf](https://drive.google.com/open?id=1x3ZZPuk3bXEyoJgycHSA7F1F9kjXfYtT), [Speaker Notes - Copy of Test Engineering Design Patterns Live Session Presentation](https://drive.google.com/open?id=1rgQqlJewV9zEl9GkTYno0133tkbeg9Qqnyii_aY1YGo) |
 | Alternate Class | [open](https://uplevel.interviewkickstart.com/update_video/76472/) | _no file matched at session level_ |
 | Assignment | [open](https://uplevel.interviewkickstart.com/update_resource_collection/407/) | **1:** [Live Class Assignments: Test Engineering Design Patterns](https://drive.google.com/open?id=1WfnZU2o7-VIk4wiKtc7P7-KC8khpJxuss1GCEeJRUMs) |
@@ -1696,13 +1742,15 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Video-3: Most used design patterns in Test Automation - Facade Pattern](https://drive.google.com/open?id=1ZtNNHZYHtRwl8--sn_5apxsoIxJzSorY_AWNxyGyjWo)
 - [[] SOLID  First 5 Object Oriented Design Principles](https://drive.google.com/open?id=1ZX3uNaHPDDEPfALNffK4VgqFlj7GHHxTQd0P-FCzGdc)
 
-**Top 5 of 57 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 57 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. Test Engineering Design Patterns *Live Session* — slide 1 of [ Test Engineering Design Patterns.pptx](https://drive.google.com/open?id=1IVyGHGYzbU_Pm7-6ZjDE-wbECt3M0eRu)
-2. Expectations — slide 2 of [ Test Engineering Design Patterns.pptx](https://drive.google.com/open?id=1IVyGHGYzbU_Pm7-6ZjDE-wbECt3M0eRu)
-3. Outline — slide 3 of [ Test Engineering Design Patterns.pptx](https://drive.google.com/open?id=1IVyGHGYzbU_Pm7-6ZjDE-wbECt3M0eRu)
-4. Why Study Design Patterns? — slide 4 of [ Test Engineering Design Patterns.pptx](https://drive.google.com/open?id=1IVyGHGYzbU_Pm7-6ZjDE-wbECt3M0eRu)
-5. Why Study Design Patterns? — slide 5 of [ Test Engineering Design Patterns.pptx](https://drive.google.com/open?id=1IVyGHGYzbU_Pm7-6ZjDE-wbECt3M0eRu)
+2. Why Study Design Patterns? — slide 4 of [ Test Engineering Design Patterns.pptx](https://drive.google.com/open?id=1IVyGHGYzbU_Pm7-6ZjDE-wbECt3M0eRu)
+3. We just need good enough ….. — slide 7 of [ Test Engineering Design Patterns.pptx](https://drive.google.com/open?id=1IVyGHGYzbU_Pm7-6ZjDE-wbECt3M0eRu)
+4. Q & A Time — slide 8 of [ Test Engineering Design Patterns.pptx](https://drive.google.com/open?id=1IVyGHGYzbU_Pm7-6ZjDE-wbECt3M0eRu)
+5. What are Design Patterns? — slide 11 of [ Test Engineering Design Patterns.pptx](https://drive.google.com/open?id=1IVyGHGYzbU_Pm7-6ZjDE-wbECt3M0eRu)
+
+_22 repeated title(s) shown once; 4 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
 
 **Other files (220)** _(module-level files, curriculum documents, repositories)_
 
@@ -1711,7 +1759,6 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - code repo: [AspirationBank-master.zip](https://drive.google.com/open?id=1fhcPXEzkEIXCenZ6c6VTy4YCRRddScw9) · _view only_
 - code repo: [Live_Class.zip](https://drive.google.com/open?id=16yBDFo012EZCi5Fqzh62F-mv26k6NYwE) · _view only_
 - file: [ FACADE PATTERN.mp4](https://drive.google.com/open?id=1DxbMgwoXgZpKnMgrk1cL52EAtKeZTymO) · _view only_
-- file: [.gitignore](https://drive.google.com/open?id=1XYSBrQgB-BFdzcfoE8VTYFjGkt2OhewW) · _view only_
 - file: [/SD4: Test Engineering/IK Test Engineering: Content Repo/Week 5/6 - Test Automation Design Patterns /2. Live_Class/Design Patterns: Live Class Prerequisite and Practice Problems ](https://drive.google.com/open?id=1TK_156LrTPXk0ZjAvNa4z_88S_bN0gncd40uqkL5vvI)
 - file: [/SD4: Test Engineering/IK Test Engineering: Content Repo/Week 5/6 - Test Automation Design Patterns /2. Live_Class/Related Documents/Copy of Design Patterns Life Class - Speaker (Rolands Notes).docx](https://drive.google.com/open?id=1IcMKiYdMChervAC2rKpeMy6F-hqlQlNY)
 - file: [/SD4: Test Engineering/IK Test Engineering: Content Repo/Week 5/6 - Test Automation Design Patterns /2. Live_Class/Related Documents/Design Pattern - Question Bank ](https://drive.google.com/open?id=1YaN-vn2xBxQ_5VlvotMJk5ppYjWS3aixoy70OebSRIc)
@@ -1720,72 +1767,21 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - file: [/SD4: Test Engineering/IK Test Engineering: Content Repo/Week 5/6 - Test Automation Design Patterns /2. Live_Class/Related Documents/Design Patterns Life Class - Speaker (Rolands Notes).docx](https://drive.google.com/open?id=13qhT8xaJnVrk-TVt-p4MYJQFwC_xG_6V)
 - file: [/SD4: Test Engineering/IK Test Engineering: Content Repo/Week 5/6 - Test Automation Design Patterns /2. Live_Class/Related Documents/Live Class Assignment Session Speaker Notes.md](https://drive.google.com/open?id=1O7rKuyvlKdQZFLWAsmQe3sZS-qKOWjwc)
 - file: [/SD4: Test Engineering/IK Test Engineering: Content Repo/Week 5/6 - Test Automation Design Patterns /2. Live_Class/Related Documents/Root Cause Analysis (RCA).pdf](https://drive.google.com/open?id=1x3ZZPuk3bXEyoJgycHSA7F1F9kjXfYtT)
-- file: [0bfc7d48-64cf-49bb-9d07-d47756c7a38f-container.json](https://drive.google.com/open?id=1Z1c2Z0fOFcc8SW-Ae2ETD7yYfl9VwmP1) · _view only_
-- file: [0ca8a554-7a30-4008-be64-42929f5eb1ac-result.json](https://drive.google.com/open?id=1ATn98FrHtiV5P-Lqi9lw3WkEC4DUtbYp) · _view only_
-- file: [0d3e4c5a-4c99-47d3-a21d-98c2f69df054-container.json](https://drive.google.com/open?id=11RIoJZ_OaNfxJFMxafvOTVAHO3PeRofe) · _view only_
-- file: [15cc104d-a938-4458-ade1-ecf6e7715b91-attachment.txt](https://drive.google.com/open?id=1TNKLjwMEibE8MO2X6KXZCf5nLOs_BB2R) · _view only_
-- file: [1820ba6a-c352-4185-9135-a9a1a4397ffd-container.json](https://drive.google.com/open?id=1Ja3hyCM8PalMlLVbAY9J3Fe-BuskocBf) · _view only_
-- file: [186472ed-f6c6-4916-ac6c-cc875b3744c5-container.json](https://drive.google.com/open?id=1dLbvq_9IdMV4iNbYfKGjbMao2lDetrvR) · _view only_
-- file: [18a1b512-f898-436d-9e42-0eb29a294116-attachment.txt](https://drive.google.com/open?id=1YokBS76bsBgHhY_PVZfPgTfj9stKxKTb) · _view only_
-- file: [1e6a525c-a5b3-49da-8b1a-07c05502d140-result.json](https://drive.google.com/open?id=1Xk3t3heoFgR9vIJizDltvdvx1j-tUYWx) · _view only_
-- file: [1fb8c66e-5eb8-483c-8dfc-25a05fec0476-result.json](https://drive.google.com/open?id=1GP0aRuKsJr1cXm5PlYJ6b7O_ovK3SnbR) · _view only_
-- file: [22c81013-ab18-4c70-a9d2-730cb3dde69b-container.json](https://drive.google.com/open?id=1e3fCdWjqkjEGUq4VOx0jWF4VJRSXDXsg) · _view only_
-- file: [27670a33-5691-47fa-8952-d41d490903f5-result.json](https://drive.google.com/open?id=1oFCoh6MGpDCSQndGKaKPNL8S95t-SPT6) · _view only_
-- file: [2ed6a63a-e537-4aed-8c66-cae0204e4580-container.json](https://drive.google.com/open?id=1EfjbXOmtTT_Jhdi-bTMnEKHKDMYwVzHR) · _view only_
-- file: [3417425f-03f1-4258-84c8-4012995507cc-container.json](https://drive.google.com/open?id=1owyuoRyE9AN0Zop2kHmSz7mDR4Fuwcb9) · _view only_
-- file: [3fa16046-bdec-45c1-b20a-725808243cb4-result.json](https://drive.google.com/open?id=1iJNVYj4bkJa73RqQmYjc4KbQckTMlRsB) · _view only_
-- file: [403281ce-1c63-4663-9220-32edd0a72940-container.json](https://drive.google.com/open?id=1oMXzYTwmAmpGZ8MXJoXjOQt-NSfQvKKP) · _view only_
-- file: [40e1d8cd-0618-41ed-801d-2d446d752ac8-container.json](https://drive.google.com/open?id=1DRG1s08J17yFaQfeIzReP7UJTUZriaWN) · _view only_
-- file: [4212000c-2f0a-48bc-811d-61940746c016-result.json](https://drive.google.com/open?id=1VtNWAogHFuCzT_p92q9o6_v7t5kL00Az) · _view only_
-- file: [444e7ddc-3b64-42d9-9a4b-7fbf16356134-container.json](https://drive.google.com/open?id=1LncIzt5XSZ1gzCs8yl-pdMy6XoP_GXlc) · _view only_
-- file: [4c94087d-901b-46fc-91b4-f1c44dc16d32-attachment.txt](https://drive.google.com/open?id=1FWlk2TJ2peXCJfTkfFLRu77EilCSOLth) · _view only_
-- file: [4f833465-6258-4767-83d2-797281ef058f-result.json](https://drive.google.com/open?id=1iU1pboSKzbFznGMneT7s8G__HDrBhihW) · _view only_
-- file: [533547de-1c7c-481c-87ff-38e818cc7269-attachment.txt](https://drive.google.com/open?id=1ZOkBwWKjP4f83IhkYP9cK8aEOkAdF73R) · _view only_
-- file: [534f469d-f764-4d72-b13e-6d78cc9643e6-result.json](https://drive.google.com/open?id=1Y_GNoIRw8EbDXS4F7qvl61W-9sDcu4dW) · _view only_
-- file: [5363b6a9-aa34-457f-ad83-65d90f3c8bc4-result.json](https://drive.google.com/open?id=1WqLhp92mILiwaVBYB_TavE8MVDHASqip) · _view only_
-- file: [53b3d482-f289-4d29-a949-be88252d550a-container.json](https://drive.google.com/open?id=1aCpRF9SNzDeWx3X8OQeqcN300DkOFNOf) · _view only_
-- file: [5cefd417-c03a-4b4c-8fc5-571ed1aa4ee9-container.json](https://drive.google.com/open?id=1pXqPj8IogGkOj36h7HzxwOmCrIvc7D8H) · _view only_
-- file: [61678067-f178-42ab-8d0b-394167e319a5-result.json](https://drive.google.com/open?id=1DVMjwdvRbTIN_g6MNbylknhIC4DyIyc_) · _view only_
-- file: [66ba024a-41b7-4e55-903d-2100936b5029-attachment.txt](https://drive.google.com/open?id=12Fx7QtDtTmb2qIFaZyaQ4hm2DuRPp4dc) · _view only_
-- file: [68ee0561-1e90-47cf-ad02-d97d6f3c93e5-container.json](https://drive.google.com/open?id=15rhGuo64EkBl4qQQuV0DBtYjVHhEfGMa) · _view only_
-- file: [6935d487-873a-4143-b92c-929801daf892-attachment.txt](https://drive.google.com/open?id=1xiGUg_lYNLpKMbxZi28awAhxlco4B8uq) · _view only_
-- file: [700c5535-3acc-4db4-a37e-a6195476cf0b-container.json](https://drive.google.com/open?id=1sM-XWmAk11RHsL5Dfpj-ttw5qun8lgAq) · _view only_
-- file: [7061a4a7-0a26-4a35-8c6c-9e11cd94a28b-container.json](https://drive.google.com/open?id=1AW7WDq-iTBvcn-_Ez1Pglt2JdUvV16_K) · _view only_
-- file: [72d81a3f-0c47-4941-b209-1d2c3f6114a3-container.json](https://drive.google.com/open?id=1qKdi4GjquO-1TU0aJercpCQXEKpXYAFz) · _view only_
-- file: [7919d9f2-70a5-4b26-83be-417f33d9e38c-result.json](https://drive.google.com/open?id=1I8rqsPLcwxuVslIllcBs_fbmsowESkPN) · _view only_
-- file: [843b07c0-3103-4c92-89ab-a639a14d81a1-container.json](https://drive.google.com/open?id=1DBK2g-x85vPfqpKBgth5slNlQBAKj8DX) · _view only_
-- file: [89609813-d2c6-4d57-b3ea-edd7b5e218b0-result.json](https://drive.google.com/open?id=1Lu95EPC46phlc2UhwYG7piJI8IaFceOo) · _view only_
-- file: [8c034d5e-0f09-4711-9c62-16ce03a35825-attachment.txt](https://drive.google.com/open?id=1v88Pj99vagjfnQUvWoDppENkq8BolzT0) · _view only_
-- file: [9481a717-6dca-4eb6-a639-b0a48f116bfe-container.json](https://drive.google.com/open?id=1_tfE_qLJMZJhIqjHBCFocGUCHOE8UTv7) · _view only_
-- file: [95465599-720b-4e3d-8607-4de625e1fc9b-container.json](https://drive.google.com/open?id=178ng0lCAg0lDLXqsFgBs8ZW8k3rLn6gP) · _view only_
-- file: [9facf946-1a57-4582-99bd-ca51dbe2a9f7-container.json](https://drive.google.com/open?id=1Rx2rsrrkeRlUaB0WFZdi61j8oqvsYCuE) · _view only_
 - file: [Assignment Session - Students Interactions.txt](https://drive.google.com/open?id=1iJ-wZaU_FQMeu-eBRY_vJZI982LuVInn) · _view only_
 - file: [Builder_pattern_demo.mp4](https://drive.google.com/open?id=16BPpsFWPP76_WUhffzpN-yP3WxzHA2zP) · _view only_
-- file: [CACHEDIR.TAG](https://drive.google.com/open?id=1E-o2HQMPHWCNHsYoXjzvSxh-jtTIvad4) · _view only_
 - file: [Decorator_pattern.mp4](https://drive.google.com/open?id=1E0BUM1BShFJg84PMlYnPusNEJlUqKpcw) · _view only_
 - file: [Design Pattern Framework Assignment.md](https://drive.google.com/open?id=1Z_IQAGW-Mt3obxJFoAocUpqJKKHSJYpd) · _view only_
 - file: [FACADE_PATTERN_DEMO.mp4](https://drive.google.com/open?id=1e6pRXHDYjEabBny6wVkpayZ492yqOjRE) · _view only_
-- file: [Fixtures.cpython-310-pytest-7.0.1.pyc](https://drive.google.com/open?id=1otag6SFy80Mm8Uz4EyIKFZqfYxqGGRbh) · _view only_
-- file: [Fixtures.cpython-310-pytest-7.1.3.pyc](https://drive.google.com/open?id=1H_JJMWrwY2wsM9N5MCReodSSoUWMIm9r) · _view only_
-- file: [Fixtures.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1IxqcvVgJkh-I_xSrqq--6Zj-3YJ0pUR3) · _view only_
-- file: [Fixtures.cpython-39.pyc](https://drive.google.com/open?id=1w2fp-8gM3jeSwW2roDs92sfiTBQSww1e) · _view only_
 - file: [Fixtures.py](https://drive.google.com/open?id=1MIW8_r1U1ipLq38GLBtXKKMPQ3pG2qpk) · _view only_
-- file: [HomePage.cpython-310.pyc](https://drive.google.com/open?id=1_atsLYdnO5fD6uuGK_gtS2tXETkOiNNr) · _view only_
-- file: [HomePage.cpython-39.pyc](https://drive.google.com/open?id=1qY5BDZ8Nyl9GFng0Bcbr6-4nryoucD2Z) · _view only_
 - file: [HomePage.py](https://drive.google.com/open?id=1m6XakYDle7XKYfacojOV3IaRH7HoYmE-) · _view only_
 - file: [INSTRUCTOR_INTRO_ROLAND.mp4](https://drive.google.com/open?id=1ad7GTcFvtCkFlpeAGMqct_ORO2oBM7r-) · _view only_
 - file: [Introduction_Ioan.mp4](https://drive.google.com/open?id=1Q_VREbxe9NXGYlyCHdst-9VYANDWhYLa) · _view only_
-- file: [Page.cpython-310.pyc](https://drive.google.com/open?id=1ZNWA85EeaCTfELJ6ckBX-Gm6rl-Bpwv2) · _view only_
-- file: [Page.cpython-39.pyc](https://drive.google.com/open?id=19qFqgJIIa1CKNRsiYR6LYlnrG4OauZBd) · _view only_
 - file: [Page.py](https://drive.google.com/open?id=1XSvunZjD0qQ2diJWzP6wrFvLT2mcO7fP) · _view only_
 - file: [QAE_TAS.md](https://drive.google.com/open?id=1zwNybJpCWxMljpotXOzOMMNS7PdnairM) · _view only_
-- file: [README.md](https://drive.google.com/open?id=1jPiBDXWNl-DpITNRa6VosvB1tdWZjnly) · _view only_
 - file: [STRATEGY PATTERN DEMO.mp4](https://drive.google.com/open?id=1AEIkdpV_Y13_TBDA15u8b4ETMRDvxkVr) · _view only_
 - file: [STRATEGY_PATTERN.mp4](https://drive.google.com/open?id=1afgc-GGrD2Q8yQXAyXrgRcc-9eEU105-) · _view only_
 - file: [STRUCTURAL_DESIGN_PATTERN_DEMO.mp4](https://drive.google.com/open?id=1P5tWKQf-CV_4zEFCDWdLk4JvcL-89NXb) · _view only_
 - file: [STRUCTURAL_PATTERNS.mp4](https://drive.google.com/open?id=10pNKJaQfCq9wVbJW3c8zqD1ff4zYFhlt) · _view only_
-- file: [SeleniumDriverFactory.cpython-310.pyc](https://drive.google.com/open?id=1cweTFbxrkTnx4j_Fx9KLdqKpVIoP9llI) · _view only_
-- file: [SeleniumDriverFactory.cpython-39.pyc](https://drive.google.com/open?id=14v7MiZnUptw5BiLC1EMQzI03-eVzjbim) · _view only_
 - file: [SeleniumDriverFactory.py](https://drive.google.com/open?id=1r2Xa1NSL9IyTIQNrndiJVHSTmUWpOmW5) · _view only_
 - file: [Slide1.mp4](https://drive.google.com/open?id=1Ee6w0e2xKwEAskcVr7ieDvhpuXl0LYIi) · _view only_
 - file: [Slide1.mp4](https://drive.google.com/open?id=1oWxXT7pIVjH_RRMG3yUbjoexHQg2HUDI) · _view only_
@@ -1801,18 +1797,8 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - file: [Technical_Behavior_Teamfit.md](https://drive.google.com/open?id=1igKO2vzxpOfymKw5Bdz7XeTTtVyayVy5) · _view only_
 - file: [Test Automation Design Patterns - Assignment](https://drive.google.com/open?id=1Z9GuOH7OozskLMsWmPo7ri-QKYjF6QqfrQc4wUKwX10) · _view only_
 - file: [Test Engineering Design Patterns Introduction.mp4](https://drive.google.com/open?id=1Aw8KaZ5L7ApMxl5t8Sfpgk_cWsejz81o) · _view only_
-- file: [TestBase.cpython-310.pyc](https://drive.google.com/open?id=1D5ZyDjI0L2x91PkkPfSgCuLZYBrBhrnr) · _view only_
-- file: [TestBase.cpython-39.pyc](https://drive.google.com/open?id=1A1MTqt3g_Obq_8vSsodos5vJaxIu_KZK) · _view only_
 - file: [TestBase.py](https://drive.google.com/open?id=1JPcK1tyL3rbw5kkToftFKFuWFb3hChS5) · _view only_
-- file: [__init__.cpython-310.pyc](https://drive.google.com/open?id=1Mn0-0zEQGty-Q7zFUEIPVevR9oFifOrw) · _view only_
-- file: [__init__.cpython-39.pyc](https://drive.google.com/open?id=1eL-O1paFXv9cmuXop1j4Y7DlTH0WMQnh) · _view only_
-- file: [__init__.cpython-39.pyc](https://drive.google.com/open?id=1iQedHYTwWav9Bi17Q6tGhbR0v_al3zBm) · _view only_
 - file: [__init__.py](https://drive.google.com/open?id=1xpNbugboZpPMfHY7mjm9kIvlFItFzIFJ) · _view only_
-- file: [ab54960c-7be5-4642-97ad-2fb8291f9c40-container.json](https://drive.google.com/open?id=1A35M_dhC9fSgEM5C3d_-ijLPD5gCh1K7) · _view only_
-- file: [ae8a2716-c35d-4cb7-b958-4181bbe4ee50-container.json](https://drive.google.com/open?id=1MeRdHcvZRHQBWNPWGIQXj5PCb_RN-ksd) · _view only_
-- file: [af332b05-cea4-4241-90d7-d2454dc7fa14-container.json](https://drive.google.com/open?id=1-GXcBbuzWWM4BvCsE7Cm1ihCzLeXOz47) · _view only_
-- file: [afc8e93d-e23c-4ed2-af78-d8b342e51d7f-result.json](https://drive.google.com/open?id=1wEnnifuhgN3OrdfS6Hc7BpuwNGLWAoTF) · _view only_
-- file: [app.js](https://drive.google.com/open?id=1hGrvYr3rxqfr5Wkd9LmUoxQpcj6ppejk) · _view only_
 - file: [audio1117755740.m4a](https://drive.google.com/open?id=13YlXF9Br1ZnraG0BPJ1CVFjIKPq7DIGy) · _view only_
 - file: [audio1128540033.m4a](https://drive.google.com/open?id=1smUiTRENo0TWbGbzK1Xc7IU5O1rRwUyj) · _view only_
 - file: [audio1145932766.m4a](https://drive.google.com/open?id=1-ZWyUIp9VMLN6rvE6_zNG67O2cmOWcUE) · _view only_
@@ -1824,73 +1810,16 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - file: [audio1587642629.m4a](https://drive.google.com/open?id=1avEFn6aDpbvMZF-jEz6AA_tciOeX6NVU) · _view only_
 - file: [audio1768426832.m4a](https://drive.google.com/open?id=1HbJTltC1Ha6T3pNhUTGX_kXbB5G5jVqz) · _view only_
 - file: [audio1999651581.m4a](https://drive.google.com/open?id=1T7xH-7ZsS4EJldE-DJTT3y0SnjfuDF7I) · _view only_
-- file: [b0e4a2b0-d4dd-437c-9ee5-b21ad3df578c-container.json](https://drive.google.com/open?id=1F0o7frAvD7_xsIjnjux9NLHNIRO91Tk1) · _view only_
-- file: [b999d87d-65ba-4cf1-b086-5b0b65b60f31-attachment.txt](https://drive.google.com/open?id=1rnmM4QhO0ddyzBqQEmYtHmntbYrKiDOp) · _view only_
-- file: [bad5344c-8ca2-4d68-9101-651f6d21b5ae-container.json](https://drive.google.com/open?id=1PDVQzTZdVlfDkKhv-W7V2n3DvCBc6t7v) · _view only_
-- file: [bc55adab-3bdc-49ad-ba61-4e2794009fea-container.json](https://drive.google.com/open?id=13Z6FqUjZLORAz1ZNnupTb88mbvO892Yb) · _view only_
-- file: [bcf3138f-05d8-4198-a980-3ef365fa7bf1-attachment.txt](https://drive.google.com/open?id=1zhg2iXWshO2WF0WwwtrXgXCQ8Cb9L-37) · _view only_
-- file: [behaviors.csv](https://drive.google.com/open?id=1s-L58E3M7kBC7TRp86uNFn7-NoGbkKkA) · _view only_
-- file: [behaviors.json](https://drive.google.com/open?id=1EfLclN-cmaXDgfBpEQjJeC-z3CRh1f17) · _view only_
-- file: [behaviors.json](https://drive.google.com/open?id=1kNIY0w3P3rOcoXmdxgKPuPm8vW9ksnJ0) · _view only_
 - file: [builder.mp4](https://drive.google.com/open?id=1aTeBFJGs5AE2M6mXCyK2WHON-HWbMtCF) · _view only_
-- file: [c126dad9-6340-4582-b13c-831a6ec07893-attachment.txt](https://drive.google.com/open?id=1_-PC563GQMIgg-NjIzyMWnJdQr083jEA) · _view only_
-- file: [c1301207-6290-4c5b-b96a-542322c6981c-result.json](https://drive.google.com/open?id=1aUflFXnHembazQflWbCCF80bFI5Ahyc6) · _view only_
-- file: [c134ca2c-237e-4d75-9821-3d740181185d-result.json](https://drive.google.com/open?id=17Xi4LJoa_CfaEybCuNU-r4elwbA7FneN) · _view only_
-- file: [c687143d-a13d-4f19-b9f7-04b0bc40ce24-attachment.txt](https://drive.google.com/open?id=1-0c2MEkLjNhIJPVfMtqpMBubszycruta) · _view only_
-- file: [c7a10575-d128-493f-9505-a93555a86022-container.json](https://drive.google.com/open?id=1RFb-LGlPmUGI_KncK5iqLC7AOv51aGPp) · _view only_
-- file: [c81bcdcb-7d02-4f26-a488-b8a13a3d1b3a-attachment.txt](https://drive.google.com/open?id=1o8r8jeyHps-cgjE-Pmz4FG_0v2TdTLcN) · _view only_
-- file: [c8453f80-593d-41a0-84e9-4b821fac4306-container.json](https://drive.google.com/open?id=1u0nOs9fYRyfRA_qbfap22VldfMedShuD) · _view only_
-- file: [ca5909a8-8b55-4177-bbf9-8594d7962a96-attachment.txt](https://drive.google.com/open?id=1E3nkAL_LyRs8rUhHS-jYk5sg93Q2WSds) · _view only_
-- file: [cab58d9e-e4d6-4016-af6a-e55a9749b63b-container.json](https://drive.google.com/open?id=1GIuHSxv849KGazmNcauHqU-KVpVZp8NJ) · _view only_
-- file: [categories-trend.json](https://drive.google.com/open?id=11lqTeda2W0GLn1xjIB9QNHVrjalaYu4P) · _view only_
-- file: [categories-trend.json](https://drive.google.com/open?id=1QLpQwkZEzvpMD7-e_GDAXB9FAHo2uEAW) · _view only_
-- file: [categories.csv](https://drive.google.com/open?id=1gC-ypbO5L4CJeqtrb24NmbV4amYJCe9a) · _view only_
 - file: [categories.json](https://drive.google.com/open?id=1ORe3ar6T9kEsBdxci2FhT8D5pEnfzGHn) · _view only_
-- file: [categories.json](https://drive.google.com/open?id=1mixUcY_UaH89OBbMKAbOs62oWLUFWQBq) · _view only_
-- file: [categories.json](https://drive.google.com/open?id=1xcAVsO5YxMr0S_Shh0Lih5qNA5n6k8Rf) · _view only_
-- file: [cb83b16e-4f4c-44e8-8d55-8675d61cd470-container.json](https://drive.google.com/open?id=1pxDrFBz6S3jOICy3czQp96hTI66Xq0KW) · _view only_
-- file: [ccf3e126-b06f-427b-aeed-b238eab8d55d-container.json](https://drive.google.com/open?id=1B8KuWsO7-Psk4TYJcjE1wf_d6kBIvA-5) · _view only_
-- file: [chrome.log](https://drive.google.com/open?id=1ZOlFeEhMYDK6GokTmr_L4CjM9RGbQM_q) · _view only_
-- file: [conftest.cpython-310-pytest-7.0.1.pyc](https://drive.google.com/open?id=1TYrzBSQmUIjaK7NEjbdKVLZDMb5nAsRT) · _view only_
-- file: [conftest.cpython-310-pytest-7.1.3.pyc](https://drive.google.com/open?id=1N0z3U3ZJHcwB2hQp8-b073XmumMyircn) · _view only_
-- file: [conftest.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1YBWLzgvS6FQXYKe4P7oNDIFuhyrFRvhO) · _view only_
 - file: [conftest.py](https://drive.google.com/open?id=1wj29et5XFL2wybSzBkwTCJfAOe8Xl3lV) · _view only_
 - file: [decorator__pattern_demo.mp4](https://drive.google.com/open?id=1dmZCpvn_hI3gfBBIZGt9jVdwFDreAXiq) · _view only_
-- file: [duration-trend.json](https://drive.google.com/open?id=1LHYd3So4J8YyrlGSPfGnQ-eLlYFsEKlz) · _view only_
-- file: [duration-trend.json](https://drive.google.com/open?id=1_QgG8uKh6TsqB2A3J-SJ7secU4-BCUhy) · _view only_
-- file: [duration.json](https://drive.google.com/open?id=1VXHGPfHtX2nKnDaIgRU8eDtjyuF_tc4w) · _view only_
-- file: [e4dee957-5d64-4036-9feb-6a0ad0cc6502-attachment.txt](https://drive.google.com/open?id=13fvtnoDc0vsud_2s_r3eThtS0FmC1rF_) · _view only_
-- file: [e7d84e5d-a473-41c5-887a-b950e7f00252-container.json](https://drive.google.com/open?id=1G5n2UU0SQQhJ9tcQhq_kn2f7OYv_Dspp) · _view only_
-- file: [edge.log](https://drive.google.com/open?id=1EM4m3wyKLOCDp_x8h-PZTudRJZtrjIgw) · _view only_
-- file: [environment.json](https://drive.google.com/open?id=1E6amRd1yTljltgAGgKLh5Mb3KIPW-iEp) · _view only_
 - file: [environment.properties](https://drive.google.com/open?id=1n-XcWt5VIvtL8WngY0hR3akyacU-TEUf) · _view only_
 - file: [executor.json](https://drive.google.com/open?id=1Hm1Y5YFbZ52XZKjU4RE0zZ3YXilyPYTp) · _view only_
-- file: [executors.json](https://drive.google.com/open?id=15gZa8B2yMMK8PHApMwaIC6PuMfDQImda) · _view only_
-- file: [favicon.ico](https://drive.google.com/open?id=1Z3G8kxrrErHQR9rDcZUQSuoY-I73dL_j) · _view only_
-- file: [fb082499-46ac-416f-862b-631732bff5b1-attachment.txt](https://drive.google.com/open?id=1EvTje0iXfGLudj5jhBqzA8GWJDTtjwgg) · _view only_
-- file: [fc45e891-6879-46fb-8c43-399350362fef-attachment.txt](https://drive.google.com/open?id=1feo89pXVswsNJI-irrFbIY_dpo19r_t0) · _view only_
-- file: [firefox.log](https://drive.google.com/open?id=1kWYCLIEarYXVaK6MDqq57Qux2w2QUQtB) · _view only_
-- file: [history-trend.json](https://drive.google.com/open?id=16YI89s5aWympTf_gX0di9bFidO3mpwtA) · _view only_
-- file: [history-trend.json](https://drive.google.com/open?id=1NxGT5pFJK1DxTzBIG1HNP_790E2VU2kq) · _view only_
-- file: [history.json](https://drive.google.com/open?id=136EiCqXXmiyvUMMMr7OaC0yQpT_W093U) · _view only_
 - file: [home_page.feature](https://drive.google.com/open?id=1cgJi-jCadkOY603Y0_2GqmnaSi_hCaeJ) · _view only_
-- file: [index.html](https://drive.google.com/open?id=1QfGczZIDSt0uxrS-dUX9u7084MlRiTVM) · _view only_
-- file: [index.js](https://drive.google.com/open?id=1DLxY2c1x8bzZCd0KCO7_bq7Mn678RvVA) · _view only_
-- file: [index.js](https://drive.google.com/open?id=1UonzLAvcGkXURcRPe6_7ZB6nArAAG92V) · _view only_
-- file: [index.js](https://drive.google.com/open?id=1fkd-x-AMIxKp5YLjXv-luGHEWAaUsgiG) · _view only_
-- file: [influxDbData.txt](https://drive.google.com/open?id=1nbycOL2ywfSRn3_kIxFT3C-FK36G-8QD) · _view only_
-- file: [lastfailed](https://drive.google.com/open?id=1XdYOptjOK7Wt95z5LTS1lvwonUYA9D6q) · _view only_
-- file: [launch.json](https://drive.google.com/open?id=1koY0GbYfmaRs0lCF6OzlsM29ClMAfDNK) · _view only_
-- file: [mail.html](https://drive.google.com/open?id=17t9dJ4t1JnJv30sDxvrh9fQcTB5jw_li) · _view only_
-- file: [nodeids](https://drive.google.com/open?id=1bKD2nkHvT7kHp5OfSB2awqRzO32RK-le) · _view only_
-- file: [packages.json](https://drive.google.com/open?id=1nfSELBfBccDZgg7ILkXMCukErt3wxq-C) · _view only_
-- file: [prometheusData.txt](https://drive.google.com/open?id=1OMy7vQM17wDKuANyCsvzSnp4R6kYyKeg) · _view only_
 - file: [pyproject.toml](https://drive.google.com/open?id=12DcJY-oLT29fX4xmJ0Eojim9uDCnjUR1) · _view only_
 - file: [readme.md](https://drive.google.com/open?id=1rBzL3BzrwblJccKeVlHbRwsxCEbID65r) · _view only_
 - file: [requirements.txt](https://drive.google.com/open?id=1ND52ikhmgNXXGtYIHLhEQjVuykcdHDvh) · _view only_
-- file: [retry-trend.json](https://drive.google.com/open?id=1-5Zu34zJiGhSB3ExhPJtLpY6y_3wTTUT) · _view only_
-- file: [retry-trend.json](https://drive.google.com/open?id=1oZiJJB-EqY658JD5wo_ddqrO3DkQPEmE) · _view only_
-- file: [severity.json](https://drive.google.com/open?id=1ZMBPJprqKE94kSZMsiDb2SbvKh2_eYNF) · _view only_
 - file: [slide1.mp4](https://drive.google.com/open?id=1R9zWuORcDz6Ah0KxUIO3YDlM-qFhzYp_) · _view only_
 - file: [slide1.mp4](https://drive.google.com/open?id=1TrlCmnpwwgcNy4O10X812pdzKN350wx3) · _view only_
 - file: [slide2.mp4](https://drive.google.com/open?id=18-FAU1BrnVdj9ox4NOpBmBadlKDFeI0b) · _view only_
@@ -1903,49 +1832,32 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - file: [slide4.mp4](https://drive.google.com/open?id=1_D1HPlInIbaP-xpAs0ulrhhYoEnvhu60) · _view only_
 - file: [slide4Combine.mov](https://drive.google.com/open?id=1jMeAEDz1ac7-31tpIVlf0rutU9v8ucDD) · _view only_
 - file: [slide5.mp4](https://drive.google.com/open?id=1Fy1fMww1nKzjMzFqH9dZD8cS6MEVVbEb) · _view only_
-- file: [status-chart.json](https://drive.google.com/open?id=1jVl5fw5WDPrc3EL-pgj8HlTteShkS3E2) · _view only_
-- file: [stepwise](https://drive.google.com/open?id=1QOf89f9lVrdjOPElPsnw_q191t9nPyxw) · _view only_
-- file: [styles.css](https://drive.google.com/open?id=1OZ5Q45g08NgkWf4rA9B9x5Vi3EFMrv5Y) · _view only_
-- file: [styles.css](https://drive.google.com/open?id=1ZjAr-o2T_x12IwsV-ZQc3occkHir-Jyf) · _view only_
-- file: [suites.csv](https://drive.google.com/open?id=1UYCcSFPuFgGbdPhpYBwypj3rKcWWUVYz) · _view only_
-- file: [suites.json](https://drive.google.com/open?id=1jyN16mQQV6l9EMVisKy3Tmb4-GRi0Htz) · _view only_
-- file: [suites.json](https://drive.google.com/open?id=1l2vG12ItDalvUNgrjZVrcT-bYuvmVbb5) · _view only_
-- file: [summary.json](https://drive.google.com/open?id=1j2nkuGKqeiRiimvJiiHZYAt6qW0EDX6c) · _view only_
 - file: [test-engineering-design-patterns-module-0.mp4](https://drive.google.com/open?id=1IGWoayhw2r_YIeFhbPxo4NIhGfEgb2Yv) · _view only_
-- file: [test_driver_factory.cpython-310-pytest-7.1.3.pyc](https://drive.google.com/open?id=1R9TGvc1jQG4gaCjm9uU8Fr_rP8VA6AnT) · _view only_
-- file: [test_driver_factory.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1XUBCUcchKWYoD4vtKfe_g49d9BaJi46f) · _view only_
-- file: [test_driver_factory.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1cQHJjVDiBiVaqFMjJSKgzKgBCTIP9Acx) · _view only_
 - file: [test_driver_factory.py](https://drive.google.com/open?id=19cqKLcs_3wPNg6E-2dpiSsLg3cRIFzis) · _view only_
-- file: [test_home_page.cpython-310-pytest-7.1.3.pyc](https://drive.google.com/open?id=13iHfMcV9bW57zv09jHQzZG7bNyzUXaPO) · _view only_
-- file: [test_home_page.cpython-310-pytest-7.1.3.pyc](https://drive.google.com/open?id=1HA13oO2ikzG3YjIebuzfVICN9JuqU4mz) · _view only_
-- file: [test_home_page.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1X5ivZartECmPNNulDaEQXQBmBvGygfdm) · _view only_
-- file: [test_home_page.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1vFpi5CITmB_HmCQN8IvXIpdPOCgFp3Le) · _view only_
 - file: [test_home_page.py](https://drive.google.com/open?id=1QkV4kFM5qnQ_P8SLpIqFuYPDxQGr6eWJ) · _view only_
 - file: [test_home_page.py](https://drive.google.com/open?id=1j00XRU_S2fBjYoD32LUNoBNjEDRq9BGP) · _view only_
-- file: [test_landing.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1gTLqKXcS-e34bUy_snwAS-oeSfoae_Tv) · _view only_
-- file: [test_runner.log](https://drive.google.com/open?id=1JTeXrsr_EA8THXaqCOJWNaNn7iVLdgrA) · _view only_
-- file: [timeline.json](https://drive.google.com/open?id=1x8Ll5aUCT4u7NcdeTpGKJwNwz8t0kknN) · _view only_
 - file: [video1195725938.mp4](https://drive.google.com/open?id=1BrwqrlbqC1KpvUf-7m9DUmgFWmXoRZGA) · _view only_
+- generated, collapsed: <details><summary>Build/recording artefacts (137)</summary> [.gitignore](https://drive.google.com/open?id=1XYSBrQgB-BFdzcfoE8VTYFjGkt2OhewW) · _view only_, [0bfc7d48-64cf-49bb-9d07-d47756c7a38f-container.json](https://drive.google.com/open?id=1Z1c2Z0fOFcc8SW-Ae2ETD7yYfl9VwmP1) · _view only_, [0ca8a554-7a30-4008-be64-42929f5eb1ac-result.json](https://drive.google.com/open?id=1ATn98FrHtiV5P-Lqi9lw3WkEC4DUtbYp) · _view only_, [0d3e4c5a-4c99-47d3-a21d-98c2f69df054-container.json](https://drive.google.com/open?id=11RIoJZ_OaNfxJFMxafvOTVAHO3PeRofe) · _view only_, [15cc104d-a938-4458-ade1-ecf6e7715b91-attachment.txt](https://drive.google.com/open?id=1TNKLjwMEibE8MO2X6KXZCf5nLOs_BB2R) · _view only_, [1820ba6a-c352-4185-9135-a9a1a4397ffd-container.json](https://drive.google.com/open?id=1Ja3hyCM8PalMlLVbAY9J3Fe-BuskocBf) · _view only_, [186472ed-f6c6-4916-ac6c-cc875b3744c5-container.json](https://drive.google.com/open?id=1dLbvq_9IdMV4iNbYfKGjbMao2lDetrvR) · _view only_, [18a1b512-f898-436d-9e42-0eb29a294116-attachment.txt](https://drive.google.com/open?id=1YokBS76bsBgHhY_PVZfPgTfj9stKxKTb) · _view only_, [1e6a525c-a5b3-49da-8b1a-07c05502d140-result.json](https://drive.google.com/open?id=1Xk3t3heoFgR9vIJizDltvdvx1j-tUYWx) · _view only_, [1fb8c66e-5eb8-483c-8dfc-25a05fec0476-result.json](https://drive.google.com/open?id=1GP0aRuKsJr1cXm5PlYJ6b7O_ovK3SnbR) · _view only_, [22c81013-ab18-4c70-a9d2-730cb3dde69b-container.json](https://drive.google.com/open?id=1e3fCdWjqkjEGUq4VOx0jWF4VJRSXDXsg) · _view only_, [27670a33-5691-47fa-8952-d41d490903f5-result.json](https://drive.google.com/open?id=1oFCoh6MGpDCSQndGKaKPNL8S95t-SPT6) · _view only_, [2ed6a63a-e537-4aed-8c66-cae0204e4580-container.json](https://drive.google.com/open?id=1EfjbXOmtTT_Jhdi-bTMnEKHKDMYwVzHR) · _view only_, [3417425f-03f1-4258-84c8-4012995507cc-container.json](https://drive.google.com/open?id=1owyuoRyE9AN0Zop2kHmSz7mDR4Fuwcb9) · _view only_, [3fa16046-bdec-45c1-b20a-725808243cb4-result.json](https://drive.google.com/open?id=1iJNVYj4bkJa73RqQmYjc4KbQckTMlRsB) · _view only_, [403281ce-1c63-4663-9220-32edd0a72940-container.json](https://drive.google.com/open?id=1oMXzYTwmAmpGZ8MXJoXjOQt-NSfQvKKP) · _view only_, [40e1d8cd-0618-41ed-801d-2d446d752ac8-container.json](https://drive.google.com/open?id=1DRG1s08J17yFaQfeIzReP7UJTUZriaWN) · _view only_, [4212000c-2f0a-48bc-811d-61940746c016-result.json](https://drive.google.com/open?id=1VtNWAogHFuCzT_p92q9o6_v7t5kL00Az) · _view only_, [444e7ddc-3b64-42d9-9a4b-7fbf16356134-container.json](https://drive.google.com/open?id=1LncIzt5XSZ1gzCs8yl-pdMy6XoP_GXlc) · _view only_, [4c94087d-901b-46fc-91b4-f1c44dc16d32-attachment.txt](https://drive.google.com/open?id=1FWlk2TJ2peXCJfTkfFLRu77EilCSOLth) · _view only_, [4f833465-6258-4767-83d2-797281ef058f-result.json](https://drive.google.com/open?id=1iU1pboSKzbFznGMneT7s8G__HDrBhihW) · _view only_, [533547de-1c7c-481c-87ff-38e818cc7269-attachment.txt](https://drive.google.com/open?id=1ZOkBwWKjP4f83IhkYP9cK8aEOkAdF73R) · _view only_, [534f469d-f764-4d72-b13e-6d78cc9643e6-result.json](https://drive.google.com/open?id=1Y_GNoIRw8EbDXS4F7qvl61W-9sDcu4dW) · _view only_, [5363b6a9-aa34-457f-ad83-65d90f3c8bc4-result.json](https://drive.google.com/open?id=1WqLhp92mILiwaVBYB_TavE8MVDHASqip) · _view only_, [53b3d482-f289-4d29-a949-be88252d550a-container.json](https://drive.google.com/open?id=1aCpRF9SNzDeWx3X8OQeqcN300DkOFNOf) · _view only_, [5cefd417-c03a-4b4c-8fc5-571ed1aa4ee9-container.json](https://drive.google.com/open?id=1pXqPj8IogGkOj36h7HzxwOmCrIvc7D8H) · _view only_, [61678067-f178-42ab-8d0b-394167e319a5-result.json](https://drive.google.com/open?id=1DVMjwdvRbTIN_g6MNbylknhIC4DyIyc_) · _view only_, [66ba024a-41b7-4e55-903d-2100936b5029-attachment.txt](https://drive.google.com/open?id=12Fx7QtDtTmb2qIFaZyaQ4hm2DuRPp4dc) · _view only_, [68ee0561-1e90-47cf-ad02-d97d6f3c93e5-container.json](https://drive.google.com/open?id=15rhGuo64EkBl4qQQuV0DBtYjVHhEfGMa) · _view only_, [6935d487-873a-4143-b92c-929801daf892-attachment.txt](https://drive.google.com/open?id=1xiGUg_lYNLpKMbxZi28awAhxlco4B8uq) · _view only_, [700c5535-3acc-4db4-a37e-a6195476cf0b-container.json](https://drive.google.com/open?id=1sM-XWmAk11RHsL5Dfpj-ttw5qun8lgAq) · _view only_, [7061a4a7-0a26-4a35-8c6c-9e11cd94a28b-container.json](https://drive.google.com/open?id=1AW7WDq-iTBvcn-_Ez1Pglt2JdUvV16_K) · _view only_, [72d81a3f-0c47-4941-b209-1d2c3f6114a3-container.json](https://drive.google.com/open?id=1qKdi4GjquO-1TU0aJercpCQXEKpXYAFz) · _view only_, [7919d9f2-70a5-4b26-83be-417f33d9e38c-result.json](https://drive.google.com/open?id=1I8rqsPLcwxuVslIllcBs_fbmsowESkPN) · _view only_, [843b07c0-3103-4c92-89ab-a639a14d81a1-container.json](https://drive.google.com/open?id=1DBK2g-x85vPfqpKBgth5slNlQBAKj8DX) · _view only_, [89609813-d2c6-4d57-b3ea-edd7b5e218b0-result.json](https://drive.google.com/open?id=1Lu95EPC46phlc2UhwYG7piJI8IaFceOo) · _view only_, [8c034d5e-0f09-4711-9c62-16ce03a35825-attachment.txt](https://drive.google.com/open?id=1v88Pj99vagjfnQUvWoDppENkq8BolzT0) · _view only_, [9481a717-6dca-4eb6-a639-b0a48f116bfe-container.json](https://drive.google.com/open?id=1_tfE_qLJMZJhIqjHBCFocGUCHOE8UTv7) · _view only_, [95465599-720b-4e3d-8607-4de625e1fc9b-container.json](https://drive.google.com/open?id=178ng0lCAg0lDLXqsFgBs8ZW8k3rLn6gP) · _view only_, [9facf946-1a57-4582-99bd-ca51dbe2a9f7-container.json](https://drive.google.com/open?id=1Rx2rsrrkeRlUaB0WFZdi61j8oqvsYCuE) · _view only_, [CACHEDIR.TAG](https://drive.google.com/open?id=1E-o2HQMPHWCNHsYoXjzvSxh-jtTIvad4) · _view only_, [Fixtures.cpython-310-pytest-7.0.1.pyc](https://drive.google.com/open?id=1otag6SFy80Mm8Uz4EyIKFZqfYxqGGRbh) · _view only_, [Fixtures.cpython-310-pytest-7.1.3.pyc](https://drive.google.com/open?id=1H_JJMWrwY2wsM9N5MCReodSSoUWMIm9r) · _view only_, [Fixtures.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1IxqcvVgJkh-I_xSrqq--6Zj-3YJ0pUR3) · _view only_, [Fixtures.cpython-39.pyc](https://drive.google.com/open?id=1w2fp-8gM3jeSwW2roDs92sfiTBQSww1e) · _view only_, [HomePage.cpython-310.pyc](https://drive.google.com/open?id=1_atsLYdnO5fD6uuGK_gtS2tXETkOiNNr) · _view only_, [HomePage.cpython-39.pyc](https://drive.google.com/open?id=1qY5BDZ8Nyl9GFng0Bcbr6-4nryoucD2Z) · _view only_, [Page.cpython-310.pyc](https://drive.google.com/open?id=1ZNWA85EeaCTfELJ6ckBX-Gm6rl-Bpwv2) · _view only_, [Page.cpython-39.pyc](https://drive.google.com/open?id=19qFqgJIIa1CKNRsiYR6LYlnrG4OauZBd) · _view only_, [README.md](https://drive.google.com/open?id=1jPiBDXWNl-DpITNRa6VosvB1tdWZjnly) · _view only_, [SeleniumDriverFactory.cpython-310.pyc](https://drive.google.com/open?id=1cweTFbxrkTnx4j_Fx9KLdqKpVIoP9llI) · _view only_, [SeleniumDriverFactory.cpython-39.pyc](https://drive.google.com/open?id=14v7MiZnUptw5BiLC1EMQzI03-eVzjbim) · _view only_, [TestBase.cpython-310.pyc](https://drive.google.com/open?id=1D5ZyDjI0L2x91PkkPfSgCuLZYBrBhrnr) · _view only_, [TestBase.cpython-39.pyc](https://drive.google.com/open?id=1A1MTqt3g_Obq_8vSsodos5vJaxIu_KZK) · _view only_, [__init__.cpython-310.pyc](https://drive.google.com/open?id=1Mn0-0zEQGty-Q7zFUEIPVevR9oFifOrw) · _view only_, [__init__.cpython-39.pyc](https://drive.google.com/open?id=1eL-O1paFXv9cmuXop1j4Y7DlTH0WMQnh) · _view only_, [__init__.cpython-39.pyc](https://drive.google.com/open?id=1iQedHYTwWav9Bi17Q6tGhbR0v_al3zBm) · _view only_, [ab54960c-7be5-4642-97ad-2fb8291f9c40-container.json](https://drive.google.com/open?id=1A35M_dhC9fSgEM5C3d_-ijLPD5gCh1K7) · _view only_, [ae8a2716-c35d-4cb7-b958-4181bbe4ee50-container.json](https://drive.google.com/open?id=1MeRdHcvZRHQBWNPWGIQXj5PCb_RN-ksd) · _view only_, [af332b05-cea4-4241-90d7-d2454dc7fa14-container.json](https://drive.google.com/open?id=1-GXcBbuzWWM4BvCsE7Cm1ihCzLeXOz47) · _view only_, [afc8e93d-e23c-4ed2-af78-d8b342e51d7f-result.json](https://drive.google.com/open?id=1wEnnifuhgN3OrdfS6Hc7BpuwNGLWAoTF) · _view only_, [app.js](https://drive.google.com/open?id=1hGrvYr3rxqfr5Wkd9LmUoxQpcj6ppejk) · _view only_, [b0e4a2b0-d4dd-437c-9ee5-b21ad3df578c-container.json](https://drive.google.com/open?id=1F0o7frAvD7_xsIjnjux9NLHNIRO91Tk1) · _view only_, [b999d87d-65ba-4cf1-b086-5b0b65b60f31-attachment.txt](https://drive.google.com/open?id=1rnmM4QhO0ddyzBqQEmYtHmntbYrKiDOp) · _view only_, [bad5344c-8ca2-4d68-9101-651f6d21b5ae-container.json](https://drive.google.com/open?id=1PDVQzTZdVlfDkKhv-W7V2n3DvCBc6t7v) · _view only_, [bc55adab-3bdc-49ad-ba61-4e2794009fea-container.json](https://drive.google.com/open?id=13Z6FqUjZLORAz1ZNnupTb88mbvO892Yb) · _view only_, [bcf3138f-05d8-4198-a980-3ef365fa7bf1-attachment.txt](https://drive.google.com/open?id=1zhg2iXWshO2WF0WwwtrXgXCQ8Cb9L-37) · _view only_, [behaviors.csv](https://drive.google.com/open?id=1s-L58E3M7kBC7TRp86uNFn7-NoGbkKkA) · _view only_, [behaviors.json](https://drive.google.com/open?id=1EfLclN-cmaXDgfBpEQjJeC-z3CRh1f17) · _view only_, [behaviors.json](https://drive.google.com/open?id=1kNIY0w3P3rOcoXmdxgKPuPm8vW9ksnJ0) · _view only_, [c126dad9-6340-4582-b13c-831a6ec07893-attachment.txt](https://drive.google.com/open?id=1_-PC563GQMIgg-NjIzyMWnJdQr083jEA) · _view only_, [c1301207-6290-4c5b-b96a-542322c6981c-result.json](https://drive.google.com/open?id=1aUflFXnHembazQflWbCCF80bFI5Ahyc6) · _view only_, [c134ca2c-237e-4d75-9821-3d740181185d-result.json](https://drive.google.com/open?id=17Xi4LJoa_CfaEybCuNU-r4elwbA7FneN) · _view only_, [c687143d-a13d-4f19-b9f7-04b0bc40ce24-attachment.txt](https://drive.google.com/open?id=1-0c2MEkLjNhIJPVfMtqpMBubszycruta) · _view only_, [c7a10575-d128-493f-9505-a93555a86022-container.json](https://drive.google.com/open?id=1RFb-LGlPmUGI_KncK5iqLC7AOv51aGPp) · _view only_, [c81bcdcb-7d02-4f26-a488-b8a13a3d1b3a-attachment.txt](https://drive.google.com/open?id=1o8r8jeyHps-cgjE-Pmz4FG_0v2TdTLcN) · _view only_, [c8453f80-593d-41a0-84e9-4b821fac4306-container.json](https://drive.google.com/open?id=1u0nOs9fYRyfRA_qbfap22VldfMedShuD) · _view only_, [ca5909a8-8b55-4177-bbf9-8594d7962a96-attachment.txt](https://drive.google.com/open?id=1E3nkAL_LyRs8rUhHS-jYk5sg93Q2WSds) · _view only_, [cab58d9e-e4d6-4016-af6a-e55a9749b63b-container.json](https://drive.google.com/open?id=1GIuHSxv849KGazmNcauHqU-KVpVZp8NJ) · _view only_, [categories-trend.json](https://drive.google.com/open?id=11lqTeda2W0GLn1xjIB9QNHVrjalaYu4P) · _view only_, [categories-trend.json](https://drive.google.com/open?id=1QLpQwkZEzvpMD7-e_GDAXB9FAHo2uEAW) · _view only_, [categories.csv](https://drive.google.com/open?id=1gC-ypbO5L4CJeqtrb24NmbV4amYJCe9a) · _view only_, [categories.json](https://drive.google.com/open?id=1mixUcY_UaH89OBbMKAbOs62oWLUFWQBq) · _view only_, [categories.json](https://drive.google.com/open?id=1xcAVsO5YxMr0S_Shh0Lih5qNA5n6k8Rf) · _view only_, [cb83b16e-4f4c-44e8-8d55-8675d61cd470-container.json](https://drive.google.com/open?id=1pxDrFBz6S3jOICy3czQp96hTI66Xq0KW) · _view only_, [ccf3e126-b06f-427b-aeed-b238eab8d55d-container.json](https://drive.google.com/open?id=1B8KuWsO7-Psk4TYJcjE1wf_d6kBIvA-5) · _view only_, [chrome.log](https://drive.google.com/open?id=1ZOlFeEhMYDK6GokTmr_L4CjM9RGbQM_q) · _view only_, [conftest.cpython-310-pytest-7.0.1.pyc](https://drive.google.com/open?id=1TYrzBSQmUIjaK7NEjbdKVLZDMb5nAsRT) · _view only_, [conftest.cpython-310-pytest-7.1.3.pyc](https://drive.google.com/open?id=1N0z3U3ZJHcwB2hQp8-b073XmumMyircn) · _view only_, [conftest.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1YBWLzgvS6FQXYKe4P7oNDIFuhyrFRvhO) · _view only_, [duration-trend.json](https://drive.google.com/open?id=1LHYd3So4J8YyrlGSPfGnQ-eLlYFsEKlz) · _view only_, [duration-trend.json](https://drive.google.com/open?id=1_QgG8uKh6TsqB2A3J-SJ7secU4-BCUhy) · _view only_, [duration.json](https://drive.google.com/open?id=1VXHGPfHtX2nKnDaIgRU8eDtjyuF_tc4w) · _view only_, [e4dee957-5d64-4036-9feb-6a0ad0cc6502-attachment.txt](https://drive.google.com/open?id=13fvtnoDc0vsud_2s_r3eThtS0FmC1rF_) · _view only_, [e7d84e5d-a473-41c5-887a-b950e7f00252-container.json](https://drive.google.com/open?id=1G5n2UU0SQQhJ9tcQhq_kn2f7OYv_Dspp) · _view only_, [edge.log](https://drive.google.com/open?id=1EM4m3wyKLOCDp_x8h-PZTudRJZtrjIgw) · _view only_, [environment.json](https://drive.google.com/open?id=1E6amRd1yTljltgAGgKLh5Mb3KIPW-iEp) · _view only_, [executors.json](https://drive.google.com/open?id=15gZa8B2yMMK8PHApMwaIC6PuMfDQImda) · _view only_, [favicon.ico](https://drive.google.com/open?id=1Z3G8kxrrErHQR9rDcZUQSuoY-I73dL_j) · _view only_, [fb082499-46ac-416f-862b-631732bff5b1-attachment.txt](https://drive.google.com/open?id=1EvTje0iXfGLudj5jhBqzA8GWJDTtjwgg) · _view only_, [fc45e891-6879-46fb-8c43-399350362fef-attachment.txt](https://drive.google.com/open?id=1feo89pXVswsNJI-irrFbIY_dpo19r_t0) · _view only_, [firefox.log](https://drive.google.com/open?id=1kWYCLIEarYXVaK6MDqq57Qux2w2QUQtB) · _view only_, [history-trend.json](https://drive.google.com/open?id=16YI89s5aWympTf_gX0di9bFidO3mpwtA) · _view only_, [history-trend.json](https://drive.google.com/open?id=1NxGT5pFJK1DxTzBIG1HNP_790E2VU2kq) · _view only_, [history.json](https://drive.google.com/open?id=136EiCqXXmiyvUMMMr7OaC0yQpT_W093U) · _view only_, [index.html](https://drive.google.com/open?id=1QfGczZIDSt0uxrS-dUX9u7084MlRiTVM) · _view only_, [index.js](https://drive.google.com/open?id=1DLxY2c1x8bzZCd0KCO7_bq7Mn678RvVA) · _view only_, [index.js](https://drive.google.com/open?id=1UonzLAvcGkXURcRPe6_7ZB6nArAAG92V) · _view only_, [index.js](https://drive.google.com/open?id=1fkd-x-AMIxKp5YLjXv-luGHEWAaUsgiG) · _view only_, [influxDbData.txt](https://drive.google.com/open?id=1nbycOL2ywfSRn3_kIxFT3C-FK36G-8QD) · _view only_, [lastfailed](https://drive.google.com/open?id=1XdYOptjOK7Wt95z5LTS1lvwonUYA9D6q) · _view only_, [launch.json](https://drive.google.com/open?id=1koY0GbYfmaRs0lCF6OzlsM29ClMAfDNK) · _view only_, [mail.html](https://drive.google.com/open?id=17t9dJ4t1JnJv30sDxvrh9fQcTB5jw_li) · _view only_, [nodeids](https://drive.google.com/open?id=1bKD2nkHvT7kHp5OfSB2awqRzO32RK-le) · _view only_, [packages.json](https://drive.google.com/open?id=1nfSELBfBccDZgg7ILkXMCukErt3wxq-C) · _view only_, [prometheusData.txt](https://drive.google.com/open?id=1OMy7vQM17wDKuANyCsvzSnp4R6kYyKeg) · _view only_, [retry-trend.json](https://drive.google.com/open?id=1-5Zu34zJiGhSB3ExhPJtLpY6y_3wTTUT) · _view only_, [retry-trend.json](https://drive.google.com/open?id=1oZiJJB-EqY658JD5wo_ddqrO3DkQPEmE) · _view only_, [severity.json](https://drive.google.com/open?id=1ZMBPJprqKE94kSZMsiDb2SbvKh2_eYNF) · _view only_, [status-chart.json](https://drive.google.com/open?id=1jVl5fw5WDPrc3EL-pgj8HlTteShkS3E2) · _view only_, [stepwise](https://drive.google.com/open?id=1QOf89f9lVrdjOPElPsnw_q191t9nPyxw) · _view only_, [styles.css](https://drive.google.com/open?id=1OZ5Q45g08NgkWf4rA9B9x5Vi3EFMrv5Y) · _view only_, [styles.css](https://drive.google.com/open?id=1ZjAr-o2T_x12IwsV-ZQc3occkHir-Jyf) · _view only_, [suites.csv](https://drive.google.com/open?id=1UYCcSFPuFgGbdPhpYBwypj3rKcWWUVYz) · _view only_, [suites.json](https://drive.google.com/open?id=1jyN16mQQV6l9EMVisKy3Tmb4-GRi0Htz) · _view only_, [suites.json](https://drive.google.com/open?id=1l2vG12ItDalvUNgrjZVrcT-bYuvmVbb5) · _view only_, [summary.json](https://drive.google.com/open?id=1j2nkuGKqeiRiimvJiiHZYAt6qW0EDX6c) · _view only_, [test_driver_factory.cpython-310-pytest-7.1.3.pyc](https://drive.google.com/open?id=1R9TGvc1jQG4gaCjm9uU8Fr_rP8VA6AnT) · _view only_, [test_driver_factory.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1XUBCUcchKWYoD4vtKfe_g49d9BaJi46f) · _view only_, [test_driver_factory.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1cQHJjVDiBiVaqFMjJSKgzKgBCTIP9Acx) · _view only_, [test_home_page.cpython-310-pytest-7.1.3.pyc](https://drive.google.com/open?id=13iHfMcV9bW57zv09jHQzZG7bNyzUXaPO) · _view only_, [test_home_page.cpython-310-pytest-7.1.3.pyc](https://drive.google.com/open?id=1HA13oO2ikzG3YjIebuzfVICN9JuqU4mz) · _view only_, [test_home_page.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1X5ivZartECmPNNulDaEQXQBmBvGygfdm) · _view only_, [test_home_page.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1vFpi5CITmB_HmCQN8IvXIpdPOCgFp3Le) · _view only_, [test_landing.cpython-39-pytest-7.1.3.pyc](https://drive.google.com/open?id=1gTLqKXcS-e34bUy_snwAS-oeSfoae_Tv) · _view only_, [test_runner.log](https://drive.google.com/open?id=1JTeXrsr_EA8THXaqCOJWNaNn7iVLdgrA) · _view only_, [timeline.json](https://drive.google.com/open?id=1x8Ll5aUCT4u7NcdeTpGKJwNwz8t0kknN) · _view only_</details>
 
 ---
 
 ## SD4/6 · Cloud Testing
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 1 §A; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Test Engineering — [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
+| Domain | Test Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4876/) · [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
 | Programme week | 14 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4674/) |
 | Decks | 41 |
-| Topics | 877 current |
+| Topics | 861 current |
 
 **Sessions**
 
 | session | Uplevel | Drive |
 |---|---|---|
-| Pre-class | [open](https://uplevel.interviewkickstart.com/update_resource_collection/1006/) | **38:** [Availability, Reliability, Scalability](https://drive.google.com/open?id=1lEFIFVcCYQ9yL9nfzbaAxw9j-1Iq49kdQ5EpjxjzJ4o), [Availability, Reliability, Scalability.pptx](https://drive.google.com/open?id=1Rf2lbNskXkfdN49EZwRSFzOp_rfCB0ny), [CI/CD in the Cloud](https://drive.google.com/open?id=1JUHgFRbdvZ-uQvGSFCWgIRwjuRfQ7hGiJr15YDSX-ZA), [CI_CD in the Cloud.pptx](https://drive.google.com/open?id=1KRNq3q1-GMpYYeTOrw5j55wq7M7UB5vG), [Cloud FM Outline](https://drive.google.com/open?id=1TBzc36iN-VYlANez-eWKmYjyulhL-T_Fy-GhGfaYkpc), [Cloud FM Outline.pptx](https://drive.google.com/open?id=10l1G63_kI61Xxo2nV5m8zQYU6lUwpzVh), [Cloud FM Outline.pptx](https://drive.google.com/open?id=1d3rFfavqtZ9-YU87V62HYJkAsVOdnXh3), [Cloud Logging, Monitoring, and Alerting](https://drive.google.com/open?id=1JJq484r5FD76kopOoWDL8P_v8D14JVrJgLrKPlHFh5I), [Cloud Logging, Monitoring, and Alerting.pptx](https://drive.google.com/open?id=1FKke4Pa3CtsbHPJ_eYvRL97DysranV-3), [Cloud Testing MCQs](https://drive.google.com/open?id=1QbhlMMCCGLjeIBszUKDTCTA8bR3U8R4zsWv4b4udp6Y), [CloudTestingFoundation - Compute (1).pptx](https://drive.google.com/open?id=1XUuUaNLtNIpLIkf6uzXS4ENcMg--nvS9), [CloudTestingFoundation - Compute.pptx](https://drive.google.com/open?id=1Hm8V4DRFZQUWvTuS5v_FLWP2uiFTKbV-), [CloudTestingFoundation - Compute.pptx](https://drive.google.com/open?id=1zhQV3OHdeplyidDZxF_U6AOnXiBEm6B9), [CloudTestingFoundation - Database (1).pptx](https://drive.google.com/open?id=1FlN6lD152QtAV6yLFzMyjV2RDCL1NW2A), [CloudTestingFoundation - Database.pptx](https://drive.google.com/open?id=1ljL6rMwqlswJLMllI-xhfGi_0fCzzHbc), [CloudTestingFoundation - Database.pptx](https://drive.google.com/open?id=1u8hqqw8_whTMM64_eVBWsxlkzzOFnaH_), [CloudTestingFoundation - StorageAndCaching (1).pptx](https://drive.google.com/open?id=1iuSYPti9xmPXgVRZTBVVEx4pDK93NR6k), [CloudTestingFoundation - StorageAndCaching.pptx](https://drive.google.com/open?id=1Wjf6WLLlgu4T3AMcRbfNRUU30gIeX7Ah), [CloudTestingFoundation - StorageAndCaching.pptx](https://drive.google.com/open?id=1g873DcVXrOPh2XKQVtQMsOaQVNu7sGbK), [Foundation Material - Rough Draft](https://drive.google.com/open?id=1CaE9oPFPlgIDL-ruwgOWCuPTa1F1IFZcj4k7XQl2Vsw), [Introduction to Cloud Services](https://drive.google.com/open?id=1Ij6JWFu3e0x0WogRijdKD2LLg39NjPEbSz0nbuaN8PA), [Introduction to Cloud Services.pptx](https://drive.google.com/open?id=1Vjd7LInsAdSHKjIQ_fjWGWg3MUK1Axci), [Introduction to Cloud Services.pptx](https://drive.google.com/open?id=1ijHGN1uVhtunpRwxDNXRDr52cmEz8X_Z), [Load Balancer](https://drive.google.com/open?id=1N8sZCVglzKDuTsMaF1robfB0xit1rz9WK0ArzEJg7uA), [Load Balancer.pptx](https://drive.google.com/open?id=1EFJrbQAeY12VP0ity2vavhE7-QjQBcm6), [Messages.pptx](https://drive.google.com/open?id=13Zv8LsYIZC-beCOVVW31RbXmCuM-bL2J), [Messages.pptx](https://drive.google.com/open?id=1b-3Q__yFOwb-Mia9H1A3NRvIRAbXvuBj), [Proxy.pptx](https://drive.google.com/open?id=13hg8sdPei4WQdP1SArkmnPGv5DsxDYK8), [Proxy.pptx](https://drive.google.com/open?id=1I0s_c7NcSOYOqHJ1QrxdnWEWD3GAs-iD), [Security (1).pptx](https://drive.google.com/open?id=1Uf6ZdDOf0vdUZELuWR4UeteIruiNTDKu), [Security.pptx](https://drive.google.com/open?id=18qYSxt1kqgLqGEfF0wSc1R92aK7ReeL4), [Security.pptx](https://drive.google.com/open?id=1aB6c78GZHMkWVrJ90TVGX1roxjezs36X), [recording.conf](https://drive.google.com/open?id=158oQGHcZcqlvt_pMVC-zVUjJAGAVYFsU), [recording.conf](https://drive.google.com/open?id=1Hl0DcI5Cqs1pE7UPs6ecOBLYq7wCEXvF), [recording.conf](https://drive.google.com/open?id=1LNinWySNKL8PS7j3BinLv4M5-a5K41IY), [recording.conf](https://drive.google.com/open?id=1d74hgpNYmMo_TJ2vKuZcz9UdvrtyliNe), [recording.conf](https://drive.google.com/open?id=1h4QmkK5kNYXjuq7tW4oWDK-BRO8vTIbz), [recording.conf](https://drive.google.com/open?id=1w7Yf3IVLa0ULDfBQtT3DHdXYHnDaqAbq) |
+| Pre-class | [open](https://uplevel.interviewkickstart.com/update_resource_collection/1006/) | **38:** [Availability, Reliability, Scalability](https://drive.google.com/open?id=1lEFIFVcCYQ9yL9nfzbaAxw9j-1Iq49kdQ5EpjxjzJ4o), [Availability, Reliability, Scalability.pptx](https://drive.google.com/open?id=1Rf2lbNskXkfdN49EZwRSFzOp_rfCB0ny), [CI/CD in the Cloud](https://drive.google.com/open?id=1JUHgFRbdvZ-uQvGSFCWgIRwjuRfQ7hGiJr15YDSX-ZA), [CI_CD in the Cloud.pptx](https://drive.google.com/open?id=1KRNq3q1-GMpYYeTOrw5j55wq7M7UB5vG), [Cloud FM Outline](https://drive.google.com/open?id=1TBzc36iN-VYlANez-eWKmYjyulhL-T_Fy-GhGfaYkpc), [Cloud FM Outline.pptx](https://drive.google.com/open?id=10l1G63_kI61Xxo2nV5m8zQYU6lUwpzVh), [Cloud FM Outline.pptx](https://drive.google.com/open?id=1d3rFfavqtZ9-YU87V62HYJkAsVOdnXh3), [Cloud Logging, Monitoring, and Alerting](https://drive.google.com/open?id=1JJq484r5FD76kopOoWDL8P_v8D14JVrJgLrKPlHFh5I), [Cloud Logging, Monitoring, and Alerting.pptx](https://drive.google.com/open?id=1FKke4Pa3CtsbHPJ_eYvRL97DysranV-3), [Cloud Testing MCQs](https://drive.google.com/open?id=1QbhlMMCCGLjeIBszUKDTCTA8bR3U8R4zsWv4b4udp6Y), [CloudTestingFoundation - Compute (1).pptx](https://drive.google.com/open?id=1XUuUaNLtNIpLIkf6uzXS4ENcMg--nvS9), [CloudTestingFoundation - Compute.pptx](https://drive.google.com/open?id=1Hm8V4DRFZQUWvTuS5v_FLWP2uiFTKbV-), [CloudTestingFoundation - Compute.pptx](https://drive.google.com/open?id=1zhQV3OHdeplyidDZxF_U6AOnXiBEm6B9), [CloudTestingFoundation - Database (1).pptx](https://drive.google.com/open?id=1FlN6lD152QtAV6yLFzMyjV2RDCL1NW2A), [CloudTestingFoundation - Database.pptx](https://drive.google.com/open?id=1ljL6rMwqlswJLMllI-xhfGi_0fCzzHbc), [CloudTestingFoundation - Database.pptx](https://drive.google.com/open?id=1u8hqqw8_whTMM64_eVBWsxlkzzOFnaH_), [CloudTestingFoundation - StorageAndCaching (1).pptx](https://drive.google.com/open?id=1iuSYPti9xmPXgVRZTBVVEx4pDK93NR6k), [CloudTestingFoundation - StorageAndCaching.pptx](https://drive.google.com/open?id=1Wjf6WLLlgu4T3AMcRbfNRUU30gIeX7Ah), [CloudTestingFoundation - StorageAndCaching.pptx](https://drive.google.com/open?id=1g873DcVXrOPh2XKQVtQMsOaQVNu7sGbK), [Foundation Material - Rough Draft](https://drive.google.com/open?id=1CaE9oPFPlgIDL-ruwgOWCuPTa1F1IFZcj4k7XQl2Vsw), [Introduction to Cloud Services](https://drive.google.com/open?id=1Ij6JWFu3e0x0WogRijdKD2LLg39NjPEbSz0nbuaN8PA), [Introduction to Cloud Services.pptx](https://drive.google.com/open?id=1Vjd7LInsAdSHKjIQ_fjWGWg3MUK1Axci), [Introduction to Cloud Services.pptx](https://drive.google.com/open?id=1ijHGN1uVhtunpRwxDNXRDr52cmEz8X_Z), [Load Balancer](https://drive.google.com/open?id=1N8sZCVglzKDuTsMaF1robfB0xit1rz9WK0ArzEJg7uA), [Load Balancer.pptx](https://drive.google.com/open?id=1EFJrbQAeY12VP0ity2vavhE7-QjQBcm6), [Messages.pptx](https://drive.google.com/open?id=13Zv8LsYIZC-beCOVVW31RbXmCuM-bL2J), [Messages.pptx](https://drive.google.com/open?id=1b-3Q__yFOwb-Mia9H1A3NRvIRAbXvuBj), [Proxy.pptx](https://drive.google.com/open?id=13hg8sdPei4WQdP1SArkmnPGv5DsxDYK8), [Proxy.pptx](https://drive.google.com/open?id=1I0s_c7NcSOYOqHJ1QrxdnWEWD3GAs-iD), [Security (1).pptx](https://drive.google.com/open?id=1Uf6ZdDOf0vdUZELuWR4UeteIruiNTDKu), [Security.pptx](https://drive.google.com/open?id=18qYSxt1kqgLqGEfF0wSc1R92aK7ReeL4), [Security.pptx](https://drive.google.com/open?id=1aB6c78GZHMkWVrJ90TVGX1roxjezs36X) <details><summary>Build/recording artefacts (6)</summary> [recording.conf](https://drive.google.com/open?id=158oQGHcZcqlvt_pMVC-zVUjJAGAVYFsU), [recording.conf](https://drive.google.com/open?id=1Hl0DcI5Cqs1pE7UPs6ecOBLYq7wCEXvF), [recording.conf](https://drive.google.com/open?id=1LNinWySNKL8PS7j3BinLv4M5-a5K41IY), [recording.conf](https://drive.google.com/open?id=1d74hgpNYmMo_TJ2vKuZcz9UdvrtyliNe), [recording.conf](https://drive.google.com/open?id=1h4QmkK5kNYXjuq7tW4oWDK-BRO8vTIbz), [recording.conf](https://drive.google.com/open?id=1w7Yf3IVLa0ULDfBQtT3DHdXYHnDaqAbq)</details> |
 | Class | [open](https://uplevel.interviewkickstart.com/update_video/76474/) | **11:** [Cloud Testing - Live Class (1).pptx](https://drive.google.com/open?id=1coeA-E1RmADX7YiBa1ghEpzOHfbkkHe3), [Cloud Testing - Live Class - Azeem](https://drive.google.com/open?id=1l7IJUpIIPV4iNXiKN60XRsp1ZyTy_JWFig3FcFwp_V8), [Cloud Testing - Live Class - Bill](https://drive.google.com/open?id=1shMrON5FB8jS7CI984BNvyYGxz6kF_Vd4Vn59cjp5CU), [Cloud Testing - Live Class.pdf](https://drive.google.com/open?id=160Xy-ZoH65fQ_1jcFOjg2_2CqH0yycvY), [Cloud Testing - Live Class.pptx](https://drive.google.com/open?id=1h4vjCr3KK8U6H2OhviAfcYlsxksGOPHS), [Cloud Testing Presentation Live Class](https://drive.google.com/open?id=1aU7JZKX-aH3YVrGf9-EZdrtieXWtKi0QEqDNesBowsw), [Cloud Testing Presentation Live Class.pptx](https://drive.google.com/open?id=1JymXX_SMBXDQMhZ-dWaqoOiG5AK1R48W), [Somewhat Old - Cloud Testing - Live Class (1).pptx](https://drive.google.com/open?id=1vYx2YONCXRXlV95AjAhzn0W_Bk7Gr5ac), [Somewhat Old - Cloud Testing - Live Class.pptx](https://drive.google.com/open?id=1ikJT0HVqoGpEsPGe4G1xykb0T23SEExe), [Very Old - Cloud Testing - 10 hour Live Class (1).pptx](https://drive.google.com/open?id=1IIjjW82Rvh_S_GfrHTMnwrpR-_uAHlvg), [Very Old - Cloud Testing - 10 hour Live Class.pptx](https://drive.google.com/open?id=1YQct6E_28DOOTO2-cGh8_dJScB_C_Hzx) |
 | Alternate Class | [open](https://uplevel.interviewkickstart.com/update_video/76476/) | _no file matched at session level_ |
 | Assignment | [open](https://uplevel.interviewkickstart.com/update_resource_collection/1108/) | **5:** [Copy of KeyToLiveClassAssignments-CloudTesting.docx](https://drive.google.com/open?id=1vUIu1CaH1aB8K9Sf9POmnQdmuEwhZfzP), [Copy of LiveClassAssignments-CloudTesting.docx](https://drive.google.com/open?id=1AbWzAsoiVy4vPOkJlVq7eHqGJo4dK4cy), [KeyToLiveClassAssignments-CloudTesting](https://drive.google.com/open?id=1UUD__BoA4PTKgzjA_8CKwhccPTr8W53T7MAA9IVjZws), [KeyToLiveClassAssignments-CloudTesting.docx](https://drive.google.com/open?id=1B7UzU3jn38VT4jYuBlrY_u1heKtYwMm7), [LiveClassAssignments-CloudTesting.docx](https://drive.google.com/open?id=1V2K2n4xmXerVxppmjdzYr3BhxBH2NTQh) |
@@ -2015,13 +1927,17 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [Very Old - Cloud Testing - 10 hour Live Class (1).pptx](https://drive.google.com/open?id=1IIjjW82Rvh_S_GfrHTMnwrpR-_uAHlvg)
 - [Very Old - Cloud Testing - 10 hour Live Class.pptx](https://drive.google.com/open?id=1YQct6E_28DOOTO2-cGh8_dJScB_C_Hzx)
 
-**Top 5 of 877 topics** _(current first, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 861 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. Assignment Questions — tab 6 of [Lesson Plan: Cloud testing](https://drive.google.com/open?id=1S2n2LZSI1W6hlCDG6hxzSDk3nhzSDdjWImAApzQYuJ0)
 2. Availability, Reliability, Scalability & Replication — tab 6 of [Lesson Plan: Cloud testing](https://drive.google.com/open?id=1S2n2LZSI1W6hlCDG6hxzSDk3nhzSDdjWImAApzQYuJ0)
-3. Availability, Reliability, Scalability & Replication: @SURUCHI — tab 6 of [Lesson Plan: Cloud testing](https://drive.google.com/open?id=1S2n2LZSI1W6hlCDG6hxzSDk3nhzSDdjWImAApzQYuJ0)
-4. Basics & Introduction — tab 6 of [Lesson Plan: Cloud testing](https://drive.google.com/open?id=1S2n2LZSI1W6hlCDG6hxzSDk3nhzSDdjWImAApzQYuJ0)
-5. Caching — tab 6 of [Lesson Plan: Cloud testing](https://drive.google.com/open?id=1S2n2LZSI1W6hlCDG6hxzSDk3nhzSDdjWImAApzQYuJ0)
+3. Basics & Introduction — tab 6 of [Lesson Plan: Cloud testing](https://drive.google.com/open?id=1S2n2LZSI1W6hlCDG6hxzSDk3nhzSDdjWImAApzQYuJ0)
+4. Caching — tab 6 of [Lesson Plan: Cloud testing](https://drive.google.com/open?id=1S2n2LZSI1W6hlCDG6hxzSDk3nhzSDdjWImAApzQYuJ0)
+5. Cloud Computing — tab 6 of [Lesson Plan: Cloud testing](https://drive.google.com/open?id=1S2n2LZSI1W6hlCDG6hxzSDk3nhzSDdjWImAApzQYuJ0)
+
+_574 repeated title(s) shown once; 31 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
+
+_8 extracted title(s) (16 occurrence(s)) held back as a person's name or biography, not a topic (D1; kept in the graph, marked `not_a_topic`): Availability, Reliability, Scalability & Replication: @SURUCHI, Caching: BALAJI, Compute: BALAJI, Databases: BALAJI, Load Balancer: SURUCHI, Messages - Pub-sub, Polling, Streaming: HETAL, Proxies: HETAL, Storage: BALAJI_
 
 **Other files (20)** _(module-level files, curriculum documents, repositories)_
 

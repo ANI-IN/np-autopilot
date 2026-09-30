@@ -30,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import ids                                          # noqa: E402
+from pipeline.lib import freshness                                  # noqa: E402
 from pipeline.lib import content_model as cm                          # noqa: E402
 from pipeline.lib import content_scope as scope                       # noqa: E402
 from pipeline.lib import curriculum as cur                            # noqa: E402
@@ -87,8 +88,10 @@ T_SESSION = _tgt_of("module_session")
 T_TUTOR = _tgt_of("module_instructor")
 T_TUTOR_CONTACT = _tgt_of("contact_of")
 
-MASTERSHEET = (REPO_ROOT / ".drive-cache" / "02-curriculum" /
-               "Resource Collection Mastersheet (Software + System).xlsx")
+#: THE LIVE SHEET (owner decision 2026-09-30, config/mastersheet-scope.yaml),
+#: exported outside the repo by pipeline/fetch_mastersheet.py. The corpus copy
+#: is superseded: kept in the graph, never read for these facts.
+MASTERSHEET = freshness.live_path()
 
 
 #: Distinguishes row-B content ids from the label-keyed main graph.
@@ -260,9 +263,29 @@ def main() -> int:
     tutor_id: dict = {}
     people_review: list = []
     sheet_variants: list = []
+    withdrawn = ms.withdrawn_roles()
+    withdrawn_used: set = set()
+    red_unexplained: list = []
+    excluded_tabs: list = []
+    uplevel_rows: dict = {}
+    if MASTERSHEET.exists():
+        # Every tab of the workbook is either declared read or excluded by
+        # name; an undeclared one fails here. Exclusions are LOGGED by name.
+        excluded_tabs = ms.check_workbook_scope(ms.sheetnames(MASTERSHEET))
+        for t, why in excluded_tabs:
+            print(f"  mastersheet tab excluded: {t!r} — {why}")
+        uplevel_rows = ms.uplevel_resource_rows(MASTERSHEET)
+        g.node(nid(T_FILE, ms.LIVE_DRIVE_ID), T_FILE, ms.LIVE_CITATION,
+               [{"origin": "corpus", "file": ms.LIVE_CITATION}],
+               relative_path=ms.LIVE_CITATION, drive_url=ms.LIVE_URL,
+               drive_file_id=ms.LIVE_DRIVE_ID,
+               mime="application/vnd.google-apps.spreadsheet")
+    else:
+        gaps["live mastersheet not fetched — no mastersheet facts"] += 1
     if MASTERSHEET.exists():
         for tab_name in ms.DOMAIN_TABS:
             tab = ms.parse_tab(MASTERSHEET, tab_name)
+            red = ms.red_cells(MASTERSHEET, tab_name)
             # THE SHEET'S `Drive Folder` VALUE IS NOT ALWAYS THE DOMAIN FOLDER.
             # Backend states `SD3: Backend Engineering`, the domain folder
             # itself; the other three state their CONTENT REPO subfolder
@@ -281,10 +304,16 @@ def main() -> int:
             # value-only read of that cell produced no link at all.
             if tab.drive_folder_url and folder in dom_id:
                 g.nodes[dom_id[folder]]["drive_folder_url"] = tab.drive_folder_url
-            msrc = [{"origin": "corpus",
-                     "file": "02-curriculum/Resource Collection Mastersheet "
-                             "(Software + System).xlsx",
+            msrc = [{"origin": "corpus", "file": ms.LIVE_CITATION,
                      "sheet": tab_name}]
+            # THE DOMAIN'S UPLEVEL LINK, from the four in-scope rows of
+            # `Uplevel Resources` (owner decision 2026-09-30).
+            if folder in dom_id and tab_name in uplevel_rows:
+                link, urow = uplevel_rows[tab_name]
+                dnode = g.nodes[dom_id[folder]]
+                dnode["uplevel_link"] = link
+                dnode["sources"].append({"origin": "corpus", "file": ms.LIVE_CITATION,
+                                         "sheet": ms.UPLEVEL_TAB, "row": urow})
 
             for mod in tab.modules:
                 key = (folder, mod.sequence)
@@ -299,6 +328,13 @@ def main() -> int:
                         {"domain": slug, "sequence": mod.sequence,
                          "folder_label": g.nodes[m]["label"],
                          "mastersheet_label": mod.name})
+                    # THE MASTERSHEET NAMES THE MODULE (owner decision,
+                    # 2026-09-30, resolving TOPv/TOPm): the sheet is the
+                    # maintained roster, the folder is where files happen to
+                    # sit. The folder name stays as label_raw — the citation
+                    # key back to the Drive path (CLAUDE.md §1).
+                    g.nodes[m]["label_raw"] = g.nodes[m]["label"]
+                    g.nodes[m]["label"] = mod.name
 
                 for s in mod.sessions:
                     sid = nid(T_SESSION, slug, mod.sequence, s.kind, s.uplevel_link)
@@ -312,7 +348,7 @@ def main() -> int:
 
                 assign = tab.assignments_by_sequence.get(mod.sequence, {})
                 assigns[(slug, mod.sequence)] = assign
-                for role in ("primary", "backup_1", "backup_2", "backup_3"):
+                for col, role in ms.ROLE_COLUMNS.items():
                     for person in assign.get(role, []):
                         src = [dict(msrc[0], row=assign.get("row"),
                                     column=role)]
@@ -320,6 +356,28 @@ def main() -> int:
                         g.node(pid, T_TUTOR, person, src, label_raw=person,
                                cross_validated=False)
                         tutor_id[cur.normalise_for_join(person)] = pid
+                        is_red = (assign.get("row"), col) in red
+                        fact = withdrawn.get((slug, mod.sequence, role, person))
+                        if fact:
+                            # THE OWNER SAYS THIS ROLE IS NO LONGER HELD. No
+                            # edge; the person stays, and a HAND source says
+                            # what the sheet shows and who said otherwise.
+                            withdrawn_used.add(fact["id"])
+                            node = g.nodes[pid]
+                            node.setdefault("withdrawn_roles", []).append(
+                                f"{slug}/{mod.sequence} {role}")
+                            node["sources"].append({
+                                "origin": "hand", "ordinal": len(node["sources"]),
+                                "entered_at": fact["asserted_at"],
+                                "establishes": ["withdrawn_roles"],
+                                "evidence": f"{fact['sheet_cell']}: {fact['fact']} "
+                                            f"({fact['asserted_by']}, "
+                                            f"{fact['asserted_at']})"})
+                            continue
+                        if is_red:
+                            red_unexplained.append(
+                                f"{tab_name} row {assign.get('row', 0) + 1} "
+                                f"{role}: {person}")
                         g.edge(R["module_instructor"], m, pid, src,
                                instructor_role=role)
                         if ms.needs_people_review(person):
@@ -526,9 +584,21 @@ def main() -> int:
                    drive_url=drive_url(fid),
                    owner_domain=r.get("owner_domain"), mime=r["mime"])
 
+    # AN OWNER FACT THAT MATCHES NOTHING IS STALE, and a stale withdrawal would
+    # silently stop withdrawing: the sheet changed under it. Refuse loudly.
+    stale = sorted(f["id"] for f in withdrawn.values()
+                   if f["id"] not in withdrawn_used)
+    if MASTERSHEET.exists() and stale:
+        raise SystemExit(f"config/mastersheet-owner-facts.yaml: {stale} match no "
+                         "mastersheet cell any more — the sheet changed; ask the "
+                         "owner before rebuilding")
     write_reviews(topic_rows, tab_rows, people_review, sheet_variants,
                   deck_proposals, g)
     meta = {
+        "mastersheet_source": ms.LIVE_CITATION if MASTERSHEET.exists() else None,
+        "mastersheet_excluded_tabs": [t for t, _ in excluded_tabs],
+        "mastersheet_withdrawn_roles": sorted(withdrawn_used),
+        "mastersheet_red_cells_unexplained": red_unexplained,
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "source": "drive-cache/content-rowB",
         "scope": "registry row B, four approved domains (D2a)",
@@ -714,6 +784,12 @@ def report(meta: dict, g: Graph) -> None:
     print("PASS 7 — row B content graph")
     print("=" * 74)
     print(f"  nodes {meta['nodes']:,}   edges {meta['edges']:,}")
+    print(f"  mastersheet roles withdrawn by owner fact: "
+          f"{meta['mastersheet_withdrawn_roles'] or 'none'}")
+    red = meta["mastersheet_red_cells_unexplained"]
+    print(f"  RED instructor cells with no owner fact: {len(red)}"
+          + ("".join(f"\n    {r}   <- kept as the sheet states; owner to say what it means"
+                     for r in red)))
     print("\n  NODES")
     for k, v in sorted(meta["node_counts"].items(), key=lambda kv: -kv[1]):
         print(f"    {k:<18}{v:>7,}")

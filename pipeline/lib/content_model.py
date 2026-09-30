@@ -613,6 +613,31 @@ def is_historical(path: str, name: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Build / recording artefacts — DISPLAY ONLY (owner request, Animesh Kumar,
+# 2026-09-30, checklist review part 1 §D)
+# ---------------------------------------------------------------------------
+# Test-run output and screen-recorder config sit in Drive beside real content:
+# 55 recording.conf on sessions, 94 allure JSON, 26 .pyc. They are collapsed
+# into one "Build/recording artefacts (N)" group in the checklist and the
+# panel. Nothing is dropped from the graph, and every one stays linked.
+# public/index.html carries ARTEFACT_NAME verbatim (tests/test_artefact_group.py).
+ARTEFACT_NAME = (r"(\.pyc$|\.log$|^CACHEDIR\.TAG$|^(lastfailed|nodeids|stepwise)$"
+                 r"|^recording\.conf$"
+                 r"|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                 r"-(result|container|attachment)(\.\w+)?$)")
+# a file under a generated directory, whatever it is called
+ARTEFACT_DIR = r"(^|/)(__pycache__|\.pytest_cache|allure-results|allure-report)(/|$)"
+_ARTEFACT_NAME = re.compile(ARTEFACT_NAME, re.I)
+_ARTEFACT_DIR = re.compile(ARTEFACT_DIR, re.I)
+
+
+def is_build_artefact(name: str, path: str = "") -> bool:
+    base = str(name or "").rstrip("/").rsplit("/", 1)[-1]
+    return bool(_ARTEFACT_NAME.search(base) or _ARTEFACT_DIR.search(str(path or ""))
+                or _ARTEFACT_DIR.search(str(name or "")))
+
+
+# ---------------------------------------------------------------------------
 # Label hygiene — the DB constraint, applied where the label is minted
 # ---------------------------------------------------------------------------
 

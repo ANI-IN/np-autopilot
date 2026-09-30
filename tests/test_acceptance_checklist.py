@@ -77,7 +77,9 @@ def test_every_module_has_a_block_with_an_owner_tickbox():
     _, _, mods = _graph()
     blocks = _blocks()
     assert len(blocks) == len(mods) == 20
-    assert all("- [ ] **Owner check**" in b for b in blocks.values())
+    # ticked only by a recorded owner confirmation (tests/test_owner_confirmations.py)
+    assert all(("- [ ] **Owner check**" in b) != ("- [x] **Owner check**" in b)
+               for b in blocks.values())
 
 
 def test_programme_week_is_the_graphs_and_says_it_is_an_owner_fact():
@@ -97,7 +99,8 @@ def test_instructors_are_the_mastersheet_roles_and_nothing_else_in_that_table():
     labels = collections.Counter(n["label"] for n in g["nodes"] if n["type"] == "instructor")
     blocks = _blocks()
     for m in mods:
-        want = sorted((e.get("instructor_role"), N[e["target"]]["label"]) for e in g["edges"]
+        want = sorted((e.get("instructor_role"), N[e["target"]]["label"],
+                       bool(N[e["target"]].get("identity_unconfirmed"))) for e in g["edges"]
                       if e["source"] == m["id"] and e["rel"] == taxonomy.edge_for_role("module_instructor")
                       and e.get("tier") == "mastersheet")
         b = blocks[m["label"]]
@@ -105,10 +108,12 @@ def test_instructors_are_the_mastersheet_roles_and_nothing_else_in_that_table():
         rows = [l for l in table.split("\n") if l.startswith("| ") and "---" not in l
                 and not l.startswith("| role")]
         assert len(rows) == len(want), (m["label"], rows, want)
-        for role, name in want:
+        for role, name, unconfirmed in want:
             hit = [r for r in rows if f"| {_md(name)}" in r]
             assert hit, (m["label"], name)
-            assert (labels[name] > 1) == ("unconfirmed identity" in hit[0]), (m["label"], name)
+            # flagged: a duplicated label, or an identity the owner left unresolved
+            assert (labels[name] > 1 or unconfirmed) == ("unconfirmed identity" in hit[0]), (
+                m["label"], name)
 
 
 def test_legacy_evidence_is_listed_separately_when_present():

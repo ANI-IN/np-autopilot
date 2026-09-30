@@ -18,15 +18,22 @@ orders and never drops (content_model.topic_rank). Every other list is whole.
 from __future__ import annotations
 
 import collections
+import hashlib
+import json
 import sys
 from pathlib import Path
+
+import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import graphio, taxonomy as tax                     # noqa: E402
+from pipeline.lib import content_model as cm                         # noqa: E402
+from pipeline.lib import module_merge as mm                          # noqa: E402
 from pipeline.lib.paths import REPO_ROOT                              # noqa: E402
 
 OUT = REPO_ROOT / "docs" / "ACCEPTANCE-CHECKLIST.md"
+CONFIRMATIONS = REPO_ROOT / "config" / "owner-confirmations.yaml"
 
 KIND_ORDER = ["pre_class", "class", "alternate_class", "task", "review",
               "alternate_review", "post_class"]
@@ -53,6 +60,62 @@ def link(label, url, view_only=False) -> str:
     text = md(label)
     out = f"[{text}]({url})" if url else f"{text} _(no link recorded)_"
     return out + (" · _view only_" if view_only else "")
+
+
+def artefact_group(files) -> str:
+    """Test-run output and recorder config (content_model.is_build_artefact),
+    collapsed but EVERY ONE still linked — display only, nothing dropped."""
+    body = ", ".join(link(*f) for f in files)
+    return (f"<details><summary>Build/recording artefacts ({len(files)})</summary> "
+            f"{body}</details>")
+
+
+def mastersheet_fingerprint(m, out, N, R) -> str:
+    """What the owner confirms: the block's MASTERSHEET facts — module name,
+    Uplevel links, mastersheet instructor roles. A confirmation holds only
+    while these are unchanged; topics and files may be re-ranked freely."""
+    facts = {
+        "label": m["label"], "uplevel": m.get("uplevel_link") or "",
+        "sessions": sorted([N[e["target"]].get("session_kind") or "",
+                            N[e["target"]].get("uplevel_link") or ""]
+                           for e in out if e["rel"] == R["module_session"]
+                           and not e.get("attached_file")),
+        "instructors": sorted([e.get("instructor_role") or "", N[e["target"]]["label"]]
+                              for e in out if e["rel"] == R["module_instructor"]
+                              and e.get("tier") == "mastersheet"),
+    }
+    return hashlib.sha256(json.dumps(facts, sort_keys=True, ensure_ascii=False)
+                          .encode("utf-8")).hexdigest()[:16]
+
+
+def load_confirmations(path: Path = CONFIRMATIONS) -> dict:
+    """{module tag: entry}. Every entry is an owner fact: origin hand, who, when."""
+    if not path.exists():
+        return {}
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    out = {}
+    for c in data.get("confirmations") or []:
+        for k in ("module", "fingerprint", "origin", "asserted_by", "asserted_at", "evidence"):
+            if not c.get(k):
+                raise SystemExit(f"{path.name}: confirmation {c!r} has no {k}")
+        if c["origin"] != "hand":
+            raise SystemExit(f"{path.name}: {c['module']} origin must be hand")
+        if c["module"] in out:
+            raise SystemExit(f"{path.name}: {c['module']} confirmed twice")
+        out[c["module"]] = c
+    return out
+
+
+def owner_check(tag, fp, conf) -> tuple[str, bool]:
+    c = conf.get(tag)
+    if not c:
+        return "- [ ] **Owner check** — this block matches the mastersheet", False
+    if c["fingerprint"] != fp:
+        return (f"- [ ] **Owner check** — confirmed by {c['asserted_by']} on "
+                f"{c['asserted_at']}, but this block's mastersheet facts have "
+                f"CHANGED since (`{c['fingerprint']}` → `{fp}`): re-check"), False
+    return (f"- [x] **Owner check** — confirmed by {c['asserted_by']} on "
+            f"{c['asserted_at']} ({c['evidence']}; `config/owner-confirmations.yaml`)"), True
 
 
 def main() -> int:
@@ -96,16 +159,20 @@ def main() -> int:
         "- **Programme weeks are an owner fact** (`rowb-program-weeks`, origin: "
         "hand), not read from a file, and are shown as such.",
         "- **Instructors**: the mastersheet role is the reviewed tier. Legacy "
-        "evidence (a `teaches` record from the older sheets) and unconfirmed "
-        "identities (INS-08/30/31/32, left apart by owner decision) are listed "
-        "separately, never merged into it.",
+        "evidence (a `teaches` record from the older sheets) is listed separately, "
+        "never merged into it. An identity the owner has not confirmed is flagged "
+        "(`docs/REVIEW-QUEUE.md`).",
+        "- A tick is an owner confirmation (`config/owner-confirmations.yaml`, "
+        "origin: hand). It holds only while the block's mastersheet facts are "
+        "unchanged; if they change, the tick comes off and says so.",
         "- Where something is absent the reason is stated; nothing falls back to "
         "the spreadsheet.",
         "",
     ]
     summary_at = len(lines)
 
-    tot = ok = 0
+    tot = ok = confirmed = 0
+    conf = load_confirmations()
     for m in mods:
         tag = f"{DOMAIN.get(m['domain_slug'], m['domain_slug'])}/{m.get('sequence')}"
         dom = next((N[e["source"]] for e in INE[m["id"]]
@@ -114,8 +181,9 @@ def main() -> int:
                      if e["rel"] == R["module_week"]), None)
         out = OUTE[m["id"]]
 
-        lines += [f"## {tag} · {md(m['label'])}", "",
-                  "- [ ] **Owner check** — this block matches the mastersheet", ""]
+        check, ticked = owner_check(tag, mastersheet_fingerprint(m, out, N, R), conf)
+        confirmed += ticked
+        lines += [f"## {tag} · {md(m['label'])}", "", check, ""]
 
         # --- facts -----------------------------------------------------------
         decks = [e for e in out if e["rel"] == R["module_deck"]]
@@ -136,7 +204,9 @@ def main() -> int:
         folder = (dom or {}).get("drive_folder_url") or ""
         lines += ["| | |", "|---|---|",
                   f"| Domain | {md(dom['label']) if dom else '_no domain recorded_'}"
-                  + (f" — {link('Drive folder', folder)}" if folder else "") + " |",
+                  + (f" — {link('Uplevel domain', dom.get('uplevel_link'))}"
+                     if dom and dom.get("uplevel_link") else "")
+                  + (f" · {link('Drive folder', folder)}" if folder else "") + " |",
                   f"| Programme week | {week_txt} |",
                   f"| Module | {link('Uplevel module', m.get('uplevel_link'))} |",
                   f"| Decks | {len(decks)}"
@@ -172,8 +242,12 @@ def main() -> int:
             ok += bool(u)
             files = sorted(attached.get(k, []))
             # EVERY FILE, BY ITS FULL NAME: a cap here once listed 193 of 653.
+            # Build/recording artefacts are collapsed, still linked (display only).
+            real = [f for f in files if not cm.is_build_artefact(f[0])]
+            junk = [f for f in files if cm.is_build_artefact(f[0])]
             drive = (f"**{len(files)}:** " + ", ".join(
-                link(nm, url) for nm, url in files)) \
+                link(nm, url) for nm, url in real)
+                + (" " + artefact_group(junk) if junk else "")) \
                 if files else "_no file matched at session level_"
             lines.append(f"| {KIND_LABEL[k]} | "
                          f"{link('open', u) if u else '_no Uplevel link_'} | {drive} |")
@@ -191,8 +265,8 @@ def main() -> int:
         if ms:
             lines += ["| role | instructor |", "|---|---|"]
             for role, n in ms:
-                flag = (" · **unconfirmed identity** (owner decision: left apart)"
-                        if n["label"] in dupes else "")
+                flag = (" · **unconfirmed identity** (see docs/REVIEW-QUEUE.md)"
+                        if n["label"] in dupes or n.get("identity_unconfirmed") else "")
                 lines.append(f"| {ROLE_LABEL.get(role, md(role) or '—')} | "
                              f"{md(n['label'])}{flag} |")
         else:
@@ -237,32 +311,39 @@ def main() -> int:
                 if e.get(k) is not None:
                     return f"{k} {e[k]}"
             return "no locator"
-        def num(e):
-            for k in ("slide", "page"):
-                if isinstance(e.get(k), (int, float)):
-                    return (0, e[k], "")
-            return (1, 0, str(e.get("tab") or ""))
-        ranked = sorted(topics, key=lambda e: (
-            bool(e.get("historical")), e.get("rank", 99),
-            str(e.get("deck_drive_url") or ""), num(e), N[e["target"]]["label"]))
-        lines += [f"**Top {min(TOPICS_SHOWN, len(topics))} of {len(topics)} topics** "
-                  "_(current first, then by source: curriculum, class, alternate "
-                  "class, pre-class, assignment, review; ordering only — every "
-                  "topic is in the graph)_", ""]
+        # one display order, shared with eval and the client (module_merge.rank_topics)
+        ranked, folded = mm.rank_topics(topics, N)
+        n_boiler = sum(1 for e in topics if N[e["target"]].get("boilerplate"))
+        lines += [f"**Top {min(TOPICS_SHOWN, len(ranked))} of {len(topics)} topics** "
+                  "_(current first, housekeeping slides last, then by source: "
+                  "curriculum, class, alternate class, pre-class, assignment, review; "
+                  "ordering only — every topic is in the graph)_", ""]
         for i, e in enumerate(ranked[:TOPICS_SHOWN], 1):
             t = N[e["target"]]
-            src = by_url.get(e.get("deck_drive_url"), "the source file")
+            # the file's own name, not its folder path: the link carries the rest
+            src = str(by_url.get(e.get("deck_drive_url"), "the source file")).rsplit("/", 1)[-1]
             lines.append(f"{i}. {md(t['label'])} — {loc(e)} of "
                          f"{link(src, e.get('deck_drive_url'))}"
-                         + (" · _historical_" if e.get("historical") else ""))
+                         + (" · _historical_" if e.get("historical") else "")
+                         + (" · _housekeeping_" if t.get("boilerplate") else ""))
+        notes = []
+        if folded:
+            notes.append(f"{folded} repeated title(s) shown once")
+        if n_boiler:
+            notes.append(f"{n_boiler} housekeeping slide(s) (agenda, welcome, "
+                         "introductions…) ranked last, not removed "
+                         "(`config/topic-quality.yaml`)")
+        if notes:
+            lines += ["", "_" + "; ".join(notes) + "._"]
         if not topics:
             lines.append("_no topics extracted_")
         if not_topics:
             lines.append("")
-            lines.append(f"_{len(not_topics)} extracted title(s) held back as a person's "
-                         "name, not a topic (D1; kept in the graph, marked "
-                         "`not_a_topic`): " + ", ".join(sorted({md(N[e['target']]['label'])
-                                                              for e in not_topics})) + "_")
+            held = sorted({N[e["target"]]["label"] for e in not_topics})
+            lines.append(f"_{len(held)} extracted title(s) ({len(not_topics)} occurrence(s)) "
+                         "held back as a person's name or biography, not a topic (D1; "
+                         "kept in the graph, marked `not_a_topic`): "
+                         + ", ".join(md(x) for x in held) + "_")
         lines.append("")
 
         # --- every other link: module files, curriculum docs, repos -------------
@@ -275,15 +356,25 @@ def main() -> int:
                 other.append(N[e["source"]])
         lines += [f"**Other files ({len(other)})** _(module-level files, "
                   "curriculum documents, repositories)_", ""]
-        for n in sorted(other, key=lambda n: (n["type"], n["label"])):
+        def is_junk(n):
+            return n["type"] == "file" and cm.is_build_artefact(
+                n["label"], n.get("path") or n.get("relative_path") or "")
+        for n in sorted((n for n in other if not is_junk(n)),
+                        key=lambda n: (n["type"], n["label"])):
             lines.append(f"- {n['type'].replace('_', ' ')}: "
                          f"{link(n['label'], n.get('drive_url'), n.get('content_available') is False)}")
+        junk = sorted(((n["label"], n.get("drive_url"), n.get("content_available") is False)
+                       for n in other if is_junk(n)))
+        if junk:
+            # text before the tag keeps it inline, so the links inside still render
+            lines.append("- generated, collapsed: " + artefact_group(junk))
         if not other:
             lines.append("_none recorded_")
         lines += ["", "---", ""]
 
-    lines.insert(summary_at, f"**{len(mods)} modules. {ok} of {tot} linkable items "
-                             "carry an Uplevel link; the rest state a reason.**\n")
+    lines.insert(summary_at, f"**{len(mods)} modules, {confirmed} confirmed by the owner. "
+                             f"{ok} of {tot} linkable items carry an Uplevel link; the "
+                             "rest state a reason.**\n")
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"  -> {OUT.relative_to(REPO_ROOT)}  ({len(mods)} modules, "
           f"{ok}/{tot} items linked)")

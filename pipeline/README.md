@@ -35,6 +35,14 @@ every module's items with their Uplevel and Drive links, for click-checking.
 Generated, never hand-written: 20 modules x 8 items goes stale on the next
 crawl and nobody notices until a link is dead.
 
+`fetch_mastersheet.py` exports the LIVE mastersheet (owner decision
+2026-09-30, `config/mastersheet-scope.yaml`) as .xlsx — read-only, pass 0's
+service account — to `~/.config/np-autopilot/mastersheet/`, never inside the
+repo: the export carries contact data. It writes a fetch record (Drive
+modifiedTime, version, sha256) that `lib/freshness.py` checks against Drive.
+Diff it against the previous copy with `eval/mastersheet_diff.py` before any
+rebuild.
+
 `count_registry.py` is **not a pass and never fetches anything.** It enumerates
 the scale-up registry's Drive folders and reports what is there — file and
 folder counts, depth, types, shortcuts, failures — so that the decision to

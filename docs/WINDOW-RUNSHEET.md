@@ -27,6 +27,32 @@ content hash `eba7c479…` and every count; the deployed code (`4767d12`) answer
 verification after projection: `verify_migration` 54/54, curation IN SYNC,
 curation counts unchanged, `stats.json` = database = merged public graph (8,507).
 
+## Step 0 — the mastersheet cache is not older than Drive
+
+Owner request, 2026-09-30. Run it first; nothing below starts on a refusal.
+
+```bash
+export NP_DRIVE_SA_KEY=~/.config/np-autopilot/drive-sa.json   # a PATH, never the key
+python3 -c "import sys; sys.path.insert(0,'.'); from pipeline.lib import freshness as f; f.require_fresh('window step 0')"
+#   must print "mastersheet fresh: Drive modified <T>, the cache holds the
+#   version modified <T> (fetched <F>)".
+#   REFUSED names both times. Then: pass 0 (read-only) for that file, rebuild
+#   passes 7-8, diff every changed mastersheet fact, regenerate the checklist,
+#   get the owner's re-confirmation — and only then a window.
+#   Could-not-look is a REFUSAL too (no key, no network, no `python3` with the
+#   Google client libraries) — not a pass.
+```
+
+Step 5's `project_graph.py` runs the same check itself and refuses on its own.
+`NP_FRESHNESS_SKIP` must **not** be set in the window shell.
+
+**What it does not cover:** the sheet the owner reads is not necessarily the
+corpus file. On 2026-09-30 the owner's live sheet named SD1/1 instructors that
+the corpus copy (Drive id `1f4T6u2m…`, modified 2026-09-02, identical to the
+cache) does not. This check compares against the file the service account
+can see. Pointing `NP_MASTERSHEET_DRIVE_ID` at the live sheet requires that
+sheet to be shared with the service account first.
+
 ## Before starting
 
 ```bash

@@ -1,15 +1,16 @@
-# REVIEW QUEUE — 86 decisions, answer by ID
+# REVIEW QUEUE — 89 decisions, answer by ID
 
 **Generated 2026-09-29 from the four review YAMLs; answers recorded below as
-they arrived.** 51 of 86 rows are answered — MOD 16, INS 32, PPL 3 — and the
-applied ones are merged by pass 8 (`pipeline/08_merge_graphs.py`). **35 remain
-open**: TOPv 3, TOPm 3, TOPt 6, PPL 9, DCK 14. The tables below are the rows as
-first generated, with a recommendation and an ID to answer by.
+they arrived.** 68 of 89 rows are answered — MOD 18, INS 32, PPL 12, TOPv 3,
+TOPm 3 — and the applied ones are merged by pass 8
+(`pipeline/08_merge_graphs.py`) or pass 7 (the module labels). **21 remain
+open**: TOPt 6, PPL 1 (PPL-12), DCK 14. The tables below are the rows as first
+generated, with a recommendation and an ID to answer by.
 
 **Count convention.** A row is **answered** once the owner has decided it —
 including "leave unresolved", which is a decision, not a pending question
-(INS-08/30, INS-31/32 and, with them, PPL-01/06). A row is **open** only while
-it has no owner answer. `docs/HANDOFF.md` §E uses the same convention.
+(PPL-09 `Reginald`, 2026-09-30). A row is **open** only while it has no owner
+answer. `docs/HANDOFF.md` §E uses the same convention.
 
 **A recommendation is not a decision.** Where it says *needs owner knowledge*,
 the evidence genuinely does not settle it and a guess would be the
@@ -17,14 +18,14 @@ picking-with-no-signal failure `lib/resolve.py` exists to refuse.
 
 | group | rows | source |
 |---|---:|---|
-| `MOD` | 16 | `config/module-aliases-review.yaml` |
+| `MOD` | 18 | `config/module-aliases-review.yaml` (MOD-17/18 added and answered 2026-09-30) |
 | `TOPv` | 3 | `config/content-topic-review.yaml` |
 | `TOPm` | 3 | `config/content-topic-review.yaml` |
 | `TOPt` | 6 | `config/content-topic-review.yaml` |
-| `PPL` | 12 | `config/mastersheet-people-review.yaml` |
+| `PPL` | 13 | `config/mastersheet-people-review.yaml` (PPL-13 added 2026-09-30) |
 | `DCK` | 14 | `config/deck-instructor-review.yaml` |
 | `INS` | 32 | derived: both graphs (see below) |
-| **total** | **86** | |
+| **total** | **89** | |
 
 
 ## MOD — row-B module labels that collide with an existing module node
@@ -206,8 +207,8 @@ Recorded in `config/instructor-identity.yaml`. Hand-entered facts emit no
 | ids | answer |
 |---|---|
 | `INS-05` `INS-06` | **One person.** Canonical `Balaram Velaga` (the mastersheet spelling); `Balaram Velega` is an alias. Both spellings stay in `label_raw` and provenance — neither source is edited (§1). The merged instructor shows both modules. |
-| `INS-08` `INS-30` | **Unresolved by decision.** `Bill Ogden` / `William David Ogden` stay separate nodes, rendered **unconfirmed** in the matrix. Not a gap in review. |
-| `INS-31` `INS-32` (with `PPL-06`, `PPL-01`) | **Full names unknown — left unresolved by decision** (answered, not open; see the count convention above). `Konstantinos` and `Shelby` stay unresolved nodes and **keep their module attachments**, marked unconfirmed. Moving real modules onto an unconfirmed full name would attach them to a guess. |
+| `INS-08` `INS-30` | _Superseded 2026-09-30 — merged, see below._ **Unresolved by decision.** `Bill Ogden` / `William David Ogden` stay separate nodes, rendered **unconfirmed** in the matrix. Not a gap in review. |
+| `INS-31` `INS-32` (with `PPL-06`, `PPL-01`) | _Superseded 2026-09-30 — merged, see below._ **Full names unknown — left unresolved by decision** (answered, not open; see the count convention above). `Konstantinos` and `Shelby` stay unresolved nodes and **keep their module attachments**, marked unconfirmed. Moving real modules onto an unconfirmed full name would attach them to a guess. |
 
 Remaining open: 78 of 86.
 
@@ -218,7 +219,7 @@ Recorded in `config/module-merges.yaml`, applied by `pipeline/08_merge_graphs.py
 | ids | answer |
 |---|---|
 | `MOD-02 03 05 06 07 08 09 10 11 13 16` | **merge** (bulk) — shared instructor and same programme family |
-| `MOD-01` | **merge.** Legacy instructors stay a separate evidence tier and are never shown as mastersheet roles; the sheet cell stays "blank in source" |
+| `MOD-01` | **merge.** Legacy instructors stay a separate evidence tier and are never shown as mastersheet roles. _(Said the sheet cell was "blank in source"; it was a parser bug — corrected 2026-09-30.)_ |
 | `MOD-12` | **merge** — distinctive label, no contradicting evidence |
 | `MOD-14` | **merge**, and must never be joined with SD4/5 `Test Automation`. Asserted by `tests/test_module_merges.py` |
 | `MOD-04` | **merge into SD2/2 (Frontend).** The legacy Full-Stack programme edges are kept with their provenance, marked **unconfirmed** — neither deleted nor asserted |
@@ -257,3 +258,67 @@ Remaining open: **35 of 86** — `TOPv` 3, `TOPm` 3, `TOPt` 6, `PPL` 9
 (PPL-02…05, 07…10, 12), `DCK` 14. The earlier "36" counted PPL-11 as open;
 the earlier "Remaining open" lines above are the running count at the time
 each answer landed.
+
+### Checklist review — answered 2026-09-30, Animesh Kumar (origin: hand)
+
+Identities recorded in `config/instructor-identity.yaml` and applied by pass 8
+with the same rules as the bulk merge: every absorbed label stays in
+`label_raw` / `merged_label_raw` and provenance (§1), the mastersheet and
+legacy tiers are never merged into each other, and each entry is tagged
+(`asserted_by`, `asserted_at`) and reversible by deleting it.
+
+| ids | answer |
+|---|---|
+| `INS-31`, `PPL-06` | **`Konstantinos` is Konstantinos Pappas.** Merged. Supersedes the 2026-09-29 "left unresolved". |
+| `INS-32`, `PPL-01` `PPL-07` `PPL-08` | **`Shelby` is Shelby Cohen.** Merged. Supersedes the 2026-09-29 answer. |
+| `INS-08` `INS-30` | **`Bill Ogden` is William David Ogden.** Merged under the full name; `Bill Ogden` kept as an alias. |
+| `PPL-10` | **`Faraaz` is Faraaz Sareshwala.** Merged. |
+| `PPL-04` | **`Cathy` is Cathy Ma.** Merged. |
+| `PPL-02` `PPL-03` `PPL-05` | **`Nisarg` is Nisarg Tanna.** Merged. |
+| _(no row)_ | **`Robert K` is Robert Kreznarich.** Merged. Raised in the checklist review, not by the generator. |
+| `PPL-09` | **`Reginald` stays unresolved** — a decision, not an open question. The node keeps its module attachment and is rendered **unconfirmed** (`identity_unconfirmed`) in the checklist and the matrix. |
+| `TOPv-01…03`, `TOPm-01…03` | **The mastersheet name is the module label**; the folder name is kept as `label_raw` (the citation key). SD1/3 `Cloud Infrastructure` (folder `Cloud`), SD1/4 `JavaScript and Web Development` (folder `JavaScript and Web Dev`), SD4/5 `Test Automation` (folder `Test Automation Design Patterns`). Node ids are unchanged. Applied by pass 7. |
+
+| | |
+|---|---|
+| duplicate instructor labels | **4 → 0** |
+| identities flagged unconfirmed | **1** (`Reginald`) |
+
+**New rows raised by these answers — OPEN.** Adopting the mastersheet names
+made two row-B modules share a label with a legacy main-graph module. A shared
+label is not a match (`CLAUDE.md` §2a(iii)); nothing is merged until answered.
+`tests/test_module_merges.py` pins these two as the only duplicate module
+labels.
+
+| id | row-B module | legacy module | evidence | recommendation |
+|---|---|---|---|---|
+| `MOD-17` | SD1/3 `Cloud Infrastructure` (`mod_ab9e5ee393195cf2`, folder `Cloud`) | `Cloud Infrastructure` (`mod_a7301acdd24c0050`; 8 `teaches`, from `UpLevel Schedule Structure`, `New Combined Schedule`) | shared instructors: Faraaz Sareshwala, Jeff Wisman, Nikhil Kolekar | **merge** — the MOD bulk criterion (shared instructor, same family); legacy tier kept apart |
+| `MOD-18` | SD1/4 `JavaScript and Web Development` (`mod_00ee7c30fff3dc36`, folder `JavaScript and Web Dev`) | `JavaScript and Web Development` (`mod_067e0cede10d31eb`; 3 `teaches`, same two files) | shared instructors: Ashish Kaila, Cathy Ma. The legacy tier also lists **Daniel Grundel** — consistent with the withdrawn Backup 3, and it stays legacy evidence | **merge**, same terms |
+
+Remaining open: **23 of 88** — `MOD-17/18` 2, `TOPt` 6, `PPL-12` 1, `DCK` 14. Several `DCK`
+rows name `Konstantinos` or `Shelby`; those identities are now settled, but
+which instructor a deck belongs to is a separate question and the rows stay
+open.
+
+### Checklist review part 3 — 2026-09-30, Animesh Kumar (origin: hand)
+
+| id | answer |
+|---|---|
+| `MOD-17` `MOD-18` | **Keep separate — not merged.** Recorded in `config/module-merges.yaml` (`kept_separate`). The two label pairs stay duplicated by decision, and `tests/test_module_merges.py` pins them as the only duplicate module labels. |
+
+**New row — a PROPOSAL, not applied. The owner confirms or declines it.**
+
+| id | proposal | evidence (live sheet `1setMmRv…`, fetched 2026-09-30, version 2736) | recommendation |
+|---|---|---|---|
+| `PPL-13` | `Reginald` → **Reginald Johnson** (reopens `PPL-09`, left unresolved 2026-09-30) | `Backend Engineering!D50`: week 4 *Cloud Native Design*, **Backup 2** = `Reginald`. `Backend Engineering!A66`: the Backend tab's instructor table lists `Reginald Johnson` — the only Reginald on any of the four in-scope tabs. | **confirm** — same tab, the only candidate; applied like the other first-name merges, alias kept, tiers apart |
+
+Remaining open: **22 of 89** — `TOPt` 6, `PPL-12` 1, `PPL-13` 1, `DCK` 14.
+
+### PPL-13 — confirmed 2026-09-30, Animesh Kumar (origin: hand), applied by pass 8
+
+| id | answer |
+|---|---|
+| `PPL-13` (reopens `PPL-09`) | **`Reginald` is Reginald Johnson.** Merged (`config/instructor-identity.yaml`, `reginald-johnson`): alias kept in `merged_label_raw`, provenance unioned, tiers apart, tagged and reversible. SD3/4's confirmation re-bound — the rename was its only change (`config/owner-confirmations.yaml`). No identity is left unconfirmed. |
+
+Remaining open: **21 of 89** — `TOPt` 6, `PPL-12` 1, `DCK` 14.
+

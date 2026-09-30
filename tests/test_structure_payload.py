@@ -107,7 +107,7 @@ def test_too_many_nodes_for_the_format_fails_loudly():
 
 # --- the classification: panel-only means READ ONLY BY THE PANEL ---------------
 
-PANEL_FUNCTIONS = {"TYPE_FACTS", "moduleChain", "relDetail", "topicLinks",
+PANEL_FUNCTIONS = {"TYPE_FACTS", "moduleChain", "domainLinks", "relDetail", "topicLinks",
                    "crossVal", "reviewFlag", "mergedNote", "raws",
                    "renderProvenance"}
 READ = re.compile(r"(?:\b(?:p|props)\.|\.p\.|\.p\|\|\{\}\)\.)([a-z_][a-z0-9_]*)")

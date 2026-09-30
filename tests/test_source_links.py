@@ -153,9 +153,10 @@ def test_every_topic_locator_can_open_its_source(g):
 def test_hyperlink_targets_are_preferred_over_display_text():
     """37 cells in the workbook display one thing and link to another. The
     graph must carry the TARGET; a value-only read carried neither."""
-    sheet = REPO / ".drive-cache" / "02-curriculum" / ms.SHEET_FILE
+    from pipeline.lib import freshness
+    sheet = freshness.live_path()
     if not sheet.exists():
-        pytest.skip("corpus cache absent")
+        pytest.skip("the live mastersheet is not fetched; run pipeline/fetch_mastersheet.py")
     total = 0
     for tab in ms.DOMAIN_TABS:
         mism = ms.link_mismatches(sheet, tab)

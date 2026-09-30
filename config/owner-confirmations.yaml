@@ -1,0 +1,158 @@
+# Owner confirmations of docs/ACCEPTANCE-CHECKLIST.md blocks (origin: hand).
+#
+# A confirmation says: this module's block matches the mastersheet. It is
+# bound to a FINGERPRINT of the block's mastersheet facts (module name,
+# Uplevel links, mastersheet instructor roles —
+# gen_acceptance_checklist.py::mastersheet_fingerprint). If those facts
+# change, the tick comes off and the checklist says what changed; it is
+# never carried silently onto facts the owner did not see.
+#
+# Fingerprints were taken on 2026-09-30 from the graph as it stood after the
+# same review's owner-requested label change (SD4/5 'Test Automation').
+version: 1
+confirmations:
+  - module: SD2/1
+    label: "JS Language & Libraries"
+    fingerprint: "9f3057f0718584a5"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 1 §A
+  - module: SD2/2
+    label: "UI & DOM"
+    fingerprint: "449c7a466c3caa02"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 1 §A
+  - module: SD2/3
+    label: "Frontend System Design"
+    fingerprint: "be562c41a82cee36"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 1 §A
+  - module: SD2/4
+    label: "Leveling Up with Advanced JavaScript and CSS"
+    fingerprint: "483241c178ff6ef2"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 1 §A
+  - module: SD3/1
+    label: "Database Design"
+    fingerprint: "fdd4137a20d21b63"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 2 §A
+  - module: SD3/2
+    label: "Object Modeling"
+    fingerprint: "af1efe4ed1619bdf"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 2 §A
+  - module: SD3/3
+    label: "API Design"
+    fingerprint: "39e19df20eb03001"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 2 §A
+  - module: SD3/4
+    label: "Cloud Native Design"
+    fingerprint: "23ff7c399e1cd3aa"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 2 §A
+    rebound: >-
+      2026-09-30, part 3: re-fingerprinted from dd9ed0a505874c63. The only change is
+      Backup 2 `Reginald` -> `Reginald Johnson`, the owner's own PPL-13 merge;
+      label, Uplevel links and sessions are identical, and the live-sheet diff
+      changed no fact.
+  - module: SD3/5
+    label: "Concurrency"
+    fingerprint: "2074fab1cb768fde"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 2 §A
+  - module: SD4/1
+    label: "Quality Engineering Foundations"
+    fingerprint: "b8a483a3bc8a9791"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 1 §A
+  - module: SD4/2
+    label: "Performance Testing"
+    fingerprint: "d448b633a48695fb"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 1 §A
+  - module: SD4/3
+    label: "API Testing"
+    fingerprint: "feaad2a0513bf411"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 1 §A
+  - module: SD4/4
+    label: "Automation Testing"
+    fingerprint: "0d4d2cceef5573bc"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 1 §A
+  - module: SD4/5
+    label: "Test Automation"
+    fingerprint: "efaa3622d0bdc064"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 1 §A
+  - module: SD4/6
+    label: "Cloud Testing"
+    fingerprint: "cea7f2d5f23788c3"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: checklist review part 1 §A
+  - module: SD1/1
+    label: "Databases"
+    fingerprint: "2bf8b0d084090d68"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: "checklist review part 3 §7: rebuilt block shows Konstantinos Pappas, Ashish Kaila, Nikhil Kolekar"
+  - module: SD1/2
+    label: "API Design and Implementation"
+    fingerprint: "0acbb0adee15cda0"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: "checklist review part 3 §7: verified against the live sheet"
+  - module: SD1/3
+    label: "Cloud Infrastructure"
+    fingerprint: "d29ed3020f26a714"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: "checklist review part 3 §7: verified against the live sheet"
+  - module: SD1/4
+    label: "JavaScript and Web Development"
+    fingerprint: "c97245e605edce17"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: "checklist review part 3 §7: verified against the live sheet"
+  - module: SD1/5
+    label: "UI System Design"
+    fingerprint: "16dbfb2c95af2bfb"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: "checklist review part 3 §7: verified against the live sheet"

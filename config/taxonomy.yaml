@@ -967,6 +967,9 @@ property_scopes:
     - mime
     - normalised_label
     - not_a_topic        # D1 (2026-09-30): a topic whose label is a known person's
+    - withdrawn_roles    # 2026-09-30: a mastersheet role the owner says is no longer held
+    - identity_unconfirmed  # 2026-09-30: instructor-identity.yaml status unconfirmed (e.g. Reginald)
+    - boilerplate        # 2026-09-30: housekeeping topic, ranked last (config/topic-quality.yaml)
     - number
     - owner_domain
     - parsed

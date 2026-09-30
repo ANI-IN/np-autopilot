@@ -177,6 +177,27 @@ module against the mastersheet; the window does not start until they
 confirm.** (Moved ahead of the window 2026-09-30 so the owner checks against the
 local build before production changes.)
 
+**State, 2026-09-30 (checklist review part 3): 20 of 20 confirmed** —
+recorded in `config/owner-confirmations.yaml` (origin: hand), each bound to a
+fingerprint of its block's mastersheet facts so a later change takes the tick
+off. SD3/4 was re-bound once, recorded in the file: its only change was the
+owner's own PPL-13 rename (`Reginald` → `Reginald Johnson`).
+
+**SD1/1 Databases — CORRECTED 2026-09-30 (part 3).** It was first reported
+here as "the live sheet is a different Drive file; a re-fetch cannot fix this".
+**That diagnosis was wrong.** The corpus copy always held SD1/1's instructors
+(Konstantinos Pappas · Ashish Kaila · Nikhil Kolekar) in a row written
+`Week 1/5: Databases`; the parser accepted only `-`/`–` after the week, skipped
+the row silently, and the "independent" re-derivation — which had copied the
+same regex — agreed. CLAUDE.md §6, a sixth time. Fixed: `:` accepted, and any
+instructor row that does not map now fails the build (tests on the exact live
+cells, mutation-tested). SD1/1 is ticked once the rebuilt block shows the three.
+
+**Freshness guard** (`pipeline/lib/freshness.py`): `project_graph.py` and
+`eval/mastersheet_rederive.py` refuse when the cached mastersheet is older than
+Drive or differs from it, naming both times; could-not-look is a refusal.
+Run-sheet step 0. Since part 3 it checks the LIVE sheet (§7).
+
 ## 4 · The window — Phase C and Phase D in ONE sitting
 **Owner decision, Animesh Kumar, 2026-09-30 (origin: hand): migrations →
 deploy → projection**, so the OLD code never runs against the NEW data. The
@@ -275,31 +296,69 @@ e. **Plugin `/module` command** (e.g. `/module API Design`) answering the full
    chain with citations; bump `plugin.json`.
 f. **Extend to other row-B domains** — scope change, re-run from Phase 2.
 
+## 7 · Mastersheet source: the LIVE sheet (owner decision, 2026-09-30)
+
+The live Google Sheet the team maintains (Drive
+`1setMmRvBUNu9_85nT4xvvUFySodB6kiWb7bQ8qLEqAQ`, shared Viewer with the
+service account) replaces the corpus copy as the source of every
+mastersheet-derived fact. The corpus copy (`1f4T6u2m…`) stays in the graph as
+a **superseded** source — not deleted, not read for facts.
+`config/mastersheet-scope.yaml` declares it all: the four domain tabs and the
+four `Uplevel Resources` rows are read; nine tabs are excluded by name with a
+reason; an undeclared tab fails the build (`tests/test_mastersheet_scope.py`).
+
+- Fetch: `python3 pipeline/fetch_mastersheet.py` exports .xlsx (cell fills
+  survive) to `~/.config/np-autopilot/mastersheet/` — OUTSIDE the repo: the
+  export carries contact data, pass 1 walks `.drive-cache/`, and the repo sits
+  under a synced folder (R22). A fetch record beside it holds Drive
+  modifiedTime, version and sha256; the freshness guard compares against it.
+- Diff before any rebuild: `python3 eval/mastersheet_diff.py OLD NEW` — every
+  mastersheet fact; contact columns as counts only.
+- **Done (part 3 §6, 2026-09-30):** pass 7 and its readers read the live
+  export and cite it as `live-sheet/Resource Collection Mastersheet (Software
+  + System).xlsx` (a `files` row the projection registers); the corpus copy
+  is kept and marked `superseded_by`; each domain carries its Uplevel link
+  from `Uplevel Resources`; the re-derivation against the live sheet shows 0
+  unexplained differences; all 20 checklist blocks ticked.
+- **OWNER DECISION PENDING — the main graph still reads the corpus copy.**
+  Passes 2–4 (`pipeline/lib/sources.py`) read it for legacy-tier facts:
+  `Indian Instructors` names (a tab now excluded as contact-bearing),
+  `Instructor(FullStack)` roles and `teaches` grid (excluded as superseded),
+  and `Module Name` on eight tabs including the four out-of-scope domains.
+  "Not read for facts" was applied to row B as instructed; removing these
+  reads would drop legacy people and the legacy modules 16 MOD merges are
+  keyed to (CLAUDE.md §2a, §4), so it is the owner's call, not a default.
+
+## 8 · Candidate for a later release — `Interview Repo`
+
+The live sheet's `Interview Repo` tab maps modules to question-bank links. Owner
+decision 2026-09-30: a candidate for a later release; **not ingested** now
+(excluded in `config/mastersheet-scope.yaml`). When taken up: declare its
+columns (never the whole tab), check each link column for contact data first,
+and give it its own diff and review.
+
 ---
 
 # E · OPEN REVIEW ITEMS AND PENDING OWNER DECISIONS
 
-`docs/REVIEW-QUEUE.md` holds **86 rows: 51 answered, 35 open.** Answered = the
-owner has decided the row, "leave unresolved" included (convention stated at
-the top of `REVIEW-QUEUE.md`, same in both files).
+`docs/REVIEW-QUEUE.md` holds **89 rows: 68 answered, 21 open** (checklist
+review, 2026-09-30). Answered = the owner has decided the row, "leave
+unresolved" included (convention stated at the top of `REVIEW-QUEUE.md`, same
+in both files).
 
 | prefix | rows | state |
 |---|---:|---|
-| `MOD` | 16 | **all answered and applied** |
-| `INS` | 32 | **all answered** (26 bulk + 6 individual) |
-| `PPL` | 12 | **3 answered** — PPL-11 applied; PPL-01/06 left unresolved with INS-31/32; **9 open** |
+| `MOD` | 18 | **all answered** — 16 applied; MOD-17/18 kept separate by decision (2026-09-30) |
+| `INS` | 32 | **all answered and applied** — INS-08/30/31/32 merged 2026-09-30 |
+| `PPL` | 13 | **12 answered** — PPL-01…11 and PPL-13 merged (PPL-13: Reginald = Reginald Johnson, superseding PPL-09's "unresolved"); **PPL-12 open** |
 | `DCK` | 14 | **open** — deck filename → instructor proposals |
-| `TOPv` | 3 | **open** — module label variants |
-| `TOPm` | 3 | **open** — mastersheet vs folder label |
+| `TOPv` | 3 | **answered and applied** — mastersheet name is the label, folder name is `label_raw` |
+| `TOPm` | 3 | **answered and applied** — same answer |
 | `TOPt` | 6 | **open** — lesson-plan tab → module |
 
-**Deliberately unresolved, by owner decision — do not "fix" these:**
-- `INS-08` / `INS-30` — Bill Ogden / William David Ogden. Two nodes, rendered
-  unconfirmed, hatched in the matrix.
-- `INS-31` / `INS-32` — `Konstantinos`, `Shelby`. First-name forms keep their
-  module rows.
+**Deliberately unresolved identities: none** since PPL-13 (2026-09-30).
 
-Answer the remaining 35 before Phase C where possible.
+Answer the remaining 21 before Phase C where possible.
 
 **PENDING — billing decision, the owner's:** raising the Vercel function
 `memory` setting buys proportionally more CPU, shortening interpreter start-up

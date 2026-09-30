@@ -52,6 +52,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import db, graphio, layout, taxonomy                # noqa: E402
+from pipeline.lib import freshness                                  # noqa: E402
 from pipeline.lib.paths import KNOWLEDGE_DIR, REPO_ROOT                          # noqa: E402
 
 #: Coordinates that make an assertion id. Mirrors ASSERTION_COORDS in
@@ -106,6 +107,14 @@ def _file_rows() -> list[tuple]:
                            r.get("sheet_count"), bool(r.get("parsed")),
                            r.get("drive_file_id"),
                            _drive_url(r.get("drive_file_id")))
+
+    # THE LIVE MASTERSHEET (owner decision 2026-09-30). Not a corpus file, so
+    # neither manifest has it; its citation key is registered here so every
+    # mastersheet fact's `node_sources.file` resolves.
+    from pipeline.lib import mastersheet as _ms
+    rows.setdefault(_ms.LIVE_CITATION, (_ms.LIVE_CITATION, None, None,
+                                        len(_ms.DOMAIN_TABS) + 1, True,
+                                        _ms.LIVE_DRIVE_ID, _ms.LIVE_URL))
 
     crawl = CACHE_MANIFEST
     if crawl.exists():
@@ -306,6 +315,12 @@ def main() -> int:
     ap.add_argument("--scope", default="public", choices=["public", "full"])
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+
+    # Phase C refuses to project a mastersheet older than Drive
+    # (pipeline/lib/freshness.py; owner request 2026-09-30). A dry run writes
+    # nothing and is not gated.
+    if not args.dry_run:
+        freshness.require_fresh("project_graph")
 
     if args.scope == "full":
         # WAS A HARDCODED REFUSAL SAYING THE RECRUITING RLS PATH "DOES NOT EXIST

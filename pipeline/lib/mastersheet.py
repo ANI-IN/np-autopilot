@@ -32,8 +32,61 @@ from typing import NamedTuple
 #: the point at which a repeated literal becomes a second source of truth.
 SHEET_FILE = "Resource Collection Mastersheet (Software + System).xlsx"
 
-DOMAIN_TABS = ("Full Stack Engineering", "Frontend Engineering",
-               "Backend Engineering", "Test Engineering")
+#: WHICH TABS ARE READ is an owner decision, in config/mastersheet-scope.yaml
+#: (2026-09-30). Every read goes through `_scoped` below; a tab outside the
+#: declared scope is refused, and a tab the scope does not mention fails the
+#: build — a new tab in the live sheet needs a decision, not a default.
+SCOPE_FILE = Path(__file__).resolve().parents[2] / "config" / "mastersheet-scope.yaml"
+
+
+def load_scope(path: Path | None = None) -> dict:
+    import yaml
+    data = yaml.safe_load((path or SCOPE_FILE).read_text(encoding="utf-8")) or {}
+    if data.get("origin") != "hand" or not data.get("decided_by"):
+        raise MastersheetError(f"{SCOPE_FILE.name}: scope must be an owner fact")
+    return data
+
+
+class MastersheetError(RuntimeError):
+    """The sheet has a shape this parser cannot map. Never swallowed: a row
+    that does not map is how SD1/1 lost its three instructors for weeks."""
+
+
+_SCOPE = load_scope()
+DOMAIN_TABS = tuple(_SCOPE["read"])
+UPLEVEL_TAB = _SCOPE["uplevel_resources"]["tab"]
+EXCLUDED_TABS = {e["tab"]: e["reason"] for e in _SCOPE["excluded"]}
+
+
+#: THE CITATION KEY for a fact read from the live sheet. `node_sources.file`
+#: names a row in `files`; the live sheet is not a corpus file, so it gets its
+#: own key — a path that says what it is and still ends in the sheet's name
+#: (validate.py checks instructor provenance by that ending).
+LIVE_DRIVE_ID = _SCOPE["source"]["drive_id"]
+LIVE_CITATION = f"live-sheet/{SHEET_FILE}"
+LIVE_URL = f"https://docs.google.com/spreadsheets/d/{LIVE_DRIVE_ID}"
+SUPERSEDED = [dict(x) for x in _SCOPE.get("superseded") or []]
+
+
+def _scoped(tab: str) -> str:
+    if tab in DOMAIN_TABS or tab == UPLEVEL_TAB:
+        return tab
+    why = EXCLUDED_TABS.get(tab, "not in config/mastersheet-scope.yaml")
+    raise MastersheetError(f"refusing to read mastersheet tab {tab!r}: {why}")
+
+
+def check_workbook_scope(sheetnames) -> list[tuple[str, str]]:
+    """[(excluded tab, reason)], for the build to log by name. Raises if the
+    workbook lacks a declared tab or has one the scope does not mention."""
+    names = list(sheetnames)
+    missing = [t for t in (*DOMAIN_TABS, UPLEVEL_TAB) if t not in names]
+    unknown = [t for t in names if t not in DOMAIN_TABS and t != UPLEVEL_TAB
+               and t not in EXCLUDED_TABS]
+    if missing or unknown:
+        raise MastersheetError(
+            f"mastersheet tabs do not match config/mastersheet-scope.yaml: "
+            f"missing {missing}, undeclared {unknown}")
+    return [(t, EXCLUDED_TABS[t]) for t in names if t in EXCLUDED_TABS]
 
 #: The tab -> row-B folder join, stated by the sheet's own `Drive Folder` row
 #: rather than inferred. Read from the file; this is only the expected shape.
@@ -73,7 +126,13 @@ class Tab(NamedTuple):
     drive_folder_url: str = ""
 
 
-_MODULE_RE = re.compile(r"^Week\s*(\d+)(?:\s*/\s*\d+)?\s*[-–]\s*(.+)$", re.I)
+#: `-`, `–`, `—` or `:` between the week and the name. The live Full Stack
+#: instructor block writes "Week 1/5: Databases"; with `[-–]` only, that row was
+#: silently skipped and SD1/1 showed no instructor (found 2026-09-30).
+_MODULE_RE = re.compile(r"^Week\s*(\d+)(?:\s*/\s*\d+)?\s*[-–—:]\s*(.+)$", re.I)
+#: Anything that STARTS like a module row. Such a row that `_MODULE_RE` cannot
+#: read fails the build instead of disappearing.
+_WEEKISH_RE = re.compile(r"^\s*week\s*\d", re.I)
 
 #: Session kind comes from the resource NAME first, because the `Type` column
 #: collapses four live-class variants into one value. Order matters: `Alternate
@@ -120,11 +179,20 @@ def split_people(cell: str) -> list[str]:
     Splitting on `/` is applied to instructor cells ONLY, exactly as
     `CLAUDE.md` restricts it to owner columns: the domain `Agentic AI - TPM/Pm`
     is one label and is one row away from `Kunal/Abhishek`, which is two
-    people. An empty token is dropped rather than becoming a blank instructor.
+    people.
+
+    Trailing and leading separators are tolerated (`Faraaz Sareshwala/`,
+    `Konstantinos `: live cells, 2026-09-30). An EMPTY token BETWEEN two names
+    (`Deval, , Adil`) is a hard fail, per CLAUDE.md — it means a name is
+    missing, and dropping it would hide that.
     """
+    cell = (cell or "").strip().strip("/,").strip()
     if not cell:
         return []
-    return [p.strip() for p in re.split(r"\s*[/,]\s*", cell) if p.strip()]
+    parts = [p.strip() for p in re.split(r"\s*[/,]\s*", cell)]
+    if any(not p for p in parts):
+        raise MastersheetError(f"empty name between separators in {cell!r}")
+    return parts
 
 
 def needs_people_review(name: str) -> bool:
@@ -184,11 +252,59 @@ def is_unusable(public: dict) -> bool:
     return not (public.get("name") or "").strip()
 
 
-def parse_tab(path: Path, tab: str) -> Tab:
+def _rows(path: Path, tab: str) -> list:
+    """Every value read of the workbook goes through here, and so through the
+    scope check. read_only, as every corpus read is."""
     import openpyxl
+    _scoped(tab)
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
-    rows = list(wb[tab].iter_rows(values_only=True))
-    wb.close()
+    try:
+        return list(wb[tab].iter_rows(values_only=True))
+    finally:
+        wb.close()
+
+
+def sheetnames(path: Path) -> list[str]:
+    import openpyxl
+    wb = openpyxl.load_workbook(path, read_only=True)
+    try:
+        return list(wb.sheetnames)
+    finally:
+        wb.close()
+
+
+def uplevel_resources(path: Path) -> dict:
+    """{domain tab: Uplevel link} — ONLY the four in-scope rows of the
+    `Uplevel Resources` tab. Found by the `Domain | Uplevel Link` header, not
+    by position; a missing in-scope row fails. `uplevel_resource_rows` gives
+    the 0-based row of each, for provenance."""
+    return {k: v[0] for k, v in uplevel_resource_rows(path).items()}
+
+
+def uplevel_resource_rows(path: Path) -> dict:
+    """{domain tab: (Uplevel link, row0)}."""
+    rows = _rows(path, UPLEVEL_TAB)
+    links = cell_links(path, UPLEVEL_TAB)
+    want = set(_SCOPE["uplevel_resources"]["rows"])
+    out = {}
+    for i in range(len(rows)):
+        for c in range(len(rows[i]) - 1):
+            if _cell(rows, i, c) == "Domain" and _cell(rows, i, c + 1) == "Uplevel Link":
+                for j in range(i + 1, len(rows)):
+                    dom = _cell(rows, j, c)
+                    if dom in want:
+                        out[dom] = (best_link(_cell(rows, j, c + 1), links.get((j, c + 1))), j)
+                break
+        if out:
+            break
+    if set(out) != want or not all(v[0] for v in out.values()):
+        raise MastersheetError(f"{UPLEVEL_TAB}: expected an Uplevel link for each of "
+                               f"{sorted(want)}, found {sorted(k for k, v in out.items() if v[0])}")
+    return out
+
+
+def parse_tab(path: Path, tab: str) -> Tab:
+    rows = _rows(path, tab)
 
     # THE REAL HYPERLINK TARGETS. A read_only workbook has no hyperlink model,
     # so a cell whose URL lives in the target rather than the value read as no
@@ -210,6 +326,10 @@ def parse_tab(path: Path, tab: str) -> Tab:
     modules: list[Module] = []
     for i in range(1, end):
         m = _MODULE_RE.match(_cell(rows, i, 0))
+        if not m and _WEEKISH_RE.match(_cell(rows, i, 0)):
+            raise MastersheetError(
+                f"{tab}!A{i + 1}: {_cell(rows, i, 0)!r} looks like a module row "
+                "but does not parse — fix the parser or the sheet; never skipped")
         if m:
             modules.append(Module(int(m.group(1)), m.group(2).strip(),
                                   _cell(rows, i, 0),
@@ -229,10 +349,26 @@ def parse_tab(path: Path, tab: str) -> Tab:
     by_seq: dict[int, dict] = {}
     if topic_row is not None:
         stop = table_row if table_row is not None else n
+        known = {mod.sequence for mod in modules}
         for i in range(topic_row + 1, stop):
-            m = _MODULE_RE.match(_cell(rows, i, 0))
-            if not m:
+            topic = _cell(rows, i, 0)
+            if not topic:
                 continue
+            m = _MODULE_RE.match(topic)
+            # EVERY non-empty row of the instructor block must map to a module.
+            # "Week 1/5: Databases" did not, was skipped, and SD1/1 lost its
+            # Primary and two Backups (found 2026-09-30).
+            if not m:
+                raise MastersheetError(
+                    f"{tab}!A{i + 1}: instructor row {topic!r} does not parse as "
+                    "a module — never skipped")
+            if int(m.group(1)) not in known:
+                raise MastersheetError(
+                    f"{tab}!A{i + 1}: instructor row {topic!r} names week "
+                    f"{m.group(1)}, which is not a module on this tab")
+            if int(m.group(1)) in by_seq:
+                raise MastersheetError(
+                    f"{tab}!A{i + 1}: a second instructor row for week {m.group(1)}")
             by_seq[int(m.group(1))] = {
                 "raw": _cell(rows, i, 0),
                 "row": i,
@@ -324,6 +460,7 @@ def _raw_links(path: Path, tab: str) -> dict:
     Hyperlinks live in two places: `<hyperlink ref="B43" r:id="rId1"/>` in the
     sheet, and the URL behind that rId in the sheet's `.rels` part.
     """
+    _scoped(tab)
     import re as _re
     import xml.etree.ElementTree as ET
     import zipfile
@@ -391,10 +528,7 @@ def link_mismatches(path: Path, tab: str, rows: list | None = None) -> list:
     about contact data does not need the contact data to make its point.
     """
     if rows is None:
-        import openpyxl
-        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
-        rows = list(wb[tab].iter_rows(values_only=True))
-        wb.close()
+        rows = _rows(path, tab)
     out = []
     for (r, c), (tgt, is_http) in sorted(_raw_links(path, tab).items()):
         disp = _cell(rows, r, c)
@@ -414,3 +548,60 @@ def best_link(value: str, target: str | None) -> str:
         return target.strip()
     v = (value or "").strip()
     return v if _LINK_OK.match(v) else ""
+
+
+# ---------------------------------------------------------------------------
+# Red-highlighted cells, and the owner's word on what they mean
+# ---------------------------------------------------------------------------
+#
+# The sheet's authors mark a no-longer-valid instructor cell RED rather than
+# clearing it (owner, 2026-09-30). A values-only read cannot see that, so the
+# cell is read here — read_only, like every other read — and the MEANING comes
+# from config/mastersheet-owner-facts.yaml, never from the colour.
+
+OWNER_FACTS = Path(__file__).resolve().parents[2] / "config" / "mastersheet-owner-facts.yaml"
+ROLE_COLUMNS = {1: "primary", 2: "backup_1", 3: "backup_2", 4: "backup_3"}
+
+
+def _is_red(hexrgb) -> bool:
+    if not isinstance(hexrgb, str) or len(hexrgb) < 6:
+        return False
+    h = hexrgb[-6:]
+    r, g, b = int(h[:2], 16), int(h[2:4], 16), int(h[4:], 16)
+    return r >= 180 and g <= 120 and b <= 120
+
+
+def red_cells(path: Path, tab: str) -> dict:
+    """{(row0, col0): value} for every non-empty cell filled or written red."""
+    _scoped(tab)
+    import openpyxl
+    wb = openpyxl.load_workbook(path, read_only=True)
+    out = {}
+    try:
+        for row in wb[tab].iter_rows():
+            for c in row:
+                if c.value in (None, ""):
+                    continue
+                fill = getattr(getattr(c.fill, "fgColor", None), "rgb", None) \
+                    if c.fill is not None and c.fill.fill_type else None
+                font = getattr(getattr(c.font, "color", None), "rgb", None) \
+                    if c.font is not None and c.font.color is not None else None
+                if _is_red(fill) or _is_red(font):
+                    out[(c.row - 1, c.column - 1)] = str(c.value)
+    finally:
+        wb.close()
+    return out
+
+
+def withdrawn_roles() -> dict:
+    """{(domain, sequence, role, person): fact} from the owner-facts file."""
+    import yaml
+    if not OWNER_FACTS.exists():
+        return {}
+    data = yaml.safe_load(OWNER_FACTS.read_text(encoding="utf-8")) or {}
+    out = {}
+    for f in data.get("withdrawn_roles") or []:
+        assert f.get("origin") == "hand" and f.get("asserted_by") and f.get("fact"), f
+        out[(f["domain"], int(f["sequence"]), f["role"], f["person"])] = f
+    return out
+
