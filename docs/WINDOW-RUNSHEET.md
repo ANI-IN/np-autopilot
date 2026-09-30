@@ -75,12 +75,14 @@ export WINDOW_DSN="$SUPABASE_DB_URL_SESSION"        # never echo it
 B=~/.config/np-autopilot/window-$(date +%Y%m%d-%H%M); mkdir -m 700 "$B"
 ```
 
-The prebuilt artifact is **`/tmp/np-deploy-694c323/`** (built 2026-09-30 from
-`main` `694c323`: `vercel build --prod` exit 0, 1,050 function files, Brotli
-and psycopg bundled, CSP header present, `index.html` identical to `main`'s, no
-pulled env file left on disk; `public/stats.json` = the re-rehearsal projection
-of the identical graph: 8,496 nodes / 12,189 edges). The last-resort old build
-is `/tmp/np-deploy-4767d12/`.
+**The prebuilt artifact** is built by `db/window/build_artifact.sh main
+<stats.json>` into `ART=/tmp/np-deploy-$(git rev-parse --short main)`: from a
+tree already pruned by `.vercelignore`, then `db/window/check_function_map.py`
+— every source file the function cites exists and is uploaded, no pulled env
+file (R23: the first step-4 attempt failed on Vercel because the map cited
+excluded files; the deploy had never been exercised). `public/stats.json` = the
+re-rehearsal projection of the identical graph: 8,496 nodes / 12,189 edges.
+The last-resort old build is `/tmp/np-deploy-4767d12/`.
 
 ## The steps
 
@@ -89,7 +91,7 @@ is `/tmp/np-deploy-4767d12/`.
 | 1 | `db/window/backup.sh "$B"` then `python3 pipeline/migrate.py status > "$B/migrate-before.txt"` | `counts-before.txt`: migration 0016, nodes 3146, edges 4021, node_sources 30658, hash `eba7c479…` | nothing has changed — stop |
 | 2 | `python3 pipeline/migrate.py up` | status ends at **0021** | `python3 pipeline/migrate.py down --to 0016` (rehearsed: exact) |
 | 3 | **owner signs in with Google** at np-autopilot.vercel.app (0020 changed the sign-in hook's grants) | signed in, sees the old explorer | `python3 pipeline/migrate.py down --to 0019` (reverts 0021 and 0020), then decide |
-| 4 | `cd /tmp/np-deploy-694c323 && vercel deploy --prebuilt --prod` | `/api/config` 200; `/api/me`, `/api/overview`, `/api/structure` **401** unauthenticated; the six security headers; live `index.html` == the artifact's | `vercel rollback dpl_5wWZxv7ed1Bhq1fvCMSMVPgnfmxg` (Hobby: the immediately previous deployment — do not deploy anything else in between). Last resort: `cd /tmp/np-deploy-4767d12 && vercel deploy --prebuilt --prod` |
+| 4 | `python3 db/window/check_function_map.py "$ART"` (must say `function map OK`); **preview first**: `cd "$ART" && vercel deploy --prebuilt` (no `--prod`) — on the preview URL `/api/config` 200 and `/api/me`, `/api/overview`, `/api/structure` **401 with OUR body** (`{"error": "unauthorised", …}`, JSON), not Vercel's login wall; then `vercel inspect` the live URL (still `dpl_5wWZ…`), the preview (target preview) and any failed attempt (never Ready) — so the rollback target is still `dpl_5wWZ…`; only then `vercel deploy --prebuilt --prod` | `/api/config` 200; `/api/me`, `/api/overview`, `/api/structure` **401** unauthenticated; the six security headers; live `index.html` == the artifact's | `vercel rollback dpl_5wWZxv7ed1Bhq1fvCMSMVPgnfmxg` (Hobby: the immediately previous deployment — do not deploy anything else to production in between; and NOT when production never left `dpl_5wWZ…`: a rollback also stops Vercel auto-assigning the domain to the next production deploy). Last resort: `cd /tmp/np-deploy-4767d12 && vercel deploy --prebuilt --prod` |
 | 5 | `NP_LANDING_STATS="$B/stats.json" NP_BUILD_LOG="$B/BUILD_LOG.md" python3 pipeline/project_graph.py` | prints `mastersheet fresh`; nodes 8,496, edges 12,189, sources 39,414, layout 3,295; ≈ 10–20 s | `db/window/restore_projection.sh "$B"` — the ONLY way back (the old `project_graph.py` cannot run after 0021); the new code on the old data is safe |
 | 6 | `python3 pipeline/verify_migration.py --source supabase`; `python3 pipeline/curation.py check`; `psql "$WINDOW_DSN" -f db/window/counts.sql`; `cp "$B/stats.json" public/stats.json`; `NP_ALLOW_PROD_TESTS=1 python3 -m pytest tests -m production_only -rs` | 54/54; IN SYNC; curation counts == `counts-before.txt`; 7 production_only pass (read-only, verified) | `restore_projection.sh "$B"` |
 | 7 | owner: open **API Design** (full chain, 13 Class decks), the **matrix**, a search; `curl -s https://np-autopilot.vercel.app/ > "$B/live.html" && node eval/drive_dom.mjs "$B/live.html"`; `python3 eval/measure_signed_in.py --phase post --wait-for-enter` (includes cold start after idle) | panels correct; harness passes; figures recorded against `docs/PERF-BASELINE.md` | step 4's rollback and/or step 5's restore |

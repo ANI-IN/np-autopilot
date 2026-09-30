@@ -261,6 +261,15 @@ withheld hiring data.
 3. **Rotate the database password, then redeploy** — so that every rollback
    target (the new production deployment, and the one before it) carries the
    new password, and none still holds the leaked one.
+4. **Review the "Indian Instructors" names the OLD graph reads** (owner request,
+   2026-09-30; no action before then). Passes 2–4 read the corpus copy's
+   `Indian Instructors` tab by its `Indian SME Name` column
+   (`pipeline/lib/sources.py`, a roster source), and the tab also holds an
+   "Indian SME hiring" section. Decide, name by name, which are **active
+   instructors** and which are **hiring candidates**; candidates are hiring
+   data and are handled like R18's — withheld from the public half, the same
+   `recruiting` treatment. The live sheet's copy of this tab is excluded
+   (`config/mastersheet-scope.yaml`) and is not read.
 
 ## 6 · First release AFTER launch
 
