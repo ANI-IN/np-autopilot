@@ -430,8 +430,8 @@ def merge(main: dict, content: dict, spec: dict | None = None,
 # what it held back. Names come from the PUBLIC graph's own person and
 # instructor labels (label, label_raw, merged_label_raw) — never from a slide —
 # so nothing is inferred about who is a person. Containment is whole-word and
-# only for MULTI-word names; a single first name counts only as an @mention
-# or as a trailing ": NAME" presenter tag,
+# only for MULTI-word names; a single first name counts only as an @mention,
+# a trailing ": NAME" presenter tag or a possessive ("Tilo’s Introduction"),
 # because 209 one-word labels would otherwise match ordinary words. Bio and
 # boilerplate patterns are a reviewed list with examples,
 # config/topic-quality.yaml, held by tests/test_topic_quality.py.
@@ -486,6 +486,11 @@ def classify_topics(g: dict, rules: dict | None = None) -> dict:
         # "Caching: BALAJI" — a lesson plan's presenter tag, the same thing as
         # an @mention without the @. Only as the LAST token after a colon.
         mentions += re.findall(r":\s*([^\W\d_][\w.-]*)\s*$", f)
+        # "Tilo’s Introduction" — a POSSESSIVE first name is a person's slide,
+        # the same thing again (owner review 2026-09-30). Straight or curly
+        # apostrophe; only a known person's first name, so "Today's agenda"
+        # and "Dijkstra's algorithm" stay topics.
+        mentions += re.findall(r"(?<!\w)([^\W\d_][\w-]*)['\u2019]s(?!\w)", f)
         if f in names or (contains and contains.search(f)) or \
                 any(m.rstrip(".") in firsts for m in mentions):
             n[NOT_A_TOPIC] = PERSON_NAME

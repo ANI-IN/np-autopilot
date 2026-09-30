@@ -15,7 +15,10 @@ numbers:
   4. no WebGL -> the 2D map, with a note;
   5. prefers-reduced-motion: no drift, no auto-rotate;
   6. a hidden tab pauses rendering;
-  7. frame time on the full default graph, and first render 3D vs 2D.
+  7. frame time on the full default graph, and first render 3D vs 2D;
+  8. a SLOW machine (requestAnimationFrame throttled by a busy-wait to well
+     under 30 fps): 3D switches to 2D with the note, "Try 3D anyway" forces
+     3D and it stays, and the choice survives a reload.
 Exit 1 on any failed check.
 """
 from __future__ import annotations
@@ -46,6 +49,9 @@ FPS = """()=>new Promise(res=>{const ts=[];function f(t){ts.push(t);if(ts.length
   else{const d=ts.slice(1).map((x,i)=>x-ts[i]).sort((a,b)=>a-b);
   res({fps:+(1000/(d.reduce((a,b)=>a+b)/d.length)).toFixed(1),p95_ms:+d[Math.floor(d.length*.95)].toFixed(1)})}}
   requestAnimationFrame(f)})"""
+#: a slow machine: every animation-frame callback busy-waits 45 ms first
+THROTTLE = """(()=>{const raf=window.requestAnimationFrame.bind(window);
+  window.requestAnimationFrame=cb=>raf(t=>{const e=performance.now()+45;while(performance.now()<e);cb(t);});})();"""
 failures: list[str] = []
 
 
@@ -155,6 +161,26 @@ def main() -> int:
         pg.wait_for_timeout(1500)
         rm = pg.evaluate("({drift:drift,autoRotate:V3.ctrl.autoRotate})")
         check("reduced motion: no drift, no auto-rotate", rm == {"drift": False, "autoRotate": False}, rm)
+        ctx.close()
+        # 8: a slow machine
+        ctx, pg, _ = page(b)
+        ctx.add_init_script(THROTTLE)
+        pg.goto(BASE + "/"); wait_until(pg, "window.__NP_3D&&window.__NP_3D.on")
+        wait_until(pg, "state.dim==='2d'", timeout=15000)
+        sw = pg.evaluate("({dim:state.dim,on:V3.on,url:location.search,"
+                         "banner:document.getElementById('banner').textContent,"
+                         "fps:(()=>{const s=V3.stamps||[];return s.length>1?+(1000*(s.length-1)/(s[s.length-1]-s[0])).toFixed(1):null})()})")
+        check("a throttled 3D view switches to 2D with the note",
+              sw["dim"] == "2d" and not sw["on"] and "Switched to 2D for smoother performance" in sw["banner"]
+              and "Try 3D anyway" in sw["banner"], sw)
+        pg.click("#force3d"); pg.wait_for_timeout(6500)
+        fo = pg.evaluate("({dim:state.dim,on:V3.on,forced:localStorage.getItem('np.force3d'),"
+                         "banner:document.getElementById('banner').textContent})")
+        check("'Try 3D anyway' forces 3D and it stays", fo["dim"] == "3d" and fo["on"] and fo["forced"] == "1"
+              and "Switched" not in fo["banner"], fo)
+        pg.goto(BASE + "/"); wait_until(pg, "window.__NP_3D&&window.__NP_3D.on"); pg.wait_for_timeout(6500)
+        rl = pg.evaluate("({dim:state.dim,on:V3.on})")
+        check("the forced choice survives a reload", rl == {"dim": "3d", "on": True}, rl)
         ctx.close()
         b.close()
     print("\n  " + ("all 3D checks passed" if not failures else f"FAILED: {failures}"))

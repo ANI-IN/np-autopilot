@@ -186,7 +186,7 @@ _none recorded_
 | Programme week | 11 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4644/) · [Drive folder](https://drive.google.com/drive/folders/1uGKsqsDsPhTzXs7jb1nLxNigQ_KRGAhd) · [Drive folder: "Uplevel shared"](https://drive.google.com/drive/folders/17WIN3TweNlBtgt_lcUfFxTyrZzB6j2NC) |
 | Decks | 13 (3 superseded) |
-| Topics | 238 current, 599 historical |
+| Topics | 220 current, 599 historical |
 
 **Sessions**
 
@@ -234,7 +234,7 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 - [API design.pptx](https://drive.google.com/open?id=1Gyd9zTgPt4cKJVGmbtmhreq-GZBqxUjk) · _superseded_
 - [Old API Design.pptx](https://drive.google.com/open?id=1-dnrK70b_vBNMOdSWiHUcBeqIp0GPhuM) · _superseded_
 
-**Top 5 of 837 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
+**Top 5 of 819 topics** _(current first, housekeeping slides last, then by source: curriculum, class, alternate class, pre-class, assignment, review; ordering only — every topic is in the graph)_
 
 1. Backend API Design — slide 1 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
 2. Some API Design (a little bit of theory) — slide 4 of [IK-API-Design-presentation-RK-v3.pptx](https://drive.google.com/open?id=11jKaL_xl5A7WSUGm491HwNXjNaQ_DTwe)
@@ -244,7 +244,7 @@ _Legacy evidence, shown separately — a `teaches` record from the older sheets,
 
 _502 repeated title(s) shown once; 14 housekeeping slide(s) (agenda, welcome, introductions…) ranked last, not removed (`config/topic-quality.yaml`)._
 
-_2 extracted title(s) (4 occurrence(s)) held back as a person's name or biography, not a topic (D1; kept in the graph, marked `not_a_topic`): Krishnamoorthy Venkatraman, Robert Kreznarich_
+_20 extracted title(s) (22 occurrence(s)) held back as a person's name or biography, not a topic (D1; kept in the graph, marked `not_a_topic`): Krishnamoorthy Venkatraman, Robert Kreznarich, Tilo’s API Design Class - October 8, 2023., Tilo’s Introduction, Tilo’s page 1 notes Agenda / Outline, Tilo’s page 10 notes for Case Study - Online Shop - Design API Endpoints - Categories, Tilo’s page 11 notes for Case Study - Online Shop - Design API Endpoints - Shopping Cart, Tilo’s page 12 notes for Case Study - Online Shop - Design API Endpoints - Checkout, Tilo’s page 13 notes on Authorization, Tilo’s page 14 notes on Versioning, Tilo’s page 16 notes for HTTP is just not Enough, Tilo’s page 16 notes on Complex Queries, Tilo’s page 2 notes for “Possible Technologies for APIs”, Tilo’s page 3 notes for “REST Architectural Style”, Tilo’s page 4 notes for “Development Process”, Tilo’s page 5 notes for Open API Example, Tilo’s page 6 notes on API Design Tradeoffs, Tilo’s page 7 notes - Case Study - Online Shop - Requirements, Tilo’s page 8 notes Case Study - Online Shop - Resources, Tilo’s page 9 notes for Case Study - Online Shop - Design API Endpoints_
 
 **Other files (5)** _(module-level files, curriculum documents, repositories)_
 

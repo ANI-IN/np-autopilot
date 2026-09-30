@@ -222,3 +222,35 @@ def test_an_old_open_list_keeps_only_its_last_item(views):
     o = views["url"]["oldLink"]
     assert o["ok"] and o["sel"] == o["want"], o
     assert "open=" not in o["url"], o
+
+
+# ---- SLOW MACHINES (owner decision 2026-09-30) --------------------------------
+# Under ~30 fps for 3 seconds, the 3D view switches to 2D with a note that lets
+# the viewer force 3D. A THROTTLED frame clock drives the page's own watcher
+# (eval/default_view_labels.mjs); eval/check_3d.py repeats it in a GPU browser
+# with requestAnimationFrame really throttled.
+
+def test_the_slow_rule_is_sustained_under_30_fps(views):
+    p = views["slow"]["pure"]
+    assert p == {"f60": False, "f31": False, "f29": True, "f10": True, "short": False}, p
+
+
+def test_a_throttled_3d_view_switches_to_2d_with_the_note(views):
+    c60, c35, c24, c12, _forced, _dip = views["slow"]["cases"]
+    assert not c60["switched"] and not c35["switched"], (c60, c35)
+    for c in (c24, c12):
+        assert c["switched"] and c["dim"] == "2d", c
+        # warm-up (1.5 s) + the 3-second window: not earlier, and not much later
+        assert 4400 <= c["at"] <= 5200, c
+        assert "Switched to 2D for smoother performance" in c["note"], c
+        assert "Try 3D anyway" in c["note"] and 'id="force3d"' in c["note"], c
+
+
+def test_forcing_3d_is_respected(views):
+    forced = views["slow"]["cases"][4]
+    assert not forced["switched"], forced
+
+
+def test_a_short_stall_is_not_a_slow_machine(views):
+    dip = views["slow"]["cases"][5]
+    assert not dip["switched"], dip

@@ -231,5 +231,25 @@ for(const [u,s0] of recorded){ run(`__T.state.sel=null; __T.state.place=null; __
 location.search='?open='+[pick.mods[0],'map:legacy-domains',pick.mods[3]].join(',')+'&focus=';
 run('applyUrl()'); settle();
 out.url.oldLink={url:location.search,sel:run('__T.state.sel'),want:pick.mods[3],ok:urlOk(location.search)};
+// SLOW MACHINES: a THROTTLED frame clock drives the page's own watcher. Each
+// case starts in 3D at t=0 and feeds frames at a fixed rate for 6 s; the watch
+// must switch at under ~30 fps held for 3 s, and at nothing else.
+const slowCase=(fps,opt={})=>run(`(()=>{
+  try{ localStorage.removeItem('np.force3d'); if(${!!opt.forced})localStorage.setItem('np.force3d','1'); }catch(e){}
+  __T.state.dim='3d'; __T.V3.slowSwitched=false; __T.V3.shownAt=0; __T.V3.stamps=[];
+  const rate=t=>(${JSON.stringify(opt.dip||null)}&&t>=${(opt.dip||[0,0])[0]}&&t<${(opt.dip||[0,0])[1]})?${opt.dipFps||fps}:${fps};
+  let t=0, at=null; while(t<6000){ t+=1000/rate(t); watchSpeed3D(t); if(__T.V3.slowSwitched&&at===null)at=Math.round(t); }
+  const r={fps:${fps},switched:__T.V3.slowSwitched,at,dim:__T.state.dim,
+           note:(document.getElementById('banner')||{}).innerHTML||''};
+  __T.V3.slowSwitched=false; __T.state.dim='2d'; try{ localStorage.removeItem('np.force3d'); }catch(e){}
+  return r;})()`);
+out.slow={
+  pure:run(`(()=>{const at=f=>Array.from({length:Math.ceil(3.2*f)},(_,i)=>i*1000/f);
+    return {f60:slowFor(at(60),3200,3000,30),f31:slowFor(at(31),3200,3000,30),f29:slowFor(at(29),3200,3000,30),
+            f10:slowFor(at(10),3200,3000,30),short:slowFor(at(10).filter(x=>x>1000),3200,3000,30)};})()`),
+  cases:[slowCase(60),slowCase(35),slowCase(24),slowCase(12),slowCase(12,{forced:true}),
+         // a 2-second stall inside an otherwise smooth run is not "slow"
+         slowCase(60,{dip:[2000,4000],dipFps:10})],
+};
 console.log = quiet;
 console.log(JSON.stringify(out));

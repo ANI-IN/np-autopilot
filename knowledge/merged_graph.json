@@ -360560,7 +360560,7 @@
    "workflow": 92
   },
   "nodes": 8496,
-  "not_a_topic": 18,
+  "not_a_topic": 36,
   "render": {
    "default_roster_only": 2620,
    "excluded_instructors": 1976,
@@ -360574,7 +360574,7 @@
   "topic_marks": {
    "boilerplate": 67,
    "person_bio": 1,
-   "person_name": 17
+   "person_name": 35
   },
   "withheld": {
    "edge_rels": {
@@ -705990,6 +705990,7 @@
    "label": "Tilo\u2019s API Design Class - October 8, 2023.",
    "label_raw": "Tilo\u2019s API Design Class - October 8, 2023.",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706007,6 +706008,7 @@
    "label": "Tilo\u2019s Introduction",
    "label_raw": "Tilo\u2019s Introduction",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706024,6 +706026,7 @@
    "label": "Tilo\u2019s page 1 notes Agenda / Outline",
    "label_raw": "Tilo\u2019s page 1 notes Agenda / Outline",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706041,6 +706044,7 @@
    "label": "Tilo\u2019s page 2 notes for \u201cPossible Technologies for APIs\u201d",
    "label_raw": "Tilo\u2019s page 2 notes for \u201cPossible Technologies for APIs\u201d",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706075,6 +706079,7 @@
    "label": "Tilo\u2019s page 3 notes for \u201cREST Architectural Style\u201d",
    "label_raw": "Tilo\u2019s page 3 notes for \u201cREST Architectural Style\u201d",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706092,6 +706097,7 @@
    "label": "Tilo\u2019s page 4 notes for \u201cDevelopment Process\u201d",
    "label_raw": "Tilo\u2019s page 4 notes for \u201cDevelopment Process\u201d",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706109,6 +706115,7 @@
    "label": "Tilo\u2019s page 5 notes for Open API Example",
    "label_raw": "Tilo\u2019s page 5 notes for Open API Example",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706126,6 +706133,7 @@
    "label": "Tilo\u2019s page 6 notes on API Design Tradeoffs",
    "label_raw": "Tilo\u2019s page 6 notes on API Design Tradeoffs",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706143,6 +706151,7 @@
    "label": "Tilo\u2019s page 7 notes - Case Study - Online Shop - Requirements",
    "label_raw": "Tilo\u2019s page 7 notes - Case Study - Online Shop - Requirements",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706160,6 +706169,7 @@
    "label": "Tilo\u2019s page 8 notes Case Study - Online Shop - Resources",
    "label_raw": "Tilo\u2019s page 8 notes Case Study - Online Shop - Resources",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706177,6 +706187,7 @@
    "label": "Tilo\u2019s page 9 notes for Case Study - Online Shop - Design API Endpoints",
    "label_raw": "Tilo\u2019s page 9 notes for Case Study - Online Shop - Design API Endpoints",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706194,6 +706205,7 @@
    "label": "Tilo\u2019s page 10 notes for Case Study - Online Shop - Design API Endpoints - Categories",
    "label_raw": "Tilo\u2019s page 10 notes for Case Study - Online Shop - Design API Endpoints - Categories",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706211,6 +706223,7 @@
    "label": "Tilo\u2019s page 11 notes for Case Study - Online Shop - Design API Endpoints - Shopping Cart",
    "label_raw": "Tilo\u2019s page 11 notes for Case Study - Online Shop - Design API Endpoints - Shopping Cart",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706228,6 +706241,7 @@
    "label": "Tilo\u2019s page 12 notes for Case Study - Online Shop - Design API Endpoints - Checkout",
    "label_raw": "Tilo\u2019s page 12 notes for Case Study - Online Shop - Design API Endpoints - Checkout",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706245,6 +706259,7 @@
    "label": "Tilo\u2019s page 13 notes on Authorization",
    "label_raw": "Tilo\u2019s page 13 notes on Authorization",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706262,6 +706277,7 @@
    "label": "Tilo\u2019s page 14 notes on Versioning",
    "label_raw": "Tilo\u2019s page 14 notes on Versioning",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706279,6 +706295,7 @@
    "label": "Tilo\u2019s page 16 notes on Complex Queries",
    "label_raw": "Tilo\u2019s page 16 notes on Complex Queries",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {
@@ -706296,6 +706313,7 @@
    "label": "Tilo\u2019s page 16 notes for HTTP is just not Enough",
    "label_raw": "Tilo\u2019s page 16 notes for HTTP is just not Enough",
    "locator_kind": "slide",
+   "not_a_topic": "person_name",
    "sensitive": false,
    "sources": [
     {

@@ -460,10 +460,20 @@ details.legacy summary{cursor:pointer;color:#8b949e;font-size:11px;margin:6px 0}
   <div class="lp-cols">
     <div class="lp-col">
       <h2>What it answers well</h2>
-      <div class="lp-item"><span class="k">Who staffs a domain.</span>
-        <span class="v">Owners and delivery, and the instructors who teach its modules.</span></div>
-      <div class="lp-item"><span class="k">What a workflow involves.</span>
-        <span class="v">Its steps, effort, tools and alert conditions.</span></div>
+      <div class="lp-item"><span class="k">A module&rsquo;s full picture.</span>
+        <span class="v">Its sessions and the programme week each one falls in, its
+          instructors by role, and every Uplevel and Drive link the corpus gives
+          for it.</span></div>
+      <div class="lp-item"><span class="k">Who teaches what, by role.</span>
+        <span class="v">For each domain, which instructors are primary and which are
+          backups, and on which modules.</span></div>
+      <div class="lp-item"><span class="k">The programme timeline.</span>
+        <span class="v">What is taught in which week, domain by domain, with older
+          programmes kept apart and marked as legacy.</span></div>
+      <div class="lp-item"><span class="k">The whole map, to explore.</span>
+        <span class="v">Domains, modules, sessions, decks and people as one network.
+          Click anything to see what it connects to; the link in the address bar
+          opens the same view for a colleague.</span></div>
       <div class="lp-item"><span class="k">Where a fact came from.</span>
         <span class="v">Every node cites the file, sheet and row it was read from &mdash;
           and says when a person entered it by hand instead.</span></div>
@@ -4073,7 +4083,8 @@ function size3D(){
 function show3D(){
   if(!V3.G)init3D();
   if(!V3.on){ V3.on=true; V3.el.style.display='block'; V3.lab.style.display='block'; cv.style.display='none';
-    size3D(); if(V3.G.resumeAnimation)V3.G.resumeAnimation(); V3.raf=requestAnimationFrame(labels3D); V3.firstFit=true; }
+    size3D(); if(V3.G.resumeAnimation)V3.G.resumeAnimation(); V3.raf=requestAnimationFrame(labels3D); V3.firstFit=true;
+    V3.shownAt=performance.now(); V3.stamps=[]; }
 }
 function hide3D(){
   if(!V3.on)return; V3.on=false;
@@ -4142,6 +4153,7 @@ function labels3D(){
   V3.raf=requestAnimationFrame(labels3D);
   if(document.hidden)return;
   const t0=performance.now(), g=V3.lctx, G=V3.G; if(!G)return;
+  watchSpeed3D(t0); if(!V3.on)return;
   g.clearRect(0,0,V3.w,V3.h);
   const cam=G.camera().position, lit=state.sel?V3.lit:null;
   const cand=[];
@@ -4191,7 +4203,37 @@ function labels3D(){
 }
 try{ document.addEventListener('visibilitychange',()=>{ if(!V3.G)return;
   if(document.hidden){ if(V3.G.pauseAnimation)V3.G.pauseAnimation(); }
-  else if(V3.on&&V3.G.resumeAnimation)V3.G.resumeAnimation(); }); }catch(e){}
+  else if(V3.on&&V3.G.resumeAnimation){ V3.G.resumeAnimation(); V3.shownAt=performance.now(); V3.stamps=[]; } }); }catch(e){}
+//: SLOW MACHINES (owner decision 2026-09-30): if the 3D view runs under ~30
+//: fps for 3 seconds, switch to 2D and say so, with a way to force 3D. PURE:
+//: `stamps` are frame times (ms, ascending); true only once a FULL window has
+//: been observed and EVERY second of it ran under `minFps` — sustained, so a
+//: two-second stall inside a smooth run (a big focus, a GC) is not "slow".
+function slowFor(stamps,now,win,minFps){
+  if(!stamps.length||stamps[0]>now-win)return false;
+  for(let a=now-win;a<now-1;a+=1000){
+    let n=0; for(const t of stamps)if(t>=a&&t<a+1000)n++;
+    if(n>=minFps)return false;
+  }
+  return true;
+}
+function forced3D(){ try{ return localStorage.getItem('np.force3d')==='1'; }catch(e){ return false; } }
+function watchSpeed3D(now){
+  if(forced3D()||V3.slowSwitched)return;
+  if(document.hidden||V3.shownAt==null||now-V3.shownAt<1500){V3.stamps=[];return;}   // warm-up, or away
+  const st=V3.stamps||(V3.stamps=[]); st.push(now);
+  while(st.length&&st[0]<now-3500)st.shift();
+  if(slowFor(st,now,3000,30))switchTo2DForSpeed();
+}
+function switchTo2DForSpeed(){
+  V3.slowSwitched=true; state.dim='2d'; hide3D(); recompute(true,'3D too slow'); renderDim(); writeUrl('replace');
+  try{
+    banner('Switched to 2D for smoother performance. <button type="button" id="force3d">Try 3D anyway</button>');
+    const b=document.getElementById('force3d');
+    if(b)b.onclick=()=>{ try{ localStorage.setItem('np.force3d','1'); }catch(e){}
+      banner(''); V3.slowSwitched=false; setDim('3d'); };
+  }catch(e){}
+}
 //: the 2D / 3D toggle, beside fit
 function renderDim(){
   const t=document.getElementById('dimtog'); if(!t)return;
@@ -4199,7 +4241,7 @@ function renderDim(){
   const inMap=state.view==='graph'&&!state.listMode&&!state.place;
   t.style.display=inMap?'':'none';
 }
-function setDim(d){ state.dim=d==='2d'?'2d':'3d'; renderDim(); writeUrl('push'); if(state.dim==='2d'){hide3D();recompute(true,'2D');} else sync3D(); }
+function setDim(d){ state.dim=d==='2d'?'2d':'3d'; if(state.dim==='3d'&&V3.slowSwitched)banner(''); renderDim(); writeUrl('push'); if(state.dim==='2d'){hide3D();recompute(true,'2D');} else sync3D(); }
 for(const b of document.querySelectorAll('#dimtog button'))b.onclick=()=>setDim(b.dataset.dim);
 
 // Called once the structure payload has landed.
