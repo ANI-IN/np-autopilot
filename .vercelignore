@@ -39,3 +39,11 @@ pipeline/*.py
 # carry `from pipeline.lib import taxonomy` — but "it happens to work" is not
 # how the import path that reads taxonomy.yaml should be held together.
 !pipeline/__init__.py
+# THE BUILD'S OWN OUTPUT IS ALWAYS UPLOADED. Everything above is about PROJECT
+# files, but gitignore patterns are unanchored: `commands/` also matched pip's
+# `pip/_internal/commands/` inside .vercel/python/.venv, and `*.md` its licence
+# files — 25 files the prebuilt function cites. Re-included last so no pattern
+# above can ever reach into the build output (window step 4, 2026-09-30, R23;
+# db/window/check_function_map.py enforces it before every deploy).
+!.vercel/
+!.vercel/**

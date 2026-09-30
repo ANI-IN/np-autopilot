@@ -720,6 +720,45 @@ outside both sync roots, and is deleted after the window.
 
 ---
 
+
+## R23 — The prebuilt deploy was never exercised against Vercel
+
+**Happened 2026-09-30, window step 4. Production untouched.**
+
+`vercel deploy --prebuilt --prod` failed on Vercel's side after uploading:
+`ENOENT: no such file or directory, readlink '/vercel/path0/01-corpus-inventory.md'`.
+The failed deployment was never promoted; `np-autopilot.vercel.app` stayed on
+`dpl_5wWZxv7ed1Bhq1fvCMSMVPgnfmxg`, serving the old code, and the database held
+at 0021 with the old data — the state the owner had verified at step 3.
+
+**Cause.** `vercel build` ran in a tree that still held every file the upload
+excludes, and wrote a function whose file map cited 1,050 of them by path —
+64 excluded by `.vercelignore` (`*.md`, and, through the unanchored `commands/`
+and `*.md`, 25 files of pip inside the build's own `.vercel/python/.venv`).
+`vercel deploy --prebuilt` uploads honouring `.vercelignore`, so the function
+pointed at files that were never sent.
+
+**Why the rehearsal did not catch it — the lesson.** The rehearsal built the
+artifact and checked the build (exit 0, headers, bundle), and the run-sheet
+called step 4 "rehearsed". The *deploy* was never run against Vercel: every
+other step was exercised on a copy of production, and this one was exercised
+only up to the point where it would have met the real service. **A step is
+rehearsed when the thing that can fail it has been run, not when its inputs
+look right.**
+
+**Fixed, permanently:**
+- `db/window/build_artifact.sh` builds from a tree already pruned by
+  `.vercelignore` (git's own matcher).
+- `.vercelignore` re-includes `.vercel/` last, so no project pattern can reach
+  into the build output.
+- `db/window/check_function_map.py` — every source file the function cites
+  must exist and must not be excluded by `.vercelignore`; the pulled env file
+  must be absent. It failed on the artifact that failed on Vercel (64), and on
+  the first pruned rebuild (25, the `.venv` case) — both before any deploy.
+  Run-sheet step 4 runs it first.
+- A **preview** deploy of the artifact (not `--prod`) is exercised before the
+  production deploy.
+
 ## Summary
 
 | # | Risk | Likelihood | Impact |
@@ -746,3 +785,4 @@ outside both sync roots, and is deleted after the window.
 | R20 | **A working copy of the repo was uploaded into the corpus folder** — DB password, `graph-sensitive.json`, `.git/`. **Removed from the folder 2026-09-30; password NOT rotated (owner choice)** | happened | high |
 | R21 | **The replacement repository was public from creation for 13 days** — 107 commits, 1,915 instructor names, 43 staff; **81 external clones**. Private, verified 2026-09-29 19:06:50Z. Disclosure escalated with R18 | happened | high |
 | R22 | **The repository folder syncs to iCloud and a Google Drive backup** — 4,287 items incl. the DB password and the withheld hiring data; backup account unconfirmed (likely personal). **Accepted by owner, deferred until after launch** | happening | high |
+| R23 | **The prebuilt deploy was never exercised against Vercel** — window step 4 failed (`ENOENT readlink 01-corpus-inventory.md`); production untouched. Fixed: artifact built from a `.vercelignore`-pruned tree, `.vercel/` re-included, function map checked before every deploy, preview deploy first | happened | medium |
