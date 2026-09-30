@@ -11,7 +11,7 @@ Tick each module when its block matches the mastersheet. Phase D does not start 
 - A tick is an owner confirmation (`config/owner-confirmations.yaml`, origin: hand). It holds only while the block's mastersheet facts are unchanged; if they change, the tick comes off and says so.
 - Where something is absent the reason is stated; nothing falls back to the spreadsheet.
 
-**20 modules, 15 confirmed by the owner. 154 of 154 linkable items carry an Uplevel link; the rest state a reason.**
+**20 modules, 20 confirmed by the owner. 154 of 154 linkable items carry an Uplevel link; the rest state a reason.**
 
 ## SD3/1 · Database Design
 
@@ -19,7 +19,7 @@ Tick each module when its block matches the mastersheet. Phase D does not start 
 
 | | |
 |---|---|
-| Domain | Backend Engineering — [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
+| Domain | Backend Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4874/) · [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
 | Programme week | 9 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4642/) |
 | Decks | 7 |
@@ -102,7 +102,7 @@ _1 extracted title(s) (1 occurrence(s)) held back as a person's name or biograph
 
 | | |
 |---|---|
-| Domain | Backend Engineering — [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
+| Domain | Backend Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4874/) · [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
 | Programme week | 10 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4643/) |
 | Decks | 10 |
@@ -172,7 +172,7 @@ _none recorded_
 
 | | |
 |---|---|
-| Domain | Backend Engineering — [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
+| Domain | Backend Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4874/) · [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
 | Programme week | 11 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4644/) |
 | Decks | 13 (3 superseded) |
@@ -252,7 +252,7 @@ _2 extracted title(s) (4 occurrence(s)) held back as a person's name or biograph
 
 | | |
 |---|---|
-| Domain | Backend Engineering — [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
+| Domain | Backend Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4874/) · [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
 | Programme week | 12 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4645/) |
 | Decks | 8 (1 superseded) |
@@ -276,7 +276,7 @@ _2 extracted title(s) (4 occurrence(s)) held back as a person's name or biograph
 |---|---|
 | Primary | Sanjay Dhar |
 | Backup 1 | Jeff Wisman |
-| Backup 2 | Reginald · **unconfirmed identity** (see docs/REVIEW-QUEUE.md) |
+| Backup 2 | Reginald Johnson |
 
 _Legacy evidence, shown separately — a `teaches` record from the older sheets, not a mastersheet role:_ Sanjay Dhar
 
@@ -324,7 +324,7 @@ _179 repeated title(s) shown once; 23 housekeeping slide(s) (agenda, welcome, in
 
 | | |
 |---|---|
-| Domain | Backend Engineering — [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
+| Domain | Backend Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4874/) · [Drive folder](https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link) |
 | Programme week | 13 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4646/) |
 | Decks | 6 (2 superseded) |
@@ -411,7 +411,7 @@ _2 extracted title(s) (5 occurrence(s)) held back as a person's name or biograph
 
 | | |
 |---|---|
-| Domain | Frontend — [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
+| Domain | Frontend — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4875/) · [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
 | Programme week | 9 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4647/) |
 | Decks | 16 |
@@ -483,7 +483,7 @@ _53 repeated title(s) shown once._
 
 | | |
 |---|---|
-| Domain | Frontend — [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
+| Domain | Frontend — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4875/) · [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
 | Programme week | 10 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4648/) |
 | Decks | 19 |
@@ -577,7 +577,7 @@ _34 repeated title(s) shown once._
 
 | | |
 |---|---|
-| Domain | Frontend — [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
+| Domain | Frontend — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4875/) · [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
 | Programme week | 11 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4649/) |
 | Decks | 23 |
@@ -662,7 +662,7 @@ _242 repeated title(s) shown once; 13 housekeeping slide(s) (agenda, welcome, in
 
 | | |
 |---|---|
-| Domain | Frontend — [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
+| Domain | Frontend — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4875/) · [Drive folder](https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link) |
 | Programme week | 12 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4650/) |
 | Decks | 28 |
@@ -754,11 +754,11 @@ _25 repeated title(s) shown once._
 
 ## SD1/1 · Databases
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 3 §7: rebuilt block shows Konstantinos Pappas, Ashish Kaila, Nikhil Kolekar; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Full Stack — [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
+| Domain | Full Stack — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4731/) · [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
 | Programme week | 9 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4611/) |
 | Decks | 13 (2 superseded) |
@@ -778,7 +778,11 @@ _25 repeated title(s) shown once._
 
 **Instructors — mastersheet (the reviewed tier)**
 
-_no mastersheet instructor for this module_
+| role | instructor |
+|---|---|
+| Primary | Konstantinos Pappas |
+| Backup 1 | Ashish Kaila |
+| Backup 2 | Nikhil Kolekar |
 
 _Legacy evidence, shown separately — a `teaches` record from the older sheets, not a mastersheet role:_ Ashish Kaila, Konstantinos Pappas, Nikhil Kolekar, Robert Kreznarich
 
@@ -831,11 +835,11 @@ _209 repeated title(s) shown once; 1 housekeeping slide(s) (agenda, welcome, int
 
 ## SD1/2 · API Design and Implementation
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 3 §7: verified against the live sheet; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Full Stack — [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
+| Domain | Full Stack — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4731/) · [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
 | Programme week | 10 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4612/) |
 | Decks | 23 (3 superseded) |
@@ -937,11 +941,11 @@ _364 repeated title(s) shown once; 32 housekeeping slide(s) (agenda, welcome, in
 
 ## SD1/3 · Cloud Infrastructure
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 3 §7: verified against the live sheet; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Full Stack — [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
+| Domain | Full Stack — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4731/) · [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
 | Programme week | 11 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4613/) |
 | Decks | 17 |
@@ -1022,11 +1026,11 @@ _29 repeated title(s) shown once; 1 housekeeping slide(s) (agenda, welcome, intr
 
 ## SD1/4 · JavaScript and Web Development
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 3 §7: verified against the live sheet; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Full Stack — [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
+| Domain | Full Stack — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4731/) · [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
 | Programme week | 12 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4614/) |
 | Decks | 39 (14 superseded) |
@@ -1137,11 +1141,11 @@ _1 extracted title(s) (1 occurrence(s)) held back as a person's name or biograph
 
 ## SD1/5 · UI System Design
 
-- [ ] **Owner check** — this block matches the mastersheet
+- [x] **Owner check** — confirmed by Animesh Kumar (corpus owner) on 2026-09-30 (checklist review part 3 §7: verified against the live sheet; `config/owner-confirmations.yaml`)
 
 | | |
 |---|---|
-| Domain | Full Stack — [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
+| Domain | Full Stack — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4731/) · [Drive folder](https://drive.google.com/drive/folders/1BrRX8COMrAXoyuvHnp03gu3_qVBqkQ3T?usp=drive_link) |
 | Programme week | 13 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4615/) |
 | Decks | 20 |
@@ -1235,7 +1239,7 @@ _135 repeated title(s) shown once; 7 housekeeping slide(s) (agenda, welcome, int
 
 | | |
 |---|---|
-| Domain | Test Engineering — [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
+| Domain | Test Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4876/) · [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
 | Programme week | 9 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4651/) |
 | Decks | 16 |
@@ -1320,7 +1324,7 @@ _1 extracted title(s) (1 occurrence(s)) held back as a person's name or biograph
 
 | | |
 |---|---|
-| Domain | Test Engineering — [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
+| Domain | Test Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4876/) · [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
 | Programme week | 10 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4652/) |
 | Decks | 13 |
@@ -1404,7 +1408,7 @@ _25 repeated title(s) shown once._
 
 | | |
 |---|---|
-| Domain | Test Engineering — [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
+| Domain | Test Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4876/) · [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
 | Programme week | 11 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4671/) |
 | Decks | 41 |
@@ -1558,7 +1562,7 @@ _43 repeated title(s) shown once; 1 housekeeping slide(s) (agenda, welcome, intr
 
 | | |
 |---|---|
-| Domain | Test Engineering — [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
+| Domain | Test Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4876/) · [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
 | Programme week | 12 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4672/) |
 | Decks | 30 |
@@ -1677,7 +1681,7 @@ _22 repeated title(s) shown once; 1 housekeeping slide(s) (agenda, welcome, intr
 
 | | |
 |---|---|
-| Domain | Test Engineering — [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
+| Domain | Test Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4876/) · [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
 | Programme week | 13 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4673/) |
 | Decks | 29 |
@@ -1843,7 +1847,7 @@ _22 repeated title(s) shown once; 4 housekeeping slide(s) (agenda, welcome, intr
 
 | | |
 |---|---|
-| Domain | Test Engineering — [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
+| Domain | Test Engineering — [Uplevel domain](https://uplevel.interviewkickstart.com/update_resource_collection/4876/) · [Drive folder](https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link) |
 | Programme week | 14 — owner fact (`rowb-program-weeks`), not read from a file |
 | Module | [Uplevel module](https://uplevel.interviewkickstart.com/update_resource_collection/4674/) |
 | Decks | 41 |

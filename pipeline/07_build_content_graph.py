@@ -30,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.lib import ids                                          # noqa: E402
+from pipeline.lib import freshness                                  # noqa: E402
 from pipeline.lib import content_model as cm                          # noqa: E402
 from pipeline.lib import content_scope as scope                       # noqa: E402
 from pipeline.lib import curriculum as cur                            # noqa: E402
@@ -87,8 +88,10 @@ T_SESSION = _tgt_of("module_session")
 T_TUTOR = _tgt_of("module_instructor")
 T_TUTOR_CONTACT = _tgt_of("contact_of")
 
-MASTERSHEET = (REPO_ROOT / ".drive-cache" / "02-curriculum" /
-               "Resource Collection Mastersheet (Software + System).xlsx")
+#: THE LIVE SHEET (owner decision 2026-09-30, config/mastersheet-scope.yaml),
+#: exported outside the repo by pipeline/fetch_mastersheet.py. The corpus copy
+#: is superseded: kept in the graph, never read for these facts.
+MASTERSHEET = freshness.live_path()
 
 
 #: Distinguishes row-B content ids from the label-keyed main graph.
@@ -263,6 +266,22 @@ def main() -> int:
     withdrawn = ms.withdrawn_roles()
     withdrawn_used: set = set()
     red_unexplained: list = []
+    excluded_tabs: list = []
+    uplevel_rows: dict = {}
+    if MASTERSHEET.exists():
+        # Every tab of the workbook is either declared read or excluded by
+        # name; an undeclared one fails here. Exclusions are LOGGED by name.
+        excluded_tabs = ms.check_workbook_scope(ms.sheetnames(MASTERSHEET))
+        for t, why in excluded_tabs:
+            print(f"  mastersheet tab excluded: {t!r} — {why}")
+        uplevel_rows = ms.uplevel_resource_rows(MASTERSHEET)
+        g.node(nid(T_FILE, ms.LIVE_DRIVE_ID), T_FILE, ms.LIVE_CITATION,
+               [{"origin": "corpus", "file": ms.LIVE_CITATION}],
+               relative_path=ms.LIVE_CITATION, drive_url=ms.LIVE_URL,
+               drive_file_id=ms.LIVE_DRIVE_ID,
+               mime="application/vnd.google-apps.spreadsheet")
+    else:
+        gaps["live mastersheet not fetched — no mastersheet facts"] += 1
     if MASTERSHEET.exists():
         for tab_name in ms.DOMAIN_TABS:
             tab = ms.parse_tab(MASTERSHEET, tab_name)
@@ -285,10 +304,16 @@ def main() -> int:
             # value-only read of that cell produced no link at all.
             if tab.drive_folder_url and folder in dom_id:
                 g.nodes[dom_id[folder]]["drive_folder_url"] = tab.drive_folder_url
-            msrc = [{"origin": "corpus",
-                     "file": "02-curriculum/Resource Collection Mastersheet "
-                             "(Software + System).xlsx",
+            msrc = [{"origin": "corpus", "file": ms.LIVE_CITATION,
                      "sheet": tab_name}]
+            # THE DOMAIN'S UPLEVEL LINK, from the four in-scope rows of
+            # `Uplevel Resources` (owner decision 2026-09-30).
+            if folder in dom_id and tab_name in uplevel_rows:
+                link, urow = uplevel_rows[tab_name]
+                dnode = g.nodes[dom_id[folder]]
+                dnode["uplevel_link"] = link
+                dnode["sources"].append({"origin": "corpus", "file": ms.LIVE_CITATION,
+                                         "sheet": ms.UPLEVEL_TAB, "row": urow})
 
             for mod in tab.modules:
                 key = (folder, mod.sequence)
@@ -570,6 +595,8 @@ def main() -> int:
     write_reviews(topic_rows, tab_rows, people_review, sheet_variants,
                   deck_proposals, g)
     meta = {
+        "mastersheet_source": ms.LIVE_CITATION if MASTERSHEET.exists() else None,
+        "mastersheet_excluded_tabs": [t for t, _ in excluded_tabs],
         "mastersheet_withdrawn_roles": sorted(withdrawn_used),
         "mastersheet_red_cells_unexplained": red_unexplained,
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),

@@ -165,17 +165,24 @@ def test_the_two_staffing_tiers_are_tagged_and_kept_apart(merged):
             assert e["rel"] == sheet_rel
 
 
-def test_mod_01_keeps_its_legacy_instructors_without_inventing_a_sheet_role(merged):
-    """The mastersheet cell is blank. The legacy tier must not fill it."""
+def test_mod_01_keeps_the_tiers_apart(merged):
+    """MOD-01 merged the legacy module into SD1/1. The legacy instructors stay
+    legacy-tier; the mastersheet roles are the sheet's own.
+
+    CORRECTED 2026-09-30: this test used to assert the mastersheet cell was
+    BLANK. It never was — `Week 1/5: Databases` was skipped by the parser, and
+    the test pinned the bug."""
     m = _mod(merged, "full-stack", 1)
-    sheet = [e for e in merged["edges"]
-             if e.get("tier") == mm.TIER_MASTERSHEET
-             and m["id"] in (e["source"], e["target"])]
+    N = {n["id"]: n for n in merged["nodes"]}
+    sheet = sorted((e.get("instructor_role"), N[e["target"]]["label"]) for e in merged["edges"]
+                   if e.get("tier") == mm.TIER_MASTERSHEET and e["source"] == m["id"])
     legacy = [e for e in merged["edges"]
               if e.get("tier") == mm.TIER_LEGACY
               and m["id"] in (e["source"], e["target"])]
-    assert not sheet, "a mastersheet role appeared where the source cell is blank"
+    assert sheet == [("backup_1", "Ashish Kaila"), ("backup_2", "Nikhil Kolekar"),
+                     ("primary", "Konstantinos Pappas")]
     assert legacy, "the legacy instructors were lost"
+    assert not any(e.get("instructor_role") for e in legacy), "a legacy edge wears a sheet role"
 
 
 # ---------------------------------------------------------------------------
@@ -228,6 +235,7 @@ CONFIRMED_ALIASES = {
     "Konstantinos Pappas": "Konstantinos", "Shelby Cohen": "Shelby",
     "William David Ogden": "Bill Ogden", "Faraaz Sareshwala": "Faraaz",
     "Cathy Ma": "Cathy", "Nisarg Tanna": "Nisarg", "Robert Kreznarich": "Robert K",
+    "Reginald Johnson": "Reginald",        # PPL-13, part 3 — supersedes PPL-09's "unresolved"
 }
 
 
@@ -256,13 +264,9 @@ def test_the_merged_person_keeps_both_evidence_tiers_apart(merged):
     assert ms_edges, "Konstantinos Pappas lost the first-name form's module rows"
 
 
-def test_reginald_stays_unresolved_and_is_flagged(merged):
-    """PPL-09: left unresolved by decision — kept, attached, flagged."""
-    hits = [n for n in merged["nodes"] if n["type"] == "instructor"
-            and (n.get("label") or "").strip() == "Reginald"]
-    assert len(hits) == 1 and hits[0].get("identity_unconfirmed")
-    assert [e for e in merged["edges"] if e.get("tier") == mm.TIER_MASTERSHEET
-            and hits[0]["id"] in (e["source"], e["target"])], "Reginald lost his module row"
+def test_no_identity_is_left_unconfirmed(merged):
+    """PPL-13 confirmed Reginald; no instructor carries identity_unconfirmed."""
+    assert not [n["label"] for n in merged["nodes"] if n.get("identity_unconfirmed")]
 
 
 def test_no_instructor_label_remains_duplicated(merged):

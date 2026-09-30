@@ -22,11 +22,13 @@ sys.path.insert(0, str(REPO))
 
 from pipeline.lib import mastersheet as ms                   # noqa: E402
 
-SHEET = (REPO / ".drive-cache" / "02-curriculum" /
-         "Resource Collection Mastersheet (Software + System).xlsx")
+from pipeline.lib import freshness                             # noqa: E402
+
+# The LIVE sheet (owner decision 2026-09-30), exported outside the repo.
+SHEET = freshness.live_path()
 pytestmark = pytest.mark.skipif(
     not SHEET.exists(),
-    reason="the corpus cache is absent; run pipeline/00_fetch_drive.py")
+    reason="the live mastersheet is not fetched; run pipeline/fetch_mastersheet.py")
 
 
 @pytest.fixture(scope="module")

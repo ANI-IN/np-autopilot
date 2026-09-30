@@ -62,11 +62,16 @@ confirmations:
     evidence: checklist review part 2 §A
   - module: SD3/4
     label: "Cloud Native Design"
-    fingerprint: "dd9ed0a505874c63"
+    fingerprint: "23ff7c399e1cd3aa"
     origin: hand
     asserted_by: Animesh Kumar (corpus owner)
     asserted_at: "2026-09-30"
     evidence: checklist review part 2 §A
+    rebound: >-
+      2026-09-30, part 3: re-fingerprinted from dd9ed0a505874c63. The only change is
+      Backup 2 `Reginald` -> `Reginald Johnson`, the owner's own PPL-13 merge;
+      label, Uplevel links and sessions are identical, and the live-sheet diff
+      changed no fact.
   - module: SD3/5
     label: "Concurrency"
     fingerprint: "2074fab1cb768fde"
@@ -116,3 +121,38 @@ confirmations:
     asserted_by: Animesh Kumar (corpus owner)
     asserted_at: "2026-09-30"
     evidence: checklist review part 1 §A
+  - module: SD1/1
+    label: "Databases"
+    fingerprint: "2bf8b0d084090d68"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: "checklist review part 3 §7: rebuilt block shows Konstantinos Pappas, Ashish Kaila, Nikhil Kolekar"
+  - module: SD1/2
+    label: "API Design and Implementation"
+    fingerprint: "0acbb0adee15cda0"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: "checklist review part 3 §7: verified against the live sheet"
+  - module: SD1/3
+    label: "Cloud Infrastructure"
+    fingerprint: "d29ed3020f26a714"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: "checklist review part 3 §7: verified against the live sheet"
+  - module: SD1/4
+    label: "JavaScript and Web Development"
+    fingerprint: "c97245e605edce17"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: "checklist review part 3 §7: verified against the live sheet"
+  - module: SD1/5
+    label: "UI System Design"
+    fingerprint: "16dbfb2c95af2bfb"
+    origin: hand
+    asserted_by: Animesh Kumar (corpus owner)
+    asserted_at: "2026-09-30"
+    evidence: "checklist review part 3 §7: verified against the live sheet"

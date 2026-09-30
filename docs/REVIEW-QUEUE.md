@@ -1,12 +1,11 @@
 # REVIEW QUEUE — 89 decisions, answer by ID
 
 **Generated 2026-09-29 from the four review YAMLs; answers recorded below as
-they arrived.** 67 of 89 rows are answered — MOD 18, INS 32, PPL 11, TOPv 3,
+they arrived.** 68 of 89 rows are answered — MOD 18, INS 32, PPL 12, TOPv 3,
 TOPm 3 — and the applied ones are merged by pass 8
-(`pipeline/08_merge_graphs.py`) or pass 7 (the module labels). **22 remain
-open**: TOPt 6, PPL 2 (PPL-12; PPL-13, a proposal added 2026-09-30), DCK 14.
-The tables below are the rows as first generated, with a recommendation and an
-ID to answer by.
+(`pipeline/08_merge_graphs.py`) or pass 7 (the module labels). **21 remain
+open**: TOPt 6, PPL 1 (PPL-12), DCK 14. The tables below are the rows as first
+generated, with a recommendation and an ID to answer by.
 
 **Count convention.** A row is **answered** once the owner has decided it —
 including "leave unresolved", which is a decision, not a pending question
@@ -220,7 +219,7 @@ Recorded in `config/module-merges.yaml`, applied by `pipeline/08_merge_graphs.py
 | ids | answer |
 |---|---|
 | `MOD-02 03 05 06 07 08 09 10 11 13 16` | **merge** (bulk) — shared instructor and same programme family |
-| `MOD-01` | **merge.** Legacy instructors stay a separate evidence tier and are never shown as mastersheet roles; the sheet cell stays "blank in source" |
+| `MOD-01` | **merge.** Legacy instructors stay a separate evidence tier and are never shown as mastersheet roles. _(Said the sheet cell was "blank in source"; it was a parser bug — corrected 2026-09-30.)_ |
 | `MOD-12` | **merge** — distinctive label, no contradicting evidence |
 | `MOD-14` | **merge**, and must never be joined with SD4/5 `Test Automation`. Asserted by `tests/test_module_merges.py` |
 | `MOD-04` | **merge into SD2/2 (Frontend).** The legacy Full-Stack programme edges are kept with their provenance, marked **unconfirmed** — neither deleted nor asserted |
@@ -314,4 +313,12 @@ open.
 | `PPL-13` | `Reginald` → **Reginald Johnson** (reopens `PPL-09`, left unresolved 2026-09-30) | `Backend Engineering!D50`: week 4 *Cloud Native Design*, **Backup 2** = `Reginald`. `Backend Engineering!A66`: the Backend tab's instructor table lists `Reginald Johnson` — the only Reginald on any of the four in-scope tabs. | **confirm** — same tab, the only candidate; applied like the other first-name merges, alias kept, tiers apart |
 
 Remaining open: **22 of 89** — `TOPt` 6, `PPL-12` 1, `PPL-13` 1, `DCK` 14.
+
+### PPL-13 — confirmed 2026-09-30, Animesh Kumar (origin: hand), applied by pass 8
+
+| id | answer |
+|---|---|
+| `PPL-13` (reopens `PPL-09`) | **`Reginald` is Reginald Johnson.** Merged (`config/instructor-identity.yaml`, `reginald-johnson`): alias kept in `merged_label_raw`, provenance unioned, tiers apart, tagged and reversible. SD3/4's confirmation re-bound — the rename was its only change (`config/owner-confirmations.yaml`). No identity is left unconfirmed. |
+
+Remaining open: **21 of 89** — `TOPt` 6, `PPL-12` 1, `DCK` 14.
 

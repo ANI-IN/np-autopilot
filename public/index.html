@@ -1290,6 +1290,17 @@ const KIND_LABEL={pre_class:'Pre-class (foundation material)',class:'Class',
 const ARTEFACT_NAME=new RegExp(String.raw`(\.pyc$|\.log$|^CACHEDIR\.TAG$|^(lastfailed|nodeids|stepwise)$|^recording\.conf$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-(result|container|attachment)(\.\w+)?$)`,'i');
 function isArtefact(name){return ARTEFACT_NAME.test(String(name||'').replace(/\/+$/,'').split('/').pop());}
 
+// A DOMAIN's own links: its Uplevel page (the live mastersheet's "Uplevel
+// Resources" row, owner decision 2026-09-30) and its Drive folder.
+function domainLinks(n){
+  const p=n.p||{};
+  return '<div class="tier"><div class="tk">source links</div><div class="item">'+
+    '<span class="ik">Domain</span>'+
+    (lnk(p.uplevel_link,'Uplevel domain')||nolnk('Uplevel link','not in the Uplevel Resources rows'))+
+    (lnk(p.drive_folder_url,'Drive folder')||nolnk('Drive folder','no folder link in the mastersheet'))+
+    '</div></div>';
+}
+
 function moduleChain(id){
   const m=idx.byId.get(id); if(!m)return '';
   const sessions=new Map(), attached=new Map(), extras=[];
@@ -1315,6 +1326,7 @@ function moduleChain(id){
   const mp=m.p||{};
   out.push('<div class="item"><span class="ik">Module</span>'+
     (lnk(mp.uplevel_link,'Uplevel module')||nolnk('Uplevel link','not in the mastersheet row'))+
+    (lnk((dom&&(dom.p||{}).uplevel_link),'Uplevel: '+(dom?dom.l:'domain'))||'')+
     (lnk((dom&&(dom.p||{}).drive_folder_url),'Drive: '+(dom?dom.l:'domain')+' folder',
          'the domain folder; pass 6 records file ids, not folder ids, so the '+
          'module subfolder has no direct link')
@@ -1462,6 +1474,7 @@ async function openNode(id){
   const pr=[];
   if(facts) pr.push('<div class="facts">'+facts+'</div>');
   if(n&&n.t==='module'){ pr.push(moduleChain(id)); pr.push(topicLinks(id,10)); }
+  if(n&&n.t==='domain') pr.push(domainLinks(n));
   const tiers=(n&&n.t==='module')?peopleRows(id)
              :(n&&n.t==='instructor')?taughtRows(id):'';
   if(tiers) pr.push(tiers);

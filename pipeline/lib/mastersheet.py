@@ -58,6 +58,16 @@ UPLEVEL_TAB = _SCOPE["uplevel_resources"]["tab"]
 EXCLUDED_TABS = {e["tab"]: e["reason"] for e in _SCOPE["excluded"]}
 
 
+#: THE CITATION KEY for a fact read from the live sheet. `node_sources.file`
+#: names a row in `files`; the live sheet is not a corpus file, so it gets its
+#: own key — a path that says what it is and still ends in the sheet's name
+#: (validate.py checks instructor provenance by that ending).
+LIVE_DRIVE_ID = _SCOPE["source"]["drive_id"]
+LIVE_CITATION = f"live-sheet/{SHEET_FILE}"
+LIVE_URL = f"https://docs.google.com/spreadsheets/d/{LIVE_DRIVE_ID}"
+SUPERSEDED = [dict(x) for x in _SCOPE.get("superseded") or []]
+
+
 def _scoped(tab: str) -> str:
     if tab in DOMAIN_TABS or tab == UPLEVEL_TAB:
         return tab
@@ -266,7 +276,13 @@ def sheetnames(path: Path) -> list[str]:
 def uplevel_resources(path: Path) -> dict:
     """{domain tab: Uplevel link} — ONLY the four in-scope rows of the
     `Uplevel Resources` tab. Found by the `Domain | Uplevel Link` header, not
-    by position; a missing in-scope row fails."""
+    by position; a missing in-scope row fails. `uplevel_resource_rows` gives
+    the 0-based row of each, for provenance."""
+    return {k: v[0] for k, v in uplevel_resource_rows(path).items()}
+
+
+def uplevel_resource_rows(path: Path) -> dict:
+    """{domain tab: (Uplevel link, row0)}."""
     rows = _rows(path, UPLEVEL_TAB)
     links = cell_links(path, UPLEVEL_TAB)
     want = set(_SCOPE["uplevel_resources"]["rows"])
@@ -277,13 +293,13 @@ def uplevel_resources(path: Path) -> dict:
                 for j in range(i + 1, len(rows)):
                     dom = _cell(rows, j, c)
                     if dom in want:
-                        out[dom] = best_link(_cell(rows, j, c + 1), links.get((j, c + 1)))
+                        out[dom] = (best_link(_cell(rows, j, c + 1), links.get((j, c + 1))), j)
                 break
         if out:
             break
-    if set(out) != want or not all(out.values()):
+    if set(out) != want or not all(v[0] for v in out.values()):
         raise MastersheetError(f"{UPLEVEL_TAB}: expected an Uplevel link for each of "
-                               f"{sorted(want)}, found {sorted(k for k, v in out.items() if v)}")
+                               f"{sorted(want)}, found {sorted(k for k, v in out.items() if v[0])}")
     return out
 
 

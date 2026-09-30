@@ -177,10 +177,11 @@ module against the mastersheet; the window does not start until they
 confirm.** (Moved ahead of the window 2026-09-30 so the owner checks against the
 local build before production changes.)
 
-**State, 2026-09-30 (checklist review parts 1–2): 15 of 20 confirmed** — SD2/1–4,
-SD3/1–5, SD4/1–6, recorded in `config/owner-confirmations.yaml` (origin: hand),
-each bound to a fingerprint of its block's mastersheet facts so a later change
-takes the tick off. **SD1/1–5 are not confirmed.**
+**State, 2026-09-30 (checklist review part 3): 20 of 20 confirmed** —
+recorded in `config/owner-confirmations.yaml` (origin: hand), each bound to a
+fingerprint of its block's mastersheet facts so a later change takes the tick
+off. SD3/4 was re-bound once, recorded in the file: its only change was the
+owner's own PPL-13 rename (`Reginald` → `Reginald Johnson`).
 
 **SD1/1 Databases — CORRECTED 2026-09-30 (part 3).** It was first reported
 here as "the live sheet is a different Drive file; a re-fetch cannot fix this".
@@ -313,10 +314,20 @@ reason; an undeclared tab fails the build (`tests/test_mastersheet_scope.py`).
   modifiedTime, version and sha256; the freshness guard compares against it.
 - Diff before any rebuild: `python3 eval/mastersheet_diff.py OLD NEW` — every
   mastersheet fact; contact columns as counts only.
-- **Pending (part 3 §6, after the owner confirms the diff):** point pass 7 and
-  its readers at the live export, carry the corpus copy as a superseded source,
-  rebuild 7–8, re-derive against the live sheet (0 unexplained), regenerate
-  the checklist, tick SD1/1–5, full suite, CI, merge.
+- **Done (part 3 §6, 2026-09-30):** pass 7 and its readers read the live
+  export and cite it as `live-sheet/Resource Collection Mastersheet (Software
+  + System).xlsx` (a `files` row the projection registers); the corpus copy
+  is kept and marked `superseded_by`; each domain carries its Uplevel link
+  from `Uplevel Resources`; the re-derivation against the live sheet shows 0
+  unexplained differences; all 20 checklist blocks ticked.
+- **OWNER DECISION PENDING — the main graph still reads the corpus copy.**
+  Passes 2–4 (`pipeline/lib/sources.py`) read it for legacy-tier facts:
+  `Indian Instructors` names (a tab now excluded as contact-bearing),
+  `Instructor(FullStack)` roles and `teaches` grid (excluded as superseded),
+  and `Module Name` on eight tabs including the four out-of-scope domains.
+  "Not read for facts" was applied to row B as instructed; removing these
+  reads would drop legacy people and the legacy modules 16 MOD merges are
+  keyed to (CLAUDE.md §2a, §4), so it is the owner's call, not a default.
 
 ## 8 · Candidate for a later release — `Interview Repo`
 
@@ -330,7 +341,7 @@ and give it its own diff and review.
 
 # E · OPEN REVIEW ITEMS AND PENDING OWNER DECISIONS
 
-`docs/REVIEW-QUEUE.md` holds **89 rows: 67 answered, 22 open** (checklist
+`docs/REVIEW-QUEUE.md` holds **89 rows: 68 answered, 21 open** (checklist
 review, 2026-09-30). Answered = the owner has decided the row, "leave
 unresolved" included (convention stated at the top of `REVIEW-QUEUE.md`, same
 in both files).
@@ -339,17 +350,15 @@ in both files).
 |---|---:|---|
 | `MOD` | 18 | **all answered** — 16 applied; MOD-17/18 kept separate by decision (2026-09-30) |
 | `INS` | 32 | **all answered and applied** — INS-08/30/31/32 merged 2026-09-30 |
-| `PPL` | 13 | **11 answered** — PPL-01…08, 10, 11 merged; PPL-09 left unresolved; **PPL-12 open; PPL-13 open** (proposal: Reginald = Reginald Johnson) |
+| `PPL` | 13 | **12 answered** — PPL-01…11 and PPL-13 merged (PPL-13: Reginald = Reginald Johnson, superseding PPL-09's "unresolved"); **PPL-12 open** |
 | `DCK` | 14 | **open** — deck filename → instructor proposals |
 | `TOPv` | 3 | **answered and applied** — mastersheet name is the label, folder name is `label_raw` |
 | `TOPm` | 3 | **answered and applied** — same answer |
 | `TOPt` | 6 | **open** — lesson-plan tab → module |
 
-**Deliberately unresolved, by owner decision — do not "fix" this:**
-- `PPL-09` — `Reginald`. Keeps its module row; rendered unconfirmed
-  (`identity_unconfirmed`) in the checklist and the matrix.
+**Deliberately unresolved identities: none** since PPL-13 (2026-09-30).
 
-Answer the remaining 22 before Phase C where possible.
+Answer the remaining 21 before Phase C where possible.
 
 **PENDING — billing decision, the owner's:** raising the Vercel function
 `memory` setting buys proportionally more CPU, shortening interpreter start-up

@@ -586,7 +586,7 @@
    "source": "mod_0bc009fd274eea44",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 1,
      "sheet": "Full Stack Engineering"
@@ -600,7 +600,7 @@
    "source": "mod_0bc009fd274eea44",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 2,
      "sheet": "Full Stack Engineering"
@@ -614,7 +614,7 @@
    "source": "mod_0bc009fd274eea44",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 3,
      "sheet": "Full Stack Engineering"
@@ -628,7 +628,7 @@
    "source": "mod_0bc009fd274eea44",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 4,
      "sheet": "Full Stack Engineering"
@@ -642,7 +642,7 @@
    "source": "mod_0bc009fd274eea44",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 5,
      "sheet": "Full Stack Engineering"
@@ -656,7 +656,7 @@
    "source": "mod_0bc009fd274eea44",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 6,
      "sheet": "Full Stack Engineering"
@@ -670,7 +670,7 @@
    "source": "mod_0bc009fd274eea44",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 7,
      "sheet": "Full Stack Engineering"
@@ -679,12 +679,57 @@
    "target": "cla_5faf39ad14afb1c0"
   },
   {
+   "instructor_role": "primary",
+   "rel": "taught_by",
+   "source": "mod_0bc009fd274eea44",
+   "sources": [
+    {
+     "column": "primary",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 46,
+     "sheet": "Full Stack Engineering"
+    }
+   ],
+   "target": "ins_3ba3964184d6332f"
+  },
+  {
+   "instructor_role": "backup_1",
+   "rel": "taught_by",
+   "source": "mod_0bc009fd274eea44",
+   "sources": [
+    {
+     "column": "backup_1",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 46,
+     "sheet": "Full Stack Engineering"
+    }
+   ],
+   "target": "ins_1c6b316a16b31ba9"
+  },
+  {
+   "instructor_role": "backup_2",
+   "rel": "taught_by",
+   "source": "mod_0bc009fd274eea44",
+   "sources": [
+    {
+     "column": "backup_2",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 46,
+     "sheet": "Full Stack Engineering"
+    }
+   ],
+   "target": "ins_300c95f7134d7361"
+  },
+  {
    "rel": "delivers_session",
    "session_kind": "pre_class",
    "source": "mod_e5f708116a4b7fac",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 9,
      "sheet": "Full Stack Engineering"
@@ -698,7 +743,7 @@
    "source": "mod_e5f708116a4b7fac",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 10,
      "sheet": "Full Stack Engineering"
@@ -712,7 +757,7 @@
    "source": "mod_e5f708116a4b7fac",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 11,
      "sheet": "Full Stack Engineering"
@@ -726,7 +771,7 @@
    "source": "mod_e5f708116a4b7fac",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 12,
      "sheet": "Full Stack Engineering"
@@ -740,7 +785,7 @@
    "source": "mod_e5f708116a4b7fac",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 13,
      "sheet": "Full Stack Engineering"
@@ -754,7 +799,7 @@
    "source": "mod_e5f708116a4b7fac",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 14,
      "sheet": "Full Stack Engineering"
@@ -768,7 +813,7 @@
    "source": "mod_e5f708116a4b7fac",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 15,
      "sheet": "Full Stack Engineering"
@@ -783,7 +828,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 47,
      "sheet": "Full Stack Engineering"
@@ -798,7 +843,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 47,
      "sheet": "Full Stack Engineering"
@@ -813,7 +858,7 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 47,
      "sheet": "Full Stack Engineering"
@@ -827,7 +872,7 @@
    "source": "mod_ab9e5ee393195cf2",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 17,
      "sheet": "Full Stack Engineering"
@@ -841,7 +886,7 @@
    "source": "mod_ab9e5ee393195cf2",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 18,
      "sheet": "Full Stack Engineering"
@@ -855,7 +900,7 @@
    "source": "mod_ab9e5ee393195cf2",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 19,
      "sheet": "Full Stack Engineering"
@@ -869,7 +914,7 @@
    "source": "mod_ab9e5ee393195cf2",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 20,
      "sheet": "Full Stack Engineering"
@@ -883,7 +928,7 @@
    "source": "mod_ab9e5ee393195cf2",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 21,
      "sheet": "Full Stack Engineering"
@@ -897,7 +942,7 @@
    "source": "mod_ab9e5ee393195cf2",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 22,
      "sheet": "Full Stack Engineering"
@@ -911,7 +956,7 @@
    "source": "mod_ab9e5ee393195cf2",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 23,
      "sheet": "Full Stack Engineering"
@@ -926,7 +971,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Full Stack Engineering"
@@ -941,7 +986,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Full Stack Engineering"
@@ -956,7 +1001,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Full Stack Engineering"
@@ -971,7 +1016,7 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Full Stack Engineering"
@@ -986,7 +1031,7 @@
    "sources": [
     {
      "column": "backup_3",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Full Stack Engineering"
@@ -1000,7 +1045,7 @@
    "source": "mod_00ee7c30fff3dc36",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 25,
      "sheet": "Full Stack Engineering"
@@ -1014,7 +1059,7 @@
    "source": "mod_00ee7c30fff3dc36",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 26,
      "sheet": "Full Stack Engineering"
@@ -1028,7 +1073,7 @@
    "source": "mod_00ee7c30fff3dc36",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 27,
      "sheet": "Full Stack Engineering"
@@ -1042,7 +1087,7 @@
    "source": "mod_00ee7c30fff3dc36",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 28,
      "sheet": "Full Stack Engineering"
@@ -1056,7 +1101,7 @@
    "source": "mod_00ee7c30fff3dc36",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 29,
      "sheet": "Full Stack Engineering"
@@ -1070,7 +1115,7 @@
    "source": "mod_00ee7c30fff3dc36",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 30,
      "sheet": "Full Stack Engineering"
@@ -1084,7 +1129,7 @@
    "source": "mod_00ee7c30fff3dc36",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 31,
      "sheet": "Full Stack Engineering"
@@ -1099,7 +1144,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 49,
      "sheet": "Full Stack Engineering"
@@ -1114,7 +1159,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 49,
      "sheet": "Full Stack Engineering"
@@ -1129,7 +1174,7 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 49,
      "sheet": "Full Stack Engineering"
@@ -1143,7 +1188,7 @@
    "source": "mod_b591bcb07c5eb33b",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 33,
      "sheet": "Full Stack Engineering"
@@ -1157,7 +1202,7 @@
    "source": "mod_b591bcb07c5eb33b",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 34,
      "sheet": "Full Stack Engineering"
@@ -1171,7 +1216,7 @@
    "source": "mod_b591bcb07c5eb33b",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 35,
      "sheet": "Full Stack Engineering"
@@ -1185,7 +1230,7 @@
    "source": "mod_b591bcb07c5eb33b",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 36,
      "sheet": "Full Stack Engineering"
@@ -1199,7 +1244,7 @@
    "source": "mod_b591bcb07c5eb33b",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 37,
      "sheet": "Full Stack Engineering"
@@ -1213,7 +1258,7 @@
    "source": "mod_b591bcb07c5eb33b",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 38,
      "sheet": "Full Stack Engineering"
@@ -1227,7 +1272,7 @@
    "source": "mod_b591bcb07c5eb33b",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 39,
      "sheet": "Full Stack Engineering"
@@ -1242,7 +1287,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Full Stack Engineering"
@@ -1257,7 +1302,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Full Stack Engineering"
@@ -1272,7 +1317,7 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Full Stack Engineering"
@@ -1287,7 +1332,7 @@
    "sources": [
     {
      "column": "backup_3",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Full Stack Engineering"
@@ -1301,7 +1346,7 @@
    "source": "mod_7af5a48eabe4adb6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 1,
      "sheet": "Frontend Engineering"
@@ -1315,7 +1360,7 @@
    "source": "mod_7af5a48eabe4adb6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 2,
      "sheet": "Frontend Engineering"
@@ -1329,7 +1374,7 @@
    "source": "mod_7af5a48eabe4adb6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 3,
      "sheet": "Frontend Engineering"
@@ -1343,7 +1388,7 @@
    "source": "mod_7af5a48eabe4adb6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 4,
      "sheet": "Frontend Engineering"
@@ -1357,7 +1402,7 @@
    "source": "mod_7af5a48eabe4adb6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 5,
      "sheet": "Frontend Engineering"
@@ -1371,7 +1416,7 @@
    "source": "mod_7af5a48eabe4adb6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 6,
      "sheet": "Frontend Engineering"
@@ -1385,7 +1430,7 @@
    "source": "mod_7af5a48eabe4adb6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 7,
      "sheet": "Frontend Engineering"
@@ -1400,7 +1445,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 38,
      "sheet": "Frontend Engineering"
@@ -1415,7 +1460,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 38,
      "sheet": "Frontend Engineering"
@@ -1429,7 +1474,7 @@
    "source": "mod_50a33a8e184e6849",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 9,
      "sheet": "Frontend Engineering"
@@ -1443,7 +1488,7 @@
    "source": "mod_50a33a8e184e6849",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 10,
      "sheet": "Frontend Engineering"
@@ -1457,7 +1502,7 @@
    "source": "mod_50a33a8e184e6849",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 11,
      "sheet": "Frontend Engineering"
@@ -1471,7 +1516,7 @@
    "source": "mod_50a33a8e184e6849",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 12,
      "sheet": "Frontend Engineering"
@@ -1485,7 +1530,7 @@
    "source": "mod_50a33a8e184e6849",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 13,
      "sheet": "Frontend Engineering"
@@ -1499,7 +1544,7 @@
    "source": "mod_50a33a8e184e6849",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 14,
      "sheet": "Frontend Engineering"
@@ -1513,7 +1558,7 @@
    "source": "mod_50a33a8e184e6849",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 15,
      "sheet": "Frontend Engineering"
@@ -1528,7 +1573,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 39,
      "sheet": "Frontend Engineering"
@@ -1543,7 +1588,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 39,
      "sheet": "Frontend Engineering"
@@ -1557,7 +1602,7 @@
    "source": "mod_0d3e49f1778b9090",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 17,
      "sheet": "Frontend Engineering"
@@ -1571,7 +1616,7 @@
    "source": "mod_0d3e49f1778b9090",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 18,
      "sheet": "Frontend Engineering"
@@ -1585,7 +1630,7 @@
    "source": "mod_0d3e49f1778b9090",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 19,
      "sheet": "Frontend Engineering"
@@ -1599,7 +1644,7 @@
    "source": "mod_0d3e49f1778b9090",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 20,
      "sheet": "Frontend Engineering"
@@ -1613,7 +1658,7 @@
    "source": "mod_0d3e49f1778b9090",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 21,
      "sheet": "Frontend Engineering"
@@ -1627,7 +1672,7 @@
    "source": "mod_0d3e49f1778b9090",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 22,
      "sheet": "Frontend Engineering"
@@ -1641,7 +1686,7 @@
    "source": "mod_0d3e49f1778b9090",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 23,
      "sheet": "Frontend Engineering"
@@ -1656,7 +1701,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 40,
      "sheet": "Frontend Engineering"
@@ -1671,7 +1716,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 40,
      "sheet": "Frontend Engineering"
@@ -1685,7 +1730,7 @@
    "source": "mod_bb30095a76e9b5c6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 25,
      "sheet": "Frontend Engineering"
@@ -1699,7 +1744,7 @@
    "source": "mod_bb30095a76e9b5c6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 26,
      "sheet": "Frontend Engineering"
@@ -1713,7 +1758,7 @@
    "source": "mod_bb30095a76e9b5c6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 27,
      "sheet": "Frontend Engineering"
@@ -1727,7 +1772,7 @@
    "source": "mod_bb30095a76e9b5c6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 28,
      "sheet": "Frontend Engineering"
@@ -1741,7 +1786,7 @@
    "source": "mod_bb30095a76e9b5c6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 29,
      "sheet": "Frontend Engineering"
@@ -1755,7 +1800,7 @@
    "source": "mod_bb30095a76e9b5c6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 30,
      "sheet": "Frontend Engineering"
@@ -1769,7 +1814,7 @@
    "source": "mod_bb30095a76e9b5c6",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 31,
      "sheet": "Frontend Engineering"
@@ -1784,7 +1829,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 41,
      "sheet": "Frontend Engineering"
@@ -1799,7 +1844,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 41,
      "sheet": "Frontend Engineering"
@@ -1813,7 +1858,7 @@
    "source": "mod_36793b37f57c09a0",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 1,
      "sheet": "Backend Engineering"
@@ -1827,7 +1872,7 @@
    "source": "mod_36793b37f57c09a0",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 2,
      "sheet": "Backend Engineering"
@@ -1841,7 +1886,7 @@
    "source": "mod_36793b37f57c09a0",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 3,
      "sheet": "Backend Engineering"
@@ -1855,7 +1900,7 @@
    "source": "mod_36793b37f57c09a0",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 4,
      "sheet": "Backend Engineering"
@@ -1869,7 +1914,7 @@
    "source": "mod_36793b37f57c09a0",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 5,
      "sheet": "Backend Engineering"
@@ -1883,7 +1928,7 @@
    "source": "mod_36793b37f57c09a0",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 6,
      "sheet": "Backend Engineering"
@@ -1897,7 +1942,7 @@
    "source": "mod_36793b37f57c09a0",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 7,
      "sheet": "Backend Engineering"
@@ -1912,7 +1957,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 46,
      "sheet": "Backend Engineering"
@@ -1927,7 +1972,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 46,
      "sheet": "Backend Engineering"
@@ -1942,7 +1987,7 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 46,
      "sheet": "Backend Engineering"
@@ -1957,7 +2002,7 @@
    "sources": [
     {
      "column": "backup_3",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 46,
      "sheet": "Backend Engineering"
@@ -1971,7 +2016,7 @@
    "source": "mod_cefc969d84e291e5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 9,
      "sheet": "Backend Engineering"
@@ -1985,7 +2030,7 @@
    "source": "mod_cefc969d84e291e5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 10,
      "sheet": "Backend Engineering"
@@ -1999,7 +2044,7 @@
    "source": "mod_cefc969d84e291e5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 11,
      "sheet": "Backend Engineering"
@@ -2013,7 +2058,7 @@
    "source": "mod_cefc969d84e291e5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 12,
      "sheet": "Backend Engineering"
@@ -2027,7 +2072,7 @@
    "source": "mod_cefc969d84e291e5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 13,
      "sheet": "Backend Engineering"
@@ -2041,7 +2086,7 @@
    "source": "mod_cefc969d84e291e5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 14,
      "sheet": "Backend Engineering"
@@ -2055,7 +2100,7 @@
    "source": "mod_cefc969d84e291e5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 15,
      "sheet": "Backend Engineering"
@@ -2070,7 +2115,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 47,
      "sheet": "Backend Engineering"
@@ -2085,7 +2130,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 47,
      "sheet": "Backend Engineering"
@@ -2100,7 +2145,7 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 47,
      "sheet": "Backend Engineering"
@@ -2114,7 +2159,7 @@
    "source": "mod_150eb79c4ec6f254",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 17,
      "sheet": "Backend Engineering"
@@ -2128,7 +2173,7 @@
    "source": "mod_150eb79c4ec6f254",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 18,
      "sheet": "Backend Engineering"
@@ -2142,7 +2187,7 @@
    "source": "mod_150eb79c4ec6f254",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 19,
      "sheet": "Backend Engineering"
@@ -2156,7 +2201,7 @@
    "source": "mod_150eb79c4ec6f254",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 20,
      "sheet": "Backend Engineering"
@@ -2170,7 +2215,7 @@
    "source": "mod_150eb79c4ec6f254",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 21,
      "sheet": "Backend Engineering"
@@ -2184,7 +2229,7 @@
    "source": "mod_150eb79c4ec6f254",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 22,
      "sheet": "Backend Engineering"
@@ -2198,7 +2243,7 @@
    "source": "mod_150eb79c4ec6f254",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 23,
      "sheet": "Backend Engineering"
@@ -2213,7 +2258,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Backend Engineering"
@@ -2228,7 +2273,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Backend Engineering"
@@ -2243,7 +2288,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Backend Engineering"
@@ -2257,7 +2302,7 @@
    "source": "mod_44e86d468ffa62f5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 25,
      "sheet": "Backend Engineering"
@@ -2271,7 +2316,7 @@
    "source": "mod_44e86d468ffa62f5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 26,
      "sheet": "Backend Engineering"
@@ -2285,7 +2330,7 @@
    "source": "mod_44e86d468ffa62f5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 27,
      "sheet": "Backend Engineering"
@@ -2299,7 +2344,7 @@
    "source": "mod_44e86d468ffa62f5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 28,
      "sheet": "Backend Engineering"
@@ -2313,7 +2358,7 @@
    "source": "mod_44e86d468ffa62f5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 29,
      "sheet": "Backend Engineering"
@@ -2327,7 +2372,7 @@
    "source": "mod_44e86d468ffa62f5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 30,
      "sheet": "Backend Engineering"
@@ -2341,7 +2386,7 @@
    "source": "mod_44e86d468ffa62f5",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 31,
      "sheet": "Backend Engineering"
@@ -2356,7 +2401,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 49,
      "sheet": "Backend Engineering"
@@ -2371,7 +2416,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 49,
      "sheet": "Backend Engineering"
@@ -2386,7 +2431,7 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 49,
      "sheet": "Backend Engineering"
@@ -2400,7 +2445,7 @@
    "source": "mod_68672ce55043c450",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 33,
      "sheet": "Backend Engineering"
@@ -2414,7 +2459,7 @@
    "source": "mod_68672ce55043c450",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 34,
      "sheet": "Backend Engineering"
@@ -2428,7 +2473,7 @@
    "source": "mod_68672ce55043c450",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 35,
      "sheet": "Backend Engineering"
@@ -2442,7 +2487,7 @@
    "source": "mod_68672ce55043c450",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 36,
      "sheet": "Backend Engineering"
@@ -2456,7 +2501,7 @@
    "source": "mod_68672ce55043c450",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 37,
      "sheet": "Backend Engineering"
@@ -2470,7 +2515,7 @@
    "source": "mod_68672ce55043c450",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 38,
      "sheet": "Backend Engineering"
@@ -2484,7 +2529,7 @@
    "source": "mod_68672ce55043c450",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 39,
      "sheet": "Backend Engineering"
@@ -2499,7 +2544,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Backend Engineering"
@@ -2514,7 +2559,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Backend Engineering"
@@ -2528,7 +2573,7 @@
    "source": "mod_2e4842a29bc521ba",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 1,
      "sheet": "Test Engineering"
@@ -2542,7 +2587,7 @@
    "source": "mod_2e4842a29bc521ba",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 2,
      "sheet": "Test Engineering"
@@ -2556,7 +2601,7 @@
    "source": "mod_2e4842a29bc521ba",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 3,
      "sheet": "Test Engineering"
@@ -2570,7 +2615,7 @@
    "source": "mod_2e4842a29bc521ba",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 4,
      "sheet": "Test Engineering"
@@ -2584,7 +2629,7 @@
    "source": "mod_2e4842a29bc521ba",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 5,
      "sheet": "Test Engineering"
@@ -2598,7 +2643,7 @@
    "source": "mod_2e4842a29bc521ba",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 6,
      "sheet": "Test Engineering"
@@ -2613,7 +2658,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Test Engineering"
@@ -2628,7 +2673,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Test Engineering"
@@ -2643,7 +2688,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Test Engineering"
@@ -2658,7 +2703,7 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Test Engineering"
@@ -2672,7 +2717,7 @@
    "source": "mod_3b8af36fddf1b226",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 8,
      "sheet": "Test Engineering"
@@ -2686,7 +2731,7 @@
    "source": "mod_3b8af36fddf1b226",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 9,
      "sheet": "Test Engineering"
@@ -2700,7 +2745,7 @@
    "source": "mod_3b8af36fddf1b226",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 10,
      "sheet": "Test Engineering"
@@ -2714,7 +2759,7 @@
    "source": "mod_3b8af36fddf1b226",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 11,
      "sheet": "Test Engineering"
@@ -2728,7 +2773,7 @@
    "source": "mod_3b8af36fddf1b226",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 12,
      "sheet": "Test Engineering"
@@ -2742,7 +2787,7 @@
    "source": "mod_3b8af36fddf1b226",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 13,
      "sheet": "Test Engineering"
@@ -2757,7 +2802,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 51,
      "sheet": "Test Engineering"
@@ -2772,7 +2817,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 51,
      "sheet": "Test Engineering"
@@ -2787,7 +2832,7 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 51,
      "sheet": "Test Engineering"
@@ -2801,7 +2846,7 @@
    "source": "mod_a036b35b54865c2a",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 15,
      "sheet": "Test Engineering"
@@ -2815,7 +2860,7 @@
    "source": "mod_a036b35b54865c2a",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 16,
      "sheet": "Test Engineering"
@@ -2829,7 +2874,7 @@
    "source": "mod_a036b35b54865c2a",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 17,
      "sheet": "Test Engineering"
@@ -2843,7 +2888,7 @@
    "source": "mod_a036b35b54865c2a",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 18,
      "sheet": "Test Engineering"
@@ -2857,7 +2902,7 @@
    "source": "mod_a036b35b54865c2a",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 19,
      "sheet": "Test Engineering"
@@ -2871,7 +2916,7 @@
    "source": "mod_a036b35b54865c2a",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 20,
      "sheet": "Test Engineering"
@@ -2886,7 +2931,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 52,
      "sheet": "Test Engineering"
@@ -2900,7 +2945,7 @@
    "source": "mod_e3865bea05ed325a",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 22,
      "sheet": "Test Engineering"
@@ -2914,7 +2959,7 @@
    "source": "mod_e3865bea05ed325a",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 23,
      "sheet": "Test Engineering"
@@ -2928,7 +2973,7 @@
    "source": "mod_e3865bea05ed325a",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 24,
      "sheet": "Test Engineering"
@@ -2942,7 +2987,7 @@
    "source": "mod_e3865bea05ed325a",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 25,
      "sheet": "Test Engineering"
@@ -2956,7 +3001,7 @@
    "source": "mod_e3865bea05ed325a",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 26,
      "sheet": "Test Engineering"
@@ -2970,7 +3015,7 @@
    "source": "mod_e3865bea05ed325a",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 27,
      "sheet": "Test Engineering"
@@ -2985,7 +3030,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 53,
      "sheet": "Test Engineering"
@@ -3000,7 +3045,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 53,
      "sheet": "Test Engineering"
@@ -3015,7 +3060,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 53,
      "sheet": "Test Engineering"
@@ -3029,7 +3074,7 @@
    "source": "mod_1262237b9b72b360",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 29,
      "sheet": "Test Engineering"
@@ -3043,7 +3088,7 @@
    "source": "mod_1262237b9b72b360",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 30,
      "sheet": "Test Engineering"
@@ -3057,7 +3102,7 @@
    "source": "mod_1262237b9b72b360",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 31,
      "sheet": "Test Engineering"
@@ -3071,7 +3116,7 @@
    "source": "mod_1262237b9b72b360",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 32,
      "sheet": "Test Engineering"
@@ -3085,7 +3130,7 @@
    "source": "mod_1262237b9b72b360",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 33,
      "sheet": "Test Engineering"
@@ -3099,7 +3144,7 @@
    "source": "mod_1262237b9b72b360",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 34,
      "sheet": "Test Engineering"
@@ -3114,7 +3159,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 54,
      "sheet": "Test Engineering"
@@ -3129,7 +3174,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 54,
      "sheet": "Test Engineering"
@@ -3143,7 +3188,7 @@
    "source": "mod_b1feb3161efd9eaa",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 36,
      "sheet": "Test Engineering"
@@ -3157,7 +3202,7 @@
    "source": "mod_b1feb3161efd9eaa",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 37,
      "sheet": "Test Engineering"
@@ -3171,7 +3216,7 @@
    "source": "mod_b1feb3161efd9eaa",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 38,
      "sheet": "Test Engineering"
@@ -3185,7 +3230,7 @@
    "source": "mod_b1feb3161efd9eaa",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 39,
      "sheet": "Test Engineering"
@@ -3199,7 +3244,7 @@
    "source": "mod_b1feb3161efd9eaa",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 40,
      "sheet": "Test Engineering"
@@ -3213,7 +3258,7 @@
    "source": "mod_b1feb3161efd9eaa",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 41,
      "sheet": "Test Engineering"
@@ -3228,7 +3273,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 55,
      "sheet": "Test Engineering"
@@ -3243,7 +3288,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 55,
      "sheet": "Test Engineering"
@@ -3258,7 +3303,7 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 55,
      "sheet": "Test Engineering"
@@ -144556,7 +144601,7 @@
   }
  ],
  "meta": {
-  "built_at": "2026-09-29T22:33:16Z",
+  "built_at": "2026-09-30T05:25:34Z",
   "caveat": "Every count is a floor over 4 of 12 domain folders in 1 of 5 registry rows. Instructors and owners are DEFERRED and no person node exists. D1: no people from deck content.",
   "edge_counts": {
    "assessed_by": 64,
@@ -144571,9 +144616,9 @@
    "reviewed_in": 3,
    "scheduled_in": 20,
    "ships_with": 38,
-   "taught_by": 54
+   "taught_by": 57
   },
-  "edges": 8165,
+  "edges": 8168,
   "gaps": {
    "SD1: Full Stack: curriculum doc not joined to a module": 1,
    "SD2: Frontend: curriculum doc not joined to a module": 4,
@@ -144590,7 +144635,19 @@
    "session (folder)": 623,
    "session (name)": 30
   },
+  "mastersheet_excluded_tabs": [
+   "Interview Repo",
+   "Upskill Guide",
+   "Cloud Engineering",
+   "SRE Engineering",
+   "Security Engineering",
+   "Embedded Systems",
+   "Indian Instructors",
+   "Training Sheet",
+   "Instructor(FullStack)"
+  ],
   "mastersheet_red_cells_unexplained": [],
+  "mastersheet_source": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
   "mastersheet_withdrawn_roles": [
    "sd1-4-daniel-grundel-backup-3"
   ],
@@ -144602,14 +144659,14 @@
    "content_topic": 2770,
    "curriculum_doc": 23,
    "domain": 4,
-   "file": 1883,
+   "file": 1884,
    "instructor": 38,
    "instructor_contact": 28,
    "module": 20,
    "program_week": 20,
    "slide_deck": 412
   },
-  "nodes": 5409,
+  "nodes": 5410,
   "scope": "registry row B, four approved domains (D2a)",
   "source": "drive-cache/content-rowB",
   "taxonomy_version": 2,
@@ -144632,9 +144689,16 @@
     {
      "file": "SD1: Full Stack",
      "origin": "corpus"
+    },
+    {
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 7,
+     "sheet": "Uplevel Resources"
     }
    ],
-   "type": "domain"
+   "type": "domain",
+   "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/4731/"
   },
   {
    "drive_folder_url": "https://drive.google.com/drive/folders/18k7YUIxVEPkY2MbHN8Vbd6cnEVK1tdLW?usp=drive_link",
@@ -144647,9 +144711,16 @@
     {
      "file": "SD2: Frontend",
      "origin": "corpus"
+    },
+    {
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 9,
+     "sheet": "Uplevel Resources"
     }
    ],
-   "type": "domain"
+   "type": "domain",
+   "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/4875/"
   },
   {
    "drive_folder_url": "https://drive.google.com/drive/folders/1li479kasP1S44g2PMyNfFJSMi1wdXBDh?usp=drive_link",
@@ -144662,9 +144733,16 @@
     {
      "file": "SD3: Backend Engineering",
      "origin": "corpus"
+    },
+    {
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 8,
+     "sheet": "Uplevel Resources"
     }
    ],
-   "type": "domain"
+   "type": "domain",
+   "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/4874/"
   },
   {
    "drive_folder_url": "https://drive.google.com/drive/folders/1Z9xX6NgoHXZgqdlsuDPIquANr4gxfHNG?usp=drive_link",
@@ -144677,9 +144755,16 @@
     {
      "file": "SD4: Test Engineering",
      "origin": "corpus"
+    },
+    {
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 10,
+     "sheet": "Uplevel Resources"
     }
    ],
-   "type": "domain"
+   "type": "domain",
+   "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/4876/"
   },
   {
    "domain_slug": "full-stack",
@@ -145374,6 +145459,23 @@
    "type": "program_week"
   },
   {
+   "drive_file_id": "1setMmRvBUNu9_85nT4xvvUFySodB6kiWb7bQ8qLEqAQ",
+   "drive_url": "https://docs.google.com/spreadsheets/d/1setMmRvBUNu9_85nT4xvvUFySodB6kiWb7bQ8qLEqAQ",
+   "id": "fil_486ed316301361b4",
+   "label": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+   "label_raw": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+   "mime": "application/vnd.google-apps.spreadsheet",
+   "relative_path": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+   "sensitive": false,
+   "sources": [
+    {
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus"
+    }
+   ],
+   "type": "file"
+  },
+  {
    "id": "cla_c20975bbcad83f16",
    "label": "Databases - Foundation Material",
    "label_raw": "Databases - Foundation Material",
@@ -145382,7 +145484,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 1,
      "sheet": "Full Stack Engineering"
@@ -145400,7 +145502,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 2,
      "sheet": "Full Stack Engineering"
@@ -145418,7 +145520,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 3,
      "sheet": "Full Stack Engineering"
@@ -145436,7 +145538,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 4,
      "sheet": "Full Stack Engineering"
@@ -145454,7 +145556,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 5,
      "sheet": "Full Stack Engineering"
@@ -145472,7 +145574,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 6,
      "sheet": "Full Stack Engineering"
@@ -145490,7 +145592,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 7,
      "sheet": "Full Stack Engineering"
@@ -145498,6 +145600,160 @@
    ],
    "type": "class_session",
    "uplevel_link": "https://uplevel.interviewkickstart.com/update_resource_collection/1079/"
+  },
+  {
+   "cross_validated": false,
+   "current_company": "Google",
+   "current_designation": "Software Engineer III",
+   "id": "ins_3ba3964184d6332f",
+   "label": "Konstantinos Pappas",
+   "label_raw": "Konstantinos Pappas",
+   "past_companies": "Amazon (Software Engineer II & I)\n\nUniversity of Michigan (Research Assistant \u2013 academic but highly reputed)",
+   "sensitive": false,
+   "sources": [
+    {
+     "column": "primary",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 46,
+     "sheet": "Full Stack Engineering"
+    },
+    {
+     "column": "backup_2",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 49,
+     "sheet": "Full Stack Engineering"
+    },
+    {
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 56,
+     "sheet": "Full Stack Engineering"
+    },
+    {
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 56,
+     "sheet": "Backend Engineering"
+    }
+   ],
+   "type": "instructor",
+   "years_experience": "15+ years"
+  },
+  {
+   "cross_validated": false,
+   "current_company": "Google",
+   "current_designation": "Designation: Staff Engineer (since Jan 2019, various roles)\nCurrent Role: Driving GenAI strategy for Google Meet (Mar 2025 \u2013 Present)",
+   "id": "ins_1c6b316a16b31ba9",
+   "label": "Ashish Kaila",
+   "label_raw": "Ashish Kaila",
+   "past_companies": "Amazon \u2013 Senior SDE & Manager (6.5 years) \u2013 Mobile, Robotics, Navigation\nMicrosoft \u2013 SDE (3 years) \u2013 Visual Studio, Windows Live\nBlackBerry \u2013 Technical Lead (4+ years)",
+   "sensitive": false,
+   "sources": [
+    {
+     "column": "backup_1",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 46,
+     "sheet": "Full Stack Engineering"
+    },
+    {
+     "column": "backup_1",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 49,
+     "sheet": "Full Stack Engineering"
+    },
+    {
+     "column": "backup_3",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 50,
+     "sheet": "Full Stack Engineering"
+    },
+    {
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 62,
+     "sheet": "Full Stack Engineering"
+    },
+    {
+     "column": "backup_1",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 41,
+     "sheet": "Frontend Engineering"
+    },
+    {
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 49,
+     "sheet": "Frontend Engineering"
+    },
+    {
+     "column": "backup_3",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 46,
+     "sheet": "Backend Engineering"
+    },
+    {
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 63,
+     "sheet": "Backend Engineering"
+    }
+   ],
+   "type": "instructor",
+   "years_experience": "20+ years"
+  },
+  {
+   "cross_validated": false,
+   "current_company": "CDK Global",
+   "current_designation": "Designation: Vice President, Product & Technology",
+   "id": "ins_300c95f7134d7361",
+   "label": "Nikhil Kolekar",
+   "label_raw": "Nikhil Kolekar",
+   "past_companies": "Viasat Inc. \u2013 VP, Platform Technology (since 2019)\nPayPal \u2013 Head of API Platform & Strategy (7 yrs)\neBay \u2013 Group Product Manager, Senior Eng. Manager (7 yrs 8 mos)\nSun Microsystems, Silicon Graphics, MCI/Systemhouse \u2013 Early career roles in software engineering & architecture",
+   "sensitive": false,
+   "sources": [
+    {
+     "column": "backup_2",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 46,
+     "sheet": "Full Stack Engineering"
+    },
+    {
+     "column": "backup_3",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 48,
+     "sheet": "Full Stack Engineering"
+    },
+    {
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 63,
+     "sheet": "Full Stack Engineering"
+    },
+    {
+     "column": "backup_2",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 47,
+     "sheet": "Backend Engineering"
+    },
+    {
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
+     "origin": "corpus",
+     "row": 64,
+     "sheet": "Backend Engineering"
+    }
+   ],
+   "type": "instructor",
+   "years_experience": "20+ years"
   },
   {
    "id": "cla_f4e11e925223f981",
@@ -145508,7 +145764,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 9,
      "sheet": "Full Stack Engineering"
@@ -145526,7 +145782,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 10,
      "sheet": "Full Stack Engineering"
@@ -145544,7 +145800,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 11,
      "sheet": "Full Stack Engineering"
@@ -145562,7 +145818,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 12,
      "sheet": "Full Stack Engineering"
@@ -145580,7 +145836,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 13,
      "sheet": "Full Stack Engineering"
@@ -145598,7 +145854,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 14,
      "sheet": "Full Stack Engineering"
@@ -145616,7 +145872,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 15,
      "sheet": "Full Stack Engineering"
@@ -145634,21 +145890,21 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 47,
      "sheet": "Full Stack Engineering"
     },
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 46,
      "sheet": "Backend Engineering"
     },
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Backend Engineering"
@@ -145668,47 +145924,47 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 47,
      "sheet": "Full Stack Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 59,
      "sheet": "Full Stack Engineering"
     },
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 46,
      "sheet": "Backend Engineering"
     },
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 47,
      "sheet": "Backend Engineering"
     },
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Backend Engineering"
     },
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Backend Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 58,
      "sheet": "Backend Engineering"
@@ -145726,21 +145982,21 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 47,
      "sheet": "Full Stack Engineering"
     },
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Full Stack Engineering"
     },
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Full Stack Engineering"
@@ -145757,7 +146013,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 17,
      "sheet": "Full Stack Engineering"
@@ -145775,7 +146031,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 18,
      "sheet": "Full Stack Engineering"
@@ -145793,7 +146049,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 19,
      "sheet": "Full Stack Engineering"
@@ -145811,7 +146067,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 20,
      "sheet": "Full Stack Engineering"
@@ -145829,7 +146085,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 21,
      "sheet": "Full Stack Engineering"
@@ -145847,7 +146103,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 22,
      "sheet": "Full Stack Engineering"
@@ -145865,7 +146121,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 23,
      "sheet": "Full Stack Engineering"
@@ -145886,19 +146142,19 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Full Stack Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 60,
      "sheet": "Full Stack Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 60,
      "sheet": "Backend Engineering"
@@ -145916,7 +146172,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Full Stack Engineering"
@@ -145936,62 +146192,22 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Full Stack Engineering"
     },
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 49,
      "sheet": "Backend Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 62,
-     "sheet": "Backend Engineering"
-    }
-   ],
-   "type": "instructor",
-   "years_experience": "20+ years"
-  },
-  {
-   "cross_validated": false,
-   "current_company": "CDK Global",
-   "current_designation": "Designation: Vice President, Product & Technology",
-   "id": "ins_300c95f7134d7361",
-   "label": "Nikhil Kolekar",
-   "label_raw": "Nikhil Kolekar",
-   "past_companies": "Viasat Inc. \u2013 VP, Platform Technology (since 2019)\nPayPal \u2013 Head of API Platform & Strategy (7 yrs)\neBay \u2013 Group Product Manager, Senior Eng. Manager (7 yrs 8 mos)\nSun Microsystems, Silicon Graphics, MCI/Systemhouse \u2013 Early career roles in software engineering & architecture",
-   "sensitive": false,
-   "sources": [
-    {
-     "column": "backup_3",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 48,
-     "sheet": "Full Stack Engineering"
-    },
-    {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 63,
-     "sheet": "Full Stack Engineering"
-    },
-    {
-     "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 47,
-     "sheet": "Backend Engineering"
-    },
-    {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 64,
      "sheet": "Backend Engineering"
     }
    ],
@@ -146007,7 +146223,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 25,
      "sheet": "Full Stack Engineering"
@@ -146025,7 +146241,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 26,
      "sheet": "Full Stack Engineering"
@@ -146043,7 +146259,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 27,
      "sheet": "Full Stack Engineering"
@@ -146061,7 +146277,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 28,
      "sheet": "Full Stack Engineering"
@@ -146079,7 +146295,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 29,
      "sheet": "Full Stack Engineering"
@@ -146097,7 +146313,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 30,
      "sheet": "Full Stack Engineering"
@@ -146115,7 +146331,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 31,
      "sheet": "Full Stack Engineering"
@@ -146135,20 +146351,20 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 49,
      "sheet": "Full Stack Engineering"
     },
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Full Stack Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 54,
      "sheet": "Full Stack Engineering"
@@ -146156,99 +146372,6 @@
    ],
    "type": "instructor",
    "years_experience": "14+"
-  },
-  {
-   "cross_validated": false,
-   "current_company": "Google",
-   "current_designation": "Designation: Staff Engineer (since Jan 2019, various roles)\nCurrent Role: Driving GenAI strategy for Google Meet (Mar 2025 \u2013 Present)",
-   "id": "ins_1c6b316a16b31ba9",
-   "label": "Ashish Kaila",
-   "label_raw": "Ashish Kaila",
-   "past_companies": "Amazon \u2013 Senior SDE & Manager (6.5 years) \u2013 Mobile, Robotics, Navigation\nMicrosoft \u2013 SDE (3 years) \u2013 Visual Studio, Windows Live\nBlackBerry \u2013 Technical Lead (4+ years)",
-   "sensitive": false,
-   "sources": [
-    {
-     "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 49,
-     "sheet": "Full Stack Engineering"
-    },
-    {
-     "column": "backup_3",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 50,
-     "sheet": "Full Stack Engineering"
-    },
-    {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 62,
-     "sheet": "Full Stack Engineering"
-    },
-    {
-     "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 41,
-     "sheet": "Frontend Engineering"
-    },
-    {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 49,
-     "sheet": "Frontend Engineering"
-    },
-    {
-     "column": "backup_3",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 46,
-     "sheet": "Backend Engineering"
-    },
-    {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 63,
-     "sheet": "Backend Engineering"
-    }
-   ],
-   "type": "instructor",
-   "years_experience": "20+ years"
-  },
-  {
-   "cross_validated": false,
-   "current_company": "Google",
-   "current_designation": "Software Engineer III",
-   "id": "ins_3ba3964184d6332f",
-   "label": "Konstantinos Pappas",
-   "label_raw": "Konstantinos Pappas",
-   "past_companies": "Amazon (Software Engineer II & I)\n\nUniversity of Michigan (Research Assistant \u2013 academic but highly reputed)",
-   "sensitive": false,
-   "sources": [
-    {
-     "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 49,
-     "sheet": "Full Stack Engineering"
-    },
-    {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 56,
-     "sheet": "Full Stack Engineering"
-    },
-    {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
-     "origin": "corpus",
-     "row": 56,
-     "sheet": "Backend Engineering"
-    }
-   ],
-   "type": "instructor",
-   "years_experience": "15+ years"
   },
   {
    "cross_validated": false,
@@ -146262,7 +146385,7 @@
    "sources": [
     {
      "column": "backup_3",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 49,
      "sheet": "Full Stack Engineering"
@@ -146277,7 +146400,7 @@
      "origin": "hand"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 58,
      "sheet": "Full Stack Engineering"
@@ -146298,7 +146421,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 33,
      "sheet": "Full Stack Engineering"
@@ -146316,7 +146439,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 34,
      "sheet": "Full Stack Engineering"
@@ -146334,7 +146457,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 35,
      "sheet": "Full Stack Engineering"
@@ -146352,7 +146475,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 36,
      "sheet": "Full Stack Engineering"
@@ -146370,7 +146493,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 37,
      "sheet": "Full Stack Engineering"
@@ -146388,7 +146511,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 38,
      "sheet": "Full Stack Engineering"
@@ -146406,7 +146529,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 39,
      "sheet": "Full Stack Engineering"
@@ -146426,27 +146549,27 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Full Stack Engineering"
     },
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 39,
      "sheet": "Frontend Engineering"
     },
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 40,
      "sheet": "Frontend Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 47,
      "sheet": "Frontend Engineering"
@@ -146466,7 +146589,7 @@
    "sensitive": false,
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 55,
      "sheet": "Full Stack Engineering"
@@ -146486,7 +146609,7 @@
    "sensitive": false,
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 57,
      "sheet": "Full Stack Engineering"
@@ -146506,13 +146629,13 @@
    "sensitive": false,
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 61,
      "sheet": "Full Stack Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 61,
      "sheet": "Backend Engineering"
@@ -146530,7 +146653,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 1,
      "sheet": "Frontend Engineering"
@@ -146548,7 +146671,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 2,
      "sheet": "Frontend Engineering"
@@ -146566,7 +146689,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 3,
      "sheet": "Frontend Engineering"
@@ -146584,7 +146707,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 4,
      "sheet": "Frontend Engineering"
@@ -146602,7 +146725,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 5,
      "sheet": "Frontend Engineering"
@@ -146620,7 +146743,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 6,
      "sheet": "Frontend Engineering"
@@ -146638,7 +146761,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 7,
      "sheet": "Frontend Engineering"
@@ -146657,13 +146780,13 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 38,
      "sheet": "Frontend Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 45,
      "sheet": "Frontend Engineering"
@@ -146681,27 +146804,27 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 38,
      "sheet": "Frontend Engineering"
     },
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 40,
      "sheet": "Frontend Engineering"
     },
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 41,
      "sheet": "Frontend Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Frontend Engineering"
@@ -146719,7 +146842,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 9,
      "sheet": "Frontend Engineering"
@@ -146737,7 +146860,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 10,
      "sheet": "Frontend Engineering"
@@ -146755,7 +146878,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 11,
      "sheet": "Frontend Engineering"
@@ -146773,7 +146896,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 12,
      "sheet": "Frontend Engineering"
@@ -146791,7 +146914,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 13,
      "sheet": "Frontend Engineering"
@@ -146809,7 +146932,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 14,
      "sheet": "Frontend Engineering"
@@ -146827,7 +146950,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 15,
      "sheet": "Frontend Engineering"
@@ -146846,13 +146969,13 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 39,
      "sheet": "Frontend Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 46,
      "sheet": "Frontend Engineering"
@@ -146870,7 +146993,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 17,
      "sheet": "Frontend Engineering"
@@ -146888,7 +147011,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 18,
      "sheet": "Frontend Engineering"
@@ -146906,7 +147029,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 19,
      "sheet": "Frontend Engineering"
@@ -146924,7 +147047,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 20,
      "sheet": "Frontend Engineering"
@@ -146942,7 +147065,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 21,
      "sheet": "Frontend Engineering"
@@ -146960,7 +147083,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 22,
      "sheet": "Frontend Engineering"
@@ -146978,7 +147101,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 23,
      "sheet": "Frontend Engineering"
@@ -146996,7 +147119,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 25,
      "sheet": "Frontend Engineering"
@@ -147014,7 +147137,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 26,
      "sheet": "Frontend Engineering"
@@ -147032,7 +147155,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 27,
      "sheet": "Frontend Engineering"
@@ -147050,7 +147173,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 28,
      "sheet": "Frontend Engineering"
@@ -147068,7 +147191,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 29,
      "sheet": "Frontend Engineering"
@@ -147086,7 +147209,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 30,
      "sheet": "Frontend Engineering"
@@ -147104,7 +147227,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 31,
      "sheet": "Frontend Engineering"
@@ -147122,7 +147245,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 1,
      "sheet": "Backend Engineering"
@@ -147140,7 +147263,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 2,
      "sheet": "Backend Engineering"
@@ -147158,7 +147281,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 3,
      "sheet": "Backend Engineering"
@@ -147176,7 +147299,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 4,
      "sheet": "Backend Engineering"
@@ -147194,7 +147317,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 5,
      "sheet": "Backend Engineering"
@@ -147212,7 +147335,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 6,
      "sheet": "Backend Engineering"
@@ -147230,7 +147353,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 7,
      "sheet": "Backend Engineering"
@@ -147248,7 +147371,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 46,
      "sheet": "Backend Engineering"
@@ -147265,7 +147388,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 9,
      "sheet": "Backend Engineering"
@@ -147283,7 +147406,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 10,
      "sheet": "Backend Engineering"
@@ -147301,7 +147424,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 11,
      "sheet": "Backend Engineering"
@@ -147319,7 +147442,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 12,
      "sheet": "Backend Engineering"
@@ -147337,7 +147460,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 13,
      "sheet": "Backend Engineering"
@@ -147355,7 +147478,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 14,
      "sheet": "Backend Engineering"
@@ -147373,7 +147496,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 15,
      "sheet": "Backend Engineering"
@@ -147394,20 +147517,20 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 47,
      "sheet": "Backend Engineering"
     },
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 48,
      "sheet": "Backend Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 57,
      "sheet": "Backend Engineering"
@@ -147425,7 +147548,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 17,
      "sheet": "Backend Engineering"
@@ -147443,7 +147566,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 18,
      "sheet": "Backend Engineering"
@@ -147461,7 +147584,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 19,
      "sheet": "Backend Engineering"
@@ -147479,7 +147602,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 20,
      "sheet": "Backend Engineering"
@@ -147497,7 +147620,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 21,
      "sheet": "Backend Engineering"
@@ -147515,7 +147638,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 22,
      "sheet": "Backend Engineering"
@@ -147533,7 +147656,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 23,
      "sheet": "Backend Engineering"
@@ -147551,7 +147674,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 25,
      "sheet": "Backend Engineering"
@@ -147569,7 +147692,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 26,
      "sheet": "Backend Engineering"
@@ -147587,7 +147710,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 27,
      "sheet": "Backend Engineering"
@@ -147605,7 +147728,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 28,
      "sheet": "Backend Engineering"
@@ -147623,7 +147746,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 29,
      "sheet": "Backend Engineering"
@@ -147641,7 +147764,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 30,
      "sheet": "Backend Engineering"
@@ -147659,7 +147782,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 31,
      "sheet": "Backend Engineering"
@@ -147680,26 +147803,26 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 49,
      "sheet": "Backend Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 59,
      "sheet": "Backend Engineering"
     },
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 55,
      "sheet": "Test Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 68,
      "sheet": "Test Engineering"
@@ -147717,7 +147840,7 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 49,
      "sheet": "Backend Engineering"
@@ -147734,7 +147857,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 33,
      "sheet": "Backend Engineering"
@@ -147752,7 +147875,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 34,
      "sheet": "Backend Engineering"
@@ -147770,7 +147893,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 35,
      "sheet": "Backend Engineering"
@@ -147788,7 +147911,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 36,
      "sheet": "Backend Engineering"
@@ -147806,7 +147929,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 37,
      "sheet": "Backend Engineering"
@@ -147824,7 +147947,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 38,
      "sheet": "Backend Engineering"
@@ -147842,7 +147965,7 @@
    "session_kind": "post_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 39,
      "sheet": "Backend Engineering"
@@ -147860,7 +147983,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Backend Engineering"
@@ -147879,7 +148002,7 @@
    "sensitive": false,
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 55,
      "sheet": "Backend Engineering"
@@ -147899,7 +148022,7 @@
    "sensitive": false,
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 65,
      "sheet": "Backend Engineering"
@@ -147917,7 +148040,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 1,
      "sheet": "Test Engineering"
@@ -147935,7 +148058,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 2,
      "sheet": "Test Engineering"
@@ -147953,7 +148076,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 3,
      "sheet": "Test Engineering"
@@ -147971,7 +148094,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 4,
      "sheet": "Test Engineering"
@@ -147989,7 +148112,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 5,
      "sheet": "Test Engineering"
@@ -148007,7 +148130,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 6,
      "sheet": "Test Engineering"
@@ -148025,7 +148148,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Test Engineering"
@@ -148044,20 +148167,20 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Test Engineering"
     },
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 53,
      "sheet": "Test Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 61,
      "sheet": "Test Engineering"
@@ -148077,20 +148200,20 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Test Engineering"
     },
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 51,
      "sheet": "Test Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 59,
      "sheet": "Test Engineering"
@@ -148108,20 +148231,20 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 50,
      "sheet": "Test Engineering"
     },
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 54,
      "sheet": "Test Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 63,
      "sheet": "Test Engineering"
@@ -148138,7 +148261,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 8,
      "sheet": "Test Engineering"
@@ -148156,7 +148279,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 9,
      "sheet": "Test Engineering"
@@ -148174,7 +148297,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 10,
      "sheet": "Test Engineering"
@@ -148192,7 +148315,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 11,
      "sheet": "Test Engineering"
@@ -148210,7 +148333,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 12,
      "sheet": "Test Engineering"
@@ -148228,7 +148351,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 13,
      "sheet": "Test Engineering"
@@ -148246,7 +148369,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 51,
      "sheet": "Test Engineering"
@@ -148266,27 +148389,27 @@
    "sources": [
     {
      "column": "backup_2",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 51,
      "sheet": "Test Engineering"
     },
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 53,
      "sheet": "Test Engineering"
     },
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 54,
      "sheet": "Test Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 62,
      "sheet": "Test Engineering"
@@ -148304,7 +148427,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 15,
      "sheet": "Test Engineering"
@@ -148322,7 +148445,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 16,
      "sheet": "Test Engineering"
@@ -148340,7 +148463,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 17,
      "sheet": "Test Engineering"
@@ -148358,7 +148481,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 18,
      "sheet": "Test Engineering"
@@ -148376,7 +148499,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 19,
      "sheet": "Test Engineering"
@@ -148394,7 +148517,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 20,
      "sheet": "Test Engineering"
@@ -148415,13 +148538,13 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 52,
      "sheet": "Test Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 65,
      "sheet": "Test Engineering"
@@ -148439,7 +148562,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 22,
      "sheet": "Test Engineering"
@@ -148457,7 +148580,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 23,
      "sheet": "Test Engineering"
@@ -148475,7 +148598,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 24,
      "sheet": "Test Engineering"
@@ -148493,7 +148616,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 25,
      "sheet": "Test Engineering"
@@ -148511,7 +148634,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 26,
      "sheet": "Test Engineering"
@@ -148529,7 +148652,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 27,
      "sheet": "Test Engineering"
@@ -148547,7 +148670,7 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 53,
      "sheet": "Test Engineering"
@@ -148564,7 +148687,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 29,
      "sheet": "Test Engineering"
@@ -148582,7 +148705,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 30,
      "sheet": "Test Engineering"
@@ -148600,7 +148723,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 31,
      "sheet": "Test Engineering"
@@ -148618,7 +148741,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 32,
      "sheet": "Test Engineering"
@@ -148636,7 +148759,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 33,
      "sheet": "Test Engineering"
@@ -148654,7 +148777,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 34,
      "sheet": "Test Engineering"
@@ -148672,7 +148795,7 @@
    "session_kind": "pre_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 36,
      "sheet": "Test Engineering"
@@ -148690,7 +148813,7 @@
    "session_kind": "class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 37,
      "sheet": "Test Engineering"
@@ -148708,7 +148831,7 @@
    "session_kind": "alternate_class",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 38,
      "sheet": "Test Engineering"
@@ -148726,7 +148849,7 @@
    "session_kind": "task",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 39,
      "sheet": "Test Engineering"
@@ -148744,7 +148867,7 @@
    "session_kind": "review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 40,
      "sheet": "Test Engineering"
@@ -148762,7 +148885,7 @@
    "session_kind": "alternate_review",
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 41,
      "sheet": "Test Engineering"
@@ -148783,13 +148906,13 @@
    "sources": [
     {
      "column": "primary",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 55,
      "sheet": "Test Engineering"
     },
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 67,
      "sheet": "Test Engineering"
@@ -148807,7 +148930,7 @@
    "sources": [
     {
      "column": "backup_1",
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 55,
      "sheet": "Test Engineering"
@@ -148824,7 +148947,7 @@
    "sensitive": false,
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 60,
      "sheet": "Test Engineering"
@@ -148843,7 +148966,7 @@
    "sensitive": false,
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 64,
      "sheet": "Test Engineering"
@@ -148860,7 +148983,7 @@
    "sensitive": false,
    "sources": [
     {
-     "file": "02-curriculum/Resource Collection Mastersheet (Software + System).xlsx",
+     "file": "live-sheet/Resource Collection Mastersheet (Software + System).xlsx",
      "origin": "corpus",
      "row": 66,
      "sheet": "Test Engineering"

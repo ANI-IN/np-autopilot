@@ -51,6 +51,15 @@ def _damage(sql: str) -> None:
         conn.commit()
 
 
+@pytest.fixture(scope="module", autouse=True)
+def project_the_current_graph():
+    """The first test verifies whatever is projected. Without this it verified
+    the PREVIOUS build's projection whenever the graph had changed since the
+    last run — found 2026-09-30 when a rebuild added 3 taught_by edges and the
+    clean-projection test failed on the stale database, then passed alone."""
+    _reproject()
+
+
 @pytest.fixture(autouse=True)
 def restore_projection():
     """Leave the database exactly as found, whatever the test did."""

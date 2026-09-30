@@ -117,8 +117,8 @@ def _mastersheet_primaries():
     if _MS_PRIMARY is not None:
         return _MS_PRIMARY
     from pipeline.lib import mastersheet as ms
-    from pipeline.lib.paths import REPO_ROOT
-    sheet = REPO_ROOT / ".drive-cache" / "02-curriculum" / ms.SHEET_FILE
+    from pipeline.lib import freshness
+    sheet = freshness.live_path()          # the live sheet, owner decision 2026-09-30
     if not sheet.exists():
         _MS_PRIMARY = {}
         return _MS_PRIMARY
@@ -190,14 +190,32 @@ def mod(slug, seq):
 
 
 def n1_blank_instructor():
-    """SD1 module 1 must answer 'blank in the mastersheet', not a name."""
-    m = mod("full-stack", 1)
-    prim = [e for e in out(m, "module_instructor")]
-    return (not prim,
-            f"{m['label']!r}: blank in the mastersheet — no instructor edge exists"
-            if not prim else
-            f"{len(prim)} instructor edges — the source cell is blank, so this "
-            f"is invented", bool(prim))
+    """A role cell that is BLANK in the mastersheet must have no edge.
+
+    Rebuilt 2026-09-30. It used to assert SD1/1 had no instructor because its
+    cell was "blank in the source" — it never was: the row read
+    `Week 1/5: Databases` and the parser skipped the `:`. The control was
+    scoring the bug as correct. It now finds a genuinely blank role cell in
+    the sheet itself instead of trusting a hard-coded module."""
+    from pipeline.lib import freshness, mastersheet as ms
+    sheet = freshness.live_path()
+    if not sheet.exists():
+        return False, "live mastersheet not fetched — the control cannot run", False
+    slug = {"Full Stack Engineering": "full-stack", "Frontend Engineering": "frontend",
+            "Backend Engineering": "backend", "Test Engineering": "testing"}
+    blank = [(slug[tab], seq, role) for tab in ms.DOMAIN_TABS
+             for seq, rec in sorted(ms.parse_tab(sheet, tab).assignments_by_sequence.items())
+             for role in ("primary", "backup_1") if not rec.get(role)]
+    if not blank:
+        return False, "no blank primary or backup_1 cell in the sheet; the control is void", False
+    dom, seq, role = blank[0]
+    m = mod(dom, seq)
+    got = [e for e in out(m, "module_instructor") if e.get("instructor_role") == role]
+    return (not got,
+            f"{m['label']!r} {role}: blank in the mastersheet — no edge exists "
+            f"({len(blank)} blank primary/backup_1 cells in the sheet)"
+            if not got else
+            f"{len(got)} {role} edges where the source cell is blank — invented", bool(got))
 
 
 def n2_unknown_module():

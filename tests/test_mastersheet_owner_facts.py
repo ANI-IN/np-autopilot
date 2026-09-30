@@ -73,8 +73,43 @@ def test_an_incomplete_fact_is_refused(tmp_path, monkeypatch, drop):
 
 
 def test_red_detection_on_the_real_sheet():
-    path = REPO / ".drive-cache" / "02-curriculum" / ms.SHEET_FILE
+    from pipeline.lib import freshness
+    path = freshness.live_path()
     if not path.exists():
-        pytest.skip("the corpus cache is absent; run pipeline/00_fetch_drive.py")
+        pytest.skip("the live mastersheet is not fetched; run pipeline/fetch_mastersheet.py")
     red = ms.red_cells(path, "Full Stack Engineering")
     assert "Daniel Grundel" in {str(v).strip() for v in red.values()}
+
+
+# --------------------------------------------------------------------------
+# validate.py's D1 check must accept an owner fact and still refuse deck text
+# --------------------------------------------------------------------------
+
+def _validate():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("validate", REPO / "pipeline" / "validate.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+ROW = {"origin": "corpus", "file": ms.LIVE_CITATION, "sheet": "Full Stack Engineering", "row": 49}
+HAND = {"origin": "hand", "establishes": ["withdrawn_roles"], "evidence": "owner said so"}
+DECK = {"origin": "corpus", "file": "/SD1: Full Stack/deck.pptx", "slide": 2}
+
+
+def test_d1_accepts_a_sheet_row_plus_an_owner_fact():
+    assert _validate().person_is_traceable({"sources": [ROW, HAND]}, ms.SHEET_FILE)
+
+
+def test_d1_refuses_deck_text_even_beside_a_sheet_row():
+    assert not _validate().person_is_traceable({"sources": [ROW, DECK]}, ms.SHEET_FILE)
+
+
+def test_d1_refuses_an_owner_fact_alone():
+    assert not _validate().person_is_traceable({"sources": [HAND]}, ms.SHEET_FILE)
+
+
+def test_d1_refuses_a_hand_source_that_names_a_file():
+    assert not _validate().person_is_traceable(
+        {"sources": [ROW, dict(HAND, file="02-curriculum/x.xlsx")]}, ms.SHEET_FILE)

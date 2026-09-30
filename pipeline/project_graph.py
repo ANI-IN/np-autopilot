@@ -108,6 +108,14 @@ def _file_rows() -> list[tuple]:
                            r.get("drive_file_id"),
                            _drive_url(r.get("drive_file_id")))
 
+    # THE LIVE MASTERSHEET (owner decision 2026-09-30). Not a corpus file, so
+    # neither manifest has it; its citation key is registered here so every
+    # mastersheet fact's `node_sources.file` resolves.
+    from pipeline.lib import mastersheet as _ms
+    rows.setdefault(_ms.LIVE_CITATION, (_ms.LIVE_CITATION, None, None,
+                                        len(_ms.DOMAIN_TABS) + 1, True,
+                                        _ms.LIVE_DRIVE_ID, _ms.LIVE_URL))
+
     crawl = CACHE_MANIFEST
     if crawl.exists():
         for fid, r in json.loads(crawl.read_text(encoding="utf-8")).items():

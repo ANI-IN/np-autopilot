@@ -41,16 +41,17 @@ merges:
 
   # ---- individually answered -------------------------------------------
 
-  # The mastersheet cell is BLANK, so there is no shared instructor to find —
-  # absence of the join evidence, not absence of the module. The legacy
-  # instructors stay legacy-tier and are never shown as mastersheet roles;
-  # the mastersheet answer for this module remains "blank in source".
+  # CORRECTED 2026-09-30: this said the mastersheet cell was BLANK. It never
+  # was — the row read `Week 1/5: Databases` and the parser skipped the `:`
+  # (HANDOFF §D.3, CLAUDE.md §6). SD1/1's roles are Konstantinos Pappas,
+  # Ashish Kaila, Nikhil Kolekar. The merge decision itself is unchanged: the
+  # legacy instructors stay legacy-tier and are never shown as sheet roles.
   - id: MOD-01
     into: {domain: full-stack, sequence: 1}
     legacy: [mod_508b16ecef815eec]
     note: >-
-      Legacy instructors remain a separate evidence tier. The mastersheet
-      primary stays "blank in source" — see eval negative control N1.
+      Legacy instructors remain a separate evidence tier. (The original note
+      said the sheet cell was blank; it was a parser bug — corrected 2026-09-30.)
 
   # A distinctive label with nothing contradicting it. The one shared
   # instructor is Bill Ogden, whose identity is itself INS-08 and

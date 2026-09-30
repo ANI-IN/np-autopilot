@@ -166,16 +166,20 @@ identities:
       is tagged (merged_from, merge_ids) and reversed by removing this entry.
     resolves: [INS-21]
 
-  - slug: reginald-first-name-only
-    canonical: Reginald
-    status: unconfirmed
-    possibly_same_as: reginald-johnson
-    keeps_module_attachments: true
+  - slug: reginald-johnson
+    canonical: Reginald Johnson
+    aliases: [Reginald]
+    status: confirmed
     origin: hand
     evidence: >-
-      Owner decision 2026-09-30 (Animesh Kumar): `Reginald` (SD3/4 Backup 2)
-      stays UNRESOLVED — no surname anywhere. Answered, not open.
-    resolves: [PPL-09]
+      Owner decision 2026-09-30 (Animesh Kumar), checklist review part 3:
+      `Reginald` (Backend Engineering!D50, SD3/4 Cloud Native Design, Backup 2)
+      is Reginald Johnson (Backend Engineering!A66, the tab's instructor
+      table; the only Reginald on any in-scope tab). Supersedes the same day's
+      "left unresolved" (PPL-09). Every spelling stays in label_raw /
+      merged_label_raw and in provenance; tiers stay separate edges; the merge
+      is tagged and reversed by removing this entry.
+    resolves: [PPL-09, PPL-13]
 
 bulk_confirmed:
   rule: exact full-name match across the two graphs

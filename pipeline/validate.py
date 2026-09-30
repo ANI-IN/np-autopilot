@@ -478,6 +478,23 @@ def main() -> int:
     return 1 if fails else 0
 
 
+def person_is_traceable(n: dict, sheet_file: str) -> bool:
+    """D1: a person is cited to a mastersheet SHEET and ROW, never to deck text.
+
+    At least one source must be such a row, and every other source must be one
+    too — or an OWNER FACT: origin hand, no file, stating what it establishes
+    (a withdrawn role, 2026-09-30). A hand fact is not deck content; requiring
+    every source to be a sheet row rejected Daniel Grundel for carrying the
+    owner's word on a red cell. Found by running validate, not by a test.
+    """
+    srcs = n.get("sources") or []
+    row = [s for s in srcs if s.get("file", "").endswith(sheet_file)
+           and s.get("sheet") and s.get("row") is not None]
+    hand = [s for s in srcs if s.get("origin") == "hand" and not s.get("file")
+            and s.get("establishes")]
+    return bool(row) and len(row) + len(hand) == len(srcs)
+
+
 def check_content_graph(r) -> None:
     """Checks for the row-B content graph. Silent when it does not exist."""
     from pipeline.lib import content_model as _cm
@@ -518,11 +535,7 @@ def check_content_graph(r) -> None:
     # difference D1 draws between a structured row and deck text.
     from pipeline.lib import mastersheet as _ms
     people = [n for n in g["nodes"] if n["type"] in ("person", "instructor")]
-    stray = [n["id"] for n in people
-             if not n.get("sources")
-             or not all(s.get("file", "").endswith(_ms.SHEET_FILE)
-                        and s.get("sheet") and s.get("row")
-                        for s in n["sources"])]
+    stray = [n["id"] for n in people if not person_is_traceable(n, _ms.SHEET_FILE)]
     r.add(FAIL if stray else INFO, "content-no-person",
           f"{len(stray)} of {len(people)} person/instructor nodes are not "
           f"traceable to a mastersheet sheet+row — D1 forbids deriving a "

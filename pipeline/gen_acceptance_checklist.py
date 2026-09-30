@@ -204,7 +204,9 @@ def main() -> int:
         folder = (dom or {}).get("drive_folder_url") or ""
         lines += ["| | |", "|---|---|",
                   f"| Domain | {md(dom['label']) if dom else '_no domain recorded_'}"
-                  + (f" — {link('Drive folder', folder)}" if folder else "") + " |",
+                  + (f" — {link('Uplevel domain', dom.get('uplevel_link'))}"
+                     if dom and dom.get("uplevel_link") else "")
+                  + (f" · {link('Drive folder', folder)}" if folder else "") + " |",
                   f"| Programme week | {week_txt} |",
                   f"| Module | {link('Uplevel module', m.get('uplevel_link'))} |",
                   f"| Decks | {len(decks)}"

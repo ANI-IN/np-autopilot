@@ -366,6 +366,17 @@ def merge(main: dict, content: dict, spec: dict | None = None,
             n["identity_unconfirmed"] = unconf[n["label"].strip().lower()]
     # Here, not in pass 8: the projection and every reader call merge() in
     # memory (graphio.load_merged) and never read merged_graph.json.
+    # THE CORPUS MASTERSHEET IS SUPERSEDED by the live sheet (owner decision
+    # 2026-09-30): kept in the graph with its provenance, marked, never read
+    # for row-B facts. Marked here for the same reason as the topics below.
+    from pipeline.lib import mastersheet as _ms
+    sup = {x["path"]: x for x in _ms.SUPERSEDED}
+    meta["superseded_files"] = []
+    for n in out["nodes"]:
+        x = sup.get(n.get("relative_path"))
+        if x and n.get("type") == taxonomy.edge_endpoints(taxonomy.edge_for_role("provenance"))[1]:
+            n["superseded_by"] = _ms.LIVE_CITATION
+            meta["superseded_files"].append(n["relative_path"])
     marks = classify_topics(out)
     meta["not_a_topic"] = len(marks[PERSON_NAME]) + len(marks[PERSON_BIO])
     meta["topic_marks"] = {k: len(v) for k, v in marks.items()}
