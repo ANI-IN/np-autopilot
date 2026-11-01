@@ -1,0 +1,44 @@
+{
+  "_comment": "SYNTHETIC FIXTURE. Every name, URL and value below is invented for tests; none is real Interview Kickstart data. Shape = Google Sheets API spreadsheets.values.batchGet response.",
+  "spreadsheetId": "synthetic-sheet-0001",
+  "valueRanges": [
+    {"range": "Programs!A1:Z5000", "majorDimension": "ROWS", "values": [
+      ["Program", "Description", "Internal Notes"],
+      ["Synthetic Backend Track", "A made-up program for tests", "ignored: not a mapped column"],
+      ["Synthetic Data Track", "Another invented program"]
+    ]},
+    {"range": "Courses!A1:Z5000", "majorDimension": "ROWS", "values": [
+      ["Course", "Program", "Summary"],
+      ["Synthetic System Design", "Synthetic Backend Track", "Invented course one"],
+      ["Synthetic Algorithms", "Synthetic Backend Track", "Invented course two"],
+      ["synthetic   ALGORITHMS", "Synthetic Backend Track", "Same key as the row above, different case"],
+      ["Synthetic Statistics", "No Such Program", "Links to a program that does not exist"],
+      ["", "Synthetic Data Track", "Blank key"]
+    ]},
+    {"range": "Modules!A1:Z5000", "majorDimension": "ROWS", "values": [
+      ["Course", "Module", "Summary"],
+      ["Synthetic System Design", "Week 1", "Load balancing"],
+      ["Synthetic System Design", "Week 2", "Caching"],
+      ["Synthetic Algorithms", "Week 1", "Same module name, different course: allowed"],
+      ["Missing Course", "Week 9", "Scope does not exist"]
+    ]},
+    {"range": "Topics!A1:Z5000", "majorDimension": "ROWS", "values": [
+      ["Topic", "Course", "Module", "Notes"],
+      ["Consistent Hashing", "Synthetic System Design", "Week 1", "Invented note"],
+      ["Bad @ Name", "Synthetic System Design", "Week 1", "Name carries an @"],
+      ["Bloom Filters", "Synthetic System Design", "Week 2"]
+    ]},
+    {"range": "Instructors!A1:Z5000", "majorDimension": "ROWS", "values": [
+      ["Instructor", "Teaches"],
+      ["Instructor Synthetic One", "Synthetic System Design, Synthetic Algorithms"],
+      ["Instructor Synthetic Two", "Synthetic Algorithms, , Synthetic System Design"]
+    ]},
+    {"range": "Resources!A1:Z5000", "majorDimension": "ROWS", "values": [
+      ["Title", "URL", "Kind", "Course", "Module"],
+      ["Synthetic SD slides", "https://example.com/synthetic/sd-slides", "slides", "Synthetic System Design", "Week 1"],
+      ["Synthetic course guide", "https://example.com/synthetic/guide", "doc", "Synthetic System Design", ""],
+      ["Broken link", "not-a-url", "link", "Synthetic Algorithms", ""],
+      ["Synthetic SD slides again", "https://EXAMPLE.com/synthetic/sd-slides", "slides", "Synthetic Algorithms", ""]
+    ]}
+  ]
+}

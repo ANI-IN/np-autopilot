@@ -1,0 +1,60 @@
+# Google Sheets → KB import mapping (pipeline/kb_import_sheets.py).
+# docs/MIGRATION_MAPPING.md explains every rule here.
+#
+# AN ALLOW-LIST OF COLUMNS, like pipeline/lib/sources.py: only the headers named
+# below are ever read. A header that looks like contact data (email, phone,
+# LinkedIn, …) is refused even if someone adds it here — CLAUDE.md §2.
+#
+# Headers match case-insensitively after trimming. `key` is the row identity
+# used in external_id ('<spreadsheet id>:<tab>:<normalised key>'), so a row that
+# MOVES in the sheet keeps its identity; a renamed key is a new record.
+version: 1
+tabs:
+  Programs:
+    entity: node
+    type: program
+    key: [Program]
+    fields: {name: Program, summary: Description}
+
+  Courses:
+    entity: node
+    type: course
+    key: [Course]
+    fields: {name: Course, summary: Summary}
+    links:
+      - {column: Program, edge: contains, from_type: program}       # program contains course
+
+  Modules:
+    entity: node
+    type: module
+    key: [Course, Module]
+    scope: {column: Course, type: course}
+    fields: {name: Module, summary: Summary}
+    links:
+      - {column: Course, edge: contains, from_type: course}         # course contains module
+
+  Topics:
+    entity: node
+    type: topic
+    key: [Topic]
+    fields: {name: Topic, summary: Notes}
+    links:
+      - {column: Module, scope_column: Course, edge: covers, from_type: module}
+
+  Instructors:
+    entity: node
+    type: instructor
+    key: [Instructor]
+    fields: {name: Instructor}
+    links:
+      # Multi-valued: split on ',' only. An empty token is a HARD row failure
+      # (CLAUDE.md "Other traps"), never silently skipped.
+      - {column: Teaches, edge: teaches, to_type: course, multi: true}
+
+  Resources:
+    entity: resource
+    key: [URL]
+    fields: {url: URL, title: Title, kind: Kind}
+    attach:
+      - {column: Module, scope_column: Course, type: module}
+      - {column: Course, type: course, only_if_blank: Module}

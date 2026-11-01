@@ -1114,6 +1114,75 @@ def me(conn) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# import support (pipeline/kb_import_sheets.py) — same rules, import attribution
+# ---------------------------------------------------------------------------
+
+def import_lookup_node(conn, external_id: str) -> dict | None:
+    return _q1(conn, """select n.id, n.name, n.summary, n.version, n.imported_version, n.archived_at, n.scope_id,
+                               t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
+                        where n.external_id = %s""", (external_id,))
+
+
+def import_find_live(conn, type_key: str, name: str, scope_id=None) -> dict | None:
+    return _existing_by_name(conn, _type_id(conn, type_key), scope_id, name)
+
+
+def import_create_node(conn, actor: Actor, *, type_key: str, name: str, summary=None,
+                       scope_id=None, external_id: str) -> dict:
+    require(conn, "admin", "importing")
+    return _insert_node(conn, type_key=type_key, name=v.name({"name": name}), summary=summary,
+                        scope_id=scope_id, external_id=external_id, imported=True)
+
+
+def import_update_node(conn, actor: Actor, node_id, expected_version: int, *, name: str, summary) -> bool:
+    """Apply sheet values ONLY if nobody edited the record in the app since the
+    last import (version == imported_version, checked again in the WHERE)."""
+    require(conn, "admin", "importing")
+    with _translate(conn, "record"):
+        with conn.cursor() as cur:
+            cur.execute("""update kb.nodes set name = %s, summary = %s, imported_at = now(),
+                                  imported_version = version + 1
+                           where id = %s and version = %s and version = imported_version
+                             and archived_at is null""",
+                        (v.name({"name": name}), summary, node_id, expected_version))
+            return cur.rowcount == 1
+
+
+def import_lookup_resource(conn, external_id: str) -> dict | None:
+    return _q1(conn, "select id, url, title, kind, version, imported_version, archived_at from kb.resources "
+                     "where external_id = %s", (external_id,))
+
+
+def import_create_resource(conn, actor: Actor, *, url: str, title: str, kind: str, external_id: str) -> dict:
+    require(conn, "admin", "importing")
+    with _translate(conn, "resource"):
+        return _q1(conn, """insert into kb.resources (url, title, kind, external_id, imported_at, imported_version)
+                            values (%s,%s,%s,%s,now(),1) returning id""", (url, title, kind, external_id))
+
+
+def import_update_resource(conn, actor: Actor, rid, expected_version: int, *, title: str, kind: str) -> bool:
+    require(conn, "admin", "importing")
+    with _translate(conn, "resource"):
+        with conn.cursor() as cur:
+            cur.execute("""update kb.resources set title = %s, kind = %s, imported_at = now(),
+                                  imported_version = version + 1
+                           where id = %s and version = %s and version = imported_version and archived_at is null""",
+                        (title, kind, rid, expected_version))
+            return cur.rowcount == 1
+
+
+def import_edge_exists(conn, type_key: str, source_id, target_id) -> bool:
+    return bool(_q1(conn, """select 1 as x from kb.edges e join kb.edge_types et on et.id = e.edge_type_id
+                             where et.key = %s and e.source_id = %s and e.target_id = %s
+                               and e.archived_at is null""", (type_key, source_id, target_id)))
+
+
+def import_attachment_exists(conn, node_id, resource_id) -> bool:
+    return bool(_q1(conn, "select 1 as x from kb.node_resources where node_id = %s and resource_id = %s "
+                          "and archived_at is null", (node_id, resource_id)))
+
+
+# ---------------------------------------------------------------------------
 # validation tools (MCP + data quality)
 # ---------------------------------------------------------------------------
 
