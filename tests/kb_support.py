@@ -65,7 +65,7 @@ def kb_available() -> bool:
 
 requires_kb = pytest.mark.skipif(
     not kb_available(),
-    reason="kb: needs the local database with migrations 0022-0023 applied (db/local/setup.sh)")
+    reason="kb: needs the local database with the kb migrations (0022+) applied (db/local/setup.sh)")
 
 
 def owner():

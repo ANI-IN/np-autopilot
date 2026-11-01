@@ -47,3 +47,10 @@ pipeline/*.py
 # db/window/check_function_map.py enforces it before every deploy).
 !.vercel/
 !.vercel/**
+
+# Knowledge-platform run (2026-11-02): local/operator code no HTTP request reaches.
+# The MCP server runs on a user's machine; the plugin ships through the
+# marketplace; fixtures are synthetic test data.
+mcp_server/
+plugins/
+fixtures/
