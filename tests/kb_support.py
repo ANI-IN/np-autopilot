@@ -168,3 +168,33 @@ class Client:
 
     def delete(self, path):
         return self.call("DELETE", path)
+
+
+# ---------------------------------------------------------------------------
+# The local dev server (eval/kb_dev_server.py) for browser and MCP tests.
+# ---------------------------------------------------------------------------
+
+@contextmanager
+def dev_server():
+    """Start eval/kb_dev_server.py on a free port; yield its base URL."""
+    import socket
+    import subprocess
+    import tempfile
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    log = tempfile.NamedTemporaryFile("w+", suffix=".log", delete=False)
+    # stdout to a FILE: the server prints an audit line per request, and an
+    # undrained pipe fills and blocks it mid-suite.
+    proc = subprocess.Popen([sys.executable, str(REPO / "eval" / "kb_dev_server.py"), str(port)],
+                            stdout=log, stderr=subprocess.STDOUT, env=dict(os.environ))
+    try:
+        deadline = time.time() + 30
+        while time.time() < deadline and "READY" not in Path(log.name).read_text(errors="replace"):
+            time.sleep(0.2)
+        if "READY" not in Path(log.name).read_text(errors="replace"):
+            raise RuntimeError("kb_dev_server did not start: " + Path(log.name).read_text(errors="replace")[-500:])
+        yield f"http://127.0.0.1:{port}"
+    finally:
+        proc.kill()
+        proc.wait(10)

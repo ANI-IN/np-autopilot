@@ -1240,6 +1240,29 @@ def validate_course_structure(conn, course_id: str) -> dict:
             "children": len(children), "issues": issues, "completeness": score}
 
 
+def find_instructors(conn, *, course_id: str | None = None, q: str | None = None, limit: int = 50) -> list[dict]:
+    """Instructors (node type `instructor`, names only) with what they teach.
+    Filter by a course/module they teach, or by name."""
+    where, args = ["i.archived_at is null", "it.key = 'instructor'"], []
+    if course_id:
+        where.append("""exists (select 1 from kb.edges e join kb.edge_types et on et.id = e.edge_type_id
+                        where et.key = 'teaches' and e.source_id = i.id and e.target_id = %s
+                          and e.archived_at is null)""")
+        args.append(v.uid(course_id, "course_id"))
+    if q:
+        where.append("(i.name_norm like %s or i.search @@ websearch_to_tsquery('simple', %s))")
+        args += ["%" + kb_like(q[:200]) + "%", q[:200]]
+    rows = _q(conn, f"""select i.id, i.name, i.summary from kb.nodes i join kb.node_types it on it.id = i.type_id
+                        where {' and '.join(where)} order by i.name_norm limit %s""", (*args, min(int(limit), 200)))
+    for r in rows:
+        r["teaches"] = _q(conn, """select n.id, n.name, t.key as type from kb.edges e
+                                   join kb.edge_types et on et.id = e.edge_type_id and et.key = 'teaches'
+                                   join kb.nodes n on n.id = e.target_id join kb.node_types t on t.id = n.type_id
+                                   where e.source_id = %s and e.archived_at is null and n.archived_at is null
+                                   order by n.name_norm""", (r["id"],))
+    return rows
+
+
 def resources_for_link_check(conn, limit: int = 50, offset: int = 0) -> list[dict]:
     return _q(conn, "select id, url, title from kb.resources where archived_at is null "
                     "order by updated_at desc limit %s offset %s", (min(int(limit), 50), max(int(offset), 0)))

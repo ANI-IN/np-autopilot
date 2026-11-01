@@ -9,16 +9,12 @@ dialog with two sessions; and role restrictions per role.
 from __future__ import annotations
 
 import json
-import os
-import socket
-import subprocess
-import sys
 import time
 from pathlib import Path
 
 import pytest
 
-from kb_support import USERS, Client, ensure_users, requires_kb, reset, token_for
+from kb_support import USERS, Client, dev_server, ensure_users, requires_kb, reset, token_for
 
 pytest.importorskip("playwright.sync_api", reason="kb e2e: needs the playwright package")
 from playwright.sync_api import expect, sync_playwright                # noqa: E402
@@ -27,30 +23,10 @@ pytestmark = [requires_kb]
 REPO = Path(__file__).resolve().parent.parent
 
 
-def _free_port() -> int:
-    with socket.socket() as s:
-        s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
-
-
 @pytest.fixture(scope="module")
 def server():
-    port = _free_port()
-    import tempfile
-    log = tempfile.NamedTemporaryFile("w+", suffix=".log", delete=False)
-    # stdout to a FILE: the server prints an audit line per request, and an
-    # undrained pipe fills and blocks it mid-suite.
-    proc = subprocess.Popen([sys.executable, str(REPO / "eval" / "kb_dev_server.py"), str(port)],
-                            stdout=log, stderr=subprocess.STDOUT, env=dict(os.environ))
-    deadline = time.time() + 30
-    while time.time() < deadline and "READY" not in Path(log.name).read_text(errors="replace"):
-        time.sleep(0.2)
-    if "READY" not in Path(log.name).read_text(errors="replace"):
-        proc.kill()
-        pytest.fail("kb_dev_server did not start")
-    yield f"http://127.0.0.1:{port}/kb/"
-    proc.kill()
-    proc.wait(10)
+    with dev_server() as base:
+        yield base + "/kb/"
 
 
 @pytest.fixture(scope="module")

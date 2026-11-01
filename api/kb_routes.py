@@ -21,6 +21,13 @@ Routes (method, path after /api/kb):
   GET    /proposals   POST /proposals/{id}/approve | /reject
   GET    /tokens      POST /tokens      POST /tokens/{id}/revoke
   GET    /members     POST /members/{user_id}   (admin)
+  GET    /instructors?course=&q=   /nodes/{id}/validate
+  GET    /quality/missing-resources | /quality/duplicates | /quality/link-candidates
+
+Authorization: a Supabase session token (browser), or a per-user KB API token
+(`ikkb_…`, MCP clients) which api/index.py resolves to its owner; token callers
+are attributed as actor_type 'ai', so their archive/delete requests become
+proposals.
   POST   /types/node  POST /types/rule          (admin)
 """
 from __future__ import annotations
@@ -66,6 +73,18 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
     if head == "changes" and method == "GET":
         since = params.get("since")
         return 200, svc.changes(conn, _int(since, None) if since not in (None, "") else None)
+
+    if head == "quality" and method == "GET" and rest == ["missing-resources"]:
+        return 200, {"items": svc.find_missing_resources(conn, params.get("type"), _int(params.get("limit"), 100))}
+    if head == "quality" and method == "GET" and rest == ["duplicates"]:
+        return 200, {"items": svc.find_duplicate_nodes(conn, float(params.get("threshold", 0.6)),
+                                                       _int(params.get("limit"), 50))}
+    if head == "quality" and method == "GET" and rest == ["link-candidates"]:
+        return 200, {"items": svc.resources_for_link_check(conn, _int(params.get("limit"), 50),
+                                                           _int(params.get("offset"), 0))}
+    if head == "instructors" and method == "GET" and not rest:
+        return 200, {"items": svc.find_instructors(conn, course_id=params.get("course"), q=params.get("q"),
+                                                   limit=_int(params.get("limit"), 50))}
 
     if head in ("nodes", "courses", "programs"):
         return _nodes(conn, actor, method, rest, params, body, force, TYPED.get(head))
@@ -127,6 +146,8 @@ def _nodes(conn, actor, method, rest, params, body, force, fixed_type):
         if method == "DELETE":
             return 200, svc.hard_delete(conn, actor, "nodes", nid)
     action = sub[0]
+    if method == "GET" and action == "validate":
+        return 200, svc.validate_course_structure(conn, nid)
     if method == "GET" and action == "impact":
         return 200, svc.archive_impact(conn, nid)
     if method == "GET" and action == "history":

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "ik-kb": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["mcp_server/kb_server.py"],
+      "env": {
+        "KB_API_URL": "${KB_API_URL:-http://127.0.0.1:8765}",
+        "KB_MCP_TOKEN": "${KB_MCP_TOKEN}"
+      }
+    }
+  }
+}

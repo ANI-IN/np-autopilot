@@ -37,7 +37,7 @@ sys.path.insert(0, str(HERE))
 
 from lib import data                                                   # noqa: E402
 from lib.auth import AuthError                                         # noqa: E402
-from lib.guard import audit, identify                                  # noqa: E402
+from lib.guard import audit, bearer, identify                                  # noqa: E402
 
 import config                                                          # noqa: E402
 
@@ -280,6 +280,33 @@ KB_MAX_BODY = 512 * 1024
 KB_METHODS = {"GET", "POST", "PATCH", "DELETE"}
 
 
+KB_TOKEN_PREFIX = "ikkb_"
+
+
+class _TokenIdentity:
+    """What audit() needs to know about a token caller: the user it acts as."""
+
+    def __init__(self, subject: str):
+        self.subject = subject
+        self.email = None
+        self.is_shared_account = False
+
+
+def _identify_kb_token(token: str):
+    """Hash → kb.resolve_token (0023/0025) → the owning user, or AuthError.
+    Expired and revoked tokens resolve to nothing."""
+    import hashlib
+    digest = hashlib.sha256(token.encode()).hexdigest()
+    with data.request_connection(None) as conn:
+        with conn.cursor() as cur:
+            cur.execute("select kb.resolve_token(%s)", (digest,))
+            row = cur.fetchone()
+        conn.commit()                       # keeps last_used_at
+    if not row or not row[0]:
+        raise AuthError("API token is invalid, expired or revoked")
+    return _TokenIdentity(str(row[0]))
+
+
 def _serve_kb(path: str, method: str, environ, start_response):
     """The only path from an HTTP request to the KB service (web/lib/kb).
 
@@ -289,8 +316,17 @@ def _serve_kb(path: str, method: str, environ, start_response):
     whole request back, which is what makes a multi-step create atomic.
     """
     started = time.time()
+    actor_type = "human"
     try:
-        identity = identify(_Headers(environ))
+        token = bearer(_Headers(environ))
+        if token and token.startswith(KB_TOKEN_PREFIX):
+            # A per-user KB API token (MCP clients). Resolved to its owner and
+            # acted on AS that user under RLS, attributed as 'ai'. Only the KB
+            # routes accept it; the corpus explorer's routes never do.
+            identity = _identify_kb_token(token)
+            actor_type = "ai"
+        else:
+            identity = identify(_Headers(environ))
     except AuthError as exc:
         return _respond(start_response, 401,
                         {"error": "unauthorised", "reason": str(exc)})
@@ -321,7 +357,7 @@ def _serve_kb(path: str, method: str, environ, start_response):
         with data.request_connection(identity.subject) as conn:
             try:
                 status, payload = kb_routes.handle(
-                    conn, kb_routes.svc.Actor(identity.subject, "human"),
+                    conn, kb_routes.svc.Actor(identity.subject, actor_type),
                     method, parts, params, body)
             except kb_routes.KbError as exc:
                 # 202 = the change was recorded as a PROPOSAL: that row is the
