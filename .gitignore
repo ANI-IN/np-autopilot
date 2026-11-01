@@ -115,3 +115,10 @@ _uv/
 # Kept on disk (eval/screenshot_views.py writes them), never in history:
 # 24 MiB of them broke the 15 MiB packed-repo budget (DECISIONS E.1a).
 docs/screenshots/b4/
+
+# --- knowledge-platform run (2026-11-02) ---
+*.pem
+*.key
+/backups/
+/test-results/
+/playwright-report/
