@@ -385,7 +385,7 @@ def test_members_and_types_are_admin_only(admin, editor):
 
 def test_quality_overview(contrib, viewer):
     c = _mk(contrib, "course", "Q Course")
-    m = _mk(contrib, "module", "Q Module", scope=c["id"],
+    _mk(contrib, "module", "Q Module", scope=c["id"],
             resources=[{"url": "https://example.com/q", "title": "Q"}])
     _mk(contrib, name="Lonely Topic")
     _mk(contrib, name="Lonely Topics")

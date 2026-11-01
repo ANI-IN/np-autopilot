@@ -1,0 +1,43 @@
+ERROR tests/test_db_migration_verification.py::test_a_count_preserving_rewiring_is_caught
+ERROR tests/test_db_migration_verification.py::test_adding_a_type_requires_no_schema_change_at_all
+ERROR tests/test_db_migration_verification.py::test_default_deny_actually_denies
+ERROR tests/test_db_migration_verification.py::test_injected_damage_is_caught[collapse provenance to one row per node and file-delete from node_sources where id not in (select min(id) from node_sources group by node_id, file, prop)-provenance]
+ERROR tests/test_db_migration_verification.py::test_injected_damage_is_caught[drop hand provenance-delete from node_sources where origin = 'hand'-provenance]
+ERROR tests/test_db_migration_verification.py::test_injected_damage_is_caught[lose one edge-delete from edges where id = (select id from edges where rel = 'teaches' order by id limit 1)-edge_counts]
+ERROR tests/test_db_migration_verification.py::test_injected_damage_is_caught[lose one node-delete from nodes where id = (select id from nodes where type = 'person' order by id limit 1)-node_counts]
+ERROR tests/test_db_migration_verification.py::test_injected_damage_is_caught[merge expert_in evidence classes-delete from edges where rel = (select name from edge_rels where from_type='instructor' and to_type='domain') and id not in (select min(id) from edges group by rel, source_id, target_id)-duplicates]
+ERROR tests/test_db_migration_verification.py::test_node_and_edge_types_are_lookup_tables_not_enums
+ERROR tests/test_db_migration_verification.py::test_replace_all_switch_conditions_are_still_false
+ERROR tests/test_db_migration_verification.py::test_rls_is_enabled_on_every_table
+ERROR tests/test_db_migration_verification.py::test_the_clean_projection_verifies
+ERROR tests/test_db_migration_verification.py::test_the_sensitive_half_is_not_in_the_database
+ERROR tests/test_role_boundary.py::test_a_member_cannot_write_anything
+ERROR tests/test_role_boundary.py::test_a_role_change_takes_effect_without_a_re_projection
+ERROR tests/test_role_boundary.py::test_an_identity_with_no_profile_sees_nothing
+ERROR tests/test_role_boundary.py::test_edges_and_provenance_follow_the_node
+ERROR tests/test_role_boundary.py::test_member_sees_zero_sensitive_rows
+ERROR tests/test_role_boundary.py::test_member_still_sees_the_public_graph
+ERROR tests/test_role_boundary.py::test_recruiting_sees_exactly_the_sensitive_rows
+ERROR tests/test_role_boundary.py::test_the_synthetic_rows_actually_exist_first
+FAILED tests/test_cache_is_not_corpus.py::test_walker_skips_pass0_bookkeeping
+FAILED tests/test_client_adapters_lose_nothing.py::test_the_edge_adapter_carries_every_key_the_api_sends
+FAILED tests/test_client_adapters_lose_nothing.py::test_the_node_adapter_carries_every_key_the_api_sends
+FAILED tests/test_content_crawler.py::test_an_orphan_file_in_the_cache_is_reported
+FAILED tests/test_content_crawler.py::test_integrity_is_checked_at_the_end_of_every_run
+FAILED tests/test_content_crawler.py::test_the_manifest_hash_matches_the_bytes_on_disk_for_crlf_text
+FAILED tests/test_curation_writes.py::test_a_field_that_cannot_be_computed_says_so
+FAILED tests/test_deploy_artifact_check.py::test_citing_an_uploaded_excluded_file_fails[01-corpus-inventory.md]
+FAILED tests/test_deploy_artifact_check.py::test_citing_an_uploaded_excluded_file_fails[pipeline/project_graph.py]
+FAILED tests/test_gitignore_blast_radius.py::test_no_tracked_file_is_shadowed_by_an_ignore_rule
+FAILED tests/test_local_stub_never_ships.py::test_nothing_the_deploy_uploads_carries_the_stub
+FAILED tests/test_local_stub_never_ships.py::test_the_deploy_check_fails_an_artifact_that_would_ship_it[web/lib/local_server.py-None]
+FAILED tests/test_local_stub_never_ships.py::test_the_stub_lives_only_where_the_upload_excludes_it
+FAILED tests/test_local_stub_never_ships.py::test_the_stub_under_eval_is_not_uploaded_even_in_an_artifact
+FAILED tests/test_repo_visibility_check.py::test_the_pre_push_hook_runs_the_check_and_is_executable
+FAILED tests/test_structure_payload.py::test_detail_brings_back_every_panel_only_prop
+FAILED tests/test_structure_payload.py::test_the_etag_is_stable_and_follows_the_role
+FAILED tests/test_warm_connection_recovers.py::test_a_network_drop_between_requests_is_survived
+FAILED tests/test_web_data_layer.py::test_a_member_can_search_and_read
+FAILED tests/test_web_data_layer.py::test_provenance_keeps_the_two_shapes_distinct
+FAILED tests/test_web_data_layer.py::test_staffing_subgraph_returns_tiers_unmerged
+FAILED tests/test_web_data_layer.py::test_traversal_cannot_walk_through_provenance
