@@ -4,6 +4,15 @@ A knowledge graph over the New Programs corpus, packaged as a Claude Code plugin
 
 **Read the limitations before the features.** They are first on purpose.
 
+> **New (branch `auto/knowledge-platform-20261102`): the KB workspace.** An
+> editable knowledge base of programs, courses, modules, topics, instructors and
+> resources at `/kb/`, separate from the derived corpus graph below and stored in
+> its own `kb` schema. Roles enforced by RLS, optimistic locking, audit history,
+> a graph view, a Google Sheets importer, and an MCP server plus a Claude Code
+> plugin (`plugins/ik-knowledge-assistant/`). Start with `HANDOFF.md`; design in
+> `docs/ARCHITECTURE.md`; verify with `scripts/verify_all.sh`. Nothing below this
+> note changed.
+
 ---
 
 # What you should not trust

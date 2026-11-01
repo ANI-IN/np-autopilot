@@ -1,4 +1,71 @@
-# AUDIT — np-autopilot, current state
+# AUDIT — np-autopilot
+
+> **2026-11-02 — Knowledge-platform audit (autonomous run).** The section below
+> is new. The original Phase-0 audit of 2026-09-16 follows it unchanged.
+
+## KB audit (2026-11-02, branch `auto/knowledge-platform-20261102`)
+
+Measured on a Windows laptop against the local Supabase stack (Docker, CLI 2.118.0).
+
+### What exists
+
+| Area | Finding |
+|---|---|
+| Architecture | Python pipeline (passes 0–8) builds `knowledge/graph.json` from a read-only Drive corpus → `pipeline/project_graph.py` **replaces** the public projection in Supabase on every refresh. |
+| Web | One WSGI entrypoint `api/index.py` on Vercel (Python runtime), lazy route table, `identify()` before any import or connection; static explorer `public/index.html` (vanilla JS, ~4,300 lines, 2D/3D map); no build step; strict CSP (`script-src 'self'` + hashes). |
+| Auth | Google Workspace sign-in verified server-side (`hd` claim) → Supabase session; every request runs as `authenticated` with the caller's claims; service-role key never used. Roles in `profiles`: member / recruiting / admin. Signup domain hook (0007/0016). |
+| Schema | 21 migrations (`pipeline/migrate.py`, hand-written up/down). Projection: `nodes(text id)`, `edges(bigint)`, `node_sources`, lookups. Curation: `people`, `domain_aliases`, `workflow_owners` with optimistic `version` + `curation_audit`. RLS on every table. |
+| Graph | Node/edge types from `config/taxonomy.yaml` (single source, guarded by a grep test). Read endpoints: overview, structure, neighbourhood (depth cap 3), node, search, staffing, coverage. |
+| Sheets/Drive | `00_fetch_drive.py` (service account, `drive.readonly`) and `fetch_mastersheet.py`; allow-list of 20 name columns in `pipeline/lib/sources.py` is the contact-data control. |
+| Tests | 1,091 tests; CI with a skip ledger, payroll/secret/repo-visibility gates. |
+| Plugin | The repo root is the `np-autopilot` Claude Code plugin (commands over `graph.json`). |
+
+### Baseline (before any change)
+
+- Without DB (CI-like): **892 passed, 12 failed, 187 skipped**. All 12 failures are
+  Windows-environment issues (CRLF hashes, executable bit, `.env*` ignore rule
+  shadowing `.env.example`, deploy-artifact checks expecting a POSIX tree).
+- With the local DB, on `main`: **998 passed, 22 failed, 21 errors, 50 skipped**.
+  Root cause of most DB failures: **`project_graph.py` cannot load the committed
+  `knowledge/graph.json` into a fresh database** — `node_sources` row with
+  `origin='corpus'` and no `file` (a Drive-folder citation) violates
+  `corpus_names_a_file` (0002). The live production DB presumably holds data
+  loaded before that constraint mattered, or a newer graph. **Not fixed in this
+  run** (pre-existing, outside scope); listed in HANDOFF. Exact list:
+  `docs/baseline-failures.txt`.
+
+### Discrepancies with the run's brief
+
+The brief assumed a JS framework (React Flow, TS MCP SDK, zod), Supabase
+Realtime and no auth. Reality: Python + vanilla JS, production Google SSO, CSP
+`connect-src 'self'`. Adapted: see PLAN.md "Adaptation" table.
+
+### Decisions from the audit
+
+- **New `kb` schema** for authored records. The projection is rebuilt wholesale,
+  so edits cannot live there; nothing in `public` changes, so the live app is
+  unaffected.
+- **Courses/programs = node types** with `is_container` (dedicated pages in the UI);
+  no strong reason for separate tables — they need exactly the relationships,
+  resources, history and search every node gets.
+- **Resources = their own table**, many-to-many with a note.
+- **KB roles layered on existing identity**: `kb.memberships`; any IK profile is a
+  KB viewer; admins only via `ADMIN_EMAILS` + `pipeline/kb_admins.py`.
+
+| Component | Keep / Improve / Replace | Reason |
+|---|---|---|
+| WSGI entrypoint + guard | Keep (extended) | `/api/kb/*` added behind the same identify-first door |
+| Google SSO + profiles | Keep | already domain-restricted, verified server-side |
+| Projection schema + explorer | Keep, untouched | rebuilt by the pipeline; read-only consumers |
+| Curation tables | Keep | separate concern (pipeline inputs) |
+| Migration runner | Keep | 0022–0025 added with downs |
+| `project_graph.py` vs fresh DB | Improve (not done) | fails `corpus_names_a_file` — owner decision |
+| Windows test portability | Improve (not done) | 12 env-specific failures |
+| Static explorer | Keep | KB workspace is a separate page (`/kb/`) sharing the session |
+
+---
+
+# Phase-0 audit (2026-09-16)
 
 **Phase 0 deliverable. No production code written.**
 
