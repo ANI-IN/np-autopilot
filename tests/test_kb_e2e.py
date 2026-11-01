@@ -56,6 +56,9 @@ def page_as(browser, base, role, viewport=(1400, 900)):
     page = ctx.new_page()
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
+    # CSP violations surface as console errors; production's policy is applied
+    # by eval/kb_dev_server.py, so any violation fails the test that caused it.
+    page.on("console", lambda m: m.type == "error" and "Content Security Policy" in m.text and errors.append(m.text))
     page.goto(base)
     expect(page.get_by_test_id("whoami")).to_contain_text(role)
     page.errors = errors

@@ -36,6 +36,22 @@ PUBLIC = REPO / "public"
 LOCAL_HOSTS = {"127.0.0.1", "localhost"}
 
 
+def _production_headers() -> list[tuple[str, str]]:
+    """vercel.json's headers for every path (CSP, HSTS, frame options …), so the
+    browser tests run under the SAME policy production serves. A page that needs
+    eval or an off-origin fetch fails here, not after a deploy."""
+    import json
+    cfg = json.loads((REPO / "vercel.json").read_text(encoding="utf-8"))
+    out = []
+    for rule in cfg.get("headers", []):
+        if rule.get("source") == "/(.*)":
+            out += [(h["key"], h["value"]) for h in rule["headers"] if h["key"] != "strict-transport-security"]
+    return out
+
+
+PROD_HEADERS = _production_headers()
+
+
 def _configure() -> None:
     os.environ.setdefault(db.SESSION, db.LOCAL_TEST_DSN)
     os.environ.setdefault(db.TRANSACTION, db.LOCAL_TEST_DSN_TRANSACTION)
@@ -74,7 +90,7 @@ def make_app():
         ctype = mimetypes.guess_type(str(target))[0] or "application/octet-stream"
         if ctype.startswith("text/") or ctype.endswith("javascript"):
             ctype += "; charset=utf-8"
-        start_response("200 OK", [("content-type", ctype), ("cache-control", "no-store")])
+        start_response("200 OK", [("content-type", ctype), ("cache-control", "no-store")] + PROD_HEADERS)
         return [target.read_bytes()]
     return app
 
