@@ -1263,6 +1263,41 @@ def find_instructors(conn, *, course_id: str | None = None, q: str | None = None
     return rows
 
 
+def quality_overview(conn, limit: int = 50) -> dict:
+    """The data-quality dashboard: counts first, then the records to act on.
+    Completeness per course/program = share of its contents (contains edges or
+    scoped records) plus itself that carry at least one resource."""
+    totals = _q1(conn, """select
+        (select count(*) from kb.nodes n where n.archived_at is null) as live,
+        (select count(*) from kb.nodes n where n.archived_at is null and not exists (
+            select 1 from kb.edges e where e.archived_at is null and (e.source_id = n.id or e.target_id = n.id))) as orphans,
+        (select count(*) from kb.nodes n where n.archived_at is null and n.owner_id is null) as no_owner,
+        (select count(*) from kb.nodes n where n.archived_at is null and not exists (
+            select 1 from kb.node_resources r where r.node_id = n.id and r.archived_at is null)) as no_resources,
+        (select count(*) from kb.nodes n where n.archived_at is null and coalesce(btrim(n.summary), '') = '') as no_summary""")
+    orphans = _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
+                          where n.archived_at is null and not exists (select 1 from kb.edges e where e.archived_at is null
+                                and (e.source_id = n.id or e.target_id = n.id))
+                          order by n.updated_at desc limit %s""", (limit,))
+    courses = _q(conn, """
+        with c as (select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
+                   where n.archived_at is null and t.is_container),
+        kids as (select c.id as cid, k.id as kid from c
+                 join kb.edges e on e.source_id = c.id and e.archived_at is null
+                 join kb.edge_types et on et.id = e.edge_type_id and et.key = 'contains'
+                 join kb.nodes k on k.id = e.target_id and k.archived_at is null
+                 union
+                 select c.id, k.id from c join kb.nodes k on k.scope_id = c.id and k.archived_at is null),
+        members as (select cid, kid as nid from kids union select id, id from c)
+        select c.id, c.name, c.type, count(m.nid) - 1 as contents,
+               round(100.0 * count(m.nid) filter (where exists (select 1 from kb.node_resources r
+                     where r.node_id = m.nid and r.archived_at is null)) / count(m.nid)) as completeness
+        from c join members m on m.cid = c.id group by c.id, c.name, c.type
+        order by completeness asc, c.name limit %s""", (limit,))
+    return {"totals": totals, "orphans": orphans, "courses": courses,
+            "duplicates": find_duplicate_nodes(conn, 0.6, 20)}
+
+
 def resources_for_link_check(conn, limit: int = 50, offset: int = 0) -> list[dict]:
     return _q(conn, "select id, url, title from kb.resources where archived_at is null "
                     "order by updated_at desc limit %s offset %s", (min(int(limit), 50), max(int(offset), 0)))

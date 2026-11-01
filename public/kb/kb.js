@@ -190,7 +190,7 @@
       lastViewKey = viewKey;
       var v = clear($('#view')); S.listReload = null;
       ({ dashboard: viewDashboard, records: viewRecords, courses: viewRecords, programs: viewRecords,
-         resources: viewResources, graph: viewGraph, proposals: viewProposals, settings: viewSettings }[head] || viewNotFound)(v, r);
+         resources: viewResources, graph: viewGraph, proposals: viewProposals, settings: viewSettings, quality: viewQuality }[head] || viewNotFound)(v, r);
     }
     if (r.q.open) openNodePanel(r.q.open); else if (r.q.res) openResourcePanel(r.q.res); else if (S.panel) closePanel(true);
   }
@@ -270,7 +270,25 @@
     ownSel.addEventListener('change', function () { f.owner = ownSel.value; setQuery({ owner: ownSel.value }, true); reset(); });
     var sortSel = el('select', { 'aria-label': 'Sort', 'data-testid': 'sort' }, el('option', { value: 'updated', text: 'Recently updated', selected: f.sort === 'updated' }), el('option', { value: 'name', text: 'Name A–Z', selected: f.sort === 'name' }));
     sortSel.addEventListener('change', function () { f.sort = sortSel.value; setQuery({ sort: sortSel.value }, true); reset(); });
-    add(filters, [stSel, ownSel, sortSel]);
+    var exportBtn = el('button', { class: 'btn', type: 'button', text: 'Export CSV', 'data-testid': 'export-csv', onclick: async function () {
+      exportBtn.disabled = true;
+      try {
+        var rows = [], cur = null, pages = 0;
+        do {
+          var p = await api('GET', '/nodes' + qs({ q: f.q, type: f.type, status: f.status, sort: f.sort, scope: f.scope, tag: f.tag,
+            owner: f.owner === 'owned' ? S.me.user_id : '', created_by: f.owner === 'created' ? S.me.user_id : '', cursor: cur, limit: 200 }));
+          rows = rows.concat(p.items); cur = p.next_cursor; pages++;
+        } while (cur && pages < 50);
+        var cell = function (x) { x = x === null || x === undefined ? '' : String(x); return /[",\r\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; };
+        var csv = [['id', 'type', 'name', 'summary', 'course_or_program', 'status', 'archived_at', 'updated_at', 'version']].concat(rows.map(function (n) {
+          return [n.id, n.type, n.name, n.summary, n.scope_name, n.status, n.archived_at, n.updated_at, n.version]; })).map(function (r) { return r.map(cell).join(','); }).join('\r\n');
+        var a = el('a', { href: URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })), download: 'kb-records.csv' });
+        document.body.appendChild(a); a.click(); a.remove();
+        toast('Exported ' + rows.length + ' record(s)' + (cur ? ' (first 10,000 — narrow the filters for the rest)' : ''));
+      } catch (e) { failToast(e, 'Export failed'); }
+      exportBtn.disabled = false;
+    } });
+    add(filters, [stSel, ownSel, sortSel, exportBtn]);
     v.appendChild(filters);
     var out = el('div', { 'data-testid': 'records' }); v.appendChild(out);
     var cursors = [null], page = 0;
@@ -909,6 +927,46 @@
                 expand: function (id) { return load(id, 1); } };
     window.__kbGraph = S.graph;   // for tests and keyboard users' devtools; holds no data of its own
     load(center, depth, true);
+  }
+
+  // ------------------------------------------------------------------ data quality
+  async function viewQuality(v) {
+    v.appendChild(el('div', { class: 'page-head' }, el('div', null, el('h1', { text: 'Data quality' }), el('div', { class: 'muted', text: 'What is incomplete, unconnected or possibly duplicated. Counts first; fix the top of each list.' }))));
+    var out = el('div', { 'data-testid': 'quality' }); v.appendChild(out); out.appendChild(skeleton(6));
+    var load = async function () {
+      try {
+        var q = await api('GET', '/quality'); clear(out);
+        var t = q.totals, cards = el('div', { class: 'cards' });
+        [['Live records', t.live], ['Not connected', t.orphans], ['No resources', t.no_resources], ['No owner', t.no_owner], ['No summary', t.no_summary]].forEach(function (c) {
+          cards.appendChild(el('div', { class: 'card', 'data-testid': 'q-' + c[0].toLowerCase().replace(/ /g, '-') }, el('div', { class: 'muted small', text: c[0] }), el('div', { class: 'num', text: c[1] })));
+        });
+        out.appendChild(cards);
+        out.appendChild(el('h2', { text: 'Completeness by course and program' }));
+        if (!q.courses.length) out.appendChild(empty('No courses or programs yet', 'Completeness is the share of a course and its contents that carry at least one resource.'));
+        else {
+          var tb = el('tbody');
+          q.courses.forEach(function (c) {
+            var pct = Number(c.completeness);
+            tb.appendChild(el('tr', { tabindex: '0', 'data-testid': 'q-course', onclick: function () { setQuery({ open: c.id }); } },
+              el('td', null, el('strong', { text: c.name })), el('td', null, typePill(c.type)), el('td', { class: 'small', text: c.contents + ' item(s)' }),
+              el('td', null, el('span', { class: 'pill ' + (pct >= 80 ? 'ok' : pct >= 40 ? 'warn' : 'danger'), text: pct + '%' }))));
+          });
+          out.appendChild(el('table', { class: 'table' }, el('thead', null, el('tr', null, ['Course / program', 'Type', 'Contents', 'With resources'].map(function (h) { return el('th', { text: h }); }))), tb));
+        }
+        out.appendChild(el('h2', { text: 'Not connected to anything', style: 'margin-top:24px' }));
+        var ul = el('ul', { class: 'list', 'data-testid': 'q-orphans' });
+        if (!q.orphans.length) ul.appendChild(el('li', { class: 'faint small', text: 'Every record has at least one relationship.' }));
+        q.orphans.forEach(function (n) { ul.appendChild(el('li', null, typePill(n.type), el('a', { href: '#/quality' + qs({ open: n.id }), text: n.name }))); });
+        out.appendChild(ul);
+        out.appendChild(el('h2', { text: 'Possible duplicates', style: 'margin-top:24px' }));
+        var dl = el('ul', { class: 'list', 'data-testid': 'q-duplicates' });
+        if (!q.duplicates.length) dl.appendChild(el('li', { class: 'faint small', text: 'No similar names found.' }));
+        q.duplicates.forEach(function (d) { dl.appendChild(el('li', null, typePill(d.type), el('a', { href: '#/quality' + qs({ open: d.a_id }), text: d.a_name }), el('span', { class: 'faint', text: '↔' }), el('a', { href: '#/quality' + qs({ open: d.b_id }), text: d.b_name }), el('span', { class: 'spacer' }), el('span', { class: 'faint small', text: 'similarity ' + d.similarity }))); });
+        out.appendChild(dl);
+        out.appendChild(el('p', { class: 'faint small', style: 'margin-top:16px', text: 'Link health is checked by the MCP tool check_broken_links (Google Drive links behind sign-in count as “needs access”, not broken).' }));
+      } catch (e) { clear(out).appendChild(errorBox(e, load)); }
+    };
+    S.listReload = load; load();
   }
 
   // ------------------------------------------------------------------ proposals

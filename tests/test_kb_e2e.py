@@ -370,3 +370,20 @@ def test_tablet_width_layout_and_tokens(server, browser):
     page.get_by_test_id("confirm-ok").click()
     expect(page.get_by_test_id("token-row")).to_contain_text("revoked")
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
+
+
+def test_quality_dashboard_and_csv_export(server, browser):
+    api = Client(USERS["editor"])
+    _, c = api.post("/api/kb/courses", {"name": "Quality, \"Course\""})
+    api.post("/api/kb/nodes", {"type": "module", "name": "Unresourced", "scope": c["id"]})
+    page = page_as(browser, server, "viewer")
+    page.goto(server + "#/quality")
+    expect(page.get_by_test_id("q-course")).to_contain_text("0%")
+    expect(page.get_by_test_id("q-orphans")).to_contain_text("Unresourced")
+    page.goto(server + "#/records")
+    with page.expect_download() as d:
+        page.get_by_test_id("export-csv").click()
+    text = Path(d.value.path()).read_text(encoding="utf-8-sig")
+    assert text.splitlines()[0].startswith("id,type,name")
+    assert '"Quality, ""Course"""' in text and "Unresourced" in text
+    assert page.errors == []

@@ -74,6 +74,8 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
         since = params.get("since")
         return 200, svc.changes(conn, _int(since, None) if since not in (None, "") else None)
 
+    if head == "quality" and method == "GET" and not rest:
+        return 200, svc.quality_overview(conn)
     if head == "quality" and method == "GET" and rest == ["missing-resources"]:
         return 200, {"items": svc.find_missing_resources(conn, params.get("type"), _int(params.get("limit"), 100))}
     if head == "quality" and method == "GET" and rest == ["duplicates"]:

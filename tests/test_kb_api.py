@@ -381,3 +381,17 @@ def test_members_and_types_are_admin_only(admin, editor):
         from kb_support import owner
         with owner() as c:
             c.execute("delete from kb.node_types where key = 'lab'")
+
+
+def test_quality_overview(contrib, viewer):
+    c = _mk(contrib, "course", "Q Course")
+    m = _mk(contrib, "module", "Q Module", scope=c["id"],
+            resources=[{"url": "https://example.com/q", "title": "Q"}])
+    _mk(contrib, name="Lonely Topic")
+    _mk(contrib, name="Lonely Topics")
+    s, q = viewer.get("/api/kb/quality")
+    assert s == 200
+    assert q["totals"]["live"] == 4 and q["totals"]["orphans"] == 4 and q["totals"]["no_resources"] == 3
+    course = [x for x in q["courses"] if x["id"] == c["id"]][0]
+    assert course["contents"] == 1 and float(course["completeness"]) == 50.0      # module has one, course none
+    assert {d["a_name"] for d in q["duplicates"]} | {d["b_name"] for d in q["duplicates"]} >= {"Lonely Topic", "Lonely Topics"}
