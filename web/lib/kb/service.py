@@ -445,11 +445,10 @@ def update_node(conn, actor: Actor, node_id: str, body: dict, *, force: bool = F
             cur.execute(f"update kb.nodes set {', '.join(sets)} where {where}", (*args, *wargs))
             n = cur.rowcount
     if n == 0:
-        latest = _node_row(conn, node_id)
-        if latest is None:
+        if _node_row(conn, node_id) is None:
             raise NotFound(f"no record with id {node_id}")
         raise Conflict("This record changed since you opened it. Your change was NOT saved.",
-                       current=latest, your_version=expected)
+                       current=get_node(conn, node_id), your_version=expected)
     return get_node(conn, node_id)
 
 
