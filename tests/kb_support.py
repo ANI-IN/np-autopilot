@@ -4,7 +4,7 @@ LOCAL OR DEV DATABASE ONLY. `reset()` truncates the kb content tables, so it
 refuses any DSN that is not a loopback host; tests/conftest.py separately
 refuses production before collection.
 
-Users are SYNTHETIC: `synthetic-kb-<role>@interviewkickstart.com`, the same
+Users are SYNTHETIC: `kbtest-<role>@interviewkickstart.com`, the same
 shape tests/test_role_boundary.py uses. No real identity appears here.
 """
 from __future__ import annotations
@@ -79,10 +79,10 @@ def ensure_users() -> None:
     with owner() as c:
         for r, uid in USERS.items():
             c.execute("insert into auth.users (id, email, created_at) values (%s, %s, now()) "
-                      "on conflict (id) do nothing", (uid, f"synthetic-kb-{r}@interviewkickstart.com"))
+                      "on conflict (id) do nothing", (uid, f"kbtest-{r}@interviewkickstart.com"))
             c.execute("insert into profiles (user_id, email, email_domain, role) "
                       "values (%s, %s, 'interviewkickstart.com', 'member') on conflict (user_id) do nothing",
-                      (uid, f"synthetic-kb-{r}@interviewkickstart.com"))
+                      (uid, f"kbtest-{r}@interviewkickstart.com"))
             if r == "viewer":
                 c.execute("delete from kb.memberships where user_id = %s", (uid,))
             else:
@@ -131,7 +131,7 @@ def token_for(user_id: str, *, ttl: int = 600) -> str:
     now = int(time.time())
     return jwt.encode({"sub": user_id, "aud": "authenticated", "role": "authenticated",
                        "exp": now + ttl, "iat": now,
-                       "email": f"synthetic-{user_id[:8]}@interviewkickstart.com"},
+                       "email": f"kbtest-{user_id[:8]}@interviewkickstart.com"},
                       TEST_JWT_SECRET, algorithm="HS256")
 
 

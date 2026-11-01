@@ -114,6 +114,8 @@ for everything derived; Postgres is the source of truth for CURATION only
 | `project_graph.py` | replace-all in one transaction. **Public half only** — `--scope full` is refused until the recruiting RLS path exists. |
 | `curation.py` | `import` / `export` / `roundtrip` / `check` for people, domain aliases and workflow owners. `roundtrip` proves the mechanism by reloading from YAML; `check` compares the database **as it is**, which is the only one that can see drift. |
 | `grant_access.py` | `list` / `grant` / `revoke` a profile. **The deliberate act that a session is not** — signing in proves a Workspace identity, a profile is what grants data, and there is no self-service path between the two. Runs as the owner because `profiles` has no INSERT policy, so this cannot be done over the web app. |
+| `kb_admins.py` | grant the KB workspace `admin` role to the profiles named in `ADMIN_EMAILS` (`--dry-run` to preview). **The only bootstrap path to KB admin**; nobody is auto-admin, a profile with no membership is a KB viewer. Refuses shared accounts. |
+| `kb_import_sheets.py` | Google Sheets → KB import: fetch (read-only) → stage → validate → dry-run report → `--apply`. Idempotent on `external_id`; never overwrites a record edited in the app since its last import. `docs/MIGRATION_MAPPING.md`. |
 
 ```
 set -a && . ~/.config/np-autopilot/env && set +a

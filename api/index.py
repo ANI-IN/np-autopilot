@@ -119,7 +119,7 @@ def _respond(start_response, status: int, body: dict, *, no_store: bool = False,
         if enc:
             headers.append(("content-encoding", enc))
     headers.append(("content-length", str(len(raw))))
-    start_response(f"{status} {'OK' if status == 200 else 'ERROR'}", headers)
+    start_response(f"{status} {'OK' if status < 400 else 'ERROR'}", headers)
     return [raw]
 
 
@@ -274,6 +274,74 @@ def _serve_write(path: str, environ, start_response):
     return _respond(start_response, status, payload, no_store=True)
 
 
+#: KB bodies carry long-form text (up to 100k characters of body), so the cap is
+#: wider than the curation one — still bounded.
+KB_MAX_BODY = 512 * 1024
+KB_METHODS = {"GET", "POST", "PATCH", "DELETE"}
+
+
+def _serve_kb(path: str, method: str, environ, start_response):
+    """The only path from an HTTP request to the KB service (web/lib/kb).
+
+    Same discipline as _serve_read / _serve_write: identify() first,
+    unconditionally, then a connection scoped to that identity, so RLS (0023)
+    applies to every statement. Commit only on success; any refusal rolls the
+    whole request back, which is what makes a multi-step create atomic.
+    """
+    started = time.time()
+    try:
+        identity = identify(_Headers(environ))
+    except AuthError as exc:
+        return _respond(start_response, 401,
+                        {"error": "unauthorised", "reason": str(exc)})
+    if method not in KB_METHODS:
+        return _respond(start_response, 405, {"error": "method_not_allowed"})
+    body = None
+    if method in ("POST", "PATCH"):
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        if length > KB_MAX_BODY:
+            return _respond(start_response, 413, {"error": "too_large"})
+        try:
+            body = json.loads(environ["wsgi.input"].read(length) or b"{}") if length else {}
+        except Exception:                                              # noqa: BLE001
+            return _respond(start_response, 400,
+                            {"error": "bad_request", "reason": "body is not JSON"})
+        if not isinstance(body, dict):
+            return _respond(start_response, 400,
+                            {"error": "bad_request", "reason": "body must be an object"})
+    params = {k: (v[0] if len(v) == 1 else v)
+              for k, v in parse_qs(environ.get("QUERY_STRING", "")).items()}
+    parts = [p for p in path[len("/api/kb/"):].split("/") if p]
+    import kb_routes                                                  # noqa: PLC0415
+    status, payload = 500, {"error": "internal"}
+    try:
+        with data.request_connection(identity.subject) as conn:
+            try:
+                status, payload = kb_routes.handle(
+                    conn, kb_routes.svc.Actor(identity.subject, "human"),
+                    method, parts, params, body)
+            except kb_routes.KbError as exc:
+                # 202 = the change was recorded as a PROPOSAL: that row is the
+                # successful write, so it commits. Every other refusal rolls back.
+                if exc.status == 202:
+                    conn.commit()
+                else:
+                    conn.rollback()
+                status, payload = exc.status, exc.payload()
+            else:
+                if method != "GET":
+                    conn.commit()
+    except Exception:                                                  # noqa: BLE001
+        print(traceback.format_exc(), file=sys.stderr)
+        return _respond(start_response, 500, {"error": "internal"})
+    audit(identity, "kb", {"method": method, "path": "/".join(parts[:1]),
+                           "status": status}, 1 if status < 300 else 0, started)
+    return _respond(start_response, status, payload, no_store=True)
+
+
 class _Headers:
     """Adapts a WSGI environ to the .get() interface guard.bearer expects."""
 
@@ -318,6 +386,9 @@ def app(environ, start_response):
             print(traceback.format_exc(), file=sys.stderr)
             status, out = 500, {"error": "internal"}
         return _respond(start_response, status, out, no_store=True)
+
+    if path.startswith("/api/kb/"):
+        return _serve_kb(path, method, environ, start_response)
 
     if path in WRITES:
         if method != "POST":
