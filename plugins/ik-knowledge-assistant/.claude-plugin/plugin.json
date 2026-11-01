@@ -1,0 +1,22 @@
+{
+  "name": "ik-knowledge-assistant",
+  "displayName": "IK Knowledge Assistant",
+  "version": "0.1.0",
+  "description": "Search, audit and extend the Interview Kickstart knowledge base (programs, courses, modules, topics, instructors, resources) through its MCP server. Acts as you, with your role; archive requests always need human approval.",
+  "author": { "name": "Interview Kickstart — New Programs" },
+  "license": "Proprietary · Interview Kickstart",
+  "keywords": ["knowledge-base", "mcp", "courses"],
+  "userConfig": {
+    "kb_api_url": {
+      "type": "string",
+      "title": "Knowledge base URL",
+      "description": "Base URL of the KB app, e.g. https://<app-host> (no trailing slash)."
+    },
+    "kb_mcp_token": {
+      "type": "string",
+      "title": "KB API token",
+      "description": "Create one in the KB app: Settings → API tokens (starts with ikkb_). Acts as you.",
+      "sensitive": true
+    }
+  }
+}

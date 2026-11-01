@@ -1,8 +1,17 @@
 {
   "$schema": "https://code.claude.com/schemas/marketplace.json",
   "name": "np-autopilot",
-  "owner": { "name": "Interview Kickstart — New Programs" },
+  "owner": {
+    "name": "Interview Kickstart — New Programs"
+  },
   "plugins": [
-    { "name": "np-autopilot", "source": "./" }
+    {
+      "name": "np-autopilot",
+      "source": "./"
+    },
+    {
+      "name": "ik-knowledge-assistant",
+      "source": "./plugins/ik-knowledge-assistant"
+    }
   ]
 }

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "ik-kb": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/kb_server.py"],
+      "env": {
+        "KB_API_URL": "${user_config.kb_api_url}",
+        "KB_MCP_TOKEN": "${user_config.kb_mcp_token}"
+      }
+    }
+  }
+}
