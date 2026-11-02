@@ -25,6 +25,14 @@
 
 ## Tools
 
+`list_types` returns the workspace's record types with their custom fields,
+relationship types with allowed pairs, link kinds and resource kinds; read it
+before creating records of a custom type. `create_node` and `update_node` take
+`props` (custom field values by key) and `create_node` takes `parent_ids`.
+With a contributor's token, `create_node` returns `approval_required` (a
+proposal). `check_broken_links` stores its results for the Data quality page
+when the token's role is editor or above.
+
 | Group | Tool | Notes |
 |---|---|---|
 | Read | `search_knowledge(query, types?, limit?)` | full-text + trigram; resources by title/URL |

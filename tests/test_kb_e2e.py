@@ -72,7 +72,7 @@ def page_as(browser, base, role, viewport=(1440, 900)):
     CONTEXTS.append(ctx)
     sess = json.dumps({"access_token": token_for(USERS[role], ttl=3600), "expires_at": int(time.time()) + 3600,
                        "user": {"email": f"kbtest-{role}@interviewkickstart.com"}})
-    ctx.add_init_script(f"localStorage.setItem('np_session', {json.dumps(sess)}); localStorage.removeItem('kb_draft_new_record');")
+    ctx.add_init_script(f"localStorage.setItem('np_session', {json.dumps(sess)}); if (!sessionStorage.getItem('kbt')) {{ localStorage.removeItem('kb_draft_new_record'); sessionStorage.setItem('kbt', '1'); }}")
     page = ctx.new_page()
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
@@ -735,3 +735,35 @@ def test_saved_view_shared_with_the_team_and_bulk_owner(server, browser):
     other.goto(server + "#/records")
     expect(other.get_by_test_id("view-tab")).to_contain_text("Needs an owner")    # shared
     assert page.errors == [] and other.errors == []
+
+
+def test_guide_promises_undo_after_create_draft_restore_and_theme(server, browser):
+    page = page_as(browser, server, "editor")
+    # Undo straight after creating archives the new record
+    page.get_by_test_id("new-record").click()
+    choose_type(page, "Topic")
+    page.get_by_test_id("create-name").fill("Undo me")
+    page.get_by_test_id("create-submit").click()
+    expect(page.get_by_test_id("panel-name")).to_have_text("Undo me")
+    page.get_by_test_id("toast-undo").click()
+    expect(toast(page)).to_contain_text("Undone")
+    assert Client(USERS["viewer"]).get("/api/kb/nodes", "q=Undo")[1]["items"] == []
+    # closing a dirty form asks first; the draft is offered next time
+    page.keyboard.press("Escape")
+    page.get_by_test_id("new-record").click()
+    page.get_by_test_id("create-name").fill("Half-written idea")
+    page.wait_for_timeout(600)                                        # draft autosave is debounced
+    page.get_by_test_id("sheet-close").click()
+    expect(page.get_by_test_id("confirm-dialog")).to_contain_text("Discard this draft?")
+    page.get_by_test_id("confirm-ok").click()
+    page.get_by_test_id("new-record").click()
+    expect(page.get_by_test_id("draft-restore")).to_be_visible()
+    page.get_by_test_id("draft-restore").get_by_role("button", name="Restore").click()
+    expect(page.get_by_test_id("create-name")).to_have_value("Half-written idea")
+    page.get_by_test_id("sheet-close").click()
+    page.get_by_test_id("confirm-ok").click()
+    # theme toggle
+    page.get_by_test_id("whoami").click()
+    page.get_by_test_id("theme-dark").click()
+    assert page.evaluate("document.documentElement.dataset.theme") == "dark"
+    assert page.errors == []

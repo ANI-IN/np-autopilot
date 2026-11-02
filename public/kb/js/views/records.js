@@ -71,8 +71,8 @@ export function viewRecords(v, r) {
     el('div', { class: 'input-icon search' }, icon('search'), search),
     el('button', { class: 'btn', type: 'button', 'data-testid': 'filter-button', onclick: (e) => filterMenu(e.currentTarget) }, icon('filter', 'sm'), 'Filter'),
     el('button', { class: 'btn', type: 'button', 'data-testid': 'sort', onclick: (e) => menu(e.currentTarget, [
-      { label: 'Recently updated' + (f.sort !== 'name' ? '  ✓' : ''), fn: () => setQuery({ sort: null }) },
-      { label: 'Name A–Z' + (f.sort === 'name' ? '  ✓' : ''), fn: () => setQuery({ sort: 'name' }), testid: 'sort-name' }]) }, icon('arrow-up-down', 'sm'), f.sort === 'name' ? 'Name' : 'Updated'),
+      { label: 'Recently updated', checked: f.sort !== 'name', fn: () => setQuery({ sort: null }) },
+      { label: 'Name A–Z', checked: f.sort === 'name', fn: () => setQuery({ sort: 'name' }), testid: 'sort-name' }]) }, icon('arrow-up-down', 'sm'), f.sort === 'name' ? 'Name' : 'Updated'),
     el('span', { class: 'spacer' }),
     el('button', { class: 'btn ghost', type: 'button', 'data-testid': 'view-options', onclick: (e) => optionsMenu(e.currentTarget) }, icon('sliders-horizontal', 'sm'), 'View'),
     el('button', { class: 'btn ghost', type: 'button', 'data-testid': 'export-csv', onclick: exportCsv }, icon('download', 'sm'), 'Export'));
@@ -110,10 +110,10 @@ export function viewRecords(v, r) {
   function tagPicker() { pickDialog('Tag', (on) => combobox({ placeholder: 'Search tags', source: async (q) => (await api('GET', '/tags')).items.filter((t) => !q || t.name.includes(q)).map((t) => ({ id: t.id, label: '#' + t.name })), onChange: on }), (x) => setQuery({ tag: x.id, tag_name: x.label, view: null })); }
   function optionsMenu(anchor) {
     menu(anchor, [{ header: true, label: 'Density' },
-      { label: 'Comfortable' + (!p.compact ? '  ✓' : ''), fn: () => { p.compact = false; savePrefs(p); tableHost.classList.remove('compact'); } },
-      { label: 'Compact' + (p.compact ? '  ✓' : ''), testid: 'density-compact', fn: () => { p.compact = true; savePrefs(p); tableHost.classList.add('compact'); } },
+      { label: 'Comfortable', checked: !p.compact, fn: () => { p.compact = false; savePrefs(p); tableHost.classList.remove('compact'); } },
+      { label: 'Compact', checked: p.compact, testid: 'density-compact', fn: () => { p.compact = true; savePrefs(p); tableHost.classList.add('compact'); } },
       '-', { header: true, label: 'Columns' },
-      ...COLS.map(([k, label]) => ({ label: label + (cols[k] ? '  ✓' : ''), fn: () => { cols[k] = !cols[k]; p.cols = cols; savePrefs(p); draw(); } }))]);
+      ...COLS.map(([k, label]) => ({ label: label, checked: cols[k], fn: () => { cols[k] = !cols[k]; p.cols = cols; savePrefs(p); draw(); } }))]);
   }
 
   async function drawChips() {

@@ -33,7 +33,7 @@ the token owner and are attributed `actor_type=ai`. Every request runs as the
 | `GET /search?q=&types=&limit=` | viewer | websearch FTS + trigram; resources by title/URL |
 | `GET /changes?since=<audit id>` | viewer | change feed for collaboration (cursor) |
 | `GET /nodes?type=&scope=&q=&status=&tag=&owner=&created_by=&sort=updated\|name&cursor=&limit=` | viewer | cursor pages: default 50, max 200 |
-| `POST /nodes` | contributor | `{type, name, summary?, body?, status?, scope?: id \| {new:{type,name}}, resources?: [...], edges?: [{type, node_id, direction}], tags?}` — one transaction |
+| `POST /nodes` | editor (contributor: 202 proposal, validated first) | one transaction: `{type, name, summary, body, status, review_status, owner_id, co_owners, props, parents: [id or {new: {type, name, parent}}] (nested inline creates), scope (= first parent), edges: [{type, direction, node: id or {new}}], resources: [{resource_id} or {url, title, kind, link_kind, description, owner_id, tags, note}], instructors, smes, tags}`. Any failure rolls everything back and names the `field` (`parents.0`, `edges.1`, `resources.2`, `props.difficulty`). |
 | `GET /nodes/{id}` | viewer | detail: `outgoing`, `incoming`, `resources`, `tags`, `children_count` |
 | `PATCH /nodes/{id}[?force=1]` | contributor (force: editor) | **requires `version`** |
 | `GET /nodes/{id}/impact` | viewer | live edges, attachments, scoped records |
@@ -55,6 +55,24 @@ the token owner and are attributed `actor_type=ai`. Every request runs as the
 | `GET /tokens` · `POST /tokens` · `POST /tokens/{id}/revoke` | own | raw token returned once |
 | `GET /members` · `POST /members/{user_id}` | admin | `{role}` |
 | `GET /people` | viewer | members' `user_id, email, role` (owner names) |
+| `GET /types[?archived=1]` | viewer | record types (fields, placement, record counts), relationship types (rules, cardinality), link kinds, resource kinds, field kinds, palette |
+| `POST /types/node` / `PATCH /types/node/{key}` | admin (editor: 202 proposal) | safe changes only (docs/SCHEMA.md 0027); `replacements: {field: {old: new}}` for removed options in use; returns `warnings`, `converted_records` |
+| `POST /types/node/{key}/archive`, `/restore`, `/duplicate` | admin (editor: proposal) | archive refused (409) while records use it; core types never archived |
+| `POST /types/node/{key}/change-type` | admin (editor: proposal) | `{to, ids?, field_map: {old_key: new_key or null}}`; all or nothing |
+| `POST /types/edge`, `PATCH /types/edge/{key}`, `POST /types/edge/{key}/archive` | admin (editor: proposal) | `{label, inverse_label, cardinality, allow_self, rules: [{source, target}]}`; narrowing reports, never deletes |
+| `POST /types/link`, `PATCH /types/link/{key}`, `POST /types/link/{key}/archive` | admin (editor: proposal) | `{label, icon, patterns: [regex], defaults: {kind}}` |
+| `GET /nodes/check-name?type=&name=&scope=` | viewer | `{exact, similar}` for the duplicate warning |
+| `POST /nodes/bulk` | contributor | `{ids, set: {owner_id, status, review_status}, add_tags, remove_tags, add_parent}` |
+| `POST /nodes/bulk-archive` | editor (contributor: proposals) | `{ids}` |
+| `GET /nodes/{id}/completeness`, `/resources/{id}/completeness` | viewer | score and missing checks; for containers the subtree average and weakest items |
+| `GET /nodes/{id}/delete-impact`, `/resources/{id}/delete-impact` | viewer | what a permanent delete removes with it |
+| `GET /archived?kind=records,resources,relationships` | viewer | newest first |
+| `GET /outline?root=`, `POST /outline/reorder` | viewer, contributor | tree from `contains`; `{parent_id, child_ids}` |
+| `GET /flags?status=&target=`, `POST /flags`, `POST /flags/{id}/resolve` or `/dismiss` | viewer | assigned to the owner |
+| `GET /templates`, `POST /templates`, `POST /templates/{id}/instantiate` or `/archive` | viewer, editor | `{source_id, name}`; `{name, parents}` |
+| `GET /views`, `POST /views`, `PATCH` or `DELETE /views/{id}` | viewer (own) | `{name, shared, config}` |
+| `PATCH /attachments/{id}` | contributor | `{note}`: the link's purpose on this record |
+| `GET /realtime` | viewer | `{url, key}` only when `KB_REALTIME_ORIGIN` is configured; else `{}` (poll `/changes`) |
 | `GET /instructors?course=&q=` | viewer | |
 | `GET /quality` | viewer | totals, completeness, orphans, `unowned`, `links` (checked/ok/needs-sign-in/broken + broken list), duplicates |
 | `GET /quality/missing-resources?type=` · `/quality/duplicates?threshold=` · `/quality/link-candidates` | viewer | |

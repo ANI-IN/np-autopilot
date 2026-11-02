@@ -199,8 +199,11 @@ export function menu(anchor, items, opts) {
     if (!it) continue;
     if (it === '-') { m.appendChild(el('div', { class: 'menu-sep' })); continue; }
     if (it.label && it.header) { m.appendChild(el('div', { class: 'menu-label', text: it.label })); continue; }
-    m.appendChild(el('button', { type: 'button', role: 'menuitem', class: it.danger ? 'danger' : '', 'data-testid': it.testid,
-      onclick: () => { closeMenu(); it.fn(); } }, it.icon ? icon(it.icon) : null, it.node || it.label, it.hint ? el('span', { class: 'spacer' }) : null, it.hint ? el('kbd', { text: it.hint }) : null));
+    const checkable = it.checked !== undefined;
+    m.appendChild(el('button', { type: 'button', role: checkable ? 'menuitemradio' : 'menuitem', 'aria-checked': checkable ? String(!!it.checked) : null,
+      class: it.danger ? 'danger' : '', 'data-testid': it.testid, onclick: () => { closeMenu(); it.fn(); } },
+      it.icon ? icon(it.icon) : null, it.node || it.label, (it.hint || checkable) ? el('span', { class: 'spacer' }) : null,
+      it.hint ? el('kbd', { text: it.hint }) : null, it.checked ? icon('check', 'sm') : null));
   }
   document.body.appendChild(m);
   const r = anchor.getBoundingClientRect();

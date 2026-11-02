@@ -57,3 +57,13 @@ new record (and the old one is left alone, never deleted by an import).
 
 The importer acts as a named KB admin (`--as <profile email>`), through the
 service layer and that admin's RLS, with `actor_type = 'import'` in the audit log.
+
+## Custom fields (run 2)
+
+A tab can target any record type, including custom ones (`type: case_study`),
+and fill its custom fields with `props: {field_key: Column}`. Cells are
+converted by the field's kind (number, duration, date, date-time, URL, checkbox
+yes/no, text); select cells match an option's value or label; person and record
+reference fields are not imported from cells. A cell that does not convert
+makes the row `invalid` in the dry run with the field named; nothing is written.
+Contact-shaped headers are refused in `props` exactly as in `fields`.

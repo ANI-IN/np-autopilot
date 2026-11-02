@@ -1,4 +1,4 @@
-# KB schema (`kb.*`) — migrations 0022–0026
+# KB schema (`kb.*`) — migrations 0022–0028
 
 The authored knowledge base lives in its own Postgres schema, `kb`. The pipeline's
 projection tables in `public` (`nodes`, `edges`, `node_sources`, …) are untouched:
@@ -115,3 +115,53 @@ unexpired, unrevoked token and stamps `last_used_at`; executable by
 privileged connection.
 
 Every policy is proven against the database directly in `tests/test_kb_rls.py`.
+
+## Custom types, link kinds, reviews, templates, views (0027)
+
+- **Record types** (`kb.node_types`) gain `plural`, `icon`, `fields` (JSON array
+  of field definitions), `allowed_parents` (placement), `parent_required`,
+  `default_status`, `owner_rule` (`creator` | `none`) and `is_core`. Labels are
+  unique (case-insensitive) among live types.
+- **Field definition**: `{key, label, kind, help, required, default, archived,
+  options: [{value, label}] (selects), ref_types: [type keys] (reference)}`.
+  Kinds: short_text, long_text, number, date, datetime, duration (minutes), url,
+  single_select, multi_select, person, reference, checkbox.
+- `kb.check_type_def()` (trigger) checks the shape, refuses a changed type key,
+  and refuses dropping or re-keying a field: removing one means `archived: true`
+  (hidden, data kept, restorable).
+- `kb.check_node_props()` (trigger) validates every record's `props` against its
+  type's live fields with `kb.field_value_error()`: options, references to the
+  allowed types, members for person fields. **Required fields are enforced on
+  INSERT only** (and not for imports): a field made required later flags existing
+  records on Data quality instead of blocking them.
+- **Relationship types** gain `cardinality` (many_to_many | one_to_many |
+  many_to_one | one_to_one; enforced in `kb.check_edge()`) and `is_core`; new
+  core type `sme` ("subject expert for"); new placement rules for Program >
+  Course > Domain > Module > Week > Session; `kb.edges.position` orders children
+  in the outline.
+- **`kb.link_kinds`**: the service a URL lives on: key (permanent), label, icon,
+  `patterns` (regular expressions, validated), `defaults` (e.g. default resource
+  kind). Built in: Drive folder, Drive file, Doc, Sheet, Slides, UpLevel
+  (`uplevel.interviewkickstart.com`, from the repo's own data), GitHub, YouTube /
+  video, Recording, Live class link, Website. `kb.resources.link_kind` references
+  it; existing resources were classified by the patterns.
+- **Resource kinds** widened with the content types: kyp_slides, speaker_notes,
+  live_class_link, assignment_brief, problem_statement, evaluation_criteria,
+  question_bank, interview_guide, reading, reference_doc. Resources gain
+  `owner_id` and `tags`.
+- **Records** gain `review_status` (none | needs_review | approved) and `co_owners`.
+- **Proposals** can be `create` (a contributor's new record; payload = the whole
+  create body) and `type_change` (an editor's change to types, approved by an
+  admin). **Contributors can no longer insert records directly**: the `nodes`
+  INSERT policy requires editor (their creates are proposals).
+- **`kb.flags`** ("flag as incorrect", assigned to the owner; resolved by the
+  assignee, the flagger or an editor), **`kb.templates`** (structure of a course
+  or program), **`kb.saved_views`** (personal or shared table views). All with RLS.
+- Down refuses while any data uses what 0027 added.
+
+## Palette and Realtime (0028)
+
+Built-in type colours move to one accessible, non-purple palette (only rows
+still holding their seed colour). `kb.audit_log` joins the `supabase_realtime`
+publication (when it exists) so browsers can be told that something changed;
+Realtime forwards changes through the subscriber's RLS.

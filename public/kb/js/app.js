@@ -102,9 +102,9 @@ function userMenu(anchor) {
   const t = currentTheme();
   menu(anchor, [
     { header: true, label: 'Theme' },
-    { label: 'System' + (t === 'system' ? '  ✓' : ''), icon: 'monitor', fn: () => applyTheme('system'), testid: 'theme-system' },
-    { label: 'Light' + (t === 'light' ? '  ✓' : ''), icon: 'sun', fn: () => applyTheme('light'), testid: 'theme-light' },
-    { label: 'Dark' + (t === 'dark' ? '  ✓' : ''), icon: 'moon', fn: () => applyTheme('dark'), testid: 'theme-dark' },
+    { label: 'System', checked: t === 'system', icon: 'monitor', fn: () => applyTheme('system'), testid: 'theme-system' },
+    { label: 'Light', checked: t === 'light', icon: 'sun', fn: () => applyTheme('light'), testid: 'theme-light' },
+    { label: 'Dark', checked: t === 'dark', icon: 'moon', fn: () => applyTheme('dark'), testid: 'theme-dark' },
     '-',
     { label: 'Keyboard shortcuts', icon: 'keyboard', fn: shortcutsDialog },
     { label: 'Corpus explorer', icon: 'external-link', fn: () => { location.href = '/'; } },

@@ -336,3 +336,19 @@ from the HTML so a new dependency cannot be added silently, and
 4. ~~Re-measure the table above in-region and replace the projection.~~
    **Done 2026-09-18** — see the latency section above and
    `LATENCY-MEASUREMENT.md`. Render cost is still unmeasured.
+
+## KB live updates over Supabase Realtime (optional; run 2, D2)
+
+Without configuration the KB workspace polls `/api/kb/changes` every 4 seconds.
+To switch on Realtime (and presence: "Priya is editing"):
+
+1. Apply migration 0028 (adds `kb.audit_log` to the `supabase_realtime`
+   publication).
+2. Write the project origin into the security policy from configuration:
+   `KB_REALTIME_ORIGIN=https://<ref>.supabase.co python scripts/kb_csp_origin.py`
+   adds exactly `https://<ref>.supabase.co wss://<ref>.supabase.co` to
+   `connect-src` in vercel.json (`--check` validates, `--clear` removes).
+3. Set the same `KB_REALTIME_ORIGIN` in the Vercel project's environment.
+   `/api/kb/realtime` hands the browser a socket configuration only when this is
+   set and equals `SUPABASE_URL`; otherwise the browser keeps polling. If the
+   socket drops, polling resumes automatically.
