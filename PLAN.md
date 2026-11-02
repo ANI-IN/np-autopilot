@@ -1,4 +1,37 @@
-# PLAN — Knowledge Platform (autonomous run, branch `auto/knowledge-platform-20261102`)
+# PLAN — Knowledge Platform, run 2: demo → team-ready (branch `auto/knowledge-platform-20261102`)
+
+T0 = Mon 2026-11-02 11:44 local. Stop new work at T+4:15 = **16:00**, then Section 7 + handoff.
+Memory: this file + PROGRESS.md. Re-read both after any context reset.
+
+Inputs: docs/SPEC.md does NOT exist in the repo (PROGRESS D15) -> the run-2 prompt is the spec.
+backups/ does not exist -> D7 BLOCKED (D16). Frontend stays vanilla JS, no build (D17).
+
+## Phase A — trustworthy verification (<=30 min)
+- [ ] A1 verify_all.sh: set -euo pipefail, git-root, every tool/path checked. Prove: wrong cwd + missing tool FAIL.
+- [ ] A2 main worktree baseline vs branch, by failing test NAME -> docs/TEST_RESULTS.md
+- [x] A3 deleted main_results.txt, verify_main.sh
+
+## Phase B — inventory (<=30 min)
+- [ ] docs/INVENTORY.md + docs/inventory/screens/*.png: screens, CRUD matrix, gaps, critique
+
+## Phase C — must ship
+- [ ] C1 design system (tokens + components, DESIGN_SYSTEM.md) + every screen rebuilt; before/after 1440/1280/1024
+- [ ] C2 custom types: fields, rules, link kinds; safe changes; list_types MCP tool
+- [ ] C3 one-step New record side sheet (same form edits)
+- [ ] C4 complete CRUD + archive -> Archived -> permanent delete; bulk edit/archive
+- [ ] C5 Guide page (one content file, real screenshots)
+
+## Phase D (cut from bottom first: D6 -> D4 -> D3 -> presence -> D5)
+- [ ] D1 Outline  - [ ] D2 Realtime+presence  - [ ] D3 Flag/review  - [ ] D4 Templates
+- [ ] D5 Completeness  - [ ] D6 Saved views  - [ ] D7 real data (BLOCKED)  - [ ] D8 deploy guard
+
+## Final (from 16:00)
+verify_all from fresh clone; full suite vs main baseline; browser tests (Case Study type, one-save create,
+rollback, duplicate warning, disallowed rel, proposal, archive->delete, conflict); keyboard pass;
+1024px no h-scroll; docs; reseed; leave demo server + supabase running.
+
+---
+# Run 1 (complete)
 
 T0 = 2026-11-02 02:58 local. Run mode: **DEGRADED** (no Supabase dev project, no Google
 credentials, no LLM key, no Vercel token; local Supabase stack via Docker is available).

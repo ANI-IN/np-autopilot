@@ -10,6 +10,20 @@ production database.
 | `main`, no DB (CI-like) | 892 passed, 12 failed, 187 skipped — all 12 Windows-environment failures |
 | `main`, local DB | 998 passed, 22 failed, 21 errors, 50 skipped — list in `docs/baseline-failures.txt` (root cause: `project_graph.py` cannot load the committed graph into a fresh DB, `corpus_names_a_file`) |
 
+## Regression check: branch vs `main`, by failing test NAME (run 2, A2, 2026-11-02 12:05)
+
+Both suites ran against the same local stack (Supabase in Docker, migrations through
+0026), each from its own git worktree, with the same `.venv`:
+
+| Checkout | Result | Failing/erroring tests |
+|---|---|---|
+| `main` @ 688f988 | 998 passed, 22 failed, 21 errors, 50 skipped | 43 — **identical, name for name, to `docs/baseline-failures.txt`** |
+| branch @ 33a5d48 | 1093 passed, 22 failed, 21 errors, 50 skipped | 43 — **the same 43 names**; 0 branch-only failures, 0 fixed |
+
+So the branch fails nothing that passes on `main`; it adds 95 passing tests. All 43
+are pre-existing (root cause: `pipeline/project_graph.py` cannot load the committed
+graph into a fresh database, `corpus_names_a_file`; see docs/AUDIT.md).
+
 ## KB tests (last run of each file after its final change)
 
 | File | Result |

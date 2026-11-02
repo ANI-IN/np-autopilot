@@ -1,104 +1,169 @@
 #!/usr/bin/env bash
 # Phase-4 verification for the KB knowledge platform — re-runnable, LOCAL ONLY.
 #
-#   scripts/verify_all.sh                 # verify this checkout against the local stack
-#   scripts/verify_all.sh --fresh-clone   # also: clean clone of the current branch → install → build checks
-#   scripts/verify_all.sh --reset-db      # also: wipe the LOCAL Supabase DB and apply every migration from 0001
-#   scripts/verify_all.sh --perf          # also: seed 5k/15k synthetic and measure p50/p95
+#   bash scripts/verify_all.sh                 # verify this checkout against the local stack
+#   bash scripts/verify_all.sh --fresh-clone   # also: clean clone of the current branch -> install -> build checks
+#   bash scripts/verify_all.sh --reset-db      # also: wipe the LOCAL Supabase DB, apply every migration from 0001
+#   bash scripts/verify_all.sh --perf          # also: seed 5k/15k synthetic and measure p50/p95
 #
-# Needs: Docker + the local Supabase stack (db/local/setup.sh), Python 3.12 + uv,
-# Node (syntax check only), Chrome or `playwright install chromium`.
-# Refuses to run if the configured database is not the loopback local stack.
-set -uo pipefail
+# Run from inside the repository (any subdirectory). Needs: git, Docker + the local
+# Supabase stack (db/local/setup.sh), the .venv (Python 3.12), uv/uvx, Node, and the
+# claude CLI (plugin validation). Works under Git Bash on Windows.
+#
+# TRUSTWORTHY BY CONSTRUCTION: a check PASSES only when its command ran and exited
+# 0. A missing tool, a missing path, a repo root that is not this repository, or a
+# command that could not run is a FAIL, never a silent skip. The previous version
+# reported PASS for `cmd && ok || bad` chains whose tools were absent.
+set -euo pipefail
 
-REPO="$(cd "$(dirname "$0")/.." && pwd)"
+FAIL=0
+step() { printf '\n=== %s ===\n' "$*"; }
+ok()   { printf 'PASS  %s\n' "$*"; }
+bad()  { printf 'FAIL  %s\n' "$*"; FAIL=1; }
+die()  { printf 'FAIL  %s\nVERIFY: ABORTED\n' "$*"; exit 2; }
+
+# check "<label>" cmd args...   -> PASS iff the command exits 0 (output shown on failure)
+check() {
+  local label="$1"; shift
+  local out rc=0
+  out="$("$@" 2>&1)" || rc=$?
+  if [ "$rc" -eq 0 ]; then ok "$label"; else bad "$label (exit $rc)"; printf '%s\n' "$out" | tail -20; fi
+}
+need_tool() { command -v "$1" >/dev/null 2>&1 || die "required tool not found on PATH: $1"; }
+need_path() { [ -e "$REPO/$1" ] || die "required path missing: $1"; }
+
+# --- repository root ---------------------------------------------------------
+need_tool git
+REPO="$(git rev-parse --show-toplevel 2>/dev/null)" \
+  || die "not inside a git repository (cwd: $(pwd)); run from the np-autopilot checkout"
+SCRIPT_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+# Compare physical paths (Git Bash may spell the same folder /c/... vs C:/...).
+if [ "$(cd "$REPO" && pwd -P)" != "$SCRIPT_REPO" ]; then
+  die "repo root resolves to $REPO, but this script lives in $SCRIPT_REPO; run it from inside that checkout"
+fi
 cd "$REPO"
-FRESH=0; RESET=0; PERF=0
-for a in "$@"; do case "$a" in --fresh-clone) FRESH=1;; --reset-db) RESET=1;; --perf) PERF=1;; esac; done
+for p in api/index.py web/lib/kb/service.py public/kb/kb.js db/migrations tests docs/baseline-failures.txt \
+         mcp_server/kb_server.py plugins/ik-knowledge-assistant/server/kb_server.py; do
+  need_path "$p"
+done
 
-PY="$REPO/.venv/bin/python"; [ -x "$PY" ] || PY="$REPO/.venv/Scripts/python"
+FRESH=0; RESET=0; PERF=0
+for a in "$@"; do
+  case "$a" in
+    --fresh-clone) FRESH=1;; --reset-db) RESET=1;; --perf) PERF=1;;
+    *) die "unknown option: $a";;
+  esac
+done
+
+for t in node uvx; do need_tool "$t"; done
+PY="$REPO/.venv/bin/python"; [ -x "$PY" ] || PY="$REPO/.venv/Scripts/python.exe"
+[ -x "$PY" ] || die "no virtualenv python at .venv/ (uv venv .venv -p 3.12 && uv pip install -p .venv -r requirements.txt)"
+need_tool claude
+
 export SUPABASE_DB_URL_SESSION="${SUPABASE_DB_URL_SESSION:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}"
 export SUPABASE_DB_URL_TRANSACTION="${SUPABASE_DB_URL_TRANSACTION:-postgresql://postgres.pooler-dev:postgres@127.0.0.1:6543/postgres}"
 case "$SUPABASE_DB_URL_SESSION" in
   *@127.0.0.1:*|*@localhost:*) ;;
-  *) echo "REFUSED: verify_all.sh runs against the local stack only"; exit 2;;
+  *) die "REFUSED: verify_all.sh runs against the local stack only";;
 esac
+"$PY" -c "import os, psycopg; psycopg.connect(os.environ['SUPABASE_DB_URL_SESSION'], connect_timeout=5).close()" \
+  >/dev/null 2>&1 || die "local database unreachable at 127.0.0.1:54322 (npx -y supabase@2.118.0 start --workdir db/local)"
 
-FAIL=0
-step() { echo; echo "=== $* ==="; }
-ok()   { echo "PASS  $*"; }
-bad()  { echo "FAIL  $*"; FAIL=1; }
-
-if [ $FRESH -eq 1 ]; then
-  step "fresh clone of $(git rev-parse --abbrev-ref HEAD) → clean install → build checks"
+if [ "$FRESH" -eq 1 ]; then
+  step "fresh clone of $(git rev-parse --abbrev-ref HEAD) -> clean install -> build checks"
+  need_tool uv
   TMP="$(mktemp -d)"
-  git clone -q --branch "$(git rev-parse --abbrev-ref HEAD)" "$REPO" "$TMP/clone" || bad "clone"
-  ( cd "$TMP/clone" && uv venv -q .venv -p 3.12 && uv pip install -q -p .venv -r requirements.txt ) && ok "clean install" || bad "clean install"
-  CPY="$TMP/clone/.venv/bin/python"; [ -x "$CPY" ] || CPY="$TMP/clone/.venv/Scripts/python"
-  "$CPY" -m compileall -q "$TMP/clone/api" "$TMP/clone/web" "$TMP/clone/mcp_server" "$TMP/clone/pipeline" >/dev/null && ok "python byte-compiles" || bad "compileall"
-  node --check "$TMP/clone/public/kb/kb.js" && ok "kb.js parses" || bad "kb.js syntax"
+  check "clone" git clone -q --branch "$(git rev-parse --abbrev-ref HEAD)" "$REPO" "$TMP/clone"
+  if [ -d "$TMP/clone" ]; then
+    check "clean install (uv venv + requirements)" bash -c "cd '$TMP/clone' && uv venv -q .venv -p 3.12 && uv pip install -q -p .venv -r requirements.txt"
+    CPY="$TMP/clone/.venv/bin/python"; [ -x "$CPY" ] || CPY="$TMP/clone/.venv/Scripts/python.exe"
+    if [ -x "$CPY" ]; then
+      check "python byte-compiles" "$CPY" -m compileall -q "$TMP/clone/api" "$TMP/clone/web" "$TMP/clone/mcp_server" "$TMP/clone/pipeline" "$TMP/clone/eval"
+    else
+      bad "fresh clone has no venv python"
+    fi
+    check "kb.js parses (clone)" node --check "$TMP/clone/public/kb/kb.js"
+  fi
   rm -rf "$TMP"
 fi
 
-if [ $RESET -eq 1 ]; then
+if [ "$RESET" -eq 1 ]; then
   step "fresh local database: reset, apply every migration, seed users"
-  npx -y supabase@2.118.0 db reset --workdir db/local --yes >/dev/null 2>&1 || bad "supabase db reset"
-  "$PY" pipeline/migrate.py up | tail -1 || bad "migrate up"
-  # The rest of db/local/setup.sh's seeding, so the regression comparison is
-  # like-for-like. (The projection step fails on main too — baseline, see HANDOFF.)
-  NP_FRESHNESS_SKIP="local verification, never production" NP_LANDING_STATS="$(mktemp)" NP_BUILD_LOG="$(mktemp)"     "$PY" pipeline/project_graph.py >/dev/null 2>&1 || echo "  (projection failed — pre-existing, see docs/AUDIT.md)"
-  "$PY" pipeline/curation.py import >/dev/null || bad "curation import"
-  "$PY" -c "import os,psycopg; c=psycopg.connect(os.environ['SUPABASE_DB_URL_SESSION'],autocommit=True); c.execute(\"insert into auth.users (id,email,created_at) select gen_random_uuid(),'b2c-courses-new-programs@interviewkickstart.com',now() where not exists (select 1 from auth.users where lower(email)='b2c-courses-new-programs@interviewkickstart.com')\")" || bad "shared account seed"
-  "$PY" pipeline/migrate.py down --to 0021 | tail -1 && "$PY" pipeline/migrate.py up | tail -1 \
-    && ok "kb migrations roll back and re-apply" || bad "kb migration round trip"
+  need_tool npx
+  check "supabase db reset" npx -y supabase@2.118.0 db reset --workdir db/local --yes
+  check "migrate up" "$PY" pipeline/migrate.py up
+  # The projection step fails on main too (pre-existing, docs/AUDIT.md); report, do not gate.
+  if NP_FRESHNESS_SKIP="local verification, never production" NP_LANDING_STATS="$(mktemp)" NP_BUILD_LOG="$(mktemp)" \
+       "$PY" pipeline/project_graph.py >/dev/null 2>&1; then ok "projection loads"; else echo "  NOTE projection failed (pre-existing on main, docs/AUDIT.md)"; fi
+  check "curation import" "$PY" pipeline/curation.py import
+  check "kb migrations roll back to 0021" "$PY" pipeline/migrate.py down --to 0021
+  check "kb migrations re-apply" "$PY" pipeline/migrate.py up
 fi
 
 step "static checks"
-node --check public/kb/kb.js && ok "kb.js parses" || bad "kb.js syntax"
-uvx -q ruff@0.14.0 check --select E9,F --target-version py312 web/lib/kb api/kb_routes.py api/index.py \
-  mcp_server pipeline/kb_import_sheets.py pipeline/kb_admins.py pipeline/lib/kb_sheets.py \
-  eval/kb_dev_server.py eval/kb_demo_server.py eval/kb_demo_seed.py eval/kb_local_stack.py \
-  scripts/kb_perf.py tests/kb_support.py tests/test_kb_*.py \
-  && ok "ruff (errors + pyflakes) on KB code" || bad "ruff"
-cmp -s mcp_server/kb_server.py plugins/ik-knowledge-assistant/server/kb_server.py && ok "plugin server copy in sync" || bad "plugin server copy drifted"
-if command -v claude >/dev/null; then
-  claude plugin validate plugins/ik-knowledge-assistant --strict >/dev/null 2>&1 && ok "plugin validates (--strict)" || bad "plugin validate"
-fi
+JSFILES=(public/kb/*.js)
+[ -e "${JSFILES[0]}" ] || die "no public/kb/*.js"
+for f in "${JSFILES[@]}"; do check "$f parses" node --check "$f"; done
+check "ruff (errors + pyflakes) on KB code" uvx -q ruff@0.14.0 check --select E9,F --target-version py312 \
+  web/lib/kb api/kb_routes.py api/index.py mcp_server pipeline/kb_import_sheets.py pipeline/kb_admins.py \
+  pipeline/lib/kb_sheets.py eval/kb_dev_server.py eval/kb_demo_server.py eval/kb_demo_seed.py \
+  eval/kb_local_stack.py scripts/kb_perf.py tests/kb_support.py tests/test_kb_*.py
+check "plugin server copy in sync" cmp mcp_server/kb_server.py plugins/ik-knowledge-assistant/server/kb_server.py
+check "plugin validates (--strict)" claude plugin validate plugins/ik-knowledge-assistant --strict
 
 step "security spot checks"
-if grep -rInE 'SERVICE_ROLE|service_role|SUPABASE_JWT_SECRET|ANTHROPIC_API_KEY|eyJhbGciOi' public/ >/dev/null; then bad "a server-only key name or JWT is in public/"; else ok "no server key names in the browser bundle"; fi
-git ls-files --error-unmatch .env >/dev/null 2>&1 && bad ".env is tracked" || ok ".env is not tracked"
-if git log -p | grep -qE 'sk-ant-[A-Za-z0-9]|-----BEGIN (RSA )?PRIVATE KEY|ikkb_[A-Za-z0-9_-]{30,}'; then bad "a secret-shaped string is in git history"; else ok "no secret-shaped strings in history"; fi
-"$PY" - <<'EOF' && ok "RLS enabled on every kb table, policies present" || bad "RLS check"
+if grep -rInE 'SERVICE_ROLE|service_role|SUPABASE_JWT_SECRET|ANTHROPIC_API_KEY|eyJhbGciOi' public/ >/dev/null; then
+  bad "a server-only key name or JWT is in public/"; else ok "no server key names in the browser bundle"; fi
+if git ls-files --error-unmatch .env >/dev/null 2>&1; then bad ".env is tracked"; else ok ".env is not tracked"; fi
+HIST="$(mktemp)"
+git log -p > "$HIST" || die "git log failed"
+[ -s "$HIST" ] || die "git log produced no output"
+if grep -qE 'sk-ant-[A-Za-z0-9]|-----BEGIN (RSA )?PRIVATE KEY|ikkb_[A-Za-z0-9_-]{30,}' "$HIST"; then
+  bad "a secret-shaped string is in git history"; else ok "no secret-shaped strings in history"; fi
+rm -f "$HIST"
+check "RLS enabled on every kb table, policies present" "$PY" - <<'EOF'
 import os, psycopg, sys
 with psycopg.connect(os.environ["SUPABASE_DB_URL_SESSION"]) as c:
+    n = c.execute("select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace "
+                  "where n.nspname='kb' and c.relkind='r'").fetchone()[0]
     off = c.execute("select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace "
                     "where n.nspname='kb' and c.relkind='r' and not c.relrowsecurity").fetchall()
     nopol = c.execute("select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace "
                       "where n.nspname='kb' and c.relkind='r' and not exists "
                       "(select 1 from pg_policies p where p.schemaname='kb' and p.tablename=c.relname)").fetchall()
-    print("  kb tables without RLS:", off, " without policies:", nopol)
-    sys.exit(1 if off or nopol else 0)
+    print("kb tables:", n, "without RLS:", off, "without policies:", nopol)
+    sys.exit(1 if n == 0 or off or nopol else 0)
 EOF
+check "deploy guard: eval/ and tests/ never ship" "$PY" -m pytest -q -p no:cacheprovider tests/test_deploy_guard.py
 
 step "full test suite (local DB, browser E2E, MCP, concurrency)"
 LOG="$(mktemp)"
-"$PY" -m pytest tests -q -p no:cacheprovider > "$LOG" 2>&1
+rc=0
+"$PY" -m pytest tests -q -p no:cacheprovider -rfE > "$LOG" 2>&1 || rc=$?
 tail -1 "$LOG"
-grep -E '^(FAILED|ERROR)' "$LOG" | sed 's/ - .*//' | sort > "$LOG.fail"
-KBFAIL=$(grep -c 'test_kb_' "$LOG.fail" || true)
-[ "$KBFAIL" = "0" ] && ok "all KB tests pass" || { bad "$KBFAIL KB test(s) failed"; grep test_kb_ "$LOG.fail"; }
-if [ -f docs/baseline-failures.txt ]; then
-  NEW=$(comm -13 docs/baseline-failures.txt "$LOG.fail" | grep -v test_kb_ || true)
-  [ -z "$NEW" ] && ok "no regressions against the pre-run baseline (docs/baseline-failures.txt)" \
-    || { bad "new failures vs baseline:"; echo "$NEW"; }
+# pytest: 0 all passed, 1 some failed — anything else means the suite did not run properly.
+if [ "$rc" -ne 0 ] && [ "$rc" -ne 1 ]; then
+  bad "pytest could not run the suite (exit $rc)"; tail -30 "$LOG"
+elif ! grep -qE '[0-9]+ passed' "$LOG"; then
+  bad "pytest reported no passing tests"; tail -30 "$LOG"
+else
+  { grep -E '^(FAILED|ERROR) ' "$LOG" || true; } | sed 's/ - .*//' | LC_ALL=C sort -u > "$LOG.fail"
+  KBFAIL="$(grep -c 'test_kb_' "$LOG.fail" || true)"
+  if [ "$KBFAIL" = "0" ]; then ok "all KB tests pass"; else bad "$KBFAIL KB test(s) failed"; grep test_kb_ "$LOG.fail"; fi
+  LC_ALL=C sort -u docs/baseline-failures.txt > "$LOG.base"
+  NEW="$(LC_ALL=C comm -13 "$LOG.base" "$LOG.fail")"
+  if [ -z "$NEW" ]; then ok "no failures beyond the main baseline (docs/baseline-failures.txt, $(wc -l < "$LOG.base") entries)"
+  else bad "new failures vs the main baseline:"; printf '%s\n' "$NEW"; fi
+  FIXED="$(LC_ALL=C comm -23 "$LOG.base" "$LOG.fail" | wc -l)"
+  echo "  baseline failures now passing: $FIXED"
 fi
+rm -f "$LOG" "$LOG.fail" "$LOG.base"
 
-if [ $PERF -eq 1 ]; then
+if [ "$PERF" -eq 1 ]; then
   step "performance (synthetic 5,000 nodes / 15,000 edges)"
-  "$PY" scripts/kb_perf.py --runs 40 | grep -v '"audit"'
+  check "perf run" "$PY" scripts/kb_perf.py --runs 40
 fi
 
 echo
-[ $FAIL -eq 0 ] && echo "VERIFY: ALL PASS" || echo "VERIFY: FAILURES ABOVE"
-exit $FAIL
+if [ "$FAIL" -eq 0 ]; then echo "VERIFY: ALL PASS"; else echo "VERIFY: FAILURES ABOVE"; fi
+exit "$FAIL"

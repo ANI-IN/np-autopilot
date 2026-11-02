@@ -1,0 +1,100 @@
+# Inventory — KB workspace
+
+Two snapshots of the same app, taken by clicking through the running local demo
+(`eval/kb_demo_server.py`, seeded with `eval/kb_demo_seed.py`), not by reading code.
+
+- **Before** — 2026-11-02 11:50, commit `33a5d48` (end of run 1 + demo). Screens:
+  `docs/redesign/before/<width>-<screen>.png` (1440/1280/1024) and dialogs in
+  `docs/inventory/screens/`.
+- **After** — see the section at the end (updated at the end of run 2).
+
+docs/SPEC.md does not exist in this repository (PROGRESS D15); the gap list below
+is measured against the run-2 brief, which is the specification for this work.
+
+---
+
+## Before
+
+### Screens
+
+| Screen | Route | Screenshot (1440) | Notes |
+|---|---|---|---|
+| Sign-in (demo only) | `/local-login` | inventory/screens/login.png | |
+| Dashboard | `#/` | redesign/before/1440-dashboard.png | type count cards, raw activity log |
+| All records | `#/records` | 1440-records.png | 7 filter controls wrap onto two rows |
+| Programs / Courses | `#/programs`, `#/courses` | 1440-programs.png, 1440-courses.png | same table, type fixed |
+| Record detail | `?open=<id>` | 1440-record-detail.png | 50% overlay panel, one long scroll |
+| Resources | `#/resources` | 1440-resources.png | |
+| Graph | `#/graph[/id]` | 1440-graph-home.png, 1440-graph.png | |
+| Data quality | `#/quality` | 1440-quality.png | |
+| Approvals | `#/proposals` | 1440-approvals.png | |
+| Settings | `#/settings` | 1440-settings.png | tokens, roles, read-only type list |
+| New record | dialog | inventory/screens/new-record.png | type, name, summary, scope, status only |
+| Attach / Connect / Archive | dialogs | attach.png, connect.png, archive-confirm.png | |
+| ⌘K palette | overlay | palette.png | |
+| Outline, Archived, Guide | — | 1440-outline.png etc. | **do not exist** ("Page not found") |
+
+### CRUD matrix (before)
+
+W = WORKS, P = PARTIAL, M = MISSING, B = BROKEN.
+
+| Entity | Create | View | Edit | Archive | Restore | Perm. delete | Duplicate | Bulk edit | Import | Export |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Record (any type) | W | W | W (inline) | W | W | P (admin, only from an archived record's panel; no Archived page to find it) | W | M | P (Sheets CLI only, no UI) | P (CSV of the list; no import counterpart) |
+| Course / program | W (incl. inline from picker) | W | W | W | W | P (as records) | W | M | P | P |
+| Relationship | W | W (panel, graph) | P (API only: note/props; no UI) | W (× on row, editor) | P (API only; no UI) | P (API only) | M | M | P | M |
+| Resource | W | W | W | W | W | P (API only; no UI) | M | M | P | M |
+| Attachment (record ↔ resource) | W | W | P (note via API only) | W (detach) | M | M | — | M | P | M |
+| Tag | W (add on record) | W | M (no rename) | M | M | M | — | M | M | M |
+| Record type | P (API `POST /types/node`; no UI) | W (read-only list) | M | M | M | M | M | — | M | M |
+| Relationship rule | P (API only) | W (read-only) | M | M | M | M | — | — | M | M |
+| Member role | W (admin) | W | W | — | — | M (no removal) | — | M | — | M |
+| API token | W | W | — | W (revoke) | — | — | — | — | — | — |
+| Proposal | W (from archive) | W | — | — | — | — | — | — | — | — |
+
+### Gaps against the brief (section by section)
+
+- **C1 design:** purple accent (`#4f46e5`, brand-mark gradient) — both banned. No icon
+  set (text-only nav). No dark-mode toggle (follows the system only). System font,
+  not Inter/Geist. Card grid for tabular counts on the dashboard. Filler copy
+  ("Every authored record, filterable."). Status pill shown on every row even when
+  live. Detail panel overlays the list (does not push) and is not resizable or
+  expandable to a page. No sticky table header, no row checkboxes, no bulk bar,
+  no density toggle, no j/k/x/e keyboard model, no saved views, no breadcrumb, no
+  tabs in the detail, no owner avatars, no link count column.
+- **C2 custom types:** no fields at all (records have name/summary/notes only);
+  types can be added only through the API; no icon/colour choice; no field kinds;
+  no link-kind registry (kinds are a fixed CHECK list); no safe-change rules; MCP
+  has no `list_types`.
+- **C3 new record:** a small modal with five fields. No relationships, links,
+  people, tags or custom fields at creation; no draft autosave; no duplicate
+  warning while typing; no "create and add another"; no undo.
+- **C4 CRUD:** see matrix — no Archived page, permanent delete hard to reach and
+  without typed confirmation, no bulk actions, resources/edges cannot be deleted
+  permanently from the UI.
+- **C5 Guide:** none.
+- **D1 Outline:** none. **D2:** 4-second polling, no presence. **D3:** no flag/review.
+  **D4:** no templates. **D5:** completeness only per course on Data quality.
+  **D6:** no saved views. **D7:** no real data available (no backups/). **D8:** the
+  demo server is excluded only by convention; no test proved it.
+
+### Design critique (honest)
+
+The app is functional and calm but reads as an internal prototype, not a tool a
+curriculum team would live in:
+
+1. **Identity**: purple accent and a gradient logo mark — generic, and against the brief.
+2. **Density**: tables use 2-line rows with summaries; at 1440 only ~12 rows fit.
+   Filters take two rows. The dashboard spends the first screen on 12 count cards.
+3. **Hierarchy**: page titles are 28px, section headings compete with content;
+   everything is the same weight of grey.
+4. **Detail panel**: one long scroll mixing facts, tags, relationships, resources
+   and history; no breadcrumb, so "where does this live" needs a click.
+5. **Navigation**: text-only sidebar, no counts, no grouping; "Corpus explorer"
+   link sits next to the user identity.
+6. **Graph**: good once loaded; no legend shapes, no minimap.
+7. **Forms**: native selects everywhere; the new-record dialog cannot express a
+   real record (no fields, no links, no relationships).
+8. **Feedback**: toasts and conflict dialog are solid; empty states are fine but
+   centred in dashed boxes.
+9. At 1024px nothing scrolls horizontally, but the overlay panel hides the list.

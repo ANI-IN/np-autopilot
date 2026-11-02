@@ -31,6 +31,13 @@ via Docker used for everything).
   tests' reset() left kb.import_runs behind, failing the import test on a re-run.
   KB tests: 95 pass, incl. 14 browser E2E.
 
+- [run 2 T+0:00 11:44] Run 2 start (demo -> team-ready). docs/SPEC.md absent; backups/ absent.
+- [T+0:10] A1 verify_all.sh rewritten (set -euo pipefail, git root, every tool/path/exit checked) | proven: wrong cwd, foreign repo, missing tool, bad option all FAIL (exit 2) | VERIFIED
+- [T+0:10] A3 main_results.txt, verify_main.sh deleted | VERIFIED
+- [T+0:12] D8 tests/test_deploy_guard.py (6 tests: .vercelignore, excludeFiles, routes, public/, shipped python, prebuilt output) | 6 pass | VERIFIED
+- [T+0:20] A2 main vs branch by failing NAME: identical 43 = baseline; branch +95 passes, 0 new failures | VERIFIED
+- [T+0:20] B inventory: docs/INVENTORY.md, 42 before screenshots (1440/1280/1024) + 6 dialogs | VERIFIED
+
 ## Decisions
 
 - D1. APPENDIX was not pasted (placeholder only). The wrapper's must-ship list is the spec.
@@ -62,6 +69,19 @@ via Docker used for everything).
   never fetches user-supplied URLs (no SSRF surface on Vercel).
 - D14. Link results live in `kb.link_checks`, not on `kb.resources`, so a check
   never bumps a resource's version and causes a spurious edit conflict.
+
+- D15. docs/SPEC.md does not exist in the repo; the run-2 brief is the specification.
+- D16. backups/ does not exist (it is gitignored) -> D7 real-data rehearsal BLOCKED.
+- D17. Frontend stays vanilla JS with no build step, split into ES modules (CSP script-src 'self'
+  allows same-origin modules). A framework would add a toolchain the repo and Vercel setup do
+  not have, for a UI of ~10 screens; see docs/DESIGN_SYSTEM.md.
+- D18. No IK brand colour is recorded anywhere in the repo -> restrained deep blue accent.
+- D19. Contributors' record creates become proposals (brief C3). Enforced in the database:
+  0027 tightens kb.nodes INSERT to editor+. Contributors still edit, connect and attach.
+- D20. UpLevel link kind uses uplevel.interviewkickstart.com, found in the repo's own data
+  (tests/test_source_links.py, docs/ACCEPTANCE-CHECKLIST.md), not guessed.
+- D21. Link kind (the service: Drive, GitHub, UpLevel...; configurable, URL-pattern detected)
+  and resource kind (what it is: KYP slides, recording, solution...) are separate dimensions.
 
 ## Blockers (each with the unblock step) — see HANDOFF.md "Action required"
 
