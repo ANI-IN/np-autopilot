@@ -133,6 +133,9 @@ again) and up → down → up on the demo database.
   unchanged: anyone with an Interview Kickstart Google account who passes its
   own sign-in can still open it. Decide whether that should change; nothing
   was changed.
+- **Clicking a relationship on the graph** opens a small inspector beside it
+  (the sentence, its note, Open, Remove) rather than the side panel: a
+  relationship has no panel of its own. Clicking a record opens the panel.
 - The graph's saved positions are shared (the shared layout, or a saved view
   anyone can open if shared); moving records never changes them.
 

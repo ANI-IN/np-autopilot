@@ -124,3 +124,10 @@ Decisions (run 3):
 - D29. Relationship-type near-duplicates: kb.rel_stem (case, spacing, punctuation, plural and -ed/-ing/-es endings) compared against every live label AND inverse; enforced by a trigger and pre-checked by the service so the UI can offer the existing type.
 - D30. Graph renderer: Cytoscape canvas (already vendored, 3.34.4); its WebGL mode is used for very large neighbourhoods. Measured numbers in docs/TEST_RESULTS.md.
 - D31. Dialogs can stack (opts.stack): New relationship type opens on top of Connect without losing it.
+- [T+1:10] B2 CRUD completed: tags rename/merge/archive/restore, member removal, template rename/restore, relationship change of type | run3 (+5) | VERIFIED
+- [T+1:10] C caching (dashboard/counts/types per caller until the next kb.changes id), lazy graph library, N+1 in course completeness removed (~1,000 -> 3 queries), EXPLAIN pass (scripts/kb_explain.py) | run3 cache test + EXPLAIN | VERIFIED
+- [T+1:10] C 25 people x 2 min (scripts/kb_load.py): 19,754 requests, 0 5xx, 0 duplicates/orphans, 1,455 409s, audit = writes | LOAD: PASS | VERIFIED
+- [T+1:10] B3 scale (scripts/kb_graph_perf.py): canvas vs WebGL at 500/2,000/5,000; WebGL above 800, haystack edges, label hiding, clustering, cached minimap | measured | VERIFIED
+- [T+1:14] Guide screenshots retaken cropped (scripts/kb_guide_shots.py); run-3 screenshots 1280-3840 @1x/2x, sweep 0 problems | VERIFIED
+- D32. Graph renderer: Cytoscape canvas up to 800 records, its WebGL mode above (2,000 records: 45-60 fps WebGL vs 22 canvas, headless software rendering).
+- D33. The load test models each person as its own instance with its own connection: web/lib/data.py's single warm connection is per process (Vercel: one request at a time per instance; dev servers lock). Sharing it between threads breaks transactions and identity; never run api/index.py threaded without that lock.
