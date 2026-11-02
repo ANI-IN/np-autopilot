@@ -5,19 +5,19 @@ Memory: this file + PROGRESS.md (run-3 log at the end). Re-read both after any c
 Cut order if >20 min behind: A4 column drag -> B2 merge tool -> B3 clustering -> 3840 tuning -> 25-user test to 10.
 
 ## Phase A — owner bugs (<=30 min, each with a test)
-- [ ] A1 one attention query (tile = list = sidebar)   - [ ] A2 named actors, no test leftovers, seed resets audit
-- [ ] A3 demo badge placement   - [ ] A4 View popover   - [ ] A5 full text, wrap, resizable columns
-- [ ] A6 Guide layout + images   - [ ] A7 relationship combobox with sentences   - [ ] 1536 sweep
+- [x] A1 one attention query (tile = list = sidebar)   - [x] A2 named actors, no test leftovers, seed resets audit
+- [x] A3 demo badge placement   - [x] A4 View popover   - [x] A5 full text, wrap, resizable columns
+- [x] A6 Guide layout + images   - [x] A7 relationship combobox with sentences   - [x] 1536 sweep
 
 ## Phase B
-- [ ] B1 page template, dashboard grid, 4K (1280/1536/1920/2560/3840 @1x/2x)
-- [ ] B2 inline relationship types (admin/editor-unreviewed/contributor-proposal, DB-enforced), duplicate guard, merge, CRUD matrix, dependencies
-- [ ] B3 graph editing (create, connect, edit, rename, delete+undo, move+positions per view, navigate, sync, scale numbers)
-- [ ] B4 Activity page + History tab (DB-enforced visibility, immutable audit)
-- [ ] B5 admin-only "Back to <site>" link (server role)
+- [x] B1 page template, dashboard grid, 4K (1280/1536/1920/2560/3840 @1x/2x)
+- [x] B2 inline relationship types (admin/editor-unreviewed/contributor-proposal, DB-enforced), duplicate guard, merge, CRUD matrix, dependencies
+- [x] B3 graph editing (create, connect, edit, rename, delete+undo, move+positions per view, navigate, sync, scale numbers)
+- [x] B4 Activity page + History tab (DB-enforced visibility, immutable audit)
+- [x] B5 admin-only "Back to <site>" link (server role)
 
 ## Phase C — perf + concurrency
-- [ ] EXPLAIN + indexes, caches, 25-user test -> docs/TEST_RESULTS.md
+- [x] EXPLAIN + indexes, caches, 25-user test -> docs/TEST_RESULTS.md
 
 ## Final (from 00:08)
 verify_all --fresh-clone --reset-db; new browser tests; click-through 1536/2560; docs; reseed; handoff.

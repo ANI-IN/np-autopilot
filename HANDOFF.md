@@ -9,7 +9,7 @@
 7. One page template on every screen, a 12-column dashboard, and a fluid scale above 2560px (screens at 1280–3840px, 1x and 2x).
 8. CRUD matrix complete (tags, members, templates, relationship type change added); dependencies shown before every archive.
 9. 25 people for 2 minutes: **0 server errors, 0 duplicates, 0 orphans, every conflict a 409, audit rows = writes**. Graph: 60 fps at 500 records; WebGL keeps 2,000 at 45–60 fps.
-10. One migration to add: **0029**. Regression vs `main`: FINAL_REGRESSION.
+10. One migration to add: **0029**. Regression vs `main`: the same 43 pre-existing failures by name, **0 new**; `verify_all --fresh-clone --reset-db`: ALL PASS.
 
 ## Open the app now
 
@@ -88,7 +88,17 @@ neighbourhood 118 / 160 ms, dashboard 331 / 414 ms, Activity 75 / 137 ms.
 
 Graph (headless Chrome, software rendering; a real GPU does better):
 
-GRAPH_TABLE
+| Nodes | Renderer | Loaded | Load (ms) | FPS, labels (zoom 0.5-1.2) | FPS, no labels (0.2-0.45) | FPS, clustered (<0.16) | Switch to clusters (ms) |
+|---|---|---|---|---|---|---|---|
+| 500 | canvas | 501 | 545 | 53.8 | 59.7 | 60.0 | 134 |
+| 500 | webgl | 501 | 658 | 54.0 | 59.9 | 60.3 | 130 |
+| 2000 | canvas | 2001 | 1955 | 21.7 | 21.9 | 57.9 | 496 |
+| 2000 | webgl | 2001 | 1493 | 45.3 | 50.1 | 60.1 | 383 |
+| 5000 | canvas | 5001 | 4830 | 7.1 | 9.3 | 39.9 | 899 |
+| 5000 | webgl | 5001 | 5179 | 13.6 | 21.5 | 59.8 | 1000 |
+
+The page opens at most 300 records (expand loads more); WebGL is used above
+800. Before the scale work 2,000 records ran at 10 fps and 5,000 at 0.6.
 
 Query plans at 5,000 records / 15,000 relationships, database time per
 request: list 9–21 ms, search 15–22 ms, neighbourhood 13–20 ms, History 1–2 ms,
@@ -98,7 +108,18 @@ docs/TEST_RESULTS.md.
 
 ## Final verification
 
-FINAL_VERIFY
+`bash scripts/verify_all.sh --fresh-clone --reset-db`: **VERIFY: ALL PASS**.
+
+- Fresh clone → clean install → byte-compile → ES modules parse: PASS.
+- `supabase db reset` → migrations 0001–0029 → KB down to 0021 → up again: PASS (projection
+  step fails as on `main`, pre-existing).
+- Lint, plugin, secrets, RLS on every kb table, deploy guard: PASS.
+- Full suite: **1203 passed, 22 failed, 21 errors, 53 skipped**; all 43 are the `main` baseline by
+  name; **0 new**; every KB test passes. Realtime test after reseeding: 1 passed.
+- Honest notes: the first final run failed on a typo in verify_all's own lint list (fixed, re-run
+  from the start). The Realtime test's cleanup no longer deletes audit rows (the log is
+  append-only; the reseed clears it).
+- KB tests by file (run 3 additions): run3 API 23; browser E2E 71 (22 new, plus Activity in the 1024px and accessible-name sweeps).
 
 ## New migration to add to the dev → production list
 

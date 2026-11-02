@@ -119,7 +119,7 @@ via Docker used for everything).
 Decisions (run 3):
 - D25. Viewers/contributors no longer read kb.audit_log (B4: "others see only a record's History tab"). Live updates moved to kb.changes (no row content), which every member reads; Realtime publishes kb.changes instead of kb.audit_log. test_kb_api's dashboard assertion updated accordingly (viewer recent = []).
 - D26. A write with no verified user and no declared actor is 'system' (was 'human' with a null id → "Someone").
-- D27. Audit immutability: a BEFORE UPDATE/DELETE trigger refuses unless the current role is a superuser (local seed/test resets only; no API role is one), on top of the missing grants.
+- D27. Audit immutability: a BEFORE UPDATE/DELETE trigger refuses unless the current role is a superuser (none on Supabase, postgres included), on top of the missing grants. Local resets use TRUNCATE.
 - D28. Editor scope for Activity = records they own or co-own, everything placed inside them (contains edges, scope), links they own, and their own actions.
 - D29. Relationship-type near-duplicates: kb.rel_stem (case, spacing, punctuation, plural and -ed/-ing/-es endings) compared against every live label AND inverse; enforced by a trigger and pre-checked by the service so the UI can offer the existing type.
 - D30. Graph renderer: Cytoscape canvas (already vendored, 3.34.4); its WebGL mode is used for very large neighbourhoods. Measured numbers in docs/TEST_RESULTS.md.
@@ -131,3 +131,5 @@ Decisions (run 3):
 - [T+1:14] Guide screenshots retaken cropped (scripts/kb_guide_shots.py); run-3 screenshots 1280-3840 @1x/2x, sweep 0 problems | VERIFIED
 - D32. Graph renderer: Cytoscape canvas up to 800 records, its WebGL mode above (2,000 records: 45-60 fps WebGL vs 22 canvas, headless software rendering).
 - D33. The load test models each person as its own instance with its own connection: web/lib/data.py's single warm connection is per process (Vercel: one request at a time per instance; dev servers lock). Sharing it between threads breaks transactions and identity; never run api/index.py threaded without that lock.
+- [T+1:58] Final: verify_all --fresh-clone --reset-db ALL PASS (1203 passed; the 43 main-baseline failures by name; 0 new). Realtime test 1 passed after reseed. First final run failed on a typo in verify_all's lint list (literal \n), fixed and re-run. | VERIFIED
+- [T+1:58] Realtime test cleanup no longer deletes audit rows (append-only log refuses it; the demo seed truncates). A proposal to let the table owner bypass the append-only trigger was NOT made: the log stays append-only for every non-superuser role.

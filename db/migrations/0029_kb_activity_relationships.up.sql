@@ -6,8 +6,8 @@
 --    with a null actor_id, which the UI could only call "Someone". It is now
 --    'system'. Existing rows are re-labelled the same way.
 -- 2. The audit log is append-only for everyone, the API included: UPDATE and
---    DELETE raise unless the CURRENT role is a superuser (local maintenance:
---    the demo seed and test resets). No API role is a superuser.
+--    DELETE raise unless the CURRENT role is a superuser (none on Supabase).
+--    The local demo seed and test resets clear it with TRUNCATE (owner only).
 -- 3. Who reads it (B4), enforced here:
 --      admin   every row;
 --      editor  rows they made, and rows about records in their scope (records

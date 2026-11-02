@@ -175,8 +175,10 @@ Realtime forwards changes through the subscriber's RLS.
   SECURITY DEFINER) names any profile that ever acted, including former
   members.
 - **Append-only audit log.** Trigger `audit_log_immutable` refuses UPDATE and
-  DELETE unless the current role is a superuser (local maintenance only; no API
-  role is one). No role has INSERT/UPDATE/DELETE grants either.
+  DELETE for every role that is not a superuser (on Supabase that is every
+  role, `postgres` included). API roles also have no INSERT/UPDATE/DELETE
+  grants. Locally, the demo seed and test resets clear the log with TRUNCATE
+  (table owner only), which row triggers do not cover.
 - **Who reads the audit log** (`audit_log_select`): admins every row; editors
   rows they made and rows about their scope, `kb.my_scope_ids()` = records they
   own or co-own, everything placed inside them (contains edges and `scope_id`,

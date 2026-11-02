@@ -81,8 +81,8 @@ def test_presence_and_realtime_live_update_between_two_people():
             b.close()
     finally:
         with owner() as c:
-            # Delete the probe FIRST, then every trace of it (its insert, update AND the
-            # delete just made), so no fixture ever shows up in anyone's activity (A2).
+            # Remove the probe record. Its audit rows stay: the activity log is
+            # append-only (0029), even for this fixture. They are attributed (System,
+            # demo admin, demo editor), never "Someone", and the demo seed, which is
+            # re-run after every test run, truncates the log (A2).
             c.execute("delete from kb.nodes where id = %s", (nid,))
-            c.execute("delete from kb.audit_log where row_id = %s", (nid,))
-            c.execute("delete from kb.changes where row_id = %s", (nid,))
