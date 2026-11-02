@@ -40,7 +40,16 @@ MAX_BODY = 16 * 1024
 
 
 def _configure() -> None:
-    stack.configure_env(stack.status())
+    st = stack.status()
+    stack.configure_env(st)
+    # Live updates over Supabase Realtime (D2): the origin comes from the local
+    # stack's own status, never a literal. The page's connect-src gets exactly
+    # that origin (http + ws), as docs/DEPLOYMENT.md describes for production.
+    origin = st["API_URL"].rstrip("/")
+    os.environ["KB_REALTIME_ORIGIN"] = origin
+    ws = "ws" + origin[len("http"):]
+    base.PROD_HEADERS[:] = [(k, v.replace("connect-src 'self'", f"connect-src 'self' {origin} {ws}"))
+                            if k.lower() == "content-security-policy" else (k, v) for k, v in base.PROD_HEADERS]
     from pipeline.lib import db
     for var in (db.SESSION, db.TRANSACTION):
         reason = db.production_reason(os.environ[var])

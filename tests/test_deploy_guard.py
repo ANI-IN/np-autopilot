@@ -81,3 +81,11 @@ def test_prebuilt_output_if_present_has_no_demo():
     bad = [str(p.relative_to(REPO)) for p in out.rglob("*")
            if p.is_file() and ("eval" in p.parts or any(m in p.name for m in DEMO_MARKERS))]
     assert not bad, bad
+
+
+def test_the_in_app_guide_ships():
+    """public/kb/guide.md is fetched by the KB page; `*.md` is otherwise excluded."""
+    lines = _ignore_lines()
+    assert "*.md" in lines and "!public/kb/guide.md" in lines
+    assert lines.index("!public/kb/guide.md") > lines.index("*.md")      # later rules win
+    assert (REPO / "public" / "kb" / "guide.md").is_file()

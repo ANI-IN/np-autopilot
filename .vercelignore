@@ -22,6 +22,8 @@ commands/
 06-analysis/
 *.md
 !README.md
+# The in-app Guide is content the KB page fetches at /kb/guide.md (brief C5).
+!public/kb/guide.md
 # EVERY top-level pipeline script, by glob rather than by name. This was eight
 # hand-written entries and five scripts added since were simply not in it —
 # gen_index, gen_landing_stats, gen_workflow_owners, query and

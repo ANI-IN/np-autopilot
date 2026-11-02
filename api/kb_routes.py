@@ -115,6 +115,8 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
             return 200, ws.save_view(conn, actor, body, rest[0])
         if method == "DELETE" and len(rest) == 1:
             return 200, ws.delete_view(conn, actor, rest[0])
+    if head == "realtime" and method == "GET" and not rest:
+        return 200, _realtime_config()
     if head == "attachments" and method == "PATCH" and len(rest) == 1:
         return 200, svc.update_attachment(conn, actor, rest[0], body)
     if head == "dashboard" and method == "GET":
@@ -177,6 +179,22 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
         if method == "POST" and len(rest) == 1:
             return 200, svc.set_role(conn, actor, rest[0], body.get("role"))
     raise NotFound(f"no KB route {method} /api/kb/{'/'.join(parts)}")
+
+
+def _realtime_config() -> dict:
+    """Supabase Realtime for live updates (D2), ONLY when the deployment names
+    the origin it also allows in the security policy's connect-src
+    (KB_REALTIME_ORIGIN, e.g. https://<ref>.supabase.co). Otherwise {} and the
+    browser keeps polling /changes. The anon key is public by design (it is the
+    key a browser holds) and grants nothing without a session: Realtime applies
+    the caller's RLS to every change it forwards."""
+    import os
+    origin = os.environ.get("KB_REALTIME_ORIGIN", "").rstrip("/")
+    url = os.environ.get("SUPABASE_URL", "").rstrip("/")
+    key = os.environ.get("SUPABASE_ANON_KEY", "")
+    if not (origin and url and key and url == origin):
+        return {}
+    return {"url": url, "key": key}
 
 
 def _types(conn, actor, method, rest, params, body):

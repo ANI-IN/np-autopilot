@@ -37,6 +37,8 @@ via Docker used for everything).
 - [T+0:12] D8 tests/test_deploy_guard.py (6 tests: .vercelignore, excludeFiles, routes, public/, shipped python, prebuilt output) | 6 pass | VERIFIED
 - [T+0:20] A2 main vs branch by failing NAME: identical 43 = baseline; branch +95 passes, 0 new failures | VERIFIED
 - [T+0:20] B inventory: docs/INVENTORY.md, 42 before screenshots (1440/1280/1024) + 6 dialogs | VERIFIED
+- [T+0:30 12:14] Backend for C2/C3/C4/D1/D3-D6 (0027, typedefs.py, workspace.py, routes, MCP list_types) | 108 KB API tests pass (+21 new) | VERIFIED (API); UI next. Commit 11633a1
+- [T+1:25 13:10] C1 redesign (tokens, components, every screen rebuilt as ES modules; Inter + Lucide self-hosted), C3 one-step New record sheet, C4 UI (Archived, typed delete, bulk bar, undo), C5 Guide page, D1 Outline, D2 Realtime client + presence (polling fallback), D3 flags UI, D4 templates UI, D5 completeness UI, D6 saved views | E2E 32/32 twice (14 updated + 18 new) | VERIFIED; 0028 palette + realtime publication
 
 ## Decisions
 
@@ -82,6 +84,13 @@ via Docker used for everything).
   (tests/test_source_links.py, docs/ACCEPTANCE-CHECKLIST.md), not guessed.
 - D21. Link kind (the service: Drive, GitHub, UpLevel...; configurable, URL-pattern detected)
   and resource kind (what it is: KYP slides, recording, solution...) are separate dimensions.
+
+- D22. Hover actions fade by opacity, not visibility, so they stay keyboard-reachable.
+- D23. Realtime is opt-in per deployment: /api/kb/realtime returns a socket config only when
+  KB_REALTIME_ORIGIN (the origin also in the CSP connect-src) is set; otherwise the page polls.
+  The local demo derives the origin from `supabase status`.
+- D24. Type colours: one accessible, non-purple palette (0028 moved the seeded colours; admin
+  choices are kept). Dark mode lightens icon colours with color-mix for contrast.
 
 ## Blockers (each with the unblock step) — see HANDOFF.md "Action required"
 

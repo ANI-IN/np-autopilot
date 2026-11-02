@@ -28,8 +28,10 @@ from .service import ROLES, Actor, _q, _q1, _translate, role, require
 
 FIELD_KINDS = ("short_text", "long_text", "number", "date", "datetime", "duration", "url",
                "single_select", "multi_select", "person", "reference", "checkbox")
-PALETTE = ("#2563eb", "#0891b2", "#0d9488", "#16a34a", "#65a30d", "#ca8a04", "#d97706",
-           "#ea580c", "#dc2626", "#db2777", "#4f46e5", "#475569")
+#: One accessible palette for every record type's icon and dot (no purple;
+#: 0028 moved the built-in types onto it). AA non-text contrast on white.
+PALETTE = ("#1d4ed8", "#0369a1", "#0e7490", "#0f766e", "#15803d", "#4d7c0f", "#a16207",
+           "#b45309", "#c2410c", "#b91c1c", "#be123c", "#475569")
 CARDINALITIES = ("many_to_many", "one_to_many", "many_to_one", "one_to_one")
 TYPE_FIELDS = {"label", "plural", "description", "icon", "color", "fields", "allowed_parents",
                "parent_required", "default_status", "owner_rule", "is_container", "key"}

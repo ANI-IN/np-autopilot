@@ -314,6 +314,10 @@ def list_nodes(conn, params: dict) -> dict:
         q = str(params["q"]).strip()[:200]
         where.append("(n.search @@ websearch_to_tsquery('simple', %s) or n.name_norm like %s)")
         args += [q, "%" + kb_like(q) + "%"]
+    total = None
+    if not params.get("cursor"):
+        total = (_q1(conn, f"select count(*) as c from {_NODE_FROM}" + (" where " + " and ".join(where) if where else ""),
+                     tuple(args)) or {}).get("c")
     cur = _cursor_decode(params.get("cursor"))
     if sort == "updated":
         order = "n.updated_at desc, n.id desc"
@@ -339,7 +343,7 @@ def list_nodes(conn, params: dict) -> dict:
                              else [last["name_norm"], last["id"]])
     for r in rows:
         r.pop("name_norm", None)
-    return {"items": rows, "next_cursor": nxt, "limit": limit}
+    return {"items": rows, "next_cursor": nxt, "limit": limit, "total": total}
 
 
 def kb_like(q: str) -> str:
@@ -1318,7 +1322,7 @@ def dashboard(conn) -> dict:
     recent = _q(conn, """select a.id, a.at, a.actor_id, a.actor_type, a.table_name, a.row_id, a.action,
                                 coalesce(a.after ->> 'name', a.before ->> 'name', a.after ->> 'title',
                                          a.before ->> 'title') as label
-                         from kb.audit_log a where a.table_name in ('nodes', 'edges', 'resources', 'node_resources')
+                         from kb.audit_log a where a.table_name in ('nodes', 'edges', 'resources')
                          order by a.id desc limit 20""")
     return {"counts": counts, "totals": totals, "recent": recent, "role": role(conn)}
 
