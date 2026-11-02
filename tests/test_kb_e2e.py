@@ -99,6 +99,12 @@ def pick(page, testid, text, option_testid=None):
     opt.click()
 
 
+def choose_type(page, label):
+    """Pick a record type in the New record form by its exact label."""
+    page.get_by_test_id("create-type").fill(label)
+    page.get_by_test_id("create-type-option").filter(has=page.get_by_text(label, exact=True)).first.click()
+
+
 def select_matching(locator, pattern):
     """Select the first <option> whose text matches `pattern` (a regex string)."""
     opts = locator.locator("option").all_text_contents()
@@ -115,8 +121,7 @@ def toast(page):
 def test_node_and_inline_course_lifecycle(server, browser):
     page = page_as(browser, server, "editor")
     page.get_by_test_id("new-record").click()
-    page.get_by_test_id("create-type").fill("Module")
-    page.get_by_test_id("create-type-option").filter(has_text="Module").first.click()
+    choose_type(page, "Module")
     page.get_by_test_id("create-name").fill("Week 1: Foundations")
     page.get_by_test_id("placement-picker").fill("Distributed Systems")
     page.get_by_test_id("placement-picker-create").filter(has_text="course").click()
@@ -433,8 +438,7 @@ def test_custom_type_case_study_end_to_end(server, browser):
     _, mod = Client(USERS["editor"]).post("/api/kb/nodes", {"type": "module", "name": "Pricing"})
     # create one through the form, placed in the module, with its fields
     page.get_by_test_id("new-record").click()
-    page.get_by_test_id("create-type").fill("Case")
-    page.get_by_test_id("create-type-option").filter(has_text="Case Study").click()
+    choose_type(page, "Case Study")
     page.get_by_test_id("create-name").fill("Surge pricing")
     page.get_by_test_id("field-input-difficulty").select_option("hard")
     pick(page, "placement-picker", "Pricing")
@@ -470,8 +474,7 @@ def test_one_save_with_nested_inline_course_relationships_and_links(server, brow
     _, lib = api.post("/api/kb/resources", {"url": "https://github.com/ik-demo/rate-limiter", "title": "Rate limiter repo"})
     page = page_as(browser, server, "editor")
     page.get_by_test_id("new-record").click()
-    page.get_by_test_id("create-type").fill("Module")
-    page.get_by_test_id("create-type-option").filter(has_text="Module").first.click()
+    choose_type(page, "Module")
     page.get_by_test_id("create-name").fill("Scalability")
     # placement: a NEW course, itself placed in the existing program
     page.get_by_test_id("placement-picker").fill("System Design II")
@@ -517,8 +520,7 @@ def test_failed_save_rolls_back_and_highlights_the_field(server, browser):
         {"label": "Difficulty", "kind": "single_select", "required": True, "options": ["easy", "hard"]}]})
     page = page_as(browser, server, "editor")
     page.get_by_test_id("new-record").click()
-    page.get_by_test_id("create-type").fill("Case")
-    page.get_by_test_id("create-type-option").filter(has_text="Case Study").click()
+    choose_type(page, "Case Study")
     page.get_by_test_id("create-name").fill("Incomplete case")
     page.get_by_test_id("add-link").click()
     page.get_by_test_id("link-url").last.fill("https://example.com/brief")
@@ -537,8 +539,7 @@ def test_duplicate_name_warning_while_typing(server, browser):
     Client(USERS["editor"]).post("/api/kb/nodes", {"type": "topic", "name": "Dynamic Programming"})
     page = page_as(browser, server, "editor")
     page.get_by_test_id("new-record").click()
-    page.get_by_test_id("create-type").fill("Topic")
-    page.get_by_test_id("create-type-option").filter(has_text="Topic").first.click()
+    choose_type(page, "Topic")
     page.get_by_test_id("create-name").fill("dynamic   programming")
     expect(page.get_by_test_id("dup-warning")).to_contain_text("already exists")
     page.get_by_test_id("open-existing").click()
@@ -572,8 +573,7 @@ def test_contributor_create_is_a_proposal_an_editor_approves(server, browser):
     page = page_as(browser, server, "contributor")
     page.get_by_test_id("new-record").click()
     expect(page.get_by_test_id("proposal-note")).to_contain_text("sent to an editor for approval")
-    page.get_by_test_id("create-type").fill("Topic")
-    page.get_by_test_id("create-type-option").filter(has_text="Topic").first.click()
+    choose_type(page, "Topic")
     page.get_by_test_id("create-name").fill("Bloom filters")
     expect(page.get_by_test_id("create-submit")).to_contain_text("Send for approval")
     page.get_by_test_id("create-submit").click()
@@ -640,3 +640,98 @@ def test_no_horizontal_scroll_at_1024(server, browser, route):
     page.wait_for_timeout(700)
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1"), route
     assert page.errors == []
+
+
+# --- phase D screens -------------------------------------------------------------
+
+def test_outline_quick_add_reorder_and_copy(server, browser):
+    api = Client(USERS["editor"])
+    _, prog = api.post("/api/kb/programs", {"name": "Outline Program"})
+    _, c = api.post("/api/kb/nodes", {"type": "course", "name": "Outline Course", "parents": [prog["id"]]})
+    api.post("/api/kb/nodes", {"type": "module", "name": "Alpha", "parents": [c["id"]]})
+    api.post("/api/kb/nodes", {"type": "module", "name": "Beta", "parents": [c["id"]]})
+    page = page_as(browser, server, "editor")
+    page.goto(server + "#/outline")
+    expect(page.get_by_test_id("outline-row").first).to_be_visible()
+    page.get_by_test_id("outline-expand").click()
+    rows = page.get_by_test_id("outline-row")
+    expect(rows.filter(has_text="Alpha")).to_be_visible()
+    names = lambda: [t.strip() for t in page.locator("[data-testid=outline-row] a.name").all_text_contents()]  # noqa: E731
+    assert names().index("Alpha") < names().index("Beta")
+    rows.filter(has_text="Beta").drag_to(rows.filter(has_text="Alpha"), target_position={"x": 40, "y": 4})
+    expect(toast(page)).to_contain_text("Order saved")
+    page.wait_for_timeout(500)
+    assert names().index("Beta") < names().index("Alpha")
+    rows.filter(has_text="Outline Course").hover()
+    rows.filter(has_text="Outline Course").get_by_test_id("outline-add").click()
+    page.get_by_test_id("outline-add-module").click()
+    expect(page.get_by_test_id("placement-picker-picked")).to_contain_text("Outline Course")
+    page.get_by_test_id("create-name").fill("Gamma")
+    page.get_by_test_id("create-submit").click()
+    expect(rows.filter(has_text="Gamma")).to_be_visible()
+    assert page.errors == []
+
+
+def test_flag_as_incorrect_reaches_the_owner_in_reviews(server, browser):
+    _, n = Client(USERS["editor"]).post("/api/kb/nodes", {"type": "topic", "name": "Questionable"})
+    viewer = page_as(browser, server, "viewer")
+    open_record(viewer, server, n["id"])
+    more(viewer, "flag")
+    viewer.get_by_test_id("flag-reason").fill("The recording link is from the 2024 cohort")
+    viewer.get_by_test_id("flag-submit").click()
+    expect(viewer.get_by_test_id("flag-banner")).to_contain_text("2024 cohort")
+    owner_page = page_as(browser, server, "editor")
+    owner_page.goto(server + "#/records?flagged=1")
+    expect(owner_page.get_by_test_id("row")).to_have_count(1)
+    owner_page.goto(server + "#/approvals?tab=reviews")
+    expect(owner_page.get_by_test_id("review")).to_contain_text("Assigned to you")
+    owner_page.get_by_test_id("flag-resolve").click()
+    owner_page.get_by_test_id("flag-resolution").fill("Replaced with the 2026 recording")
+    owner_page.get_by_test_id("flag-close").click()
+    expect(owner_page.get_by_test_id("empty")).to_contain_text("No open reviews")
+    assert viewer.errors == [] and owner_page.errors == []
+
+
+def test_save_course_as_template_and_create_from_it(server, browser):
+    api = Client(USERS["editor"])
+    _, c = api.post("/api/kb/courses", {"name": "Python Basics"})
+    m = api.post("/api/kb/nodes", {"type": "module", "name": "Python Basics: Syntax", "parents": [c["id"]]})[1]
+    api.post("/api/kb/nodes", {"type": "week", "name": "Week 1", "parents": [m["id"]]})
+    page = page_as(browser, server, "editor")
+    open_record(page, server, c["id"])
+    more(page, "save-template")
+    page.get_by_test_id("template-save").click()
+    expect(toast(page)).to_contain_text("Template saved")
+    page.get_by_test_id("new-record").click()
+    choose_type(page, "Course")
+    page.get_by_test_id("create-name").fill("Go Basics")
+    page.get_by_test_id("template-select").select_option(label="Python Basics template (course)")
+    page.get_by_test_id("create-submit").click()
+    expect(toast(page)).to_contain_text("from the template (3 records)")
+    names = {n["name"] for n in Client(USERS["viewer"]).get("/api/kb/nodes", "limit=50")[1]["items"]}
+    assert {"Go Basics", "Go Basics: Syntax"} <= names
+    assert page.errors == []
+
+
+def test_saved_view_shared_with_the_team_and_bulk_owner(server, browser):
+    api = Client(USERS["editor"])
+    for i in range(3):
+        api.post("/api/kb/nodes", {"type": "topic", "name": f"Bulk {i}", "owner_id": None})
+    page = page_as(browser, server, "editor")
+    page.goto(server + "#/records?owner=none")
+    expect(page.get_by_test_id("row")).to_have_count(3)
+    page.get_by_test_id("save-view").click()
+    page.get_by_test_id("view-name").fill("Needs an owner")
+    page.get_by_test_id("view-shared").check()
+    page.get_by_test_id("view-save").click()
+    expect(page.get_by_test_id("view-tab")).to_contain_text("Needs an owner")
+    page.get_by_test_id("select-all").check()
+    expect(page.get_by_test_id("bulk-bar")).to_contain_text("3 records selected")
+    page.get_by_test_id("bulk-owner").click()
+    page.get_by_test_id("bulk-owner-option").first.click()
+    expect(toast(page)).to_contain_text("Updated 3 records")
+    expect(page.get_by_test_id("empty")).to_be_visible()
+    other = page_as(browser, server, "contributor")
+    other.goto(server + "#/records")
+    expect(other.get_by_test_id("view-tab")).to_contain_text("Needs an owner")    # shared
+    assert page.errors == [] and other.errors == []

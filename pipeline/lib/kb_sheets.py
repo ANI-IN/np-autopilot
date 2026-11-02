@@ -85,6 +85,7 @@ class Staged:
     links: list = field(default_factory=list)       # (edge, direction, other_type, name, scope_name)
     attach: list = field(default_factory=list)      # (type, name, scope_name)
     scope: tuple | None = None                      # (type, name)
+    props: dict = field(default_factory=dict)       # custom field key -> raw cell (converted in plan)
     errors: list = field(default_factory=list)
     status: str = "pending"                         # create|update|unchanged|duplicate|conflict|invalid
     note: str = ""
@@ -105,7 +106,8 @@ def stage(mapping: dict, tabs: dict, sheet_id: str) -> list[Staged]:
             return cells[i].strip() if i is not None and i < len(cells) else ""
 
         for header in data["headers"]:
-            if CONTACT_HEADER.search(header) and norm(header) in {norm(c) for c in (spec.get("fields") or {}).values()}:
+            declared = list((spec.get("fields") or {}).values()) + list((spec.get("props") or {}).values())
+            if CONTACT_HEADER.search(header) and norm(header) in {norm(c) for c in declared}:
                 raise MappingError(f"{tab}: refusing contact-shaped column {header!r}")
         seen: dict[str, int] = {}
         for rownum, cells in data["rows"]:
@@ -121,6 +123,8 @@ def stage(mapping: dict, tabs: dict, sheet_id: str) -> list[Staged]:
                     s.errors.append(f"duplicate of row {seen[key]} (same {', '.join(spec['key'])})")
                 else:
                     seen[key] = rownum
+            # Custom fields (C2): `props: {field_key: Column}` for any record type.
+            s.props = {fk: cell(cells, col) for fk, col in (spec.get("props") or {}).items() if cell(cells, col)}
             if spec.get("scope"):
                 sc = cell(cells, spec["scope"]["column"])
                 s.scope = (spec["scope"]["type"], sc) if sc else None
@@ -206,6 +210,12 @@ def plan(conn, svc, staged: list[Staged]) -> dict:
     for s in staged:
         if s.status == "invalid":
             continue
+        if s.entity == "node" and s.props:
+            try:
+                s.props = svc.import_convert_props(conn, s.type, s.props)
+            except Exception as exc:                                   # noqa: BLE001
+                s.status, s.note = "invalid", str(getattr(exc, "message", exc))
+                continue
         if s.entity == "node":
             cur = svc.import_lookup_node(conn, s.external_id)
             if cur is None:
@@ -292,12 +302,12 @@ def apply(conn, svc, actor, staged: list[Staged]) -> dict:
                     continue
             svc.import_create_node(conn, actor, type_key=s.type, name=s.values["name"],
                                    summary=s.values.get("summary") or None, scope_id=scope_id,
-                                   external_id=s.external_id)
+                                   external_id=s.external_id, props=s.props or None)
             written["nodes_created"] += 1
         elif s.status == "update":
             cur = svc.import_lookup_node(conn, s.external_id)
             if svc.import_update_node(conn, actor, cur["id"], cur["version"], name=s.values["name"],
-                                      summary=s.values.get("summary") or None):
+                                      summary=s.values.get("summary") or None, props=s.props or None):
                 written["nodes_updated"] += 1
             else:
                 written["skipped_races"] += 1

@@ -12,7 +12,7 @@ from kb_support import USERS, Client, as_user, ensure_users, owner, requires_kb,
 pytestmark = requires_kb
 
 CASE_STUDY = {
-    "label": "Case Study", "plural": "Case studies", "icon": "briefcase", "color": "#0d9488",
+    "label": "Case Study", "plural": "Case studies", "icon": "briefcase", "color": "#0f766e",
     "description": "A worked business scenario used in a session",
     "allowed_parents": ["module", "session"],
     "fields": [
@@ -193,6 +193,8 @@ def test_relationship_types_cardinality_self_links_and_narrowing(admin, editor):
                                                                "rules": [{"source": "session", "target": "course"}]})
     assert s == 200 and "no longer fit" in out2["warnings"][0]
     assert len(editor.get("/api/kb/edges", f"node={c['id']}")[1]["items"]) == 1     # kept, not deleted
+    misfits = editor.get("/api/kb/dashboard")[1]["attention"]["misfits"]          # ...and listed on Data quality
+    assert [(m["source"], m["target"]) for m in misfits] == [("M1", "C")]
 
 
 def test_link_kinds_detect_uplevel_and_are_editable(admin, editor):

@@ -306,15 +306,25 @@ def needs_attention(conn, limit: int = 12) -> dict:
                           from kb.flags f left join kb.nodes n on f.target_table = 'nodes' and n.id = f.target_id
                           left join kb.resources r on f.target_table = 'resources' and r.id = f.target_id
                           where f.status = 'open' order by f.created_at desc limit %s""", (limit,))
+    misfits = _q(conn, """select e.id, s.id as source_id, s.name as source, st.key as source_type, et.label,
+                                 t.id as target_id, t.name as target, tt.key as target_type
+                          from kb.edges e join kb.edge_types et on et.id = e.edge_type_id
+                          join kb.nodes s on s.id = e.source_id join kb.node_types st on st.id = s.type_id
+                          join kb.nodes t on t.id = e.target_id join kb.node_types tt on tt.id = t.type_id
+                          where e.archived_at is null and s.archived_at is null and t.archived_at is null
+                            and not exists (select 1 from kb.edge_type_rules r where r.edge_type_id = e.edge_type_id
+                                and r.archived_at is null and r.source_type_id = s.type_id and r.target_type_id = t.type_id)
+                          order by e.updated_at desc limit %s""", (limit,))
     return {"no_owner": no_owner, "broken_links": broken, "orphans": orphans,
-            "missing_required": missing[:limit], "flagged": flagged,
+            "missing_required": missing[:limit], "flagged": flagged, "misfits": misfits,
             "counts": _q1(conn, """select
                 (select count(*) from kb.nodes where archived_at is null and owner_id is null) as no_owner,
                 (select count(*) from kb.link_checks lc join kb.resources r on r.id = lc.resource_id
                   where r.archived_at is null and lc.status in ('broken', 'forbidden', 'unreachable', 'timeout')) as broken_links,
                 (select count(*) from kb.nodes n where n.archived_at is null and not exists (select 1 from kb.edges e
                   where e.archived_at is null and (e.source_id = n.id or e.target_id = n.id))) as orphans,
-                (select count(*) from kb.flags where status = 'open') as flagged""") | {"missing_required": len(missing)}}
+                (select count(*) from kb.flags where status = 'open') as flagged""") | {"missing_required": len(missing),
+                                                                                    "misfits": len(misfits)}}
 
 
 def course_completeness(conn) -> list[dict]:

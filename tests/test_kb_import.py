@@ -127,3 +127,36 @@ def test_unmapped_columns_are_never_read():
     prog = [s for s in staged if s.tab == "Programs"][0]
     assert set(prog.values) == {"name", "summary"}
     assert "ignored" not in json.dumps([s.values for s in staged])
+
+
+def test_custom_type_fields_import_and_bad_cells_are_rejected(tmp_path, monkeypatch):
+    """C2 → Sheets: a mapping can target any record type and its custom fields
+    (`props: {field_key: Column}`); cells are converted by field kind, select
+    cells match an option's value or label, and a bad cell makes the row
+    invalid in the dry run instead of being written."""
+    s, _ = Client(USERS["admin"]).post("/api/kb/types/node", {"label": "Case Study", "fields": [
+        {"label": "Difficulty", "kind": "single_select", "options": [{"value": "easy", "label": "Easy"}, {"value": "hard", "label": "Hard"}]},
+        {"label": "Minutes", "kind": "number"}]})
+    assert s == 201
+    try:
+        mapping = tmp_path / "map.yaml"
+        mapping.write_text("version: 1\ntabs:\n  Cases:\n    entity: node\n    type: case_study\n    key: [Case]\n"
+                           "    fields: {name: Case, summary: Notes}\n    props: {difficulty: Level, minutes: Length}\n", encoding="utf-8")
+        fixture = tmp_path / "cases.json"
+        fixture.write_text(json.dumps({"spreadsheetId": "synthetic-cases", "valueRanges": [{"range": "Cases!A1:Z5000", "values": [
+            ["Case", "Notes", "Level", "Length"],
+            ["Surge pricing", "Synthetic", "Hard", "45"],
+            ["Bad minutes", "Synthetic", "Easy", "about an hour"]]}]}), encoding="utf-8")
+        monkeypatch.setattr(importer, "MAPPING", mapping)
+        r = run(fixture=fixture)
+        assert r["counts"]["create"] == 1 and r["counts"]["invalid"] == 1
+        why = {x["row"]: x["why"] for x in r["rows_needing_attention"]}
+        assert "Minutes" in why[3]
+        run(apply=True, fixture=fixture)
+        made = Client(USERS["viewer"]).get("/api/kb/nodes", "type=case_study")[1]["items"]
+        assert [(n["name"], n["props"]) for n in made] == [("Surge pricing", {"difficulty": "hard", "minutes": 45})]
+        assert run(fixture=fixture)["counts"]["create"] == 0                      # idempotent
+    finally:
+        reset()
+        with owner() as c:
+            c.execute("delete from kb.node_types where key = 'case_study'")

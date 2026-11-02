@@ -12,8 +12,8 @@ export function viewOutline(v, r) {
   const root = r.q.root || '';
   let data = null;
   const head = el('div', { class: 'page-head' }, el('h1', { text: 'Outline' }), el('span', { class: 'sub', text: 'Programs and courses, top to bottom.' }), el('span', { class: 'spacer' }),
-    el('button', { class: 'btn ghost', type: 'button', 'data-testid': 'outline-expand', onclick: () => { walk(data.roots, (n) => { openState[n.id] = true; }); saveOpen(); draw(); } }, 'Expand all'),
-    el('button', { class: 'btn ghost', type: 'button', onclick: () => { openState = {}; saveOpen(); draw(); } }, 'Collapse all'),
+    el('button', { class: 'btn ghost', type: 'button', 'data-testid': 'outline-expand', onclick: () => { if (!data) return; walk(data.roots, (n) => { openState[n.id] = true; }); saveOpen(); draw(); } }, 'Expand all'),
+    el('button', { class: 'btn ghost', type: 'button', onclick: () => { if (!data) return; openState = {}; saveOpen(); draw(); } }, 'Collapse all'),
     el('button', { class: 'btn', type: 'button', 'data-testid': 'outline-copy', onclick: copyText }, icon('copy', 'sm'), 'Copy as text'),
     can('contributor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': 'outline-new-program', onclick: () => openRecordForm({ type: 'program' }) }, icon('plus'), 'New program') : null);
   v.appendChild(head);

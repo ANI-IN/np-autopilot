@@ -27,6 +27,9 @@ export function viewQuality(v) {
       left.appendChild(list('Records without an owner', q.unowned, (x) => rec(x), 'Every record has an owner.', 'q-unowned'));
       left.appendChild(list('Missing required fields', a.missing_required, (x) => rec(x, x.field), 'Every required field is filled in.', 'q-missing-required'));
       left.appendChild(list('Not connected to anything', q.orphans, (x) => rec(x), 'Every record has at least one relationship.', 'q-orphans'));
+      left.appendChild(list('Relationships that no longer fit the rules', a.misfits, (x) => el('a', { class: 'link-row', href: '#/quality?open=' + x.source_id },
+        typeIcon(x.source_type), el('span', { class: 'truncate', style: 'color:var(--text)', text: x.source }), el('span', { class: 'faint small', text: x.label }),
+        typeIcon(x.target_type), el('span', { class: 'truncate', style: 'color:var(--text)', text: x.target })), 'Every relationship fits its type’s rules.', 'q-misfits'));
       const L = q.links;
       right.appendChild(el('section', null, el('div', { class: 'row', style: 'margin-bottom:4px' }, el('h2', { text: 'Link health' })),
         el('p', { class: 'muted small', 'data-testid': 'q-link-summary', style: 'margin-bottom:8px', text: L.checked + ' of ' + plural(L.resources, 'link') + ' checked · ' + L.ok + ' working · ' + L.needs_auth + ' need sign-in · ' + L.problems + ' broken' }),

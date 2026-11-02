@@ -1406,24 +1406,53 @@ def import_find_live(conn, type_key: str, name: str, scope_id=None) -> dict | No
     return _existing_by_name(conn, _type_id(conn, type_key), scope_id, name)
 
 
+def import_convert_props(conn, type_key: str, raw: dict) -> dict:
+    """Sheet cells (text) -> typed custom-field values for `type_key`, by each
+    field's kind; select cells match an option's value or label. Raises
+    Invalid naming the field when a cell cannot be converted."""
+    from .typedefs import _convert
+    fields = {f["key"]: f for f in _type_def(conn, type_key)["fields"] if not f.get("archived")}
+    out = {}
+    for k, cell in raw.items():
+        f = fields.get(k)
+        if not f:
+            raise Invalid(f"the mapping names field {k!r}, which {type_key} does not have", field="props." + k)
+        try:
+            if f["kind"] in ("single_select", "multi_select"):
+                opts = {o["value"].lower(): o["value"] for o in f["options"]} | {o["label"].lower(): o["value"] for o in f["options"]}
+                vals = [opts[x.strip().lower()] for x in (cell.split(",") if f["kind"] == "multi_select" else [cell])]
+                out[k] = vals if f["kind"] == "multi_select" else vals[0]
+            elif f["kind"] in ("person", "reference"):
+                raise ValueError("people and record references are not imported from cells")
+            else:
+                out[k] = _convert(f["kind"], cell)
+        except (KeyError, ValueError, TypeError) as exc:
+            raise Invalid(f"{f['label']}: {cell!r} is not a valid {f['kind'].replace('_', ' ')} ({exc})",
+                          field="props." + k) from None
+    return out
+
+
 def import_create_node(conn, actor: Actor, *, type_key: str, name: str, summary=None,
-                       scope_id=None, external_id: str) -> dict:
+                       scope_id=None, external_id: str, props: dict | None = None) -> dict:
     require(conn, "admin", "importing")
     return _insert_node(conn, type_key=type_key, name=v.name({"name": name}), summary=summary,
-                        scope_id=scope_id, external_id=external_id, imported=True)
+                        scope_id=scope_id, external_id=external_id, imported=True, props=props)
 
 
-def import_update_node(conn, actor: Actor, node_id, expected_version: int, *, name: str, summary) -> bool:
+def import_update_node(conn, actor: Actor, node_id, expected_version: int, *, name: str, summary,
+                       props: dict | None = None) -> bool:
     """Apply sheet values ONLY if nobody edited the record in the app since the
     last import (version == imported_version, checked again in the WHERE)."""
     require(conn, "admin", "importing")
     with _translate(conn, "record"):
         with conn.cursor() as cur:
             cur.execute("""update kb.nodes set name = %s, summary = %s, imported_at = now(),
+                                  props = case when %s::jsonb is null then props else props || %s::jsonb end,
                                   imported_version = version + 1
                            where id = %s and version = %s and version = imported_version
                              and archived_at is null""",
-                        (v.name({"name": name}), summary, node_id, expected_version))
+                        (v.name({"name": name}), summary, json.dumps(props) if props else None,
+                         json.dumps(props) if props else None, node_id, expected_version))
             return cur.rowcount == 1
 
 

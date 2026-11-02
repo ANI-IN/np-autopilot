@@ -91,8 +91,20 @@ def ensure_users() -> None:
 
 
 def reset() -> None:
-    with owner() as c:
-        c.execute("truncate " + ", ".join(f"kb.{t}" for t in CONTENT_TABLES) + " cascade")
+    """Empty the kb content tables. Retried on deadlock: a request the app
+    server is still finishing (a page's last poll) can hold a share lock on one
+    table while TRUNCATE locks the others in order."""
+    import psycopg
+    for attempt in range(6):
+        try:
+            with owner() as c:
+                c.execute("set lock_timeout = '5s'")
+                c.execute("truncate " + ", ".join(f"kb.{t}" for t in CONTENT_TABLES) + " cascade")
+            return
+        except (psycopg.errors.DeadlockDetected, psycopg.errors.LockNotAvailable):
+            if attempt == 5:
+                raise
+            time.sleep(0.5 * (attempt + 1))
 
 
 @contextmanager
