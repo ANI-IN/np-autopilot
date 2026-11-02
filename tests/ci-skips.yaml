@@ -44,6 +44,6 @@ skips:
   # +85 on 2026-11-02, knowledge-platform run: the KB tests (schema, RLS, API,
   # concurrency, import, MCP, browser E2E) run against the local Supabase stack
   # only, like every DB test; the plugin's CLI validation needs the claude CLI.
-  "kb: needs the local database with the kb migrations (0022+) applied (db/local/setup.sh)": 126
+  "kb: needs the local database with the kb migrations (0022+) applied (db/local/setup.sh)": 135
   "kb realtime: needs the local Supabase stack running and the demo users (eval/kb_demo_seed.py)": 1
   "kb plugin: the claude CLI is not installed": 1

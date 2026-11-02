@@ -1,7 +1,7 @@
 {
   "name": "ik-knowledge-assistant",
   "displayName": "IK Knowledge Assistant",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Search, audit and extend the Interview Kickstart knowledge base (programs, courses, modules, topics, instructors, resources) through its MCP server. Acts as you, with your role; archive requests always need human approval.",
   "author": { "name": "Interview Kickstart — New Programs" },
   "license": "Proprietary · Interview Kickstart",

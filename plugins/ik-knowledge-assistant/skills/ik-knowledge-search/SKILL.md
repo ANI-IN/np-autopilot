@@ -42,6 +42,13 @@ may have changed it a minute ago. This skill holds no copy of the knowledge; the
 - **Writes only when asked.** Create or connect records only on an explicit
   request. Before `create_node`, search for the name: a duplicate is refused
   anyway, and the refusal names the existing record — offer that one instead.
+- **Types are configurable.** Call `list_types` before creating a record of a
+  type you have not seen (admins add types such as "Case Study" with custom
+  fields). Pass custom field values as `props` keyed by field key; required
+  fields must be present. Place records with `parent_ids` (a session under its
+  week, a week under its module).
+- **Contributors propose.** With a contributor's token, `create_node` returns
+  `approval_required`: tell the user an editor will approve it in Approvals.
 - **Edits need the version you read.** `update_node(node_id, version, …)` with
   the `version` from your latest `get_node`. A conflict means someone else
   changed it: re-read, show the user the difference, and only retry if they

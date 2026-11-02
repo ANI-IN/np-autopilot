@@ -788,3 +788,32 @@ def test_new_record_prefills_from_the_open_record_and_shows_custom_columns(serve
     expect(page.get_by_test_id("th-field-difficulty")).to_be_visible()
     expect(page.get_by_test_id("row")).to_contain_text("hard")
     assert page.errors == []
+
+
+A11Y_SCRIPT = """() => {
+  const name = (e) => (e.getAttribute('aria-label') || e.getAttribute('title') || e.textContent || e.value || '').trim()
+    || (e.id && document.querySelector('label[for="' + e.id + '"]') ? 'label' : '') || (e.closest('label') ? 'label' : '')
+    || (e.getAttribute('placeholder') || '').trim();
+  const bad = [];
+  document.querySelectorAll('button, a[href], input:not([type=hidden]), select, textarea, [role=button], [role=tab]').forEach((e) => {
+    const r = e.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    if (!name(e)) bad.push(e.tagName + '.' + (e.className || '') + ' ' + (e.getAttribute('data-testid') || ''));
+  });
+  return bad;
+}"""
+
+
+@pytest.mark.parametrize("route", ["#/", "#/records", "#/outline", "#/quality", "#/approvals", "#/archived", "#/settings", "#/resources", "#/graph"])
+def test_every_control_has_an_accessible_name(server, browser, route):
+    api = Client(USERS["editor"])
+    _, c = api.post("/api/kb/courses", {"name": "A11y Course"})
+    api.post("/api/kb/nodes", {"type": "module", "name": "A11y Module", "parents": [c["id"]],
+                               "resources": [{"url": "https://example.com/a11y", "title": "A11y link"}]})
+    page = page_as(browser, server, "admin")
+    page.goto(server + route + ("" if "?" in route else f"?open={c['id']}"))
+    page.wait_for_timeout(1200)
+    assert page.evaluate(A11Y_SCRIPT) == [], route
+    page.get_by_test_id("new-record").click()
+    page.wait_for_timeout(300)
+    assert page.evaluate(A11Y_SCRIPT) == [], route + " + New record sheet"
