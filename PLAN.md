@@ -7,23 +7,23 @@ Inputs: docs/SPEC.md does NOT exist in the repo (PROGRESS D15) -> the run-2 prom
 backups/ does not exist -> D7 BLOCKED (D16). Frontend stays vanilla JS, no build (D17).
 
 ## Phase A — trustworthy verification (<=30 min)
-- [ ] A1 verify_all.sh: set -euo pipefail, git-root, every tool/path checked. Prove: wrong cwd + missing tool FAIL.
-- [ ] A2 main worktree baseline vs branch, by failing test NAME -> docs/TEST_RESULTS.md
+- [x] A1 verify_all.sh: set -euo pipefail, git-root, every tool/path checked. Proven failing (wrong cwd, foreign repo, missing tool, bad option, missing path).
+- [x] A2 main vs branch: identical 43 failing names -> docs/TEST_RESULTS.md
 - [x] A3 deleted main_results.txt, verify_main.sh
 
 ## Phase B — inventory (<=30 min)
-- [ ] docs/INVENTORY.md + docs/inventory/screens/*.png: screens, CRUD matrix, gaps, critique
+- [x] docs/INVENTORY.md (before + after) + screenshots
 
 ## Phase C — must ship
-- [ ] C1 design system (tokens + components, DESIGN_SYSTEM.md) + every screen rebuilt; before/after 1440/1280/1024
-- [ ] C2 custom types: fields, rules, link kinds; safe changes; list_types MCP tool
-- [ ] C3 one-step New record side sheet (same form edits)
-- [ ] C4 complete CRUD + archive -> Archived -> permanent delete; bulk edit/archive
-- [ ] C5 Guide page (one content file, real screenshots)
+- [x] C1 design system + every screen rebuilt; before/after 1440/1280/1024
+- [x] C2 custom types (0027), safe changes, link kinds, list_types
+- [x] C3 one-step New record sheet (same form edits)
+- [x] C4 complete CRUD, Archived, typed delete, bulk
+- [x] C5 Guide (public/kb/guide.md)
 
 ## Phase D (cut from bottom first: D6 -> D4 -> D3 -> presence -> D5)
-- [ ] D1 Outline  - [ ] D2 Realtime+presence  - [ ] D3 Flag/review  - [ ] D4 Templates
-- [ ] D5 Completeness  - [ ] D6 Saved views  - [ ] D7 real data (BLOCKED)  - [ ] D8 deploy guard
+- [x] D1 Outline  - [x] D2 Realtime+presence  - [x] D3 Flag/review  - [x] D4 Templates
+- [x] D5 Completeness  - [x] D6 Saved views  - [ ] D7 real data (BLOCKED: no backups/)  - [x] D8 deploy guard
 
 ## Final (from 16:00)
 verify_all from fresh clone; full suite vs main baseline; browser tests (Case Study type, one-save create,

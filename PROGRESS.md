@@ -39,6 +39,10 @@ via Docker used for everything).
 - [T+0:20] B inventory: docs/INVENTORY.md, 42 before screenshots (1440/1280/1024) + 6 dialogs | VERIFIED
 - [T+0:30 12:14] Backend for C2/C3/C4/D1/D3-D6 (0027, typedefs.py, workspace.py, routes, MCP list_types) | 108 KB API tests pass (+21 new) | VERIFIED (API); UI next. Commit 11633a1
 - [T+1:25 13:10] C1 redesign (tokens, components, every screen rebuilt as ES modules; Inter + Lucide self-hosted), C3 one-step New record sheet, C4 UI (Archived, typed delete, bulk bar, undo), C5 Guide page, D1 Outline, D2 Realtime client + presence (polling fallback), D3 flags UI, D4 templates UI, D5 completeness UI, D6 saved views | E2E 32/32 twice (14 updated + 18 new) | VERIFIED; 0028 palette + realtime publication
+- [T+1:30 13:14] Sheets import custom fields (props), rule misfits on Data quality, phase-D browser tests | 36 E2E | VERIFIED
+- [T+1:40 13:24] Custom-field columns, New record prefilled from context, Guide links from empty states, resource completeness, accessible-name sweep, plugin 0.2.0 | 47 E2E | VERIFIED
+- [T+1:45 13:29] Final verify_all --fresh-clone --reset-db started (migrations 0001-0028 on a fresh DB: PASS; static/security/deploy guard: PASS)
+- [T+2:05 13:50] FINAL: verify_all --fresh-clone --reset-db ALL PASS; full suite 1156 pass, 43 = main baseline, 0 new; realtime 1 pass after reseed; after-screens 1440/1280/1024 + dark, no issues | VERIFIED. Handoff written; demo reseeded; demo server + local Supabase left running.
 
 ## Decisions
 

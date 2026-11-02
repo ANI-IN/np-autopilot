@@ -1,4 +1,32 @@
-# Test results — 2026-11-02 (local Supabase stack, Windows 11, Python 3.12, Chrome)
+# Test results — 2026-11-02 (run 1 below; run 2 first) (local Supabase stack, Windows 11, Python 3.12, Chrome)
+
+## Run 2 (demo → team-ready), final
+
+`bash scripts/verify_all.sh --fresh-clone --reset-db` (13:29–13:45): **VERIFY: ALL PASS**.
+
+- Fresh clone of the branch → clean `uv` install → Python byte-compiles → all KB ES modules parse: PASS.
+- `supabase db reset` → every migration 0001–0028 → KB rolled back to 0021 → re-applied: PASS
+  (the projection step fails exactly as on `main`; pre-existing, docs/AUDIT.md).
+- Lint, plugin copy in sync, `claude plugin validate --strict`, no server keys in `public/`,
+  `.env` untracked, no secret-shaped strings in history, RLS on every kb table, deploy guard: PASS.
+- Full suite: **1156 passed, 22 failed, 21 errors, 53 skipped**; all 43 failures/errors are the
+  `main` baseline by name; **0 new**; all KB tests pass. (The Realtime test skipped there because
+  the reset removed the demo users; it passes after reseeding: 1 passed.)
+- KB tests by file: API 34, schema 16, RLS 11, concurrency 3, import 7, MCP 8, plugin 5,
+  types 10, workspace 11, browser E2E 47, Realtime 1, deploy guard 8.
+
+Browser tests (`tests/test_kb_e2e.py`, 47) run in Chrome under the production security headers:
+the 14 run-1 paths updated for the redesign; custom type "Case Study" end to end; one-save create
+with nested inline course, 2 relationships, 3 links (Drive, UpLevel, GitHub reused); rollback with
+the field highlighted; duplicate warning; disallowed relationships; contributor proposal; archive →
+permanent delete; two-user conflict; keyboard-only flows; outline reorder and quick-add; flag →
+review; templates; shared saved view + bulk owner; Guide promises (Undo, draft restore, theme);
+prefill from context and custom-field columns; no horizontal scroll at 1024px (10 screens);
+accessible names on every control (9 screens + the form). Ran green repeatedly.
+
+Performance at 5,000 records / 15,000 relationships (local, 20 runs): list p50 16–19 ms, search
+p50 19–32 ms, depth-2 neighbourhood p95 120 ms, hub detail p50 32 ms; dashboard p50 33 ms,
+outline 8 ms, quality 15 ms.
 
 Only measured results are stated. Nothing here was run against a shared or
 production database.
