@@ -22,6 +22,21 @@ ok()   { printf 'PASS  %s\n' "$*"; }
 bad()  { printf 'FAIL  %s\n' "$*"; FAIL=1; }
 die()  { printf 'FAIL  %s\nVERIFY: ABORTED\n' "$*"; exit 2; }
 
+# esm_check DIR -> node --check every ES module under DIR (copied to .mjs: node
+# parses a plain .js file as CommonJS, where `import` is a syntax error).
+esm_check() {
+  local dir="$1" tmp f n=0
+  tmp="$(mktemp -d)"
+  for f in "$dir"/js/*.js "$dir"/js/views/*.js; do
+    [ -e "$f" ] || continue
+    n=$((n + 1)); cp "$f" "$tmp/$n.mjs"
+    node --check "$tmp/$n.mjs" || { echo "syntax error in $f"; rm -rf "$tmp"; return 1; }
+  done
+  rm -rf "$tmp"
+  [ "$n" -gt 0 ] || { echo "no modules under $dir/js"; return 1; }
+  echo "$n modules parse"
+}
+
 # check "<label>" cmd args...   -> PASS iff the command exits 0 (output shown on failure)
 check() {
   local label="$1"; shift
@@ -42,7 +57,7 @@ if [ "$(cd "$REPO" && pwd -P)" != "$SCRIPT_REPO" ]; then
   die "repo root resolves to $REPO, but this script lives in $SCRIPT_REPO; run it from inside that checkout"
 fi
 cd "$REPO"
-for p in api/index.py web/lib/kb/service.py public/kb/kb.js db/migrations tests docs/baseline-failures.txt \
+for p in api/index.py web/lib/kb/service.py public/kb/js/app.js public/kb/guide.md db/migrations tests docs/baseline-failures.txt \
          mcp_server/kb_server.py plugins/ik-knowledge-assistant/server/kb_server.py; do
   need_path "$p"
 done
@@ -82,7 +97,7 @@ if [ "$FRESH" -eq 1 ]; then
     else
       bad "fresh clone has no venv python"
     fi
-    check "kb.js parses (clone)" node --check "$TMP/clone/public/kb/kb.js"
+    check "KB ES modules parse (clone)" esm_check "$TMP/clone/public/kb"
   fi
   rm -rf "$TMP"
 fi
@@ -101,9 +116,7 @@ if [ "$RESET" -eq 1 ]; then
 fi
 
 step "static checks"
-JSFILES=(public/kb/*.js)
-[ -e "${JSFILES[0]}" ] || die "no public/kb/*.js"
-for f in "${JSFILES[@]}"; do check "$f parses" node --check "$f"; done
+check "KB ES modules parse" esm_check public/kb
 check "ruff (errors + pyflakes) on KB code" uvx -q ruff@0.14.0 check --select E9,F --target-version py312 \
   web/lib/kb api/kb_routes.py api/index.py mcp_server pipeline/kb_import_sheets.py pipeline/kb_admins.py \
   pipeline/lib/kb_sheets.py eval/kb_dev_server.py eval/kb_demo_server.py eval/kb_demo_seed.py \

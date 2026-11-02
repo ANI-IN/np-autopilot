@@ -98,3 +98,59 @@ curriculum team would live in:
 8. **Feedback**: toasts and conflict dialog are solid; empty states are fine but
    centred in dashed boxes.
 9. At 1024px nothing scrolls horizontally, but the overlay panel hides the list.
+
+---
+
+## After — 2026-11-02 (run 2, branch `auto/knowledge-platform-20261102`)
+
+Screens: `docs/redesign/after/<width>-<screen>.png` (1440/1280/1024, plus dark
+mode at 1440 in the HANDOFF), Guide screenshots in `public/kb/guide/`. Every
+screen was clicked through in Chrome (scripted with Playwright against the demo
+server and the test server) and checked against the banned list in
+docs/DESIGN_SYSTEM.md; no screen scrolls horizontally at 1024px (tested).
+
+### Screens (after)
+
+| Screen | Route | Notes |
+|---|---|---|
+| Dashboard | `#/` | headline numbers, records by type, completeness by course, needs attention, activity sentences |
+| All records / Programs / Courses | `#/records` `#/programs` `#/courses` | one-row toolbar, filter chips, saved views as tabs, bulk bar, density, custom-field columns for a one-type list, CSV |
+| Record detail | `?open=<id>` panel, `#/r/<id>` page | breadcrumb, editable title, properties incl. custom fields and completeness, tabs Overview · Links & resources · Relationships · History (diffs) |
+| New record / Edit | side sheet | one save: placement (nested inline), relationships, links, people, tags, fields |
+| Outline | `#/outline` | tree, drag reorder, quick-add, completeness, copy as text |
+| Graph | `#/graph[/id]` | shapes by type, legend and filters, minimap, fit, connect mode |
+| Resources | `#/resources` | service and kind filters, health |
+| Data quality | `#/quality` | no owner, missing required, broken links, flagged, orphans, rule misfits, duplicates, completeness |
+| Approvals | `#/approvals` | proposals (creates, archives, type changes) and Reviews (flags) |
+| Archived | `#/archived` | records, links, relationships; restore; typed permanent delete |
+| Settings | `#/settings` | record types (fields, placement, live preview, change type), relationship types, link kinds, members, API tokens, templates |
+| Guide | `#/guide` | `public/kb/guide.md` |
+
+### CRUD matrix (after)
+
+W = WORKS (verified by a browser or API test named in docs/TEST_RESULTS.md),
+N/A = not meaningful for that entity (reason given).
+
+| Entity | Create | View | Edit | Archive | Restore | Perm. delete | Duplicate | Bulk edit | Import | Export |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Record (any type, incl. custom) | W (one-step sheet; contributors propose) | W | W (inline + sheet) | W (impact first) | W | W (Archived, admin, typed) | W (editor) | W (owner, tags, status, placement) + bulk archive | W (Sheets CLI, custom fields) | W (CSV with custom fields) |
+| Relationship | W (form, Connect, graph) | W | W (note via API; type is fixed: archive and re-create) | W (× with undo) | W (undo, Archived) | W (Archived, admin) | N/A (a pair can hold a type once) | N/A | W (Sheets links) | N/A (exported with the graph neighbourhood API) |
+| Link (resource) | W (form, Add link, library) | W | W | W | W | W (Archived, admin) | W ("Duplicate" opens a prefilled New link; URLs are unique) | N/A | W | N/A |
+| Attachment (link on a record) | W | W | W (purpose) | W (× with undo) | W (undo re-attaches) | N/A (archived with its record or link) | N/A | N/A | W | N/A |
+| Record type | W (admin; editors propose) | W | W (safe-change rules) | W (blocked while in use; core never) | W | N/A (archive only; types are audited configuration) | W | N/A | N/A | via `GET /types` / MCP `list_types` |
+| Relationship type | W | W | W (narrowing reported) | W (custom, unused) | N/A | N/A | N/A | N/A | N/A | via `GET /types` |
+| Link kind | W | W | W | W (custom; built-ins editable, not archivable) | N/A | N/A | N/A | N/A | N/A | via `GET /types` |
+| Flag | W | W | N/A | resolve / dismiss | N/A | N/A | N/A | N/A | N/A | N/A |
+| Template | W | W | N/A | W | N/A | N/A | N/A | N/A | N/A | N/A |
+| Saved view | W | W | W (update, share) | N/A | N/A | W (owner) | N/A | N/A | N/A | N/A |
+| Member role / API token | W | W | W | W (revoke) | N/A | N/A | N/A | N/A | N/A | N/A |
+
+### Gaps that remain (honest)
+
+- D7 real-data rehearsal: BLOCKED (no `backups/`; PROGRESS D16).
+- Relationship type of an existing relationship cannot be changed in place
+  (archive and re-create), unchanged from run 1.
+- Sheets import cannot fill person or record-reference custom fields from cells.
+- Realtime and presence are off in production until the owner sets
+  `KB_REALTIME_ORIGIN` (docs/DEPLOYMENT.md); polling is the fallback.
+- Live Sheets import and a Vercel preview remain untested (no credentials).
