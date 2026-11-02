@@ -6,7 +6,7 @@ Two snapshots of the same app, taken by clicking through the running local demo
 - **Before** — 2026-11-02 11:50, commit `33a5d48` (end of run 1 + demo). Screens:
   `docs/redesign/before/<width>-<screen>.png` (1440/1280/1024) and dialogs in
   `docs/inventory/screens/`.
-- **After** — see the section at the end (updated at the end of run 2).
+- **After** — see the run-2 section, then **Run 3** at the end (the current state).
 
 docs/SPEC.md does not exist in this repository (PROGRESS D15); the gap list below
 is measured against the run-2 brief, which is the specification for this work.
@@ -154,3 +154,80 @@ N/A = not meaningful for that entity (reason given).
 - Realtime and presence are off in production until the owner sets
   `KB_REALTIME_ORIGIN` (docs/DEPLOYMENT.md); polling is the fallback.
 - Live Sheets import and a Vercel preview remain untested (no credentials).
+
+---
+
+## Run 3 — 2026-11-02 (polish, graph editing, custom relationships, activity)
+
+Screens: `docs/redesign/run3/` (every screen at 1536 and 2560px; key screens at
+1280, 1920 and 3840px; 1536 and 3840 at 2x). Swept automatically with
+`scripts/kb_screens.py` (horizontal scroll, elements past the right edge,
+clipped text without a tooltip, overlapping controls, script errors) and by
+eye.
+
+### Screens added or changed
+
+| Screen | Route | What changed |
+|---|---|---|
+| Every screen | | one page template (`pageHead`): title, count, context, actions right; three widths (full, contained, reading); fluid scale above 2560px |
+| Dashboard | `#/` | 12-column grid: six equal tiles, two equal columns; one attention number everywhere |
+| All records | `#/records` | View popover (density switch, column checkboxes, drag/arrow reorder), resizable columns, full text on hover, two-line descriptions |
+| Graph | `#/graph/<id>` | an editing surface: create, connect by dragging a handle, rename, archive + Undo, move with saved layouts, saved graph views, filters, search, keyboard, live sync, presence, clustering when zoomed far out |
+| Activity | `#/activity` | new: every change with who, what, which, when and field diffs; filters, search, CSV; editors and admins |
+| Record History tab | panel | same entries as Activity |
+| Approvals | `#/approvals` | relationship types to review: Confirm, Rename…, Merge into…, Reject |
+| Settings → Relationship types | `#/settings?tab=relationships` | review badge, Merge…, Archive (shows what uses it, offers merge) |
+| Settings → Tags | `#/settings?tab=tags` | new: rename, merge, archive with Undo |
+| Settings → Members | | Remove (audited; regrant any time) |
+| Guide | `#/guide` | content and contents centred as one unit; screenshots cropped, click to enlarge; three new sections |
+| Sidebar | | demo badge in its own slot; Activity (editors, admins); Back to NP Autopilot (admins only) |
+
+### CRUD matrix (run 3)
+
+W = WORKS (each verified by a test named in docs/TEST_RESULTS.md, run 3).
+N/A says why the operation does not apply.
+
+| Entity | Create | View | Edit | Archive | Restore | Perm. delete | Duplicate | Bulk edit | Import | Export |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Record (any type) | W (form, graph, palette; contributors propose) | W | W (form, inline, graph rename) | W (impact first; graph Delete) | W (Archived, Undo) | W (admin, typed name) | W | W | W (Sheets) | W (CSV) |
+| Relationship | W (form, Connect, graph drag) | W | W (note; **type: Change type, one step**) | W (× / graph Delete, Undo) | W | W (admin) | N/A: a pair holds a type once | N/A: edited one at a time | W | W (Activity CSV; neighbourhood API) |
+| Link (resource) | W | W | W | W | W | W (admin) | W | N/A | W | N/A: links export with their records |
+| Attachment | W | W | W (purpose) | W | W | N/A: archived with its record or link | N/A | N/A | W | N/A |
+| Record type | W (admin; editors propose) | W | W (safe changes) | W (blocked while in use: Change type of N records first) | W | N/A: types are audited configuration, archive only | W | N/A | N/A | W (`GET /types`) |
+| Field | W (in the type editor) | W | W (convertible kinds) | W (hides, keeps data) | W | N/A: data is kept | N/A | N/A | W (Sheets `props:`) | W (CSV) |
+| Relationship type | **W inline everywhere** (admin; editor unreviewed; contributor proposal) | W | W (+ review: confirm/rename) | W (shows uses; offers **Merge**) | N/A: merged types point at the kept one | N/A: archive only | N/A | N/A | N/A | W (`GET /types`) |
+| Link kind | W | W | W | W (custom) | N/A | N/A | N/A | N/A | N/A | W |
+| Tag | W (on a record) | W | **W (rename)** | **W (Undo restores it on its records)** | **W** | N/A: archive keeps history | N/A | **W (Merge)** | N/A | W (`GET /tags`) |
+| Member / role | W (admin) | W | W | **W (Remove, audited)** | W (grant again) | N/A: memberships are audited, never deleted | N/A | N/A | N/A | N/A |
+| API token | W | W | N/A: shown once, by design | W (revoke) | N/A: issue a new one | N/A | N/A | N/A | N/A | N/A |
+| Saved view (table or graph) | W | W | W (update, share) | N/A | N/A | W (owner) | N/A | N/A | N/A | N/A |
+| Graph layout | W (move) | W | W | N/A | N/A | W (Reset) | W (Save view copies it) | W (Auto-layout) | N/A | N/A |
+| Template | W | W | **W (rename)** | W | **W (Undo)** | N/A | N/A | N/A | N/A | N/A |
+| Flag | W | W | N/A | resolve / dismiss | N/A | N/A | N/A | N/A | N/A | N/A |
+| Activity entry | automatic | W | **never** (append-only, enforced by a trigger) | never | never | never | N/A | N/A | N/A | W (CSV) |
+
+### Dependency handling (B2)
+
+Before anything is archived or deleted the app shows what depends on it and
+offers the safe path:
+
+- **Record** (panel, bulk, graph): relationships and links that go with it;
+  records placed in it stay. Undo restores everything.
+- **Link**: the records it is attached to.
+- **Relationship type**: how many relationships use it; archiving is offered
+  only when unused, otherwise **Merge into another type**.
+- **Record type**: archiving is blocked while records use it; **Change type of
+  N records** moves them first.
+- **Tag**: how many records carry it; Undo puts it back on all of them; Merge
+  moves them to another tag.
+- **Member**: what removal means (they stay a viewer if they can sign in to the
+  main site); last admin and yourself are refused.
+- **Permanent delete**: admin only, typed-name confirmation, what goes with it
+  listed, recorded in Activity.
+
+### Gaps that remain (honest)
+
+- D7 real-data rehearsal: still BLOCKED (no `backups/`).
+- Sheets import cannot fill person or record-reference fields from cells.
+- Graph positions are not in the live feed: another person's moves appear on
+  your next load, not instantly (records and relationships do sync live).

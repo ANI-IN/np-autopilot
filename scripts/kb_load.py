@@ -77,6 +77,32 @@ def seed() -> dict:
     return {"course": course, "mods": mods, "topics": topics, "hot": mods[:3]}
 
 
+def one_connection_per_person() -> None:
+    """Production model: on Vercel each instance serves ONE request at a time
+    over its own warm connection (web/lib/data.py keeps one per process; the
+    local dev server serialises API calls with a lock for the same reason).
+    Here each simulated person is such an instance: a thread-local warm
+    connection, never shared between threads."""
+    from lib import data as _data
+    local = threading.local()
+
+    def warm():
+        c = getattr(local, "conn", None)
+        if c is None or c.closed:
+            local.conn = _data._db.connect(_data._db.TRANSACTION)
+        return local.conn
+
+    def discard():
+        c, local.conn = getattr(local, "conn", None), None
+        if c is not None:
+            try:
+                c.close()
+            except Exception:                                          # noqa: BLE001
+                pass
+    _data._warm_connection = warm
+    _data._discard = discard
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--users", type=int, default=25)
@@ -86,6 +112,8 @@ def main() -> int:
 
     ensure_users()
     reset()
+    Client(USERS["viewer"])                       # imports the app (and web/lib/data.py)
+    one_connection_per_person()
     crowd = people(a.users)
     world = seed()
     with owner() as c:
@@ -182,13 +210,13 @@ def main() -> int:
             group by type_id, coalesce(scope_id, '00000000-0000-0000-0000-000000000000'::uuid), name_norm having count(*) > 1) x""").fetchone()[0]
         checks["orphan_relationships"] = c.execute("""select count(*) from kb.edges e join kb.nodes s on s.id = e.source_id
             join kb.nodes t on t.id = e.target_id where e.archived_at is null and (s.archived_at is not null or t.archived_at is not null)""").fetchone()[0]
-        a = dict(c.execute("""select table_name || '_' || action, count(*) from kb.audit_log where id > %s
+        aud = dict(c.execute("""select table_name || '_' || action, count(*) from kb.audit_log where id > %s
             and table_name in ('nodes', 'edges', 'proposals') group by 1""", (audit0,)).fetchall())
     # creates with placement also write a contains edge: count only the load's own writes
-    checks["audit_node_updates"] = (a.get("nodes_update", 0), writes["node_update"])
-    checks["audit_node_inserts"] = (a.get("nodes_insert", 0), writes["node_insert"])
-    checks["audit_edge_inserts"] = (a.get("edges_insert", 0), writes["edge_insert"])
-    checks["audit_proposals"] = (a.get("proposals_insert", 0), writes["proposal_insert"])
+    checks["audit_node_updates"] = (aud.get("nodes_update", 0), writes["node_update"])
+    checks["audit_node_inserts"] = (aud.get("nodes_insert", 0), writes["node_insert"])
+    checks["audit_edge_inserts"] = (aud.get("edges_insert", 0), writes["edge_insert"])
+    checks["audit_proposals"] = (aud.get("proposals_insert", 0), writes["proposal_insert"])
     patch = status["PATCH /nodes/{id}"]
     checks["rejected_saves_all_409"] = all(k in (200, 409, 403) for k in patch)
     total = sum(sum(v.values()) for v in status.values())

@@ -57,6 +57,7 @@ def main() -> int:
     ap.add_argument("--out", default="")
     ap.add_argument("--only", default="", help="comma-separated screen names")
     ap.add_argument("--email", default="demo-admin@interviewkickstart.com")
+    ap.add_argument("--jpeg", action="store_true", help="save JPEG (quality 82) instead of PNG: large widths stay small")
     a = ap.parse_args()
     out = Path(a.out) if a.out else None
     if out:
@@ -94,7 +95,8 @@ def main() -> int:
                         print(f"{name} @ {w}x{dpr:g}: {f}")
                     problems += len(found)
                     if out:
-                        page.screenshot(path=str(out / f"{w}{'@2x' if dpr == 2 else ''}-{name}.png"))
+                        ext = "jpg" if a.jpeg else "png"
+                        page.screenshot(path=str(out / f"{w}{'@2x' if dpr == 2 else ''}-{name}.{ext}"), **({"quality": 82} if a.jpeg else {}))
                 ctx.close()
         b.close()
     print(f"{problems} layout problem(s)")

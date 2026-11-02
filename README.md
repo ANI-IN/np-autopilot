@@ -8,14 +8,18 @@ A knowledge graph over the New Programs corpus, packaged as a Claude Code plugin
 > editable knowledge base of programs, courses, domains, modules, weeks, live
 > sessions, topics, instructors and their links at `/kb/`, separate from the
 > derived corpus graph below and stored in its own `kb` schema. Custom record
-> types with fields (enforced in the database), a one-step New record form, an
-> outline, a graph, data quality, approvals, archive and permanent delete, an
-> in-app Guide (`public/kb/guide.md`), roles enforced by RLS, optimistic locking,
-> audit history, optional Supabase Realtime with presence, a Google Sheets
-> importer, and an MCP server plus a Claude Code plugin
-> (`plugins/ik-knowledge-assistant/`). Start with `HANDOFF.md`; design in
-> `docs/DESIGN_SYSTEM.md` and `docs/ARCHITECTURE.md`; try it with `docs/DEMO.md`;
-> verify with `bash scripts/verify_all.sh`. Nothing below this note changed.
+> types with fields (enforced in the database), custom relationship types
+> created inline (reviewed by an admin, near-duplicates refused, mergeable), a
+> one-step New record form, an outline, a graph you can edit directly (create,
+> connect, rename, archive, arrange), an Activity log (append-only, scoped by
+> role in the database), data quality, approvals, archive and permanent delete,
+> an in-app Guide (`public/kb/guide.md`), roles enforced by RLS, optimistic
+> locking, optional Supabase Realtime with presence, a Google Sheets importer,
+> and an MCP server plus a Claude Code plugin (`plugins/ik-knowledge-assistant/`).
+> Start with `HANDOFF.md`; design in `docs/DESIGN_SYSTEM.md` and
+> `docs/ARCHITECTURE.md`; try it with `docs/DEMO.md`; verify with
+> `bash scripts/verify_all.sh` (`--load` adds the 25-person concurrency check).
+> Nothing below this note changed.
 
 ---
 

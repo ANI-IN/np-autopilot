@@ -212,7 +212,7 @@ a.tile:hover { background: var(--surface-hover); text-decoration: none; }
 .diff-row { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; font-size: var(--fs-xs); }
 .diff-row .faint { min-width: 90px; }
 .panel .entry { padding: var(--s-2) 0; }
-.filters { flex-wrap: wrap; align-items: flex-end; padding: 0 0 var(--s-3); }
+.toolbar.filters { flex-wrap: wrap; align-items: flex-end; padding: 0 0 var(--s-3); }
 .filter { display: flex; flex-direction: column; gap: 2px; }
 .filter select, .filter input { height: 32px; }
 .notice { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2) var(--s-3); margin-bottom: var(--s-3); background: var(--accent-soft); border-radius: var(--radius); font-size: var(--fs-sm); }

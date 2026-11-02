@@ -1,4 +1,4 @@
-# KB schema (`kb.*`) — migrations 0022–0028
+# KB schema (`kb.*`) — migrations 0022–0029
 
 The authored knowledge base lives in its own Postgres schema, `kb`. The pipeline's
 projection tables in `public` (`nodes`, `edges`, `node_sources`, …) are untouched:
@@ -165,3 +165,41 @@ Built-in type colours move to one accessible, non-purple palette (only rows
 still holding their seed colour). `kb.audit_log` joins the `supabase_realtime`
 publication (when it exists) so browsers can be told that something changed;
 Realtime forwards changes through the subscriber's RLS.
+
+## Activity, change feed, relationship review, graph layouts (0029, run 3)
+
+- **Actors.** `kb.actor_type()` returns `system` when there is no verified user
+  and no declared actor (a migration, psql, a fixture); it used to return
+  `human` with a null id, which could only be shown as "Someone". Old rows of
+  that shape are relabelled `system`. `kb.actor_emails(uuid[])` (viewer+,
+  SECURITY DEFINER) names any profile that ever acted, including former
+  members.
+- **Append-only audit log.** Trigger `audit_log_immutable` refuses UPDATE and
+  DELETE unless the current role is a superuser (local maintenance only; no API
+  role is one). No role has INSERT/UPDATE/DELETE grants either.
+- **Who reads the audit log** (`audit_log_select`): admins every row; editors
+  rows they made and rows about their scope, `kb.my_scope_ids()` = records they
+  own or co-own, everything placed inside them (contains edges and `scope_id`,
+  any depth) and the links they own; nobody else. A single record's history for
+  any viewer+ goes through `kb.record_history(id, max)` (SECURITY DEFINER,
+  checks the role): the record's own rows, its relationships, links and tags.
+- **`kb.changes`**: the collaboration feed without content (id = audit id,
+  table, row, action, version, actor). Written by `kb.audit()` with the audit
+  row; readable by every member (api_tokens/memberships rows: admin or the
+  actor). Realtime publishes `kb.changes` instead of `kb.audit_log`.
+- **Relationship types.** `edge_types.review_status` (`reviewed` |
+  `unreviewed`) and `merged_into`. Policies: admins do anything; editors may
+  INSERT only unreviewed, non-core types, and rules only for unreviewed types
+  they created; contributors and viewers cannot write types (they propose).
+  Trigger `edge_types_check_name` refuses a label or inverse whose
+  `kb.rel_stem()` (lower case, punctuation and spacing collapsed, plural and
+  -ed/-ing/-es endings removed, word by word) matches any live type's label or
+  inverse: "Teaches", "teach" and "taught by" all hit `teaches / taught by`.
+- **`kb.graph_positions`** (layout, node_id, x, y): `layout` is `default` (the
+  shared layout) or a saved view's id. Viewer+ read, contributor+ write. Layout
+  only: never touches a record's version.
+- Indexes for the activity filters: audit_log by actor, by table, and by the
+  `source_id` / `target_id` / `node_id` / `resource_id` inside before/after.
+- Down refuses while relationship types are unreviewed or merged, or saved
+  layouts exist; otherwise restores 0028's audit function, policy and
+  publication.

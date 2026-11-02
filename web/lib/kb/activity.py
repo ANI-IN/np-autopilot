@@ -93,11 +93,44 @@ def _shape(rows: list[dict]) -> list[dict]:
     return rows
 
 
+def name_links(conn, rows: list[dict]) -> list[dict]:
+    """A link attached to (or detached from) a record, and a tag on a record,
+    read as "“Deck” on “Week 1”" instead of an anonymous row. One query each
+    for the records and the links involved, whatever the page size."""
+    nids, rids, tids = set(), set(), set()
+    for r in rows:
+        if r["table_name"] in ("node_resources", "node_tags"):
+            src = r.get("after") or r.get("before") or {}
+            if src.get("node_id"):
+                nids.add(src["node_id"])
+            if src.get("resource_id"):
+                rids.add(src["resource_id"])
+            if src.get("tag_id"):
+                tids.add(src["tag_id"])
+    if not (nids or rids or tids):
+        return rows
+    names = {}
+    if nids:
+        names.update({str(x["id"]): x["name"] for x in _q(conn, "select id, name from kb.nodes where id = any(%s::uuid[])", (list(nids),))})
+    if rids:
+        names.update({str(x["id"]): x["title"] for x in _q(conn, "select id, title from kb.resources where id = any(%s::uuid[])", (list(rids),))})
+    if tids:
+        names.update({str(x["id"]): "#" + x["name"] for x in _q(conn, "select id, name from kb.tags where id = any(%s::uuid[])", (list(tids),))})
+    for r in rows:
+        if r["table_name"] in ("node_resources", "node_tags"):
+            src = r.get("after") or r.get("before") or {}
+            what = names.get(str(src.get("resource_id") or src.get("tag_id") or ""))
+            on = names.get(str(src.get("node_id") or ""))
+            if what or on:
+                r["label"] = f"{what or 'a link'} on {on or 'a record'}"
+    return rows
+
+
 def history(conn, row_id: str, limit: int = 50) -> list[dict]:
     rows = _q(conn, """select id, at, actor_id, actor_type, table_name, row_id, action, before, after
                        from kb.record_history(%s, %s)""",
               (v.uid(row_id, "id"), max(1, min(int(limit), 200))))
-    return label_actors(conn, _shape(rows))
+    return label_actors(conn, name_links(conn, _shape(rows)))
 
 
 def changes(conn, since: int | None, limit: int = 200) -> dict:
@@ -179,7 +212,7 @@ def activity(conn, params: dict) -> dict:
                         from kb.audit_log a {('where ' + ' and '.join(where)) if where else ''}
                         order by a.id desc limit %s""", (*args, limit + 1))
     more = len(rows) > limit
-    rows = label_actors(conn, _shape(rows[:limit]))
+    rows = label_actors(conn, name_links(conn, _shape(rows[:limit])))
     return {"items": rows, "next_cursor": rows[-1]["id"] if more and rows else None}
 
 

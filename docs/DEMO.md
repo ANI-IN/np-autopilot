@@ -10,7 +10,7 @@ server, fictional data. Nothing here touches production, Vercel or Google.
 npx -y supabase@2.118.0 start --workdir db/local
 export SUPABASE_DB_URL_SESSION=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 export SUPABASE_DB_URL_TRANSACTION=postgresql://postgres.pooler-dev:postgres@127.0.0.1:6543/postgres
-.venv/Scripts/python pipeline/migrate.py up          # through 0028 (bin/python on macOS/Linux)
+.venv/Scripts/python pipeline/migrate.py up          # through 0029 (bin/python on macOS/Linux)
 .venv/Scripts/python eval/kb_demo_seed.py            # demo users + fictional data (re-runnable)
 .venv/Scripts/python eval/kb_demo_server.py 8765     # leave running; prints READY 8765
 ```

@@ -6,14 +6,15 @@
 import { S, el, clear, icon, api, avatar, ago, skeletonRows, empty, errorBox, can, setQuery, qs, combobox, peopleSource, debounce, you, failToast, toast } from '../core.js';
 import { pageHead } from '../page.js';
 
-const ENTITY = { nodes: 'record', edges: 'relationship', resources: 'link', node_resources: 'link on a record', node_tags: 'tag on a record',
+const ENTITY = { nodes: 'record', edges: 'relationship', resources: 'link', node_resources: 'attached link', node_tags: 'tag',
   node_types: 'record type', edge_types: 'relationship type', edge_type_rules: 'relationship rule', link_kinds: 'link kind', proposals: 'proposal',
   flags: 'flag', templates: 'template', saved_views: 'saved view', memberships: 'role', api_tokens: 'API token', import_runs: 'import', tags: 'tag' };
 const SOURCE_LABEL = { app: 'App', ai: 'AI assistant', import: 'Import', system: 'System' };
 
 function verb(a) {
   const b = a.before || {}, f = a.after || {};
-  if (a.action === 'insert') return a.table_name === 'proposals' ? 'proposed' : 'created';
+  if (a.action === 'insert') return a.table_name === 'proposals' ? 'proposed' : a.table_name === 'node_resources' ? 'attached' : a.table_name === 'node_tags' ? 'added' : 'created';
+  if (a.action === 'delete' && a.table_name === 'node_tags') return 'removed';
   if (a.action === 'delete') return 'permanently deleted';
   if (!b.archived_at && f.archived_at) return 'archived';
   if (b.archived_at && !f.archived_at) return 'restored';
@@ -44,7 +45,9 @@ export function activityEntry(a, opts) {
     a.actor_type === 'human' && a.actor_id ? avatar(a.actor_id) : el('span', { class: 'avatar', style: '--av:#475569', title: a.actor_label }, icon(a.actor_type === 'ai' ? 'sparkles' : a.actor_type === 'import' ? 'upload' : 'settings', 'sm')),
     el('div', { class: 'entry-body' },
       el('div', { class: 'entry-line' }, el('strong', { 'data-testid': 'activity-actor', text: who }), ' ' + verb(a) + ' ',
-        opts.inRecord && (a.table_name === 'nodes' || a.table_name === 'resources') ? 'this' : [kind + ' ', target],
+        opts.inRecord && (a.table_name === 'nodes' || a.table_name === 'resources') ? 'this'
+          : a.table_name === 'node_resources' || a.table_name === 'node_tags' ? [target || 'a ' + kind]
+            : ['the ' + kind + ' ', target],
         a.source && a.source !== 'app' ? el('span', { class: 'badge', style: 'margin-left:6px', text: SOURCE_LABEL[a.source] }) : null),
       diffs.children.length ? diffs : null),
     el('time', { class: 'faint xs entry-time', datetime: a.at, title: when.toLocaleString(), text: ago(a.at) }));
@@ -66,11 +69,11 @@ export function viewActivity(v, r) {
       el('option', { value: '', text: 'Any' }), opts.map(([val, l]) => el('option', { value: val, text: l, selected: q[k] === val ? '' : null }))));
   const actor = combobox({ label: 'Person', placeholder: 'Anyone', testid: 'activity-actor-filter', source: peopleSource(), openOnFocus: true,
     value: q.actor && S.personById[q.actor] ? [{ id: q.actor, label: S.personById[q.actor].email }] : [], onChange: (p) => set('actor', p ? p.id : null) });
-  const search = el('input', { type: 'search', placeholder: 'Search names, values…', 'aria-label': 'Search activity', 'data-testid': 'activity-search', value: q.q || '' });
+  const search = el('input', { type: 'search', placeholder: 'Names or values', 'aria-label': 'Search activity', 'data-testid': 'activity-search', value: q.q || '' });
   search.addEventListener('input', debounce(() => set('q', search.value.trim()), 300));
   const date = (k, label) => el('label', { class: 'filter' }, el('span', { class: 'faint xs', text: label }),
     el('input', { type: 'date', 'aria-label': label, 'data-testid': 'activity-' + k, value: q[k] ? q[k].slice(0, 10) : '', onchange: (e) => set(k, e.target.value ? (k === 'to' ? e.target.value + 'T23:59:59' : e.target.value) : null) }));
-  const bar = el('div', { class: 'toolbar filters' }, search,
+  const bar = el('div', { class: 'toolbar filters' }, el('label', { class: 'filter', style: 'flex:1;min-width:180px' }, el('span', { class: 'faint xs', text: 'Search' }), search),
     el('label', { class: 'filter', style: 'min-width:200px' }, el('span', { class: 'faint xs', text: 'Person' }), actor),
     sel('action', 'Action', [['insert', 'Created'], ['update', 'Updated (incl. archive, restore)'], ['delete', 'Deleted permanently']]),
     sel('table', 'Entity', Object.entries(ENTITY).filter(([k]) => !['api_tokens', 'node_tags'].includes(k)).map(([k, l]) => [k, l[0].toUpperCase() + l.slice(1)])),

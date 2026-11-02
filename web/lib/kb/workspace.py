@@ -591,10 +591,12 @@ def save_graph_positions(conn, actor: Actor, body: dict) -> dict:
         except (TypeError, KeyError, ValueError, AttributeError):
             raise Invalid("each position needs node_id, x and y", field="positions") from None
     with _translate(conn, "position"):
-        with conn.cursor() as cur:
-            cur.executemany("""insert into kb.graph_positions (layout, node_id, x, y) values (%s, %s, %s, %s)
-                               on conflict (layout, node_id) do update set x = excluded.x, y = excluded.y,
-                               updated_by = auth.uid(), updated_at = now()""", rows)
+        # One statement for the whole batch (unnest), whatever its size.
+        _q(conn, """insert into kb.graph_positions (layout, node_id, x, y)
+                    select %s, n, x, y from unnest(%s::uuid[], %s::float8[], %s::float8[]) as u(n, x, y)
+                    on conflict (layout, node_id) do update set x = excluded.x, y = excluded.y,
+                    updated_by = auth.uid(), updated_at = now()""",
+           (lay, [r[1] for r in rows], [r[2] for r in rows], [r[3] for r in rows]))
     return {"layout": lay, "saved": len(rows)}
 
 

@@ -21,7 +21,7 @@ Before/after screenshots at 1440, 1280 and 1024px: `docs/redesign/before/` and
   framework would add a bundler, a dependency tree to audit and a second deploy
   surface for no capability the brief needs.
 - Everything is self-hosted: Inter (variable woff2, OFL) in
-  `public/vendor/inter/`, a 106-icon Lucide subset (ISC) as one SVG sprite in
+  `public/vendor/inter/`, a 126-icon Lucide subset (ISC; 20 added in run 3) as one SVG sprite in
   `public/vendor/lucide-sprite.svg`, Cytoscape.js for the graph. No CDN, no
   Google Fonts: `default-src 'self'` holds.
 - Every value from the API is rendered with `textContent` via `el()`. The Guide's
@@ -94,6 +94,19 @@ Every palette hue is at least 4.9:1 on white (the AA threshold for icons is 3:1)
 | Link row | `.link-row`, `linkRow(resource)` | service icon, title, kind, domain, purpose, owner, health |
 | Properties | `dl.props` | 120px label column |
 | Progress | `.bar` `.ok` `.warn` `.danger` | completeness |
+| Page header (run 3) | `pageHead({title, count, sub, actions})` | the one header every screen uses: title, count, one line of context, actions on the right |
+| Card | `.card` › `.card-head` + `.card-body` | hairline border, one radius, no shadow; dashboard blocks |
+| Tile | `.card.span-2` › `.tile` (`.v` value, `.k` label) | dashboard numbers, six equal tiles on the 12-column grid |
+| Popover | `popover(anchor, content, {alignRight})` | floating panel kept inside the viewport (flips above, clamps at both edges); Esc or outside click closes |
+| Segmented switch | `.segmented` with `role=radio` buttons | labelled choices such as row density |
+| Check list | `.check-list` | checkbox + label with a 10px gap, drag handle and ↑↓ buttons to reorder |
+| Relationship picker | `relCombobox` (relpicker.js) | options read as sentences, grouped "This course …" / "… this course"; "Create relationship '…'" |
+| Activity entry | `activityEntry(a)` (views/activity.js) | who · what · which (link or "deleted") · when (exact on hover) · field diffs; Activity page and every History tab |
+| Stacked dialog | `openDialog(content, {stack: true})` | opens over another dialog and returns to it on close |
+| Graph handles | `.graph-handles` | the hover toolbar beside a record on the graph: connect handle, expand, rename, presence |
+
+Text that can be cut off with "…" always carries its full text as a tooltip:
+`el()` adds a `title` to any `.truncate` element given `text`.
 
 ## Layout
 
@@ -103,6 +116,29 @@ panel (440px, resizable with the mouse or arrow keys, pushes the list, expands
 to a full page at `#/r/<id>`). On screens up to 1280px the sidebar folds while a
 record is open, so the list keeps its width. Nothing scrolls horizontally at
 1024px (tested for every screen).
+
+### Page template (run 3)
+
+Every screen opens with the same header (`pageHead`), then `.page-body` with
+24px side padding and 24px between sections. The router sets `data-layout` on
+the view:
+
+| Layout | Screens | Width |
+|---|---|---|
+| `full` | All records, Programs, Courses, Resources, Graph | the whole width (tables and the canvas use it) |
+| `contained` | Dashboard, Outline, Data quality, Approvals, Activity, Archived, Settings | centred, at most `--page-max` (1440px) |
+| `reading` | Guide, a record as a page | content `--read-max` (760px) plus contents `--toc-w` (220px), centred together as one unit |
+
+The dashboard is a 12-column grid: six equal tiles (2 columns each), then two
+equal columns (6 each) whose last cards stretch so both end level.
+
+### Large screens
+
+Below 2561px nothing scales. Above it, type, spacing, row heights, the sidebar,
+the panel and the three widths grow with the viewport (`clamp()`, factor =
+viewport / 2560, capped at 1.3), so a 3840px screen reads like a 2560px one
+rather than a sea of small text. Screenshots at 1280, 1536, 1920, 2560 and
+3840px, at 1x and 2x: `docs/redesign/run3/`.
 
 ## Banned (and checked against every after-screenshot)
 
@@ -118,3 +154,8 @@ numbers (every number on the dashboard is a query).
 `/` table search · `j` / `k` move · `Enter` open · `x` select · `e` edit the open
 record · `Esc` closes the innermost layer · ⌘/Ctrl Enter saves a form. Every
 control is reachable with Tab; menus and comboboxes use arrow keys.
+
+Graph (when the canvas has focus): `N` new record · `F` fit · `/` find ·
+`Delete` archive the selection · arrows move the selection (Shift: further) ·
+`E` expand or collapse · `Esc` clear the selection. Double-click empty space to
+create, double-click a record to rename it.

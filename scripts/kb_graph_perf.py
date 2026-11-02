@@ -29,10 +29,10 @@ os.environ.setdefault("SUPABASE_DB_URL_TRANSACTION", "postgresql://postgres.pool
 
 from kb_support import USERS, dev_server, ensure_users, owner, reset, token_for   # noqa: E402
 
-FPS_JS = """async () => {
+FPS_JS = """async ([z0, z1]) => {
   const cy = window.__kbGraph.cy; let frames = 0; const t0 = performance.now();
   await new Promise((done) => { const step = (t) => { frames++; const k = (t - t0) / 3000;
-      cy.viewport({ zoom: 0.25 + 0.5 * Math.abs(Math.sin(k * Math.PI * 2)), pan: { x: 400 * Math.sin(k * 7), y: 300 * Math.cos(k * 5) } });
+      cy.viewport({ zoom: z0 + (z1 - z0) * Math.abs(Math.sin(k * Math.PI * 2)), pan: { x: 400 * Math.sin(k * 7), y: 300 * Math.cos(k * 5) } });
       if (t - t0 < 3000) requestAnimationFrame(step); else done(); };
     requestAnimationFrame(step); });
   return frames / ((performance.now() - t0) / 1000);
@@ -84,19 +84,27 @@ def main() -> int:
                 page.goto(base + f"/kb/#/graph/{hub}?limit={n}&renderer={renderer}")
                 page.wait_for_function("() => window.__kbGraph && window.__kbGraph.loadedAt", timeout=180000)
                 load_ms = (time.perf_counter() - t0) * 1000
-                shown = page.evaluate("() => window.__kbGraph.cy.nodes(':visible').length")
-                fps = page.evaluate(FPS_JS)
+                shown = page.evaluate("() => window.__kbGraph.cy.nodes(':not(.cluster)').length")
+                fps = page.evaluate(FPS_JS, [0.5, 1.2])          # labels shown
+                fps_far = page.evaluate(FPS_JS, [0.2, 0.45])     # labels hidden (simplified drawing)
+                # switching into cluster mode happens once; time it, then measure steady state
+                switch_ms = page.evaluate("""() => { const cy = window.__kbGraph.cy, t0 = performance.now(); cy.zoom(0.1);
+                    return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(performance.now() - t0)))); }""")
+                page.wait_for_timeout(500)
+                fps_cl = page.evaluate(FPS_JS, [0.06, 0.16])     # clustered (one bubble per type), steady state
+                clustered = page.evaluate("() => !!window.__kbGraph.clustered")
                 gl = page.evaluate("() => !!window.__kbGraph.webgl")
-                rows.append({"nodes": n, "visible": shown, "renderer": renderer + ("" if (renderer == "webgl") == gl else " (fell back)"),
-                             "load_ms": round(load_ms), "fps_pan_zoom": round(fps, 1)})
+                rows.append({"nodes": n, "loaded": shown, "renderer": renderer + ("" if (renderer == "webgl") == gl else " (fell back)"),
+                             "load_ms": round(load_ms), "fps_labels": round(fps, 1), "fps_no_labels": round(fps_far, 1),
+                             "fps_clustered": round(fps_cl, 1) if clustered else None, "cluster_switch_ms": round(switch_ms)})
                 print(rows[-1], flush=True)
                 ctx.close()
         b.close()
     reset()
-    print("| Nodes | Renderer | Visible | Load (ms) | FPS while panning/zooming |")
-    print("|---|---|---|---|---|")
+    print("| Nodes | Renderer | Loaded | Load (ms) | FPS, labels (zoom 0.5-1.2) | FPS, no labels (0.2-0.45) | FPS, clustered (<0.16) | Switch to clusters (ms) |")
+    print("|---|---|---|---|---|---|---|---|")
     for r in rows:
-        print(f"| {r['nodes']} | {r['renderer']} | {r['visible']} | {r['load_ms']} | {r['fps_pan_zoom']} |")
+        print(f"| {r['nodes']} | {r['renderer']} | {r['loaded']} | {r['load_ms']} | {r['fps_labels']} | {r['fps_no_labels']} | {r['fps_clustered'] if r['fps_clustered'] is not None else 'n/a (below threshold)'} | {r['cluster_switch_ms']} |")
     if a.json:
         Path(a.json).write_text(json.dumps(rows, indent=2))
     return 0

@@ -28,8 +28,11 @@ import { onPresence, others } from '../realtime.js';
 const SHAPES = { program: 'round-hexagon', course: 'round-rectangle', domain: 'round-pentagon', module: 'ellipse', week: 'round-tag',
   session: 'barrel', topic: 'ellipse', instructor: 'round-diamond', process: 'round-triangle' };
 const SHAPE_ICON = { 'round-hexagon': 'hexagon', 'round-rectangle': 'rect', 'round-pentagon': 'penta', ellipse: 'circle', 'round-tag': 'tag', barrel: 'barrel', 'round-diamond': 'diamond', 'round-triangle': 'tri' };
-const GL_FROM = 1500;          // switch to the WebGL renderer above this many nodes
-const LABELS_FROM_ZOOM = 0.45; // labels hidden below this zoom (simplified drawing)
+const GL_FROM = 800;           // switch to the WebGL renderer above this many nodes (measured: docs/TEST_RESULTS.md)
+const LABELS_FROM_ZOOM = 0.45; // labels hidden below this zoom (simplified drawing, step 1)
+const CLUSTER_ZOOM = 0.18;     // below this zoom, with CLUSTER_FROM+ records, one bubble per type (step 2)
+const CLUSTER_FROM = 400;
+const BIG_FROM = 800;          // above this many records: texture while moving, edges hidden during motion
 
 function legendShape(shape, color) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -123,7 +126,9 @@ export function viewGraph(v, r) {
   const useGL = r.q.renderer === 'webgl' || (r.q.renderer !== 'canvas' && r.q.limit && Number(r.q.limit) > GL_FROM);
   const cy = window.cytoscape({ container: cyBox, wheelSensitivity: 0.25, minZoom: 0.05, maxZoom: 3, boxSelectionEnabled: true, selectionType: 'additive',
     renderer: useGL ? { name: 'canvas', webgl: true } : undefined,
-    hideEdgesOnViewport: false, textureOnViewport: false,
+    // Large neighbourhoods: draw a cached texture while panning/zooming and skip
+    // edges during the motion; one device pixel per CSS pixel (measured, B3).
+    hideEdgesOnViewport: Number(r.q.limit) > BIG_FROM, textureOnViewport: Number(r.q.limit) > BIG_FROM, pixelRatio: Number(r.q.limit) > BIG_FROM ? 1 : 'auto',
     style: [
       { selector: 'node', style: { 'background-color': 'data(color)', label: 'data(label)', 'font-size': 11, 'font-family': 'Inter, system-ui, sans-serif', color: tok('--text', '#18181b'),
         'text-valign': 'bottom', 'text-margin-y': 5, width: 'mapData(degree, 0, 30, 18, 44)', height: 'mapData(degree, 0, 30, 18, 44)', shape: 'data(shape)', 'text-max-width': 130, 'text-wrap': 'ellipsis',
@@ -140,6 +145,10 @@ export function viewGraph(v, r) {
       { selector: 'edge.hover, edge:selected', style: { 'text-opacity': 1, width: 2, 'line-color': tok('--accent', '#1d4ed8'), 'target-arrow-color': tok('--accent', '#1d4ed8') } },
       { selector: 'edge.ghost', style: { 'line-style': 'dashed', 'line-color': tok('--accent', '#1d4ed8'), 'target-arrow-color': tok('--accent', '#1d4ed8'), width: 2, label: '' } },
       { selector: '.hidden', style: { display: 'none' } },
+      { selector: '.lod-hidden', style: { display: 'none' } },
+      { selector: 'node.cluster', style: { shape: 'ellipse', 'background-opacity': 0.25, 'border-width': 2, 'border-color': 'data(color)',
+        width: 'data(size)', height: 'data(size)', label: 'data(label)', 'font-size': 'data(font)', 'text-valign': 'center', 'text-margin-y': 0,
+        'min-zoomed-font-size': 0, 'font-weight': 600 } },
     ] });
   let expanded = {}, addedBy = {}; const totals = {};
   Object.assign(G, { cy, center, layoutId, webgl: !!(useGL && cy.renderer() && cy.renderer().webgl) });
@@ -147,7 +156,7 @@ export function viewGraph(v, r) {
   window.__kbGraph = G;                 // for tests; holds no data of its own
 
   // ---------------------------------------------------------------- helpers
-  const visibleNodes = () => cy.nodes().filter((n) => !n.hasClass('hidden') && !n.hasClass('ghost'));
+  const visibleNodes = () => cy.nodes().filter((n) => !n.hasClass('hidden') && !n.hasClass('ghost') && !n.hasClass('cluster') && !n.hasClass('lod-hidden'));
   function status() {
     const shown = visibleNodes().length, t = totals[center];
     return 'Showing ' + shown + ' record(s)' + (t && t.truncated ? ' (' + t.shown + ' of ' + t.total + ' nearby)' : '');
@@ -175,7 +184,7 @@ export function viewGraph(v, r) {
   function drawLegend() {
     clear(side);
     side.appendChild(el('h3', { text: 'Record types' }));
-    const present = {}; cy.nodes(':not(.ghost)').forEach((n) => { present[n.data('type')] = (present[n.data('type')] || 0) + 1; });
+    const present = {}; cy.nodes(':not(.ghost):not(.cluster)').forEach((n) => { present[n.data('type')] = (present[n.data('type')] || 0) + 1; });
     S.types.forEach((t) => {
       if (!present[t.key] && !hidden[t.key]) return;
       const cb = el('input', { type: 'checkbox', checked: !hidden[t.key], 'data-testid': 'graph-filter-' + t.key, 'aria-label': 'Show ' + t.plural });
@@ -190,7 +199,7 @@ export function viewGraph(v, r) {
       side.appendChild(el('label', { class: 'legend-item small' }, cb, el('span', { class: 'legend-line', 'aria-hidden': 'true' }), el('span', { class: 'truncate', style: 'flex:1', text: types[k].label }), el('span', { class: 'count', text: types[k].n })));
     });
     side.appendChild(el('h3', { text: 'Filter', style: 'margin-top:8px' }));
-    const owners = {}; cy.nodes(':not(.ghost)').forEach((n) => { if (n.data('owner')) owners[n.data('owner')] = 1; });
+    const owners = {}; cy.nodes(':not(.ghost):not(.cluster)').forEach((n) => { if (n.data('owner')) owners[n.data('owner')] = 1; });
     const ownerSel = el('select', { 'aria-label': 'Owner', 'data-testid': 'graph-owner-filter' }, el('option', { value: '', text: 'Any owner' }), el('option', { value: 'none', text: 'No owner', selected: ownerFilter === 'none' }),
       Object.keys(owners).map((id) => el('option', { value: id, text: personName(id) || id.slice(0, 8), selected: ownerFilter === id })));
     ownerSel.addEventListener('change', () => { ownerFilter = ownerSel.value || null; applyFilter(); });
@@ -207,7 +216,7 @@ export function viewGraph(v, r) {
   }
   function applyFilter() {
     cy.batch(() => {
-      cy.nodes(':not(.ghost)').forEach((n) => {
+      cy.nodes(':not(.ghost):not(.cluster)').forEach((n) => {
         const id = n.id(), own = n.data('owner');
         const hide = id !== center && (!!hidden[n.data('type')] || (ownerFilter === 'none' ? !!own : ownerFilter ? own !== ownerFilter : false) || (scopeFilter ? !scopeFilter.ids.has(id) : false));
         n.toggleClass('hidden', hide);
@@ -246,9 +255,17 @@ export function viewGraph(v, r) {
         cy.layout({ name: n > 300 ? 'concentric' : 'cose', animate: false, fit: false, padding: 48, idealEdgeLength: () => 120, nodeRepulsion: () => 140000, componentSpacing: 100, nodeOverlap: 20,
           concentric: (x) => (x.id() === center ? 10 : 10 - (x.data('degree') > 5 ? 1 : 2)), minNodeSpacing: n > 1000 ? 4 : 20, spacingFactor: n > 1000 ? 0.6 : 1 }).run();
         placed.unlock();
-        cy.nodes(':not(.ghost)').addClass('placed');
+        cy.nodes(':not(.ghost):not(.cluster)').addClass('placed');
       }
       if (isRoot) fit();
+      if (cy.nodes().length > BIG_FROM && !G.bigStyle) {
+        // Cytoscape's large-graph recipe: straight "haystack" edges without
+        // arrows or labels, record labels only when zoomed in close.
+        G.bigStyle = true;
+        const rr = cy.renderer(); if (rr) { rr.textureOnViewport = true; rr.hideEdgesOnViewport = true; }
+        cy.style().selector('edge').style({ 'curve-style': 'haystack', 'haystack-radius': 0, 'target-arrow-shape': 'none', label: '' })
+          .selector('node').style({ 'min-zoomed-font-size': 14, 'text-background-opacity': 0 }).update();
+      }
       drawLegend(); info.textContent = status(); drawMini();
       if (nb.truncated) toast('Showing ' + nb.nodes.length + ' of ' + nb.total + ' records around this one.');
       G.loadedAt = performance.now();
@@ -281,10 +298,18 @@ export function viewGraph(v, r) {
   }
 
   // ---------------------------------------------------------------- minimap
-  function drawMini() {
-    const ctx = mini.getContext('2d'); const W = mini.width, H = mini.height;
-    ctx.clearRect(0, 0, W, H);
-    const nodes = visibleNodes();
+  /* Minimap: the records are drawn once into a cached layer (when the graph
+     changes); moving the view only redraws the viewport rectangle on top, so
+     panning a 5,000-record graph does not redraw 5,000 dots per frame. */
+  let miniBase = null, miniDirty = true;
+  function drawMini() { miniDirty = true; drawMiniView(); }
+  function drawMiniBase() {
+    const W = mini.width, H = mini.height;
+    miniBase = miniBase || document.createElement('canvas'); miniBase.width = W; miniBase.height = H;
+    const ctx = miniBase.getContext('2d'); ctx.clearRect(0, 0, W, H);
+    // the records themselves, also while they are shown as cluster bubbles
+    const nodes = cy.nodes().filter((x) => !x.hasClass('hidden') && !x.hasClass('ghost') && !x.hasClass('cluster'));
+    mini._map = null; miniDirty = false;
     if (!nodes.length) return;
     const bb = nodes.boundingBox(); const pad = 20;
     const sc = Math.min((W - 2 * pad) / Math.max(bb.w, 1), (H - 2 * pad) / Math.max(bb.h, 1));
@@ -292,21 +317,52 @@ export function viewGraph(v, r) {
     mini._map = { bb, sc, pad };
     if (nodes.length < 1500) {
       ctx.strokeStyle = tok('--border-strong', '#ccc'); ctx.lineWidth = 1;
-      cy.edges(':visible').forEach((e) => { ctx.beginPath(); ctx.moveTo(tx(e.source().position('x')), ty(e.source().position('y'))); ctx.lineTo(tx(e.target().position('x')), ty(e.target().position('y'))); ctx.stroke(); });
+      cy.edges(':not(.hidden):not(.ghost)').forEach((e) => { ctx.beginPath(); ctx.moveTo(tx(e.source().position('x')), ty(e.source().position('y'))); ctx.lineTo(tx(e.target().position('x')), ty(e.target().position('y'))); ctx.stroke(); });
     }
     nodes.forEach((n) => { ctx.fillStyle = n.data('color'); ctx.fillRect(tx(n.position('x')) - 2, ty(n.position('y')) - 2, 4, 4); });
-    const ext = cy.extent();
-    ctx.strokeStyle = tok('--accent', '#1d4ed8'); ctx.lineWidth = 2;
-    ctx.strokeRect(tx(ext.x1), ty(ext.y1), ext.w * sc, ext.h * sc);
   }
+  function drawMiniView() {
+    if (miniDirty) drawMiniBase();
+    const ctx = mini.getContext('2d'); ctx.clearRect(0, 0, mini.width, mini.height);
+    if (miniBase) ctx.drawImage(miniBase, 0, 0);
+    const m = mini._map; if (!m) return;
+    const ext = cy.extent(), tx = (x) => m.pad + (x - m.bb.x1) * m.sc, ty = (y) => m.pad + (y - m.bb.y1) * m.sc;
+    ctx.strokeStyle = tok('--accent', '#1d4ed8'); ctx.lineWidth = 2;
+    // the view, clamped to the minimap (zoomed out, it is larger than the records' box)
+    const W = mini.width, H = mini.height, x1 = Math.max(1, tx(ext.x1)), y1 = Math.max(1, ty(ext.y1));
+    const x2 = Math.min(W - 1, tx(ext.x2)), y2 = Math.min(H - 1, ty(ext.y2));
+    if (x2 > x1 && y2 > y1) ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+  }
+  cy.on('dragfree add remove', () => { miniDirty = true; });
   mini.addEventListener('click', (e) => {
     const m = mini._map; if (!m) return;
     const rect = mini.getBoundingClientRect();
     const x = ((e.clientX - rect.left) * (mini.width / rect.width) - m.pad) / m.sc + m.bb.x1, y = ((e.clientY - rect.top) * (mini.height / rect.height) - m.pad) / m.sc + m.bb.y1;
     cy.pan({ x: cy.width() / 2 - x * cy.zoom(), y: cy.height() / 2 - y * cy.zoom() });
   });
+  /* Simplified drawing when zoomed far out on a big graph: one bubble per
+     record type at the centre of its records, sized by count. Clicking a
+     bubble zooms back in there. Layout only; nothing is fetched. */
+  let clustered = false;
+  function updateClusters() {
+    const want = cy.zoom() < CLUSTER_ZOOM && cy.nodes(':not(.cluster):not(.ghost)').length >= CLUSTER_FROM;
+    if (want === clustered) return;
+    clustered = want;
+    cy.batch(() => {
+      cy.remove('node.cluster');
+      if (!want) { cy.elements('.lod-hidden').removeClass('lod-hidden'); return; }
+      const groups = {};
+      visibleNodes().forEach((x) => { const g = groups[x.data('type')] = groups[x.data('type')] || { n: 0, x: 0, y: 0 }; g.n++; g.x += x.position('x'); g.y += x.position('y'); });
+      cy.elements(':not(.cluster)').addClass('lod-hidden');
+      Object.entries(groups).forEach(([type, g]) => cy.add({ group: 'nodes', classes: 'cluster', position: { x: g.x / g.n, y: g.y / g.n },
+        data: { id: '__cluster_' + type, type, color: (S.typeByKey[type] || {}).color || '#64748b', label: typeLabel(type, true) + ' · ' + g.n,
+          size: Math.round(Math.max(40, Math.min(220, Math.sqrt(g.n) * 6)) / cy.zoom()), font: Math.round(12 / cy.zoom()) } }));
+    });
+    G.clustered = clustered;
+  }
+  cy.on('tap', 'node.cluster', (evt) => { cy.animate({ center: { eles: evt.target }, zoom: CLUSTER_ZOOM * 2.2 }, { duration: 250 }); });
   let miniQueued = false;
-  cy.on('viewport', () => { if (!miniQueued) { miniQueued = true; requestAnimationFrame(() => { miniQueued = false; drawMini(); placeHandles(); }); } });
+  cy.on('viewport', () => { if (!miniQueued) { miniQueued = true; requestAnimationFrame(() => { miniQueued = false; updateClusters(); drawMiniView(); if (handleNode) placeHandles(); }); } });
 
   // ---------------------------------------------------------------- handles (hover toolbar)
   let handleNode = null;
@@ -325,7 +381,7 @@ export function viewGraph(v, r) {
     presenceTag.textContent = o.length ? o.map((x) => personName(x.user_id) + (x.editing ? ' is editing' : ' is viewing')).join(', ') : '';
     presenceTag.hidden = !o.length;
   }
-  cy.on('mouseover', 'node', (e) => { if (!dragging && !e.target.hasClass('ghost')) showHandles(e.target); });
+  cy.on('mouseover', 'node', (e) => { if (!dragging && !e.target.hasClass('ghost') && !e.target.hasClass('cluster')) showHandles(e.target); });
   cy.on('select', 'node', (e) => showHandles(e.target));
   cy.on('position', 'node', (e) => { if (e.target === handleNode) placeHandles(); });
   cy.on('remove', 'node', (e) => { if (e.target === handleNode) showHandles(null); });
@@ -537,7 +593,7 @@ export function viewGraph(v, r) {
 
   // ---------------------------------------------------------------- events
   cy.on('tap', 'node', (evt) => {
-    const n = evt.target; if (n.hasClass('ghost')) return;
+    const n = evt.target; if (n.hasClass('ghost') || n.hasClass('cluster')) return;
     if (connectFrom === false) { connectFrom = n; n.addClass('connect-src'); info.textContent = 'Now click the record to connect it to.'; return; }
     if (connectFrom) {
       const src = connectFrom; connectFrom = null; src.removeClass('connect-src'); if (connectBtn) connectBtn.classList.remove('primary');
@@ -553,7 +609,7 @@ export function viewGraph(v, r) {
   let tapTimer = null;
   cy.on('tap', 'edge', (evt) => { if (!evt.target.hasClass('ghost')) edgeInspector(evt.target, evt.renderedPosition); });
   cy.on('dbltap', (evt) => { if (evt.target === cy) quickCreate(evt.position); });
-  cy.on('dbltap', 'node', (evt) => { clearTimeout(tapTimer); if (!evt.target.hasClass('ghost')) { if (canEdit) rename(evt.target); else toggleExpand(evt.target.id()); } });
+  cy.on('dbltap', 'node', (evt) => { clearTimeout(tapTimer); if (!evt.target.hasClass('ghost') && !evt.target.hasClass('cluster')) { if (canEdit) rename(evt.target); else toggleExpand(evt.target.id()); } });
   cy.on('mouseover', 'edge', (e) => e.target.addClass('hover'));
   cy.on('mouseout', 'edge', (e) => e.target.removeClass('hover'));
   cy.on('dragfree', 'node', (evt) => { const sel = cy.$('node:selected'); queueSave(sel.length && evt.target.selected() ? sel : evt.target); drawMini(); });
@@ -662,14 +718,14 @@ export function viewGraph(v, r) {
     if (cy.getElementById(n.id).length) return;
     cy.add({ group: 'nodes', data: nodeData(Object.assign({ degree: 0 }, n)), position: pos, classes: 'placed' });
   }
-  async function refresh() { await applyChanges([...cy.nodes(':not(.ghost)').map((n) => ({ table_name: 'nodes', row_id: n.id() }))]); }
+  async function refresh() { await applyChanges([...cy.nodes(':not(.ghost):not(.cluster)').map((n) => ({ table_name: 'nodes', row_id: n.id() }))]); }
   onLiveChange((theirs) => {
     if (S.graph !== G) return;
     const mine = theirs.filter((c) => c.table_name === 'nodes' || c.table_name === 'edges');
     if (mine.length) applyChanges(mine);
   });
   function markPresence() {
-    cy.batch(() => cy.nodes(':not(.ghost)').forEach((n) => n.toggleClass('presence', others(n.id()).some((o) => o.editing))));
+    cy.batch(() => cy.nodes(':not(.ghost):not(.cluster)').forEach((n) => n.toggleClass('presence', others(n.id()).some((o) => o.editing))));
     if (handleNode) placeHandles();
   }
   onPresence(() => { if (S.graph === G) markPresence(); });

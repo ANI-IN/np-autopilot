@@ -342,8 +342,8 @@ from the HTML so a new dependency cannot be added silently, and
 Without configuration the KB workspace polls `/api/kb/changes` every 4 seconds.
 To switch on Realtime (and presence: "Priya is editing"):
 
-1. Apply migration 0028 (adds `kb.audit_log` to the `supabase_realtime`
-   publication).
+1. Apply migrations 0028 and 0029 (0029 publishes `kb.changes`, the
+   content-free change feed, instead of `kb.audit_log`).
 2. Write the project origin into the security policy from configuration:
    `KB_REALTIME_ORIGIN=https://<ref>.supabase.co python scripts/kb_csp_origin.py`
    adds exactly `https://<ref>.supabase.co wss://<ref>.supabase.co` to

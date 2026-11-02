@@ -1219,3 +1219,29 @@ def test_b5_link_back_to_the_original_site_is_admin_only(server, browser, role):
         expect(link).to_have_count(0)
         expect(page.get_by_test_id("back-to-site")).to_have_count(0)
     assert page.errors == []
+
+
+def test_b3_graph_keyboard_only(server, browser):
+    ed = Client(USERS["editor"])
+    _, course = ed.post("/api/kb/courses", {"name": "Keyboard Canvas"})
+    ed.post("/api/kb/nodes", {"type": "module", "name": "Keyed module", "parents": [course["id"]]})
+    page = page_as(browser, server, "editor", viewport=(1536, 900))
+    _graph(page, server, course["id"])
+    page.get_by_test_id("graph-canvas").focus()
+    page.keyboard.press("n")                                           # N: new record at the centre
+    expect(page.get_by_test_id("graph-new-name")).to_be_focused()
+    page.keyboard.type("Typed topic")
+    page.keyboard.press("Enter")
+    expect(toast(page)).to_contain_text("Created “Typed topic”")
+    page.get_by_test_id("graph-canvas").focus()
+    page.keyboard.press("f")                                           # F: fit
+    page.keyboard.press("/")                                           # /: find
+    expect(page.get_by_test_id("graph-search")).to_be_focused()
+    page.keyboard.type("Keyed")
+    page.keyboard.press("Enter")
+    page.wait_for_function("() => window.__kbGraph.cy.$('node:selected').length === 1")
+    assert page.evaluate("() => window.__kbGraph.cy.$('node:selected').data('label')") == "Keyed module"
+    page.get_by_test_id("graph-canvas").focus()
+    page.keyboard.press("Escape")                                      # Esc: clear the selection
+    assert page.evaluate("() => window.__kbGraph.cy.$(':selected').length") == 0
+    assert page.errors == []

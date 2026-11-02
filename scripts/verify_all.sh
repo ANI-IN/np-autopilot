@@ -5,6 +5,7 @@
 #   bash scripts/verify_all.sh --fresh-clone   # also: clean clone of the current branch -> install -> build checks
 #   bash scripts/verify_all.sh --reset-db      # also: wipe the LOCAL Supabase DB, apply every migration from 0001
 #   bash scripts/verify_all.sh --perf          # also: seed 5k/15k synthetic and measure p50/p95
+#   bash scripts/verify_all.sh --load          # also: 25 simulated people for 2 minutes (conflicts, races, audit check)
 #
 # Run from inside the repository (any subdirectory). Needs: git, Docker + the local
 # Supabase stack (db/local/setup.sh), the .venv (Python 3.12), uv/uvx, Node, and the
@@ -62,10 +63,10 @@ for p in api/index.py web/lib/kb/service.py public/kb/js/app.js public/kb/guide.
   need_path "$p"
 done
 
-FRESH=0; RESET=0; PERF=0
+FRESH=0; RESET=0; PERF=0; LOAD=0
 for a in "$@"; do
   case "$a" in
-    --fresh-clone) FRESH=1;; --reset-db) RESET=1;; --perf) PERF=1;;
+    --fresh-clone) FRESH=1;; --reset-db) RESET=1;; --perf) PERF=1;; --load) LOAD=1;;
     *) die "unknown option: $a";;
   esac
 done
@@ -120,7 +121,7 @@ check "KB ES modules parse" esm_check public/kb
 check "ruff (errors + pyflakes) on KB code" uvx -q ruff@0.14.0 check --select E9,F --target-version py312 \
   web/lib/kb api/kb_routes.py api/index.py mcp_server pipeline/kb_import_sheets.py pipeline/kb_admins.py \
   pipeline/lib/kb_sheets.py eval/kb_dev_server.py eval/kb_demo_server.py eval/kb_demo_seed.py \
-  eval/kb_local_stack.py scripts/kb_perf.py tests/kb_support.py tests/test_kb_*.py
+  eval/kb_local_stack.py scripts/kb_perf.py scripts/kb_load.py scripts/kb_explain.py scripts/kb_graph_perf.py \n  scripts/kb_screens.py scripts/kb_guide_shots.py tests/kb_support.py tests/test_kb_*.py
 check "plugin server copy in sync" cmp mcp_server/kb_server.py plugins/ik-knowledge-assistant/server/kb_server.py
 check "plugin validates (--strict)" claude plugin validate plugins/ik-knowledge-assistant --strict
 
@@ -175,6 +176,11 @@ rm -f "$LOG" "$LOG.fail" "$LOG.base"
 if [ "$PERF" -eq 1 ]; then
   step "performance (synthetic 5,000 nodes / 15,000 edges)"
   check "perf run" "$PY" scripts/kb_perf.py --runs 40
+fi
+
+if [ "$LOAD" -eq 1 ]; then
+  step "concurrency: 25 simulated people, 2 minutes"
+  check "load run (no duplicates, no orphans, every conflict a 409, audit = writes, no 5xx)" "$PY" scripts/kb_load.py --users 25 --seconds 120
 fi
 
 echo
