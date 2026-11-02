@@ -175,8 +175,8 @@ class Client:
 # ---------------------------------------------------------------------------
 
 @contextmanager
-def dev_server():
-    """Start eval/kb_dev_server.py on a free port; yield its base URL."""
+def dev_server(script: str = "kb_dev_server.py"):
+    """Start eval/<script> on a free port; yield its base URL."""
     import socket
     import subprocess
     import tempfile
@@ -186,10 +186,10 @@ def dev_server():
     log = tempfile.NamedTemporaryFile("w+", suffix=".log", delete=False)
     # stdout to a FILE: the server prints an audit line per request, and an
     # undrained pipe fills and blocks it mid-suite.
-    proc = subprocess.Popen([sys.executable, str(REPO / "eval" / "kb_dev_server.py"), str(port)],
+    proc = subprocess.Popen([sys.executable, str(REPO / "eval" / script), str(port)],
                             stdout=log, stderr=subprocess.STDOUT, env=dict(os.environ))
     try:
-        deadline = time.time() + 30
+        deadline = time.time() + 90
         while time.time() < deadline and "READY" not in Path(log.name).read_text(errors="replace"):
             time.sleep(0.2)
         if "READY" not in Path(log.name).read_text(errors="replace"):

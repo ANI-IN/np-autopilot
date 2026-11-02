@@ -9,7 +9,7 @@
    the change rows through the API as before. */
 import { S, api } from './core.js';
 
-let ws = null, cfg = null, ref = 0, hb = null, handlers = null, retry = 0;
+let ws = null, cfg = null, ref = 0, hb = null, handlers = null, retry = 0, joinRef = null;
 const presenceListeners = [];
 let presence = {};                 // presence key -> [metas]
 let tracked = null;
@@ -23,9 +23,10 @@ export async function connectRealtime(h) {
 }
 
 function send(topic, event, payload) {
-  if (!ws || ws.readyState !== 1) return;
+  if (!ws || ws.readyState !== 1) return null;
   ref += 1;
-  ws.send(JSON.stringify({ topic, event, payload, ref: String(ref), join_ref: '1' }));
+  ws.send(JSON.stringify({ topic, event, payload, ref: String(ref), join_ref: joinRef || String(ref) }));
+  return String(ref);
 }
 
 function open() {
@@ -33,7 +34,8 @@ function open() {
   try { ws = new WebSocket(url); } catch (e) { handlers.onDown(); return; }
   ws.onopen = () => {
     retry = 0;
-    send(TOPIC, 'phx_join', {
+    joinRef = null;
+    joinRef = send(TOPIC, 'phx_join', {
       config: { broadcast: { self: false }, presence: { key: S.me.user_id },
         postgres_changes: [{ event: 'INSERT', schema: 'kb', table: 'audit_log' }] },
       access_token: S.session.access_token,
@@ -42,7 +44,8 @@ function open() {
   };
   ws.onmessage = (m) => {
     let msg; try { msg = JSON.parse(m.data); } catch (e) { return; }
-    if (msg.event === 'phx_reply' && msg.topic === TOPIC) {
+    // Only the reply to OUR join decides up/down (track and other pushes reply too).
+    if (msg.event === 'phx_reply' && msg.topic === TOPIC && msg.ref === joinRef) {
       if (msg.payload && msg.payload.status === 'ok') { handlers.onUp(); if (tracked) track(tracked); }
       else { handlers.onDown(); ws.close(); }
     } else if (msg.event === 'postgres_changes') handlers.onChange(msg.payload);

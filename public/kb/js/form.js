@@ -76,7 +76,7 @@ export function fieldInput(f, val, onChange, opts) {
 // ------------------------------------------------------------------ placement picker (nested inline create)
 /* Returns an element whose .getValue() is a list of placement specs:
    "<id>" or {new: {type, name, parent: spec?}}. */
-function placementPicker(typeKey, initial, testid) {
+function placementPicker(typeKey, initial, testid, single) {
   const list = el('div', { class: 'col', 'data-testid': testid || 'placement' });
   const rows = [];
   function parentsOf(k) { const t = S.typeByKey[k]; return (t && t.allowed_parents) || []; }
@@ -93,7 +93,7 @@ function placementPicker(typeKey, initial, testid) {
     function drawNested() {
       clear(nestedBox); state.nested = null;
       if (state.value && state.value.isNew && parentsOf(state.value.type).length) {
-        const np = placementPicker(state.value.type, null, (testid || 'placement') + '-nested');
+        const np = placementPicker(state.value.type, null, (testid || 'placement') + '-nested', true);
         state.nested = np;
         nestedBox.append(el('div', { class: 'faint xs', text: 'Place the new ' + typeLabel(state.value.type).toLowerCase() + ' under (optional):' }), np);
       }
@@ -112,6 +112,7 @@ function placementPicker(typeKey, initial, testid) {
   }
   const addBtn = el('button', { class: 'btn ghost sm', type: 'button', style: 'align-self:flex-start', 'data-testid': (testid || 'placement') + '-add', onclick: () => addRow() }, icon('plus', 'sm'), 'Add another place');
   list.appendChild(addBtn);
+  if (single) addBtn.hidden = true;                // a new parent has one place
   (initial && initial.length ? initial : [null]).forEach((p) => addRow(p));
   list.getValue = () => rows.map((r) => r.spec()).filter(Boolean);
   list.count = () => list.getValue().length;

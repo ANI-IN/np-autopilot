@@ -318,7 +318,7 @@ export function combobox(o) {
   function closeList() { if (menuEl) { menuEl.remove(); menuEl = null; input.setAttribute('aria-expanded', 'false'); } }
   function pick(it) {
     if (!it) return;
-    if (it.isCreate && o.onCreateRequest) { closeList(); o.onCreateRequest(it, (made) => { if (made) { if (!o.multi) chosen.length = 0; chosen.push(made); render(); changed(); } }); return; }
+    if (it.isCreate && o.onCreateRequest) { closeList(); input.value = ''; o.onCreateRequest(it, (made) => { if (made) { if (!o.multi) chosen.length = 0; chosen.push(made); render(); changed(); } }); return; }
     if (!o.multi) chosen.length = 0;
     if (!chosen.some((c) => c.id === it.id)) chosen.push(it);
     input.value = ''; closeList(); render(); changed();

@@ -359,6 +359,14 @@ tr:hover .row-actions, tr.cursor .row-actions, tr:focus-within .row-actions { op
 .guide-layout { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: var(--s-5); }
 
 /* ------------------------------------------------------------------ responsive */
+/* With a record open on a laptop-sized screen, the sidebar folds to icons so
+   the list keeps a usable width. */
+@media (max-width: 1280px) {
+  .app.has-panel { --sidebar-w: 56px; }
+  .app.has-panel .label-text, .app.has-panel .nav-group-label, .app.has-panel .nav a .count, .app.has-panel .nav-search kbd { display: none; }
+  .app.has-panel .nav a, .app.has-panel .brand, .app.has-panel .nav-search { justify-content: center; padding: 0; }
+  .app.has-panel .brand .spacer, .app.has-panel .brand .btn { display: none; }
+}
 @media (max-width: 1180px) {
   .app { --panel-w: 380px; }
   .two-col { grid-template-columns: minmax(0, 1fr); }

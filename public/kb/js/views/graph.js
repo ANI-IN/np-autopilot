@@ -100,7 +100,7 @@ export function viewGraph(v, r) {
       cy.add(batch); expanded[id] = true;
       if (isRoot) cy.getElementById(center).addClass('center');
       applyFilter();
-      cy.layout({ name: batch.length > 150 ? 'concentric' : 'cose', animate: false, fit: isRoot, padding: 48, idealEdgeLength: () => 95, nodeRepulsion: () => 65000, componentSpacing: 80,
+      cy.layout({ name: batch.length > 150 ? 'concentric' : 'cose', animate: false, fit: isRoot, padding: 48, idealEdgeLength: () => 120, nodeRepulsion: () => 140000, componentSpacing: 100, nodeOverlap: 20,
         concentric: (n) => (n.id() === center ? 10 : 10 - (n.data('degree') > 5 ? 1 : 2)) }).run();
       if (isRoot && cy.zoom() > 1.6) { cy.zoom(1.6); cy.center(); }
       drawLegend(); info.textContent = status(); drawMini();

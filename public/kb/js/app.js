@@ -137,6 +137,7 @@ export function route() {
   if (viewKey !== lastView || r.q.__force) {
     lastView = viewKey;
     S.listReload = null; S.onSelect = null; S.onQueryChange = null; S.tableKeys = null;
+    if (S.panel && S.panel.full) S.panel = null;          // leaving a full-page record
     clear(v); v.scrollTop = 0;
     if (!fn) v.appendChild(el('div', { class: 'page-body' }, el('div', { class: 'empty' }, el('h2', { text: 'Page not found' }), el('p', { text: 'That address does not match anything here.' }), el('a', { class: 'btn', href: '#/' , text: 'Go to the dashboard' }))));
     else fn(v, r);
@@ -145,7 +146,10 @@ export function route() {
     if (r.q.open) openRecordPanel(r.q.open);
     else if (r.q.res) openRecordPanel(r.q.res, 'resource');
     else closePanel(true);
-  } else closePanel(true);
+  } else {
+    // A full-page record owns S.panel; only the side panel element is hidden.
+    const p = $('#panel'); p.hidden = true; clear(p); $('#app').classList.remove('has-panel');
+  }
 }
 
 // ------------------------------------------------------------------ palette

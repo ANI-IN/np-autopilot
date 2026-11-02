@@ -1,6 +1,6 @@
 /* Local demo only (eval/kb_demo_server.py). */
 .demo-ribbon {
-  position: fixed; left: 16px; bottom: 128px; z-index: 90;
+  position: fixed; left: 16px; bottom: 128px; z-index: 30;
   padding: 3px 12px; border-radius: 999px; font: 500 11px/1.6 var(--font, system-ui);
   background: var(--surface-3, #ebebe8); color: var(--text-2, #555); border: 1px solid var(--border, #ddd);
   pointer-events: none; white-space: nowrap;
@@ -8,3 +8,7 @@
 .login-card { display: flex; flex-direction: column; gap: 12px; text-align: left; width: min(380px, calc(100vw - 32px)); box-sizing: border-box; }
 .login-card h1 { margin: 0; text-align: center; }
 .login-card .btn.primary { justify-content: center; padding: 8px 12px; }
+/* No room for the label when the sidebar is folded to icons. */
+body:has(.app.collapsed) .demo-ribbon { display: none; }
+@media (max-width: 1280px) { body:has(.app.has-panel) .demo-ribbon { display: none; } }
+@media (max-width: 900px) { body:has(.app) .demo-ribbon { display: none; } }

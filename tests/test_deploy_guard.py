@@ -89,3 +89,23 @@ def test_the_in_app_guide_ships():
     assert "*.md" in lines and "!public/kb/guide.md" in lines
     assert lines.index("!public/kb/guide.md") > lines.index("*.md")      # later rules win
     assert (REPO / "public" / "kb" / "guide.md").is_file()
+
+
+def test_csp_origin_script_adds_and_clears_realtime_from_config(tmp_path):
+    """D2: the Realtime origin enters connect-src only through the script, paired https+wss."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("kb_csp_origin", REPO / "scripts" / "kb_csp_origin.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert mod.check() == []                                         # the committed vercel.json is sound
+    copy = tmp_path / "vercel.json"
+    copy.write_text((REPO / "vercel.json").read_text(encoding="utf-8"), encoding="utf-8")
+    pol = mod.apply("https://abcdefgh.supabase.co", copy)
+    assert "connect-src 'self' https://abcdefgh.supabase.co wss://abcdefgh.supabase.co" in pol
+    assert mod.check(copy) == []
+    pol = mod.apply("https://other.supabase.co", copy)               # replaces, never accumulates
+    assert "abcdefgh" not in pol and pol.count(".supabase.co") == 2
+    assert ".supabase.co" not in mod.apply(None, copy)
+    import pytest
+    with pytest.raises(SystemExit):
+        mod.apply("https://evil.example.com", copy)

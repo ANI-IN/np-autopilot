@@ -73,7 +73,7 @@ export function reloadPanel() { if (S.panel) { S.panel.stale = false; loadInto(S
 
 // ------------------------------------------------------------------ record
 function crumbs(n) {
-  const c = el('nav', { class: 'crumbs', 'aria-label': 'Breadcrumb', 'data-testid': 'breadcrumb' });
+  const c = el('nav', { class: 'crumbs', 'aria-label': 'Breadcrumb', 'data-testid': 'breadcrumb', style: 'flex:1 1 0;min-width:0' });
   (n.breadcrumb || []).forEach((b) => { c.append(el('a', { href: '#/records?open=' + b.id, text: b.name }), icon('chevron-right', 'sm')); });
   c.append(el('span', { class: 'row', style: 'gap:4px' }, typeIcon(n.type, 'sm'), typeLabel(n.type)));
   return c;
@@ -84,7 +84,7 @@ function renderNode(st, keepTab) {
   const tab = keepTab && st.tab ? st.tab : 'overview';
   st.tab = tab;
   // header
-  const acts = el('div', { class: 'row', style: 'gap:2px' });
+  const acts = el('div', { class: 'row', style: 'gap:2px;flex:none' });
   if (!st.full) acts.appendChild(el('a', { class: 'btn ghost sm icon', href: '#/r/' + n.id, title: 'Open as a page', 'aria-label': 'Open as a page', 'data-testid': 'open-full' }, icon('maximize-2', 'sm')));
   else acts.appendChild(el('a', { class: 'btn ghost sm', href: '#/records?open=' + n.id, 'data-testid': 'back-to-list' }, icon('arrow-left', 'sm'), 'Back to list'));
   acts.appendChild(el('a', { class: 'btn ghost sm icon', href: '#/graph/' + n.id, title: 'Show in graph', 'aria-label': 'Show in graph', 'data-testid': 'open-graph' }, icon('network', 'sm')));
@@ -92,7 +92,7 @@ function renderNode(st, keepTab) {
   acts.appendChild(el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'More actions', 'data-testid': 'more-actions', onclick: (e) => moreMenu(e.currentTarget, st) }, icon('ellipsis')));
   if (!st.full) acts.appendChild(el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Close details', 'data-testid': 'close-panel', onclick: () => closePanel() }, icon('x')));
   const head = el('div', { class: 'section', style: 'border-bottom:0;padding-bottom:8px' + (st.full ? ';max-width:900px' : '') },
-    el('div', { class: 'row', style: 'margin-bottom:8px' }, crumbs(n), el('span', { class: 'spacer' }), acts));
+    el('div', { class: 'row', style: 'margin-bottom:8px;align-items:flex-start' }, crumbs(n), acts));
   const title = el('h1', { class: editable ? 'inline-edit' : '', 'data-testid': 'panel-name', text: n.name, contenteditable: editable ? 'true' : null,
     spellcheck: 'false', 'aria-label': 'Name', role: editable ? 'textbox' : null });
   if (editable) {
