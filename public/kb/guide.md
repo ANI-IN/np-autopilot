@@ -135,7 +135,7 @@ Changing a type that is already in use is safe. Renaming is fine. Removing a fie
 
 ## Activity
 
-**Maintain → Activity** lists every change: who made it (a person, the AI assistant working for a named person, the Sheets import, or the system), what they did, to which record (with a link, or marked **deleted** if it is gone), and when. Hover the time to see the exact date. For an update, each changed field shows its value before and after.
+**Maintain → Activity** lists every change: who made it (a person, the AI assistant working for a named person, an import, or the system), what they did, to which record (with a link, or marked **deleted** if it is gone), and when. Hover the time to see the exact date. For an update, each changed field shows its value before and after.
 
 Filter by person, action, kind of record, source (app, AI assistant, import, system) and dates, or search names and values. **Export CSV** downloads exactly what is shown.
 

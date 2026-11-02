@@ -12,6 +12,8 @@ db/
 commands/
 .claude-plugin/
 .drive-cache/
+# Local copies of production data (gitignored): never uploaded.
+backups/
 .github/
 00-master/
 01-workflows/

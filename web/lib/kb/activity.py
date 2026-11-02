@@ -7,7 +7,7 @@ scope) and kb.record_history() for a single record's History tab. Nothing here
 widens that; filters only narrow it.
 
 Each entry carries a named actor (owner bug A2): a person, the AI assistant
-acting for a named person, the Sheets import, or the system. "Someone" never
+acting for a named person, an import (Sheets or the projection), or the system. "Someone" never
 appears.
 """
 from __future__ import annotations
@@ -55,7 +55,7 @@ def label_actors(conn, rows: list[dict]) -> list[dict]:
         if t == "ai":
             r["actor_label"] = "AI assistant" + (f" (for {person})" if person else "")
         elif t == "import":
-            r["actor_label"] = "Sheets import" + (f" (run by {person})" if person else "")
+            r["actor_label"] = "Import" + (f" (run by {person})" if person else "")
         elif t == "system" or not r.get("actor_id"):
             r["actor_label"] = "System"
         else:

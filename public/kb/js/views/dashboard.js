@@ -79,7 +79,7 @@ function block(title, content, hint, extra) {
 }
 export function sentence(a) {
   // Every entry names its actor (server-resolved: a person, the AI assistant for
-  // a named person, the Sheets import, or the system); never "Someone".
+  // a named person, an import, or the system); never "Someone".
   const who = a.actor_type === 'human' && you(a.actor_id) ? 'You' : a.actor_label;
   const what = { insert: 'created', update: 'updated', delete: 'deleted' }[a.action] || a.action;
   const thing = { nodes: '', resources: 'the link', edges: 'a relationship', node_resources: 'a link on a record', node_tags: 'a tag' }[a.table_name];

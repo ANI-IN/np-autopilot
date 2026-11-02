@@ -150,11 +150,28 @@ def _enforce_read_only(conn, var: str, port) -> None:
                            f"(default_transaction_read_only={state})")
 
 
+def assert_transaction_pooler(url: str) -> None:
+    """Request-scoped code must reach a Supabase project through the
+    TRANSACTION pooler (port 6543). The session pooler (5432) holds one server
+    connection per client for the client's whole life, so many serverless
+    instances, each keeping its warm connection, exhaust the project's pool and
+    every later request fails. Local stacks (127.0.0.1) are not checked."""
+    u = urlparse(url)
+    host = u.hostname or ""
+    if host.endswith(".pooler.supabase.com") and u.port != TRANSACTION_POOLER_PORT:
+        raise RuntimeError(
+            f"{TRANSACTION} must use the transaction pooler (port {TRANSACTION_POOLER_PORT}); "
+            f"it points at port {u.port}. On Vercel the session pooler is exhausted by "
+            "instances holding their warm connection. See docs/DEPLOYMENT.md.")
+    assert_not_direct(url)
+
+
 def connect(var: str = SESSION, **kw):
     """A psycopg connection. Import is local so the pipeline runs without it."""
     import psycopg
     kw.setdefault("connect_timeout", 30)
     if var == TRANSACTION:
+        assert_transaction_pooler(os.environ.get(TRANSACTION, ""))
         # Transaction-mode pooling cannot hold prepared statements across
         # statements. psycopg3 prepares after 5 executions by default, which
         # fails with "prepared statement already exists" under the pooler — the

@@ -1,0 +1,93 @@
+# The projection (public.*) -> KB (kb.*) mapping used by
+# pipeline/kb_import_projection.py. Explained in docs/MIGRATION_MAPPING.md.
+#
+# Every projection type and relationship named here must exist in
+# config/taxonomy.yaml (the importer checks at start and refuses otherwise),
+# so a taxonomy change fails loudly instead of silently mapping nothing.
+
+# projection node type -> KB record type
+types:
+  program: program
+  domain: domain
+  module: module
+  class_session: session
+  program_week: week
+  content_topic: topic
+  instructor: instructor
+  workflow: process
+  person: team_member
+  theme: theme
+
+# Projection types that become LINKS (their drive_url), in the order that picks
+# a merged link's title and kind when several share one URL.
+artifacts: [slide_deck, curriculum_doc, code_repo, assignment, assignment_review, file]
+artifact_kind:
+  slide_deck: slides
+  curriculum_doc: doc
+  code_repo: repo
+  assignment: assignment
+  assignment_review: doc
+
+# Roles some projection types and relationships play in the import.
+roles:
+  topic: content_topic            # merged by name; not_a_topic rows rejected
+  person: person                  # curation notes from people.yaml
+  workflow: workflow              # curation notes and owner suggestions
+  week_link: scheduled_in         # module -> week: the week sits in its module
+  placement: [contains, offers, delivers_session, scheduled_in]
+  teaching: teaches               # role and class dates become the note
+  teaching_reversed: taught_by
+
+# KB relationship types the import creates (when missing) for relationships the
+# KB has no built-in type for. Reviewed (the import runs as an admin).
+new_relationship_types:
+  - {key: owned_by, label: owned by, inverse_label: owns, rules: [{source: domain, target: team_member}]}
+  - {key: supported_by, label: supported by, inverse_label: supports, rules: [{source: domain, target: team_member}]}
+  - {key: delivered_by, label: delivered by, inverse_label: delivers, rules: [{source: domain, target: team_member}]}
+
+# projection relationship -> KB relationship (flip: reverse the direction)
+relationships:
+  - {rel: covers_topic, source: module, target: content_topic, kb: covers}
+  - {rel: teaches, source: instructor, target: module, kb: teaches}
+  - {rel: teaches, source: instructor, target: class_session, kb: teaches}
+  - {rel: taught_by, source: module, target: instructor, kb: teaches, flip: true}
+  - {rel: expert_in, source: instructor, target: domain, kb: sme}
+  - {rel: delivers_session, source: module, target: class_session, kb: contains}
+  - {rel: contains, source: program, target: module, kb: contains}
+  - {rel: offers, source: domain, target: module, kb: contains}
+  - {rel: covers, source: program, target: domain, kb: covers}
+  - {rel: scheduled_in, source: module, target: program_week, kb: contains}
+  - {rel: belongs_to, source: workflow, target: theme, kb: contains, flip: true}
+  - {rel: owned_by, source: domain, target: person, kb: owned_by}
+  - {rel: supported_by, source: domain, target: person, kb: supported_by}
+  - {rel: delivered_by, source: domain, target: person, kb: delivered_by}
+
+# projection relationship -> a LINK on a record (record: which end is the record)
+attachments:
+  - {rel: delivers, source: module, target: file, record: source, note: Delivered in this module}
+  - {rel: presented_with, source: module, target: slide_deck, record: source, note: Slides}
+  - {rel: ships_with, source: module, target: code_repo, record: source, note: Code}
+  - {rel: assessed_by, source: module, target: assignment, record: source, note: Assignment}
+  - {rel: reviewed_in, source: module, target: assignment_review, record: source, note: Assignment review}
+  - {rel: described_by, source: domain, target: curriculum_doc, record: source, note: Curriculum document}
+  - {rel: introduces, source: curriculum_doc, target: module, record: target, note: Introduces this module}
+
+# properties the import carries over, per projection type (the rest are listed
+# as unmapped in docs/MIGRATION_REPORT.md)
+mapped_props:
+  program: [family, doctype]
+  domain: [cadence, stage, uplevel_link, drive_folder_url]
+  module: [granularity, sequence, uplevel_link, drive_folders, review]
+  class_session: [session_kind, resource_type, uplevel_link, drive_folders]
+  program_week: [number]
+  content_topic: [boilerplate, not_a_topic]
+  instructor: [review]
+  workflow: [workflow_id, effort, steps, alerts, tools]
+  person: [team, title, seniority]
+  theme: [theme_id]
+  slide_deck: [drive_url, mime, historical]
+  file: [drive_url, mime, relative_path, path, historical, content_available]
+  curriculum_doc: [drive_url, content_available]
+  code_repo: [drive_url, mime, path, content_available]
+  assignment: [drive_url, historical]
+  assignment_review: [drive_url]

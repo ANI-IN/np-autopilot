@@ -40,9 +40,11 @@ SKIP_NAMES = {".DS_Store"}
 # Project directories, not corpus. `commands` and `eval` were missing, so pass 1
 # swept in 8 of our own files and the file-count check caught it — which is what
 # that check is for. Any new top-level project directory must be added here.
+# `backups` holds LOCAL copies of production data (gitignored; 2026-11-03):
+# never corpus, never walked, never shipped.
 SKIP_DIRS = {"pipeline", "config", "tests", "knowledge", ".git",
              "__pycache__", ".drive-cache", ".claude-plugin",
-             "commands", "skills", "eval", "scripts", "docs"}
+             "commands", "skills", "eval", "scripts", "docs", "backups"}
 # This repo's own analysis documents live at the corpus root and are not corpus.
 # Our own root-level documents. NEXT.md was missed and became a corpus file
 # node on the very next refresh — the count check caught it again.

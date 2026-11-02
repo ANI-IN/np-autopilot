@@ -84,3 +84,46 @@ npx -y supabase@2.118.0 stop --workdir db/local      # keeps the data for next t
 ```
 
 Quit Docker Desktop if nothing else needs it.
+
+## The real-data copy (http://localhost:8766)
+
+A second, separate local workspace over a **copy of production's data**, next
+to the demo, which it never touches.
+
+**How it is kept apart (the cleanest way on one machine):**
+- Its own **database**, `kb_realdata`, in the same local Postgres
+  (127.0.0.1:54322). The demo's `postgres` database, its users and its data
+  are untouched, and dropping one never affects the other.
+- Its own **server and port**, `eval/kb_realdata_server.py` on 8766. It binds
+  127.0.0.1 and refuses any non-local database or Host header.
+- Its own **sign-in**: the demo's `/local-login` page, with an account that
+  exists only in `kb_realdata`. A session lasts 8 hours and is signed with a
+  secret generated each time the server starts, so restarting the server
+  signs everyone out.
+- The data comes from `backups/` (gitignored, never deployed): `prod_schema.sql`
+  and `prod_data.sql`, from the read-only dump of 2026-11-03.
+
+| Sign in | Password | Role |
+|---|---|---|
+| `realdata-admin@interviewkickstart.com` | `ik-realdata-local` (or `KB_REALDATA_PASSWORD` when building) | KB admin |
+
+**Build or rebuild it** (about 10 s, then about 30 s for the import):
+
+```bash
+python eval/kb_realdata_db.py rebuild            # database, production schema + data, KB migrations, admin
+SUPABASE_DB_URL_SESSION=postgresql://postgres:postgres@127.0.0.1:54322/kb_realdata \
+  python pipeline/kb_import_projection.py preview --as realdata-admin@interviewkickstart.com
+SUPABASE_DB_URL_SESSION=postgresql://postgres:postgres@127.0.0.1:54322/kb_realdata \
+  python pipeline/kb_import_projection.py apply   --as realdata-admin@interviewkickstart.com --report backups/import-apply.json
+python eval/kb_realdata_server.py 8766           # leave running; prints READY 8766
+python eval/kb_realdata_check.py                 # optional: 5 programs checked in a browser (ids and counts only)
+```
+
+Other commands: `python eval/kb_realdata_db.py counts | drift | admin`.
+
+**Stop:** end the `eval/kb_realdata_server.py` process. To remove the copy
+entirely, run `python eval/kb_realdata_db.py drop-reference`, then
+`dropdb`/`drop database kb_realdata` in the local stack, and delete the files
+in `backups/`.
+
+The test suite and the demo seed use only the demo's database. `scripts/verify_all.sh --reset-db` resets the whole local stack and can remove `kb_realdata`: rebuild it with the commands above afterwards.

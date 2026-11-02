@@ -1,3 +1,24 @@
+# PLAN — real-data rehearsal (local copy of production), 2026-11-03
+
+T0 = 2026-11-03 00:48 (Step 0 dump). Memory: this file + PROGRESS.md ("Real-data run" log).
+Production was read ONLY for the two pg_dump runs (Step 0); the URL is deleted from .env. LOCAL ONLY from here.
+Real data lives only in backups/ (ignored by .gitignore and .git/info/exclude) and in the local database kb_realdata.
+Reports: counts and record ids only.
+
+- [x] Step 0 dumps (schema 41,935 B, data 17.3 MB, UTF-8, 18 tables, counts = production)
+- [x] 1 schema drift vs 0001-0021 -> docs/MIGRATION_REPORT.md
+- [x] 2 restore into kb_realdata (separate DB, same local cluster), counts = production
+- [x] 3 apply 0022-0029 on the restored data (the rehearsal)
+- [x] 4 project_graph.py corpus_names_a_file root cause; rerun suite
+- [x] 5 migrate public -> kb (idempotent, preview, never overwrite app edits) + docs/MIGRATION_MAPPING.md
+- [x] 6 (skipped: no workbook) ik_workbook.xlsx (skip if absent)
+- [x] 7 preview / apply / re-run (0 duplicates) -> docs/MIGRATION_REPORT.md
+- [x] 8 local-only admin sign-in on 8766
+- [x] 9 browser check at 8766, 5 courses
+- [x] 10 connection pooling (transaction pooler) -> docs/DEPLOYMENT.md
+- [ ] Finish: 8765 + 8766 running, HANDOFF section, push
+
+---
 # PLAN — run 3: polish, graph editing, custom relationships, audit log
 
 T0 = Mon 2026-11-02 21:18 local. Stop new work at T+2:50 = **00:08**, then Section 6 + handoff.

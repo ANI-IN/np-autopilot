@@ -67,3 +67,75 @@ yes/no, text); select cells match an option's value or label; person and record
 reference fields are not imported from cells. A cell that does not convert
 makes the row `invalid` in the dry run with the field named; nothing is written.
 Contact-shaped headers are refused in `props` exactly as in `fields`.
+
+---
+
+# Projection (existing production data) → KB mapping (2026-11-03)
+
+Code: `pipeline/kb_import_projection.py`. Mapping: `config/kb-projection-mapping.yaml`
+(checked against `config/taxonomy.yaml` at start; a taxonomy change fails loudly).
+Results: docs/MIGRATION_REPORT.md. Run: `preview` (rolls back) then `apply`,
+`--as <KB admin e-mail>`; idempotent; never overwrites a record edited in the app.
+
+## Tables
+
+| Source table | Goes to | Notes |
+|---|---|---|
+| `nodes` (not sensitive) | `kb.nodes` records, or `kb.resources` links | by type, below; `external_id = 'np:<id>'` |
+| `edges` | `kb.edges`, or a link on a record | one relationship per (pair, type): the projection repeats a pair once per piece of evidence |
+| `node_sources` | links on records, note "Source" | each record gets one link per distinct cited file (the file's Drive URL) |
+| `node_layout` | `kb.graph_positions` (shared layout) | only where nobody has placed the record yet |
+| `people` | Team member fields: team, title, seniority | matched by canonical name |
+| `people_aliases` | Team member "Also known as" | |
+| `domain_aliases` | Domain "Also known as" | matched by domain name (15 of 21) |
+| `workflow_owners` | Process "Suggested owner" (unconfirmed) | no owner is confirmed in the source |
+| `curation_notes` | the record's body, "Curation notes" | people.yaml and workflow-owners.yaml notes; author e-mail left out |
+| `files` | (through artifacts) | its Drive URLs reach the KB via the artifact records that cite them |
+| `profiles`, `shared_accounts`, `auth_hook_refusals`, `curation_audit`, `projection_meta`, `np_schema_migrations`, `node_types`, `edge_rels` | not mapped | sign-in, audit and bookkeeping of the original site; KB roles are granted with `pipeline/kb_admins.py` |
+
+## Record types
+
+| Projection type | KB type | Fields carried | Special rules |
+|---|---|---|---|
+| program | Program | Family, Document type | |
+| domain | Domain | Cadence, Stage, Also known as | UpLevel and Drive-folder URL become links |
+| module | Module | Granularity, Sequence | UpLevel link and Drive folders become links; scope = its only program or domain |
+| class_session | Live session | Session kind, Resource type | UpLevel link and Drive folders become links; scope = its only module |
+| program_week | Week | Week number | scope = the module it is scheduled in (so "Week 1" can repeat) |
+| content_topic | Topic | | same name = same topic (merged); `not_a_topic` rows REJECTED; `boilerplate` tagged and marked for review |
+| instructor | Instructor | | `review` → marked for review; recruiting-pipeline properties are NOT imported |
+| workflow | Process | Workflow id, Effort, Steps, Alerts, Tools, Suggested owner | placed in its Theme |
+| person | **Team member** (new type) | Team, Title, Seniority, Also known as | `employee_ids` never imported |
+| theme | **Theme** (new type) | Theme id | allowed parent of Process |
+| slide_deck, curriculum_doc, code_repo, assignment, assignment_review, file | **links** (`kb.resources`) | | one link per Drive URL; kind from the type, or from the MIME type for files; tags `historical`, `unavailable` |
+
+A name that breaks a KB rule (contains an e-mail address or URL, or is over
+300 characters) is rejected with its id. Two DIFFERENT records with the same
+name and scope are both kept: the second as "Name (2)", marked for review.
+
+## Relationships
+
+| Projection relationship | KB |
+|---|---|
+| module covers_topic content_topic | covers |
+| instructor teaches module / class_session | teaches (note: role and class dates) |
+| module taught_by instructor | teaches (reversed) |
+| instructor expert_in domain | subject expert for (sme) |
+| program contains module; domain offers module; module delivers_session class_session; module scheduled_in program_week | contains (placement) |
+| program covers domain | covers |
+| workflow belongs_to theme | contains (Theme → Process) |
+| domain owned_by / supported_by / delivered_by person | **owned by / supported by / delivered by** (new types) → Team member |
+| module delivers file; presented_with slide_deck; ships_with code_repo; assessed_by assignment; reviewed_in assignment_review; domain described_by curriculum_doc; curriculum_doc introduces module | a link on the record (note says which) |
+
+## Re-runs and edits in the app
+
+- Records, links and relationships are found by `external_id`; nothing that
+  exists is created again.
+- A record is refreshed only while its `version` still equals
+  `imported_version` (recorded in the same write as the import's change). Once
+  someone edits it in the app, the import leaves it alone and counts it
+  "kept (edited in the app)".
+- Graph positions are written only where none exists, so a layout arranged
+  in the app is never moved back.
+- The import is one transaction, attributed to the named admin as an import
+  (Activity: "Import (run by …)").

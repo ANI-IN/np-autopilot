@@ -91,8 +91,9 @@ def _drive_url(fid):
     return f"https://drive.google.com/open?id={fid}" if fid else None
 
 
-def _file_rows() -> list[tuple]:
-    """Every file the projection may cite: pass 1's corpus AND the row-B crawl.
+def _file_rows(graph: dict | None = None) -> list[tuple]:
+    """Every file the projection may cite: pass 1's corpus AND the row-B crawl,
+    AND every path the graph itself cites.
 
     Two manifests, one table. `files.relative_path` carries
     `check (relative_path !~ '^/')` and the crawl records absolute paths, so
@@ -137,6 +138,26 @@ def _file_rows() -> list[tuple]:
         # entering scope needs no edit here.
         for rel in {p.split("/", 1)[0] for p in list(rows) if "/" in p}:
             rows.setdefault(rel, (rel, None, None, None, False, None, None))
+
+    # EVERY PATH THE GRAPH CITES IS REGISTERED, whether or not the crawl cache
+    # is on this machine (2026-11-03; the root cause of the 43 baseline test
+    # failures). The row-B crawl manifest lives in .drive-cache/, which is not
+    # in the repository, so on any fresh checkout or CI the content graph's
+    # citations (1,437 content files and the four domain FOLDERS) were unknown
+    # here. `_file_ref` then wrote them with file NULL, and
+    # `corpus_names_a_file` refused the first one, aborting the projection.
+    # That constraint is right (a corpus assertion must name something in
+    # `files`); what was wrong is that the registry depended on an untracked
+    # cache. A path the graph cites but no manifest describes is registered
+    # with its path only: no hash, size, Drive id or URL is invented. When the
+    # crawl IS present its rows win (setdefault), so the projection on the
+    # owner's machine is byte-identical to before.
+    if graph is not None:
+        for n in graph["nodes"]:
+            for src in n.get("sources") or []:
+                rel = (src.get("file") or "").lstrip("/")
+                if rel and src.get("origin", "corpus") == "corpus":
+                    rows.setdefault(rel, (rel, None, None, None, False, None, None))
     return list(rows.values())
 
 
@@ -188,6 +209,10 @@ def rows_for(graph: dict, known_files: set | None = None):
                 # land in different columns rather than being flattened to text.
                 col = src.get("column")
                 fref, extra = _file_ref(src.get("file"), known_files)
+                if src.get("origin", "corpus") == "corpus" and src.get("file") and fref is None:
+                    # Loud, not a NULL the database refuses 29,000 rows later.
+                    raise SystemExit(f"node {n['id']}: corpus citation {src.get('file')!r} is not in the files "
+                                     "registry; build it with _file_rows(graph)")
                 evidence = src.get("evidence")
                 if extra:
                     evidence = f"{evidence}; {extra}" if evidence else extra
@@ -412,7 +437,7 @@ def main() -> int:
     # BEFORE the rows that reference it — pass 1's manifest plus the row-B
     # crawl's. Without the second, 1,437 content files are foreign-key
     # violations and the projection aborts on the first one.
-    file_rows = _file_rows()
+    file_rows = _file_rows(graph)
     known_files = {r[0] for r in file_rows}
     nodes, edges, sources = rows_for(graph, known_files)
     content = graphio.content_hash(graph)

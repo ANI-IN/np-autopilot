@@ -65,7 +65,7 @@ reach the browser:
 
 | Variable | What it is |
 |---|---|
-| `SUPABASE_DB_URL_TRANSACTION` | Transaction pooler, **port 6543**. Every web request. |
+| `SUPABASE_DB_URL_TRANSACTION` | Transaction pooler, **port 6543**. Every web request. Refused at connect time if it points at the session pooler (5432) or the direct host: see "Connection pooling" below. |
 | `SUPABASE_JWT_SECRET` | Verifies Supabase access tokens on legacy (HS256) projects. Not needed if the project publishes JWKS. |
 | `GOOGLE_OAUTH_CLIENT_ID` | The `aud` a Google ID token must carry. |
 | `NP_ALLOWED_HD` | `interviewkickstart.com`. Deployment-level, never per request. |
@@ -352,3 +352,30 @@ To switch on Realtime (and presence: "Priya is editing"):
    `/api/kb/realtime` hands the browser a socket configuration only when this is
    set and equals `SUPABASE_URL`; otherwise the browser keeps polling. If the
    socket drops, polling resumes automatically.
+
+
+## Connection pooling (checked 2026-11-03)
+
+How the app connects at runtime, and why many Vercel instances cannot exhaust
+the database's connection limit:
+
+- **Every web request** (`api/index.py` → `web/lib/data.py`) uses
+  `SUPABASE_DB_URL_TRANSACTION`, Supabase's **transaction pooler on port 6543**.
+  Each instance keeps ONE warm connection and serves one request at a time; the
+  pooler lends a real server connection only for the length of a transaction,
+  so a thousand idle instances hold a thousand cheap client slots, not a
+  thousand database connections.
+- `pipeline/lib/db.connect()` turns prepared statements off on that variable
+  (transaction pooling cannot keep them) and, since 2026-11-03, **refuses** a
+  value that points at the session pooler (5432) or the direct host
+  (`assert_transaction_pooler`, tested in `tests/test_db_pooling.py`). The
+  session pooler holds a server connection for each client's whole life, which
+  is exactly what serverless instances with warm connections would exhaust.
+- **Long jobs** (migrations, the projection loader, `kb_import_projection.py`,
+  `kb_import_sheets.py`) use `SUPABASE_DB_URL_SESSION`, the session pooler on
+  5432: they need session state and run one at a time from a laptop or CI.
+- Request-time settings (`request.jwt.claims`, the role) are set with
+  `set_config(..., true)`, i.e. transaction-local, which is what makes them safe
+  under transaction pooling.
+- Never run `api/index.py` under a multi-threaded server without a lock: the
+  warm connection is per process (the local dev servers serialise API calls).

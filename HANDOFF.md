@@ -1,3 +1,149 @@
+# HANDOFF — real production data, local rehearsal (2026-11-03)
+
+A copy of production's data now runs locally, migrated into the knowledge
+base, next to the fictional demo. Production was read once, by two read-only
+`pg_dump`s at 00:48; the read-only URL is deleted from `.env`, and nothing
+connected to production after that. The data stays in `backups/`
+(gitignored, never committed, never deployed) and in the local database
+`kb_realdata`.
+
+## Open it
+
+| | URL | Sign in |
+|---|---|---|
+| **Real data (copy of production)** | **http://localhost:8766/local-login** | `realdata-admin@interviewkickstart.com` / `ik-realdata-local` (KB admin; exists only in the local copy) |
+| Fictional demo (unchanged) | http://localhost:8765/local-login | `demo-admin@interviewkickstart.com` / `ik-demo-local` |
+
+How the two are kept apart: separate database, server, port and sign-in
+(docs/DEMO.md, "The real-data copy"). Rebuild: `python eval/kb_realdata_db.py
+rebuild`, then the importer's `preview` and `apply`.
+
+## Headline numbers
+
+- **Copied:** 18 tables; every count equals production's (node_sources 39,414;
+  edges 12,189; nodes 8,496; node_layout 3,707; files 1,524; people 20;
+  profiles 7; the rest in the report).
+- **Schema drift vs migrations 0001–0021:** none. 126 columns, 59 constraints,
+  36 indexes, 8 functions, 9 triggers, 17 policies and RLS on all 18 tables are
+  identical, and the migration checksums match.
+- **KB migrations 0022–0029** applied on the real data in about 1 s, rolled
+  back to 0021 and re-applied cleanly; the existing tables were untouched.
+- **Imported into the KB:**
+  - records: **5,741**;
+  - relationships: **6,938**;
+  - links: **1,827**;
+  - links on records: **10,434**;
+  - shared-layout positions: 3,707.
+
+  Preview equals apply, and a re-run creates **0**. An edit made in the app
+  survives a re-run.
+- **Merged:** 220 same-name topics, 983 artifacts sharing a Drive URL, and 4,185
+  repeated evidence rows for the same relationship.
+- **Rejected:** 37 rows, with 53 relationships to them dropped.
+- **43 baseline test failures:** **30 now pass** after the root-cause fix (3 of
+  them also failed in the run before, so treat those as unstable). 13 remain,
+  all environment issues (Windows line endings, executable bits, ignore rules,
+  deploy-artifact checks), none of them KB tests. The final full suite: 1,240
+  passed, 13 failed, 52 skipped, **0 new failures** vs the main baseline.
+- **Browser check at 8766** (5 largest programs):
+  - placement, All records and record panel match the source exactly;
+  - the graph draws up to 300 records at 60 fps;
+  - the dashboard equals the import report.
+
+## Top 10 data problems to look at
+
+1. **No KB admin exists after the migration.** Every one of production's 7
+   profiles reads the KB as a viewer; the 2 site admins are not KB admins
+   until `pipeline/kb_admins.py` runs.
+2. **No record has an owner** (5,741). The source names owners as people,
+   never as sign-in accounts, so ownership came across as owned by, supported
+   by and delivered by relationships. 7 domains have none.
+3. **892 instructors are connected to nothing:** in rosters, but teaching no
+   module.
+4. **721 of 924 modules and all 46 domains sit in no program.**
+5. **508 links are marked unavailable in production; 441 links hang on no
+   record;** 24 citations name a file without a Drive URL.
+6. **No process has a confirmed owner** (92); 39 carry an unconfirmed
+   suggestion, kept as a field.
+7. **36 person names were extracted as topics** (the pipeline flagged them
+   `not_a_topic`) and were rejected. One more topic name contains an e-mail
+   address or URL: `con_7957d10a9373c9e3`.
+8. **220 topics were merged by name.** Spot-check that no two different topics
+   merged.
+9. **Two domains share a name** (`dom_8eca42bd0bd17ab8`, `dom_fadfd977f7d5b5d7`;
+   one is shown "(2)"). Two module pairs and 5 groups of weeks were kept apart
+   by scope.
+10. **123 records are marked for review:** 94 instructors and 26 boilerplate
+    topics flagged by the pipeline, plus the same-name cases.
+
+Full report: docs/MIGRATION_REPORT.md. Mapping: docs/MIGRATION_MAPPING.md.
+
+## Schema drift found
+
+**None** in production's `public` schema. Not checkable from this dump:
+- privileges (`--no-privileges`);
+- 0015's trigger on `auth.users`;
+- the Realtime publication.
+
+To check them in the Supabase SQL editor:
+
+```sql
+select table_name, grantee, string_agg(privilege_type, ',') from information_schema.table_privileges
+ where table_schema = 'public' and grantee in ('anon','authenticated','service_role') group by 1,2 order by 1,2;
+select tgname from pg_trigger where tgrelid = 'auth.users'::regclass and not tgisinternal;
+select tablename from pg_publication_tables where pubname = 'supabase_realtime';
+```
+
+## What the 43-failure fix changed
+
+`pipeline/project_graph.py` registered cited files and the domain Drive
+folders only from the crawl cache (`.drive-cache/`, not in the repository).
+On a fresh checkout every content citation therefore lost its file, and the
+correct `corpus_names_a_file` constraint refused it. Now:
+- `_file_rows(graph)` registers every path the graph cites, with its path only
+  (no invented hash or Drive id);
+- folders are registered regardless of the cache;
+- a corpus citation without a registered file is a loud error.
+
+The constraint is unchanged, and when the cache is present the projection is
+byte-identical. A fresh projection now reproduces production's counts exactly.
+
+## What will need to happen differently on dev and production
+
+- **No dump or restore:** the data is already in place. Back up, then apply
+  0022–0029 through the session pooler (`pipeline/migrate.py up`), exactly as
+  rehearsed here.
+- **Grant KB admins in the same window** (`pipeline/kb_admins.py`); until then
+  nobody can administer the KB.
+- **Run the importer** with `SUPABASE_DB_URL_SESSION=<session pooler>`, first
+  `preview --as <your e-mail>`, then `apply`. The admin must have signed in
+  once. It's one transaction, about 30 s locally and longer through the
+  pooler. Re-running is safe.
+- **Realtime:** on a real project 0029 moves the publication from
+  `kb.audit_log` to `kb.changes`; that step was skipped locally.
+- **Not used on dev or production:** the local `auth` schema, the local admin
+  and the HS256 sign-in on 8766 are constructions of the local copy only
+  (`eval/`, never deployed).
+- **Connection pooling:** web requests must use the transaction pooler (6543).
+  `pipeline/lib/db.py` now refuses a `SUPABASE_DB_URL_TRANSACTION` that points
+  at the session pooler or the direct host (docs/DEPLOYMENT.md, "Connection
+  pooling"). Check the Vercel variable before deploying.
+
+## Action required from owner
+
+1. **Run `drop role kb_readonly;` in the Supabase SQL editor.** The copy is
+   done, and the read-only login is no longer needed. Its URL has already
+   been deleted from `.env`.
+2. Review the branch. Nothing was merged to main or deployed.
+3. Run the three SQL checks above, plus the dev and production steps
+   (migrations, KB admins, import).
+4. Decide on owners (problem 2) and the 892 unconnected instructors (problem 3)
+   before the team starts editing.
+5. `backups/` holds real internal data. Keep it on this machine; delete it when
+   the rehearsal is no longer needed.
+
+---
+
 # HANDOFF — knowledge platform, run 3 (polish, graph editing, custom relationships, activity), 2026-11-02
 
 1. Branch `auto/knowledge-platform-20261102`, pushed; **nothing merged to main, nothing deployed**; everything ran locally.
