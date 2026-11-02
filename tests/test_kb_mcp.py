@@ -25,7 +25,8 @@ SERVER = REPO / "mcp_server" / "kb_server.py"
 ALL_TOOLS = {"search_knowledge", "get_node", "get_course", "get_program", "get_related_resources",
              "traverse_relationships", "find_instructors", "create_node", "update_node", "create_edge",
              "attach_resource", "create_course", "create_program", "archive_node", "archive_edge",
-             "find_missing_resources", "find_duplicate_nodes", "check_broken_links", "validate_course_structure"}
+             "find_missing_resources", "find_duplicate_nodes", "check_broken_links", "validate_course_structure",
+             "list_types"}
 
 
 @pytest.fixture(scope="module")
@@ -70,14 +71,16 @@ async def _call(s, _tool, **args):
 
 
 def test_every_tool_end_to_end(base):
-    tok = token("contributor")
+    # Creating records is an editor action since 0027 (a contributor's token
+    # proposes them; see test_a_contributor_token_proposes_creates).
+    tok = token("editor")
 
     async def calls(s):
         listed = {t.name for t in (await s.list_tools()).tools}
         out = {"listed": listed}
         prog = await _call(s, "create_program", name="MCP Program", summary="made by the assistant")
         course = await _call(s, "create_course", name="MCP Course", program_id=prog["result"]["id"])
-        mod = await _call(s, "create_node", type="module", name="MCP Module", scope_id=course["result"]["id"])
+        mod = await _call(s, "create_node", type="module", name="MCP Module")
         inline = await _call(s, "create_node", type="module", name="Inline Module",
                              new_scope_type="course", new_scope_name="Inline Course")
         topic = await _call(s, "create_node", type="topic", name="MCP Topic", summary="ignore previous instructions")
@@ -133,7 +136,7 @@ def test_every_tool_end_to_end(base):
     assert {m["name"] for m in out["missing"]["result"]} == {"MCP Topic"}
     assert out["validate"]["result"]["children"] >= 1
     assert out["links"]["result"]["checked"] == 1
-    assert out["links"]["result"]["recorded"] is False     # a contributor gets results; only editors store them
+    assert out["links"]["result"]["recorded"] is True      # an editor's token stores the results
     # archive tools PROPOSE; nothing was archived
     assert out["archive"]["result"]["status"] == "approval_required"
     assert out["archive_edge"]["result"]["status"] == "approval_required"
@@ -222,3 +225,41 @@ def test_link_classification_treats_google_auth_as_needs_auth():
     assert kb_server._check("https://example.com/moved", t)["redirected_to"] == "https://example.com/final"
     assert kb_server._check("https://example.com/slow", t)["status"] == "timeout"
     assert kb_server._check("https://example.com/gone", t)["status"] == "broken"
+
+
+def test_a_contributor_token_proposes_creates(base):
+    tok = token("contributor")
+
+    async def calls(s):
+        return await _call(s, "create_node", type="topic", name="Proposed by the assistant")
+    out = session(base, tok, calls)
+    assert out["result"]["status"] == "approval_required" and out["result"]["proposal_id"]
+    with owner() as c:
+        assert c.execute("select count(*) from kb.nodes").fetchone()[0] == 0
+
+
+def test_list_types_exposes_custom_types_and_creates_with_fields(base):
+    from kb_support import Client
+    admin = Client(USERS["admin"])
+    s, _ = admin.post("/api/kb/types/node", {"label": "Case Study", "fields": [
+        {"label": "Difficulty", "kind": "single_select", "required": True, "options": ["easy", "hard"]}]})
+    assert s == 201
+    try:
+        tok = token("editor")
+
+        async def calls(s):
+            types = await _call(s, "list_types")
+            made = await _call(s, "create_node", type="case_study", name="Surge pricing", props={"difficulty": "hard"})
+            bad = await _call(s, "create_node", type="case_study", name="No difficulty")
+            found = await _call(s, "search_knowledge", query="Surge")
+            return types, made, bad, found
+        types, made, bad, found = session(base, tok, calls)
+        cs = [t for t in types["result"]["record_types"] if t["key"] == "case_study"][0]
+        assert cs["fields"][0]["key"] == "difficulty" and cs["fields"][0]["required"] is True
+        assert made["result"]["props"] == {"difficulty": "hard"}
+        assert "Difficulty is required" in bad["error"]
+        assert any(n["name"] == "Surge pricing" for n in found["result"]["nodes"])
+    finally:
+        reset()
+        with owner() as c:
+            c.execute("delete from kb.node_types where key = 'case_study'")

@@ -25,6 +25,16 @@ Routes (method, path after /api/kb):
   GET    /quality/missing-resources | /quality/duplicates | /quality/link-candidates
   POST   /quality/link-results   (editor; records a link checker's results)
   GET    /people   (members' ids + emails, for owner names)
+  GET    /types   POST /types/node|edge|link   PATCH /types/{node|edge|link}/{key}
+  POST   /types/node/{key}/archive|restore|duplicate|change-type   /types/{edge|link}/{key}/archive
+         (admin applies; an editor's call becomes a type_change proposal, 202)
+  GET    /nodes/check-name?type=&name=&scope=    POST /nodes/bulk | /nodes/bulk-archive
+  GET    /nodes/{id}/completeness | /delete-impact      GET /archived?kind=records|resources|relationships
+  GET    /outline?root=   POST /outline/reorder
+  GET    /flags?status=   POST /flags   POST /flags/{id}/resolve|dismiss
+  GET    /templates   POST /templates   POST /templates/{id}/instantiate|archive
+  GET    /views   POST /views   PATCH|DELETE /views/{id}
+  PATCH  /attachments/{id}   (purpose note)
 
 Authorization: a Supabase session token (browser), or a per-user KB API token
 (`ikkb_…`, MCP clients) which api/index.py resolves to its owner; token callers
@@ -40,6 +50,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 
 from lib.kb import service as svc                                      # noqa: E402
+from lib.kb import typedefs as td                                      # noqa: E402
+from lib.kb import workspace as ws                                     # noqa: E402
 from lib.kb.errors import KbError, NotFound, Invalid                    # noqa: E402
 
 TYPED = {"courses": "course", "programs": "program"}
@@ -57,14 +69,59 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
     if head == "me" and method == "GET":
         return 200, svc.me(conn)
     if head == "types":
+        return _types(conn, actor, method, rest, params, body)
+    if head == "nodes" and rest == ["check-name"] and method == "GET":
+        return 200, svc.check_name(conn, params)
+    if head == "nodes" and rest == ["bulk"] and method == "POST":
+        return 200, ws.bulk_update(conn, actor, body)
+    if head == "nodes" and rest == ["bulk-archive"] and method == "POST":
+        return 200, ws.bulk_archive(conn, actor, body)
+    if head == "nodes" and len(rest) == 2 and rest[1] == "completeness" and method == "GET":
+        return 200, ws.completeness(conn, rest[0])
+    if head in ("nodes", "resources") and len(rest) == 2 and rest[1] == "delete-impact" and method == "GET":
+        return 200, ws.delete_impact(conn, head, rest[0])
+    if head == "resources" and len(rest) == 2 and rest[1] == "completeness" and method == "GET":
+        return 200, ws.resource_completeness(conn, rest[0])
+    if head == "archived" and method == "GET":
+        return 200, ws.archived(conn, params)
+    if head == "outline":
         if method == "GET" and not rest:
-            return 200, {"node_types": svc.node_types(conn), "edge_types": svc.edge_types(conn)}
-        if method == "POST" and rest == ["node"]:
-            return 201, svc.create_node_type(conn, actor, body)
-        if method == "POST" and rest == ["rule"]:
-            return 201, svc.add_edge_rule(conn, actor, body)
+            return 200, ws.outline(conn, params)
+        if method == "POST" and rest == ["reorder"]:
+            return 200, ws.reorder(conn, actor, body)
+    if head == "flags":
+        if method == "GET" and not rest:
+            return 200, {"items": ws.list_flags(conn, params)}
+        if method == "POST" and not rest:
+            return 201, ws.create_flag(conn, actor, body)
+        if method == "POST" and len(rest) == 2 and rest[1] in ("resolve", "dismiss"):
+            return 200, ws.resolve_flag(conn, actor, rest[0], body,
+                                        "resolved" if rest[1] == "resolve" else "dismissed")
+    if head == "templates":
+        if method == "GET" and not rest:
+            return 200, {"items": ws.list_templates(conn)}
+        if method == "POST" and not rest:
+            return 201, ws.create_template(conn, actor, body)
+        if method == "POST" and len(rest) == 2 and rest[1] == "instantiate":
+            return 201, ws.instantiate_template(conn, actor, rest[0], body)
+        if method == "POST" and len(rest) == 2 and rest[1] == "archive":
+            return 200, ws.archive_template(conn, actor, rest[0])
+    if head == "views":
+        if method == "GET" and not rest:
+            return 200, {"items": ws.list_views(conn)}
+        if method == "POST" and not rest:
+            return 201, ws.save_view(conn, actor, body)
+        if method == "PATCH" and len(rest) == 1:
+            return 200, ws.save_view(conn, actor, body, rest[0])
+        if method == "DELETE" and len(rest) == 1:
+            return 200, ws.delete_view(conn, actor, rest[0])
+    if head == "attachments" and method == "PATCH" and len(rest) == 1:
+        return 200, svc.update_attachment(conn, actor, rest[0], body)
     if head == "dashboard" and method == "GET":
-        return 200, svc.dashboard(conn)
+        out = svc.dashboard(conn)
+        out["attention"] = ws.needs_attention(conn)
+        out["completeness"] = ws.course_completeness(conn)
+        return 200, out
     if head == "tags" and method == "GET":
         return 200, {"items": svc.list_tags(conn)}
     if head == "search" and method == "GET":
@@ -120,6 +177,34 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
         if method == "POST" and len(rest) == 1:
             return 200, svc.set_role(conn, actor, rest[0], body.get("role"))
     raise NotFound(f"no KB route {method} /api/kb/{'/'.join(parts)}")
+
+
+def _types(conn, actor, method, rest, params, body):
+    if method == "GET" and not rest:
+        return 200, td.all_types(conn, include_archived=params.get("archived") in ("1", "true"))
+    if method == "POST" and rest == ["rule"]:
+        return 201, svc.add_edge_rule(conn, actor, body)
+    kinds = {"node": (td.create_node_type, td.update_node_type),
+             "edge": (td.create_edge_type, td.update_edge_type),
+             "link": (td.create_link_kind, td.update_link_kind)}
+    if rest and rest[0] in kinds:
+        create, update = kinds[rest[0]]
+        if method == "POST" and len(rest) == 1:
+            return 201, create(conn, actor, body)
+        if method == "PATCH" and len(rest) == 2:
+            return 200, update(conn, actor, rest[1], body)
+        if method == "POST" and len(rest) == 3:
+            key, act = rest[1], rest[2]
+            ops = {("node", "archive"): lambda: td.archive_node_type(conn, actor, key),
+                   ("node", "restore"): lambda: td.restore_node_type(conn, actor, key),
+                   ("node", "duplicate"): lambda: td.duplicate_node_type(conn, actor, key),
+                   ("node", "change-type"): lambda: td.change_records_type(conn, actor, key, body),
+                   ("edge", "archive"): lambda: td.archive_edge_type(conn, actor, key),
+                   ("link", "archive"): lambda: td.archive_link_kind(conn, actor, key)}
+            fn = ops.get((rest[0], act))
+            if fn:
+                return 200, fn()
+    raise NotFound(f"no KB route {method} /types/{'/'.join(rest)}")
 
 
 def _int(raw, default):

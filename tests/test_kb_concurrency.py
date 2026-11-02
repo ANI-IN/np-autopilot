@@ -78,10 +78,10 @@ def test_twenty_parallel_creates_no_duplicates_no_orphans_audit_matches():
     def create(name):
         def fn(c, a):
             barrier.wait()
-            n = svc.create_node(c, a, {"type": "module", "name": name, "scope": str(course["id"])})
-            svc.create_edge(c, a, {"type": "contains", "source_id": str(course["id"]), "target_id": str(n["id"])})
-            return n
-        return _run("contributor", fn)
+            # Placement under the course creates the `contains` edge in the same
+            # transaction (0027); creating records is an editor action.
+            return svc.create_node(c, a, {"type": "module", "name": name, "scope": str(course["id"])})
+        return _run("editor", fn)
 
     t0 = time.perf_counter()
     with ThreadPoolExecutor(len(names)) as ex:

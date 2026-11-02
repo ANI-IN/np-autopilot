@@ -57,9 +57,14 @@ def test_viewer_reads_but_cannot_write():
         assert cur.rowcount == 0, "a viewer's UPDATE must match no rows under RLS"
 
 
-def test_contributor_creates_and_edits_but_cannot_archive_or_delete():
+def test_contributor_edits_but_cannot_create_archive_or_delete():
+    # 0027: a contributor's create is a proposal, so the database refuses a
+    # direct insert from them; editing an existing record is still allowed.
     with as_user(USERS["contributor"]) as c:
-        n = _insert_topic(c)
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            _insert_topic(c)
+    n = _seed_topic("Editable")
+    with as_user(USERS["contributor"]) as c:
         c.execute("update kb.nodes set summary = 'edited' where id = %s", (n,))
         with pytest.raises(psycopg.errors.InsufficientPrivilege, match="editor"):
             c.execute("update kb.nodes set archived_at = now(), status = 'archived' where id = %s", (n,))
@@ -113,10 +118,10 @@ def test_nobody_writes_the_audit_log_directly():
 
 
 def test_audit_attributes_the_verified_user_and_actor_type():
-    with as_user(USERS["contributor"], actor_type="ai") as c:
+    with as_user(USERS["editor"], actor_type="ai") as c:
         n = _insert_topic(c, "AI made")
         row = c.execute("select actor_id, actor_type from kb.audit_log where row_id = %s", (n,)).fetchone()
-        assert str(row[0]) == USERS["contributor"] and row[1] == "ai"
+        assert str(row[0]) == USERS["editor"] and row[1] == "ai"
 
 
 def test_memberships_are_admin_managed_and_not_self_grantable():

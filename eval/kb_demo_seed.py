@@ -228,15 +228,17 @@ class Seeder:
         self.conn.execute("select set_config('kb.actor_type', 'human', false)")
         return svc.Actor(self.ids[role])
 
-    def node(self, type_key, name, summary=None, owner=None, scope=None, status="active"):
+    def node(self, type_key, name, summary=None, owner=None, parents=(), status="active"):
         from lib.kb import service as svc
-        actor = self.act(owner or "editor")
+        # Contributors propose creates (0027); records are created by an editor or admin,
+        # owned by whoever the demo assigns.
+        actor = self.act(owner if owner in ("admin", "editor") else "editor")
         body = {"type": type_key, "name": name, "status": status}
         if summary:
             body["summary"] = summary
         body["owner_id"] = self.ids[owner] if owner else None     # explicit: None is the deliberate gap
-        if scope:
-            body["scope"] = str(self.nodes[scope]["id"])
+        if parents:
+            body["parents"] = [str(self.nodes[p]["id"]) for p in parents]
         n = svc.create_node(self.conn, actor, body)
         self.nodes[name] = n
         return n
@@ -258,9 +260,7 @@ def build(s: Seeder) -> dict:
     for name, owner in DOMAINS:
         s.node("domain", name, f"Subject area: {name}.", owner)
     for name, summary, owner, programs, domains in COURSES:
-        s.node("course", name, summary, owner, scope=programs[0])     # home program; others via contains
-        for p in programs:
-            s.edge("contains", p, name, "admin")
+        s.node("course", name, summary, owner, parents=programs)      # placed in every program it belongs to
         for d in domains:
             s.edge("covers", name, d)
     topics = sorted({t for mods in STRUCTURE.values() for _, _, weeks in mods for _, sess in weeks
@@ -274,14 +274,11 @@ def build(s: Seeder) -> dict:
             s.edge("teaches", name, c)
     for course, modules in STRUCTURE.items():
         for module, owner, weeks in modules:
-            s.node("module", module, MODULE_SUMMARIES[module], owner, scope=course)
-            s.edge("contains", course, module)
+            s.node("module", module, MODULE_SUMMARIES[module], owner, parents=[course])
             for week, sessions in weeks:
-                s.node("week", week, f"{course}: {week.split('·', 1)[1].strip()}.", owner or "editor", scope=course)
-                s.edge("contains", module, week)
+                s.node("week", week, f"{course}: {week.split('·', 1)[1].strip()}.", owner or "editor", parents=[module])
                 for title, when, instructor, ts in sessions:
-                    s.node("session", title, f"Live session · {when}.", owner or "editor", scope=course)
-                    s.edge("contains", week, title)
+                    s.node("session", title, f"Live session · {when}.", owner or "editor", parents=[week])
                     s.edge("teaches", instructor, title)
                     for t in ts:
                         s.edge("covers", title, t, "contributor")

@@ -114,7 +114,11 @@ class _translate:
                                 constraint=diag.constraint_name) from None
             if isinstance(exc, (pgerr.CheckViolation, pgerr.NotNullViolation,
                                 pgerr.StringDataRightTruncation)):
-                raise Invalid(msg, constraint=diag.constraint_name, rule=hint or None) from None
+                field = None
+                if hint.startswith(("kb_field_value:", "kb_field_required:")):
+                    field = "props." + hint.split(":", 1)[1]
+                raise Invalid(msg, constraint=diag.constraint_name, rule=hint or None,
+                              **({"field": field} if field else {})) from None
             if isinstance(exc, pgerr.ForeignKeyViolation):
                 raise Invalid(f"a referenced record does not exist ({msg})") from None
             if isinstance(exc, pgerr.RaiseException):
@@ -140,12 +144,13 @@ def _cursor_decode(raw):
 # ---------------------------------------------------------------------------
 
 def node_types(conn) -> list[dict]:
-    return _q(conn, "select id, key, label, color, icon, is_container, description, version "
+    return _q(conn, "select id, key, label, plural, color, icon, is_container, description, fields, "
+                    "allowed_parents, parent_required, default_status, owner_rule, is_core, version "
                     "from kb.node_types where archived_at is null order by sort_order, label")
 
 
 def edge_types(conn) -> list[dict]:
-    types = _q(conn, "select id, key, label, inverse_label, description, allow_self, version "
+    types = _q(conn, "select id, key, label, inverse_label, description, allow_self, cardinality, is_core, version "
                      "from kb.edge_types where archived_at is null order by label")
     rules = _q(conn, """select r.edge_type_id, s.key as source_type, t.key as target_type
                         from kb.edge_type_rules r
@@ -198,7 +203,7 @@ def add_edge_rule(conn, actor: Actor, body: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 _NODE_COLS = """n.id, n.name, n.summary, n.body, n.status, n.version, n.props, n.scope_id,
-    n.owner_id, n.external_id, n.created_by, n.updated_by, n.created_at, n.updated_at,
+    n.owner_id, n.co_owners, n.review_status, n.external_id, n.created_by, n.updated_by, n.created_at, n.updated_at,
     n.archived_at, t.key as type, t.label as type_label, t.color as type_color,
     sc.name as scope_name, st.key as scope_type"""
 _NODE_FROM = """kb.nodes n join kb.node_types t on t.id = n.type_id
@@ -235,12 +240,38 @@ def get_node(conn, node_id: str, *, detail: bool = True) -> dict:
         (node_id,))
     node["resources"] = _q(conn, """
         select nr.id as attachment_id, nr.version as attachment_version, nr.note, r.id, r.url,
-               r.title, r.kind, r.version
+               r.title, r.kind, r.link_kind, r.description, r.owner_id, r.tags, r.version,
+               (select row_to_json(lc) from (select status, http_status, checked_at from kb.link_checks
+                  where resource_id = r.id) lc) as link_health
         from kb.node_resources nr join kb.resources r on r.id = nr.resource_id
         where nr.node_id = %s and nr.archived_at is null order by nr.position, r.title""", (node_id,))
     node["children_count"] = (_q1(conn, "select count(*) as c from kb.nodes where scope_id = %s "
                                         "and archived_at is null", (node_id,)) or {}).get("c", 0)
+    node["parents"] = [e for e in node["incoming"] if e["type"] == "contains"]
+    node["breadcrumb"] = breadcrumb(conn, node_id)
+    node["flags"] = _q(conn, "select id, reason, assigned_to, created_by, created_at from kb.flags "
+                             "where target_id = %s and status = 'open' order by created_at", (node_id,))
+    from .workspace import completeness
+    if not node["archived_at"]:
+        node["completeness"] = completeness(conn, node_id)
     return node
+
+
+def breadcrumb(conn, node_id: str) -> list[dict]:
+    """The first `contains` chain up to a root (Program > Course > Module > ...)."""
+    chain, seen, cur = [], {node_id}, node_id
+    for _ in range(8):
+        up = _q1(conn, """select s.id, s.name, t.key as type from kb.edges e
+                          join kb.edge_types et on et.id = e.edge_type_id and et.key = 'contains'
+                          join kb.nodes s on s.id = e.source_id join kb.node_types t on t.id = s.type_id
+                          where e.target_id = %s and e.archived_at is null and s.archived_at is null
+                          order by t.sort_order, s.name_norm limit 1""", (cur,))
+        if not up or up["id"] in seen:
+            break
+        chain.insert(0, up)
+        seen.add(up["id"])
+        cur = up["id"]
+    return chain
 
 
 def list_nodes(conn, params: dict) -> dict:
@@ -269,6 +300,16 @@ def list_nodes(conn, params: dict) -> dict:
     if params.get("tag"):
         where.append("exists (select 1 from kb.node_tags nt where nt.node_id = n.id and nt.tag_id = %s)")
         args.append(v.uid(params["tag"], "tag"))
+    if str(params.get("flagged") or "") in ("1", "true"):
+        where.append("exists (select 1 from kb.flags f where f.target_id = n.id and f.status = 'open')")
+    if str(params.get("no_owner") or "") in ("1", "true"):
+        where.append("n.owner_id is null")
+    if params.get("review_status"):
+        where.append("n.review_status = %s"); args.append(params["review_status"])
+    if params.get("parent"):
+        where.append("""exists (select 1 from kb.edges pe join kb.edge_types pet on pet.id = pe.edge_type_id
+                        and pet.key = 'contains' where pe.target_id = n.id and pe.source_id = %s and pe.archived_at is null)""")
+        args.append(v.uid(params["parent"], "parent"))
     if params.get("q"):
         q = str(params["q"]).strip()[:200]
         where.append("(n.search @@ websearch_to_tsquery('simple', %s) or n.name_norm like %s)")
@@ -282,7 +323,10 @@ def list_nodes(conn, params: dict) -> dict:
         order = "n.name_norm asc, n.id asc"
         if cur:
             where.append("(n.name_norm, n.id) > (%s, %s::uuid)"); args += cur
-    sql = (f"select {_NODE_COLS}, n.name_norm from {_NODE_FROM}"
+    sql = (f"select {_NODE_COLS}, n.name_norm, t.icon as type_icon, "
+           "(select count(*) from kb.node_resources nr where nr.node_id = n.id and nr.archived_at is null) as links, "
+           "(select count(*) from kb.flags f where f.target_id = n.id and f.status = 'open') as flags "
+           f"from {_NODE_FROM}"
            + (" where " + " and ".join(where) if where else "")
            + f" order by {order} limit %s")
     rows = _q(conn, sql, (*args, limit + 1))
@@ -357,47 +401,200 @@ def _resolve_scope(conn, actor: Actor, body: dict):
     return sid, None
 
 
-NODE_FIELDS = {"type", "name", "summary", "body", "scope", "owner_id", "status", "props",
-               "resources", "edges", "tags"}
+NODE_FIELDS = {"type", "name", "summary", "body", "scope", "parents", "owner_id", "co_owners", "status",
+               "review_status", "props", "resources", "edges", "tags", "instructors", "smes"}
 
 
-def create_node(conn, actor: Actor, body: dict) -> dict:
-    """Create a node, optionally with an inline new scope, resources and edges,
-    all in one transaction."""
-    require(conn, "contributor", "creating a record")
+def _type_def(conn, key: str) -> dict:
+    row = _q1(conn, "select * from kb.node_types where key = %s and archived_at is null", (key,))
+    if not row:
+        raise Invalid(f"unknown record type {key!r}", field="type")
+    return row
+
+
+def validate_props(conn, tdef: dict, props: dict | None, *, creating: bool) -> dict:
+    """Field-by-field check with the database's own rules (kb.field_value_error),
+    so a form can highlight the failing field before anything is written."""
+    props = dict(props or {})
+    for f in tdef["fields"]:
+        if f.get("archived"):
+            continue
+        k = f["key"]
+        if creating and k not in props and f.get("default") not in (None, ""):
+            props[k] = f["default"]
+        val = props.get(k)
+        if val in ("", []):
+            props.pop(k, None)
+            val = None
+        if val is not None:
+            err = (_q1(conn, "select kb.field_value_error(%s::jsonb, %s::jsonb) as e",
+                       (json.dumps(f), json.dumps(val))) or {}).get("e")
+            if err:
+                raise Invalid(f"{f['label']} {err}", field="props." + k)
+        elif creating and f.get("required"):
+            raise Invalid(f"{f['label']} is required", field="props." + k)
+    return props
+
+
+def check_name(conn, params: dict) -> dict:
+    """Live duplicate warning for the New record form: an exact live match in
+    the same type (and scope), plus similar names to consider."""
+    tkey = v.text(params, "type", required=True, max_len=40)
+    name = (params.get("name") or "").strip()
+    if not name:
+        return {"exact": None, "similar": []}
+    tid = _type_id(conn, tkey)
+    scope = v.uid(params["scope"], "scope") if params.get("scope") else None
+    exact = _existing_by_name(conn, tid, scope, name)
+    similar = _q(conn, """select n.id, n.name, sc.name as scope_name from kb.nodes n
+                          left join kb.nodes sc on sc.id = n.scope_id
+                          where n.type_id = %s and n.archived_at is null and n.name_norm <> kb.norm(%s)
+                            and extensions.similarity(n.name_norm, kb.norm(%s)) >= 0.45
+                          order by extensions.similarity(n.name_norm, kb.norm(%s)) desc limit 5""",
+                 (tid, name, name, name))
+    return {"exact": exact, "similar": similar}
+
+
+def _inline_node(conn, actor: Actor, spec, created: list, *, field: str) -> str:
+    """An existing id, or {new: {type, name, parent?}} created now (recursively)."""
+    if isinstance(spec, str):
+        nid = v.uid(spec, field)
+        row = _q1(conn, "select id, archived_at from kb.nodes where id = %s", (nid,))
+        if not row:
+            raise Invalid("the chosen record does not exist", field=field)
+        if row["archived_at"]:
+            raise Invalid("the chosen record is archived", field=field)
+        return nid
+    if not isinstance(spec, dict) or not isinstance(spec.get("new"), dict):
+        raise Invalid("expected a record id or {new: {type, name}}", field=field)
+    nw = spec["new"]
+    tdef = _type_def(conn, v.text(nw, "type", required=True, max_len=40))
+    try:
+        name = v.name(nw)
+    except Invalid as exc:
+        raise Invalid(exc.message, field=field) from None
+    parent = _inline_node(conn, actor, nw["parent"], created, field=field) if nw.get("parent") else None
+    scope = _scope_for(conn, parent) if parent else None
+    existing = _existing_by_name(conn, tdef["id"], scope, name)
+    if existing:
+        return str(existing["id"])                     # the picker's intent is clear: reuse
+    row = _insert_node(conn, type_key=tdef["key"], name=name, scope_id=scope, status=tdef["default_status"],
+                       owner_id=actor.user_id if tdef["owner_rule"] == "creator" else None,
+                       props=validate_props(conn, tdef, {}, creating=False))
+    if parent:
+        try:
+            create_edge(conn, actor, {"type": "contains", "source_id": parent, "target_id": str(row["id"])})
+        except KbError as exc:
+            raise type(exc)(exc.message, **{**exc.details, "field": field}) from None
+    created.append({"id": str(row["id"]), "type": tdef["key"], "name": name})
+    return str(row["id"])
+
+
+def _scope_for(conn, parent_id) -> str | None:
+    """Primary scope: the parent if it is a course/program, else the parent's own scope."""
+    row = _q1(conn, """select n.id, n.scope_id, t.is_container from kb.nodes n join kb.node_types t on t.id = n.type_id
+                       where n.id = %s""", (parent_id,))
+    if not row:
+        return None
+    return str(row["id"]) if row["is_container"] else (str(row["scope_id"]) if row["scope_id"] else None)
+
+
+def _with_field(exc: KbError, field: str) -> KbError:
+    return type(exc)(exc.message, **{**exc.details, "field": exc.details.get("field") or field})
+
+
+def create_node(conn, actor: Actor, body: dict, *, _approved: bool = False) -> dict:
+    """Create a record and everything around it in ONE transaction: placement
+    (several parents, created inline at any depth), relationships, links,
+    people, tags and custom fields. Any failure rolls the whole thing back and
+    names the failing field. Contributors' creates are validated the same way,
+    then recorded as a proposal for an editor to approve."""
+    have = require(conn, "contributor", "creating a record")
     v.only(body, NODE_FIELDS)
-    type_key = v.text(body, "type", required=True, max_len=40)
+    tdef = _type_def(conn, v.text(body, "type", required=True, max_len=40))
     name = v.name(body)
     summary = v.text(body, "summary", max_len=v.SUMMARY_MAX)
     text_body = v.text(body, "body", max_len=v.BODY_MAX)
-    status = v.choice(body, "status", v.NODE_STATUSES, "active")
-    # Unless the caller says otherwise (including an explicit null), the creator
-    # owns what they create: "No owner" is a gap the quality page reports.
-    owner = (v.uid(body.get("owner_id"), "owner_id", required=False) if "owner_id" in body
-             else actor.user_id)
-    props = v.props(body)
-    scope_id, created_scope = _resolve_scope(conn, actor, body)
-    row = _insert_node(conn, type_key=type_key, name=name, summary=summary, body=text_body,
+    status = v.choice(body, "status", v.NODE_STATUSES) or tdef["default_status"]
+    review = v.choice(body, "review_status", ("none", "needs_review", "approved"), "none")
+    if "owner_id" in body:
+        owner = v.uid(body.get("owner_id"), "owner_id", required=False)
+    else:
+        owner = actor.user_id if tdef["owner_rule"] == "creator" else None
+    co_owners = [v.uid(x, "co_owners") for x in (body.get("co_owners") or [])]
+    props = validate_props(conn, tdef, body.get("props"), creating=True)
+    for k, lst in (("edges", "relationships"), ("resources", "links"), ("parents", "placements")):
+        if body.get(k) is not None and not isinstance(body[k], list):
+            raise Invalid(f"{lst} must be a list", field=k)
+    parents_raw = list(body.get("parents") or [])
+    if body.get("scope") not in (None, ""):
+        parents_raw.insert(0, body["scope"])
+    if tdef["parent_required"] and not parents_raw:
+        raise Invalid(f"a {tdef['label'].lower()} must be placed under a "
+                      f"{' or '.join(tdef['allowed_parents']) or 'parent'}", field="parents")
+    if not _approved and actor.actor_type != "import" and ROLES.index(have) < ROLES.index("editor"):
+        # Validated like an editor's save as far as can be done without writing,
+        # then recorded for an editor to approve (which re-runs this in full).
+        if not parents_raw:
+            dupe = _existing_by_name(conn, tdef["id"], None, name)
+            if dupe:
+                raise Duplicate(f"a {tdef['key']} named {dupe['name']!r} already exists", existing=dupe)
+        with _translate(conn, "proposal"):
+            row = _q1(conn, "insert into kb.proposals (action, target_table, target_id, reason, payload, actor_type) "
+                            "values ('create', 'nodes', null, %s, %s, %s) returning id",
+                      (f"New {tdef['label'].lower()}: {name}"[:2000], json.dumps(body, default=str), actor.actor_type))
+        raise NeedsApproval(f"“{name}” was sent for approval. An editor will review it in Approvals.",
+                            proposal_id=row["id"])
+    created: list = []
+    parent_ids = [_inline_node(conn, actor, p, created, field=f"parents.{i}") for i, p in enumerate(parents_raw)]
+    scope_id = None
+    for pid in parent_ids:
+        scope_id = _scope_for(conn, pid)
+        if scope_id:
+            break
+    row = _insert_node(conn, type_key=tdef["key"], name=name, summary=summary, body=text_body,
                        scope_id=scope_id, owner_id=owner, status=status, props=props)
-    nid = row["id"]
-    for res in body.get("resources") or []:
-        attach_resource(conn, actor, nid, res)
-    for e in body.get("edges") or []:
+    nid = str(row["id"])
+    if co_owners or review != "none":
+        _q(conn, "update kb.nodes set co_owners = %s, review_status = %s where id = %s", (co_owners, review, nid))
+    for i, pid in enumerate(parent_ids):
+        try:
+            create_edge(conn, actor, {"type": "contains", "source_id": pid, "target_id": nid})
+        except KbError as exc:
+            raise _with_field(exc, f"parents.{i}") from None
+    for i, e in enumerate(body.get("edges") or []):
         if not isinstance(e, dict):
-            raise Invalid("each edge must be an object", field="edges")
-        spec = dict(e)
-        direction = spec.pop("direction", "out")
-        other = spec.pop("node_id", None)
-        if direction == "out":
+            raise Invalid("each relationship must be an object", field=f"edges.{i}")
+        spec = {k: e[k] for k in ("type", "note") if k in e}
+        other = _inline_node(conn, actor, e.get("node") or e.get("node_id"), created, field=f"edges.{i}")
+        if e.get("direction", "out") == "out":
             spec.update(source_id=nid, target_id=other)
         else:
             spec.update(source_id=other, target_id=nid)
-        create_edge(conn, actor, spec)
+        try:
+            create_edge(conn, actor, spec)
+        except KbError as exc:
+            raise _with_field(exc, f"edges.{i}") from None
+    for key, etype in (("instructors", "teaches"), ("smes", "sme")):
+        for i, pspec in enumerate(body.get(key) or []):
+            if isinstance(pspec, dict) and isinstance(pspec.get("new"), dict):
+                pspec = {"new": {**pspec["new"], "type": "instructor"}}
+            pid = _inline_node(conn, actor, pspec, created, field=f"{key}.{i}")
+            try:
+                create_edge(conn, actor, {"type": etype, "source_id": pid, "target_id": nid})
+            except KbError as exc:
+                raise _with_field(exc, f"{key}.{i}") from None
+    for i, res in enumerate(body.get("resources") or []):
+        try:
+            attach_resource(conn, actor, nid, res)
+        except KbError as exc:
+            raise _with_field(exc, f"resources.{i}") from None
     for tag in body.get("tags") or []:
         tag_node(conn, actor, nid, tag)
     out = get_node(conn, nid)
-    if created_scope:
-        out["created_scope_id"] = created_scope
+    out["created_inline"] = created
+    if created and created[0]["id"] in parent_ids:
+        out["created_scope_id"] = created[0]["id"]
     return out
 
 
@@ -406,7 +603,8 @@ def update_node(conn, actor: Actor, node_id: str, body: dict, *, force: bool = F
     `force` (editor+) overwrites a newer version deliberately."""
     require(conn, "contributor", "editing a record")
     node_id = v.uid(node_id, "id")
-    v.only(body, {"version", "name", "summary", "body", "scope", "owner_id", "status", "props"})
+    v.only(body, {"version", "name", "summary", "body", "scope", "owner_id", "co_owners", "status",
+                  "review_status", "props"})
     expected = v.version(body)
     if force:
         require(conn, "editor", "overwriting someone else's change")
@@ -427,7 +625,13 @@ def update_node(conn, actor: Actor, node_id: str, body: dict, *, force: bool = F
     if "owner_id" in body:
         sets.append("owner_id = %s"); args.append(v.uid(body["owner_id"], "owner_id", required=False))
     if "props" in body:
-        sets.append("props = %s"); args.append(json.dumps(v.props(body) or {}))
+        props = validate_props(conn, _type_def(conn, current["type"]), v.props(body), creating=False)
+        sets.append("props = %s"); args.append(json.dumps(props))
+    if "co_owners" in body:
+        sets.append("co_owners = %s"); args.append([v.uid(x, "co_owners") for x in (body.get("co_owners") or [])])
+    if "review_status" in body:
+        sets.append("review_status = %s")
+        args.append(v.choice(body, "review_status", ("none", "needs_review", "approved")))
     if "scope" in body:
         sid, _ = _resolve_scope(conn, actor, body)
         if sid == node_id:
@@ -504,7 +708,8 @@ def restore_node(conn, actor: Actor, node_id: str) -> dict:
 def duplicate_node(conn, actor: Actor, node_id: str) -> dict:
     """A copy with the same type, scope, text, tags and resource attachments.
     Relationships are NOT copied: an edge asserts a fact about the original."""
-    require(conn, "contributor", "duplicating a record")
+    # A duplicate is a new record: an editor action since 0027 (contributors propose).
+    require(conn, "editor", "duplicating a record")
     src = get_node(conn, node_id)
     type_id = _type_id(conn, src["type"])
     base, n = f"{src['name']} (copy)", 1
@@ -653,8 +858,10 @@ def restore_edge(conn, actor: Actor, edge_id: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def _resource_row(conn, rid) -> dict | None:
-    return _q1(conn, """select r.id, r.url, r.title, r.kind, r.description, r.version, r.status,
-                               r.archived_at, r.created_at, r.updated_at, r.created_by,
+    return _q1(conn, """select r.id, r.url, r.title, r.kind, r.link_kind, r.owner_id, r.tags, r.description,
+                               r.version, r.status, r.archived_at, r.created_at, r.updated_at, r.created_by,
+                               (select row_to_json(lc) from (select status, http_status, checked_at from kb.link_checks
+                                  where resource_id = r.id) lc) as link_health,
                                (select count(*) from kb.node_resources nr where nr.resource_id = r.id
                                   and nr.archived_at is null) as used_by
                         from kb.resources r where r.id = %s""", (rid,))
@@ -687,10 +894,13 @@ def list_resources(conn, params: dict) -> dict:
         where.append("(lower(r.title) like %s or r.url_norm like %s)"); args += [q, q]
     if params.get("kind"):
         where.append("r.kind = %s"); args.append(params["kind"])
+    if params.get("link_kind"):
+        where.append("r.link_kind = %s"); args.append(params["link_kind"])
     cur = _cursor_decode(params.get("cursor"))
     if cur:
         where.append("(r.updated_at, r.id) < (%s::timestamptz, %s::uuid)"); args += cur
-    rows = _q(conn, f"""select r.id, r.url, r.title, r.kind, r.version, r.updated_at, r.archived_at,
+    rows = _q(conn, f"""select r.id, r.url, r.title, r.kind, r.link_kind, r.owner_id, r.version, r.updated_at, r.archived_at,
+                               (select lc.status from kb.link_checks lc where lc.resource_id = r.id) as link_status,
                                (select count(*) from kb.node_resources nr where nr.resource_id = r.id
                                   and nr.archived_at is null) as used_by
                         from kb.resources r where {' and '.join(where)}
@@ -705,24 +915,52 @@ def create_resource(conn, actor: Actor, body: dict) -> dict:
     """Same URL twice → Duplicate naming the existing resource, so the caller
     can offer to link it instead."""
     require(conn, "contributor", "adding a resource")
-    v.only(body, {"url", "title", "kind", "description"})
+    v.only(body, RESOURCE_FIELDS)
     url = v.url(body)
     title = v.text(body, "title", required=True, max_len=v.NAME_MAX, allow_empty=False)
-    kind = v.choice(body, "kind", v.RESOURCE_KINDS, "link")
+    lk = _link_kind(conn, body, url)
+    kind = v.choice(body, "kind", v.RESOURCE_KINDS) or _default_kind(conn, lk)
     existing = find_resource_by_url(conn, url)
     if existing:
         raise Duplicate("this URL is already a resource; link the existing one instead",
                         existing=existing)
+    owner = v.uid(body.get("owner_id"), "owner_id", required=False) if "owner_id" in body else actor.user_id
     with _translate(conn, "resource"):
-        row = _q1(conn, "insert into kb.resources (url, title, kind, description) values (%s,%s,%s,%s) "
-                        "returning id", (url, title, kind, v.text(body, "description", max_len=v.SUMMARY_MAX)))
+        row = _q1(conn, "insert into kb.resources (url, title, kind, link_kind, description, owner_id, tags) "
+                        "values (%s,%s,%s,%s,%s,%s,%s) returning id",
+                  (url, title, kind, lk, v.text(body, "description", max_len=v.SUMMARY_MAX), owner, _tags(body)))
     return get_resource(conn, row["id"])
+
+
+RESOURCE_FIELDS = {"url", "title", "kind", "link_kind", "description", "owner_id", "tags"}
+
+
+def _link_kind(conn, body: dict, url: str) -> str:
+    from .typedefs import detect_link_kind
+    lk = body.get("link_kind")
+    if lk:
+        if not _q1(conn, "select 1 from kb.link_kinds where key = %s and archived_at is null", (lk,)):
+            raise Invalid(f"unknown link kind {lk!r}", field="link_kind")
+        return lk
+    return detect_link_kind(conn, url)
+
+
+def _default_kind(conn, link_kind: str) -> str:
+    row = _q1(conn, "select defaults->>'kind' as k from kb.link_kinds where key = %s", (link_kind,))
+    return (row or {}).get("k") or "link"
+
+
+def _tags(body: dict) -> list[str]:
+    t = body.get("tags") or []
+    if not isinstance(t, list) or not all(isinstance(x, str) for x in t):
+        raise Invalid("tags must be a list of text", field="tags")
+    return sorted({x.strip()[:60] for x in t if x.strip()})
 
 
 def update_resource(conn, actor: Actor, rid: str, body: dict, *, force: bool = False) -> dict:
     require(conn, "contributor", "editing a resource")
     rid = v.uid(rid, "id")
-    v.only(body, {"version", "url", "title", "kind", "description"})
+    v.only(body, {"version"} | RESOURCE_FIELDS)
     expected = v.version(body)
     if force:
         require(conn, "editor", "overwriting someone else's change")
@@ -733,6 +971,8 @@ def update_resource(conn, actor: Actor, rid: str, body: dict, *, force: bool = F
         if ex and str(ex["id"]) != rid:
             raise Duplicate("another resource already has this URL", existing=ex)
         sets.append("url = %s"); args.append(url)
+        if "link_kind" not in body:
+            sets.append("link_kind = %s"); args.append(_link_kind(conn, {}, url))
     if "title" in body:
         sets.append("title = %s")
         args.append(v.text(body, "title", required=True, max_len=v.NAME_MAX, allow_empty=False))
@@ -740,6 +980,12 @@ def update_resource(conn, actor: Actor, rid: str, body: dict, *, force: bool = F
         sets.append("kind = %s"); args.append(v.choice(body, "kind", v.RESOURCE_KINDS))
     if "description" in body:
         sets.append("description = %s"); args.append(v.text(body, "description", max_len=v.SUMMARY_MAX))
+    if "link_kind" in body:
+        sets.append("link_kind = %s"); args.append(_link_kind(conn, body, body.get("url") or ""))
+    if "owner_id" in body:
+        sets.append("owner_id = %s"); args.append(v.uid(body["owner_id"], "owner_id", required=False))
+    if "tags" in body:
+        sets.append("tags = %s"); args.append(_tags(body))
     if not sets:
         raise Invalid("nothing to change")
     where = "id = %s and archived_at is null" + ("" if force else " and version = %s")
@@ -806,8 +1052,7 @@ def attach_resource(conn, actor: Actor, node_id: str, body: dict) -> dict:
         if ex:
             rid, reused = str(ex["id"]), True
         else:
-            rid = str(create_resource(conn, actor, {k: body[k] for k in ("url", "title", "kind", "description")
-                                                    if k in body})["id"])
+            rid = str(create_resource(conn, actor, {k: body[k] for k in RESOURCE_FIELDS if k in body})["id"])
     already = _q1(conn, "select id from kb.node_resources where node_id = %s and resource_id = %s "
                         "and archived_at is null", (node_id, rid))
     if already:
@@ -819,6 +1064,19 @@ def attach_resource(conn, actor: Actor, node_id: str, body: dict) -> dict:
         row = _q1(conn, "insert into kb.node_resources (node_id, resource_id, note, position) "
                         "values (%s,%s,%s,%s) returning id, version", (node_id, rid, note, pos))
     return {"attachment_id": row["id"], "resource_id": rid, "node_id": node_id, "reused": reused}
+
+
+def update_attachment(conn, actor: Actor, attachment_id: str, body: dict) -> dict:
+    """Change the purpose note ("why it is attached here") of one attachment."""
+    require(conn, "contributor", "editing a link")
+    v.only(body, {"note"})
+    aid = v.uid(attachment_id, "id")
+    with _translate(conn, "attachment"):
+        row = _q1(conn, "update kb.node_resources set note = %s where id = %s and archived_at is null "
+                        "returning id, note, version", (v.text(body, "note", max_len=v.NOTE_MAX), aid))
+    if not row:
+        raise NotFound("no live attachment with that id")
+    return row
 
 
 def detach_resource(conn, actor: Actor, attachment_id: str) -> dict:
@@ -974,16 +1232,17 @@ def propose(conn, actor: Actor, action: str, table: str, target_id: str, reason=
 
 
 def list_proposals(conn, status: str = "pending") -> list[dict]:
-    return _q(conn, """select p.id, p.action, p.target_table, p.target_id, p.reason, p.actor_type,
-                              p.status, p.created_at, p.created_by, p.version,
-                              coalesce(n.name, r.title, es.name || ' → ' || et.name) as target_label
+    return _q(conn, """select p.id, p.action, p.target_table, p.target_id, p.reason, p.payload, p.actor_type,
+                              p.status, p.created_by, p.created_at, p.decided_by, p.decided_at, p.version,
+                              coalesce(n.name, r.title, s.name || ' ' || et.label || ' ' || t.name,
+                                       p.payload->>'name', p.payload->'args'->>'label', p.reason) as target_label
                        from kb.proposals p
                        left join kb.nodes n on p.target_table = 'nodes' and n.id = p.target_id
                        left join kb.resources r on p.target_table = 'resources' and r.id = p.target_id
                        left join kb.edges e on p.target_table = 'edges' and e.id = p.target_id
-                       left join kb.nodes es on es.id = e.source_id left join kb.nodes et on et.id = e.target_id
-                       where p.status = %s order by p.created_at desc limit 200""", (status,))
-
+                       left join kb.edge_types et on et.id = e.edge_type_id
+                       left join kb.nodes s on s.id = e.source_id left join kb.nodes t on t.id = e.target_id
+                       where p.status = %s or %s = 'all' order by p.created_at desc limit 200""", (status, status))
 
 def decide_proposal(conn, actor: Actor, proposal_id: str, approve: bool) -> dict:
     require(conn, "editor", "deciding a proposal")
@@ -995,7 +1254,13 @@ def decide_proposal(conn, actor: Actor, proposal_id: str, approve: bool) -> dict
         raise NotFound("no such proposal")
     if p["status"] != "pending":
         raise Conflict(f"this proposal was already {p['status']}", current=p)
-    if approve:
+    result = None
+    if approve and p["action"] == "create":
+        result = create_node(conn, Actor(actor.user_id, "human"), p["payload"], _approved=True)
+    elif approve and p["action"] == "type_change":
+        from .typedefs import apply_type_change
+        result = apply_type_change(conn, Actor(actor.user_id, "human"), p["payload"])
+    elif approve:
         human = Actor(actor.user_id, "human")
         if p["target_table"] == "nodes":
             archive_node(conn, human, str(p["target_id"]))
@@ -1008,8 +1273,13 @@ def decide_proposal(conn, actor: Actor, proposal_id: str, approve: bool) -> dict
                 _q(conn, "update kb.node_resources set archived_at = now(), status = 'archived' "
                          "where id = %s and archived_at is null", (p["target_id"],))
     with _translate(conn, "proposal"):
-        return _q1(conn, "update kb.proposals set status = %s, decided_by = kb.actor_id(), decided_at = now() "
-                         "where id = %s returning id, status, version", ("approved" if approve else "rejected", pid))
+        out = _q1(conn, "update kb.proposals set status = %s, decided_by = kb.actor_id(), decided_at = now(), "
+                        "target_id = coalesce(target_id, %s) where id = %s returning id, status, version",
+                  ("approved" if approve else "rejected",
+                   (result or {}).get("id") if p["action"] == "create" else None, pid))
+    if result is not None:
+        out["result"] = result
+    return out
 
 
 # ---------------------------------------------------------------------------

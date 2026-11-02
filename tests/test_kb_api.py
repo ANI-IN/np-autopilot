@@ -42,6 +42,10 @@ def viewer():
 
 
 def _mk(client, type_="topic", name="Binary Search", **kw):
+    # Contributors' record creates are proposals since 0027 (an editor approves);
+    # fixtures that need a record to exist create it as an editor.
+    if client.user_id == USERS["contributor"]:
+        client = Client(USERS["editor"])
     s, body = client.post("/api/kb/nodes", {"type": type_, "name": name, **kw})
     assert s == 201, body
     return body
@@ -144,12 +148,13 @@ def test_archive_impact_archive_restore(contrib, editor):
     assert editor.get(f"/api/kb/edges/{e['id']}")[1]["archived_at"] is None
 
 
-def test_duplicate_copies_text_and_resources_not_edges(contrib):
-    n = _mk(contrib, name="Original", summary="s", resources=[{"url": "https://example.com/r", "title": "R"}])
-    s, d = contrib.post(f"/api/kb/nodes/{n['id']}/duplicate")
+def test_duplicate_copies_text_and_resources_not_edges(contrib, editor):
+    n = _mk(editor, name="Original", summary="s", resources=[{"url": "https://example.com/r", "title": "R"}])
+    assert contrib.post(f"/api/kb/nodes/{n['id']}/duplicate")[0] == 403    # a duplicate is a create
+    s, d = editor.post(f"/api/kb/nodes/{n['id']}/duplicate")
     assert s == 201 and d["name"] == "Original (copy)" and d["status"] == "draft"
     assert len(d["resources"]) == 1 and d["resources"][0]["id"] == n["resources"][0]["id"]
-    s, d2 = contrib.post(f"/api/kb/nodes/{n['id']}/duplicate")
+    s, d2 = editor.post(f"/api/kb/nodes/{n['id']}/duplicate")
     assert d2["name"] == "Original (copy 2)"
 
 
@@ -164,21 +169,21 @@ def test_hard_delete_admin_only_and_archived_only(editor, admin):
 
 # --- courses / programs, inline creation, one transaction ---------------------
 
-def test_inline_course_creation_inside_a_module_create(contrib, viewer):
-    s, m = contrib.post("/api/kb/nodes", {"type": "module", "name": "Week 1",
+def test_inline_course_creation_inside_a_module_create(editor, viewer):
+    s, m = editor.post("/api/kb/nodes", {"type": "module", "name": "Week 1",
                                           "scope": {"new": {"type": "course", "name": "System Design"}}})
     assert s == 201 and m["scope_name"] == "System Design" and m["created_scope_id"]
     s, courses = viewer.get("/api/kb/courses")
     assert [c["name"] for c in courses["items"]] == ["System Design"]
-    s, prog = contrib.post("/api/kb/programs", {"name": "Backend Track"})
+    s, prog = editor.post("/api/kb/programs", {"name": "Backend Track"})
     assert s == 201 and prog["type"] == "program"
     assert viewer.get(f"/api/kb/courses/{prog['id']}")[0] == 404
 
 
-def test_multi_step_create_is_atomic(contrib, viewer):
+def test_multi_step_create_is_atomic(editor, viewer):
     """A bad edge in the same request rolls back the node, the inline course and
     the resource: nothing partial is left behind."""
-    s, out = contrib.post("/api/kb/nodes", {
+    s, out = editor.post("/api/kb/nodes", {
         "type": "module", "name": "Atomic", "scope": {"new": {"type": "course", "name": "Atomic Course"}},
         "resources": [{"url": "https://example.com/atomic", "title": "doc"}],
         "edges": [{"type": "teaches", "node_id": str(uuid.uuid4())}]})
@@ -187,10 +192,11 @@ def test_multi_step_create_is_atomic(contrib, viewer):
     assert viewer.get("/api/kb/resources")[1]["items"] == []
 
 
-def test_scope_must_be_a_container(contrib):
-    t = _mk(contrib, name="A topic")
-    s, out = contrib.post("/api/kb/nodes", {"type": "module", "name": "M", "scope": t["id"]})
-    assert s == 422 and out["field"] == "scope"
+def test_placement_must_follow_the_contains_rules(editor):
+    # `scope` is a placement: the parent must be allowed to contain this type.
+    t = _mk(editor, name="A topic")
+    s, out = editor.post("/api/kb/nodes", {"type": "module", "name": "M", "scope": t["id"]})
+    assert s == 422 and out["field"] == "parents.0" and "not allowed from topic to module" in out["message"]
 
 
 # --- edges -------------------------------------------------------------------
@@ -367,7 +373,9 @@ def test_members_and_types_are_admin_only(admin, editor):
     assert editor.get("/api/kb/members")[0] == 403
     s, out = admin.get("/api/kb/members")
     assert s == 200 and {m["role"] for m in out["items"]} >= {"admin", "editor"}
-    assert editor.post("/api/kb/types/node", {"key": "lab", "label": "Lab"})[0] == 403
+    # Editors PROPOSE type changes (an admin approves in Approvals); admins apply.
+    s, out = editor.post("/api/kb/types/node", {"key": "lab", "label": "Lab"})
+    assert s == 202 and out["proposal_id"]
     s, t = admin.post("/api/kb/types/node", {"key": "lab", "label": "Lab"})
     assert s == 201
     s, _ = admin.post("/api/kb/types/node", {"key": "lab", "label": "Lab again"})
@@ -391,7 +399,9 @@ def test_quality_overview(contrib, viewer):
     _mk(contrib, name="Lonely Topics")
     s, q = viewer.get("/api/kb/quality")
     assert s == 200
-    assert q["totals"]["live"] == 4 and q["totals"]["orphans"] == 4 and q["totals"]["no_resources"] == 3
+    # The module is placed in the course (a `contains` edge, 0027), so only the
+    # two lonely topics are unconnected.
+    assert q["totals"]["live"] == 4 and q["totals"]["orphans"] == 2 and q["totals"]["no_resources"] == 3
     course = [x for x in q["courses"] if x["id"] == c["id"]][0]
     assert course["contents"] == 1 and float(course["completeness"]) == 50.0      # module has one, course none
     assert {d["a_name"] for d in q["duplicates"]} | {d["b_name"] for d in q["duplicates"]} >= {"Lonely Topic", "Lonely Topics"}
@@ -409,9 +419,9 @@ def test_members_show_every_members_email_and_people_is_for_members(admin, viewe
 
 
 def test_owner_defaults_to_the_creator_can_be_changed_and_quality_lists_unowned(contrib, viewer):
-    n = _mk(contrib, name="Owned Topic")
-    assert n["owner_id"] == USERS["contributor"]                 # the creator owns it by default
-    assert _mk(contrib, name="Unowned Topic", owner_id=None)["owner_id"] is None
+    n = _mk(Client(USERS["editor"]), name="Owned Topic")
+    assert n["owner_id"] == USERS["editor"]                      # the creator owns it by default
+    assert _mk(Client(USERS["editor"]), name="Unowned Topic", owner_id=None)["owner_id"] is None
     unowned = lambda: sorted(u["name"] for u in viewer.get("/api/kb/quality")[1]["unowned"])  # noqa: E731
     assert unowned() == ["Unowned Topic"]
     s, n = contrib.patch(f"/api/kb/nodes/{n['id']}", {"version": n["version"], "owner_id": USERS["editor"]})
@@ -424,9 +434,10 @@ def test_course_shape_types_and_new_resource_kinds(contrib):
     c = _mk(contrib, "course", "Shape Course")
     d = _mk(contrib, "domain", "Shape Domain")
     m = _mk(contrib, "module", "Shape Module", scope=c["id"])
-    w = _mk(contrib, "week", "Shape Week", scope=c["id"])
-    se = _mk(contrib, "session", "Shape Session", scope=c["id"])
-    for t, a, b in (("covers", c, d), ("contains", m, w), ("contains", w, se)):
+    w = _mk(contrib, "week", "Shape Week")
+    se = _mk(contrib, "session", "Shape Session", parents=[w["id"]])     # placement creates week contains session
+    assert [p["node_name"] for p in se["parents"]] == ["Shape Week"]
+    for t, a, b in (("covers", c, d), ("contains", m, w)):
         assert contrib.post("/api/kb/edges", {"type": t, "source_id": a["id"], "target_id": b["id"]})[0] == 201
     assert contrib.post("/api/kb/edges", {"type": "contains", "source_id": se["id"], "target_id": w["id"]})[0] == 422
     for kind in ("recording", "assignment", "solution", "repo"):  # taxonomy-literal-ok: a KB resource kind (migration 0026 CHECK), not the corpus-graph taxonomy

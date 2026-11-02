@@ -73,7 +73,8 @@ def call(method: str, path: str, *, params: dict | None = None, body: dict | Non
         data = {"error": "bad_response", "message": r.text[:200]}
     if r.status_code == 202:
         return {"status": "approval_required", "proposal_id": data.get("proposal_id"),
-                "message": data.get("message") + ". Nothing was archived; a person approves it in the app (Approvals)."}
+                "message": (data.get("message") or "Recorded as a proposal").rstrip(".")
+                + ". Nothing was changed yet; a person approves it in the app (Approvals)."}
     if r.status_code == 401:
         raise ToolError("the KB API token was rejected (invalid, expired or revoked). Mint a new one in the app.")
     if r.status_code >= 400:
@@ -110,6 +111,23 @@ mcp = FastMCP("ik-knowledge-base", instructions=(
 
 
 # ---------------------------------------------------------------------------- read
+@mcp.tool()
+def list_types() -> str:
+    """The workspace's record types (with their custom fields: key, label, kind,
+    required, options), relationship types (with allowed source -> target pairs and
+    cardinality) and link kinds. Read this before creating records of a custom type."""
+    t = call("GET", "/types")
+    out = {"record_types": [{k: x.get(k) for k in ("key", "label", "plural", "description", "allowed_parents",
+                                                   "parent_required", "is_core")}
+                            | {"fields": [f for f in x.get("fields") or [] if not f.get("archived")]}
+                            for x in t["node_types"]],
+           "relationship_types": [{k: x.get(k) for k in ("key", "label", "inverse_label", "cardinality", "rules")}
+                                  for x in t["edge_types"]],
+           "link_kinds": [{k: x.get(k) for k in ("key", "label", "patterns")} for x in t["link_kinds"]],
+           "resource_kinds": t.get("resource_kinds")}
+    return wrap(out)
+
+
 @mcp.tool()
 def search_knowledge(query: str, types: list[str] | None = None, limit: int = 10) -> str:
     """Full-text + fuzzy search over records (and resources by title/URL).
@@ -184,26 +202,30 @@ def find_instructors(course_id: str | None = None, query: str | None = None) -> 
 # ---------------------------------------------------------------------------- write
 @mcp.tool()
 def create_node(type: str, name: str, summary: str | None = None, scope_id: str | None = None,
-                new_scope_type: str | None = None, new_scope_name: str | None = None) -> str:
-    """Create a record. Optionally inside a course/program (scope_id), or create that
-    course/program in the same step (new_scope_type + new_scope_name). Duplicate names
-    are refused with the existing record's id."""
-    body = {"type": type, "name": name, "summary": summary}
+                new_scope_type: str | None = None, new_scope_name: str | None = None,
+                props: dict | None = None, parent_ids: list[str] | None = None) -> str:
+    """Create a record of any type (see list_types for types and their fields).
+    Place it under parents (parent_ids) or inside a course/program (scope_id), or
+    create that course/program in the same step (new_scope_type + new_scope_name).
+    `props` holds custom field values keyed by field key. Duplicate names are
+    refused with the existing record's id. With a contributor's token the create
+    becomes a proposal that a person approves."""
+    body = {"type": type, "name": name, "summary": summary, "props": props, "parents": parent_ids}
     if scope_id:
         body["scope"] = scope_id
     elif new_scope_name:
         body["scope"] = {"new": {"type": new_scope_type or "course", "name": new_scope_name}}
     n = call("POST", "/nodes", body={k: v for k, v in body.items() if v is not None})
-    return wrap(n, [link(n["id"])])
+    return wrap(n, [link(n["id"])] if n.get("id") else [])
 
 
 @mcp.tool()
 def update_node(node_id: str, version: int, name: str | None = None, summary: str | None = None,
-                body: str | None = None, status: str | None = None) -> str:
+                body: str | None = None, status: str | None = None, props: dict | None = None) -> str:
     """Edit a record. `version` must be the one you read (get_node); if someone changed
     it since, this fails with a conflict instead of overwriting their work."""
-    changes = {k: v for k, v in {"name": name, "summary": summary, "body": body, "status": status}.items()
-               if v is not None}
+    changes = {k: v for k, v in {"name": name, "summary": summary, "body": body, "status": status,
+                                 "props": props}.items() if v is not None}
     n = call("PATCH", f"/nodes/{quote(node_id)}", body={"version": version, **changes})
     return wrap(n, [link(n["id"])])
 
