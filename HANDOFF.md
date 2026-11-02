@@ -96,11 +96,10 @@ Full detail: docs/TEST_RESULTS.md.
   DB with the kb round trip; lint; plugin validation; security spot checks; RLS on
   every kb table; every KB test file passing (91 KB tests: 27 schema/RLS, 30 API,
   14 browser E2E, 3 concurrency, 6 import, 6 MCP, 5 plugin).
-- **Not completed:** the final full-suite run inside `verify_all.sh`, including the
-  regression comparison against `docs/baseline-failures.txt`. Claude Code stopped it
-  because the machine was low on memory. Run `bash scripts/verify_all.sh` once to
-  close this out. Existing repo guard tests affected by the change were run
-  individually and pass.
+- **Full suite + regression comparison:** PASS on re-run (`bash scripts/verify_all.sh`):
+  1089 passed, 22 failed, 21 errors, 50 skipped. Every failure and error is a
+  pre-existing baseline item (`docs/baseline-failures.txt`); no regressions;
+  `VERIFY: ALL PASS`.
 - **Pre-existing, not fixed:** `project_graph.py` fails on a fresh DB
   (`corpus_names_a_file`); 12 Windows-only test failures (docs/AUDIT.md).
 - **Limitations:** no presence indicators; collaboration uses 4-second polling, not

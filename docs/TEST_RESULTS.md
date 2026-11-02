@@ -33,7 +33,7 @@ production database.
 | Plugin server copy in sync; `claude plugin validate --strict` | PASS |
 | No server key names / JWTs in `public/`; `.env` untracked; no secret-shaped strings in `git log -p` | PASS |
 | RLS enabled and policies present on every `kb` table | PASS |
-| **Full suite + regression comparison vs baseline** | **NOT COMPLETED** — the run was stopped by Claude Code's low-memory reaper during this step. Re-run `bash scripts/verify_all.sh` to get it. |
+| **Full suite + regression comparison vs baseline** | **PASS** (re-run 2026-11-02, `bash scripts/verify_all.sh`): 1089 passed, 22 failed, 21 errors, 50 skipped in 6m31s — every failure and error is in `docs/baseline-failures.txt`; all KB tests pass; `VERIFY: ALL PASS` |
 
 ## Concurrency (measured)
 

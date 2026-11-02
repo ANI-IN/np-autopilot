@@ -32,7 +32,7 @@ credentials, no LLM key, no Vercel token; local Supabase stack via Docker is ava
 - [x] **M8 Sheets import** — fetch/stage/validate/dry-run/apply, idempotent, synthetic fixture.
 - [x] **M9 MCP server** — `mcp_server/kb_server.py`, token auth, all tools, automated test.
 - [x] **M10 Skills + plugin** — skills inside `plugins/ik-knowledge-assistant/` (PROGRESS D8).
-- [x] Phase 5 handoff. Phase 4: all steps PASS except the final full-suite regression run (stopped by the low-memory reaper; re-run `scripts/verify_all.sh`).
+- [x] Phase 5 handoff. Phase 4: all steps PASS, including the full-suite regression run (re-run: 1089 pass, no regressions).
 
 Cut order (from the wrapper): presence → MCP validation tools → plugin skeleton → graph filters
 beyond type → Sheets apply.

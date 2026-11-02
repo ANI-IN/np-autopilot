@@ -22,6 +22,7 @@ via Docker used for everything).
 - [T+0:55] Stretch: data-quality dashboard + CSV export (tests pass). E2E now runs under production CSP.
 - [T+1:00] Perf (5,000 nodes / 15,000 edges): see docs/TEST_RESULTS.md.
 - [T+1:05] Phase 4: verify_all.sh — clone, reset-DB migrations, lint, plugin, security, RLS all PASS; full-suite step stopped by the low-memory reaper (not re-run, per the reaper notice). Handoff written.
+- [re-run] `bash scripts/verify_all.sh`: full suite 1089 pass / 22 fail / 21 error / 50 skip — all failures baseline, no regressions, VERIFY: ALL PASS.
 
 ## Decisions
 
