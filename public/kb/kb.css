@@ -68,7 +68,8 @@ kbd { font: 11px var(--mono); padding: 1px 5px; border: 1px solid var(--border-s
 .nav a:hover { background: var(--surface-3); text-decoration: none; color: var(--text); }
 .nav a.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-1); }
 .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-2); }
-.whoami { font-size: var(--t-sm); color: var(--text-2); }
+.whoami { font-size: var(--t-sm); color: var(--text-2); min-width: 0; }
+.who-email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .main { overflow-y: auto; min-width: 0; position: relative; }
 .view { padding: var(--s-5) var(--s-6); max-width: 1180px; }
 .panel { border-left: 1px solid var(--border); background: var(--surface); overflow-y: auto; padding: var(--s-4) var(--s-5); }
@@ -136,7 +137,9 @@ label.field input, label.field select, label.field textarea { color: var(--text)
 .rel:last-child { border-bottom: 0; }
 .rel .label { color: var(--text-3); min-width: 90px; }
 .kv { display: grid; grid-template-columns: 110px 1fr; gap: 4px var(--s-3); font-size: var(--t-sm); }
-.kv dt { color: var(--text-3); } .kv dd { margin: 0; }
+.kv dt { color: var(--text-3); } .kv dd { margin: 0; min-width: 0; }
+.kv dd select { max-width: 100%; }
+.graph-starts { margin-top: var(--s-5); }
 .diff { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 4px var(--s-2); font-size: var(--t-sm); margin: var(--s-3) 0; }
 .diff .h { font-weight: 600; color: var(--text-3); }
 .diff .mine { background: var(--accent-soft); padding: 2px 6px; border-radius: var(--r-1); }

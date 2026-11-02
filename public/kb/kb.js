@@ -6,8 +6,22 @@
 
   var SESSION_KEY = 'np_session';
   var POLL_MS = 4000;
+  // Mirrors web/lib/kb/validate.py RESOURCE_KINDS (the database CHECK, 0026).
+  var RESOURCE_KINDS = ['link', 'slides', 'recording', 'assignment', 'solution', 'repo', 'doc', 'sheet', 'video', 'pdf', 'folder', 'other'];
+  /* A starting guess from the URL, shown in the Kind select; the person can change it. */
+  function guessKind(url) {
+    var u = String(url || '').toLowerCase();
+    if (/github\.com|gitlab\.com|bitbucket\.org/.test(u)) return 'repo';
+    if (/zoom\.us\/rec|vimeo\.com|youtube\.com|youtu\.be|loom\.com/.test(u)) return 'recording';
+    if (/docs\.google\.com\/presentation/.test(u)) return 'slides';
+    if (/docs\.google\.com\/spreadsheets/.test(u)) return 'sheet';
+    if (/docs\.google\.com\/document/.test(u)) return 'doc';
+    if (/drive\.google\.com\/drive\/folders/.test(u)) return 'folder';
+    if (/\.pdf(\?|#|$)/.test(u)) return 'pdf';
+    return 'link';
+  }
   var S = { session: null, me: null, types: [], edgeTypes: [], typeByKey: {}, route: null,
-            panel: null, feedCursor: null, feedFails: 0, listReload: null };
+            panel: null, feedCursor: null, feedFails: 0, listReload: null, people: [], personById: {} };
 
   // ------------------------------------------------------------------ dom
   function el(tag, props) {
@@ -55,7 +69,9 @@
     if (a.actor_type === 'ai') return 'AI assistant';
     if (a.actor_type === 'import') return 'Sheets import';
     if (a.actor_type === 'system') return 'System';
-    return S.me && a.actor_id === S.me.user_id ? 'You' : 'A teammate';
+    if (S.me && a.actor_id === S.me.user_id) return 'You';
+    var p = S.personById[a.actor_id];
+    return p && p.email ? p.email.split('@')[0] : 'A teammate';
   }
 
   // ------------------------------------------------------------------ api
@@ -141,10 +157,12 @@
     try {
       var res = await Promise.all([api('GET', '/me'), api('GET', '/types')]);
       S.me = res[0]; setTypes(res[1]);
+      if (S.me.role !== 'none') await loadPeople();
     } catch (e) { if (e.status !== 401) showGate('The knowledge base is unavailable: ' + e.message); return; }
     if (S.me.role === 'none') { showGate('Your account has no access to the knowledge base yet. Ask an admin to grant you a role.'); return; }
     document.body.dataset.role = S.me.role;
-    $('#whoami').textContent = ((S.session.user && S.session.user.email) || 'Signed in') + ' · ' + S.me.role;
+    var who = (S.session.user && S.session.user.email) || 'Signed in';
+    add(clear($('#whoami')), [el('div', { class: 'who-email', title: who, text: who }), el('div', { class: 'faint', text: 'Role: ' + S.me.role })]);
     $('#palette-kbd').textContent = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
     window.addEventListener('hashchange', route);
     document.addEventListener('keydown', globalKeys);
@@ -154,6 +172,21 @@
     route();
     startFeed();
     refreshPending();
+  }
+  async function loadPeople() {
+    try { S.people = (await api('GET', '/people')).items; } catch (e) { S.people = []; }
+    S.personById = {}; S.people.forEach(function (p) { S.personById[p.user_id] = p; });
+  }
+  function personName(id) {
+    if (!id) return null;
+    if (S.me && id === S.me.user_id) return 'You';
+    var p = S.personById[id]; return p ? p.email : 'A former member';
+  }
+  function ownerSelect(n) {
+    var s = el('select', { 'aria-label': 'Owner', 'data-testid': 'panel-owner' }, el('option', { value: '', text: 'No owner', selected: !n.owner_id }));
+    S.people.forEach(function (p) { if (p.role !== 'viewer') s.appendChild(el('option', { value: p.user_id, text: p.user_id === S.me.user_id ? p.email + ' (you)' : p.email, selected: n.owner_id === p.user_id })); });
+    s.addEventListener('change', function () { saveNode({ owner_id: s.value || null }); });
+    return s;
   }
   function setTypes(t) {
     S.types = t.node_types; S.edgeTypes = t.edge_types; S.typeByKey = {};
@@ -481,6 +514,7 @@
     add(kv, [el('dt', { text: 'Belongs to' }), scopeDd]);
     if (S.typeByKey[n.type] && S.typeByKey[n.type].is_container) add(kv, [el('dt', { text: 'Contains' }), el('dd', null, el('a', { href: '#/records' + qs({ scope: n.id }), text: n.children_count + ' record(s)' }))]);
     add(kv, [el('dt', { text: 'Status' }), el('dd', null, editable ? statusSelect(n) : (n.status))]);
+    add(kv, [el('dt', { text: 'Owner' }), el('dd', null, editable ? ownerSelect(n) : (personName(n.owner_id) || el('span', { class: 'faint', text: 'No owner' })))]);
     add(kv, [el('dt', { text: 'Updated' }), el('dd', { text: ago(n.updated_at) }), el('dt', { text: 'Created' }), el('dd', { text: new Date(n.created_at).toLocaleString() })]);
     if (n.external_id) add(kv, [el('dt', { text: 'Imported from' }), el('dd', { class: 'mono', text: n.external_id })]);
     p.appendChild(kv);
@@ -698,7 +732,7 @@
     var list = el('ul', { class: 'picker-menu', style: 'position:static;box-shadow:none;max-height:200px', 'data-testid': 'attach-results' });
     var title = el('input', { placeholder: 'Title for a new resource', 'aria-label': 'Title', 'data-testid': 'attach-title', maxlength: '300' });
     var kind = el('select', { 'aria-label': 'Kind', 'data-testid': 'attach-kind' });
-    ['link', 'doc', 'sheet', 'slides', 'video', 'pdf', 'folder', 'other'].forEach(function (k) { kind.appendChild(el('option', { value: k, text: k })); });
+    RESOURCE_KINDS.forEach(function (k) { kind.appendChild(el('option', { value: k, text: k })); });
     var note = el('input', { placeholder: 'How it relates (optional)', 'aria-label': 'Note', 'data-testid': 'attach-note', maxlength: '2000' });
     var chosen = [];
     var chips = el('div', { class: 'row', 'data-testid': 'attach-chosen' });
@@ -714,6 +748,7 @@
       } catch (e) { list.appendChild(el('li', { class: 'field-error', text: e.message })); }
     }, 200);
     search.addEventListener('input', find);
+    search.addEventListener('input', function () { if (isUrl(search.value.trim())) kind.value = guessKind(search.value.trim()); });
     var addNew = el('button', { class: 'btn sm', type: 'button', text: 'Add URL', 'data-testid': 'attach-add-url', onclick: function () {
       var u = search.value.trim(); err.textContent = '';
       if (!isUrl(u)) { err.textContent = 'Paste a full http(s) URL to add a new resource.'; return; }
@@ -745,7 +780,7 @@
       can('contributor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-resource', text: 'New resource', onclick: newResourceModal }) : null));
     var qIn = el('input', { type: 'search', placeholder: 'Filter by title or URL…', value: f.q, 'aria-label': 'Filter', 'data-testid': 'res-filter' });
     var kSel = el('select', { 'aria-label': 'Kind' }, el('option', { value: '', text: 'Any kind' }));
-    ['link', 'doc', 'sheet', 'slides', 'video', 'pdf', 'folder', 'other'].forEach(function (k) { kSel.appendChild(el('option', { value: k, text: k, selected: f.kind === k })); });
+    RESOURCE_KINDS.forEach(function (k) { kSel.appendChild(el('option', { value: k, text: k, selected: f.kind === k })); });
     var sSel = el('select', { 'aria-label': 'Status' }, el('option', { value: 'live', text: 'Live' }), el('option', { value: 'archived', text: 'Archived', selected: f.status === 'archived' }));
     qIn.addEventListener('input', debounce(function () { f.q = qIn.value; setQuery({ q: f.q }, true); reset(); }, 250));
     kSel.addEventListener('change', function () { f.kind = kSel.value; setQuery({ kind: f.kind }, true); reset(); });
@@ -778,7 +813,8 @@
     var err = el('div', { class: 'field-error', role: 'alert' });
     var url = el('input', { type: 'url', placeholder: 'https://…', required: true, 'data-testid': 'res-url', autofocus: true, maxlength: '2048' });
     var title = el('input', { required: true, 'data-testid': 'res-title', maxlength: '300' });
-    var kind = el('select', { 'data-testid': 'res-kind' }); ['link', 'doc', 'sheet', 'slides', 'video', 'pdf', 'folder', 'other'].forEach(function (k) { kind.appendChild(el('option', { value: k, text: k })); });
+    var kind = el('select', { 'data-testid': 'res-kind' }); RESOURCE_KINDS.forEach(function (k) { kind.appendChild(el('option', { value: k, text: k })); });
+    url.addEventListener('input', function () { kind.value = guessKind(url.value.trim()); });
     openModal(el('form', { novalidate: true, onsubmit: async function (e) {
       e.preventDefault(); err.textContent = '';
       try { var r = await api('POST', '/resources', { url: url.value.trim(), title: title.value, kind: kind.value }); closeModal(); toast('Added “' + r.title + '”'); setQuery({ res: r.id }); if (S.listReload) S.listReload(); }
@@ -824,7 +860,7 @@
   function editResourceModal() {
     var r = S.panel.res, err = el('div', { class: 'field-error', role: 'alert' });
     var url = el('input', { value: r.url, 'data-testid': 'res-edit-url' }), title = el('input', { value: r.title, 'data-testid': 'res-edit-title' });
-    var kind = el('select'); ['link', 'doc', 'sheet', 'slides', 'video', 'pdf', 'folder', 'other'].forEach(function (k) { kind.appendChild(el('option', { value: k, text: k, selected: r.kind === k })); });
+    var kind = el('select'); RESOURCE_KINDS.forEach(function (k) { kind.appendChild(el('option', { value: k, text: k, selected: r.kind === k })); });
     openModal(el('form', { onsubmit: async function (e) {
       e.preventDefault(); err.textContent = '';
       var body = { version: r.version }; if (url.value.trim() !== r.url) body.url = url.value.trim(); if (title.value !== r.title) body.title = title.value; if (kind.value !== r.kind) body.kind = kind.value;
@@ -836,12 +872,22 @@
   }
 
   // ------------------------------------------------------------------ graph
-  var SHAPES = { program: 'round-hexagon', course: 'round-rectangle', module: 'ellipse', topic: 'ellipse', instructor: 'round-diamond', process: 'round-triangle' };
+  var SHAPES = { program: 'round-hexagon', course: 'round-rectangle', module: 'ellipse', topic: 'ellipse', instructor: 'round-diamond', process: 'round-triangle',
+                 domain: 'round-pentagon', week: 'round-tag', session: 'barrel' };
   function viewGraph(v, r) {
     var center = r.path[1];
     if (!center) {
       v.appendChild(el('div', { class: 'page-head' }, el('div', null, el('h1', { text: 'Graph' }), el('div', { class: 'muted', text: 'Pick a record to explore its neighbourhood. The graph never loads everything at once.' }))));
       v.appendChild(el('div', { style: 'max-width:420px' }, nodePicker({ placeholder: 'Start from…', testid: 'graph-start', onPick: function (n) { if (n) location.hash = '#/graph/' + n.id; } })));
+      var starts = el('div', { class: 'graph-starts', 'data-testid': 'graph-starts' }); v.appendChild(starts);
+      Promise.all(containerKeys().map(function (k) { return api('GET', '/nodes' + qs({ type: k, sort: 'name', limit: 12 })); })).then(function (rs) {
+        var items = [].concat.apply([], rs.map(function (x) { return x.items; }));
+        if (!items.length) return;
+        add(starts, [el('div', { class: 'small muted', text: 'Or start from a program or course' })]);
+        var row = el('div', { class: 'row', style: 'flex-wrap:wrap;gap:8px;margin-top:8px' });
+        items.forEach(function (n) { row.appendChild(el('a', { class: 'btn', href: '#/graph/' + n.id + '?depth=2', 'data-testid': 'graph-start-chip' }, typePill(n.type), n.name)); });
+        starts.appendChild(row);
+      }).catch(function () { /* the picker still works */ });
       return;
     }
     var depth = r.q.depth === '2' ? 2 : 1, hidden = {}, connectFrom = null;
@@ -893,9 +939,10 @@
         expanded[id] = true;
         if (isRoot) cy.getElementById(center).addClass('center');
         applyFilter();
-        cy.layout({ name: batch.length > 150 ? 'concentric' : 'cose', animate: false, fit: isRoot, padding: 30,
+        cy.layout({ name: batch.length > 150 ? 'concentric' : 'cose', animate: false, fit: isRoot, padding: 40,
+          idealEdgeLength: function () { return 90; }, nodeRepulsion: function () { return 60000; }, componentSpacing: 80,
           concentric: function (n) { return n.id() === center ? 10 : 10 - (n.data('degree') > 5 ? 1 : 2); } }).run();
-        if (isRoot && cy.zoom() > 1.25) { cy.zoom(1.25); cy.center(); }
+        if (isRoot && cy.zoom() > 1.6) { cy.zoom(1.6); cy.center(); }
         info.textContent = status();
         if (nb.truncated) toast('Showing ' + nb.nodes.length + ' of ' + nb.total + ' records around this one.');
       } catch (e) { if (isRoot) wrap.appendChild(errorBox(e, function () { load(id, d, isRoot); })); else failToast(e, 'Could not expand'); }
@@ -958,12 +1005,25 @@
         if (!q.orphans.length) ul.appendChild(el('li', { class: 'faint small', text: 'Every record has at least one relationship.' }));
         q.orphans.forEach(function (n) { ul.appendChild(el('li', null, typePill(n.type), el('a', { href: '#/quality' + qs({ open: n.id }), text: n.name }))); });
         out.appendChild(ul);
+        out.appendChild(el('h2', { text: 'Records without an owner', style: 'margin-top:24px' }));
+        var ol = el('ul', { class: 'list', 'data-testid': 'q-unowned' });
+        if (!q.unowned.length) ol.appendChild(el('li', { class: 'faint small', text: 'Every record has an owner.' }));
+        q.unowned.forEach(function (n) { ol.appendChild(el('li', null, typePill(n.type), el('a', { href: '#/quality' + qs({ open: n.id }), text: n.name }))); });
+        out.appendChild(ol);
+        var L = q.links;
+        out.appendChild(el('h2', { text: 'Link health', style: 'margin-top:24px' }));
+        out.appendChild(el('p', { class: 'muted small', 'data-testid': 'q-link-summary', text: L.checked + ' of ' + L.resources + ' resource link(s) checked · ' + L.ok + ' working · ' + L.needs_auth + ' need sign-in · ' + L.problems + ' broken' }));
+        var bl = el('ul', { class: 'list', 'data-testid': 'q-broken-links' });
+        if (!L.items.length) bl.appendChild(el('li', { class: 'faint small', text: L.checked ? 'No broken links among the checked resources.' : 'No links checked yet.' }));
+        L.items.forEach(function (r) { bl.appendChild(el('li', null, el('span', { class: 'pill danger', text: r.http_status ? 'HTTP ' + r.http_status : r.status }), el('span', { class: 'pill', text: r.kind }),
+          el('a', { href: '#/resources' + qs({ res: r.id }), text: r.title }), el('span', { class: 'faint small mono', text: r.url }), el('span', { class: 'spacer' }), el('span', { class: 'faint small', text: 'checked ' + ago(r.checked_at) }))); });
+        out.appendChild(bl);
+        out.appendChild(el('p', { class: 'faint small', style: 'margin-top:8px', text: 'Links are checked by the knowledge assistant (the check_broken_links tool in Claude Code), never by this server. Google Drive links behind sign-in count as “need sign-in”, not broken.' }));
         out.appendChild(el('h2', { text: 'Possible duplicates', style: 'margin-top:24px' }));
         var dl = el('ul', { class: 'list', 'data-testid': 'q-duplicates' });
         if (!q.duplicates.length) dl.appendChild(el('li', { class: 'faint small', text: 'No similar names found.' }));
         q.duplicates.forEach(function (d) { dl.appendChild(el('li', null, typePill(d.type), el('a', { href: '#/quality' + qs({ open: d.a_id }), text: d.a_name }), el('span', { class: 'faint', text: '↔' }), el('a', { href: '#/quality' + qs({ open: d.b_id }), text: d.b_name }), el('span', { class: 'spacer' }), el('span', { class: 'faint small', text: 'similarity ' + d.similarity }))); });
         out.appendChild(dl);
-        out.appendChild(el('p', { class: 'faint small', style: 'margin-top:16px', text: 'Link health is checked by the MCP tool check_broken_links (Google Drive links behind sign-in count as “needs access”, not broken).' }));
       } catch (e) { clear(out).appendChild(errorBox(e, load)); }
     };
     S.listReload = load; load();
@@ -1008,7 +1068,7 @@
     var tok = el('section', { 'data-testid': 'tokens' }); v.appendChild(tok);
     tok.appendChild(el('h2', { text: 'API tokens for Claude (MCP)' }));
     tok.appendChild(el('p', { class: 'muted small', text: 'A token lets an AI assistant act as you, with your role, through the MCP server. It is shown once. Archive and delete requests made with it always need a person\'s approval.' }));
-    var nameIn = el('input', { placeholder: 'Token name, e.g. “laptop Claude Code”', 'aria-label': 'Token name', 'data-testid': 'token-name', maxlength: '80' });
+    var nameIn = el('input', { placeholder: 'Token name, e.g. “laptop Claude Code”', 'aria-label': 'Token name', 'data-testid': 'token-name', maxlength: '80', style: 'width:280px' });
     var days = el('select', { 'aria-label': 'Expiry' }, el('option', { value: '30', text: '30 days' }), el('option', { value: '90', text: '90 days', selected: true }), el('option', { value: '365', text: '1 year' }));
     tok.appendChild(el('div', { class: 'row' }, nameIn, days, el('button', { class: 'btn primary', type: 'button', text: 'Create token', 'data-testid': 'token-create', onclick: async function () {
       if (!nameIn.value.trim()) { nameIn.focus(); toast('Name the token first.', { error: true }); return; }

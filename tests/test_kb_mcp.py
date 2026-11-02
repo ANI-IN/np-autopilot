@@ -133,6 +133,7 @@ def test_every_tool_end_to_end(base):
     assert {m["name"] for m in out["missing"]["result"]} == {"MCP Topic"}
     assert out["validate"]["result"]["children"] >= 1
     assert out["links"]["result"]["checked"] == 1
+    assert out["links"]["result"]["recorded"] is False     # a contributor gets results; only editors store them
     # archive tools PROPOSE; nothing was archived
     assert out["archive"]["result"]["status"] == "approval_required"
     assert out["archive_edge"]["result"]["status"] == "approval_required"

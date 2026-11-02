@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Local Demo Sign-in</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='2' width='12' height='12' rx='3' fill='%234f46e5'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/kb/kb.css">
+<link rel="stylesheet" href="/local-demo.css">
+</head>
+<body>
+<div class="demo-ribbon">Local demo · fictional data · not connected to production</div>
+<div class="gate">
+  <form class="gate-card login-card" id="login" novalidate>
+    <h1>Knowledge Base</h1>
+    <p class="muted small">Local demo sign-in. Production uses Google sign-in only; this page exists only on the local demo server.</p>
+    <label class="field">Email <input id="email" type="email" autocomplete="username" required value="demo-admin@interviewkickstart.com"></label>
+    <label class="field">Password <input id="password" type="password" autocomplete="current-password" required></label>
+    <div class="field-error" id="err" role="alert"></div>
+    <button class="btn primary" id="submit" type="submit">Sign in</button>
+    <p class="faint small" id="signed-in" hidden>You are signed in. <a href="/kb/">Open the Knowledge Base</a> · <button class="btn ghost sm" type="button" id="signout">Sign out</button></p>
+  </form>
+</div>
+<script src="/local-login.js"></script>
+</body>
+</html>

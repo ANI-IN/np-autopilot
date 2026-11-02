@@ -64,8 +64,11 @@ def _configure() -> None:
     os.environ.pop("SUPABASE_URL", None)       # no issuer check / JWKS for local tokens
 
 
-def make_app():
-    _configure()
+def make_app(configure=None, extra=None):
+    """`configure` replaces the test configuration (eval/kb_demo_server.py uses
+    the local stack's own auth instead). `extra(environ, start_response, lock)`
+    may answer a request first by returning a body, or decline with None."""
+    (configure or _configure)()
     import index
     api = index.app
     lock = threading.Lock()
@@ -76,6 +79,10 @@ def make_app():
             start_response("403 Forbidden", [("content-type", "text/plain")])
             return [b"local only"]
         path = environ.get("PATH_INFO", "/")
+        if extra is not None:
+            answered = extra(environ, start_response, lock)
+            if answered is not None:
+                return answered
         if path.startswith("/api/"):
             with lock:
                 return list(api(environ, start_response))
@@ -104,15 +111,18 @@ class _Quiet(WSGIRequestHandler):
         pass
 
 
-def main() -> int:
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
-    server = make_server("127.0.0.1", port, make_app(), server_class=_Threaded, handler_class=_Quiet)
+def serve(app, port: int) -> int:
+    server = make_server("127.0.0.1", port, app, server_class=_Threaded, handler_class=_Quiet)
     print(f"READY {port}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     return 0
+
+
+def main() -> int:
+    return serve(make_app(), int(sys.argv[1]) if len(sys.argv) > 1 else 8765)
 
 
 if __name__ == "__main__":

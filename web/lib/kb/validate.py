@@ -19,7 +19,9 @@ SUMMARY_MAX = 2000
 BODY_MAX = 100_000
 NOTE_MAX = 2000
 URL_MAX = 2048
-RESOURCE_KINDS = ("link", "doc", "sheet", "slides", "video", "pdf", "folder", "other")
+RESOURCE_KINDS = ("link", "doc", "sheet", "slides", "video", "pdf", "folder", "other",
+                  "recording", "assignment", "solution", "repo")      # 0026 widened the CHECK  # taxonomy-literal-ok: a KB resource kind (migration 0026 CHECK), not the corpus-graph taxonomy
+LINK_STATUSES = ("ok", "needs_auth", "forbidden", "broken", "timeout", "unreachable")
 NODE_STATUSES = ("draft", "active")
 PAGE_DEFAULT, PAGE_MAX = 50, 200
 

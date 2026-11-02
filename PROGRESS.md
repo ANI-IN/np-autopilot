@@ -23,6 +23,13 @@ via Docker used for everything).
 - [T+1:00] Perf (5,000 nodes / 15,000 edges): see docs/TEST_RESULTS.md.
 - [T+1:05] Phase 4: verify_all.sh — clone, reset-DB migrations, lint, plugin, security, RLS all PASS; full-suite step stopped by the low-memory reaper (not re-run, per the reaper notice). Handoff written.
 - [re-run] `bash scripts/verify_all.sh`: full suite 1089 pass / 22 fail / 21 error / 50 skip — all failures baseline, no regressions, VERIFY: ALL PASS.
+- [demo, 2026-11-02] Local demo: migration 0026 (domain/week/session types,
+  resource kinds, kb.link_checks, kb.people()), owner shown and editable in the
+  record panel, Data quality lists unowned records and broken links, demo server
+  with a local-only sign-in page, re-runnable fictional seed. Fixed: Settings →
+  Roles showed other members as uuids (profiles are self-only under RLS); the
+  tests' reset() left kb.import_runs behind, failing the import test on a re-run.
+  KB tests: 95 pass, incl. 14 browser E2E.
 
 ## Decisions
 
@@ -46,6 +53,15 @@ via Docker used for everything).
 - D10. Import duplicates against app records are flagged, never adopted automatically.
 - D11. Test users are `kbtest-<role>@interviewkickstart.com` (not `synthetic-…`, which
   `test_role_boundary` counts).
+
+- D12. Demo sign-in is a page in the eval/ demo server (never deployed), using the
+  LOCAL Supabase Auth's password grant; tokens are then verified by the
+  production code path. No change to production login.
+- D13. Link health is checked by the client (MCP `check_broken_links`) and only
+  RECORDED by the server (`POST /quality/link-results`, editor+). The server
+  never fetches user-supplied URLs (no SSRF surface on Vercel).
+- D14. Link results live in `kb.link_checks`, not on `kb.resources`, so a check
+  never bumps a resource's version and causes a spurious edit conflict.
 
 ## Blockers (each with the unblock step) — see HANDOFF.md "Action required"
 

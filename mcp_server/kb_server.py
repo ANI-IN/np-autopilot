@@ -315,7 +315,16 @@ def check_broken_links(limit: int = 50, offset: int = 0) -> str:
     summary = {}
     for r in results:
         summary[r["status"]] = summary.get(r["status"], 0) + 1
-    return wrap({"checked": len(results), "summary": summary, "results": results,
+    # Record the results so the Data quality page shows them. Needs the editor
+    # role; a lower role still gets its results, only unrecorded.
+    try:
+        call("POST", "/quality/link-results", body={"results": [
+            {"id": r["resource_id"], "status": r["status"], "http": r.get("http"),
+             "redirected_to": r.get("redirected_to")} for r in results]}) if results else None
+        recorded = bool(results)
+    except ToolError:
+        recorded = False
+    return wrap({"checked": len(results), "summary": summary, "results": results, "recorded": recorded,
                  "next_offset": offset + len(results) if len(results) == limit else None})
 
 

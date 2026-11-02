@@ -1,4 +1,4 @@
-# KB schema (`kb.*`) — migrations 0022–0025
+# KB schema (`kb.*`) — migrations 0022–0026
 
 The authored knowledge base lives in its own Postgres schema, `kb`. The pipeline's
 projection tables in `public` (`nodes`, `edges`, `node_sources`, …) are untouched:
@@ -53,6 +53,22 @@ Edge types and allowed pairs:
 | teaches | instructor→course, instructor→module |
 | prerequisite | course→course, module→module, topic→topic |
 | related | topic↔topic, course↔course, module↔module, process→process/course/program |
+
+### The course shape, link health and owner names (0026)
+
+- Node types `domain` (subject area), `week` (a week of a course), `session` (a live
+  session). Added pairs: covers course/program→domain, session→topic; contains
+  module→week, course→week, week→session; teaches instructor→session; related
+  domain↔domain.
+- Resource kinds widened: + `recording`, `assignment`, `solution`, `repo`.
+- `kb.link_checks` — the LAST link-check result per resource (`status` ok |
+  needs_auth | forbidden | broken | timeout | unreachable, `http_status`,
+  `checked_at`, `checked_by`). Separate from `kb.resources` so recording a check
+  never bumps a resource's version. Read: viewer; write: editor (RLS).
+- `kb.people()` — SECURITY DEFINER; members' `user_id, email, role`, for viewers
+  and up. Profiles and memberships stay self-only under RLS; this is the one
+  narrow window, so owners and members can be shown by email.
+- Down refuses while any record or resource uses the new types or kinds.
 
 ### Archive cascade (`kb.cascade_archive()`)
 

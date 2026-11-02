@@ -4,7 +4,7 @@ Ordered by value. Items marked **(owner)** need a human decision or credential.
 
 ## Next session — recommended 5
 
-1. **Apply 0022–0025 to a dev Supabase project, then production** (owner; HANDOFF
+1. **Apply 0022–0026 to a dev Supabase project, then production** (owner; HANDOFF
    §Action 2), bootstrap admins with `pipeline/kb_admins.py`, smoke-test `/kb/`
    on a Vercel preview.
 2. **Run the Sheets import against the real workbook** (owner supplies the sheet

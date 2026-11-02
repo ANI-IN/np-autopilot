@@ -371,7 +371,10 @@ def create_node(conn, actor: Actor, body: dict) -> dict:
     summary = v.text(body, "summary", max_len=v.SUMMARY_MAX)
     text_body = v.text(body, "body", max_len=v.BODY_MAX)
     status = v.choice(body, "status", v.NODE_STATUSES, "active")
-    owner = v.uid(body.get("owner_id"), "owner_id", required=False)
+    # Unless the caller says otherwise (including an explicit null), the creator
+    # owns what they create: "No owner" is a gap the quality page reports.
+    owner = (v.uid(body.get("owner_id"), "owner_id", required=False) if "owner_id" in body
+             else actor.user_id)
     props = v.props(body)
     scope_id, created_scope = _resolve_scope(conn, actor, body)
     row = _insert_node(conn, type_key=type_key, name=name, summary=summary, body=text_body,
@@ -1094,8 +1097,10 @@ def revoke_token(conn, actor: Actor, token_id: str) -> dict:
 
 def list_members(conn) -> list[dict]:
     require(conn, "admin", "listing roles")
+    # Emails through kb.people(): profiles are self-only under RLS, so a plain
+    # join showed an admin every OTHER member as a bare uuid.
     return _q(conn, """select m.user_id, m.role, m.version, m.updated_at, p.email
-                       from kb.memberships m left join public.profiles p on p.user_id = m.user_id
+                       from kb.memberships m left join kb.people() p on p.user_id = m.user_id
                        order by m.role, p.email""")
 
 
@@ -1294,8 +1299,62 @@ def quality_overview(conn, limit: int = 50) -> dict:
                      where r.node_id = m.nid and r.archived_at is null)) / count(m.nid)) as completeness
         from c join members m on m.cid = c.id group by c.id, c.name, c.type
         order by completeness asc, c.name limit %s""", (limit,))
-    return {"totals": totals, "orphans": orphans, "courses": courses,
-            "duplicates": find_duplicate_nodes(conn, 0.6, 20)}
+    unowned = _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
+                          where n.archived_at is null and n.owner_id is null
+                          order by t.sort_order, n.name_norm limit %s""", (limit,))
+    links = _q1(conn, """select count(*) as resources,
+                                count(lc.resource_id) as checked,
+                                count(*) filter (where lc.status = 'ok') as ok,
+                                count(*) filter (where lc.status = 'needs_auth') as needs_auth,
+                                count(*) filter (where lc.status in ('broken', 'forbidden', 'timeout', 'unreachable')) as problems
+                         from kb.resources r left join kb.link_checks lc on lc.resource_id = r.id
+                         where r.archived_at is null""")
+    links["items"] = _q(conn, """select r.id, r.title, r.url, r.kind, lc.status, lc.http_status, lc.checked_at
+                                 from kb.resources r join kb.link_checks lc on lc.resource_id = r.id
+                                 where r.archived_at is null
+                                   and lc.status in ('broken', 'forbidden', 'timeout', 'unreachable')
+                                 order by lc.checked_at desc limit %s""", (limit,))
+    return {"totals": totals, "orphans": orphans, "courses": courses, "unowned": unowned,
+            "links": links, "duplicates": find_duplicate_nodes(conn, 0.6, 20)}
+
+
+def record_link_results(conn, actor: Actor, results) -> dict:
+    """Store the LAST check result per resource (kb.link_checks). The checking
+    itself happens client-side (the MCP tool check_broken_links): this server
+    never fetches a user-supplied URL."""
+    require(conn, "editor", "recording link-check results")
+    if not isinstance(results, list) or not results:
+        raise Invalid("results must be a non-empty list", field="results")
+    if len(results) > 200:
+        raise Invalid("at most 200 results per call", field="results")
+    saved = 0
+    for r in results:
+        if not isinstance(r, dict):
+            raise Invalid("each result must be an object", field="results")
+        rid = v.uid(r.get("id"), "id")
+        status = v.choice(r, "status", v.LINK_STATUSES)
+        if not status:
+            raise Invalid("each result needs a status", field="status")
+        http = r.get("http")
+        if http is not None and (not isinstance(http, int) or not 100 <= http <= 599):
+            raise Invalid("http must be an HTTP status code", field="http")
+        final = v.text(r, "redirected_to", max_len=v.URL_MAX)
+        with _translate(conn, "link check"):
+            with conn.cursor() as cur:
+                cur.execute("""insert into kb.link_checks (resource_id, status, http_status, final_url, checked_by)
+                               select id, %s, %s, %s, kb.actor_id() from kb.resources where id = %s
+                               on conflict (resource_id) do update set status = excluded.status,
+                                   http_status = excluded.http_status, final_url = excluded.final_url,
+                                   checked_at = now(), checked_by = excluded.checked_by""",
+                            (status, http, final, rid))
+                saved += cur.rowcount
+    return {"saved": saved}
+
+
+def people(conn) -> list[dict]:
+    """Members (id, email, role) for showing owners by name. Viewer+."""
+    require(conn, "viewer", "listing people")
+    return _q(conn, "select user_id, email, role from kb.people()")
 
 
 def resources_for_link_check(conn, limit: int = 50, offset: int = 0) -> list[dict]:

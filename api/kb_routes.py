@@ -23,6 +23,8 @@ Routes (method, path after /api/kb):
   GET    /members     POST /members/{user_id}   (admin)
   GET    /instructors?course=&q=   /nodes/{id}/validate
   GET    /quality/missing-resources | /quality/duplicates | /quality/link-candidates
+  POST   /quality/link-results   (editor; records a link checker's results)
+  GET    /people   (members' ids + emails, for owner names)
 
 Authorization: a Supabase session token (browser), or a per-user KB API token
 (`ikkb_…`, MCP clients) which api/index.py resolves to its owner; token callers
@@ -84,6 +86,10 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
     if head == "quality" and method == "GET" and rest == ["link-candidates"]:
         return 200, {"items": svc.resources_for_link_check(conn, _int(params.get("limit"), 50),
                                                            _int(params.get("offset"), 0))}
+    if head == "quality" and method == "POST" and rest == ["link-results"]:
+        return 200, svc.record_link_results(conn, actor, (body or {}).get("results"))
+    if head == "people" and method == "GET" and not rest:
+        return 200, {"items": svc.people(conn)}
     if head == "instructors" and method == "GET" and not rest:
         return 200, {"items": svc.find_instructors(conn, course_id=params.get("course"), q=params.get("q"),
                                                    limit=_int(params.get("limit"), 50))}

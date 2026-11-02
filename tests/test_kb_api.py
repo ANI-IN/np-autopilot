@@ -395,3 +395,61 @@ def test_quality_overview(contrib, viewer):
     course = [x for x in q["courses"] if x["id"] == c["id"]][0]
     assert course["contents"] == 1 and float(course["completeness"]) == 50.0      # module has one, course none
     assert {d["a_name"] for d in q["duplicates"]} | {d["b_name"] for d in q["duplicates"]} >= {"Lonely Topic", "Lonely Topics"}
+
+
+def test_members_show_every_members_email_and_people_is_for_members(admin, viewer):
+    # Regression: profiles are self-only under RLS, so the admin saw other
+    # members as bare uuids until list_members read emails through kb.people().
+    s, out = admin.get("/api/kb/members")
+    assert s == 200 and all(m["email"] for m in out["items"])
+    s, people = viewer.get("/api/kb/people")
+    assert s == 200 and {p["email"] for p in people["items"]} >= {"kbtest-editor@interviewkickstart.com"}
+    assert all(set(p) == {"user_id", "email", "role"} for p in people["items"])
+    assert Client(OUTSIDER).get("/api/kb/people")[0] == 403
+
+
+def test_owner_defaults_to_the_creator_can_be_changed_and_quality_lists_unowned(contrib, viewer):
+    n = _mk(contrib, name="Owned Topic")
+    assert n["owner_id"] == USERS["contributor"]                 # the creator owns it by default
+    assert _mk(contrib, name="Unowned Topic", owner_id=None)["owner_id"] is None
+    unowned = lambda: sorted(u["name"] for u in viewer.get("/api/kb/quality")[1]["unowned"])  # noqa: E731
+    assert unowned() == ["Unowned Topic"]
+    s, n = contrib.patch(f"/api/kb/nodes/{n['id']}", {"version": n["version"], "owner_id": USERS["editor"]})
+    assert s == 200 and n["owner_id"] == USERS["editor"]
+    s, n = contrib.patch(f"/api/kb/nodes/{n['id']}", {"version": n["version"], "owner_id": None})
+    assert s == 200 and n["owner_id"] is None
+    assert unowned() == ["Owned Topic", "Unowned Topic"]
+
+def test_course_shape_types_and_new_resource_kinds(contrib):
+    c = _mk(contrib, "course", "Shape Course")
+    d = _mk(contrib, "domain", "Shape Domain")
+    m = _mk(contrib, "module", "Shape Module", scope=c["id"])
+    w = _mk(contrib, "week", "Shape Week", scope=c["id"])
+    se = _mk(contrib, "session", "Shape Session", scope=c["id"])
+    for t, a, b in (("covers", c, d), ("contains", m, w), ("contains", w, se)):
+        assert contrib.post("/api/kb/edges", {"type": t, "source_id": a["id"], "target_id": b["id"]})[0] == 201
+    assert contrib.post("/api/kb/edges", {"type": "contains", "source_id": se["id"], "target_id": w["id"]})[0] == 422
+    for kind in ("recording", "assignment", "solution", "repo"):  # taxonomy-literal-ok: a KB resource kind (migration 0026 CHECK), not the corpus-graph taxonomy
+        s, r = contrib.post("/api/kb/resources", {"url": f"https://example.com/{kind}", "title": kind, "kind": kind})
+        assert s == 201 and r["kind"] == kind, r
+    assert contrib.post("/api/kb/resources", {"url": "https://example.com/x", "title": "x", "kind": "podcast"})[0] == 422
+
+
+def test_link_results_are_editor_only_validated_and_shown(contrib, editor, viewer):
+    s, ok = contrib.post("/api/kb/resources", {"url": "https://example.com/ok", "title": "Fine"})
+    s, bad = contrib.post("/api/kb/resources", {"url": "https://example.com/gone", "title": "Gone"})
+    results = [{"id": ok["id"], "status": "ok", "http": 200}, {"id": bad["id"], "status": "broken", "http": 404}]
+    assert contrib.post("/api/kb/quality/link-results", {"results": results})[0] == 403
+    assert editor.post("/api/kb/quality/link-results", {"results": [{"id": ok["id"], "status": "fine"}]})[0] == 422
+    assert editor.post("/api/kb/quality/link-results", {"results": [{"id": ok["id"], "status": "ok", "http": 9}]})[0] == 422
+    assert editor.post("/api/kb/quality/link-results", {"results": []})[0] == 422
+    s, out = editor.post("/api/kb/quality/link-results", {"results": results})
+    assert s == 200 and out["saved"] == 2
+    links = viewer.get("/api/kb/quality")[1]["links"]
+    assert (links["resources"], links["checked"], links["ok"], links["problems"]) == (2, 2, 1, 1)
+    assert [(i["title"], i["http_status"]) for i in links["items"]] == [("Gone", 404)]
+    # Recording a check does not bump the resource version (no spurious conflicts).
+    assert viewer.get(f"/api/kb/resources/{bad['id']}")[1]["version"] == bad["version"]
+    # A later check replaces the earlier result.
+    editor.post("/api/kb/quality/link-results", {"results": [{"id": bad["id"], "status": "ok", "http": 200}]})
+    assert viewer.get("/api/kb/quality")[1]["links"]["problems"] == 0

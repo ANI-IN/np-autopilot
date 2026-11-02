@@ -57,7 +57,8 @@ step "static checks"
 node --check public/kb/kb.js && ok "kb.js parses" || bad "kb.js syntax"
 uvx -q ruff@0.14.0 check --select E9,F --target-version py312 web/lib/kb api/kb_routes.py api/index.py \
   mcp_server pipeline/kb_import_sheets.py pipeline/kb_admins.py pipeline/lib/kb_sheets.py \
-  eval/kb_dev_server.py scripts/kb_perf.py tests/kb_support.py tests/test_kb_*.py \
+  eval/kb_dev_server.py eval/kb_demo_server.py eval/kb_demo_seed.py eval/kb_local_stack.py \
+  scripts/kb_perf.py tests/kb_support.py tests/test_kb_*.py \
   && ok "ruff (errors + pyflakes) on KB code" || bad "ruff"
 cmp -s mcp_server/kb_server.py plugins/ik-knowledge-assistant/server/kb_server.py && ok "plugin server copy in sync" || bad "plugin server copy drifted"
 if command -v claude >/dev/null; then

@@ -58,7 +58,7 @@ Realtime and no auth. Reality: Python + vanilla JS, production Google SSO, CSP
 | Google SSO + profiles | Keep | already domain-restricted, verified server-side |
 | Projection schema + explorer | Keep, untouched | rebuilt by the pipeline; read-only consumers |
 | Curation tables | Keep | separate concern (pipeline inputs) |
-| Migration runner | Keep | 0022–0025 added with downs |
+| Migration runner | Keep | 0022–0026 added with downs |
 | `project_graph.py` vs fresh DB | Improve (not done) | fails `corpus_names_a_file` — owner decision |
 | Windows test portability | Improve (not done) | 12 env-specific failures |
 | Static explorer | Keep | KB workspace is a separate page (`/kb/`) sharing the session |

@@ -63,7 +63,7 @@ pipeline/kb_admins.py        ── ADMIN_EMAILS bootstrap (operator, owner conn
 
 | Path | Role |
 |---|---|
-| `db/migrations/0022–0025` | schema, RLS, import runs, token resolution |
+| `db/migrations/0022–0026` | schema, RLS, import runs, token resolution, course shape + link health + people |
 | `web/lib/kb/{service,validate,errors}.py` | rules |
 | `api/kb_routes.py`, `api/index.py::_serve_kb` | HTTP |
 | `public/kb/{index.html,kb.css,kb.js}` | UI (design system in `docs/DESIGN_SYSTEM.md`) |

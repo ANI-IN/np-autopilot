@@ -40,7 +40,7 @@
 | | `create_course(name, summary?, program_id?)`, `create_program(name, summary?)` | |
 | Approval | `archive_node(node_id, reason)`, `archive_edge(edge_id, reason)` | always a proposal |
 | Validation | `find_missing_resources(type?)`, `find_duplicate_nodes(threshold?)` | rank, never merge |
-| | `check_broken_links(limit≤50, offset)` | concurrent HEAD, 6 s timeout, redirects followed; Google 401/403 or sign-in redirect = `needs_auth`, not broken |
+| | `check_broken_links(limit≤50, offset)` | concurrent HEAD, 6 s timeout, redirects followed; Google 401/403 or sign-in redirect = `needs_auth`, not broken. Results are stored for the Data quality page when the token's role is editor+ (`recorded: true`) |
 | | `validate_course_structure(course_id)` | issues + completeness score |
 
 ## Claude Code

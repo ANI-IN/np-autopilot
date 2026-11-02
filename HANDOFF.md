@@ -6,7 +6,7 @@ Branch `auto/knowledge-platform-20261102` (pushed; **not merged, not deployed**)
 
 - Run mode: **DEGRADED** — no Supabase dev project, Google, LLM or Vercel credentials
   were available, so everything ran against the **local Supabase stack** (Docker).
-- New, additive **`kb` schema** (migrations 0022–0025) for authored knowledge:
+- New, additive **`kb` schema** (migrations 0022–0026) for authored knowledge:
   configurable node/edge types with allowed-pair rules, resources (many-to-many),
   tags, proposals, per-user API tokens, an audit log of every write, RLS on every table.
 - **`/api/kb/*`** behind the existing single front door; one service module holds every
@@ -42,10 +42,11 @@ uv venv .venv -p 3.12 && uv pip install -p .venv -r requirements.txt
 db/local/setup.sh                    # Docker; local Supabase on 54322 + pooler 6543
 export SUPABASE_DB_URL_SESSION=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 export SUPABASE_DB_URL_TRANSACTION=postgresql://postgres.pooler-dev:postgres@127.0.0.1:6543/postgres
-python pipeline/migrate.py up        # applies 0022–0025 if setup.sh predates them
+python pipeline/migrate.py up        # applies 0022–0026 if setup.sh predates them
 python eval/kb_dev_server.py 8765    # local only; then open http://127.0.0.1:8765/kb/
 ```
-Locally there is no Google sign-in; the browser tests inject a session minted with
+**Leadership demo:** `docs/DEMO.md` (local sign-in page, fictional seed data,
+reset and stop). Locally there is no Google sign-in; the browser tests inject a session minted with
 the test-only secret (`tests/kb_support.py`). Verification:
 `bash scripts/verify_all.sh [--fresh-clone] [--reset-db] [--perf]`.
 MCP: docs/MCP.md (token from Settings → API tokens; `.mcp.json` from
@@ -58,7 +59,7 @@ MCP: docs/MCP.md (token from Settings → API tokens; `.mcp.json` from
    ```bash
    export SUPABASE_DB_URL_SESSION=<session pooler URL>     # dev project
    mkdir -p backups && pg_dump "$SUPABASE_DB_URL_SESSION" --schema=public --schema=kb > backups/pre-kb-$(date +%F).sql
-   python pipeline/migrate.py status && python pipeline/migrate.py up   # 0022–0025, additive
+   python pipeline/migrate.py status && python pipeline/migrate.py up   # 0022–0026, additive
    ```
    Repeat on production after the dev smoke test (db/window/backup.sh for the full
    backup procedure). Rollback: `python pipeline/migrate.py down --to 0021` (drops only `kb`).

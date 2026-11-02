@@ -54,8 +54,11 @@ the token owner and are attributed `actor_type=ai`. Every request runs as the
 | `GET /proposals?status=` · `POST /proposals/{id}/approve\|reject` | viewer · editor (humans only) | approve executes the change |
 | `GET /tokens` · `POST /tokens` · `POST /tokens/{id}/revoke` | own | raw token returned once |
 | `GET /members` · `POST /members/{user_id}` | admin | `{role}` |
+| `GET /people` | viewer | members' `user_id, email, role` (owner names) |
 | `GET /instructors?course=&q=` | viewer | |
+| `GET /quality` | viewer | totals, completeness, orphans, `unowned`, `links` (checked/ok/needs-sign-in/broken + broken list), duplicates |
 | `GET /quality/missing-resources?type=` · `/quality/duplicates?threshold=` · `/quality/link-candidates` | viewer | |
+| `POST /quality/link-results` | editor | `{results: [{id, status, http?, redirected_to?}]}` ≤200; stores the last check per resource. The server never fetches a URL itself |
 
 Tests: `tests/test_kb_api.py` (every family: success, 422, 403, 404, 409 conflict,
 409 duplicate), `tests/test_kb_concurrency.py`.
