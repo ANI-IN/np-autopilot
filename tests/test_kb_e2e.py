@@ -767,3 +767,24 @@ def test_guide_promises_undo_after_create_draft_restore_and_theme(server, browse
     page.get_by_test_id("theme-dark").click()
     assert page.evaluate("document.documentElement.dataset.theme") == "dark"
     assert page.errors == []
+
+
+def test_new_record_prefills_from_the_open_record_and_shows_custom_columns(server, browser):
+    _, c = Client(USERS["editor"]).post("/api/kb/courses", {"name": "Context Course"})
+    page = page_as(browser, server, "editor")
+    open_record(page, server, c["id"])
+    page.locator("body").click(position={"x": 700, "y": 700})
+    page.keyboard.press("c")
+    expect(page.get_by_test_id("placement-picker-picked")).to_contain_text("Context Course")
+    page.get_by_test_id("create-name").fill("From context")
+    page.get_by_test_id("create-submit").click()
+    expect(page.get_by_test_id("breadcrumb")).to_contain_text("Context Course")
+    # a list of one custom type shows its fields as columns
+    Client(USERS["admin"]).post("/api/kb/types/node", {"label": "Case Study", "fields": [
+        {"label": "Difficulty", "kind": "single_select", "options": ["easy", "hard"]}]})
+    Client(USERS["editor"]).post("/api/kb/nodes", {"type": "case_study", "name": "Columned", "props": {"difficulty": "hard"}})
+    page.goto(server + "#/records?type=case_study")
+    page.reload()
+    expect(page.get_by_test_id("th-field-difficulty")).to_be_visible()
+    expect(page.get_by_test_id("row")).to_contain_text("hard")
+    assert page.errors == []

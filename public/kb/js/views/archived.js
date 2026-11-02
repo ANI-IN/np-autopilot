@@ -16,7 +16,7 @@ export function viewArchived(v, r) {
     try {
       const items = (await api('GET', '/archived?kind=' + kind)).items;
       clear(box);
-      if (!items.length) { box.appendChild(empty('Nothing archived', 'Archived ' + kind + ' appear here, ready to restore.', null, 'archive')); return; }
+      if (!items.length) { box.appendChild(empty('Nothing archived', 'Archived ' + kind + ' appear here, ready to restore.', null, 'archive', 'archive-and-permanent-delete')); return; }
       const tb = el('tbody');
       items.forEach((x) => tb.appendChild(el('tr', { 'data-testid': 'archived-row' },
         el('td', null, el('div', { class: 'cell-name' }, kind === 'records' ? typeIcon(x.type) : icon(kind === 'resources' ? 'link' : 'git-branch'), el('span', { class: 'name', text: x.name }),

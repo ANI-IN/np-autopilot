@@ -343,7 +343,9 @@ export function openRecordForm(o) {
     });
     sFields.hidden = !optionalFields.children.length;
     clear(placement);
-    if ((t.allowed_parents || []).length) placement.appendChild(placementPicker(typeKey, o.parents || null, 'placement'));
+    // Prefilled placements (from context) only where this type may live.
+    const pre = (o.parents || []).filter((p) => !p.type || (t.allowed_parents || []).includes(p.type));
+    if ((t.allowed_parents || []).length) placement.appendChild(placementPicker(typeKey, pre.length ? pre : null, 'placement'));
     else placement.appendChild(el('p', { class: 'faint small', text: typeLabel(typeKey, true) + ' are not placed under anything.' }));
     sPlace.hidden = editing;
     templateRow.hidden = editing || !t.is_container;
@@ -482,7 +484,7 @@ export function openRecordForm(o) {
   }
 
   const foot = [el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: () => requestCloseSheet() }), el('span', { class: 'spacer' }),
-    el('a', { class: 'btn ghost sm', href: '#/guide?s=create', onclick: () => closeSheet(true) }, icon('circle-help', 'sm'), 'How this works'), anotherBtn, submitBtn];
+    el('a', { class: 'btn ghost sm', href: '#/guide?s=creating-records', onclick: () => closeSheet(true) }, icon('circle-help', 'sm'), 'How this works'), anotherBtn, submitBtn];
   const sheet = openSheet({ title: editing ? 'Edit ' + typeLabel(typeKey).toLowerCase() : 'New record', body: form, foot, testid: 'record-sheet', isDirty: dirty });
   sheet.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit(false); } });
   onTypeChange();

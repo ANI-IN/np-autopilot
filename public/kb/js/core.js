@@ -271,9 +271,9 @@ export function skeletonBlock(lines) {
   for (let i = 0; i < (lines || 6); i++) w.appendChild(el('div', { class: 'skeleton', style: 'width:' + (90 - (i * 13) % 50) + '%' }));
   return w;
 }
-export function empty(title, body, action, iconName) {
+export function empty(title, body, action, iconName, help) {
   return el('div', { class: 'empty', 'data-testid': 'empty' }, iconName ? icon(iconName) : null, el('h2', { text: title }), el('p', { text: body }),
-    action || null);
+    el('div', { class: 'row' }, action || null, help ? el('a', { class: 'btn ghost sm', href: '#/guide?s=' + help, 'data-testid': 'empty-help' }, icon('circle-help', 'sm'), 'How this works') : null));
 }
 export function errorBox(e, retry) {
   const msg = e.status === 403 ? 'You do not have access to this. Ask an admin for a role that allows it.' :

@@ -23,7 +23,7 @@ async function loadProposals(box) {
   try {
     const items = (await api('GET', '/proposals')).items;
     clear(box);
-    if (!items.length) { box.appendChild(empty('Nothing waiting', 'When a contributor or the AI assistant proposes a change, it appears here for an editor to approve.', null, 'circle-check')); return; }
+    if (!items.length) { box.appendChild(empty('Nothing waiting', 'When a contributor or the AI assistant proposes a change, it appears here for an editor to approve.', null, 'circle-check', 'roles')); return; }
     const ul = el('ul', { class: 'list' });
     items.forEach((x) => {
       const p = x.payload || {};
@@ -55,7 +55,7 @@ async function loadReviews(box) {
   try {
     const items = (await api('GET', '/flags?status=open')).items;
     clear(box);
-    if (!items.length) { box.appendChild(empty('No open reviews', 'When someone flags a record or link as incorrect, the owner sees it here.', null, 'flag')); return; }
+    if (!items.length) { box.appendChild(empty('No open reviews', 'When someone flags a record or link as incorrect, the owner sees it here.', null, 'flag', 'keeping-things-accurate')); return; }
     const ul = el('ul', { class: 'list' });
     items.forEach((f) => {
       const close = (outcome) => () => {

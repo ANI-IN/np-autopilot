@@ -3,7 +3,7 @@
    bar, density toggle, result count, keyboard (j/k, Enter, x, e, /). */
 import { S, el, add, $, $$, clear, icon, typeIcon, typeLabel, api, toast, failToast, avatar, personName, ago, qs, menu, can, setQuery,
   skeletonRows, empty, errorBox, debounce, openDialog, closeDialog, combobox, nodeSource, confirmDialog, plural, you } from '../core.js';
-import { openRecordForm } from '../form.js';
+import { openRecordForm, fieldDisplay } from '../form.js';
 
 const FIXED = { programs: 'program', courses: 'course' };
 const COLS = [['scope', 'Course / program'], ['owner', 'Owner'], ['links', 'Links'], ['updated', 'Updated']];
@@ -108,12 +108,19 @@ export function viewRecords(v, r) {
   function parentPicker() { pickDialog('Show records in…', (on) => combobox({ testid: 'filter-parent-picker', placeholder: 'Search programs, courses, modules…', source: nodeSource(['program', 'course', 'domain', 'module', 'week']), onChange: on }), (x) => setQuery({ parent: x.id, view: null })); }
   function ownerPicker() { pickDialog('Owner', (on) => combobox({ placeholder: 'Search people', source: async (q) => S.people.filter((p) => !q || p.email.includes(q)).map((p) => ({ id: p.user_id, label: personName(p.user_id), sub: p.email, icon: avatar(p.user_id) })), onChange: on }), (x) => setQuery({ owner: x.id, view: null })); }
   function tagPicker() { pickDialog('Tag', (on) => combobox({ placeholder: 'Search tags', source: async (q) => (await api('GET', '/tags')).items.filter((t) => !q || t.name.includes(q)).map((t) => ({ id: t.id, label: '#' + t.name })), onChange: on }), (x) => setQuery({ tag: x.id, tag_name: x.label, view: null })); }
+  // A list of one type shows that type's custom fields as optional columns.
+  function typeFields() { const t = S.typeByKey[fixed || f.type]; return t ? (t.fields || []).filter((x) => !x.archived) : []; }
+  function fieldOn(k) { return (p.fieldCols || {})[(fixed || f.type) + ':' + k] !== false; }
   function optionsMenu(anchor) {
+    const tf = typeFields();
     menu(anchor, [{ header: true, label: 'Density' },
       { label: 'Comfortable', checked: !p.compact, fn: () => { p.compact = false; savePrefs(p); tableHost.classList.remove('compact'); } },
       { label: 'Compact', checked: p.compact, testid: 'density-compact', fn: () => { p.compact = true; savePrefs(p); tableHost.classList.add('compact'); } },
       '-', { header: true, label: 'Columns' },
-      ...COLS.map(([k, label]) => ({ label: label, checked: cols[k], fn: () => { cols[k] = !cols[k]; p.cols = cols; savePrefs(p); draw(); } }))]);
+      ...COLS.map(([k, label]) => ({ label: label, checked: cols[k], fn: () => { cols[k] = !cols[k]; p.cols = cols; savePrefs(p); draw(); } })),
+      ...(tf.length ? [{ header: true, label: typeLabel(fixed || f.type) + ' fields' }] : []),
+      ...tf.map((x) => ({ label: x.label, checked: fieldOn(x.key), testid: 'col-field-' + x.key,
+        fn: () => { p.fieldCols = p.fieldCols || {}; p.fieldCols[(fixed || f.type) + ':' + x.key] = !fieldOn(x.key); savePrefs(p); draw(); } }))]);
   }
 
   async function drawChips() {
@@ -148,13 +155,14 @@ export function viewRecords(v, r) {
     if (!items.length) {
       const filtered = f.q || f.type || f.parent || f.owner || f.tag || f.flagged || f.review || (f.status && f.status !== 'live');
       tableHost.appendChild(filtered ? empty('Nothing matches', 'Try fewer filters or a different search.', el('button', { class: 'btn sm', type: 'button', text: 'Clear filters', onclick: () => { location.hash = '#/' + r.path[0]; } }), 'search')
-        : empty('No ' + title.toLowerCase() + ' yet', 'Create the first one; it takes one form.', can('contributor') ? el('button', { class: 'btn primary sm', type: 'button', text: 'New ' + (fixed ? typeLabel(fixed).toLowerCase() : 'record'), onclick: () => openRecordForm(fixed ? { type: fixed } : {}) }) : null, 'inbox'));
+        : empty('No ' + title.toLowerCase() + ' yet', 'Create the first one; it takes one form.', can('contributor') ? el('button', { class: 'btn primary sm', type: 'button', text: 'New ' + (fixed ? typeLabel(fixed).toLowerCase() : 'record'), onclick: () => openRecordForm(fixed ? { type: fixed } : {}) }) : null, 'inbox', 'creating-records'));
       clear(foot); return;
     }
     const allBox = el('input', { type: 'checkbox', 'aria-label': 'Select all shown', 'data-testid': 'select-all', onclick: (e) => { e.stopPropagation(); if (allBox.checked) items.forEach((n) => selected.add(n.id)); else selected.clear(); draw(); drawBulk(); } });
     allBox.checked = selected.size && selected.size === items.length;
     const head = el('tr', null, el('th', { style: 'width:44px' }, allBox), el('th', { text: 'Name' }),
       cols.scope ? el('th', { class: 'col-optional', style: 'width:22%', text: 'Course / program' }) : null,
+      typeFields().filter((x) => fieldOn(x.key)).map((x) => el('th', { class: 'col-optional', style: 'width:12%', text: x.label, 'data-testid': 'th-field-' + x.key })),
       cols.owner ? el('th', { style: 'width:64px', text: 'Owner' }) : null,
       cols.links ? el('th', { class: 'col-optional num', style: 'width:64px', text: 'Links' }) : null,
       cols.updated ? el('th', { style: 'width:96px', text: 'Updated' }) : null, el('th', { style: 'width:72px', 'aria-label': 'Actions' }));
@@ -170,6 +178,7 @@ export function viewRecords(v, r) {
           n.flags ? el('span', { class: 'badge danger', title: 'Flagged as incorrect' }, icon('flag', 'sm')) : null,
           n.summary ? el('span', { class: 'desc', text: n.summary }) : null)),
         cols.scope ? el('td', { class: 'col-optional truncate faint', text: n.scope_name || '' }) : null,
+        typeFields().filter((x) => fieldOn(x.key)).map((x) => el('td', { class: 'col-optional truncate small' }, fieldDisplay(x, (n.props || {})[x.key]))),
         cols.owner ? el('td', null, avatar(n.owner_id)) : null,
         cols.links ? el('td', { class: 'col-optional num faint', text: n.links ? String(n.links) : '' }) : null,
         cols.updated ? el('td', { class: 'faint', text: ago(n.updated_at) }) : null,

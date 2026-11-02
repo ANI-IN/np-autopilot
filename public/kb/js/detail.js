@@ -246,7 +246,7 @@ function linksTab(st, editable) {
   wrap.appendChild(el('div', { class: 'section-head' }, el('h3', { text: plural(n.resources.length, 'link') }), el('span', { class: 'spacer' }),
     editable ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'attach', onclick: () => attachDialog(n, () => reloadPanel(true)) }, icon('plus', 'sm'), 'Add link') : null));
   const ul = el('ul', { class: 'list bordered', 'data-testid': 'panel-resources' });
-  if (!n.resources.length) return add(wrap, empty('No links yet', 'Attach slides, recordings, briefs or repos so people can find them from here.', editable ? el('button', { class: 'btn sm', type: 'button', onclick: () => attachDialog(n, () => reloadPanel(true)) }, 'Add a link') : null, 'link'));
+  if (!n.resources.length) return add(wrap, empty('No links yet', 'Attach slides, recordings, briefs or repos so people can find them from here.', editable ? el('button', { class: 'btn sm', type: 'button', onclick: () => attachDialog(n, () => reloadPanel(true)) }, 'Add a link') : null, 'link', 'adding-links'));
   n.resources.forEach((r) => ul.appendChild(el('li', null, linkRow(r, { actions: [
     el('a', { class: 'btn ghost sm icon', href: '#/resources?res=' + r.id, title: 'Resource details', 'aria-label': 'Details for ' + r.title }, icon('panel-right', 'sm')),
     editable ? el('button', { class: 'btn ghost sm icon', type: 'button', title: 'Edit purpose', 'aria-label': 'Edit purpose of ' + r.title, onclick: () => purposeDialog(st, r) }, icon('pencil', 'sm')) : null,
@@ -274,7 +274,7 @@ function relationshipsTab(st, editable) {
   wrap.appendChild(el('div', { class: 'section-head' }, el('h3', { text: plural(n.outgoing.length + n.incoming.length, 'relationship') }), el('span', { class: 'spacer' }),
     editable ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'connect', onclick: () => connectDialog(n, () => reloadPanel(true)) }, icon('plus', 'sm'), 'Connect') : null));
   const rows = n.outgoing.map((e) => ({ e, label: e.label })).concat(n.incoming.map((e) => ({ e, label: e.label })));
-  if (!rows.length) return add(wrap, empty('Not connected yet', 'Connect this record to the courses, topics and people it relates to.', editable ? el('button', { class: 'btn sm', type: 'button', onclick: () => connectDialog(n, () => reloadPanel(true)) }, 'Connect') : null, 'git-branch'));
+  if (!rows.length) return add(wrap, empty('Not connected yet', 'Connect this record to the courses, topics and people it relates to.', editable ? el('button', { class: 'btn sm', type: 'button', onclick: () => connectDialog(n, () => reloadPanel(true)) }, 'Connect') : null, 'git-branch', 'connecting-records'));
   const groups = {};
   rows.forEach((r) => { (groups[r.label] = groups[r.label] || []).push(r); });
   const box = el('div', { 'data-testid': 'panel-relationships' });
@@ -496,6 +496,12 @@ function renderResource(st) {
     el('dt', { text: 'Link health' }), el('dd', null, health ? el('span', { class: 'badge ' + (health.status === 'ok' ? 'ok' : health.status === 'needs_auth' ? 'warn' : 'danger'), text: (health.status === 'ok' ? 'Working' : health.status === 'needs_auth' ? 'Needs sign-in' : 'Broken') + (health.http_status ? ' · HTTP ' + health.http_status : '') }) : el('span', { class: 'faint', text: 'Not checked yet' }), health ? el('span', { class: 'faint xs', text: 'checked ' + ago(health.checked_at) }) : null),
     el('dt', { text: 'Tags' }), el('dd', null, (r.tags || []).length ? r.tags.map((t) => el('span', { class: 'token', text: '#' + t })) : el('span', { class: 'faint', text: 'None' })),
     el('dt', { text: 'Description' }), el('dd', { text: r.description || '—', style: 'white-space:pre-wrap' })]);
+  const compDd = el('dd', { 'data-testid': 'res-completeness' }, el('span', { class: 'faint', text: '…' }));
+  add(dl, [el('dt', { text: 'Completeness' }), compDd]);
+  api('GET', '/resources/' + r.id + '/completeness').then((c) => {
+    clear(compDd).append(el('div', { class: 'bar ' + (c.score >= 80 ? 'ok' : c.score >= 50 ? 'warn' : 'danger'), style: 'width:80px' }, el('span', { style: 'width:' + c.score + '%' })),
+      el('span', { class: 'tabular small', text: c.score + '%' }), c.missing.length ? el('span', { class: 'faint small truncate', text: 'Missing: ' + c.missing.join(', ') }) : null);
+  }).catch(() => clear(compDd));
   host.appendChild(el('div', { class: 'section' }, dl));
   const used = el('ul', { class: 'list bordered', 'data-testid': 'res-used-by' });
   r.nodes.forEach((x) => used.appendChild(el('li', null, el('a', { class: 'link-row', href: '#/records?open=' + x.id }, typeIcon(x.type), el('span', { class: 'truncate', text: x.name, style: 'color:var(--text)' }), x.note ? el('span', { class: 'faint xs truncate', text: '— ' + x.note }) : null))));

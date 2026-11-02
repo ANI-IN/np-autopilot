@@ -28,7 +28,7 @@ export function viewOutline(v, r) {
   S.listReload = load;
   function draw() {
     clear(body);
-    if (!data.roots.length) { body.appendChild(empty('No programs or courses yet', 'Start with a program, then add courses, modules, weeks and sessions inside it.', can('contributor') ? el('button', { class: 'btn primary sm', type: 'button', text: 'New program', onclick: () => openRecordForm({ type: 'program' }) }) : null, 'list-tree')); return; }
+    if (!data.roots.length) { body.appendChild(empty('No programs or courses yet', 'Start with a program, then add courses, modules, weeks and sessions inside it.', can('contributor') ? el('button', { class: 'btn primary sm', type: 'button', text: 'New program', onclick: () => openRecordForm({ type: 'program' }) }) : null, 'list-tree', 'finding-things')); return; }
     const ul = el('ul', { class: 'tree', role: 'tree', 'aria-label': 'Outline' });
     data.roots.forEach((n) => ul.appendChild(item(n, null, 0)));
     body.appendChild(ul);

@@ -30,6 +30,26 @@ function currentTheme() { try { return localStorage.getItem('kb_theme') || 'syst
 applyTheme(currentTheme());
 
 // ------------------------------------------------------------------ boot
+/* "New record" from the sidebar or the c key starts where you are: with a
+   record open (or a graph centred on one), the form is placed under it and
+   picks the first type that may live there. */
+export function newRecordFromContext(extra) {
+  const r = S.route || { path: [''] };
+  let n = S.panel && S.panel.node ? S.panel.node : null;
+  if (!n && r.path[0] === 'graph' && r.path[1] && S.graph) {
+    const c = S.graph.cy.getElementById(r.path[1]);
+    if (c && c.length) n = { id: c.id(), name: c.data('label'), type: c.data('type') };
+  }
+  const o = Object.assign({}, extra || {});
+  if (r.path[0] === 'courses' && !o.type && !n) o.type = 'course';
+  if (r.path[0] === 'programs' && !o.type && !n) o.type = 'program';
+  if (n && !o.parents) {
+    const child = S.types.find((t) => (t.allowed_parents || []).includes(n.type));
+    if (child) { o.type = o.type || child.key; o.parents = [{ id: n.id, label: n.name, type: n.type, icon: typeIcon(n.type) }]; }
+  }
+  openRecordForm(o);
+}
+
 function showGate(msg) { $('#gate-msg').textContent = msg; $('#gate').hidden = false; }
 setSignedOutHandler(showGate);
 
@@ -78,7 +98,7 @@ function renderSidebar() {
   sb.appendChild(el('button', { class: 'nav-search', type: 'button', 'data-testid': 'open-palette', onclick: openPalette, 'aria-label': 'Search or run a command' },
     icon('search'), el('span', { class: 'label-text', text: 'Search' }), el('span', { class: 'spacer' }), el('kbd', { text: /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K' })));
   if (can('contributor')) sb.appendChild(el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-record', style: 'width:100%;margin-bottom:4px',
-    onclick: () => openRecordForm({}) }, icon('plus'), el('span', { class: 'label-text', text: 'New record' })));
+    onclick: () => newRecordFromContext() }, icon('plus'), el('span', { class: 'label-text', text: 'New record' })));
   const nav = el('nav', { class: 'nav', id: 'nav' });
   for (const [group, items] of NAV) {
     const g = el('div', { class: 'nav-group' }, el('div', { class: 'nav-group-label', text: group }));
@@ -224,7 +244,7 @@ function globalKeys(e) {
   if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
   if ($('#dialog-overlay') || $('.sheet')) return;
   if (e.key === 'Escape' && S.panel) { e.preventDefault(); closePanel(); return; }
-  if (e.key === 'c' && can('contributor')) { e.preventDefault(); openRecordForm(S.route && S.route.path[0] === 'courses' ? { type: 'course' } : {}); return; }
+  if (e.key === 'c' && can('contributor')) { e.preventDefault(); newRecordFromContext(); return; }
   if (e.key === 'e' && S.panel && S.panel.kind === 'node' && S.panel.node && can('contributor')) { e.preventDefault(); openRecordForm({ edit: S.panel.node }); return; }
   if (S.tableKeys && S.tableKeys(e)) e.preventDefault();
 }
