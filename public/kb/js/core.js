@@ -386,6 +386,8 @@ export function combobox(o) {
   }, 150);
   input.addEventListener('input', search);
   input.addEventListener('focus', () => { if (o.openOnFocus) search(); });
+  // Clicking an input that already has focus (after Esc closed its list) opens the list again.
+  input.addEventListener('mousedown', () => { if (o.openOnFocus && !menuEl && document.activeElement === input) search(); });
   input.addEventListener('blur', () => setTimeout(closeList, 150));
   input.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {

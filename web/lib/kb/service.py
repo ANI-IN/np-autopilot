@@ -1377,7 +1377,7 @@ def list_members(conn) -> list[dict]:
     # join showed an admin every OTHER member as a bare uuid.
     return _q(conn, """select m.user_id, m.role, m.version, m.updated_at, p.email
                        from kb.memberships m left join kb.people() p on p.user_id = m.user_id
-                       order by m.role, p.email""")
+                       where m.archived_at is null order by m.role, p.email""")
 
 
 def set_role(conn, actor: Actor, user_id: str, new_role: str) -> dict:
@@ -1386,7 +1386,7 @@ def set_role(conn, actor: Actor, user_id: str, new_role: str) -> dict:
         raise Invalid("role must be viewer, contributor, editor or admin", field="role")
     with _translate(conn, "membership"):
         return _q1(conn, """insert into kb.memberships (user_id, role) values (%s, %s)
-                            on conflict (user_id) do update set role = excluded.role
+                            on conflict (user_id) do update set role = excluded.role, archived_at = null, status = 'active'
                             returning user_id, role, version""", (v.uid(user_id, "user_id"), new_role))
 
 

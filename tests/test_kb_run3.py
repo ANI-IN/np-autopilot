@@ -251,3 +251,72 @@ def test_only_admins_get_the_link_back_to_the_original_site(r):
     assert me["admin_links"] == [{"label": "Back to NP Autopilot", "href": "/", "testid": "back-to-site"}]
     s, me = Client(USERS[r]).get("/api/kb/me")
     assert s == 200 and "admin_links" not in me
+
+
+# --- B2: the rest of the CRUD matrix ---------------------------------------------
+
+def test_tags_rename_merge_archive_and_restore(admin, editor):
+    n1, n2 = _node(editor, name="Tagged one"), _node(editor, name="Tagged two")
+    for n, t in ((n1, "graphs"), (n2, "graph")):
+        s, _ = editor.post(f"/api/kb/nodes/{n['id']}/tags", {"name": t})
+        assert s in (200, 201)
+    tags = {t["name"]: t for t in editor.get("/api/kb/tags")[1]["items"]}
+    s, out = editor.patch(f"/api/kb/tags/{tags['graph']['id']}", {"version": tags["graph"]["version"], "name": "Graphs"})
+    assert s == 422                                                     # already exists: merge instead
+    s, out = editor.post(f"/api/kb/tags/{tags['graph']['id']}/merge", {"into": tags["graphs"]["id"]})
+    assert s == 200 and out["records"] == 1
+    tags = {t["name"]: t for t in editor.get("/api/kb/tags")[1]["items"]}
+    assert list(tags) == ["graphs"] and tags["graphs"]["used_by"] == 2
+    s, out = editor.post(f"/api/kb/tags/{tags['graphs']['id']}/archive")
+    assert s == 200 and len(out["removed_from"]) == 2 and editor.get("/api/kb/tags")[1]["items"] == []
+    s, _ = editor.post(f"/api/kb/tags/{tags['graphs']['id']}/restore", {"records": out["removed_from"]})
+    assert editor.get("/api/kb/tags")[1]["items"][0]["used_by"] == 2
+
+
+def test_member_removal_is_admin_only_audited_and_reversible(admin, editor):
+    s, _ = editor.post(f"/api/kb/members/{USERS['contributor']}/remove")
+    assert s == 403
+    s, _ = admin.post(f"/api/kb/members/{USERS['admin']}/remove")
+    assert s == 422                                                     # not yourself
+    s, out = admin.post(f"/api/kb/members/{USERS['contributor']}/remove")
+    assert s == 200
+    assert USERS["contributor"] not in {m["user_id"] for m in admin.get("/api/kb/members")[1]["items"]}
+    s, out = admin.post(f"/api/kb/members/{USERS['contributor']}", {"role": "contributor"})
+    assert s == 200 and USERS["contributor"] in {m["user_id"] for m in admin.get("/api/kb/members")[1]["items"]}
+    s, act = admin.get("/api/kb/activity", "table=memberships")
+    assert {"update"} <= {x["action"] for x in act["items"]}
+
+
+def test_template_rename_and_restore(admin, editor):
+    c = _node(editor, type_="course", name="Template source")
+    s, t = editor.post("/api/kb/templates", {"source_id": c["id"], "name": "Course shape"})
+    assert s == 201, t
+    s, out = editor.patch(f"/api/kb/templates/{t['id']}", {"name": "Course shape v2"})
+    assert s == 200 and out["name"] == "Course shape v2"
+    editor.post(f"/api/kb/templates/{t['id']}/archive")
+    assert editor.get("/api/kb/templates")[1]["items"] == []
+    editor.post(f"/api/kb/templates/{t['id']}/restore")
+    assert [x["name"] for x in editor.get("/api/kb/templates")[1]["items"]] == ["Course shape v2"]
+
+
+def test_relationship_type_can_be_changed_in_one_step(admin, editor):
+    s, _ = admin.post("/api/kb/types/edge", {"label": "explains", "inverse_label": "explained by", "rules": [{"source": "module", "target": "topic"}]})
+    assert s == 201
+    m = _node(editor, type_="module", name="Retype module")
+    t = _node(editor, name="Retype topic")
+    s, e = editor.post("/api/kb/edges", {"type": "covers", "source_id": m["id"], "target_id": t["id"], "note": "keep me"})
+    assert s == 201, e
+    s, e2 = editor.post(f"/api/kb/edges/{e['id']}/retype", {"type": "explains"})
+    assert s == 201 and e2["type"] == "explains" and e2["note"] == "keep me" and e2["source_id"] == m["id"]
+    assert editor.get(f"/api/kb/edges/{e['id']}")[1]["archived_at"]                # the old one is kept, archived
+    s, bad = editor.post(f"/api/kb/edges/{e2['id']}/retype", {"type": "teaches"})  # not allowed module -> topic
+    assert s == 422 and not editor.get(f"/api/kb/edges/{e2['id']}")[1]["archived_at"]   # nothing changed
+
+
+def test_dashboard_cache_is_invalidated_by_any_write(admin, editor):
+    s, d1 = admin.get("/api/kb/dashboard")
+    _node(editor, name="Fresh after cache")
+    s, d2 = admin.get("/api/kb/dashboard")
+    assert d2["totals"]["nodes"] == d1["totals"]["nodes"] + 1
+    s, c2 = admin.get("/api/kb/counts")
+    assert c2["totals"]["nodes"] == d2["totals"]["nodes"]

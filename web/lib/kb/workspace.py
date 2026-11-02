@@ -350,11 +350,30 @@ def attention_counts(conn) -> dict:
 
 
 def course_completeness(conn) -> list[dict]:
+    """Completeness of every course and program over everything inside it, in
+    three queries whatever the number of containers (was one completeness()
+    call, ~5 queries, per container: an N+1 found in run 3's EXPLAIN pass)."""
+    containers = _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
+                             where n.archived_at is null and t.is_container order by t.sort_order, n.name_norm""")
+    if not containers:
+        return []
+    pairs = _q(conn, """with recursive tree(root, id, depth) as (
+                            select n.id, n.id, 0 from kb.nodes n join kb.node_types t on t.id = n.type_id
+                            where n.archived_at is null and t.is_container
+                            union
+                            select tree.root, e.target_id, tree.depth + 1 from kb.edges e
+                            join kb.edge_types et on et.id = e.edge_type_id and et.key = 'contains'
+                            join tree on tree.id = e.source_id where e.archived_at is null and tree.depth < 6)
+                        select distinct root, id from tree""")
+    scores = completeness_map(conn)
+    members: dict[str, list[str]] = {}
+    for p_ in pairs:
+        members.setdefault(str(p_["root"]), []).append(str(p_["id"]))
     out = []
-    for c in _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
-                         where n.archived_at is null and t.is_container order by t.sort_order, n.name_norm"""):
-        sc = completeness(conn, str(c["id"]))
-        out.append({**c, "score": sc.get("tree_score", sc["score"]), "size": sc.get("tree_size", 1)})
+    for c in containers:
+        ids = [i for i in members.get(str(c["id"]), [str(c["id"])]) if i in scores]
+        vals = [scores[i]["score"] for i in ids] or [scores.get(str(c["id"]), {"score": 0})["score"]]
+        out.append({**c, "score": round(sum(vals) / len(vals)), "size": max(len(ids), 1)})
     return out
 
 
@@ -588,3 +607,134 @@ def reset_graph_positions(conn, actor: Actor, params: dict) -> dict:
     else:
         n = _q(conn, "delete from kb.graph_positions where layout = %s returning 1", (lay,))
     return {"layout": lay, "removed": len(n)}
+
+
+# ---------------------------------------------------------------------------
+# configuration CRUD completed in run 3 (B2): tags, memberships, templates,
+# a relationship's type. Every change is audited by the triggers.
+# ---------------------------------------------------------------------------
+
+def update_tag(conn, actor: Actor, tag_id: str, body: dict) -> dict:
+    require(conn, "editor", "renaming a tag")
+    v.only(body, {"version", "name", "color"})
+    tid = v.uid(tag_id, "id")
+    sets, args = [], []
+    if "name" in body:
+        nm = v.text(body, "name", required=True, max_len=60, allow_empty=False)
+        if _q1(conn, "select 1 from kb.tags where name_norm = kb.norm(%s) and id <> %s and archived_at is null", (nm, tid)):
+            raise Invalid(f"a tag called {nm!r} already exists; merge into it instead", field="name")
+        sets.append("name = %s"); args.append(nm)
+    if "color" in body:
+        sets.append("color = %s"); args.append(v.text(body, "color", required=True, max_len=7))
+    if not sets:
+        raise Invalid("nothing to change")
+    with _translate(conn, "tag"):
+        row = _q1(conn, f"update kb.tags set {', '.join(sets)} where id = %s and version = %s and archived_at is null "
+                        "returning id, name, color, version", (*args, tid, v.version(body)))
+    if not row:
+        cur = _q1(conn, "select id, name, color, version from kb.tags where id = %s", (tid,))
+        if not cur:
+            raise NotFound("no such tag")
+        raise Conflict("This tag changed since you opened it.", current=cur)
+    return row
+
+
+def tag_impact(conn, tag_id: str) -> dict:
+    return _q1(conn, "select count(*) as records from kb.node_tags where tag_id = %s", (v.uid(tag_id, "id"),))
+
+
+def merge_tag(conn, actor: Actor, tag_id: str, body: dict) -> dict:
+    """Every record tagged `tag_id` is tagged `into` instead; the old tag is archived."""
+    require(conn, "editor", "merging tags")
+    v.only(body, {"into"})
+    src, dst = v.uid(tag_id, "id"), v.uid(body.get("into"), "into")
+    if src == dst:
+        raise Invalid("choose a different tag to merge into", field="into")
+    if not _q1(conn, "select 1 from kb.tags where id = %s and archived_at is null", (dst,)):
+        raise NotFound("the tag to merge into does not exist")
+    with _translate(conn, "tag"):
+        moved = _q(conn, """insert into kb.node_tags (node_id, tag_id) select node_id, %s from kb.node_tags where tag_id = %s
+                            on conflict do nothing returning node_id""", (dst, src))
+        _q(conn, "delete from kb.node_tags where tag_id = %s", (src,))
+        _q(conn, "update kb.tags set archived_at = now(), status = 'archived' where id = %s", (src,))
+    return {"merged": str(src), "into": str(dst), "records": len(moved)}
+
+
+def archive_tag(conn, actor: Actor, tag_id: str) -> dict:
+    """Archiving a tag takes it off its records (returned, so Undo can put it
+    back, and recorded in Activity) and out of pickers."""
+    require(conn, "editor", "archiving a tag")
+    tid = v.uid(tag_id, "id")
+    with _translate(conn, "tag"):
+        on = _q(conn, "delete from kb.node_tags where tag_id = %s returning node_id", (tid,))
+        row = _q1(conn, "update kb.tags set archived_at = now(), status = 'archived' where id = %s and archived_at is null returning id", (tid,))
+    if not row:
+        raise NotFound("no live tag with that id")
+    return {"archived": str(tid), "removed_from": [str(r["node_id"]) for r in on]}
+
+
+def restore_tag(conn, actor: Actor, tag_id: str, body: dict | None = None) -> dict:
+    require(conn, "editor", "restoring a tag")
+    tid = v.uid(tag_id, "id")
+    with _translate(conn, "tag"):
+        row = _q1(conn, "update kb.tags set archived_at = null, status = 'active' where id = %s returning id, name", (tid,))
+        for nid in (body or {}).get("records") or []:
+            _q(conn, "insert into kb.node_tags (node_id, tag_id) values (%s, %s) on conflict do nothing", (v.uid(nid, "records"), tid))
+    if not row:
+        raise NotFound("no such tag")
+    return row
+
+
+def remove_member(conn, actor: Actor, user_id: str) -> dict:
+    """Take away a person's knowledge-base role (archived, so it is audited and
+    can be granted again). They keep what the main site's own access gives
+    them: kb.role() falls back to viewer for signed-in site users."""
+    require(conn, "admin", "removing a member")
+    uid = v.uid(user_id, "user_id")
+    if str(uid) == str(actor.user_id):
+        raise Invalid("you cannot remove your own role; ask another admin")
+    target = _q1(conn, "select role from kb.memberships where user_id = %s and archived_at is null", (uid,))
+    if not target:
+        raise NotFound("that person has no role to remove")
+    if target["role"] == "admin" and (_q1(conn, "select count(*) as c from kb.memberships where role = 'admin' and archived_at is null") or {})["c"] <= 1:
+        raise Invalid("the last admin cannot be removed")
+    with _translate(conn, "membership"):
+        _q(conn, "update kb.memberships set archived_at = now(), status = 'archived' where user_id = %s", (uid,))
+    return {"removed": str(uid)}
+
+
+def rename_template(conn, actor: Actor, tid: str, body: dict) -> dict:
+    require(conn, "editor", "renaming a template")
+    v.only(body, {"name"})
+    nm = v.text(body, "name", required=True, max_len=120, allow_empty=False)
+    with _translate(conn, "template"):
+        row = _q1(conn, "update kb.templates set name = %s where id = %s and archived_at is null returning id, name", (nm, v.uid(tid, "id")))
+    if not row:
+        raise NotFound("no live template with that id")
+    return row
+
+
+def restore_template(conn, actor: Actor, tid: str) -> dict:
+    require(conn, "editor", "restoring a template")
+    with _translate(conn, "template"):
+        row = _q1(conn, "update kb.templates set archived_at = null, status = 'active' where id = %s returning id, name", (v.uid(tid, "id"),))
+    if not row:
+        raise NotFound("no such template")
+    return row
+
+
+def retype_edge(conn, actor: Actor, edge_id: str, body: dict) -> dict:
+    """Change a relationship's type in one step: the old relationship is
+    archived (kept in history) and one with the chosen type, the same two
+    records and the same note is created, in one transaction."""
+    require(conn, "contributor", "changing a relationship")
+    v.only(body, {"type", "flip"})
+    from .service import archive_edge, create_edge
+    eid = v.uid(edge_id, "id")
+    e = _q1(conn, "select source_id, target_id, note from kb.edges where id = %s and archived_at is null", (eid,))
+    if not e:
+        raise NotFound("no live relationship with that id")
+    s, t = (e["target_id"], e["source_id"]) if body.get("flip") else (e["source_id"], e["target_id"])
+    archive_edge(conn, actor, str(eid), {})
+    return create_edge(conn, actor, {"type": body.get("type"), "source_id": str(s), "target_id": str(t),
+                                     **({"note": e["note"]} if e["note"] else {})})

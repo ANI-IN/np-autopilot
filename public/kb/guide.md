@@ -58,7 +58,19 @@ To add a link to an existing record, open it, go to the **Links & resources** ta
 
 ## Connecting records
 
-Open a record, go to **Relationships** and click **Connect**. Choose the relationship (only the ones allowed for this type are offered), then the other record. The sentence under the row shows what you are about to say, for example "Ada Example teaches Designing a rate limiter".
+Open a record, go to **Relationships** and click **Connect**. Type in the relationship box to search. Each choice reads as a sentence, grouped by direction: "This module covers a topic" under **This module …**, and "An instructor teaches this module" under **… this module**. Only the ones allowed for this type are offered. Then pick the other record. The sentence under the row shows what you are about to say, for example "Ada Example teaches Designing a rate limiter".
+
+![Choosing a relationship: sentences grouped by direction, with Create relationship at the end](/kb/guide/relationship.png)
+
+### A relationship that does not exist yet
+
+Type its name, for example "mentors", and choose **Create relationship "mentors"**. Give the name it reads the other way ("mentored by" is suggested for you) and the two kinds of record it connects (filled in from the records you are connecting).
+
+- **Admins**: it is available to everyone straight away.
+- **Editors**: you can use it straight away. It is marked **Awaiting review** and appears in **Approvals**, where an admin confirms it, renames it, or merges it into an existing one.
+- **Contributors**: it is sent to an admin as a proposal. Nobody can use it until it is approved.
+
+Names that already exist are refused, including small differences: "Teaches", "teach" and "taught by" all match **teaches / taught by**. You are offered the existing one instead. Admins can **Merge** two relationship types in **Settings → Relationship types**: every relationship moves to the one you keep, with a count first, and the merge is recorded in Activity.
 
 What the built-in relationships mean:
 
@@ -70,6 +82,21 @@ What the built-in relationships mean:
 - **related to**: a looser connection.
 
 The same pair cannot be connected twice the same way, and pairs a relationship does not allow are not offered.
+
+## Editing on the graph
+
+The **Graph** page shows the records around one record, and you can edit there as well as look. Everything uses the same rules, permissions and history as the forms.
+
+- **Add a record**: double-click empty space (or press **N**), choose the type, type the name and press **Create**. **More…** opens the full New record form. The record appears where you clicked.
+- **Connect two records**: hover a record and drag its connect handle onto another record. Choose the relationship, or **Create relationship…**. If the two kinds of record cannot be connected, the graph says why and the line snaps back.
+- **Open or rename**: click a record to open its panel beside the graph. Double-click it to rename it in place. Click a relationship to see it as a sentence, edit its note or remove it.
+- **Archive**: select one or more records or relationships (shift-click, or shift-drag a box) and press **Delete**. The confirmation shows what goes with them. **Undo** is in the message that follows.
+- **Arrange**: drag records around. Positions are saved for everyone in the shared layout, or in a **saved graph view** of your own. They never change the records. **Auto-layout** tidies everything; **Reset** forgets the saved positions.
+- **Find your way**: **F** fits the graph to the screen, **/** searches (and loads the record if it is not shown yet), the minimap moves the view, and the filters on the left narrow by type, relationship, owner or course. The **+** next to a record expands or collapses its neighbours. Arrow keys move the selected records, and **Esc** clears the selection.
+
+Changes other people make appear on your graph as they happen. A record someone is editing has a dashed green ring, and hovering it shows who.
+
+![Editing on the graph: a record's handle, the relationship picker and the legend with filters](/kb/guide/graph.png)
 
 ## When someone else changed it first
 
@@ -97,7 +124,7 @@ Changing a type that is already in use is safe. Renaming is fine. Removing a fie
 - **Viewer**: sees everything, can flag things as incorrect.
 - **Contributor**: edits records, adds links and relationships, and sends new records and archive requests for approval.
 - **Editor**: creates and archives directly, approves proposals, and can overwrite a conflicting change.
-- **Admin**: everything an editor does, plus record types, roles and permanent deletion.
+- **Admin**: everything an editor does, plus record types, relationship type review and merges, roles and permanent deletion. Admins also see a **Back to NP Autopilot** link in the sidebar.
 
 ## Keeping things accurate
 
@@ -105,6 +132,16 @@ Changing a type that is already in use is safe. Renaming is fine. Removing a fie
 - If something is wrong and it is not yours, open it and choose **Flag as incorrect** from the **…** menu. The owner gets a review in **Approvals → Reviews**.
 - Every record shows a **completeness** score: owner, summary, required fields, links and placement. A course's score covers everything inside it.
 - A course or program can be saved as a **template** from its **…** menu, and a new course can start from it under New record → Start from.
+
+## Activity
+
+**Maintain → Activity** lists every change: who made it (a person, the AI assistant working for a named person, the Sheets import, or the system), what they did, to which record (with a link, or marked **deleted** if it is gone), and when. Hover the time to see the exact date. For an update, each changed field shows its value before and after.
+
+Filter by person, action, kind of record, source (app, AI assistant, import, system) and dates, or search names and values. **Export CSV** downloads exactly what is shown.
+
+Admins see all activity. Editors see their own changes and everything about the courses and records they own. Everyone else sees a record's history in its **History** tab, which lists entries the same way. Nobody, admins included, can edit or delete an entry.
+
+![Activity, filtered to updates, with a before and after for each changed field](/kb/guide/activity.png)
 
 ## Who to contact
 

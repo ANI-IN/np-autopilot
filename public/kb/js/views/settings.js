@@ -8,7 +8,7 @@ import { fieldInput } from '../form.js';
 import { loadTypes, refreshCounts } from '../app.js';
 import { kindLabel } from '../detail.js';
 
-const TABS = [['types', 'Record types'], ['relationships', 'Relationship types'], ['links', 'Link kinds'], ['members', 'Members'], ['tokens', 'API tokens'], ['templates', 'Templates']];
+const TABS = [['types', 'Record types'], ['relationships', 'Relationship types'], ['links', 'Link kinds'], ['tags', 'Tags'], ['members', 'Members'], ['tokens', 'API tokens'], ['templates', 'Templates']];
 const ICONS = ['box', 'book-open', 'graduation-cap', 'layers', 'calendar-days', 'radio', 'lightbulb', 'circle-user', 'workflow', 'compass', 'briefcase', 'puzzle', 'target',
   'clipboard-list', 'file-text', 'presentation', 'notebook-pen', 'list-checks', 'scroll-text', 'book-marked', 'film', 'mic-vocal', 'star', 'flag', 'shapes', 'hash', 'inbox'];
 const FIELD_KIND_LABEL = { short_text: 'Short text', long_text: 'Long text', number: 'Number', date: 'Date', datetime: 'Date and time', duration: 'Duration (minutes)',
@@ -21,7 +21,7 @@ export function viewSettings(v, r) {
     el('a', { href: '#/settings?tab=' + k, role: 'tab', 'aria-selected': k === tab ? 'true' : 'false', 'data-testid': 'settings-tab-' + k, text: l }))));
   const body = el('div', { class: 'page-body', style: 'padding-top:16px' });
   v.appendChild(body);
-  ({ types: typesTab, relationships: relTab, links: linksTab, members: membersTab, tokens: tokensTab, templates: templatesTab })[tab](body);
+  ({ types: typesTab, relationships: relTab, links: linksTab, tags: tagsTab, members: membersTab, tokens: tokensTab, templates: templatesTab })[tab](body);
   S.onQueryChange = (nr) => { if ((nr.q.tab || '') !== (r.q.tab || '')) { clear(v); viewSettings(v, nr); } };
 }
 const reloadSettings = async () => { await loadTypes(); const { rerender } = await import('../app.js'); rerender(); };
@@ -307,14 +307,54 @@ function linkEditor(x) {
 }
 
 // ------------------------------------------------------------------ members, tokens, templates
+// ------------------------------------------------------------------ tags (B2)
+/* Rename, merge into another tag, archive (shows how many records carry it;
+   Undo puts it back on them). */
+function tagsTab(body) {
+  body.appendChild(el('p', { class: 'muted small', style: 'margin-bottom:12px', text: 'Tags are added on records. Here an editor renames them, merges duplicates, or archives one: its records simply lose the tag.' }));
+  const ul = el('ul', { class: 'list bordered', 'data-testid': 'tags' });
+  body.appendChild(ul);
+  const reload = () => { clear(body); tagsTab(body); };
+  api('GET', '/tags').then((t) => {
+    if (!t.items.length) ul.appendChild(el('li', { class: 'link-row faint', text: 'No tags yet.' }));
+    t.items.forEach((x) => ul.appendChild(el('li', { 'data-testid': 'tag-row', 'data-name': x.name }, el('div', { class: 'link-row', style: 'padding:8px 12px' },
+      icon('tag'), el('strong', { text: '#' + x.name }), el('span', { class: 'faint xs', style: 'flex:1', text: plural(x.used_by, 'record') }),
+      can('editor') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'tag-rename', text: 'Rename', onclick: () => {
+        const name = el('input', { value: x.name, 'aria-label': 'Tag name', 'data-testid': 'tag-name' });
+        const err = el('div', { class: 'field-error', role: 'alert' });
+        openDialog([el('h2', { text: 'Rename #' + x.name }), name, err, el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }),
+          el('button', { class: 'btn primary', type: 'button', 'data-testid': 'tag-rename-save', text: 'Rename', onclick: async () => {
+            try { await api('PATCH', '/tags/' + x.id, { version: x.version, name: name.value.trim() }); closeDialog(); toast('Renamed'); reload(); } catch (e) { err.textContent = e.message; } } }))], { label: 'Rename tag' });
+      } }) : null,
+      can('editor') && t.items.length > 1 ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'tag-merge', onclick: () => {
+        const into = el('select', { 'aria-label': 'Merge into', 'data-testid': 'tag-merge-into' }, t.items.filter((y) => y.id !== x.id).map((y) => el('option', { value: y.id, text: '#' + y.name })));
+        openDialog([el('h2', { text: 'Merge #' + x.name }), el('p', { class: 'small', text: plural(x.used_by, 'record') + ' get the tag you choose instead; #' + x.name + ' is archived.' }), into,
+          el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }),
+            el('button', { class: 'btn primary', type: 'button', 'data-testid': 'tag-merge-save', text: 'Merge', onclick: async () => {
+              try { await api('POST', '/tags/' + x.id + '/merge', { into: into.value }); closeDialog(); toast('Merged'); reload(); } catch (e) { failToast(e); } } }))], { label: 'Merge tag' });
+      } }, icon('git-merge', 'sm'), 'Merge…') : null,
+      can('editor') ? el('button', { class: 'btn sm danger', type: 'button', 'data-testid': 'tag-archive', onclick: async () => {
+        const ok = await confirmDialog({ title: 'Archive #' + x.name + '?', body: plural(x.used_by, 'record') + ' will lose this tag. Undo puts it back on all of them.', confirmLabel: 'Archive', danger: true });
+        if (!ok) return;
+        try { const out = await api('POST', '/tags/' + x.id + '/archive');
+          toast('Archived #' + x.name, { action: { label: 'Undo', fn: async () => { await api('POST', '/tags/' + x.id + '/restore', { records: out.removed_from }); toast('Restored'); reload(); } } }); reload(); }
+        catch (e) { failToast(e); }
+      } }, icon('archive', 'sm'), 'Archive') : null))));
+  }).catch((e) => body.appendChild(errorBox(e)));
+}
+
 function membersTab(body) {
   body.appendChild(el('p', { class: 'muted small', style: 'margin-bottom:12px', text: 'Anyone with an IK profile is a viewer. Contributors edit and propose new records; editors create, archive and approve; admins also change types and roles.' }));
   const ul = el('ul', { class: 'list bordered', 'data-testid': 'members' });
   body.appendChild(ul);
   api('GET', '/members').then((m) => m.items.forEach((x) => {
+    const remove = !you(x.user_id) ? el('button', { class: 'btn sm danger', type: 'button', 'data-testid': 'member-remove', text: 'Remove', onclick: async () => {
+      const ok = await confirmDialog({ title: 'Remove ' + (x.email || 'this person') + '?', body: 'Their knowledge-base role is removed (audited). If they can sign in to the main site they stay a viewer. You can grant a role again any time.', confirmLabel: 'Remove', danger: true });
+      if (!ok) return;
+      try { await api('POST', '/members/' + x.user_id + '/remove'); toast('Removed'); clear(body); membersTab(body); } catch (e) { failToast(e); } } }) : null;
     const sel = el('select', { 'aria-label': 'Role for ' + (x.email || x.user_id), 'data-testid': 'member-role' }, ['viewer', 'contributor', 'editor', 'admin'].map((r) => el('option', { value: r, text: r.charAt(0).toUpperCase() + r.slice(1), selected: r === x.role })));
     sel.addEventListener('change', async () => { try { await api('POST', '/members/' + x.user_id, { role: sel.value }); toast('Role updated'); } catch (e) { failToast(e); } });
-    ul.appendChild(el('li', null, el('div', { class: 'link-row', style: 'padding:8px 12px' }, avatar(x.user_id), el('span', { class: 'truncate', style: 'flex:1', text: x.email || x.user_id }), you(x.user_id) ? el('span', { class: 'badge', text: 'You' }) : null, sel)));
+    ul.appendChild(el('li', null, el('div', { class: 'link-row', style: 'padding:8px 12px' }, avatar(x.user_id), el('span', { class: 'truncate', style: 'flex:1', text: x.email || x.user_id }), you(x.user_id) ? el('span', { class: 'badge', text: 'You' }) : null, sel, remove)));
   })).catch((e) => body.appendChild(errorBox(e)));
 }
 function tokensTab(body) {
@@ -347,6 +387,11 @@ function templatesTab(body) {
   api('GET', '/templates').then((t) => {
     if (!t.items.length) ul.appendChild(el('li', { class: 'link-row faint', text: 'No templates yet.' }));
     t.items.forEach((x) => ul.appendChild(el('li', null, el('div', { class: 'link-row', style: 'padding:8px 12px' }, typeIcon(x.root_type), el('strong', { text: x.name }), el('span', { class: 'faint xs', style: 'flex:1', text: plural(x.top_level || 0, 'top-level item') + ' · ' + ago(x.created_at) }),
-      can('editor') ? el('button', { class: 'btn sm', type: 'button', text: 'Remove', onclick: async () => { try { await api('POST', '/templates/' + x.id + '/archive'); toast('Removed'); clear(body); templatesTab(body); } catch (e) { failToast(e); } } }) : null))));
+      can('editor') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'template-rename', text: 'Rename', onclick: () => {
+        const name = el('input', { value: x.name, 'aria-label': 'Template name' });
+        openDialog([el('h2', { text: 'Rename template' }), name, el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }),
+          el('button', { class: 'btn primary', type: 'button', text: 'Rename', onclick: async () => { try { await api('PATCH', '/templates/' + x.id, { name: name.value.trim() }); closeDialog(); toast('Renamed'); clear(body); templatesTab(body); } catch (e) { failToast(e); } } }))], { label: 'Rename template' }); } }) : null,
+      can('editor') ? el('button', { class: 'btn sm', type: 'button', text: 'Remove', onclick: async () => { try { await api('POST', '/templates/' + x.id + '/archive'); clear(body); templatesTab(body);
+        toast('Removed', { action: { label: 'Undo', fn: async () => { await api('POST', '/templates/' + x.id + '/restore'); clear(body); templatesTab(body); } } }); } catch (e) { failToast(e); } } }) : null))));
   }).catch((e) => body.appendChild(errorBox(e)));
 }

@@ -61,10 +61,22 @@ function startPage(v) {
   }).catch(() => {});
 }
 
+/* The graph library (~430 KB) loads only when a graph is opened (Phase C). */
+let libLoading = null;
+function loadLib() {
+  if (typeof window.cytoscape === 'function') return Promise.resolve();
+  libLoading = libLoading || new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = '/vendor/cytoscape.min.js'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
+  return libLoading;
+}
+
 export function viewGraph(v, r) {
   const center = r.path[1];
   if (!center) { startPage(v); return; }
-  if (typeof window.cytoscape !== 'function') { v.appendChild(errorBox({ message: 'The graph library did not load. Reload the page.' })); return; }
+  if (typeof window.cytoscape !== 'function') {
+    loadLib().then(() => { if (S.route && S.route.path[0] === 'graph' && S.route.path[1] === center) { clear(v); viewGraph(v, r); } })
+      .catch(() => v.appendChild(errorBox({ message: 'The graph library did not load. Reload the page.' })));
+    return;
+  }
   const depth = r.q.depth === '2' ? 2 : 1;
   const layoutId = r.q.view || 'default';
   const canEdit = can('contributor');
@@ -107,9 +119,10 @@ export function viewGraph(v, r) {
 
   const css = getComputedStyle(document.documentElement);
   const tok = (k, d) => css.getPropertyValue(k).trim() || d;
-  const big = r.q.limit && Number(r.q.limit) > GL_FROM;
+  // Renderer: canvas by default; WebGL for very large neighbourhoods (or ?renderer=webgl|canvas to compare).
+  const useGL = r.q.renderer === 'webgl' || (r.q.renderer !== 'canvas' && r.q.limit && Number(r.q.limit) > GL_FROM);
   const cy = window.cytoscape({ container: cyBox, wheelSensitivity: 0.25, minZoom: 0.05, maxZoom: 3, boxSelectionEnabled: true, selectionType: 'additive',
-    renderer: big ? { name: 'canvas', webgl: true } : undefined,
+    renderer: useGL ? { name: 'canvas', webgl: true } : undefined,
     hideEdgesOnViewport: false, textureOnViewport: false,
     style: [
       { selector: 'node', style: { 'background-color': 'data(color)', label: 'data(label)', 'font-size': 11, 'font-family': 'Inter, system-ui, sans-serif', color: tok('--text', '#18181b'),
@@ -129,7 +142,7 @@ export function viewGraph(v, r) {
       { selector: '.hidden', style: { display: 'none' } },
     ] });
   let expanded = {}, addedBy = {}; const totals = {};
-  Object.assign(G, { cy, center, layoutId });
+  Object.assign(G, { cy, center, layoutId, webgl: !!(useGL && cy.renderer() && cy.renderer().webgl) });
   S.graph = G;
   window.__kbGraph = G;                 // for tests; holds no data of its own
 

@@ -58,6 +58,30 @@ from lib.kb.errors import KbError, NotFound, Invalid                    # noqa: 
 TYPED = {"courses": "course", "programs": "program"}
 
 
+# Short-lived read cache (run 3, Phase C) for the heaviest reads every page
+# makes: the dashboard, the sidebar counts and the type configuration. Keyed by
+# the caller (RLS scopes what each person sees), the role, and the newest
+# change-feed id, so ANY audited write invalidates it at once; the TTL bounds
+# staleness for what the feed does not carry (link-check results).
+_CACHE: dict = {}
+CACHE_TTL = 15.0
+
+
+def _cached(conn, actor, name: str, fn):
+    import time as _t
+    head_id = svc._q1(conn, "select coalesce(max(id), 0) as m from kb.changes")["m"]
+    key = (name, str(actor.user_id), actor.actor_type, svc.role(conn), head_id)
+    hit = _CACHE.get(key)
+    now = _t.monotonic()
+    if hit and now - hit[0] < CACHE_TTL:
+        return hit[1]
+    val = fn()
+    if len(_CACHE) > 500:
+        _CACHE.clear()
+    _CACHE[key] = (now, val)
+    return val
+
+
 def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
            body: dict | None) -> tuple[int, dict]:
     """Returns (status, payload). Raises KbError for the caller to translate."""
@@ -107,6 +131,10 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
             return 201, ws.instantiate_template(conn, actor, rest[0], body)
         if method == "POST" and len(rest) == 2 and rest[1] == "archive":
             return 200, ws.archive_template(conn, actor, rest[0])
+        if method == "POST" and len(rest) == 2 and rest[1] == "restore":
+            return 200, ws.restore_template(conn, actor, rest[0])
+        if method == "PATCH" and len(rest) == 1:
+            return 200, ws.rename_template(conn, actor, rest[0], body)
     if head == "views":
         if method == "GET" and not rest:
             return 200, {"items": ws.list_views(conn)}
@@ -121,16 +149,28 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
     if head == "attachments" and method == "PATCH" and len(rest) == 1:
         return 200, svc.update_attachment(conn, actor, rest[0], body)
     if head == "dashboard" and method == "GET":
-        out = svc.dashboard(conn)
-        out["attention"] = ws.needs_attention(conn)
-        out["completeness"] = ws.course_completeness(conn)
-        return 200, out
+        def _dash():
+            out = svc.dashboard(conn)
+            out["attention"] = ws.needs_attention(conn)
+            out["completeness"] = ws.course_completeness(conn)
+            return out
+        return 200, _cached(conn, actor, "dashboard", _dash)
     if head == "counts" and method == "GET":
         # Sidebar counts: the same totals and attention numbers as the dashboard, without the lists.
-        d = svc.dashboard_totals(conn)
-        return 200, {**d, "attention": ws.attention_counts(conn)}
-    if head == "tags" and method == "GET":
+        return 200, _cached(conn, actor, "counts", lambda: {**svc.dashboard_totals(conn), "attention": ws.attention_counts(conn)})
+    if head == "tags" and method == "GET" and not rest:
         return 200, {"items": svc.list_tags(conn)}
+    if head == "tags" and len(rest) >= 1:
+        if method == "PATCH" and len(rest) == 1:
+            return 200, ws.update_tag(conn, actor, rest[0], body)
+        if method == "GET" and rest[1:] == ["impact"]:
+            return 200, ws.tag_impact(conn, rest[0])
+        if method == "POST" and rest[1:] == ["merge"]:
+            return 200, ws.merge_tag(conn, actor, rest[0], body)
+        if method == "POST" and rest[1:] == ["archive"]:
+            return 200, ws.archive_tag(conn, actor, rest[0])
+        if method == "POST" and rest[1:] == ["restore"]:
+            return 200, ws.restore_tag(conn, actor, rest[0], body)
     if head == "search" and method == "GET":
         types = params.get("types")
         return 200, svc.search(conn, params.get("q", ""),
@@ -195,6 +235,8 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
             return 200, {"items": svc.list_members(conn)}
         if method == "POST" and len(rest) == 1:
             return 200, svc.set_role(conn, actor, rest[0], body.get("role"))
+        if method == "POST" and len(rest) == 2 and rest[1] == "remove":
+            return 200, ws.remove_member(conn, actor, rest[0])
     raise NotFound(f"no KB route {method} /api/kb/{'/'.join(parts)}")
 
 
@@ -216,7 +258,8 @@ def _realtime_config() -> dict:
 
 def _types(conn, actor, method, rest, params, body):
     if method == "GET" and not rest:
-        return 200, td.all_types(conn, include_archived=params.get("archived") in ("1", "true"))
+        arch = params.get("archived") in ("1", "true")
+        return 200, _cached(conn, actor, "types" + ("+archived" if arch else ""), lambda: td.all_types(conn, include_archived=arch))
     if method == "POST" and rest == ["rule"]:
         return 201, svc.add_edge_rule(conn, actor, body)
     if method == "GET" and rest == ["edge-similar"]:
@@ -320,6 +363,8 @@ def _edges(conn, actor, method, rest, params, body):
         return 200, svc.archive_edge(conn, actor, eid, body)
     if method == "POST" and sub == ["restore"]:
         return 200, svc.restore_edge(conn, actor, eid)
+    if method == "POST" and sub == ["retype"]:
+        return 201, ws.retype_edge(conn, actor, eid, body)
     if method == "GET" and sub == ["history"]:
         return 200, {"items": svc.history(conn, eid)}
     raise NotFound("no such relationship route")
