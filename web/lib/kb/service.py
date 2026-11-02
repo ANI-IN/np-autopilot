@@ -24,12 +24,14 @@ from dataclasses import dataclass
 import psycopg
 from psycopg import errors as pgerr
 
+from . import activity
 from . import validate as v
 from .errors import Conflict, Duplicate, Forbidden, Invalid, KbError, NeedsApproval, NotFound
 
 ROLES = ("none", "viewer", "contributor", "editor", "admin")
 MAX_DEPTH = 2
-MAX_NEIGHBOURHOOD = 300
+MAX_NEIGHBOURHOOD = 300          # the default; a caller may ask for up to GRAPH_MAX (the graph page at scale)
+GRAPH_MAX = 5000
 TOKEN_PREFIX = "ikkb_"
 
 
@@ -1153,7 +1155,7 @@ def neighbourhood(conn, node_id: str, depth=1, *, types=None, limit: int = MAX_N
         raise Invalid("depth must be 1 or 2", field="depth") from None
     if depth < 1 or depth > MAX_DEPTH:
         raise Invalid(f"depth must be between 1 and {MAX_DEPTH}", field="depth")
-    limit = max(1, min(int(limit), MAX_NEIGHBOURHOOD))
+    limit = max(1, min(int(limit), GRAPH_MAX))
     if not _node_row(conn, node_id):
         raise NotFound(f"no record with id {node_id}")
     type_filter = list(types) if types else None
@@ -1173,16 +1175,16 @@ def neighbourhood(conn, node_id: str, depth=1, *, types=None, limit: int = MAX_N
     keep = rows[:limit]
     ids = [r["id"] for r in keep]
     dist = {r["id"]: r["dist"] for r in keep}
-    nodes = _q(conn, """select n.id, n.name, n.status, n.scope_id, t.key as type, t.color, t.label as type_label,
+    nodes = _q(conn, """select n.id, n.name, n.status, n.scope_id, n.owner_id, n.version, t.key as type, t.color, t.label as type_label,
                                (select count(*) from kb.edges e where e.archived_at is null
                                   and (e.source_id = n.id or e.target_id = n.id)) as degree
                         from kb.nodes n join kb.node_types t on t.id = n.type_id where n.id = any(%s)""", (ids,))
     for n in nodes:
         n["distance"] = dist[n["id"]]
-    edges = _q(conn, """select e.id, e.source_id, e.target_id, et.key as type, et.label
+    edges = _q(conn, """select e.id, e.source_id, e.target_id, e.note, e.version, et.key as type, et.label
                         from kb.edges e join kb.edge_types et on et.id = e.edge_type_id
                         where e.archived_at is null and e.source_id = any(%s) and e.target_id = any(%s)
-                        limit 2000""", (ids, ids))
+                        limit 20000""", (ids, ids))
     return {"center": node_id, "depth": depth, "nodes": nodes, "edges": edges,
             "total": total, "truncated": total > len(keep), "limit": limit}
 
@@ -1248,7 +1250,7 @@ def list_proposals(conn, status: str = "pending") -> list[dict]:
                        left join kb.nodes s on s.id = e.source_id left join kb.nodes t on t.id = e.target_id
                        where p.status = %s or %s = 'all' order by p.created_at desc limit 200""", (status, status))
 
-def decide_proposal(conn, actor: Actor, proposal_id: str, approve: bool) -> dict:
+def decide_proposal(conn, actor: Actor, proposal_id: str, approve: bool, decision: dict | None = None) -> dict:
     require(conn, "editor", "deciding a proposal")
     if actor.actor_type == "ai":
         raise Forbidden("an AI client cannot approve proposals; a person decides in the app")
@@ -1263,7 +1265,14 @@ def decide_proposal(conn, actor: Actor, proposal_id: str, approve: bool) -> dict
         result = create_node(conn, Actor(actor.user_id, "human"), p["payload"], _approved=True)
     elif approve and p["action"] == "type_change":
         from .typedefs import apply_type_change
-        result = apply_type_change(conn, Actor(actor.user_id, "human"), p["payload"])
+        payload = p["payload"]
+        if (payload or {}).get("op") == "edge_review" and decision:
+            # The admin renamed or merged while confirming.
+            payload = {**payload, "args": {**payload.get("args", {}), **decision}}
+        result = apply_type_change(conn, Actor(actor.user_id, "human"), payload)
+    elif not approve and p["action"] == "type_change" and (p["payload"] or {}).get("op") == "edge_review":
+        from .typedefs import reject_edge_review
+        reject_edge_review(conn, Actor(actor.user_id, "human"), p["payload"]["args"]["key"])
     elif approve:
         human = Actor(actor.user_id, "human")
         if p["target_table"] == "nodes":
@@ -1291,24 +1300,14 @@ def decide_proposal(conn, actor: Actor, proposal_id: str, approve: bool) -> dict
 # ---------------------------------------------------------------------------
 
 def history(conn, row_id: str, limit: int = 50) -> list[dict]:
-    return _q(conn, """select id, at, actor_id, actor_type, table_name, action, before, after
-                       from kb.audit_log where row_id = %s order by id desc limit %s""",
-              (v.uid(row_id, "id"), max(1, min(int(limit), 200))))
+    return activity.history(conn, row_id, limit)
 
 
 def changes(conn, since: int | None, limit: int = 200) -> dict:
-    """The change feed clients poll for collaboration (M7). Cursor = audit id."""
-    if since is None:
-        last = _q1(conn, "select coalesce(max(id), 0) as m from kb.audit_log")
-        return {"cursor": last["m"], "changes": []}
-    rows = _q(conn, """select id, at, actor_id, actor_type, table_name, row_id, action,
-                              coalesce(after ->> 'version', before ->> 'version') as version
-                       from kb.audit_log where id > %s order by id limit %s""",
-              (int(since), max(1, min(int(limit), 500))))
-    return {"cursor": rows[-1]["id"] if rows else int(since), "changes": rows}
+    return activity.changes(conn, since, limit)
 
 
-def dashboard(conn) -> dict:
+def dashboard_totals(conn) -> dict:
     counts = _q(conn, """select t.key, t.label, t.color, count(n.id) as n
                          from kb.node_types t left join kb.nodes n on n.type_id = t.id and n.archived_at is null
                          where t.archived_at is null group by t.key, t.label, t.color, t.sort_order
@@ -1318,13 +1317,16 @@ def dashboard(conn) -> dict:
         (select count(*) from kb.edges where archived_at is null) as edges,
         (select count(*) from kb.resources where archived_at is null) as resources,
         (select count(*) from kb.nodes where archived_at is not null) as archived,
-        (select count(*) from kb.proposals where status = 'pending') as pending_proposals""")
-    recent = _q(conn, """select a.id, a.at, a.actor_id, a.actor_type, a.table_name, a.row_id, a.action,
-                                coalesce(a.after ->> 'name', a.before ->> 'name', a.after ->> 'title',
-                                         a.before ->> 'title') as label
-                         from kb.audit_log a where a.table_name in ('nodes', 'edges', 'resources')
-                         order by a.id desc limit 20""")
-    return {"counts": counts, "totals": totals, "recent": recent, "role": role(conn)}
+        (select count(*) from kb.proposals where status = 'pending') as pending_proposals,
+        (select count(distinct row_id) from kb.changes where at > now() - interval '7 days'
+          and table_name in ('nodes', 'edges', 'resources')) as changed_7d""")
+    return {"counts": counts, "totals": totals}
+
+
+def dashboard(conn) -> dict:
+    out = dashboard_totals(conn)
+    recent = activity.recent(conn)
+    return {**out, "recent": recent, "role": role(conn)}
 
 
 # ---------------------------------------------------------------------------
@@ -1388,8 +1390,18 @@ def set_role(conn, actor: Actor, user_id: str, new_role: str) -> dict:
                             returning user_id, role, version""", (v.uid(user_id, "user_id"), new_role))
 
 
+# The original site this workspace grew out of (public/index.html, "NP Autopilot —
+# knowledge graph"). The link back is offered to admins only (run 3, B5); the
+# decision comes from the role the database verifies, never from the client.
+ORIGINAL_SITE = {"label": "Back to NP Autopilot", "href": "/", "testid": "back-to-site"}
+
+
 def me(conn) -> dict:
-    return {"user_id": (_q1(conn, "select kb.actor_id() as u") or {}).get("u"), "role": role(conn)}
+    r = role(conn)
+    out = {"user_id": (_q1(conn, "select kb.actor_id() as u") or {}).get("u"), "role": r}
+    if r == "admin":
+        out["admin_links"] = [ORIGINAL_SITE]
+    return out
 
 
 # ---------------------------------------------------------------------------

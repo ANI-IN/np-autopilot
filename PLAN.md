@@ -1,3 +1,28 @@
+# PLAN — run 3: polish, graph editing, custom relationships, audit log
+
+T0 = Mon 2026-11-02 21:18 local. Stop new work at T+2:50 = **00:08**, then Section 6 + handoff.
+Memory: this file + PROGRESS.md (run-3 log at the end). Re-read both after any context reset.
+Cut order if >20 min behind: A4 column drag -> B2 merge tool -> B3 clustering -> 3840 tuning -> 25-user test to 10.
+
+## Phase A — owner bugs (<=30 min, each with a test)
+- [ ] A1 one attention query (tile = list = sidebar)   - [ ] A2 named actors, no test leftovers, seed resets audit
+- [ ] A3 demo badge placement   - [ ] A4 View popover   - [ ] A5 full text, wrap, resizable columns
+- [ ] A6 Guide layout + images   - [ ] A7 relationship combobox with sentences   - [ ] 1536 sweep
+
+## Phase B
+- [ ] B1 page template, dashboard grid, 4K (1280/1536/1920/2560/3840 @1x/2x)
+- [ ] B2 inline relationship types (admin/editor-unreviewed/contributor-proposal, DB-enforced), duplicate guard, merge, CRUD matrix, dependencies
+- [ ] B3 graph editing (create, connect, edit, rename, delete+undo, move+positions per view, navigate, sync, scale numbers)
+- [ ] B4 Activity page + History tab (DB-enforced visibility, immutable audit)
+- [ ] B5 admin-only "Back to <site>" link (server role)
+
+## Phase C — perf + concurrency
+- [ ] EXPLAIN + indexes, caches, 25-user test -> docs/TEST_RESULTS.md
+
+## Final (from 00:08)
+verify_all --fresh-clone --reset-db; new browser tests; click-through 1536/2560; docs; reseed; handoff.
+
+---
 # PLAN — Knowledge Platform, run 2: demo → team-ready (branch `auto/knowledge-platform-20261102`)
 
 T0 = Mon 2026-11-02 11:44 local. Stop new work at T+4:15 = **16:00**, then Section 7 + handoff.

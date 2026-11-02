@@ -99,7 +99,8 @@ def extra(environ, start_response, lock):
                             '<a class="btn primary" href="/local-login">Sign in</a>', 1)
         html = html.replace('<link rel="stylesheet" href="/kb/kb.css">',
                             '<link rel="stylesheet" href="/kb/kb.css">\n<link rel="stylesheet" href="/local-demo.css">', 1)
-        html = html.replace("<body>", '<body>\n<div class="demo-ribbon">Local demo · fictional data</div>', 1)
+        # The app moves this badge into its own sidebar slot, above the user menu (A3).
+        html = html.replace("<body>", '<body>\n<div class="demo-ribbon" id="demo-badge-slot" data-testid="demo-badge">Local demo · fictional data</div>', 1)
         start_response("200 OK", [("content-type", "text/html; charset=utf-8"), ("cache-control", "no-store")] + base.PROD_HEADERS)
         return [html.encode()]
     return None

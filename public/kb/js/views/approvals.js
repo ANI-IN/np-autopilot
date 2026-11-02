@@ -2,13 +2,15 @@
    removals; editors' type changes) and Reviews (records/links flagged as
    incorrect, assigned to their owner). */
 import { S, el, clear, icon, typeIcon, api, toast, failToast, avatar, personName, ago, skeletonRows, empty, errorBox, can, setQuery, openDialog, closeDialog, you } from '../core.js';
-import { refreshCounts } from '../app.js';
+import { pageHead } from '../page.js';
+import { refreshCounts, loadTypes } from '../app.js';
+import { mergeDialog } from './settings.js';
 
 const ACTION = { archive: 'Archive', delete: 'Delete', create: 'Create', type_change: 'Change types' };
 
 export function viewApprovals(v, r) {
   const tab = r.q.tab === 'reviews' ? 'reviews' : 'proposals';
-  v.appendChild(el('div', { class: 'page-head' }, el('h1', { text: 'Approvals' })));
+  v.appendChild(pageHead({ title: 'Approvals', sub: 'Proposed changes waiting for an editor or admin, and records flagged as incorrect.' }));
   v.appendChild(el('div', { class: 'tabs', role: 'tablist' },
     el('a', { href: '#/approvals', role: 'tab', 'aria-selected': tab === 'proposals' ? 'true' : 'false', 'data-testid': 'tab-proposals' }, 'Proposals'),
     el('a', { href: '#/approvals?tab=reviews', role: 'tab', 'aria-selected': tab === 'reviews' ? 'true' : 'false', 'data-testid': 'tab-reviews' }, icon('flag', 'sm'), 'Reviews')));
@@ -27,10 +29,14 @@ async function loadProposals(box) {
     const ul = el('ul', { class: 'list' });
     items.forEach((x) => {
       const p = x.payload || {};
-      const detail = x.action === 'create' ? 'New ' + (p.type || 'record') + (p.parents && p.parents.length ? ' with placement' : '') + ((p.resources || []).length ? ', ' + p.resources.length + ' link(s)' : '')
+      const review = x.action === 'type_change' && p.op === 'edge_review';
+      const detail = review ? 'An editor created this relationship type; it is already in use. Confirm it, rename it, or merge it into an existing type.'
+        : x.action === 'type_change' && p.op === 'edge_create' ? 'New relationship type “' + ((p.args || {}).label || '') + '”' + ((p.args || {}).inverse_label ? ' / ' + p.args.inverse_label : '')
+        : x.action === 'create' ? 'New ' + (p.type || 'record') + (p.parents && p.parents.length ? ' with placement' : '') + ((p.resources || []).length ? ', ' + p.resources.length + ' link(s)' : '')
         : x.action === 'type_change' ? (p.op || '').replace('_', ' ') : x.target_table.replace('node_resources', 'link on a record').replace(/s$/, '');
-      const decide = (yes) => async () => {
-        try { const out = await api('POST', '/proposals/' + x.id + '/' + (yes ? 'approve' : 'reject'));
+      const decide = (yes, extra) => async () => {
+        try { const out = await api('POST', '/proposals/' + x.id + '/' + (yes ? 'approve' : 'reject'), extra);
+          if (x.action === 'type_change') await loadTypes();
           toast(yes ? 'Approved and applied' : 'Rejected', out.result && out.result.id && x.action === 'create' ? { action: { label: 'Open', fn: () => setQuery({ open: out.result.id }) } } : {});
           loadProposals(box); refreshCounts(); }
         catch (e) { failToast(e, 'Not decided'); }
@@ -38,17 +44,32 @@ async function loadProposals(box) {
       ul.appendChild(el('li', { 'data-testid': 'proposal', style: 'border-bottom:1px solid var(--border)' }, el('div', { class: 'link-row', style: 'padding:12px 24px;align-items:flex-start' },
         x.created_by ? avatar(x.created_by) : el('span', { class: 'avatar', style: '--av:#475569' }, icon('star', 'sm')),
         el('div', { class: 'col', style: 'gap:2px;flex:1;min-width:0' },
-          el('div', { class: 'row' }, el('span', { class: 'badge ' + (x.action === 'create' ? 'accent' : 'warn'), text: ACTION[x.action] || x.action }), el('strong', { class: 'truncate', text: x.target_label || '(record)' })),
+          el('div', { class: 'row' }, el('span', { class: 'badge ' + (x.action === 'create' ? 'accent' : 'warn'), text: review ? 'Review relationship type' : p.op === 'edge_create' ? 'New relationship type' : ACTION[x.action] || x.action }),
+            el('strong', { class: 'truncate', text: x.target_label || (p.args && p.args.label) || '(record)' })),
           el('div', { class: 'faint xs' }, (x.actor_type === 'ai' ? 'The AI assistant' : you(x.created_by) ? 'You' : personName(x.created_by) || 'Someone') + ' · ' + detail + ' · ' + ago(x.created_at)),
           x.reason && x.action !== 'create' ? el('div', { class: 'small', text: '“' + x.reason + '”' }) : null),
         x.target_id && x.target_table === 'nodes' ? el('a', { class: 'btn ghost sm', href: '#/approvals?open=' + x.target_id }, 'View') : null,
         x.action === 'create' ? el('button', { class: 'btn ghost sm', type: 'button', onclick: () => openDialog([el('h2', { text: 'Proposed record' }), el('pre', { class: 'mono', style: 'white-space:pre-wrap;max-height:50vh;overflow:auto', text: JSON.stringify(p, null, 2) }),
           el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Close', onclick: closeDialog }))], { label: 'Proposed record', wide: true }) }, 'Details') : null,
-        can(x.action === 'type_change' ? 'admin' : 'editor') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'reject', text: 'Reject', onclick: decide(false) }) : null,
-        can(x.action === 'type_change' ? 'admin' : 'editor') ? el('button', { class: 'btn primary sm', type: 'button', 'data-testid': 'approve', text: 'Approve', onclick: decide(true) }) : null)));
+        review && can('admin') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'review-merge', onclick: async () => {
+          const t = await api('GET', '/types'); const et = t.edge_types.find((e) => e.key === p.args.key);
+          if (et) mergeDialog(et, t.edge_types, () => { loadProposals(box); refreshCounts(); loadTypes(); }); } }, icon('git-merge', 'sm'), 'Merge into…') : null,
+        review && can('admin') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'review-rename', onclick: () => renameDialog(x, p, decide) }, 'Rename…') : null,
+        can(x.action === 'type_change' ? 'admin' : 'editor') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'reject', text: review ? 'Reject (archive if unused)' : 'Reject', onclick: decide(false) }) : null,
+        can(x.action === 'type_change' ? 'admin' : 'editor') ? el('button', { class: 'btn primary sm', type: 'button', 'data-testid': 'approve', text: review ? 'Confirm' : 'Approve', onclick: decide(true) }) : null)));
     });
     box.appendChild(ul);
   } catch (e) { clear(box).appendChild(errorBox(e, () => loadProposals(box))); }
+}
+
+function renameDialog(x, p, decide) {
+  const label = el('input', { value: x.target_label || '', 'aria-label': 'Name', 'data-testid': 'review-label' });
+  const inv = el('input', { value: '', 'aria-label': 'Read the other way', 'data-testid': 'review-inverse', placeholder: 'Leave empty to keep it' });
+  openDialog([el('h2', { text: 'Rename and confirm' }), el('label', { class: 'field' }, el('span', { class: 'label', text: 'Name' }), label),
+    el('label', { class: 'field' }, el('span', { class: 'label', text: 'Read the other way' }), inv),
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }),
+      el('button', { class: 'btn primary', type: 'button', 'data-testid': 'review-rename-save', text: 'Rename and confirm', onclick: () => { closeDialog();
+        decide(true, Object.assign({ label: label.value.trim() }, inv.value.trim() ? { inverse_label: inv.value.trim() } : {}))(); } }))], { label: 'Rename relationship type' });
 }
 
 async function loadReviews(box) {

@@ -2,6 +2,7 @@
    expandable tree. Drag to reorder within a parent, link count and
    completeness per node, quick-add at any level, "Copy as text". */
 import { S, el, add, clear, icon, typeIcon, typeLabel, api, toast, failToast, setQuery, skeletonRows, empty, errorBox, can, qs } from '../core.js';
+import { pageHead } from '../page.js';
 import { openRecordForm } from '../form.js';
 
 let openState = {};
@@ -11,11 +12,11 @@ const saveOpen = () => { try { localStorage.setItem('kb_outline_open', JSON.stri
 export function viewOutline(v, r) {
   const root = r.q.root || '';
   let data = null;
-  const head = el('div', { class: 'page-head' }, el('h1', { text: 'Outline' }), el('span', { class: 'sub', text: 'Programs and courses, top to bottom.' }), el('span', { class: 'spacer' }),
+  const head = pageHead({ title: 'Outline', sub: 'Programs and courses, top to bottom.', actions: [
     el('button', { class: 'btn ghost', type: 'button', 'data-testid': 'outline-expand', onclick: () => { if (!data) return; walk(data.roots, (n) => { openState[n.id] = true; }); saveOpen(); draw(); } }, 'Expand all'),
     el('button', { class: 'btn ghost', type: 'button', onclick: () => { if (!data) return; openState = {}; saveOpen(); draw(); } }, 'Collapse all'),
     el('button', { class: 'btn', type: 'button', 'data-testid': 'outline-copy', onclick: copyText }, icon('copy', 'sm'), 'Copy as text'),
-    can('contributor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': 'outline-new-program', onclick: () => openRecordForm({ type: 'program' }) }, icon('plus'), 'New program') : null);
+    can('contributor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': 'outline-new-program', onclick: () => openRecordForm({ type: 'program' }) }, icon('plus'), 'New program') : null] });
   v.appendChild(head);
   const body = el('div', { class: 'page-body', 'data-testid': 'outline' }, skeletonRows(10));
   v.appendChild(body);

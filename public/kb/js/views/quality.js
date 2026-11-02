@@ -1,9 +1,10 @@
 /* Data quality: counts first, then the records to act on. */
 import { S, el, add, clear, icon, typeIcon, api, ago, skeletonBlock, errorBox, plural } from '../core.js';
+import { pageHead } from '../page.js';
 import { kindLabel } from '../detail.js';
 
 export function viewQuality(v) {
-  v.appendChild(el('div', { class: 'page-head' }, el('h1', { text: 'Data quality' }), el('span', { class: 'sub', text: 'What is incomplete, unconnected, broken or flagged.' })));
+  v.appendChild(pageHead({ title: 'Data quality', sub: 'What is incomplete, unconnected, broken or flagged.' }));
   const out = el('div', { class: 'page-body', 'data-testid': 'quality' }, skeletonBlock(8));
   v.appendChild(out);
   const load = async () => {
@@ -11,8 +12,8 @@ export function viewQuality(v) {
       const [q, d] = await Promise.all([api('GET', '/quality'), api('GET', '/dashboard')]);
       const a = d.attention, t = q.totals;
       clear(out);
-      out.appendChild(el('div', { class: 'stat-row' }, [['Live records', t.live, 'live'], ['No owner', t.no_owner, 'no-owner'], ['Missing required fields', a.counts.missing_required, 'missing-required'],
-        ['Broken links', q.links.problems, 'broken'], ['Flagged', a.counts.flagged, 'flagged'], ['Not connected', t.orphans, 'not-connected']]
+      out.appendChild(el('div', { class: 'stat-row' }, [['Need attention', a.total, 'total'], ['No owner', a.counts.no_owner, 'no-owner'], ['Missing required fields', a.counts.missing_required, 'missing-required'],
+        ['Broken links', a.counts.broken_links, 'broken'], ['Flagged', a.counts.flagged, 'flagged'], ['Not connected', a.counts.orphans, 'not-connected'], ['Rule misfits', a.counts.misfits, 'misfits']]
         .map(([k, val, id]) => el('div', { class: 'stat', 'data-testid': 'q-' + id }, el('div', { class: 'v', text: String(val || 0) }), el('div', { class: 'k', text: k })))));
       const grid = el('div', { class: 'two-col', style: 'margin-top:24px' });
       const left = el('div', { class: 'col', style: 'gap:24px' }), right = el('div', { class: 'col', style: 'gap:24px' });

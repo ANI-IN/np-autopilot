@@ -1,12 +1,13 @@
 /* Archived: everything archived, restorable; admins can delete permanently
    (typed-name confirmation, shows what goes with it, audited). */
 import { S, el, clear, icon, typeIcon, api, toast, failToast, ago, skeletonRows, empty, errorBox, can, personName } from '../core.js';
+import { pageHead } from '../page.js';
 import { hardDelete } from '../detail.js';
 import { refreshCounts } from '../app.js';
 
 export function viewArchived(v, r) {
   const kind = ['records', 'resources', 'relationships'].includes(r.q.kind) ? r.q.kind : 'records';
-  v.appendChild(el('div', { class: 'page-head' }, el('h1', { text: 'Archived' }), el('span', { class: 'sub', text: 'Restore anything here. Admins can delete permanently.' })));
+  v.appendChild(pageHead({ title: 'Archived', sub: 'Restore anything here. Admins can delete permanently.' }));
   v.appendChild(el('div', { class: 'tabs', role: 'tablist' }, [['records', 'Records'], ['resources', 'Links'], ['relationships', 'Relationships']].map(([k, l]) =>
     el('a', { href: '#/archived' + (k === 'records' ? '' : '?kind=' + k), role: 'tab', 'aria-selected': k === kind ? 'true' : 'false', 'data-testid': 'archived-tab-' + k, text: l }))));
   const box = el('div', { 'data-testid': 'archived' }, skeletonRows(6));

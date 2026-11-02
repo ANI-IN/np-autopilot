@@ -14,12 +14,16 @@ import { viewApprovals } from './views/approvals.js';
 import { viewArchived } from './views/archived.js';
 import { viewSettings } from './views/settings.js';
 import { viewGuide } from './views/guide.js';
+import { viewActivity } from './views/activity.js';
 
 const ROUTES = {
   '': viewDashboard, records: viewRecords, programs: viewRecords, courses: viewRecords, resources: viewResources,
   outline: viewOutline, graph: viewGraph, quality: viewQuality, approvals: viewApprovals, proposals: viewApprovals,
-  archived: viewArchived, settings: viewSettings, guide: viewGuide, r: renderFullRecord,
+  archived: viewArchived, settings: viewSettings, guide: viewGuide, r: renderFullRecord, activity: viewActivity,
 };
+/* Page template widths (B1): tables and the graph use the full width; reading
+   content is centred at a readable measure; everything else is contained. */
+const LAYOUT = { records: 'full', programs: 'full', courses: 'full', resources: 'full', graph: 'full', guide: 'reading', r: 'reading' };
 
 // ------------------------------------------------------------------ theme
 function applyTheme(t) {
@@ -88,7 +92,7 @@ async function boot() {
 const NAV = [
   ['Workspace', [['', 'Dashboard', 'layout-dashboard'], ['records', 'All records', 'list', 'records'], ['outline', 'Outline', 'list-tree'], ['graph', 'Graph', 'network']]],
   ['Browse', [['programs', 'Programs', 'graduation-cap', 'program'], ['courses', 'Courses', 'book-open', 'course'], ['resources', 'Resources', 'link', 'resources']]],
-  ['Maintain', [['quality', 'Data quality', 'shield-check', 'attention'], ['approvals', 'Approvals', 'circle-check', 'pending'], ['archived', 'Archived', 'archive', 'archived']]],
+  ['Maintain', [['quality', 'Data quality', 'shield-check', 'attention'], ['approvals', 'Approvals', 'circle-check', 'pending'], ['activity', 'Activity', 'history', null, 'editor'], ['archived', 'Archived', 'archive', 'archived']]],
 ];
 function renderSidebar() {
   const sb = clear($('#sidebar'));
@@ -102,7 +106,8 @@ function renderSidebar() {
   const nav = el('nav', { class: 'nav', id: 'nav' });
   for (const [group, items] of NAV) {
     const g = el('div', { class: 'nav-group' }, el('div', { class: 'nav-group-label', text: group }));
-    for (const [path, label, ic, countKey] of items) {
+    for (const [path, label, ic, countKey, minRole] of items) {
+      if (minRole && !can(minRole)) continue;
       g.appendChild(el('a', { href: '#/' + path, 'data-nav': path || 'dashboard', title: label }, icon(ic), el('span', { class: 'label-text', text: label }),
         countKey ? el('span', { class: 'count', 'data-count': countKey }) : null));
     }
@@ -113,10 +118,18 @@ function renderSidebar() {
     avatar(S.me.user_id, 'lg'), el('span', { class: 'label-text col', style: 'gap:0;min-width:0' },
       el('span', { class: 'truncate', text: (S.session.user && S.session.user.email) || personName(S.me.user_id) }),
       el('span', { class: 'faint xs', text: 'Role: ' + S.me.role })));
+  // Admin-only links come from /me, which includes them only for a role the
+  // server verified (B5); nothing here decides who is an admin.
+  const adminLinks = (S.me.admin_links || []).map((l) => el('a', { href: l.href, 'data-testid': l.testid + '-nav', title: l.label }, icon('arrow-left'), el('span', { class: 'label-text', text: l.label })));
+  // The local demo server's badge (eval/ only): kept across sidebar re-renders.
+  const badge = S.demoBadge = document.getElementById('demo-badge-slot') || S.demoBadge;
   sb.appendChild(el('div', { class: 'sidebar-foot nav' },
     el('a', { href: '#/guide', 'data-nav': 'guide', title: 'Guide' }, icon('circle-help'), el('span', { class: 'label-text', text: 'Guide' })),
     el('a', { href: '#/settings', 'data-nav': 'settings', title: 'Settings' }, icon('settings'), el('span', { class: 'label-text', text: 'Settings' })),
+    adminLinks,
+    el('div', { class: 'sidebar-slot', id: 'sidebar-slot' }),
     user));
+  if (badge) $('#sidebar-slot').appendChild(badge);
 }
 function userMenu(anchor) {
   const t = currentTheme();
@@ -127,16 +140,16 @@ function userMenu(anchor) {
     { label: 'Dark', checked: t === 'dark', icon: 'moon', fn: () => applyTheme('dark'), testid: 'theme-dark' },
     '-',
     { label: 'Keyboard shortcuts', icon: 'keyboard', fn: shortcutsDialog },
-    { label: 'Corpus explorer', icon: 'external-link', fn: () => { location.href = '/'; } },
+    ...(S.me.admin_links || []).flatMap((l) => ['-', { label: l.label, icon: 'arrow-left', testid: l.testid, fn: () => { location.href = l.href; } }]),
   ]);
 }
 export async function refreshCounts() {
   try {
-    const d = await api('GET', '/dashboard');
+    const d = await api('GET', '/counts');
     const byType = {}; d.counts.forEach((c) => { byType[c.key] = c.n; });
     const vals = { records: d.totals.nodes, program: byType.program, course: byType.course, resources: d.totals.resources,
       pending: d.totals.pending_proposals || '', archived: d.totals.archived || '',
-      attention: (d.attention.counts.no_owner + d.attention.counts.broken_links + d.attention.counts.missing_required + d.attention.counts.flagged) || '' };
+      attention: d.attention.total || '' };
     $$('[data-count]').forEach((c) => { c.textContent = vals[c.dataset.count] === undefined ? '' : vals[c.dataset.count]; });
     S.counts = vals;
   } catch (e) { /* counts are decoration */ }
@@ -156,6 +169,7 @@ export function route() {
   const v = $('#view');
   if (viewKey !== lastView || r.q.__force) {
     lastView = viewKey;
+    v.dataset.layout = LAYOUT[key] || 'contained';
     S.listReload = null; S.onSelect = null; S.onQueryChange = null; S.tableKeys = null;
     if (S.panel && S.panel.full) S.panel = null;          // leaving a full-page record
     clear(v); v.scrollTop = 0;
@@ -195,7 +209,7 @@ function openPalette(prefill) {
   const commands = () => {
     const c = [];
     if (can('contributor')) S.types.forEach((t) => c.push({ group: 'Create', label: 'New ' + t.label.toLowerCase(), icon: typeIcon(t.key), fn: () => openRecordForm({ type: t.key, name: input.value.trim() }), testid: 'palette-create-' + t.key }));
-    [['Dashboard', ''], ['All records', 'records'], ['Outline', 'outline'], ['Graph', 'graph'], ['Resources', 'resources'], ['Data quality', 'quality'], ['Approvals', 'approvals'], ['Archived', 'archived'], ['Guide', 'guide'], ['Settings', 'settings']]
+    [['Dashboard', ''], ['All records', 'records'], ['Outline', 'outline'], ['Graph', 'graph'], ['Resources', 'resources'], ['Data quality', 'quality'], ['Approvals', 'approvals'], ['Activity', 'activity'], ['Archived', 'archived'], ['Guide', 'guide'], ['Settings', 'settings']]
       .forEach(([l, p]) => c.push({ group: 'Go to', label: l, icon: icon('arrow-right'), fn: () => { location.hash = '#/' + p; } }));
     c.push({ group: 'Commands', label: 'Toggle dark mode', icon: icon('moon'), fn: () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark') });
     return c;

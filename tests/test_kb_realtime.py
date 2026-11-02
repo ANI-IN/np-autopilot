@@ -81,5 +81,8 @@ def test_presence_and_realtime_live_update_between_two_people():
             b.close()
     finally:
         with owner() as c:
-            c.execute("delete from kb.audit_log where row_id = %s", (nid,))
+            # Delete the probe FIRST, then every trace of it (its insert, update AND the
+            # delete just made), so no fixture ever shows up in anyone's activity (A2).
             c.execute("delete from kb.nodes where id = %s", (nid,))
+            c.execute("delete from kb.audit_log where row_id = %s", (nid,))
+            c.execute("delete from kb.changes where row_id = %s", (nid,))

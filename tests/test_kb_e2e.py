@@ -63,8 +63,10 @@ def _data():
 
 def _drop_custom():
     with owner() as c:
-        c.execute("truncate kb.flags, kb.templates, kb.saved_views")
+        c.execute("truncate kb.flags, kb.templates, kb.saved_views, kb.graph_positions")
+        c.execute("delete from kb.proposals where action = 'type_change'")
         c.execute("delete from kb.node_types where not is_core")
+        c.execute("delete from kb.edge_types where not is_core")
 
 
 def page_as(browser, base, role, viewport=(1440, 900)):
@@ -110,6 +112,19 @@ def select_matching(locator, pattern):
     opts = locator.locator("option").all_text_contents()
     match = next(o for o in opts if re.search(pattern, o))
     locator.select_option(label=match)
+
+
+def choose_rel(page, pattern):
+    """Pick a relationship in the searchable relationship picker (A7) by a regex
+    on its sentence, e.g. "^This module covers a topic$"."""
+    page.get_by_test_id("rel-type").last.click()
+    page.get_by_test_id("rel-type-option").filter(has_text=re.compile(pattern)).first.click()
+
+
+def rel_options(page):
+    page.get_by_test_id("rel-type").last.click()
+    page.get_by_test_id("rel-type-option").first.wait_for()
+    return page.get_by_test_id("rel-type-option").all_text_contents()
 
 
 def toast(page):
@@ -217,7 +232,8 @@ def test_edge_lifecycle_from_the_graph(server, browser):
         return [p('{mod['id']}'), p('{topic['id']}')]; }}""")
     page.mouse.click(*pos[0])
     page.mouse.click(*pos[1])
-    select_matching(page.get_by_test_id("connect-type"), "covers")
+    page.get_by_test_id("graph-rel").click()
+    page.get_by_test_id("graph-rel-option").filter(has_text="covers").first.click()
     page.get_by_test_id("connect-submit").click()
     expect(toast(page)).to_contain_text("Connected")
     edges = Client(USERS["viewer"]).get("/api/kb/edges", f"node={topic['id']}")[1]["items"]
@@ -227,7 +243,7 @@ def test_edge_lifecycle_from_the_graph(server, browser):
     expect(page.get_by_test_id("rel")).to_have_count(2)
     page.get_by_test_id("rel").filter(has_text="Graph Topic").get_by_role("button", name="Remove relationship").click()
     expect(page.get_by_test_id("rel")).to_have_count(1)
-    page.get_by_test_id("toast-undo").click()                         # undo restores it
+    toast(page).get_by_test_id("toast-undo").click()                  # undo restores it
     page.get_by_test_id("tab-relationships").click()
     expect(page.get_by_test_id("rel")).to_have_count(2)
     assert page.errors == []
@@ -483,12 +499,12 @@ def test_one_save_with_nested_inline_course_relationships_and_links(server, brow
     # two relationships: covers a NEW topic, taught by an existing instructor
     page.get_by_test_id("section-relationships").locator("summary").click()
     page.get_by_test_id("add-relationship").click()
-    select_matching(page.get_by_test_id("rel-type").last, "^covers")
+    choose_rel(page, "^This module covers a topic")
     page.get_by_test_id("rel-target").last.fill("Rate limiting")
     page.get_by_test_id("rel-target-create").last.click()
     expect(page.get_by_test_id("rel-sentence").last).to_contain_text("“Scalability” covers “Rate limiting”")
     page.get_by_test_id("add-relationship").click()
-    select_matching(page.get_by_test_id("rel-type").last, "^taught by")
+    choose_rel(page, "^An instructor teaches this module")
     pick(page, "rel-target", "Ada Example")
     # three links: Drive, UpLevel, GitHub (reused from the library)
     for url, title in (("https://drive.google.com/file/d/abc123/view", "Deck"),
@@ -555,14 +571,16 @@ def test_disallowed_relationships_are_not_offered_and_duplicates_blocked(server,
     open_record(page, server, t1["id"])
     page.get_by_test_id("tab-relationships").click()
     page.get_by_test_id("connect").click()
-    options = page.get_by_test_id("rel-type").last.locator("option").all_text_contents()
-    assert not any(o.startswith("teaches") for o in options)           # a topic cannot teach
-    select_matching(page.get_by_test_id("rel-type").last, "^related to → topic")
+    options = rel_options(page)
+    assert options and not any("This topic teaches" in o for o in options)   # a topic cannot teach
+    assert not any("←" in o or "→" in o for o in options)                    # plain sentences (A7)
+    page.keyboard.press("Escape")
+    choose_rel(page, "^This topic is related to a topic")
     pick(page, "rel-target", "Priority queues")
     page.get_by_test_id("connect-submit").click()
     expect(toast(page)).to_contain_text("Connected")
     page.get_by_test_id("connect").click()
-    select_matching(page.get_by_test_id("rel-type").last, "^related to → topic")
+    choose_rel(page, "^This topic is related to a topic")
     pick(page, "rel-target", "Priority queues")
     page.get_by_test_id("connect-submit").click()
     expect(page.get_by_test_id("connect-error")).to_contain_text("already connected")
@@ -632,7 +650,7 @@ def test_keyboard_only_main_flows(server, browser):
     assert page.errors == []
 
 
-@pytest.mark.parametrize("route", ["#/", "#/records", "#/outline", "#/graph", "#/quality", "#/approvals", "#/archived", "#/settings", "#/guide", "#/resources"])
+@pytest.mark.parametrize("route", ["#/", "#/records", "#/outline", "#/graph", "#/quality", "#/approvals", "#/activity", "#/archived", "#/settings", "#/guide", "#/resources"])
 def test_no_horizontal_scroll_at_1024(server, browser, route):
     Client(USERS["editor"]).post("/api/kb/courses", {"name": "A course with a rather long name for layout testing"})
     page = page_as(browser, server, "admin", viewport=(1024, 768))
@@ -804,7 +822,7 @@ A11Y_SCRIPT = """() => {
 }"""
 
 
-@pytest.mark.parametrize("route", ["#/", "#/records", "#/outline", "#/quality", "#/approvals", "#/archived", "#/settings", "#/resources", "#/graph"])
+@pytest.mark.parametrize("route", ["#/", "#/records", "#/outline", "#/quality", "#/approvals", "#/activity", "#/archived", "#/settings", "#/resources", "#/graph"])
 def test_every_control_has_an_accessible_name(server, browser, route):
     api = Client(USERS["editor"])
     _, c = api.post("/api/kb/courses", {"name": "A11y Course"})
@@ -817,3 +835,387 @@ def test_every_control_has_an_accessible_name(server, browser, route):
     page.get_by_test_id("new-record").click()
     page.wait_for_timeout(300)
     assert page.evaluate(A11Y_SCRIPT) == [], route + " + New record sheet"
+
+
+# --- run 3: owner bugs (phase A) -------------------------------------------------
+
+def _records_with_issues():
+    ed = Client(USERS["editor"])
+    _, a = ed.post("/api/kb/nodes", {"type": "topic", "name": "Unowned topic", "owner_id": None})
+    _, b = ed.post("/api/kb/nodes", {"type": "topic", "name": "Lonely topic"})
+    _, r = ed.post("/api/kb/resources", {"url": "https://github.com/ik-demo/broken", "title": "Broken repo", "kind": "repo"})
+    with owner() as c:
+        c.execute("insert into kb.link_checks (resource_id, status, http_status, checked_at) values (%s, 'broken', 404, now())", (r["id"],))
+    return a, b
+
+
+def test_a1_attention_tile_list_and_sidebar_agree(server, browser):
+    _records_with_issues()
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
+    tile = page.get_by_test_id("dash-attention-total").locator(".v")
+    expect(tile).to_have_text("4")                             # no owner 1 + broken 1 + not connected 2
+    counts = [int(x) for x in page.get_by_test_id("attention-count").all_text_contents()]
+    assert sum(counts) == 4
+    expect(page.locator("[data-count=attention]")).to_have_text("4")
+    page.get_by_role("link", name="Data quality").click()
+    expect(page.get_by_test_id("q-total").locator(".v")).to_have_text("4")
+    assert page.errors == []
+
+
+def test_a2_activity_names_every_actor(server, browser):
+    Client(USERS["editor"]).post("/api/kb/nodes", {"type": "topic", "name": "By a person"})
+    with owner() as c:
+        tid = c.execute("select id from kb.node_types where key = 'topic'").fetchone()[0]
+        c.execute("insert into kb.nodes (type_id, name) values (%s, 'By the system')", (tid,))
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
+    actors = page.get_by_test_id("activity").get_by_test_id("activity-actor")
+    expect(actors.first).to_be_visible()
+    names = actors.all_text_contents()
+    assert "System" in names and all(n and n != "Someone" for n in names), names
+    assert page.errors == []
+
+
+def test_a3_demo_badge_has_its_own_sidebar_slot(server, browser):
+    # The demo server injects the badge with the slot id the app looks for ...
+    import urllib.request
+    with dev_server("kb_demo_server.py") as base:
+        html = urllib.request.urlopen(base + "/kb/", timeout=10).read().decode()
+        css = urllib.request.urlopen(base + "/local-demo.css", timeout=10).read().decode()
+    assert 'id="demo-badge-slot"' in html and ".sidebar-slot .demo-ribbon" in css
+    # ... and the app moves it into its own slot above the user menu, clear of the links.
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
+    page.add_init_script("document.addEventListener('readystatechange', () => document.readyState === 'interactive' && document.body.insertAdjacentHTML('afterbegin', "
+                         "'<div class=\"demo-ribbon\" id=\"demo-badge-slot\" data-testid=\"demo-badge\">Local demo · fictional data</div>'))")
+    page.reload()
+    badge = page.locator("#sidebar-slot [data-testid=demo-badge]")
+    expect(badge).to_be_visible()
+    b, user = badge.bounding_box(), page.get_by_test_id("whoami").bounding_box()
+    last = page.locator(".sidebar-foot > a").last.bounding_box()
+    assert last["y"] + last["height"] <= b["y"] and b["y"] + b["height"] <= user["y"]     # between the links and the user menu
+    assert page.errors == []
+
+
+def test_a4_view_popover_stays_in_the_viewport_with_labelled_controls(server, browser):
+    Client(USERS["editor"]).post("/api/kb/nodes", {"type": "topic", "name": "Columns"})
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
+    page.goto(server + "#/records")
+    page.get_by_test_id("view-options").click()
+    pop = page.get_by_test_id("view-popover")
+    expect(pop).to_be_visible()
+    box = pop.bounding_box()
+    assert box["x"] >= 0 and box["x"] + box["width"] <= 1536 and box["y"] + box["height"] <= 900
+    expect(page.get_by_role("radiogroup", name="Row density")).to_be_visible()
+    lab = page.get_by_test_id("col-row-owner").locator("label")
+    gap = page.evaluate("(l) => { const c = l.querySelector('input').getBoundingClientRect(), t = l.querySelector('span').getBoundingClientRect(); return t.left - c.right; }", lab.element_handle())
+    assert gap >= 8                                                     # the ✓ is not glued to the label
+    page.get_by_test_id("col-owner").uncheck()
+    expect(page.get_by_test_id("th-owner")).to_have_count(0)
+    page.get_by_role("button", name="Move Updated up").click()
+    heads = page.locator("[data-testid=records-table] th").all_text_contents()
+    assert heads.index("Updated") < heads.index("Links")
+    page.get_by_test_id("density-compact").click()
+    expect(page.locator(".table-wrap.compact")).to_have_count(1)
+    assert page.evaluate("[...document.querySelectorAll('.tabs')].every((t) => t.scrollHeight <= t.clientHeight + 1)")   # no stray scrollbar
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
+    assert page.errors == []
+
+
+def test_a5_full_text_on_hover_two_line_description_and_resizable_columns(server, browser):
+    long = "A very long description that keeps going well past the width of the column so that it would be cut off " * 3
+    Client(USERS["editor"]).post("/api/kb/nodes", {"type": "topic", "name": "Long one", "summary": long.strip()})
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
+    page.goto(server + "#/records")
+    cell = page.get_by_test_id("cell-name").first
+    assert long.strip() in cell.get_attribute("title")
+    clamp = page.evaluate("getComputedStyle(document.querySelector('[data-testid=cell-desc]')).webkitLineClamp")
+    assert clamp == "2"
+    th = page.get_by_test_id("th-scope")
+    w0 = th.bounding_box()["width"]
+    h = page.get_by_test_id("col-resize-scope").bounding_box()
+    page.mouse.move(h["x"] + 3, h["y"] + h["height"] / 2)
+    page.mouse.down(); page.mouse.move(h["x"] + 83, h["y"] + h["height"] / 2, steps=5); page.mouse.up()
+    assert th.bounding_box()["width"] > w0 + 60
+    page.reload()
+    assert page.get_by_test_id("th-scope").bounding_box()["width"] > w0 + 60    # remembered
+    assert page.errors == []
+
+
+def test_a6_guide_is_centred_and_screenshots_enlarge(server, browser):
+    page = page_as(browser, server, "viewer", viewport=(1536, 900))
+    page.goto(server + "#/guide")
+    doc, toc = page.get_by_test_id("guide").bounding_box(), page.locator(".guide-toc").bounding_box()
+    view = page.locator("#view").bounding_box()
+    left, right = doc["x"] - view["x"], view["x"] + view["width"] - (toc["x"] + toc["width"])
+    assert abs(left - right) < 40, (left, right)                      # one centred unit
+    assert 700 <= doc["width"] <= 800 and 180 <= toc["width"] <= 260
+    page.get_by_test_id("guide-figure").first.click()
+    expect(page.get_by_test_id("guide-lightbox")).to_be_visible()
+    page.keyboard.press("Escape")
+    expect(page.get_by_test_id("guide-lightbox")).to_have_count(0)
+    assert page.errors == []
+
+
+def test_a7_relationship_picker_reads_as_sentences_and_does_not_hide_the_record_input(server, browser):
+    page = page_as(browser, server, "editor", viewport=(1536, 900))
+    page.get_by_test_id("new-record").click()
+    choose_type(page, "Module")
+    page.get_by_test_id("create-name").fill("Sentences")
+    page.get_by_test_id("section-relationships").locator("summary").click()
+    page.get_by_test_id("add-relationship").click()
+    options = rel_options(page)
+    assert options and not any(("←" in o or "→" in o) for o in options), options
+    assert any(o.startswith("This module ") for o in options) and any(o.endswith(" this module") for o in options)
+    labels = page.get_by_test_id("rel-type-menu").locator(".menu-label").all_text_contents()
+    assert "This module …" in labels and "… this module" in labels
+    menu, target = page.get_by_test_id("rel-type-menu").bounding_box(), page.get_by_test_id("rel-target-placeholder").bounding_box()
+    assert menu["y"] >= target["y"] + target["height"] - 1             # the list opens below, never over the record input
+    page.get_by_test_id("rel-type-option").filter(has_text="This module covers a topic").first.click()
+    expect(page.get_by_test_id("rel-target")).to_be_visible()
+    assert page.errors == []
+
+
+# --- run 3: custom relationship types (B2) ------------------------------------------
+
+def _connect_dialog(page, server, node_id):
+    open_record(page, server, node_id)
+    page.get_by_test_id("tab-relationships").click()
+    page.get_by_test_id("connect").click()
+
+
+@pytest.mark.parametrize("role", ["admin", "editor", "contributor"])
+def test_b2_inline_relationship_creation_by_role(server, browser, role):
+    _, inst = Client(USERS["editor"]).post("/api/kb/nodes", {"type": "instructor", "name": "Asha Rao"})
+    page = page_as(browser, server, role, viewport=(1536, 900))
+    _connect_dialog(page, server, inst["id"])
+    page.get_by_test_id("rel-type").last.fill("mentors")
+    page.get_by_test_id("rel-type-create").click()
+    expect(page.get_by_test_id("newrel-dialog")).to_be_visible()
+    expect(page.get_by_test_id("newrel-inverse")).to_have_value("mentored by")      # suggested
+    page.get_by_test_id("newrel-target").select_option("instructor")
+    page.get_by_test_id("newrel-save").click()
+    expect(page.get_by_test_id("newrel-dialog")).to_have_count(0)
+    types = {t["key"]: t for t in Client(USERS["admin"]).get("/api/kb/types")[1]["edge_types"]}
+    if role == "contributor":
+        expect(toast(page)).to_contain_text("Proposed")
+        assert "mentors" not in types
+        props = Client(USERS["admin"]).get("/api/kb/proposals")[1]["items"]
+        assert any((p["payload"] or {}).get("op") == "edge_create" for p in props)
+    else:
+        expect(toast(page)).to_contain_text("Created")
+        expect(page.get_by_test_id("rel-type-picked").last).to_contain_text("mentors")
+        assert types["mentors"]["review_status"] == ("reviewed" if role == "admin" else "unreviewed")
+    if role == "editor":                                               # the admin confirms it in Approvals
+        admin = page_as(browser, server, "admin", viewport=(1536, 900))
+        admin.goto(server + "#/approvals")
+        row = admin.get_by_test_id("proposal").filter(has_text="Review relationship type")
+        expect(row).to_have_count(1)
+        row.get_by_test_id("approve").click()
+        expect(toast(admin)).to_contain_text("Approved")
+        assert {t["key"]: t for t in Client(USERS["admin"]).get("/api/kb/types")[1]["edge_types"]}["mentors"]["review_status"] == "reviewed"
+    assert page.errors == []
+
+
+def test_b2_duplicate_relationship_type_is_blocked_with_the_existing_one_offered(server, browser):
+    _, inst = Client(USERS["editor"]).post("/api/kb/nodes", {"type": "instructor", "name": "Ben Ode"})
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
+    _connect_dialog(page, server, inst["id"])
+    page.get_by_test_id("rel-type").last.fill("Taught by")
+    page.get_by_test_id("rel-type-create").click()
+    expect(page.get_by_test_id("newrel-duplicate")).to_contain_text("teaches")
+    expect(page.get_by_test_id("newrel-save")).to_be_disabled()
+    page.get_by_test_id("newrel-use-existing").click()
+    assert not [t for t in Client(USERS["admin"]).get("/api/kb/types")[1]["edge_types"] if t["key"] not in
+                ("contains", "covers", "teaches", "prerequisite", "sme", "related")]
+    assert page.errors == []
+
+
+def test_b2_merge_relationship_types_from_settings(server, browser):
+    admin = Client(USERS["admin"])
+    admin.post("/api/kb/types/edge", {"label": "coaches", "inverse_label": "coached by", "rules": [{"source": "instructor", "target": "course"}]})
+    _, i = admin.post("/api/kb/nodes", {"type": "instructor", "name": "Cleo"})
+    _, c = admin.post("/api/kb/courses", {"name": "Merge Course"})
+    admin.post("/api/kb/edges", {"type": "coaches", "source_id": i["id"], "target_id": c["id"]})
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
+    page.goto(server + "#/settings?tab=relationships")
+    row = page.locator("[data-testid=edge-type-row][data-key=coaches]")
+    row.get_by_test_id("edge-archive").click()
+    expect(page.get_by_test_id("edge-archive-impact")).to_contain_text("1 live relationship")
+    page.get_by_role("button", name="Merge into another type…").click()
+    page.get_by_test_id("merge-into").select_option("teaches")
+    expect(page.get_by_test_id("merge-preview")).to_contain_text("1 relationship will move")
+    page.get_by_test_id("merge-confirm").click()
+    expect(toast(page)).to_contain_text("Merged")
+    edges = Client(USERS["viewer"]).get("/api/kb/edges", f"node={c['id']}")[1]["items"]
+    assert [e["type"] for e in edges] == ["teaches"]
+    assert page.errors == []
+
+
+# --- run 3: graph editing (B3) --------------------------------------------------------
+
+def _graph(page, server, center):
+    page.goto(server + f"#/graph/{center}")
+    expect(page.get_by_test_id("graph-info")).to_contain_text("Showing")
+    page.wait_for_function("() => window.__kbGraph && window.__kbGraph.loadedAt")
+
+
+def test_b3_graph_create_connect_rename_delete_undo(server, browser):
+    ed = Client(USERS["editor"])
+    _, course = ed.post("/api/kb/courses", {"name": "Canvas Course"})
+    _, mod = ed.post("/api/kb/nodes", {"type": "module", "name": "Canvas Module", "parents": [course["id"]]})
+    page = page_as(browser, server, "editor", viewport=(1536, 900))
+    _graph(page, server, course["id"])
+    # create: double-click empty canvas (pan the records out of the way first)
+    page.evaluate("() => { const cy = window.__kbGraph.cy; cy.zoom(1); cy.pan({ x: -4000, y: -4000 }); }")
+    box = page.get_by_test_id("graph-canvas").bounding_box()
+    page.mouse.dblclick(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.get_by_test_id("graph-new-type").select_option("topic")
+    page.get_by_test_id("graph-new-name").fill("Drawn topic")
+    page.get_by_test_id("graph-new-create").click()
+    expect(toast(page)).to_contain_text("Created “Drawn topic”")
+    topic = next(n for n in Client(USERS["viewer"]).get("/api/kb/nodes", "q=Drawn topic")[1]["items"])
+    page.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{topic['id']}').length === 1")
+    page.get_by_test_id("graph-canvas").focus()
+    page.keyboard.press("f")                                            # fit: everything back in view
+    # connect: drag the module's handle onto the new topic
+    page.mouse.move(*page.evaluate(f"window.__kbGraph.renderedPosition('{mod['id']}')"))
+    h = page.get_by_test_id("graph-handle").bounding_box()
+    page.mouse.move(h["x"] + 12, h["y"] + 12)
+    page.mouse.down()
+    tx, ty = page.evaluate(f"window.__kbGraph.renderedPosition('{topic['id']}')")
+    page.mouse.move(tx, ty, steps=8)
+    page.mouse.up()
+    page.get_by_test_id("graph-rel").click()
+    page.get_by_test_id("graph-rel-option").filter(has_text="This module covers a topic").first.click()
+    expect(page.get_by_test_id("graph-rel-sentence")).to_contain_text("“Canvas Module” covers “Drawn topic”")
+    page.get_by_test_id("connect-submit").click()
+    expect(toast(page)).to_contain_text("Connected")
+    assert len(Client(USERS["viewer"]).get("/api/kb/edges", f"node={topic['id']}")[1]["items"]) == 1
+    # rename in place: double-click the node (centred, clear of the minimap and the toolbar)
+    page.evaluate(f"() => window.__kbGraph.cy.center(window.__kbGraph.cy.getElementById('{topic['id']}'))")
+    page.mouse.dblclick(*page.evaluate(f"window.__kbGraph.renderedPosition('{topic['id']}')"))
+    page.get_by_test_id("graph-rename-input").fill("Renamed topic")
+    page.keyboard.press("Enter")
+    expect(toast(page)).to_contain_text("Renamed")
+    assert Client(USERS["viewer"]).get(f"/api/kb/nodes/{topic['id']}")[1]["name"] == "Renamed topic"
+    # delete: select and press Delete -> impact -> archive; Undo restores
+    page.evaluate(f"(() => {{ const cy = window.__kbGraph.cy; cy.$(':selected').unselect(); cy.getElementById('{topic['id']}').select(); }})()")
+    page.get_by_test_id("graph-canvas").focus()
+    page.keyboard.press("Delete")
+    expect(page.get_by_test_id("archive-impact")).to_contain_text("1 relationship will be archived")
+    page.get_by_test_id("confirm-ok").click()
+    expect(toast(page)).to_contain_text("Archived 1 record")
+    assert Client(USERS["viewer"]).get(f"/api/kb/nodes/{topic['id']}")[1]["archived_at"]
+    toast(page).get_by_test_id("toast-undo").click()
+    page.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{topic['id']}').length === 1")
+    assert not Client(USERS["viewer"]).get(f"/api/kb/nodes/{topic['id']}")[1]["archived_at"]
+    # move: positions are saved to the shared layout and never touch the record
+    v0 = Client(USERS["viewer"]).get(f"/api/kb/nodes/{mod['id']}")[1]["version"]
+    page.evaluate(f"() => window.__kbGraph.cy.center(window.__kbGraph.cy.getElementById('{mod['id']}'))")
+    n0 = page.evaluate("() => window.__kbGraph.savedPositions || 0")
+    mx, my = page.evaluate(f"window.__kbGraph.renderedPosition('{mod['id']}')")
+    page.mouse.move(mx, my); page.mouse.down(); page.mouse.move(mx - 120, my + 90, steps=6); page.mouse.up()
+    page.wait_for_function(f"() => (window.__kbGraph.savedPositions || 0) > {n0}")
+    pos = Client(USERS["viewer"]).get("/api/kb/graph/positions", "layout=default")[1]["items"]
+    assert any(p["node_id"] == mod["id"] for p in pos)
+    assert Client(USERS["viewer"]).get(f"/api/kb/nodes/{mod['id']}")[1]["version"] == v0
+    assert page.errors == []
+
+
+def test_b3_graph_rejects_an_invalid_connection_with_a_reason(server, browser):
+    types = Client(USERS["admin"]).get("/api/kb/types")[1]
+    pairs = {(r["source"], r["target"]) for t in types["edge_types"] for r in t["rules"]}
+    a, b = next((x["key"], y["key"]) for x in types["node_types"] for y in types["node_types"]
+                if (x["key"], y["key"]) not in pairs and (y["key"], x["key"]) not in pairs and x["key"] != y["key"])
+    ed = Client(USERS["editor"])
+    _, na = ed.post("/api/kb/nodes", {"type": a, "name": "Left one"})
+    _, nb = ed.post("/api/kb/nodes", {"type": b, "name": "Right one"})
+    page = page_as(browser, server, "editor", viewport=(1536, 900))
+    _graph(page, server, na["id"])
+    page.evaluate(f"""(() => {{ const cy = window.__kbGraph.cy; cy.add({{group:'nodes', data:{{id:'{nb['id']}', label:'Right one', type:'{b}', color:'#475569', degree:0, shape:'ellipse'}}, position: {{x: cy.getElementById('{na['id']}').position('x') + 220, y: cy.getElementById('{na['id']}').position('y')}}}}); cy.center(); }})()""")
+    page.mouse.move(*page.evaluate(f"window.__kbGraph.renderedPosition('{na['id']}')"))
+    h = page.get_by_test_id("graph-handle").bounding_box()
+    page.mouse.move(h["x"] + 12, h["y"] + 12)
+    page.mouse.down()
+    page.mouse.move(*page.evaluate(f"window.__kbGraph.renderedPosition('{nb['id']}')"), steps=8)
+    page.mouse.up()
+    expect(page.get_by_test_id("graph-connect-reason")).to_contain_text("No relationship type allows")
+    assert page.evaluate("window.__kbGraph.cy.$('#__ghost, #__ghost_edge').length") == 0          # the line snapped back
+    assert Client(USERS["viewer"]).get("/api/kb/edges", f"node={na['id']}")[1]["items"] == []
+    assert page.errors == []
+
+
+def test_b3_two_people_edit_the_graph_at_once(server, browser):
+    ed = Client(USERS["editor"])
+    _, course = ed.post("/api/kb/courses", {"name": "Shared Canvas"})
+    _, mod = ed.post("/api/kb/nodes", {"type": "module", "name": "Shared Module", "parents": [course["id"]]})
+    a = page_as(browser, server, "editor", viewport=(1536, 900))
+    b = page_as(browser, server, "admin", viewport=(1536, 900))
+    _graph(a, server, course["id"])
+    _graph(b, server, course["id"])
+    # A adds a record and connects it; B sees both arrive without reloading
+    _, extra = ed.post("/api/kb/nodes", {"type": "module", "name": "Arrives live", "parents": [course["id"]]})
+    b.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{extra['id']}').length === 1", timeout=20000)
+    # both rename the same record: the second save gets the conflict dialog
+    a.mouse.dblclick(*a.evaluate(f"window.__kbGraph.renderedPosition('{mod['id']}')"))
+    a.get_by_test_id("graph-rename-input").fill("Name from A")
+    a.keyboard.press("Enter")
+    expect(toast(a)).to_contain_text("Renamed")
+    b.mouse.dblclick(*b.evaluate(f"window.__kbGraph.renderedPosition('{mod['id']}')"))
+    b.evaluate("window.__kbGraph.cy.nodes().forEach((n) => n.data('version', Math.min(n.data('version') || 1, 1)))")   # B still holds v1
+    b.get_by_test_id("graph-rename-input").fill("Name from B")
+    b.keyboard.press("Enter")
+    expect(b.get_by_test_id("conflict-dialog")).to_contain_text("Name from A")
+    b.get_by_test_id("conflict-reload").click()
+    assert Client(USERS["viewer"]).get(f"/api/kb/nodes/{mod['id']}")[1]["name"] == "Name from A"
+    assert a.errors == [] and b.errors == []
+
+
+# --- run 3: activity (B4) and the admin-only link (B5) --------------------------------
+
+def test_b4_activity_filters_and_diff(server, browser):
+    ed = Client(USERS["editor"])
+    _, n = ed.post("/api/kb/nodes", {"type": "topic", "name": "Diff me", "summary": "old text"})
+    ed.patch(f"/api/kb/nodes/{n['id']}", {"version": 1, "summary": "new text"})
+    Client(USERS["admin"]).post("/api/kb/nodes", {"type": "topic", "name": "Admin made"})
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
+    page.goto(server + "#/activity")
+    expect(page.get_by_test_id("activity-entry").first).to_be_visible()
+    page.get_by_test_id("activity-action").select_option("update")
+    expect(page.get_by_test_id("activity-entry")).to_have_count(1)
+    entry = page.get_by_test_id("activity-entry").first
+    expect(entry.get_by_test_id("history-diff")).to_contain_text("old text")
+    expect(entry.get_by_test_id("history-diff")).to_contain_text("new text")
+    expect(entry.locator("time")).to_have_attribute("title", re.compile(r"\d"))
+    page.get_by_test_id("activity-clear").click()
+    page.get_by_test_id("activity-search").fill("Admin made")
+    expect(page.get_by_test_id("activity-entry")).to_have_count(1)
+    with page.expect_download() as dl:
+        page.get_by_test_id("activity-csv").click()
+    text = Path(dl.value.path()).read_text(encoding="utf-8")
+    assert text.startswith("id,at,actor,source,action") and "Admin made" in text
+    # the record's History tab uses the same entries
+    open_record(page, server, n["id"])
+    page.get_by_test_id("tab-history").click()
+    expect(page.get_by_test_id("history-list").get_by_test_id("activity-entry")).to_have_count(2)
+    assert page.errors == []
+
+
+def test_b4_activity_is_not_offered_to_viewers(server, browser):
+    page = page_as(browser, server, "viewer", viewport=(1536, 900))
+    expect(page.locator("[data-nav=activity]")).to_have_count(0)
+    page.goto(server + "#/activity")
+    expect(page.get_by_test_id("empty")).to_contain_text("Activity is for editors and admins")
+
+
+@pytest.mark.parametrize("role", ["admin", "editor", "contributor", "viewer"])
+def test_b5_link_back_to_the_original_site_is_admin_only(server, browser, role):
+    page = page_as(browser, server, role, viewport=(1536, 900))
+    link = page.get_by_test_id("back-to-site-nav")
+    page.get_by_test_id("whoami").click()
+    if role == "admin":
+        expect(link).to_have_attribute("href", "/")
+        expect(page.get_by_test_id("back-to-site")).to_be_visible()
+    else:
+        expect(link).to_have_count(0)
+        expect(page.get_by_test_id("back-to-site")).to_have_count(0)
+    assert page.errors == []

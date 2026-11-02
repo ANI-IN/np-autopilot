@@ -1,11 +1,11 @@
 /* Dashboard: real numbers only — records by type, completeness by course,
    what needs attention, recent activity as sentences with avatars. */
-import { S, el, add, clear, icon, typeIcon, typeLabel, api, avatar, personName, ago, skeletonBlock, errorBox, plural, you, can } from '../core.js';
+import { S, el, add, clear, icon, typeIcon, typeLabel, api, avatar, ago, skeletonBlock, errorBox, plural, you, can } from '../core.js';
+import { pageHead } from '../page.js';
 import { openRecordForm } from '../form.js';
 
 export function viewDashboard(v) {
-  v.appendChild(el('div', { class: 'page-head' }, el('h1', { text: 'Dashboard' }), el('span', { class: 'spacer' }),
-    can('contributor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-record-dash', onclick: () => openRecordForm({}) }, icon('plus'), 'New record') : null));
+  v.appendChild(pageHead({ title: 'Dashboard', actions: can('contributor') ? [el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-record-dash', onclick: () => openRecordForm({}) }, icon('plus'), 'New record')] : null }));
   const body = el('div', { class: 'page-body', 'data-testid': 'dashboard' }, skeletonBlock(10));
   v.appendChild(body);
   const load = async () => {
@@ -13,11 +13,14 @@ export function viewDashboard(v) {
       const d = await api('GET', '/dashboard');
       clear(body);
       // headline numbers
-      add(body, el('div', { class: 'stat-row', 'data-testid': 'dash-counts' },
-        stat('Records', d.totals.nodes, '#/records'), stat('Relationships', d.totals.edges), stat('Links', d.totals.resources, '#/resources'),
-        stat('Awaiting approval', d.totals.pending_proposals, '#/approvals'), stat('Need attention', sumAttention(d.attention.counts), '#/quality')));
-      const left = el('div', { class: 'col', style: 'gap:24px' }), right = el('div', { class: 'col', style: 'gap:24px' });
-      body.appendChild(el('div', { class: 'two-col', style: 'margin-top:24px' }, left, right));
+      // 12-column grid: six equal tiles (2 columns each), then two equal columns (6 each).
+      const grid = el('div', { class: 'grid-12', 'data-testid': 'dash-grid' });
+      body.appendChild(grid);
+      add(grid, [stat('Records', d.totals.nodes, '#/records'), stat('Relationships', d.totals.edges, '#/graph'), stat('Links', d.totals.resources, '#/resources'),
+        stat('Awaiting approval', d.totals.pending_proposals, '#/approvals'), stat('Need attention', d.attention.total, '#/quality', 'dash-attention-total'),
+        stat('Changed in 7 days', d.totals.changed_7d, can('editor') ? '#/activity' : null)]);
+      const left = el('div', { class: 'stack span-6', 'data-testid': 'dash-left' }), right = el('div', { class: 'stack span-6', 'data-testid': 'dash-right' });
+      add(grid, [left, right]);
       // records by type
       const max = Math.max(1, ...d.counts.map((c) => c.n));
       const types = el('ul', { class: 'list', 'data-testid': 'dash-types' });
@@ -40,7 +43,7 @@ export function viewDashboard(v) {
         if (!items.length) return;
         const ul = el('ul', { class: 'list' });
         items.slice(0, 5).forEach((x) => ul.appendChild(el('li', null, render(x))));
-        att.appendChild(el('div', null, el('div', { class: 'row small', style: 'margin-bottom:2px' }, el('strong', { text: label }), el('span', { class: 'count', text: a.counts[href] !== undefined ? a.counts[href] : items.length }), el('span', { class: 'spacer' }),
+        att.appendChild(el('div', { 'data-testid': 'attention-group' }, el('div', { class: 'row small', style: 'margin-bottom:2px' }, el('strong', { text: label }), el('span', { class: 'count', 'data-testid': 'attention-count', text: a.counts[href] }), el('span', { class: 'spacer' }),
           el('a', { class: 'xs', href: '#/quality', text: 'See all' })), ul));
       };
       const rec = (x, extra) => el('a', { class: 'link-row', href: '#/records?open=' + x.id }, typeIcon(x.type), el('span', { class: 'truncate', text: x.name, style: 'color:var(--text)' }), extra ? el('span', { class: 'faint xs truncate', text: extra }) : null);
@@ -49,6 +52,8 @@ export function viewDashboard(v) {
       group('Missing required fields', a.missing_required, (x) => rec(x, x.field), 'missing_required');
       group('Flagged as incorrect', a.flagged, (x) => el('a', { class: 'link-row', href: '#/approvals?tab=reviews' }, icon('flag'), el('span', { class: 'truncate', text: x.name, style: 'color:var(--text)' }), el('span', { class: 'faint xs truncate', text: x.reason })), 'flagged');
       group('Not connected to anything', a.orphans, (x) => rec(x), 'orphans');
+      group('Relationships that no longer fit the rules', a.misfits, (x) => el('a', { class: 'link-row', href: '#/records?open=' + x.source_id }, typeIcon(x.source_type),
+        el('span', { class: 'truncate', text: x.source, style: 'color:var(--text)' }), el('span', { class: 'faint xs', text: x.label }), el('span', { class: 'truncate', text: x.target, style: 'color:var(--text)' })), 'misfits');
       if (!att.children.length) att.appendChild(el('p', { class: 'faint small', text: 'Nothing needs attention right now.' }));
       right.appendChild(block('Needs attention', att));
       // recent activity
@@ -57,25 +62,29 @@ export function viewDashboard(v) {
         x.actor_type === 'human' && x.actor_id ? avatar(x.actor_id) : el('span', { class: 'avatar', style: '--av:#475569' }, icon(x.actor_type === 'ai' ? 'star' : 'upload', 'sm')),
         el('span', { class: 'small', style: 'flex:1;min-width:0' }, sentence(x)), el('span', { class: 'faint xs', style: 'white-space:nowrap', text: ago(x.at) })))));
       if (!d.recent.length) act.appendChild(el('li', { class: 'faint small', text: 'No activity yet.' }));
-      right.appendChild(block('Recent activity', act));
+      if (can('editor')) right.appendChild(block('Recent activity', act, null, el('a', { class: 'xs', href: '#/activity', text: 'All activity' })));
+      // Both columns end level: the last card in each grows to the taller column.
+      [left, right].forEach((c) => { if (c.lastElementChild) c.lastElementChild.style.flex = '1'; });
     } catch (e) { clear(body).appendChild(errorBox(e, load)); }
   };
   S.listReload = load; load();
 }
-function sumAttention(c) { return (c.no_owner || 0) + (c.broken_links || 0) + (c.missing_required || 0) + (c.flagged || 0); }
-function stat(k, value, href) {
+function stat(k, value, href, testid) {
   const inner = [el('div', { class: 'v', text: value === null || value === undefined ? '0' : String(value) }), el('div', { class: 'k', text: k })];
-  return href ? el('a', { class: 'stat', href, style: 'color:inherit;text-decoration:none' }, inner) : el('div', { class: 'stat' }, inner);
+  return el('div', { class: 'card span-2 dash-tile' }, href ? el('a', { class: 'tile', href, 'data-testid': testid }, inner) : el('div', { class: 'tile', 'data-testid': testid }, inner));
 }
-function block(title, content, hint) {
-  return el('section', null, el('div', { class: 'row', style: 'margin-bottom:8px' }, el('h2', { text: title })), hint ? el('p', { class: 'faint xs', style: 'margin:-4px 0 8px', text: hint }) : null, content);
+function block(title, content, hint, extra) {
+  return el('section', { class: 'card' }, el('div', { class: 'card-head' }, el('h2', { text: title }), el('span', { class: 'spacer' }), extra || null),
+    el('div', { class: 'card-body' }, hint ? el('p', { class: 'card-hint', text: hint }) : null, content));
 }
-function sentence(a) {
-  const who = a.actor_type === 'ai' ? 'The AI assistant' : a.actor_type === 'import' ? 'The Sheets import' : a.actor_type === 'system' ? 'The system' : you(a.actor_id) ? 'You' : (personName(a.actor_id) || 'Someone');
+export function sentence(a) {
+  // Every entry names its actor (server-resolved: a person, the AI assistant for
+  // a named person, the Sheets import, or the system); never "Someone".
+  const who = a.actor_type === 'human' && you(a.actor_id) ? 'You' : a.actor_label;
   const what = { insert: 'created', update: 'updated', delete: 'deleted' }[a.action] || a.action;
   const thing = { nodes: '', resources: 'the link', edges: 'a relationship', node_resources: 'a link on a record', node_tags: 'a tag' }[a.table_name];
   const label = a.label;
-  const link = label && (a.table_name === 'nodes' || a.table_name === 'resources') && a.action !== 'delete'
+  const link = label && (a.table_name === 'nodes' || a.table_name === 'resources') && a.action !== 'delete' && a.exists_now !== false
     ? el('a', { href: a.table_name === 'nodes' ? '#/records?open=' + a.row_id : '#/resources?res=' + a.row_id, text: label }) : label ? el('strong', { text: label }) : null;
-  return [el('strong', { text: who }), ' ' + what + ' ', thing ? thing + ' ' : '', link];
+  return [el('strong', { text: who, 'data-testid': 'activity-actor' }), ' ' + what + ' ', thing ? thing + ' ' : '', link];
 }

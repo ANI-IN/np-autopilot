@@ -317,14 +317,36 @@ def needs_attention(conn, limit: int = 12) -> dict:
                           order by e.updated_at desc limit %s""", (limit,))
     return {"no_owner": no_owner, "broken_links": broken, "orphans": orphans,
             "missing_required": missing[:limit], "flagged": flagged, "misfits": misfits,
-            "counts": _q1(conn, """select
-                (select count(*) from kb.nodes where archived_at is null and owner_id is null) as no_owner,
-                (select count(*) from kb.link_checks lc join kb.resources r on r.id = lc.resource_id
-                  where r.archived_at is null and lc.status in ('broken', 'forbidden', 'unreachable', 'timeout')) as broken_links,
-                (select count(*) from kb.nodes n where n.archived_at is null and not exists (select 1 from kb.edges e
-                  where e.archived_at is null and (e.source_id = n.id or e.target_id = n.id))) as orphans,
-                (select count(*) from kb.flags where status = 'open') as flagged""") | {"missing_required": len(missing),
-                                                                                    "misfits": len(misfits)}}
+            **attention_counts(conn)}
+
+
+# The ONE definition of "needs attention" (owner bug A1): the dashboard tile, the
+# dashboard list, the sidebar's Data quality count and the Data quality page all
+# read these numbers. Each is an exact count (never the length of a capped list);
+# total = the sum of every category the list shows.
+ATTENTION_KEYS = ("no_owner", "missing_required", "broken_links", "flagged", "orphans", "misfits")
+BROKEN = "('broken', 'forbidden', 'unreachable', 'timeout')"
+
+
+def attention_counts(conn) -> dict:
+    c = _q1(conn, f"""select
+        (select count(*) from kb.nodes where archived_at is null and owner_id is null) as no_owner,
+        (select count(*) from kb.link_checks lc join kb.resources r on r.id = lc.resource_id
+          where r.archived_at is null and lc.status in {BROKEN}) as broken_links,
+        (select count(*) from kb.nodes n where n.archived_at is null and not exists (select 1 from kb.edges e
+          where e.archived_at is null and (e.source_id = n.id or e.target_id = n.id))) as orphans,
+        (select count(*) from kb.flags where status = 'open') as flagged,
+        (select count(*) from kb.nodes n join kb.node_types t on t.id = n.type_id
+          cross join lateral jsonb_array_elements(t.fields) f
+          where n.archived_at is null and t.archived_at is null and coalesce((f ->> 'required')::boolean, false)
+            and not coalesce((f ->> 'archived')::boolean, false)
+            and coalesce(n.props ->> (f ->> 'key'), '') in ('', '[]')) as missing_required,
+        (select count(*) from kb.edges e join kb.nodes s on s.id = e.source_id join kb.nodes t on t.id = e.target_id
+          where e.archived_at is null and s.archived_at is null and t.archived_at is null
+            and not exists (select 1 from kb.edge_type_rules r where r.edge_type_id = e.edge_type_id
+                and r.archived_at is null and r.source_type_id = s.type_id and r.target_type_id = t.type_id)) as misfits""")
+    counts = {k: int(c[k] or 0) for k in ATTENTION_KEYS}
+    return {"counts": counts, "total": sum(counts.values())}
 
 
 def course_completeness(conn) -> list[dict]:
@@ -510,3 +532,59 @@ def delete_view(conn, actor: Actor, vid: str) -> dict:
     if not rows:
         raise Forbidden("only the person who saved a view can delete it")
     return {"deleted": vid}
+
+
+# ---------------------------------------------------------------------------
+# graph layouts (run 3, B3): node positions per layout ('default' = the shared
+# layout, or a saved graph view's id). Layout only: nothing here changes a
+# record, so a move never bumps a record's version or causes a conflict.
+# ---------------------------------------------------------------------------
+
+def _layout(raw) -> str:
+    lay = str(raw or "default")
+    if lay != "default":
+        lay = str(v.uid(lay, "layout"))
+    return lay
+
+
+def graph_positions(conn, params: dict) -> dict:
+    lay = _layout(params.get("layout"))
+    ids = [x for x in str(params.get("ids") or "").split(",") if x]
+    if ids:
+        ids = [str(v.uid(x, "ids")) for x in ids[:5000]]
+        rows = _q(conn, "select node_id, x, y from kb.graph_positions where layout = %s and node_id = any(%s::uuid[])", (lay, ids))
+    else:
+        rows = _q(conn, "select node_id, x, y from kb.graph_positions where layout = %s limit 5000", (lay,))
+    return {"layout": lay, "items": rows}
+
+
+def save_graph_positions(conn, actor: Actor, body: dict) -> dict:
+    require(conn, "contributor", "arranging the graph")
+    v.only(body, {"layout", "positions"})
+    lay = _layout(body.get("layout"))
+    pos = body.get("positions")
+    if not isinstance(pos, list) or not pos or len(pos) > 5000:
+        raise Invalid("positions must be a list of 1-5000 {node_id, x, y}", field="positions")
+    rows = []
+    for p in pos:
+        try:
+            rows.append((lay, str(v.uid(p.get("node_id"), "node_id")), float(p["x"]), float(p["y"])))
+        except (TypeError, KeyError, ValueError, AttributeError):
+            raise Invalid("each position needs node_id, x and y", field="positions") from None
+    with _translate(conn, "position"):
+        with conn.cursor() as cur:
+            cur.executemany("""insert into kb.graph_positions (layout, node_id, x, y) values (%s, %s, %s, %s)
+                               on conflict (layout, node_id) do update set x = excluded.x, y = excluded.y,
+                               updated_by = auth.uid(), updated_at = now()""", rows)
+    return {"layout": lay, "saved": len(rows)}
+
+
+def reset_graph_positions(conn, actor: Actor, params: dict) -> dict:
+    require(conn, "contributor", "arranging the graph")
+    lay = _layout(params.get("layout"))
+    ids = [str(v.uid(x, "ids")) for x in str(params.get("ids") or "").split(",") if x]
+    if ids:
+        n = _q(conn, "delete from kb.graph_positions where layout = %s and node_id = any(%s::uuid[]) returning 1", (lay, ids))
+    else:
+        n = _q(conn, "delete from kb.graph_positions where layout = %s returning 1", (lay,))
+    return {"layout": lay, "removed": len(n)}

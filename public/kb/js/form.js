@@ -6,6 +6,7 @@
 import { S, el, add, $, $$, clear, icon, typeIcon, typeLabel, api, toast, failToast, avatar, personName, debounce, qs, host,
   openSheet, closeSheet, requestCloseSheet, openDialog, closeDialog, combobox, nodeSource, nodeItem, peopleSource, can, setQuery, you, plural } from './core.js';
 
+import { relCombobox } from './relpicker.js';
 // ------------------------------------------------------------------ link kinds
 export function linkKindFor(r) {
   const key = r.link_kind || detectLinkKind(r.url || '');
@@ -120,32 +121,26 @@ function placementPicker(typeKey, initial, testid, single) {
 }
 
 // ------------------------------------------------------------------ relationship rows
-function relOptions(typeKey) {
-  const out = [];
-  S.edgeTypes.forEach((et) => (et.rules || []).forEach((r) => {
-    if (et.key === 'contains' && r.target === typeKey) return;      // placement covers "part of"
-    if (r.source === typeKey) out.push({ key: et.key + '|out|' + r.target, type: et.key, direction: 'out', other: r.target, label: et.label + ' → ' + typeLabel(r.target).toLowerCase() });
-    if (r.target === typeKey && et.key !== 'contains') out.push({ key: et.key + '|in|' + r.source, type: et.key, direction: 'in', other: r.source, label: (et.inverse_label || et.label) + ' ← ' + typeLabel(r.source).toLowerCase() });
-  }));
-  return out.sort((a, b) => a.label.localeCompare(b.label));
-}
+/* One row = a relationship (searchable, written as a sentence, grouped by
+   direction; "Create relationship …" for a new type) beside the record it
+   points at, with an optional note underneath (A7). */
 function relationshipRows(typeKey, getName, testid) {
   const box = el('div', { class: 'col', 'data-testid': testid || 'rel-rows' });
   const rows = [];
   const addBtn = el('button', { class: 'btn ghost sm', type: 'button', style: 'align-self:flex-start', 'data-testid': 'add-relationship', onclick: () => addRow() }, icon('plus', 'sm'), 'Add relationship');
   function addRow() {
-    const opts = relOptions(typeKey());
-    const st = { opt: opts[0] || null, target: null, note: '' };
-    const sel = el('select', { 'aria-label': 'Relationship', 'data-testid': 'rel-type' }, opts.map((o) => el('option', { value: o.key, text: o.label })));
-    if (!opts.length) sel.appendChild(el('option', { text: 'No relationships allowed for this type' }));
-    const tgtHost = el('div', { style: 'flex:1;min-width:0' });
+    const st = { opt: null, target: null, note: '' };
+    const tgtHost = el('div', { class: 'rel-target' });
     const sentence = el('div', { class: 'faint xs', 'data-testid': 'rel-sentence' });
-    const note = el('input', { placeholder: 'Note (optional)', 'aria-label': 'Note', style: 'width:100%' });
+    const note = el('input', { placeholder: 'Note (optional)', 'aria-label': 'Note', class: 'rel-note' });
     note.addEventListener('input', () => { st.note = note.value; });
+    const relBox = relCombobox({ typeKey, otherType: () => (st.target && st.target.type) || null, testid: 'rel-type',
+      onChange: (it) => { const changed = !st.opt || !it || st.opt.other !== it.other; st.opt = it; if (changed) st.target = null; drawTarget(); } });
     function drawTarget() {
       clear(tgtHost);
-      if (!st.opt) return;
-      tgtHost.appendChild(combobox({ testid: 'rel-target', label: 'Related record', placeholder: 'Search ' + typeLabel(st.opt.other, true).toLowerCase() + '…',
+      if (!st.opt) { tgtHost.appendChild(el('div', { class: 'combo-box placeholder faint small', 'data-testid': 'rel-target-placeholder', text: 'Choose a relationship first' })); drawSentence(); return; }
+      tgtHost.appendChild(combobox({ testid: 'rel-target', label: 'Related record', placeholder: 'Search ' + typeLabel(st.opt.other, true).toLowerCase() + '…', openOnFocus: true,
+        value: st.target ? [st.target] : [],
         source: nodeSource([st.opt.other]), create: (q) => [{ id: 'new:' + q, label: 'Create ' + typeLabel(st.opt.other).toLowerCase() + ' “' + q + '”', name: q }],
         onCreateRequest: (it, done) => done({ id: 'new:' + st.opt.other + ':' + it.name, label: it.name + ' (new)', icon: typeIcon(st.opt.other), isNew: true, name: it.name, type: st.opt.other }),
         onChange: (v) => { st.target = v; drawSentence(); } }));
@@ -154,11 +149,10 @@ function relationshipRows(typeKey, getName, testid) {
     function drawSentence() {
       const me = getName() || 'This record', other = st.target ? st.target.label.replace(/ \(new\)$/, '') : '…';
       const et = st.opt && S.edgeTypes.find((e) => e.key === st.opt.type);
-      sentence.textContent = !st.opt ? '' : st.opt.direction === 'out' ? '“' + me + '” ' + et.label + ' “' + other + '”' : '“' + other + '” ' + et.label + ' “' + me + '”';
+      sentence.textContent = !st.opt || !et ? '' : st.opt.direction === 'out' ? '“' + me + '” ' + et.label + ' “' + other + '”' : '“' + other + '” ' + et.label + ' “' + me + '”';
     }
-    sel.addEventListener('change', () => { st.opt = opts.find((o) => o.key === sel.value); st.target = null; drawTarget(); });
-    const row = el('div', { class: 'col', style: 'gap:4px;padding:8px;border:1px solid var(--border);border-radius:6px', 'data-testid': 'rel-row' },
-      el('div', { class: 'row' }, sel, tgtHost, el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Remove relationship row', onclick: () => { rows.splice(rows.indexOf(st), 1); row.remove(); } }, icon('x', 'sm'))),
+    const row = el('div', { class: 'rel-row', 'data-testid': 'rel-row' },
+      relBox, tgtHost, el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Remove relationship row', onclick: () => { rows.splice(rows.indexOf(st), 1); row.remove(); } }, icon('x', 'sm')),
       note, sentence);
     st.row = row;
     rows.push(st); box.insertBefore(row, addBtn); drawTarget();

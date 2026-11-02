@@ -25,6 +25,8 @@ export function el(tag, props, ...kids) {
     else n.setAttribute(k, v === true ? '' : v);
   }
   add(n, kids);
+  // Text that may be cut off with "…" always carries its full text as a tooltip (A5 sweep).
+  if (props && props.text && !props.title && / truncate |^truncate | truncate$|^truncate$/.test(props.class || '')) n.title = String(props.text);
   return n;
 }
 export function add(parent, kids) {
@@ -150,13 +152,17 @@ export function failToast(e, what) {
 }
 
 // ------------------------------------------------------------------ dialogs
-let lastFocus = null;
+/* Dialogs stack: one opened from inside another (New relationship type from
+   Connect) sits on top, and closing it returns to the one below with its
+   state intact. Without `stack`, opening a dialog replaces whatever is open. */
 export function openDialog(content, opts) {
   opts = opts || {};
-  closeDialog();
-  lastFocus = document.activeElement;
-  const box = el('div', { class: 'dialog' + (opts.wide ? ' wide' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-label': opts.label || 'Dialog', 'data-testid': opts.testid || 'dialog' }, content);
-  const ov = el('div', { class: 'overlay', id: 'dialog-overlay', onmousedown: (e) => { if (e.target === ov && !opts.sticky) closeDialog(); } }, box);
+  const stacked = opts.stack && $$('.overlay[data-dialog]').length > 0;
+  if (!stacked) closeAllDialogs();
+  const box = el('div', { class: 'dialog' + (opts.wide ? ' wide' : '') + (opts.cls ? ' ' + opts.cls : ''), role: 'dialog', 'aria-modal': 'true', 'aria-label': opts.label || 'Dialog', 'data-testid': opts.testid || 'dialog' }, content);
+  const ov = el('div', { class: 'overlay' + (stacked ? ' stacked' : ''), id: stacked ? null : 'dialog-overlay', 'data-dialog': '1',
+    onmousedown: (e) => { if (e.target === ov && !opts.sticky) closeDialog(); } }, box);
+  ov._lastFocus = document.activeElement;
   ov.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeDialog(); } });
   document.body.appendChild(ov);
   const f = box.querySelector('[autofocus], input:not([type=hidden]), select, textarea, button.primary, button');
@@ -164,9 +170,11 @@ export function openDialog(content, opts) {
   return box;
 }
 export function closeDialog() {
-  const ov = $('#dialog-overlay');
-  if (ov) { ov.remove(); if (lastFocus && lastFocus.focus && document.contains(lastFocus)) lastFocus.focus(); }
+  const all = $$('.overlay[data-dialog]');
+  const ov = all.length ? all[all.length - 1] : $('#dialog-overlay');
+  if (ov) { ov.remove(); const lf = ov._lastFocus; if (lf && lf.focus && document.contains(lf)) lf.focus(); }
 }
+function closeAllDialogs() { $$('.overlay[data-dialog]').forEach((o) => o.remove()); const p = $('#dialog-overlay'); if (p) p.remove(); }
 export function confirmDialog(o) {
   return new Promise((resolve) => {
     let input = null;
@@ -220,7 +228,32 @@ export function menu(anchor, items, opts) {
   });
   return m;
 }
-document.addEventListener('mousedown', (e) => { if (openMenuEl && !openMenuEl.contains(e.target)) closeMenu(); });
+// A picker's option list lives in <body>; choosing from one inside a popover must not close the popover.
+document.addEventListener('mousedown', (e) => { if (openMenuEl && !openMenuEl.contains(e.target) && !(e.target.closest && e.target.closest('.menu[role=listbox]'))) closeMenu(); });
+
+/* A popover: a floating panel anchored to a button, always inside the
+   viewport (flips above when there is no room below, clamps at both edges),
+   closed by Esc or a click outside. Shares the single open-menu slot. */
+export function popover(anchor, content, opts) {
+  closeMenu();
+  opts = opts || {};
+  const m = el('div', { class: 'popover', role: 'dialog', 'aria-label': opts.label || 'Options', 'data-testid': opts.testid || 'popover' }, content);
+  document.body.appendChild(m);
+  const place = () => {
+    const r = anchor.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight, vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    let left = opts.alignRight ? r.right - w : r.left;
+    left = Math.max(8, Math.min(left, vw - w - 8));
+    let top = r.bottom + 6;
+    if (top + h > vh - 8 && r.top - h - 6 > 8) top = r.top - h - 6;
+    m.style.left = left + 'px'; m.style.top = Math.max(8, Math.min(top, vh - h - 8)) + 'px';
+  };
+  place();
+  openMenuEl = m;
+  m.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeMenu(); anchor.focus(); } });
+  const first = m.querySelector('input, button, select'); if (first) first.focus();
+  m.reposition = place;
+  return m;
+}
 
 // ------------------------------------------------------------------ side sheet
 let sheetState = null;
@@ -338,12 +371,15 @@ export function combobox(o) {
     if (!items.length && !q) return;
     menuEl = el('div', { class: 'menu', role: 'listbox', 'data-testid': (o.testid || 'combo') + '-menu' });
     if (!items.length) menuEl.appendChild(el('div', { class: 'menu-label', text: 'No matches' }));
-    items.forEach((it, i) => menuEl.appendChild(el('button', { type: 'button', role: 'option', 'aria-selected': i === active ? 'true' : 'false',
+    let group = null;
+    items.forEach((it, i) => (it.group && it.group !== group && !it.isCreate ? menuEl.appendChild(el('div', { class: 'menu-label', role: 'presentation', text: (group = it.group) })) : null, menuEl.appendChild(el('button', { type: 'button', role: 'option', 'aria-selected': i === active ? 'true' : 'false',
       'data-testid': it.isCreate ? (o.testid || 'combo') + '-create' : (o.testid || 'combo') + '-option', onmousedown: (e) => { e.preventDefault(); pick(it); } },
-      it.isCreate ? icon('plus') : (it.icon || null), el('span', { class: 'truncate', text: it.label }), it.sub ? el('span', { class: 'faint small truncate', text: it.sub }) : null)));
+      it.isCreate ? icon('plus') : (it.icon || null), el('span', { class: 'truncate', text: it.label }), it.sub ? el('span', { class: 'faint small truncate', text: it.sub }) : null))));
     document.body.appendChild(menuEl);
     const r = box.getBoundingClientRect();
-    menuEl.style.left = r.left + 'px'; menuEl.style.width = Math.max(r.width, 240) + 'px';
+    // Never past the viewport's edges (A4 sweep): clamp the width and the left edge.
+    const vw = document.documentElement.clientWidth, w = Math.min(Math.max(r.width, o.menuWidth || 240), vw - 16);
+    menuEl.style.width = w + 'px'; menuEl.style.maxWidth = w + 'px'; menuEl.style.left = Math.max(8, Math.min(r.left, vw - w - 8)) + 'px';
     const below = window.innerHeight - r.bottom;
     if (below < 220 && r.top > below) menuEl.style.bottom = (window.innerHeight - r.top + 4) + 'px'; else menuEl.style.top = (r.bottom + 4) + 'px';
     input.setAttribute('aria-expanded', 'true');

@@ -2,7 +2,7 @@
    Supported markdown: # ## ### headings, paragraphs, - and 1. lists,
    ![caption](/kb/guide/x.png), **bold**, `code`, [text](link). Everything is
    built with el()/textContent: the file is never injected as HTML. */
-import { el, add, clear, skeletonBlock, errorBox } from '../core.js';
+import { el, add, clear, skeletonBlock, errorBox, openDialog, closeDialog, icon } from '../core.js';
 
 function inline(text) {
   const out = [];
@@ -18,6 +18,11 @@ function inline(text) {
   }
   if (last < text.length) out.push(text.slice(last));
   return out;
+}
+function lightbox(src, alt) {
+  openDialog([el('div', { class: 'row' }, el('h2', { class: 'truncate', text: alt || 'Screenshot' }), el('span', { class: 'spacer' }),
+    el('button', { class: 'btn ghost icon', type: 'button', 'aria-label': 'Close', onclick: closeDialog }, icon('x'))),
+  el('img', { src, alt: alt || '', class: 'lightbox-img', 'data-testid': 'guide-lightbox' })], { label: alt || 'Screenshot', wide: true, cls: 'lightbox' });
 }
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
@@ -37,7 +42,14 @@ export function render(md) {
       if (lvl === 2) toc.push([id, m[2]]);
       return;
     }
-    if (img) { flush(); list = null; const src = img[2].startsWith('/kb/guide/') ? img[2] : ''; doc.appendChild(el('figure', null, el('img', { src, alt: img[1], loading: 'lazy' }), img[1] ? el('figcaption', { text: img[1] }) : null)); return; }
+    if (img) {
+      flush(); list = null;
+      const src = img[2].startsWith('/kb/guide/') ? img[2] : '';
+      // Click (or Enter) to see the screenshot full size (A6).
+      doc.appendChild(el('figure', null, el('button', { class: 'figure-zoom', type: 'button', 'aria-label': 'Enlarge: ' + (img[1] || 'screenshot'), 'data-testid': 'guide-figure', onclick: () => lightbox(src, img[1]) },
+        el('img', { src, alt: img[1], loading: 'lazy', decoding: 'async' })), img[1] ? el('figcaption', { text: img[1] }) : null));
+      return;
+    }
     if ((m = /^\s*(-|\d+\.)\s+(.*)$/.exec(line))) {
       flush();
       const ordered = m[1] !== '-';

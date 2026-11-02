@@ -6,6 +6,7 @@ import { S, el, add, $, clear, icon, typeIcon, typeLabel, typeDot, api, toast, f
 import { onLiveChange, showLive, hideLive } from './live.js';
 import { track, onPresence, others } from './realtime.js';
 import { openRecordForm, linkKindFor, attachDialog, connectDialog, fieldInput, fieldDisplay } from './form.js';
+import { activityEntry } from './views/activity.js';
 
 // ------------------------------------------------------------------ panel host
 let panelWidth = 440;
@@ -197,7 +198,7 @@ function drawTab(st, body, editable) {
   } else {
     const h = el('div', { class: 'section', 'data-testid': 'panel-history' }, skeletonBlock(4));
     body.appendChild(h);
-    loadHistory(h, '/nodes/' + n.id + '/history');
+    loadHistory(h, '/nodes/' + n.id + '/history', n.id);
   }
 }
 
@@ -310,28 +311,16 @@ function placementDialog(st) {
 }
 
 // ------------------------------------------------------------------ history
-export async function loadHistory(box, path) {
+/* A record's History tab: the same entry component as the Activity page, so
+   it reads the same way (who, what, when, field-by-field diff). Read through
+   kb.record_history(), which any member who can see the record may use. */
+export async function loadHistory(box, path, recordId) {
   try {
     const h = (await api('GET', path)).items;
     clear(box);
     if (!h.length) { box.appendChild(el('p', { class: 'faint small', text: 'No history.' })); return; }
-    const ul = el('ul', { class: 'list' });
-    h.forEach((a) => {
-      const who = a.actor_type === 'ai' ? 'AI assistant' : a.actor_type === 'import' ? 'Sheets import' : a.actor_type === 'system' ? 'System' : (you(a.actor_id) ? 'You' : personName(a.actor_id) || 'Someone');
-      const verb = { insert: 'created this', update: 'changed', delete: 'deleted this' }[a.action] || a.action;
-      const diffs = el('div', { class: 'col', style: 'gap:2px;margin-top:4px' });
-      if (a.action === 'update' && a.before && a.after) {
-        Object.keys(a.after).filter((k) => !['updated_at', 'updated_by', 'version', 'search', 'name_norm'].includes(k) && JSON.stringify(a.before[k]) !== JSON.stringify(a.after[k])).slice(0, 6).forEach((k) => {
-          const fmt = (v) => (v === null || v === undefined || v === '' ? '—' : typeof v === 'object' ? JSON.stringify(v) : String(v));
-          diffs.appendChild(el('div', { class: 'small', 'data-testid': 'history-diff' }, el('span', { class: 'faint', text: k.replace(/_id$/, '').replace(/_/g, ' ') + ': ' }),
-            el('span', { class: 'diff-del', text: fmt(a.before[k]).slice(0, 140) }), ' → ', el('span', { class: 'diff-add', text: fmt(a.after[k]).slice(0, 140) })));
-        });
-      }
-      ul.appendChild(el('li', { style: 'padding:8px 0;border-bottom:1px solid var(--border)' }, el('div', { class: 'row small' }, a.actor_id ? avatar(a.actor_id) : null,
-        el('span', null, el('strong', { text: who }), ' ' + verb + (a.table_name !== 'nodes' && a.table_name !== 'resources' ? ' (' + a.table_name.replace('node_', '').replace(/_/g, ' ') + ')' : '')),
-        el('span', { class: 'spacer' }), el('span', { class: 'faint xs', text: ago(a.at) })), diffs));
-    });
-    box.appendChild(ul);
+    box.appendChild(el('ul', { class: 'entries', 'data-testid': 'history-list' }, h.map((a) => activityEntry(a, { inRecord: true, all: true }))));
+    if (can('editor') && recordId) box.appendChild(el('a', { class: 'btn ghost sm', style: 'margin-top:8px', href: '#/activity?record=' + recordId, 'data-testid': 'history-in-activity' }, icon('history', 'sm'), 'Open in Activity'));
   } catch (e) { clear(box).appendChild(errorBox(e)); }
 }
 

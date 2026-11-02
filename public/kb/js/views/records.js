@@ -1,7 +1,7 @@
 /* Records table: one-row toolbar (search, Filter → removable chips, sort, view
    options, export), saved views as tabs, sticky header, hover actions, bulk
    bar, density toggle, result count, keyboard (j/k, Enter, x, e, /). */
-import { S, el, add, $, $$, clear, icon, typeIcon, typeLabel, api, toast, failToast, avatar, personName, ago, qs, menu, can, setQuery,
+import { S, el, add, $, $$, clear, icon, typeIcon, typeLabel, api, toast, failToast, avatar, personName, ago, qs, menu, popover, can, setQuery,
   skeletonRows, empty, errorBox, debounce, openDialog, closeDialog, combobox, nodeSource, confirmDialog, plural, you } from '../core.js';
 import { openRecordForm, fieldDisplay } from '../form.js';
 
@@ -111,16 +111,74 @@ export function viewRecords(v, r) {
   // A list of one type shows that type's custom fields as optional columns.
   function typeFields() { const t = S.typeByKey[fixed || f.type]; return t ? (t.fields || []).filter((x) => !x.archived) : []; }
   function fieldOn(k) { return (p.fieldCols || {})[(fixed || f.type) + ':' + k] !== false; }
+  /* View settings (A4): a popover that stays inside the viewport, with a
+     labelled density switch and one checkbox per column; drag a row by its
+     handle (or use the arrows) to reorder the columns. */
   function optionsMenu(anchor) {
-    const tf = typeFields();
-    menu(anchor, [{ header: true, label: 'Density' },
-      { label: 'Comfortable', checked: !p.compact, fn: () => { p.compact = false; savePrefs(p); tableHost.classList.remove('compact'); } },
-      { label: 'Compact', checked: p.compact, testid: 'density-compact', fn: () => { p.compact = true; savePrefs(p); tableHost.classList.add('compact'); } },
-      '-', { header: true, label: 'Columns' },
-      ...COLS.map(([k, label]) => ({ label: label, checked: cols[k], fn: () => { cols[k] = !cols[k]; p.cols = cols; savePrefs(p); draw(); } })),
-      ...(tf.length ? [{ header: true, label: typeLabel(fixed || f.type) + ' fields' }] : []),
-      ...tf.map((x) => ({ label: x.label, checked: fieldOn(x.key), testid: 'col-field-' + x.key,
-        fn: () => { p.fieldCols = p.fieldCols || {}; p.fieldCols[(fixed || f.type) + ':' + x.key] = !fieldOn(x.key); savePrefs(p); draw(); } }))]);
+    const seg = el('div', { class: 'segmented', role: 'radiogroup', 'aria-label': 'Row density' });
+    const setDensity = (c) => { p.compact = c; savePrefs(p); tableHost.classList.toggle('compact', c); $$('button', seg).forEach((b) => b.setAttribute('aria-checked', String((b.dataset.v === 'compact') === c))); };
+    [['comfortable', 'Comfortable'], ['compact', 'Compact']].forEach(([k, l]) => seg.appendChild(el('button', { type: 'button', role: 'radio', 'data-v': k, 'data-testid': 'density-' + k,
+      'aria-checked': String((k === 'compact') === !!p.compact), text: l, onclick: () => setDensity(k === 'compact') })));
+    const list = el('ul', { class: 'check-list', 'data-testid': 'column-list' });
+    let dragId = null;
+    const drawList = () => {
+      clear(list);
+      columnOrder().forEach((c) => {
+        const li = el('li', { draggable: 'true', 'data-col': c.id, 'data-testid': 'col-row-' + c.id.replace(':', '-'),
+          ondragstart: (e) => { dragId = c.id; e.dataTransfer.effectAllowed = 'move'; },
+          ondragover: (e) => { e.preventDefault(); li.classList.add('drag-over'); },
+          ondragleave: () => li.classList.remove('drag-over'),
+          ondrop: (e) => { e.preventDefault(); li.classList.remove('drag-over'); moveColumn(dragId, c.id); drawList(); draw(); } },
+          el('span', { class: 'grip', title: 'Drag to reorder', 'aria-hidden': 'true' }, icon('grip-vertical', 'sm')),
+          el('label', null, el('input', { type: 'checkbox', checked: c.on, 'data-testid': c.field ? 'col-field-' + c.field.key : 'col-' + c.id,
+            onchange: (e) => { setColumn(c, e.target.checked); draw(); } }), el('span', { class: 'truncate', text: c.label })),
+          el('span', { class: 'row', style: 'gap:0' },
+            el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Move ' + c.label + ' up', onclick: () => { moveBy(c.id, -1); drawList(); draw(); } }, icon('chevron-up', 'sm')),
+            el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Move ' + c.label + ' down', onclick: () => { moveBy(c.id, 1); drawList(); draw(); } }, icon('chevron-down', 'sm'))));
+        list.appendChild(li);
+      });
+    };
+    drawList();
+    popover(anchor, [el('div', { class: 'popover-label', text: 'Density' }), seg, el('div', { class: 'popover-label', text: 'Columns' }), list,
+      el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'columns-reset', onclick: () => { delete p.order; delete p.widths; Object.assign(cols, { scope: true, owner: true, links: true, updated: true }); p.cols = cols; savePrefs(p); drawList(); draw(); } }, icon('rotate-ccw', 'sm'), 'Reset columns')],
+    { alignRight: true, testid: 'view-popover', label: 'View settings' });
+  }
+  // Columns other than Name: built-ins and (for a one-type list) the type's fields, in the saved order.
+  function columnOrder() {
+    const all = COLS.map(([k, label]) => ({ id: k, label, on: !!cols[k] }))
+      .concat(typeFields().map((x) => ({ id: 'field:' + x.key, label: x.label, on: fieldOn(x.key), field: x })));
+    const order = p.order || [];
+    const rank = (c) => { const i = order.indexOf(c.id); return i < 0 ? 100 + all.indexOf(c) : i; };
+    return all.slice().sort((a, b) => rank(a) - rank(b));
+  }
+  function setColumn(c, on) {
+    if (c.field) { p.fieldCols = p.fieldCols || {}; p.fieldCols[(fixed || f.type) + ':' + c.field.key] = on; } else { cols[c.id] = on; p.cols = cols; }
+    savePrefs(p);
+  }
+  function moveColumn(from, to) {
+    if (!from || from === to) return;
+    const ids = columnOrder().map((c) => c.id); ids.splice(ids.indexOf(from), 1); ids.splice(ids.indexOf(to), 0, from);
+    p.order = ids; savePrefs(p);
+  }
+  function moveBy(id, d) {
+    const ids = columnOrder().map((c) => c.id); const i = ids.indexOf(id), j = i + d;
+    if (j < 0 || j >= ids.length) return; ids.splice(i, 1); ids.splice(j, 0, id); p.order = ids; savePrefs(p);
+  }
+  const DEFAULT_W = { scope: 220, owner: 72, links: 72, updated: 104 };
+  function colWidth(id) { return (p.widths || {})[id] || DEFAULT_W[id] || 140; }
+  // Drag the right edge of a header to resize that column; saved per browser.
+  function resizer(id, th) {
+    const h = el('span', { class: 'col-resize', role: 'separator', 'aria-orientation': 'vertical', 'aria-label': 'Resize column', 'data-testid': 'col-resize-' + id.replace(':', '-'),
+      onclick: (e) => e.stopPropagation(),
+      onmousedown: (e) => {
+        e.preventDefault(); e.stopPropagation(); h.classList.add('dragging');
+        const x0 = e.clientX, w0 = th.getBoundingClientRect().width;
+        const mv = (ev) => { th.style.width = Math.max(56, Math.round(w0 + ev.clientX - x0)) + 'px'; };
+        const up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); h.classList.remove('dragging');
+          p.widths = Object.assign({}, p.widths, { [id]: parseInt(th.style.width, 10) }); savePrefs(p); };
+        document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+      } });
+    return h;
   }
 
   async function drawChips() {
@@ -160,12 +218,13 @@ export function viewRecords(v, r) {
     }
     const allBox = el('input', { type: 'checkbox', 'aria-label': 'Select all shown', 'data-testid': 'select-all', onclick: (e) => { e.stopPropagation(); if (allBox.checked) items.forEach((n) => selected.add(n.id)); else selected.clear(); draw(); drawBulk(); } });
     allBox.checked = selected.size && selected.size === items.length;
-    const head = el('tr', null, el('th', { style: 'width:44px' }, allBox), el('th', { text: 'Name' }),
-      cols.scope ? el('th', { class: 'col-optional', style: 'width:22%', text: 'Course / program' }) : null,
-      typeFields().filter((x) => fieldOn(x.key)).map((x) => el('th', { class: 'col-optional', style: 'width:12%', text: x.label, 'data-testid': 'th-field-' + x.key })),
-      cols.owner ? el('th', { style: 'width:64px', text: 'Owner' }) : null,
-      cols.links ? el('th', { class: 'col-optional num', style: 'width:64px', text: 'Links' }) : null,
-      cols.updated ? el('th', { style: 'width:96px', text: 'Updated' }) : null, el('th', { style: 'width:72px', 'aria-label': 'Actions' }));
+    const shown = columnOrder().filter((c) => c.on);
+    const nameTh = el('th', { class: 'resizable', text: 'Name', style: p.widths && p.widths.name ? 'width:' + p.widths.name + 'px' : null });
+    nameTh.appendChild(resizer('name', nameTh));
+    const head = el('tr', null, el('th', { style: 'width:44px' }, allBox), nameTh,
+      shown.map((c) => { const th = el('th', { class: 'resizable' + (c.id === 'links' ? ' num' : '') + (['scope', 'links'].includes(c.id) || c.field ? ' col-optional' : ''),
+        style: 'width:' + colWidth(c.id) + 'px', text: c.label, 'data-testid': c.field ? 'th-field-' + c.field.key : 'th-' + c.id }); th.appendChild(resizer(c.id, th)); return th; }),
+      el('th', { style: 'width:72px', 'aria-label': 'Actions' }));
     const tb = el('tbody');
     items.forEach((n, i) => {
       const box = el('input', { type: 'checkbox', 'aria-label': 'Select ' + n.name, checked: selected.has(n.id), 'data-testid': 'row-check',
@@ -173,15 +232,17 @@ export function viewRecords(v, r) {
       const tr = el('tr', { 'data-id': n.id, 'data-testid': 'row', tabindex: '-1', class: (S.panel && S.panel.id === n.id ? 'selected' : '') + (i === cur ? ' cursor' : ''),
         onclick: () => { cur = i; setQuery({ open: n.id, res: null }); } },
         el('td', null, box),
-        el('td', null, el('div', { class: 'cell-name' }, typeIcon(n.type), el('span', { class: 'name', text: n.name }),
-          n.status === 'draft' ? el('span', { class: 'badge warn', text: 'Draft' }) : null, n.archived_at ? el('span', { class: 'badge danger', text: 'Archived' }) : null,
-          n.flags ? el('span', { class: 'badge danger', title: 'Flagged as incorrect' }, icon('flag', 'sm')) : null,
-          n.summary ? el('span', { class: 'desc', text: n.summary }) : null)),
-        cols.scope ? el('td', { class: 'col-optional truncate faint', text: n.scope_name || '' }) : null,
-        typeFields().filter((x) => fieldOn(x.key)).map((x) => el('td', { class: 'col-optional truncate small' }, fieldDisplay(x, (n.props || {})[x.key]))),
-        cols.owner ? el('td', null, avatar(n.owner_id)) : null,
-        cols.links ? el('td', { class: 'col-optional num faint', text: n.links ? String(n.links) : '' }) : null,
-        cols.updated ? el('td', { class: 'faint', text: ago(n.updated_at) }) : null,
+        // Full name and description on hover (A5); comfortable density wraps the description to two lines.
+        el('td', { title: n.name + (n.summary ? '\n\n' + n.summary : ''), 'data-testid': 'cell-name' }, el('div', { class: 'cell-stack' }, typeIcon(n.type),
+          el('div', { class: 'head' }, el('span', { class: 'name', text: n.name }),
+            n.status === 'draft' ? el('span', { class: 'badge warn', text: 'Draft' }) : null, n.archived_at ? el('span', { class: 'badge danger', text: 'Archived' }) : null,
+            n.flags ? el('span', { class: 'badge danger', title: 'Flagged as incorrect' }, icon('flag', 'sm')) : null),
+          n.summary ? el('span', { class: 'desc', text: n.summary, 'data-testid': 'cell-desc' }) : null)),
+        shown.map((c) => c.field ? el('td', { class: 'col-optional truncate small' }, fieldDisplay(c.field, (n.props || {})[c.field.key]))
+          : c.id === 'scope' ? el('td', { class: 'col-optional truncate faint', title: n.scope_name || '', text: n.scope_name || '' })
+            : c.id === 'owner' ? el('td', null, avatar(n.owner_id))
+              : c.id === 'links' ? el('td', { class: 'col-optional num faint', text: n.links ? String(n.links) : '' })
+                : el('td', { class: 'faint', title: n.updated_at ? new Date(n.updated_at).toLocaleString() : '', text: ago(n.updated_at) })),
         el('td', null, el('span', { class: 'row-actions' },
           el('a', { class: 'btn ghost sm icon', href: '#/r/' + n.id, title: 'Open as a page', 'aria-label': 'Open ' + n.name + ' as a page', onclick: (e) => e.stopPropagation() }, icon('maximize-2', 'sm')),
           can('contributor') ? el('button', { class: 'btn ghost sm icon', type: 'button', title: 'Edit', 'aria-label': 'Edit ' + n.name, onclick: async (e) => { e.stopPropagation(); try { openRecordForm({ edit: await api('GET', '/nodes/' + n.id) }); } catch (er) { failToast(er); } } }, icon('pencil', 'sm')) : null)));

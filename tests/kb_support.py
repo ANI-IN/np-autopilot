@@ -38,7 +38,8 @@ USERS = {r: str(uuid.uuid5(uuid.NAMESPACE_URL, f"np-kb-test/{r}")) for r in ROLE
 OUTSIDER = str(uuid.uuid5(uuid.NAMESPACE_URL, "np-kb-test/no-profile"))
 
 CONTENT_TABLES = ("node_tags", "node_resources", "edges", "nodes", "resources", "tags",
-                  "proposals", "api_tokens", "audit_log", "import_runs")
+                  "proposals", "api_tokens", "audit_log", "import_runs",
+                  "changes", "graph_positions", "flags", "templates", "saved_views")
 
 
 def session_dsn() -> str | None:

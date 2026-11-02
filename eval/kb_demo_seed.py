@@ -41,7 +41,8 @@ USERS = {"admin": "demo-admin@interviewkickstart.com",
          "editor": "demo-editor@interviewkickstart.com",
          "contributor": "demo-contributor@interviewkickstart.com"}
 CONTENT = ("link_checks", "node_tags", "node_resources", "edges", "nodes", "resources", "tags",
-           "proposals", "api_tokens", "audit_log", "import_runs")
+           "proposals", "api_tokens", "audit_log", "import_runs",
+           "changes", "graph_positions", "flags", "templates", "saved_views")
 BROKEN_URL = "https://github.com/ik-demo/dp-on-grids-solutions"
 
 # ---------------------------------------------------------------------------

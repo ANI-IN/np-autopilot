@@ -4,7 +4,7 @@
    policy's connect-src (KB_REALTIME_ORIGIN; see docs/DEPLOYMENT.md). Otherwise
    this is a no-op and live.js polls. Any socket error → onDown → polling.
 
-   The socket only says THAT something changed (a kb.audit_log insert, which
+   The socket only says THAT something changed (a kb.changes insert (0029), which
    Realtime filters through the same RLS as every read); live.js then fetches
    the change rows through the API as before. */
 import { S, api } from './core.js';
@@ -37,7 +37,7 @@ function open() {
     joinRef = null;
     joinRef = send(TOPIC, 'phx_join', {
       config: { broadcast: { self: false }, presence: { key: S.me.user_id },
-        postgres_changes: [{ event: 'INSERT', schema: 'kb', table: 'audit_log' }] },
+        postgres_changes: [{ event: 'INSERT', schema: 'kb', table: 'changes' }] },
       access_token: S.session.access_token,
     });
     hb = setInterval(() => send('phoenix', 'heartbeat', {}), 25000);

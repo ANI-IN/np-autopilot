@@ -344,7 +344,7 @@ def test_tags(contrib, viewer):
     assert contrib.call("DELETE", f"/api/kb/nodes/{n['id']}/tags/{t['tag_id']}")[0] == 200
 
 
-def test_dashboard_history_and_change_feed(contrib, viewer):
+def test_dashboard_history_and_change_feed(contrib, viewer, admin):
     s, feed = viewer.get("/api/kb/changes")
     cursor = feed["cursor"]
     n = _mk(contrib, name="Watched")
@@ -352,11 +352,16 @@ def test_dashboard_history_and_change_feed(contrib, viewer):
     s, feed = viewer.get("/api/kb/changes", f"since={cursor}")
     mine = [c for c in feed["changes"] if c["row_id"] == n["id"]]
     assert [c["action"] for c in mine] == ["insert", "update"] and mine[-1]["version"] == "2"
+    # Run 3 (B4): the activity log is for admins (everything) and editors (their
+    # scope); a viewer's dashboard has no activity, but a record's History works.
     s, d = viewer.get("/api/kb/dashboard")
-    assert d["totals"]["nodes"] == 1 and d["recent"][0]["label"] == "Watched"
+    assert d["totals"]["nodes"] == 1 and d["recent"] == []
+    s, d = admin.get("/api/kb/dashboard")
+    assert d["recent"][0]["label"] == "Watched" and d["recent"][0]["actor_label"]
     s, h = viewer.get(f"/api/kb/nodes/{n['id']}/history")
     assert [x["action"] for x in h["items"]] == ["update", "insert"]
     assert h["items"][0]["actor_id"] == USERS["contributor"]
+    assert h["items"][0]["changes"] == [{"field": "summary", "before": None, "after": "s"}]
 
 
 def test_tokens_are_shown_once_and_hashed(viewer):

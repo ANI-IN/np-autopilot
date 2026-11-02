@@ -56,7 +56,7 @@ def all_types(conn, include_archived: bool = False) -> dict:
                               (select count(*) from kb.nodes n where n.type_id = t.id and n.archived_at is null) as records
                        from kb.node_types t {arch} order by t.sort_order, t.label""")
     ets = _q(conn, f"""select t.id, t.key, t.label, t.inverse_label, t.description, t.allow_self, t.cardinality,
-                              t.is_core, t.version, t.archived_at,
+                              t.is_core, t.version, t.archived_at, t.review_status, t.merged_into,
                               (select count(*) from kb.edges e where e.edge_type_id = t.id and e.archived_at is null) as edges
                        from kb.edge_types t {arch} order by t.label""")
     rules = _q(conn, """select r.id, r.edge_type_id, s.key as source, t.key as target from kb.edge_type_rules r
@@ -527,25 +527,142 @@ def _edge_out(conn, key: str) -> dict:
     return next(t for t in all_types(conn, include_archived=True)["edge_types"] if t["key"] == key)
 
 
+def similar_edge_type(conn, label: str | None, inverse: str | None, exclude_key: str | None = None) -> dict | None:
+    """An existing live type whose name or inverse matches either name after
+    normalising case, spacing, plurals and verb endings (kb.rel_stem, the same
+    rule the database enforces): "Teaches", "teach" and "taught by" all match
+    `teaches / taught by`."""
+    return _q1(conn, """select key, label, inverse_label from kb.edge_types
+                        where archived_at is null and key is distinct from %s
+                          and (kb.rel_stem(label) in (kb.rel_stem(%s), kb.rel_stem(%s))
+                               or kb.rel_stem(inverse_label) in (kb.rel_stem(%s), kb.rel_stem(%s)))
+                        limit 1""", (exclude_key, label, inverse, label, inverse))
+
+
 def create_edge_type(conn, actor: Actor, body: dict, approved: bool = False) -> dict:
-    require(conn, "editor", "adding a relationship type")
+    """Admin: created and reviewed. Editor: created at once for their use but
+    'unreviewed', with an edge_review proposal so an admin confirms, renames or
+    merges it. Contributor or the AI assistant: a proposal only. The database
+    enforces the same split (0029 policies on kb.edge_types / edge_type_rules)."""
+    require(conn, "contributor", "adding a relationship type")
     v.only(body, EDGE_FIELDS | {"reason"})
     vals = _edge_vals(body, partial=False)
     key = body.get("key") or slug(vals["label"])
-    if _q1(conn, "select 1 from kb.edge_types where lower(label) = lower(%s) and archived_at is null", (vals["label"],)):
-        raise Duplicate(f"a relationship type called {vals['label']!r} already exists", field="label")
+    hit = similar_edge_type(conn, vals["label"], vals.get("inverse_label"))
+    if hit:
+        raise Duplicate(f"a relationship type like this already exists: {hit['label']!r}"
+                        + (f" (its inverse is {hit['inverse_label']!r})" if hit.get("inverse_label") else "")
+                        + "; use it instead", field="label", existing=hit)
     if _q1(conn, "select 1 from kb.edge_types where key = %s", (key,)):
         raise Duplicate(f"the key {key!r} is taken; choose another name", field="label")
     if not isinstance(body.get("rules"), list) or not body["rules"]:
         raise Invalid("a relationship type needs at least one allowed source → target pair", field="rules")
-    if not approved:
-        _gate(conn, actor, "edge_create", {**body, "key": key})
-    cols = ["key"] + list(vals)
+    r = role(conn)
+    reviewed = approved or (r == "admin" and actor.actor_type != "ai")
+    if not reviewed and (r != "editor" or actor.actor_type == "ai"):
+        # Contributors (and the AI at any role) propose; an admin decides.
+        with _translate(conn, "proposal"):
+            row = _q1(conn, "insert into kb.proposals (action, target_table, target_id, reason, payload, actor_type) "
+                            "values ('type_change', 'edge_types', null, %s, %s, %s) returning id",
+                      (body.get("reason") or "new relationship type " + vals["label"],
+                       json.dumps({"op": "edge_create", "args": {**body, "key": key}}, default=str), actor.actor_type))
+        raise NeedsApproval("relationship type proposed; an admin will review it in Approvals", proposal_id=row["id"])
+    cols = ["key"] + list(vals) + ["review_status"]
     with _translate(conn, "relationship type"):
         _q(conn, f"insert into kb.edge_types ({', '.join(cols)}) values ({', '.join(['%s'] * len(cols))})",
-           [key] + list(vals.values()))
+           [key] + list(vals.values()) + ["reviewed" if reviewed else "unreviewed"])
         _set_rules(conn, key, body["rules"])
+        if not reviewed:
+            _q(conn, "insert into kb.proposals (action, target_table, target_id, reason, payload, actor_type) "
+                     "select 'type_change', 'edge_types', id, %s, %s, 'human' from kb.edge_types where key = %s",
+               ("review new relationship type " + vals["label"],
+                json.dumps({"op": "edge_review", "args": {"key": key}}), key))
     return _edge_out(conn, key)
+
+
+def review_edge_type(conn, actor: Actor, key: str, approved: bool = False, label: str | None = None,
+                     inverse_label: str | None = None, merge_into: str | None = None) -> dict:
+    """An admin confirms an editor's new type (optionally renaming it) or merges
+    it into an existing one."""
+    require(conn, "admin", "reviewing a relationship type")
+    cur = _q1(conn, "select * from kb.edge_types where key = %s for update", (key,))
+    if not cur:
+        raise NotFound(f"no relationship type {key!r}")
+    if merge_into:
+        return merge_edge_type(conn, actor, key, {"into": merge_into})
+    sets, args = ["review_status = 'reviewed'"], []
+    if label:
+        sets.append("label = %s"); args.append(v.text({"label": label}, "label", required=True, max_len=80, allow_empty=False))
+    if inverse_label is not None:
+        sets.append("inverse_label = %s"); args.append(v.text({"inverse_label": inverse_label}, "inverse_label", max_len=300))
+    with _translate(conn, "relationship type"):
+        _q(conn, f"update kb.edge_types set {', '.join(sets)} where key = %s", (*args, key))
+    return _edge_out(conn, key)
+
+
+def reject_edge_review(conn, actor: Actor, key: str) -> None:
+    """Rejecting an editor's new type archives it, but only while nothing uses
+    it; otherwise the admin merges it into the type it duplicates."""
+    require(conn, "admin", "reviewing a relationship type")
+    cur = _q1(conn, "select id from kb.edge_types where key = %s", (key,))
+    if not cur:
+        return
+    n = (_q1(conn, "select count(*) as c from kb.edges where edge_type_id = %s and archived_at is null", (cur["id"],)) or {})["c"]
+    if n:
+        raise Conflict(f"{n} relationship(s) already use this type; merge it into another type instead of rejecting it",
+                       current={"edges": n})
+    _q(conn, "update kb.edge_types set archived_at = now(), status = 'archived', review_status = 'reviewed' where key = %s", (key,))
+
+
+def merge_edge_type(conn, actor: Actor, key: str, body: dict, approved: bool = False) -> dict:
+    """Move every relationship of type `key` to type `into` (flipped when
+    `flip`), copy its allowed pairs, archive the merged type with merged_into
+    set. A pair that already holds the kept type keeps one relationship; the
+    duplicate is archived, never deleted. `preview: true` only counts.
+    Everything is audited by the triggers."""
+    require(conn, "admin", "merging relationship types")
+    v.only(body, {"into", "flip", "preview", "reason"})
+    drop = _q1(conn, "select * from kb.edge_types where key = %s and archived_at is null for update", (key,))
+    keep = _q1(conn, "select * from kb.edge_types where key = %s and archived_at is null for update", (body.get("into"),))
+    if not drop or not keep:
+        raise NotFound("both relationship types must exist and be live")
+    if drop["id"] == keep["id"]:
+        raise Invalid("choose a different type to merge into", field="into")
+    if drop["is_core"]:
+        raise Invalid("a core relationship type cannot be merged away; merge the other one into it", field="into")
+    flip = bool(body.get("flip"))
+    src, tgt = ("target_id", "source_id") if flip else ("source_id", "target_id")
+    counts = _q1(conn, f"""select count(*) as total,
+                              count(*) filter (where exists (select 1 from kb.edges k where k.edge_type_id = %s
+                                  and k.archived_at is null and k.source_id = e.{src} and k.target_id = e.{tgt})) as duplicates
+                           from kb.edges e where e.edge_type_id = %s and e.archived_at is null""", (keep["id"], drop["id"]))
+    out = {"from": key, "into": keep["key"], "flip": flip, "relationships": counts["total"],
+           "duplicates": counts["duplicates"], "moved": counts["total"] - counts["duplicates"]}
+    if body.get("preview"):
+        return out
+    rules = _q(conn, """select s.key as source, t.key as target from kb.edge_type_rules r
+                        join kb.node_types s on s.id = r.source_type_id join kb.node_types t on t.id = r.target_type_id
+                        where r.edge_type_id = %s and r.archived_at is null""", (drop["id"],))
+    with _translate(conn, "relationship type"):
+        for r in rules:
+            s_, t_ = (r["target"], r["source"]) if flip else (r["source"], r["target"])
+            _q(conn, """insert into kb.edge_type_rules (edge_type_id, source_type_id, target_type_id)
+                        select %s, s.id, t.id from kb.node_types s, kb.node_types t where s.key = %s and t.key = %s
+                        on conflict (edge_type_id, source_type_id, target_type_id) do update set archived_at = null, status = 'active'""",
+               (keep["id"], s_, t_))
+        _q(conn, f"""update kb.edges e set archived_at = now(), status = 'archived' where e.edge_type_id = %s and e.archived_at is null
+                     and exists (select 1 from kb.edges k where k.edge_type_id = %s and k.archived_at is null
+                                 and k.source_id = e.{src} and k.target_id = e.{tgt})""", (drop["id"], keep["id"]))
+        if flip:
+            _q(conn, """update kb.edges set edge_type_id = %s, source_id = target_id, target_id = source_id
+                        where edge_type_id = %s and archived_at is null""", (keep["id"], drop["id"]))
+        else:
+            _q(conn, "update kb.edges set edge_type_id = %s where edge_type_id = %s and archived_at is null", (keep["id"], drop["id"]))
+        _q(conn, """update kb.edge_types set archived_at = now(), status = 'archived', merged_into = %s, review_status = 'reviewed'
+                    where id = %s""", (keep["id"], drop["id"]))
+        _q(conn, """update kb.proposals set status = 'approved', decided_by = kb.actor_id(), decided_at = now()
+                    where status = 'pending' and action = 'type_change' and target_table = 'edge_types' and target_id = %s""", (drop["id"],))
+    return out
 
 
 def update_edge_type(conn, actor: Actor, key: str, body: dict, approved: bool = False) -> dict:
@@ -697,6 +814,7 @@ OPS = {
     "edge_create": lambda conn, actor, approved, **a: create_edge_type(conn, actor, a, approved=approved),
     "edge_update": lambda conn, actor, approved, key, **a: update_edge_type(conn, actor, key, a, approved=approved),
     "edge_archive": lambda conn, actor, approved, key, **a: archive_edge_type(conn, actor, key, approved=approved),
+    "edge_review": lambda conn, actor, approved, key, **a: review_edge_type(conn, actor, key, approved=approved, **a),
     "link_create": lambda conn, actor, approved, **a: create_link_kind(conn, actor, a, approved=approved),
     "link_update": lambda conn, actor, approved, key, **a: update_link_kind(conn, actor, key, a, approved=approved),
     "link_archive": lambda conn, actor, approved, key, **a: archive_link_kind(conn, actor, key, approved=approved),

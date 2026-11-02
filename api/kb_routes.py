@@ -49,6 +49,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 
+from lib.kb import activity as act                                    # noqa: E402
 from lib.kb import service as svc                                      # noqa: E402
 from lib.kb import typedefs as td                                      # noqa: E402
 from lib.kb import workspace as ws                                     # noqa: E402
@@ -124,6 +125,10 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
         out["attention"] = ws.needs_attention(conn)
         out["completeness"] = ws.course_completeness(conn)
         return 200, out
+    if head == "counts" and method == "GET":
+        # Sidebar counts: the same totals and attention numbers as the dashboard, without the lists.
+        d = svc.dashboard_totals(conn)
+        return 200, {**d, "attention": ws.attention_counts(conn)}
     if head == "tags" and method == "GET":
         return 200, {"items": svc.list_tags(conn)}
     if head == "search" and method == "GET":
@@ -131,6 +136,17 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
         return 200, svc.search(conn, params.get("q", ""),
                                types=str(types).split(",") if types else None,
                                limit=_int(params.get("limit"), 20))
+    if head == "graph" and rest == ["positions"]:
+        if method == "GET":
+            return 200, ws.graph_positions(conn, params)
+        if method in ("PUT", "POST"):
+            return 200, ws.save_graph_positions(conn, actor, body)
+        if method == "DELETE":
+            return 200, ws.reset_graph_positions(conn, actor, params)
+    if head == "activity" and method == "GET" and not rest:
+        if params.get("format") == "csv":
+            return 200, {"filename": "activity.csv", "csv": act.activity_csv(conn, params)}
+        return 200, act.activity(conn, params)
     if head == "changes" and method == "GET":
         since = params.get("since")
         return 200, svc.changes(conn, _int(since, None) if since not in (None, "") else None)
@@ -165,7 +181,8 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
         if method == "GET" and not rest:
             return 200, {"items": svc.list_proposals(conn, params.get("status", "pending"))}
         if method == "POST" and len(rest) == 2 and rest[1] in ("approve", "reject"):
-            return 200, svc.decide_proposal(conn, actor, rest[0], rest[1] == "approve")
+            return 200, svc.decide_proposal(conn, actor, rest[0], rest[1] == "approve",
+                                            {k: body[k] for k in ("label", "inverse_label", "merge_into") if k in (body or {})} or None)
     if head == "tokens":
         if method == "GET" and not rest:
             return 200, {"items": svc.list_tokens(conn)}
@@ -202,6 +219,8 @@ def _types(conn, actor, method, rest, params, body):
         return 200, td.all_types(conn, include_archived=params.get("archived") in ("1", "true"))
     if method == "POST" and rest == ["rule"]:
         return 201, svc.add_edge_rule(conn, actor, body)
+    if method == "GET" and rest == ["edge-similar"]:
+        return 200, {"existing": td.similar_edge_type(conn, params.get("label"), params.get("inverse_label"))}
     kinds = {"node": (td.create_node_type, td.update_node_type),
              "edge": (td.create_edge_type, td.update_edge_type),
              "link": (td.create_link_kind, td.update_link_kind)}
@@ -218,6 +237,7 @@ def _types(conn, actor, method, rest, params, body):
                    ("node", "duplicate"): lambda: td.duplicate_node_type(conn, actor, key),
                    ("node", "change-type"): lambda: td.change_records_type(conn, actor, key, body),
                    ("edge", "archive"): lambda: td.archive_edge_type(conn, actor, key),
+                   ("edge", "merge"): lambda: td.merge_edge_type(conn, actor, key, body),
                    ("link", "archive"): lambda: td.archive_link_kind(conn, actor, key)}
             fn = ops.get((rest[0], act))
             if fn:
@@ -265,7 +285,7 @@ def _nodes(conn, actor, method, rest, params, body, force, fixed_type):
         return 200, {"items": svc.history(conn, nid)}
     if method == "GET" and action == "neighbourhood":
         types = params.get("types")
-        return 200, svc.neighbourhood(conn, nid, params.get("depth", 1),
+        return 200, svc.neighbourhood(conn, nid, params.get("depth", 1), limit=_int(params.get("limit"), svc.MAX_NEIGHBOURHOOD),
                                       types=str(types).split(",") if types else None)
     if method == "POST" and action == "archive":
         return 200, svc.archive_node(conn, actor, nid, body)

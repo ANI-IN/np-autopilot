@@ -101,3 +101,26 @@ via Docker used for everything).
 - Live Sheets import: needs `KB_SHEETS_ID` + `NP_DRIVE_SA_KEY` with the sheet shared read-only.
 - Shared DB migration: needs a dev Supabase project URL (SUPABASE_ENV=dev) or owner-run commands.
 - Vercel preview: needs VERCEL_TOKEN or the Git integration on this branch.
+
+## Run 3 log (T0 = 2026-11-02 21:18)
+
+- [T+0:47] A1 one attention definition (workspace.attention_counts; /counts for the sidebar) | test_kb_run3 + e2e a1 | VERIFIED
+- [T+0:47] A2 named actors (0029 'system' default, kb.actor_emails, activity.label_actors); realtime test cleans its own rows; seed + reset truncate kb.changes too | run3 + e2e a2 | VERIFIED
+- [T+0:47] A3 demo badge in its own sidebar slot above the user menu | e2e a3 | VERIFIED
+- [T+0:47] A4 View popover (core.popover, viewport-clamped, density radiogroup, column checkboxes, drag + arrow reorder); stray tabs scrollbar hidden | e2e a4 | VERIFIED
+- [T+0:47] A5 tooltip on every truncated text (core.el), 2-line description, resizable columns | e2e a5 | VERIFIED
+- [T+0:47] A6 Guide centred as one unit (760 + 220), click to enlarge | e2e a6 | VERIFIED (crop: screenshots retaken at the end)
+- [T+0:47] A7 relationship combobox (relpicker.js) with sentences grouped by direction, side by side with the record picker | e2e a7 | VERIFIED
+- [T+0:47] B2 inline relationship types (admin reviewed / editor unreviewed + review proposal / contributor proposal; DB policies), rel_stem duplicate guard (DB trigger + service), merge with preview, archive shows dependants and offers merge | run3 (8) + e2e b2 (5) | VERIFIED
+- [T+0:47] B3 graph editing: create (dbl-click, N), connect (handle drag, picker, Create relationship), invalid pair reason + snap back, inspector for edges, rename in place with 409 dialog, Delete → impact → archive + Undo, move + saved positions per layout, auto-layout/reset, saved graph views, filters (type, relationship, owner, course/program), search, keyboard, live sync (row-level), presence ring | e2e b3 (3) + existing graph tests | VERIFIED (perf numbers pending, Phase C)
+- [T+0:47] B4 Activity page + History tab share activityEntry; DB: audit append-only trigger, editor scope policy, kb.record_history for others, kb.changes feed for live updates | run3 (3) + e2e b4 (2) | VERIFIED
+- [T+0:47] B5 /me admin_links (server role) → sidebar + user menu | run3 + e2e b5 (4) | VERIFIED
+
+Decisions (run 3):
+- D25. Viewers/contributors no longer read kb.audit_log (B4: "others see only a record's History tab"). Live updates moved to kb.changes (no row content), which every member reads; Realtime publishes kb.changes instead of kb.audit_log. test_kb_api's dashboard assertion updated accordingly (viewer recent = []).
+- D26. A write with no verified user and no declared actor is 'system' (was 'human' with a null id → "Someone").
+- D27. Audit immutability: a BEFORE UPDATE/DELETE trigger refuses unless the current role is a superuser (local seed/test resets only; no API role is one), on top of the missing grants.
+- D28. Editor scope for Activity = records they own or co-own, everything placed inside them (contains edges, scope), links they own, and their own actions.
+- D29. Relationship-type near-duplicates: kb.rel_stem (case, spacing, punctuation, plural and -ed/-ing/-es endings) compared against every live label AND inverse; enforced by a trigger and pre-checked by the service so the UI can offer the existing type.
+- D30. Graph renderer: Cytoscape canvas (already vendored, 3.34.4); its WebGL mode is used for very large neighbourhoods. Measured numbers in docs/TEST_RESULTS.md.
+- D31. Dialogs can stack (opts.stack): New relationship type opens on top of Connect without losing it.

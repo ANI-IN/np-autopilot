@@ -3,6 +3,7 @@
    Admins apply type changes; an editor's change becomes a proposal. */
 import { S, el, add, $, $$, clear, icon, typeIcon, typeLabel, api, toast, failToast, avatar, personName, ago, skeletonRows, empty, errorBox,
   can, openSheet, closeSheet, openDialog, closeDialog, confirmDialog, plural, you, setQuery } from '../core.js';
+import { pageHead } from '../page.js';
 import { fieldInput } from '../form.js';
 import { loadTypes, refreshCounts } from '../app.js';
 import { kindLabel } from '../detail.js';
@@ -15,7 +16,7 @@ const FIELD_KIND_LABEL = { short_text: 'Short text', long_text: 'Long text', num
 
 export function viewSettings(v, r) {
   const tab = TABS.some(([k]) => k === r.q.tab) ? r.q.tab : 'types';
-  v.appendChild(el('div', { class: 'page-head' }, el('h1', { text: 'Settings' }), el('span', { class: 'sub', text: 'Your role is ' + S.me.role + '.' })));
+  v.appendChild(pageHead({ title: 'Settings', sub: 'Your role is ' + S.me.role + '.' }));
   v.appendChild(el('div', { class: 'tabs', role: 'tablist' }, TABS.filter(([k]) => k !== 'members' || can('admin')).map(([k, l]) =>
     el('a', { href: '#/settings?tab=' + k, role: 'tab', 'aria-selected': k === tab ? 'true' : 'false', 'data-testid': 'settings-tab-' + k, text: l }))));
   const body = el('div', { class: 'page-body', style: 'padding-top:16px' });
@@ -191,15 +192,59 @@ async function archiveType(t) {
 // ------------------------------------------------------------------ relationship types
 function relTab(body) {
   add(body, el('div', { class: 'row', style: 'margin-bottom:12px' }, el('p', { class: 'muted small', style: 'flex:1', text: 'What can be connected to what. Removing an allowed pair never deletes existing relationships; they are listed on Data quality.' }),
-    can('editor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-edge-type', onclick: () => edgeEditor(null) }, icon('plus'), 'New relationship type') : null));
+    can('contributor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-edge-type', onclick: () => edgeEditor(null) }, icon('plus'), can('editor') ? 'New relationship type' : 'Propose relationship type') : null));
   const ul = el('ul', { class: 'list bordered' });
-  api('GET', '/types').then((t) => t.edge_types.forEach((x) => ul.appendChild(el('li', null, el('div', { class: 'link-row', style: 'padding:10px 12px;align-items:flex-start' },
+  ul.setAttribute('data-testid', 'edge-types');
+  api('GET', '/types').then((t) => t.edge_types.forEach((x) => ul.appendChild(el('li', { 'data-testid': 'edge-type-row', 'data-key': x.key }, el('div', { class: 'link-row', style: 'padding:10px 12px;align-items:flex-start' },
     el('div', { class: 'col', style: 'gap:2px;flex:1;min-width:0' }, el('div', { class: 'row' }, el('strong', { text: x.label }), x.inverse_label ? el('span', { class: 'faint xs', text: '/ ' + x.inverse_label }) : null,
-      x.is_core ? el('span', { class: 'badge', text: 'Built-in' }) : null, x.cardinality !== 'many_to_many' ? el('span', { class: 'badge', text: x.cardinality.replace(/_/g, ' ') }) : null),
+      x.is_core ? el('span', { class: 'badge', text: 'Built-in' }) : null, x.review_status === 'unreviewed' ? el('span', { class: 'badge warn', 'data-testid': 'edge-unreviewed', text: 'Awaiting review' }) : null,
+      x.cardinality !== 'many_to_many' ? el('span', { class: 'badge', text: x.cardinality.replace(/_/g, ' ') }) : null),
       el('div', { class: 'faint xs', text: x.rules.map((r) => typeLabel(r.source) + ' → ' + typeLabel(r.target)).join(' · ') })),
     el('span', { class: 'faint xs', text: plural(x.edges, 'use') }),
-    can('editor') ? el('button', { class: 'btn sm', type: 'button', onclick: () => edgeEditor(x) }, 'Edit') : null))))).catch((e) => body.appendChild(errorBox(e)));
+    can('editor') ? el('button', { class: 'btn sm', type: 'button', onclick: () => edgeEditor(x) }, 'Edit') : null,
+    can('admin') && !x.is_core ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'edge-merge', onclick: () => mergeDialog(x, t.edge_types) }, icon('git-merge', 'sm'), 'Merge…') : null,
+    can('admin') && !x.is_core ? el('button', { class: 'btn sm danger', type: 'button', 'data-testid': 'edge-archive', onclick: () => archiveEdgeType(x, t.edge_types) }, icon('archive', 'sm'), 'Archive') : null))))).catch((e) => body.appendChild(errorBox(e)));
   body.appendChild(ul);
+}
+/* Merge (B2): every relationship moves to the kept type; a pair that already
+   holds the kept type keeps one. The preview counts first; the merge is one
+   audited transaction. */
+export function mergeDialog(x, all, after) {
+  const keep = el('select', { 'aria-label': 'Merge into', 'data-testid': 'merge-into' }, all.filter((e) => e.key !== x.key && !e.archived_at).map((e) => el('option', { value: e.key, text: e.label + (e.inverse_label ? ' / ' + e.inverse_label : '') })));
+  const flip = el('input', { type: 'checkbox', 'aria-label': 'Reverse direction', 'data-testid': 'merge-flip' });
+  const prev = el('p', { class: 'note-box', 'data-testid': 'merge-preview', text: 'Counting…' });
+  const err = el('div', { class: 'field-error', role: 'alert' });
+  const preview = async () => {
+    try { const p = await api('POST', '/types/edge/' + x.key + '/merge', { into: keep.value, flip: flip.checked, preview: true });
+      prev.textContent = plural(p.relationships, 'relationship') + ' will move to “' + keep.selectedOptions[0].text + '”' + (p.duplicates ? '; ' + p.duplicates + ' already exist there and will be archived' : '') + '. “' + x.label + '” is then archived.'; }
+    catch (e) { prev.textContent = e.message; }
+  };
+  keep.addEventListener('change', preview); flip.addEventListener('change', preview);
+  openDialog([el('h2', { text: 'Merge “' + x.label + '”' }),
+    el('label', { class: 'field' }, el('span', { class: 'label', text: 'Into' }), keep),
+    el('label', { class: 'row small' }, flip, 'Reverse the direction (it reads as the other type’s inverse)'), prev, err,
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }),
+      el('button', { class: 'btn primary', type: 'button', 'data-testid': 'merge-confirm', text: 'Merge', onclick: async () => {
+        try { const out = await api('POST', '/types/edge/' + x.key + '/merge', { into: keep.value, flip: flip.checked }); closeDialog();
+          toast('Merged: ' + plural(out.moved, 'relationship') + ' moved' + (out.duplicates ? ', ' + out.duplicates + ' duplicate(s) archived' : ''));
+          if (after) after(out); else await reloadSettings(); }
+        catch (e) { err.textContent = e.message; } } }))], { label: 'Merge relationship type', testid: 'merge-dialog' });
+  preview();
+}
+/* Archive with its dependencies shown first (B2): a type in use is never
+   archived silently; the dialog counts what uses it and offers the merge. */
+function archiveEdgeType(x, all) {
+  if (x.edges) {
+    openDialog([el('h2', { text: 'Archive “' + x.label + '”?' }),
+      el('p', { class: 'note-box warn', 'data-testid': 'edge-archive-impact', text: plural(x.edges, 'live relationship') + ' use this type. Move them to another type first.' }),
+      el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }),
+        el('button', { class: 'btn primary', type: 'button', text: 'Merge into another type…', onclick: () => { closeDialog(); mergeDialog(x, all); } }))], { label: 'Archive relationship type' });
+    return;
+  }
+  confirmDialog({ title: 'Archive “' + x.label + '”?', body: 'Nothing uses it. It disappears from pickers; its history stays in Activity.', confirmLabel: 'Archive' }).then(async (ok) => {
+    if (!ok) return;
+    try { await api('POST', '/types/edge/' + x.key + '/archive'); toast('Archived “' + x.label + '”'); await reloadSettings(); } catch (e) { failToast(e, 'Not archived'); }
+  });
 }
 function edgeEditor(x) {
   const isNew = !x;
