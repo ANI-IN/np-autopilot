@@ -10,8 +10,6 @@ content is not touched (a record is created and removed by the test).
 """
 from __future__ import annotations
 
-import time
-
 import pytest
 
 from kb_support import dev_server, owner, requires_kb
@@ -54,9 +52,16 @@ def test_presence_and_realtime_live_update_between_two_people():
         with dev_server("kb_demo_server.py") as base, sync_playwright() as pw:
             b = pw.chromium.launch(channel="chrome", headless=True)
 
-            def login(email):
+            frames: list[str] = []          # what the admin's socket received
+            polls: list[int] = []           # frame count at each change-feed fetch of the admin's page
+
+            def login(email, watch=False):
                 ctx = b.new_context(viewport={"width": 1440, "height": 900})
                 p = ctx.new_page()
+                if watch:
+                    p.on("websocket", lambda ws: ws.on(
+                        "framereceived", lambda f: frames.append(f if isinstance(f, str) else f.decode(errors="replace"))))
+                    p.on("request", lambda r: "/api/kb/changes?since=" in r.url and polls.append(len(frames)))
                 p.goto(base + "/local-login")
                 p.locator("#email").fill(email)
                 p.locator("#password").fill(DEMO_PW)
@@ -65,19 +70,24 @@ def test_presence_and_realtime_live_update_between_two_people():
                 p.goto(base + f"/kb/#/records?open={nid}")
                 expect(p.get_by_test_id("panel-name")).to_have_text("Realtime probe topic")
                 return p
-            a = login("demo-admin@interviewkickstart.com")
+            a = login("demo-admin@interviewkickstart.com", watch=True)
             e = login("demo-editor@interviewkickstart.com")
             assert a.evaluate("(async () => (await import('/kb/js/realtime.js')).realtimeActive())()") is True
             expect(a.get_by_test_id("presence")).to_contain_text("demo editor is viewing", timeout=15000)
             e.get_by_test_id("panel-summary").click()
             expect(a.get_by_test_id("presence")).to_contain_text("demo editor is editing", timeout=15000)
             e.get_by_test_id("edit-summary").fill("changed over realtime")
-            t0 = time.time()
+            before = len(frames)
             e.get_by_test_id("panel-name").click()
             expect(a.get_by_test_id("panel-summary")).to_have_text("changed over realtime", timeout=10000)
-            # Polling alone runs every 4 s (backed off to 32 s while the socket is up): a
-            # sub-3-second arrival means the socket delivered it.
-            assert time.time() - t0 < 3.0
+            # The socket delivered it: after the edit the admin's socket received a
+            # postgres_changes event, and the page fetched the change feed BECAUSE of
+            # it (a fetch made after that frame arrived). Run 6 (B5): this replaces a
+            # wall-clock bound (arrival under 3 s), which failed on a loaded machine
+            # although the socket had delivered.
+            got = [i for i, f in enumerate(frames) if i >= before and '"postgres_changes"' in f]
+            assert got, "the admin's socket received no change event after the edit"
+            assert any(n > got[0] for n in polls), "no change-feed fetch followed the socket's event"
             b.close()
     finally:
         with owner() as c:

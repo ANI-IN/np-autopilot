@@ -81,7 +81,7 @@ def main() -> int:
     ap.add_argument("--keep", action="store_true")
     ap.add_argument("--json", default="")
     a = ap.parse_args()
-    from lib.kb import activity, service as svc, workspace as ws
+    from lib.kb import activity, graph, service as svc, views, workspace as ws
     ensure_users()
     reset()
     data = kb_perf.seed(random.Random(42))
@@ -106,6 +106,15 @@ def main() -> int:
                 "activity filtered": lambda: activity.activity(conn, {"table": "nodes", "action": "insert", "limit": 50}),
                 "history": lambda: activity.history(conn, str(topic)),
                 "changes": lambda: activity.changes(conn, 1),
+                # run 6 (B5): the graph read API and the screens behind it
+                "graph page": lambda: graph.read(conn, {}),
+                "graph archived=1": lambda: graph.read(conn, {"archived": "1", "limit": "500"}),
+                "graph focus d1": lambda: graph.read(conn, {"focus": str(topic), "depth": "1"}),
+                "graph focus d2": lambda: graph.read(conn, {"focus": str(topic), "depth": "2"}),
+                "quality": lambda: svc.quality_overview(conn),
+                "outline": lambda: ws.outline(conn, {}),
+                "teaching": lambda: views.teaching_matrix(conn, {}),
+                "timeline": lambda: views.programme_timeline(conn, {}),
             }
             for name, fn in cases.items():
                 conn.label = f"{role}: {name}"

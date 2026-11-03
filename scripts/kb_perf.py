@@ -102,6 +102,16 @@ def main() -> int:
         "neighbourhood: depth 2, random topic": lambda: api.get(f"/api/kb/nodes/{rng.choice(topics)}/neighbourhood", "depth=2"),
         "neighbourhood: depth 1, 600-edge hub (capped 300)": lambda: api.get(f"/api/kb/nodes/{data['hub']}/neighbourhood", "depth=1"),
         "node detail: hub": lambda: api.get(f"/api/kb/nodes/{data['hub']}"),
+        # run 6 (B5): the one graph read API and the screens behind it
+        "graph: first page (2,000 records)": lambda: api.get("/api/kb/graph"),
+        "graph: archived=1 (degree counts archived edges)": lambda: api.get("/api/kb/graph", "archived=1&limit=500"),
+        "graph focus: depth 1, random topic": lambda: api.get("/api/kb/graph", f"focus={rng.choice(topics)}&depth=1"),
+        "graph focus: depth 2, random topic": lambda: api.get("/api/kb/graph", f"focus={rng.choice(topics)}&depth=2"),
+        "graph focus: depth 1, 600-edge hub": lambda: api.get("/api/kb/graph", f"focus={data['hub']}&depth=1"),
+        "outline": lambda: api.get("/api/kb/outline"),
+        "who teaches what": lambda: api.get("/api/kb/views/teaching"),
+        "programme timeline": lambda: api.get("/api/kb/views/timeline"),
+        "data quality (cached duplicates after the first)": lambda: api.get("/api/kb/quality"),
     }
     results = {}
     with contextlib.redirect_stdout(sink):
@@ -112,6 +122,15 @@ def main() -> int:
     print("\n| Request | p50 ms | p95 ms | max ms | runs |\n|---|---|---|---|---|")
     for name, r in results.items():
         print(f"| {name} | {r['p50']} | {r['p95']} | {r['max']} | {r['runs']} |")
+    # Uncached duplicate detection over the synthetic names, once: the seed names
+    # every record "Perf <type> <n>", so nearly every same-type pair is similar
+    # (the worst case for any similarity join; the real data is far kinder).
+    from lib.kb import duplicates
+    duplicates._CACHE.clear()
+    with contextlib.redirect_stdout(sink):
+        t0 = time.perf_counter()
+        api.get("/api/kb/quality/duplicates")
+    print(f"| duplicates, uncached, worst case (all names alike) | {(time.perf_counter() - t0) * 1000:.0f} | | | 1 |")
     print(f"\nhub neighbourhood: returned {len(hubnb['nodes'])} of total {hubnb['total']} (truncated={hubnb['truncated']})")
     if not args.keep:
         reset()
