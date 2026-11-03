@@ -49,6 +49,10 @@ def _actor(conn, identity) -> cs.Actor:
 
 
 def handle(conn, identity, body: dict) -> tuple[int, dict]:
+    # A JSON array, or a non-string table/key, is a bad request, not a 500 (run 6, B5).
+    if not isinstance(body, dict) or not all(isinstance(body.get(k) or "", str) for k in ("table", "key", "reason")):
+        return 400, {"error": "bad_request",
+                     "reason": "the body must be an object; table, key and reason are strings"}
     table = (body.get("table") or "").strip()
     key = (body.get("key") or "").strip()
     changes = body.get("changes")
