@@ -1,97 +1,276 @@
 # np-autopilot
 
-A knowledge graph over the New Programs corpus, packaged as a Claude Code plugin.
+Interview Kickstart's New Programs (NP) knowledge, in one deployment:
 
-**Read the limitations before the features.** They are first on purpose.
+- **The NP Autopilot map at `/`** (`public/index.html`): the programme,
+  domain, module and instructor graph that the NP team uses day to day.
+- **The knowledge base at `/kb/`** (`public/kb/`): an editable, audited
+  workspace of programs, courses, domains, modules, weeks, live sessions,
+  topics, people and their links, with custom record and relationship types.
+- **The pipeline** (`pipeline/`): reads the NP Google Drive folder
+  (read-only) and builds the graph that feeds the knowledge base.
+- **An MCP server and a Claude Code plugin**, so Claude can search and edit
+  the knowledge base as you, under your role.
 
-> **New (branch `auto/knowledge-platform-20261102`): the KB workspace.** An
-> editable knowledge base of programs, courses, domains, modules, weeks, live
-> sessions, topics, instructors and their links at `/kb/`, separate from the
-> derived corpus graph below and stored in its own `kb` schema. Custom record
-> types with fields (enforced in the database), custom relationship types
-> created inline (reviewed by an admin, near-duplicates refused, mergeable), a
-> one-step New record form, an outline, a graph you can edit directly (create,
-> connect, rename, archive, arrange), an Activity log (append-only, scoped by
-> role in the database), data quality, approvals, archive and permanent delete,
-> an in-app Guide (`public/kb/guide.md`), roles enforced by RLS, optimistic
-> locking, optional Supabase Realtime with presence, a Google Sheets importer,
-> and an MCP server plus a Claude Code plugin (`plugins/ik-knowledge-assistant/`).
-> Start with `HANDOFF.md`; design in `docs/DESIGN_SYSTEM.md` and
-> `docs/ARCHITECTURE.md`; try it with `docs/DEMO.md`; verify with
-> `bash scripts/verify_all.sh` (`--load` adds the 25-person concurrency check).
-> Nothing below this note changed.
+**The `kb` schema is the single source of truth** (run 6). Every page,
+including the map at `/`, reads `kb`. The pipeline's old tables in `public`
+are only its *intake*: a scheduled one-way sync copies them into `kb`.
+Background: `docs/ARCHITECTURE.md`. Where this could go next:
+`docs/VISION_AND_ROADMAP.md`.
 
----
-
-# What you should not trust
-
-## Every count is a floor, not a total
-
-**127 of 374 worksheets have been read by an entity scan.** The rest breaks down
-as 37 sheets in the excluded payroll file, 139 sheets of learner data (both
-deliberate), and **71 sheets / 4,572 rows that are a genuine blind spot**.
-
-`person`, `instructor` and `module` carry **no expected count** in
-`config/taxonomy.yaml` for this reason. Never quote one as a total.
-
-**Coverage was audited per FILE for six rounds before anyone audited it per
-SHEET.** That hid the biggest single finding in the project: `New Combined
-Schedule.xlsx` had 1 of 62 sheets read, and the other 44 held the entire class
-delivery log. A file counted as "read" while 98% of it was not.
-
-## The master spreadsheet has never been located
-
-The brief's taxonomy derives from an "NP Autopilot" spreadsheet with
-`Automations`, `All Tasks` and `To-Do & Working Notes` tabs. **No such file is in
-the corpus.** If it exists in Drive, `Owner` and `Automation` may return as node
-types and the taxonomy is redone.
-
-## The filters had a bias, and it ran for several rounds
-
-Six name-shape rules were rejecting candidates outright. Re-applied to today's
-population they would exclude **336 people (8.8%)**:
-
-- **84 for holding a PhD, Dr, MD or Jr** — two thirds of everything the
-  punctuation rule removed
-- **28 for a middle initial** (`Benjamin O. Tayo`, `Minh P. Vo`)
-- **4 of 5 stopword hits were people named `Will`** — the word is in the stopword
-  list and is also a first name
-- **22 for long multi-part names, disproportionately South Asian**
-  (`Achanta Sri Surya Srinivasa Sai Kiran`)
-
-**Noise removal that correlates with a category of person is not noise removal.**
-All six now flag rather than reject. Full audit in `10-threshold-audit.md`.
-
-## The junk rate
-
-**No non-people found in a sample of 50. Upper bound ~6% at 95% confidence.**
-Not "0%" — a point estimate of zero is a claim a 50-item sample cannot support.
-
-## The module layer hangs off instructors, not programs
-
-**671 of 922 modules (73%) connect only through `teaches`.** `contains` is 351
-edges against 2,239 `teaches`, and `contains` is itself inferred via domain —
-there is no row-level program↔module pairing anywhere in the corpus. Hide
-instructors and the module layer shatters into 772 components.
-
-## What the graph cannot answer
-
-- **Workflow ownership.** It does not exist — everyone in NP does every kind of
-  work. 92 workflows, all blank, and that is the correct final state.
-- **Workflow sequencing.** `depends_on` has zero evidence.
-- **Anything crossing from a workflow to a person, program or module.** From a
-  workflow you reach its theme and its sibling workflows. No path exists onward.
-- **`expert_in` is not teaching evidence.** 1,155 edges, ~92% Google Form
-  responses. 320 also went through a confirmed alias — two inference steps.
+**Read `CLAUDE.md` before touching the pipeline.** It holds the safety rules
+summarised under "Rules that are not optional" below.
 
 ---
 
-# What it holds
+## Architecture
 
-**Generated by `pipeline/gen_index.py`. Do not hand-edit the block below.** The
-hand-written table it replaced named a plugin version two bumps stale and omitted
-the `file` type entirely, so it summed to 4,974 against its own stated 5,048.
-`refresh.py` regenerates this on every build.
+```
+ Google Drive (one folder, read-only, service account, drive.readonly)
+        │  pipeline/00_fetch_drive.py … 04_build_graph.py, project_graph.py   (run by hand)
+        ▼
+ OLD TABLES (public.*): nodes · edges · node_sources · node_layout · files · curation
+        │  ONE-WAY sync, web/lib/kb/sync.py: hourly (pg_cron → POST /api/cron/kb-sync),
+        │  "Sync now" (Settings → Sync), or the first import (pipeline/kb_import_projection.py)
+        ▼
+ KB (kb.*)  RLS on every table · triggers: version, audit log, archive cascade
+        │  every write → kb.changes (the change feed; Realtime, or polling /api/kb/changes)
+        ├──► /api/kb/*   api/kb_routes.py → web/lib/kb/service.py (the one rulebook) ──► /kb/
+        ├──► /api/kb/graph (docs/CONTRACTS.md §1) ──► the KB Graph page AND the map at "/"
+        ├──► /api/structure, /node, /neighbourhood, /search, /overview, /staffing,
+        │    /coverage, /me   (the map's routes, web/lib/kb/npmap.py, read from kb)
+        └──► mcp_server/kb_server.py (an HTTP client of /api/kb/*, your own token)
+```
+
+Every request enters `api/index.py` (one WSGI app on Vercel). Identity is
+checked there before any database connection. Requests run as Postgres role
+`authenticated` with the caller's claims, so RLS applies. The map can be
+switched back to the old tables with `NP_MAP_SOURCE=old` (rollback only:
+`docs/ARCHITECTURE.md`, "Rollback").
+
+| Path | What it is |
+|---|---|
+| `api/` | HTTP: `index.py` (front door), `kb_routes.py` (KB adapter), the map's routes |
+| `web/lib/kb/` | KB logic: `service.py`, `validate.py`, `typedefs.py`, `graph.py`, `npmap.py`, `sync.py`, `activity.py`, `workspace.py`, … |
+| `public/` | the map (`index.html`) and the KB app (`kb/`, vanilla JS, Cytoscape; `kb/guide.md` is the in-app Guide) |
+| `db/migrations/` | numbered `.up.sql` / `.down.sql`; `kb` is 0022 onwards |
+| `pipeline/` | Drive fetch, extraction, graph build, projection, KB import/admin CLIs |
+| `config/` | `taxonomy.yaml` (the only source of type names), the KB mapping files |
+| `mcp_server/`, `plugins/ik-knowledge-assistant/` | MCP server and Claude Code plugin |
+| `eval/` | local servers, seeds and checks (never deployed: `.vercelignore`) |
+| `tests/` | pytest suites; `tests/kb_support.py` holds the KB fixtures |
+
+---
+
+## Setup
+
+You need Python 3.12, Node (for `npx supabase`), Docker (for the local
+Supabase stack), and `uv` (optional, used by `scripts/verify_all.sh`).
+
+### Windows (Git Bash)
+
+Use Git Bash for every command in this README.
+
+```bash
+uv venv .venv -p 3.12 && uv pip install -p .venv -r requirements.txt
+#   or: py -3.12 -m venv .venv && .venv/Scripts/pip install -r requirements.txt
+# Docker Desktop must be running.
+bash db/local/setup.sh                       # local Supabase stack (first run pulls ~2 GB), migrates, seeds
+```
+
+The interpreter is `.venv/Scripts/python`.
+
+### Linux / macOS
+
+```bash
+uv venv .venv -p 3.12 && uv pip install -p .venv -r requirements.txt
+bash db/local/setup.sh                       # needs Docker (macOS here: colima)
+```
+
+The interpreter is `.venv/bin/python`.
+
+`db/local/setup.sh --stop` stops the stack and keeps its data. The stack uses
+fixed loopback addresses and development keys. The test suite and the local
+servers refuse any non-local database.
+
+`requirements.txt` is the full environment (pipeline, MCP, tests).
+`pyproject.toml` is only the Vercel function's dependencies. Do not add
+packages there: the bundle is at its size limit.
+
+---
+
+## Environment variables (names only)
+
+Never put a value in the repository, in a doc or in a commit. Values live in
+Vercel (per environment), in Supabase Vault, or in your shell.
+
+| Name | Used by | Purpose |
+|---|---|---|
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | app (`/api/config`) | public by design (`docs/DEPLOYMENT.md`) |
+| `SUPABASE_DB_URL_TRANSACTION` | app | transaction pooler (port 6543), every request; the session pooler and the direct host are refused |
+| `SUPABASE_DB_URL_SESSION` | CLIs, migrations | session pooler (owner); laptop/CI only, **never set in Vercel** |
+| `SUPABASE_JWT_SECRET` | app | only for HS256 projects |
+| `GOOGLE_OAUTH_CLIENT_ID` | app | Google sign-in audience |
+| `NP_ALLOWED_HD` | app | the one allowed Google Workspace domain |
+| `NP_SHARED_ACCOUNTS` | app | shared mailboxes, flagged in the audit log |
+| `NP_MAP_SOURCE` | app | `old` = rollback the map to the old tables |
+| `KB_SYNC_ENABLED` | app | `false` stops every sync run (kill switch) |
+| `KB_SYNC_SECRET` | app + Vault (`kb_sync_secret`) | authorises pg_cron's call to `/api/cron/kb-sync` |
+| `KB_SYNC_BUDGET_SECONDS` | app | time budget per sync run (default 10) |
+| `KB_REALTIME_ORIGIN` | app | enables Supabase Realtime in the KB page's CSP |
+| `ADMIN_EMAILS` | `pipeline/kb_admins.py` | bootstrap KB admins (operator) |
+| `KB_API_URL`, `KB_MCP_TOKEN`, `KB_APP_URL` | MCP server | KB host, your personal `ikkb_` token, links in answers |
+| `NP_DRIVE_SA_KEY`, `NP_DRIVE_CONFIG` | pass 0 | path to the service-account key (outside the repo), Drive config |
+| `NP_CORPUS_PATH` | pipeline | fallback local corpus mirror |
+| `NP_AS_OF`, `NP_BUILD_LOG`, `NP_LANDING_STATS`, `NP_FRESHNESS_SKIP` | pipeline | pinned build date, log path, stats output, freshness override (a reason) |
+| `KB_SHEETS_ID` | `pipeline/kb_import_sheets.py` | spreadsheet to import |
+| `NP_TEST_DSN`, `NP_TEST_DSN_TRANSACTION` | tests | override the local test database |
+| `KB_REALDATA_PASSWORD`, `KB_LOCAL_DB`, `KB_LOCAL_DB_CONTAINER` | `eval/` | local servers only |
+| `NP_ALLOW_LEGACY_DELETE_ON_PRODUCTION` | `web/lib/kb/legacy_delete.py` | explicit gate for the owner-approved legacy delete |
+
+`SUPABASE_SERVICE_ROLE_KEY` is never set in Vercel. The dev deployment's
+`DEV_*` variables are described in `docs/DEV_DEPLOY.md`.
+
+---
+
+## Run it locally
+
+### Demo (fictional data), http://localhost:8765
+
+```bash
+.venv/Scripts/python eval/kb_demo_seed.py          # demo users + fictional data (re-runnable = reset)
+.venv/Scripts/python eval/kb_demo_server.py 8765   # prints READY 8765
+```
+
+Open `http://localhost:8765/local-login`. The demo accounts and the password
+login exist only in the local stack and `eval/` (never deployed). Details,
+sign-ins and reset: `docs/DEMO.md`. Running the KB tests wipes `kb` data, so
+re-run the seed afterwards.
+
+### Real-data copy, http://localhost:8766
+
+A separate local database (`kb_realdata`) built from a read-only production
+dump in the gitignored `backups/`. Server: `eval/kb_realdata_server.py 8766`.
+It binds 127.0.0.1 and refuses non-local databases. Build steps:
+`docs/DEMO.md`, "The real-data copy". Never copy anything from it into code,
+tests, docs or commits.
+
+---
+
+## Tests
+
+```bash
+bash scripts/verify_all.sh            # everything, against the local stack (PASS only if each check really ran)
+bash scripts/verify_all.sh --reset-db # also re-applies every migration from 0001 (can remove kb_realdata)
+.venv/Scripts/python -m pytest tests/test_kb_sync.py -q      # one suite
+.venv/Scripts/python -m pytest tests/test_kb_rls.py -q -k viewer
+```
+
+Browser tests (Playwright) are `tests/test_kb_e2e.py`,
+`test_kb_propagation_e2e.py`, `test_kb_realtime.py`, `test_kb_ui_run6.py`,
+`test_kb_graph_run6.py` and `test_kb_console_run6.py`. **On a 16 GB laptop,
+run them one file at a time**, with nothing else heavy running. Running them
+together has run the machine out of memory. Other options of
+`verify_all.sh`: `--fresh-clone`, `--perf`, `--load`.
+
+---
+
+## Roles
+
+Sign-in is Google SSO, restricted to `@interviewkickstart.com` and checked on
+every request. KB roles are enforced in the database (RLS, `0023_kb_rls`), so
+they hold whatever tool is used: the app, MCP or SQL as `authenticated`. Any
+signed-in IK account with no membership is a **viewer**. Admins add members by
+e-mail in Settings → Members, before or after their first sign-in
+(`0035_kb_member_invites`). The last admin cannot be removed.
+
+| Role | Can |
+|---|---|
+| **viewer** | read everything in the KB and the map; flag something as incorrect; claim their own person record (an admin confirms) |
+| **contributor** | + attach links and add relationships to existing records directly; new records, field edits, archive requests and type changes go to **Approvals** |
+| **editor** | + create and archive directly, approve proposals, overwrite on a conflict, see sync conflicts; a new relationship type is usable at once but reviewed by an admin |
+| **admin** | + record and relationship types, roles and members, people's e-mail addresses, profile claims, permanent deletion of archived items, Settings → Sync |
+
+An AI caller (MCP token) acts with its owner's role. Its archive and delete
+calls always become proposals, and it cannot approve or start a sync. Source:
+`public/kb/guide.md` ("Roles"), `db/migrations/0023_kb_rls.up.sql`,
+`web/lib/kb/service.py`.
+
+---
+
+## The sync
+
+`web/lib/kb/sync.py` builds the desired KB state from the old tables. It
+compares each unit with `kb.sync_map` checksums and writes only what changed.
+A unit edited in the KB since the sync wrote it is **not** overwritten: it
+becomes a conflict on Data quality. A row that disappears at the source is
+flagged "removed at the source". Records are never deleted, and relationships
+and links are archived (reversible). Records created in the KB are never
+touched. `kb.sync_exclusions` (0037) keeps permanently deleted legacy
+records from coming back. One run at a time, time-boxed, resumable.
+
+- **Schedule:** pg_cron + pg_net in the database (migration 0031), hourly by
+  default, calling `/api/cron/kb-sync` with the Vault secret. Set up as in
+  `docs/DEV_DEPLOY.md` step 6.
+- **By hand:** Settings → Sync → **Sync now** (admins), which also shows the
+  run log. Admins see a banner while the last run failed.
+- **Off:** `KB_SYNC_ENABLED=false` stops every run. `select kb.sync_schedule_remove();`
+  stops the calls.
+- The sync only copies what the pipeline last projected. Passes 0–4 and
+  `project_graph.py` are still run by hand (`pipeline/README.md`).
+
+Details: `docs/DEPLOYMENT.md` "Scheduled sync", `docs/run6/SYNC_TIMING.md`.
+
+---
+
+## Claude: MCP server and plugin
+
+`mcp_server/kb_server.py` (stdio, or `--http` on 127.0.0.1) is a thin client
+of `/api/kb/*`: search, read, traverse, create, connect, attach, audit tools.
+It authenticates with **your** personal token (Settings → API tokens; only a
+hash is stored) and runs as you under RLS. Retrieved text is returned as
+data, with source links. `plugins/ik-knowledge-assistant/` bundles the same
+server (a byte-identical copy, enforced by `tests/test_kb_plugin.py`) and
+two skills: `ik-knowledge-search` and `ik-course-audit`.
+
+```bash
+cp mcp_server/mcp.example.json .mcp.json     # gitignored; never put the token in it
+export KB_API_URL=...  KB_MCP_TOKEN=...      # set in your shell
+```
+
+A multi-user remote (Claude.ai) deployment needs per-user OAuth, which is not
+built. See `docs/MCP.md`.
+
+The repository's marketplace (`.claude-plugin/marketplace.json`) also lists
+the older `np-autopilot` plugin. Its commands (`commands/`: `/staffing`,
+`/coverage`, `/workflow`, `/domain-owner`, `/setup`) read the pipeline's
+committed `knowledge/graph.json` snapshot, not the live KB.
+
+---
+
+## Deployment
+
+One Vercel project (`vercel.json`; `api/index.py` is the only function). Read,
+in order:
+
+- `docs/DEPLOYMENT.md`: variables, Supabase Auth, pooling, the scheduled sync,
+  checks after deploying.
+- `docs/DEV_DEPLOY.md`: the dev database and the Vercel preview.
+  `scripts/dev_db.py` refuses the production project.
+- `docs/GO_LIVE.md`: the production go-live steps (being written by the lead
+  in run 6).
+
+Migrations: `pipeline/migrate.py up` with `SUPABASE_DB_URL_SESSION`. Each
+migration is additive and has a `.down.sql`.
+
+---
+
+## The pipeline's graph (the intake), generated
+
+These are the counts of the pipeline's own graph (`knowledge/graph.json`), which is the
+intake of the knowledge base, not the KB's live numbers. **Generated by
+`pipeline/gen_index.py`; do not hand-edit the block** (`tests/test_readme_counts.py`).
+Person, instructor and module counts are floors (CLAUDE.md §2).
 
 <!-- generated:counts -->
 `3,146 nodes · 34,575 edges` at plugin **v0.1.9**, built `2026-09-17`.
@@ -124,147 +303,34 @@ the `file` type entirely, so it summed to 4,974 against its own stated 5,048.
 Declared but at zero, deliberately: `depends_on`, `workflow_owned_by`. No evidence in the corpus.
 <!-- /generated:counts -->
 
-**Eval: 20/22 on the original set, 5/5 on five questions written fresh against
-the finished graph. Zero fabrications. 4/4 on the correctly-unanswerable set.**
-
-## Commands
-
-| command | |
-|---|---|
-| `/staffing <domain>` | Who can teach it. **Tiers never merged**: taught → HR record → form response → alias-matched form response. Leads with absence. |
-| `/coverage` | What is missing. Never reports workflows as missing an owner. |
-| `/workflow <id>` | Steps, effort, alerts, tools. Lookup, not reasoning. |
-| `/domain-owner <domain>` | Primary, secondary, delivery POC, cadence. |
-| `/setup` | Graph counts, build date, and the Drive-deferral warning. |
-
 ---
 
-# Running it
+## Rules that are not optional
 
-## Refresh
+The full text is in `CLAUDE.md`. In short:
 
-```
-python3 pipeline/refresh.py
-```
+- **The corpus is read-only.** Never write, move or rename a Drive/corpus
+  file. Drive scope stays `drive.readonly`. Filename typos are citation keys.
+- **Contact data stays out.** Extraction reads declared name columns only
+  (`pipeline/lib/sources.py` is the allow-list). Never declare a contact
+  column (`tests/test_exclusion_is_deny_by_default.py`). The payroll file is
+  excluded (`config/taxonomy.yaml` `excluded:`). The sensitive half of the
+  graph is never projected or committed.
+- **Counts are floors, not totals.** Entity scans have not read every file.
+  Never quote person, instructor or module counts as totals.
+- **Thresholds rank or warn. They never silently exclude** (`10-threshold-audit.md`).
+- **`config/taxonomy.yaml` is the only source of type names**
+  (`tests/test_taxonomy_single_source.py`).
+- **One rulebook:** KB rules live in `web/lib/kb/service.py` and its siblings,
+  and the database enforces them again.
+- **The audit log is append-only.** No real names or e-mails in code, tests,
+  docs or commits: use synthetic `kbtest-*@interviewkickstart.com` data.
+- **Never connect to production** from a laptop session without the owner.
+  Never print secrets, URLs or hosts.
 
-Runs all six passes, validates, prints a delta, **bumps the version, and stops.
-It never commits.**
+## More docs
 
-**The version bump is automatic AND enforced.** `validate.py` hard-fails if
-`graph.json` content changed while `plugin.json` did not:
-
-> *graph.json content changed but plugin.json is still 0.1.2. Teammates would
-> never receive this build.*
-
-Automatic-and-trusted is how a graph nobody can receive gets shipped.
-
-**Determinism, verified:** a second refresh with no corpus change reports
-`IDENTICAL — nodes and edges byte-identical` and does not bump.
-
-## Passes
-
-Pass 0 is the only one that touches the network; pass 1 only reads local files.
-**Do not fuse them** — re-parsing must never re-download.
-
-| 0 | `00_fetch_drive.py` | **live** — service account, `drive.readonly` |
-| 1 | `01_walk_corpus.py` | discovery, integrity, manifest |
-| 2 | `02_extract.py` | candidates + rejection log |
-| 3 | `03_resolve.py` | identity; fuzzy **proposes only** |
-| 4 | `04_build_graph.py` | assembly |
-| 5 | `05_render_html.py` | `graph.html` |
-| — | `validate.py` | 17 categories, all fault-injection tested |
-
-**Manifest rules:** a **changed or removed** file is a hard fail; an **added**
-file is reported and ingested. `--rebaseline` accepts a change explicitly and
-records it in BUILD_LOG — never use it to make an unexplained diff go away.
-
----
-
-# Deferred and decided
-
-## Drive ingestion — LIVE since 2026-09-16
-
-`00_fetch_drive.py` runs against the real folder with a **service account**,
-scope `drive.readonly`, no domain-wide delegation. The key lives outside the
-repo, named by path through `NP_DRIVE_SA_KEY`; pass 0 refuses to read one from
-inside the repo. First run: 75 files, 0 failures, all 75 sha256-identical to the
-hand-export.
-
-**Pass 0's stated rationale turned out not to be the thing that mattered.** It
-was written because native Google files sync to disk as unreadable URL stubs and
-must be exported — and **there are no native Google files in this folder**. All
-75 are already binaries, the export map has never fired, and that is precisely
-why the hand-export matched byte for byte: it was a download, not a conversion.
-
-The real value is different and larger: **the laptop is no longer in the loop.**
-The corpus is reproducible by anyone with the key, a scheduled refresh becomes
-possible, staleness is detectable, and the master-spreadsheet question became
-answerable — it is **not** in this folder, established by listing all 374
-worksheets across 18 workbooks rather than by assuming.
-
-`file.drive_url` is still null, so click-to-open a source file still does not
-work. Populating it is now unblocked.
-
-## Distribution — single-owner, deliberately
-
-**`ANI-IN/np-autopilot`, private, no collaborators. This overrides D10 for v1.**
-*Private is the decision, not a fact anyone may assume: the repository was
-public 2026-09-09→17 (`07-risks.md` R18) and again 2026-09-17→30 (R21). CI
-and the pre-push hook now check it — `pipeline/check_repo_private.py`.*
-
-- **No teammate can install anything.** A private repo with no collaborators is
-  unreachable by `/plugin marketplace add`.
-- **Moving it later changes the marketplace URL**, which breaks
-  `/plugin marketplace add` for anyone already installed — and removing a
-  marketplace auto-uninstalls its plugins, so it is a remove-and-reinstall.
-- **That cost scales with adoption. Move it before the second user, not after
-  the tenth.**
-
-Target state under D10 is a GitHub Organization + team. Honest first-time install
-cost is **four steps**, not two: a GitHub account with org access, `gh auth
-login`, `/plugin marketplace add`, `/plugin install`.
-
-**Offboarding:** removing someone from the org stops *future* updates. It does
-**not** remove the graph snapshot already in their local plugin cache.
-
-## Cloudflare Access — documented, NOT configured
-
-Nothing has been set up. When distribution becomes urgent:
-
-- One rule: email domain `@interviewkickstart.com` (D7). No per-node filtering in
-  the render (D8).
-- The `sensitive` flag drives a render filter that **exists and defaults to off**
-  (D9). It is not the access control.
-- **Before enabling any of this**, re-read `07-risks.md` R6: the graph carries
-  ratings and written judgements about named individuals, and the render already
-  excludes 1,842 in-pipeline/rejected/lapsed instructors including 255 hiring
-  rejections. Access control is not a substitute for that exclusion.
-
-## Not built
-
-**Refresh v2 (nightly)** needs pass 0 working. When built, it should use a
-**service account** with the folder shared to its address — a headless job cannot
-complete a browser consent, and a job tied to one person breaks when they leave.
-
----
-
-# The corpus is read-only
-
-It mirrors a live Drive folder and **has already changed under an active
-analysis**. Filename typos (`Businees`, `Enginnering Mnagement`) are load-bearing
-citation keys — correcting one breaks provenance.
-
-## Exclusions
-
-`03-instructors/US Instructor Cost Analysis.xlsx` — a Paycor payroll export with
-termination records for 5,387 people. 17 contact-field patterns are dropped at
-extraction. Cohort counts, session titles, coach assignments and names are kept.
-Machine-readable list in `config/taxonomy.yaml` under `excluded:`.
-
-**Known cost:** that file is the only corpus source for 14 of the 25 internal
-`@interviewkickstart.com` addresses.
-
----
-
-See `CLAUDE.md` for the five working rules, `knowledge/USING_THE_KG.md` for
-traversal guidance, `BUILD_LOG.md` for every build and finding.
+`docs/ARCHITECTURE.md` · `docs/CONTRACTS.md` · `docs/API.md` ·
+`docs/SCHEMA.md` · `docs/DESIGN_SYSTEM.md` · `docs/MCP.md` · `docs/DEMO.md` ·
+`docs/AUTH.md` · `docs/CONTACT-DATA.md` · `docs/VISION_AND_ROADMAP.md` ·
+`HANDOFF.md` · `BUILD_LOG.md` · `pipeline/README.md`
