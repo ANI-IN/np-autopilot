@@ -185,6 +185,22 @@ def desired_state(conn, M: dict, source: str = "public") -> dict:
             rep["rejected"].append({"id": n["id"], "reason": "name longer than 300 characters"}); continue
         recs[n["id"]] = {"np": n["id"], "type": TYPE_MAP[n["type"]], "src_type": n["type"], "name": lab, "src": n,
                          "legacy": n["id"] in cat["legacy"]}
+    # Permanent exclusions (0037; run 6 R3, the owner-approved deletion of the
+    # legacy domains and modules): once the rule is on, a domain NP Autopilot
+    # does not count as current and a legacy module are never created again,
+    # and neither is any source id the deletion removed. Their relationships
+    # and attachments then have a missing end and are left out with them.
+    from .legacy_delete import excluded as _excluded
+    rule_on, gone = _excluded(conn)
+    excluded_np: set = set()
+    if rule_on or gone:
+        drop = [k for k, r in recs.items() if k in gone or (rule_on and (
+            (r["src_type"] == R["domain"] and k not in cat["current_domains"]) or
+            (r["src_type"] == R["module"] and r["legacy"])))]
+        for k in drop:
+            del recs[k]
+        excluded_np = set(drop)
+        rep["excluded"] = len(drop)
     # scope: the one container a record sits in (NP: a generic name always sits under what it belongs to)
     parents = defaultdict(set)
     for _, rel, s, t, _p in edges:
@@ -333,6 +349,8 @@ def desired_state(conn, M: dict, source: str = "public") -> dict:
             rec_np, art_np = (s, t) if side == "source" else (t, s)
             if rec_np in recs and art_np in res_of_np:
                 attach(rec_np, res_of_np[art_np], note)
+            elif rec_np in excluded_np:
+                rep["excluded_attachments"] = rep.get("excluded_attachments", 0) + 1
             else:
                 rep["problems"]["attachment_without_record_or_link"].append(f"edge {eid}")
             continue
@@ -340,6 +358,8 @@ def desired_state(conn, M: dict, source: str = "public") -> dict:
             rep["problems"]["relationship_shape_unmapped"].append(f"edge {eid}"); continue
         etype, flip = EDGE_MAP[key3]
         if s not in recs or t not in recs:
+            if s in excluded_np or t in excluded_np:
+                rep["excluded_relationships"] = rep.get("excluded_relationships", 0) + 1; continue
             rep["problems"]["relationship_end_rejected"].append(f"edge {eid}"); continue
         src, tgt = (t, s) if flip else (s, t)
         if src == tgt:
