@@ -700,7 +700,7 @@ export function viewGraph(v, r) {
       try {
         const e = await api('GET', '/edges/' + id);
         if (e.archived_at) { here.remove(); continue; }
-        if (here.length) { here.data({ note: e.note || '', version: e.version }); continue; }
+        if (here.length) { here.data(Object.assign({ note: e.note || '', version: e.version, type: e.type, label: (S.edgeTypes.find((x) => x.key === e.type) || {}).label || e.type }, edgeStyle(e.type))); continue; }   // B1 (run 6): a merge changes the type
         const s0 = cy.getElementById(e.source_id), t0 = cy.getElementById(e.target_id);
         if (!s0.length && !t0.length) continue;                   // not about anything on screen
         for (const [have, other] of [[s0, e.target_id], [t0, e.source_id]]) {
@@ -728,6 +728,7 @@ export function viewGraph(v, r) {
   // refreshes what is on screen.
   onLiveFeed(async (changes, info) => {
     if (S.graph !== G) return;
+    G.feed = (G.feed || 0) + 1;
     if (info.types) {
       await loadTypes();
       cy.batch(() => cy.edges(':not(.ghost)').forEach((e) => e.data(Object.assign({ label: (S.edgeTypes.find((x) => x.key === e.data('type')) || {}).label || e.data('label') }, edgeStyle(e.data('type'))))));

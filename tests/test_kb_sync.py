@@ -395,8 +395,10 @@ def test_person_account_now_and_on_a_future_sign_in():
 def test_no_owner_counts_only_records_without_any_owner():
     sync()
     with owner() as c:
-        want = c.execute("""select count(*) from kb.nodes where archived_at is null and not is_legacy
-                            and owner_id is null and owner_record_id is null""").fetchone()[0]
+        # run 6: counted only for types whose "owner expected" is ON (0032)
+        want = c.execute("""select count(*) from kb.nodes n join kb.node_types t on t.id = n.type_id
+                            where n.archived_at is null and not n.is_legacy and t.owner_expected
+                            and n.owner_id is null and n.owner_record_id is null""").fetchone()[0]
         with_role = c.execute("select count(*) from kb.nodes where not is_legacy and owner_record_id is not null").fetchone()[0]
     assert with_role == 2                                    # mod_cur (P) and dom_cur (owned_by)
     assert Client(ADMIN).get("/api/kb/counts")[1]["attention"]["counts"]["no_owner"] == want
