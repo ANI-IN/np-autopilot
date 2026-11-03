@@ -260,6 +260,30 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
             return 200, svc.set_role(conn, actor, rest[0], body.get("role"))
         if method == "POST" and len(rest) == 2 and rest[1] == "remove":
             return 200, ws.remove_member(conn, actor, rest[0])
+
+    # ---- B1 (run 6): people, owned by you, claims, data-quality lists --------
+    if head == "person-records":
+        from lib.kb import people as pp
+        if method == "GET" and not rest:
+            return 200, pp.list_people(conn, params)
+        if method == "POST" and rest == ["preview"]:
+            return 200, pp.csv_preview(conn, actor, body)
+        if method == "POST" and rest == ["link"]:
+            return 200, pp.csv_apply(conn, actor, body)
+    if head == "my" and rest == ["link"] and method == "POST":
+        from lib.kb import people as pp
+        return 200, pp.link_me(conn, actor)
+    if head == "my" and rest == ["owned"] and method == "GET":
+        from lib.kb import people as pp
+        return 200, pp.owned_by_me(conn, actor, params)
+    if head == "claims" and method == "POST" and not rest:
+        return 202, svc.claim_person(conn, actor, (body or {}).get("node_id"), body)
+    if head == "quality" and method == "GET" and rest == ["legacy-expertise"]:
+        from lib.kb import people as pp
+        return 200, pp.legacy_expertise_domains(conn)
+    if head == "quality" and method == "GET" and rest == ["no-owner"]:
+        from lib.kb import people as pp
+        return 200, pp.no_owner(conn, _int(params.get("limit"), 100))
     raise NotFound(f"no KB route {method} /api/kb/{'/'.join(parts)}")
 
 

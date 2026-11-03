@@ -19,6 +19,12 @@ update kb.node_types
         'help', 'The short identifier of a current domain in the mastersheet (the NP Autopilot map codes domains by it).'))
  where key = 'domain'
    and not exists (select 1 from jsonb_array_elements(fields) f where f ->> 'key' = 'slug');
+-- After a rollback (which archives the field and keeps the values), bring it back.
+update kb.node_types
+   set fields = (select jsonb_agg(case when f ->> 'key' = 'slug' then f || '{"archived": false}'::jsonb else f end)
+                   from jsonb_array_elements(fields) f)
+ where key = 'domain'
+   and exists (select 1 from jsonb_array_elements(fields) f where f ->> 'key' = 'slug' and (f ->> 'archived')::boolean);
 
 -- 2 ------------------------------------------------------------------------
 -- The landing page shows these numbers before anyone signs in (as the static
@@ -30,7 +36,11 @@ as $$
         'source', 'kb',
         'nodes', (select count(*) from kb.nodes where archived_at is null),
         'edges', (select count(*) from kb.edges e where e.archived_at is null),
-        'files', (select count(*) from kb.resources where archived_at is null),
+        -- "corpus files": the files records cite (the sync's "Source" links)
+        'files', (select count(distinct nr.resource_id) from kb.node_resources nr
+                    join kb.resources r on r.id = nr.resource_id
+                   where nr.note = 'Source' and nr.archived_at is null and r.archived_at is null),
+        'links', (select count(*) from kb.resources where archived_at is null),
         'by_type', coalesce((select jsonb_object_agg(k, c) from (
                     select t.key as k, count(*) as c from kb.nodes n join kb.node_types t on t.id = n.type_id
                     where n.archived_at is null group by t.key) x), '{}'::jsonb),
@@ -149,6 +159,21 @@ language sql volatile security definer set search_path = pg_catalog, public
 as $$ select kb.auto_link_person(auth.uid()) $$;
 revoke all on function kb.link_me() from public, anon;
 grant execute on function kb.link_me() to authenticated;
+
+-- The person records that carry the caller's name and are not linked yet (for
+-- "Is this you?" when the name is ambiguous). Names and ids only.
+create or replace function kb.person_candidates_for_me() returns table (id uuid, name text, type text)
+language sql stable security definer set search_path = pg_catalog, public
+as $$
+    select n.id, n.name, t.key
+      from kb.nodes n join kb.node_types t on t.id = n.type_id
+     where kb.role_at_least('viewer') and t.key in ('instructor', 'team_member') and n.archived_at is null
+       and n.name_norm = kb.person_name_of(auth.uid())
+       and not exists (select 1 from kb.person_accounts pa where pa.node_id = n.id and pa.user_id is not null)
+     order by n.is_legacy, n.name
+$$;
+revoke all on function kb.person_candidates_for_me() from public, anon;
+grant execute on function kb.person_candidates_for_me() to authenticated;
 
 -- On sign-in (a profile row appears or changes e-mail): the 0030 e-mail link,
 -- then the name step.

@@ -4,6 +4,7 @@
 drop function if exists kb.apply_claim(uuid);
 drop function if exists kb.claim_person(uuid, text);
 drop function if exists kb.link_me();
+drop function if exists kb.person_candidates_for_me();
 drop function if exists kb.auto_link_person(uuid);
 drop function if exists kb.person_name_of(uuid);
 
@@ -45,12 +46,10 @@ alter table kb.sync_runs drop column resume;
 
 drop function if exists kb.landing_stats();
 
--- Fields can never be removed by a write (kb.check_type_def): the migration
--- itself takes the slug field back out, with that check paused for this statement.
-alter table kb.node_types disable trigger node_types_check_def;
+-- A field is never removed (kb.check_type_def): the slug field is ARCHIVED, and
+-- the domains keep their values (0033 up brings the field back as it was).
 update kb.node_types
-   set fields = coalesce((select jsonb_agg(f) from jsonb_array_elements(fields) f where f ->> 'key' <> 'slug'), '[]'::jsonb)
- where key = 'domain';
-alter table kb.node_types enable trigger node_types_check_def;
-update kb.nodes n set props = n.props - 'slug'
-  from kb.node_types t where t.id = n.type_id and t.key = 'domain' and n.props ? 'slug';
+   set fields = (select jsonb_agg(case when f ->> 'key' = 'slug' then f || '{"archived": true}'::jsonb else f end)
+                   from jsonb_array_elements(fields) f)
+ where key = 'domain'
+   and exists (select 1 from jsonb_array_elements(fields) f where f ->> 'key' = 'slug');

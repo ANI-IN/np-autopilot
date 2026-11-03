@@ -49,7 +49,8 @@ def node_shape(n: int) -> str:
 
 CARDINALITIES = ("many_to_many", "one_to_many", "many_to_one", "one_to_one")
 TYPE_FIELDS = {"label", "plural", "description", "icon", "color", "fields", "allowed_parents",
-               "parent_required", "default_status", "owner_rule", "is_container", "key"}
+               "parent_required", "default_status", "owner_rule", "is_container", "key",
+               "owner_expected"}       # run 6 (0032): "No owner" counts only types with it ON
 
 
 def slug(label: str) -> str:
@@ -205,7 +206,7 @@ def _type_values(conn, body: dict, *, partial: bool) -> dict:
         if bad:
             raise Invalid(f"unknown parent type(s): {', '.join(bad)}", field="allowed_parents")
         out["allowed_parents"] = ap
-    for k in ("parent_required", "is_container"):
+    for k in ("parent_required", "is_container", "owner_expected"):
         if k in body:
             out[k] = bool(body[k])
     if "default_status" in body:

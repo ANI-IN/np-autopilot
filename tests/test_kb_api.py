@@ -112,13 +112,16 @@ def test_duplicate_name_is_409_with_a_link_to_the_existing_record(contrib):
     assert out["existing"]["id"] == n["id"]
 
 
-def test_update_needs_version_and_a_stale_version_is_409_with_current(contrib, editor):
+def test_update_needs_version_and_a_stale_version_is_409_with_current(contrib, editor, admin):
     n = _mk(contrib)
     s, out = contrib.patch(f"/api/kb/nodes/{n['id']}", {"summary": "no version"})
     assert s == 422 and out["field"] == "version"
-    s, a = contrib.patch(f"/api/kb/nodes/{n['id']}", {"version": 1, "summary": "first"})
+    # Run 6 decision: a contributor's field edit is a proposal (0033), not a write.
+    s, out = contrib.patch(f"/api/kb/nodes/{n['id']}", {"version": 1, "summary": "proposed"})
+    assert s == 202 and out["proposal_id"]
+    s, a = editor.patch(f"/api/kb/nodes/{n['id']}", {"version": 1, "summary": "first"})
     assert s == 200 and a["version"] == 2
-    s, out = editor.patch(f"/api/kb/nodes/{n['id']}", {"version": 1, "summary": "second"})
+    s, out = admin.patch(f"/api/kb/nodes/{n['id']}", {"version": 1, "summary": "second"})
     assert s == 409 and out["error"] == "version_conflict"
     assert out["current"]["summary"] == "first" and out["current"]["version"] == 2
 
@@ -344,11 +347,11 @@ def test_tags(contrib, viewer):
     assert contrib.call("DELETE", f"/api/kb/nodes/{n['id']}/tags/{t['tag_id']}")[0] == 200
 
 
-def test_dashboard_history_and_change_feed(contrib, viewer, admin):
+def test_dashboard_history_and_change_feed(editor, viewer, admin):
     s, feed = viewer.get("/api/kb/changes")
     cursor = feed["cursor"]
-    n = _mk(contrib, name="Watched")
-    contrib.patch(f"/api/kb/nodes/{n['id']}", {"version": 1, "summary": "s"})
+    n = _mk(editor, name="Watched")
+    editor.patch(f"/api/kb/nodes/{n['id']}", {"version": 1, "summary": "s"})
     s, feed = viewer.get("/api/kb/changes", f"since={cursor}")
     mine = [c for c in feed["changes"] if c["row_id"] == n["id"]]
     assert [c["action"] for c in mine] == ["insert", "update"] and mine[-1]["version"] == "2"
@@ -360,7 +363,7 @@ def test_dashboard_history_and_change_feed(contrib, viewer, admin):
     assert d["recent"][0]["label"] == "Watched" and d["recent"][0]["actor_label"]
     s, h = viewer.get(f"/api/kb/nodes/{n['id']}/history")
     assert [x["action"] for x in h["items"]] == ["update", "insert"]
-    assert h["items"][0]["actor_id"] == USERS["contributor"]
+    assert h["items"][0]["actor_id"] == USERS["editor"]
     assert h["items"][0]["changes"] == [{"field": "summary", "before": None, "after": "s"}]
 
 
@@ -423,17 +426,21 @@ def test_members_show_every_members_email_and_people_is_for_members(admin, viewe
     assert Client(OUTSIDER).get("/api/kb/people")[0] == 403
 
 
-def test_owner_defaults_to_the_creator_can_be_changed_and_quality_lists_unowned(contrib, viewer):
-    n = _mk(Client(USERS["editor"]), name="Owned Topic")
+def test_owner_defaults_to_the_creator_can_be_changed_and_quality_lists_unowned(contrib, editor, viewer):
+    # Run 6: "No owner" counts only types whose "owner expected" is ON (modules, not topics).
+    n = _mk(editor, "module", name="Owned Module")
     assert n["owner_id"] == USERS["editor"]                      # the creator owns it by default
-    assert _mk(Client(USERS["editor"]), name="Unowned Topic", owner_id=None)["owner_id"] is None
+    assert _mk(editor, "module", name="Unowned Module", owner_id=None)["owner_id"] is None
+    assert _mk(editor, name="Unowned Topic", owner_id=None)["owner_id"] is None
     unowned = lambda: sorted(u["name"] for u in viewer.get("/api/kb/quality")[1]["unowned"])  # noqa: E731
-    assert unowned() == ["Unowned Topic"]
-    s, n = contrib.patch(f"/api/kb/nodes/{n['id']}", {"version": n["version"], "owner_id": USERS["editor"]})
+    assert unowned() == ["Unowned Module"]
+    s, _ = contrib.patch(f"/api/kb/nodes/{n['id']}", {"version": n["version"], "owner_id": None})
+    assert s == 202                                              # a contributor's edit is a proposal
+    s, n = editor.patch(f"/api/kb/nodes/{n['id']}", {"version": n["version"], "owner_id": USERS["editor"]})
     assert s == 200 and n["owner_id"] == USERS["editor"]
-    s, n = contrib.patch(f"/api/kb/nodes/{n['id']}", {"version": n["version"], "owner_id": None})
+    s, n = editor.patch(f"/api/kb/nodes/{n['id']}", {"version": n["version"], "owner_id": None})
     assert s == 200 and n["owner_id"] is None
-    assert unowned() == ["Owned Topic", "Unowned Topic"]
+    assert unowned() == ["Owned Module", "Unowned Module"]
 
 def test_course_shape_types_and_new_resource_kinds(contrib):
     c = _mk(contrib, "course", "Shape Course")

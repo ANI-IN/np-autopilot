@@ -51,6 +51,16 @@ def bulk_update(conn, actor: Actor, body: dict) -> dict:
     live = [r["id"] for r in _q(conn, "select id from kb.nodes where id = any(%s) and archived_at is null", (ids,))]
     if len(live) != len(ids):
         raise Invalid(f"{len(ids) - len(live)} selected record(s) are archived or missing", field="ids")
+    proposed = 0
+    if sets and role(conn) == "contributor":
+        # Run 6: a contributor's field changes are proposals, one per record (0033).
+        from .service import propose_update
+        for i in ids:
+            try:
+                propose_update(conn, actor, str(i), dict(s))
+            except NeedsApproval:
+                proposed += 1
+        sets = []
     with _translate(conn, "record"):
         if sets:
             _q(conn, f"update kb.nodes set {', '.join(sets)} where id = any(%s)", (*args, ids))
@@ -76,6 +86,8 @@ def bulk_update(conn, actor: Actor, body: dict) -> dict:
                     except KbError as exc:
                         name = (_q1(conn, "select name from kb.nodes where id = %s", (i,)) or {}).get("name")
                         raise type(exc)(f"{name}: {exc.message}", **exc.details) from None
+    if proposed:
+        raise NeedsApproval(f"{proposed} edit(s) sent for approval", count=proposed)
     return {"updated": len(ids)}
 
 
@@ -289,6 +301,7 @@ def resource_completeness(conn, rid: str) -> dict:
 def needs_attention(conn, limit: int = 12) -> dict:
     no_owner = _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
                            where n.archived_at is null and not n.is_legacy and n.owner_id is null and n.owner_record_id is null
+                             and t.owner_expected
                            order by n.updated_at desc limit %s""", (limit,))
     broken = _q(conn, """select r.id, r.title as name, lc.http_status from kb.resources r
                          join kb.link_checks lc on lc.resource_id = r.id
@@ -336,11 +349,12 @@ ATTENTION_KEYS = ATTENTION_KEYS + ("sync_conflicts", "removed_at_source")
 def attention_counts(conn) -> dict:
     """Current records only (legacy is NP Autopilot's "older sheets": hidden
     from the default counts). "No owner" = no account owner AND no owner by
-    role. Sync conflicts and rows removed at source come from kb.sync_map
+    role, counted only for types whose "owner expected" is ON (run 6). Sync conflicts and rows removed at source come from kb.sync_map
     (editors and admins see them; RLS)."""
     c = _q1(conn, f"""select
-        (select count(*) from kb.nodes where archived_at is null and not is_legacy
-          and owner_id is null and owner_record_id is null) as no_owner,
+        (select count(*) from kb.nodes n join kb.node_types t on t.id = n.type_id
+          where n.archived_at is null and not n.is_legacy and t.owner_expected
+          and n.owner_id is null and n.owner_record_id is null) as no_owner,
         (select count(*) from kb.link_checks lc join kb.resources r on r.id = lc.resource_id
           where r.archived_at is null and lc.status in {BROKEN}) as broken_links,
         (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and not exists (select 1 from kb.edges e

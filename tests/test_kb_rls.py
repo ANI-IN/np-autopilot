@@ -57,16 +57,20 @@ def test_viewer_reads_but_cannot_write():
         assert cur.rowcount == 0, "a viewer's UPDATE must match no rows under RLS"
 
 
-def test_contributor_edits_but_cannot_create_archive_or_delete():
+def test_contributor_cannot_create_edit_archive_or_delete():
     # 0027: a contributor's create is a proposal, so the database refuses a
-    # direct insert from them; editing an existing record is still allowed.
+    # direct insert from them. Run 6 (0033): a field edit is a proposal too,
+    # and the database refuses the direct UPDATE (links and relationships stay
+    # direct: tests/test_kb_propagation.py).
     with as_user(USERS["contributor"]) as c:
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             _insert_topic(c)
     n = _seed_topic("Editable")
     with as_user(USERS["contributor"]) as c:
-        c.execute("update kb.nodes set summary = 'edited' where id = %s", (n,))
-        with pytest.raises(psycopg.errors.InsufficientPrivilege, match="editor"):
+        with pytest.raises(psycopg.errors.InsufficientPrivilege, match="Approvals"):
+            c.execute("update kb.nodes set summary = 'edited' where id = %s", (n,))
+    with as_user(USERS["contributor"]) as c:
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
             c.execute("update kb.nodes set archived_at = now(), status = 'archived' where id = %s", (n,))
     n2 = _seed_topic("To delete")
     with owner() as o:

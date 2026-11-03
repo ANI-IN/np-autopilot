@@ -1087,6 +1087,9 @@ const TYPE_PLURAL={domain:'Domains',program:'Programmes',module:'Modules',person
   program_week:'Programme weeks',class_session:'Sessions',assignment:'Assignments',
   assignment_review:'Assignment reviews',slide_deck:'Decks',content_topic:'Topics',
   curriculum_doc:'Curriculum documents',code_repo:'Code repositories'};
+//: RUN 6: the knowledge base's relationship types (/api/kb/types), for the ones
+//: the map never had: key -> {label, inverse_label, color, line_style, is_core}
+let KBREL={};
 //: rel -> [as seen from the source, as seen from the target]
 const REL_LABEL={
   teaches:['Teaches (older sheets)','Taught by (older sheets)'],
@@ -1111,6 +1114,8 @@ const REL_LABEL={
 function relLabel(rel,dir){
   const p=REL_LABEL[rel];
   if(p)return dir==='in'?p[1]:p[0];
+  const k=KBREL[rel];
+  if(k&&k.label){ const t=dir==='in'?(k.inverse_label||k.label):k.label; return t.charAt(0).toUpperCase()+t.slice(1); }
   return String(rel||'').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase());
 }
 function typeLabel(t){return TYPE_LABEL[t]||String(t||'').replace(/_/g,' ')}
@@ -3131,7 +3136,19 @@ function renderLegend(){
     // the ROLE colours, on the map's edges and in the matrix cells
     '<div style="grid-column:1/-1;margin-top:6px;color:#8b949e">Roles (edges, matrix)</div>'+
     ROLE_ORDER.map(r=>'<div><i style="background:'+ROLE_COLOR[r]+';border-radius:1px;height:3px;margin-top:5px"></i>'+
-      esc(ROLE_SHORT[r]+' '+ROLE_LABEL[r])+'</div>').join('');
+      esc(ROLE_SHORT[r]+' '+ROLE_LABEL[r])+'</div>').join('')+
+    // RUN 6: relationship types made in the knowledge base, each in its own
+    // colour and line style (docs/CONTRACTS.md §3)
+    customRelLegend();
+}
+function customRelLegend(){
+  const custom=Object.entries(KBREL||{}).filter(([k,v])=>!v.is_core&&!REL_LABEL[k]);
+  if(!custom.length)return '';
+  const dash={dashed:'dashed',dotted:'dotted'};
+  return '<div style="grid-column:1/-1;margin-top:6px;color:#8b949e">Relationship types (knowledge base)</div>'+
+    custom.map(([k,v])=>'<div data-rel="'+esc(k)+'" data-color="'+esc(v.color||'')+'" data-line="'+esc(v.line_style)+'">'+
+      '<i style="background:none;border-radius:0;height:0;margin-top:5px;border-top:3px '+(dash[v.line_style]||'solid')+' '+
+      esc(v.color||'#8b949e')+'"></i>'+esc(v.label)+'</div>').join('');
 }
 renderLegend();
 
@@ -3491,6 +3508,8 @@ async function afterSignIn(){
   // an event. If the fetch fails there is no recompute at all -- 'initial' has
   // already rendered the empty canvas, and api() has already said what broke.
   await loadStructure();
+  for(const n of D.nodes)if(n.x!==undefined)LIVE.xy.set(n.id,[n.x,n.y]);
+  liveStart();
 }
 
 document.getElementById('signout').onclick=async ()=>{
@@ -3517,11 +3536,16 @@ document.getElementById('signout').onclick=async ()=>{
 // lands on a populated page.
 async function loadStats(){
   let s;
-  try{
-    const r=await fetch('/stats.json',{cache:'no-cache'});
-    if(!r.ok) return;
-    s=await r.json();
-  }catch(e){ return; }
+  // RUN 6: the numbers come from the knowledge base at request time
+  // (/api/stats: counts only); the generated static file is the fallback.
+  for(const url of [API+'/stats','/stats.json']){
+    try{
+      const r=await fetch(url,{cache:'no-cache'});
+      if(!r.ok) continue;
+      s=await r.json(); break;
+    }catch(e){ continue; }
+  }
+  if(!s) return;
   const put=(id,v)=>{const el=document.getElementById(id);
                      if(el&&v!==undefined&&v!==null)el.textContent=v};
   const num=x=>Number(x).toLocaleString('en-US');
@@ -3533,6 +3557,121 @@ async function loadStats(){
   // on a re-projection of identical content, and is churned by the test suite.
   if(s.built_as_of) put('st-date', new Date(s.built_as_of + 'T00:00:00Z')
     .toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));
+}
+
+// ---- LIVE (run 6, B1): the map follows the knowledge base -----------------
+// The map reads kb (docs/ARCHITECTURE.md, top). Every write in the knowledge
+// base appends to its change feed (kb.changes); this page polls it, as the
+// knowledge base app does when Supabase Realtime is not configured (this page
+// has no supabase-js, and every NP member is a KB viewer, so the feed is
+// readable). A change refetches the structure: one compressed request that the
+// server answers from its per-change model (and with 304 when nothing this
+// page shows changed); a type change also refetches the relationship styles.
+// Positions, the open panel and the camera stay where they are.
+const LIVE={cursor:null,timer:null,fails:0,busy:false,again:false,applied:0,last:null,xy:new Map()};
+try{ window.__NP_LIVE=LIVE; }catch(e){}
+async function liveGet(path,opts){
+  if(!SESSION)return null;
+  try{
+    const r=await fetch(API+path,Object.assign({cache:'no-store',headers:{authorization:'Bearer '+SESSION.access_token}},opts||{}));
+    if(!r.ok)return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
+async function loadKbTypes(){
+  const t=await liveGet('/kb/types');
+  if(!t||!t.edge_types)return;
+  const m={};
+  for(const e of t.edge_types)m[e.key]={label:e.label,inverse_label:e.inverse_label,color:e.color,
+    line_style:e.line_style||'solid',is_core:!!e.is_core};
+  KBREL=m; renderLegend();
+}
+function liveSchedule(){
+  clearTimeout(LIVE.timer);
+  const ms=document.hidden?15000:Math.min(2500*Math.pow(2,LIVE.fails),60000);
+  LIVE.timer=setTimeout(liveTick,ms);
+}
+async function liveStart(){
+  const r=await liveGet('/kb/changes');
+  if(r)LIVE.cursor=r.cursor;
+  loadKbTypes();
+  liveSchedule();
+}
+async function liveTick(){
+  if(!SESSION){ liveSchedule(); return; }
+  if(LIVE.cursor===null){ const r=await liveGet('/kb/changes'); if(r)LIVE.cursor=r.cursor; liveSchedule(); return; }
+  const r=await liveGet('/kb/changes?since='+encodeURIComponent(LIVE.cursor)+'&limit=500');
+  if(!r){ LIVE.fails=Math.min(LIVE.fails+1,5); liveSchedule(); return; }
+  LIVE.fails=0; LIVE.cursor=r.cursor;
+  if(r.changes&&r.changes.length){
+    try{ await liveApply(r.changes); }catch(e){ console.warn('live update', e); }
+  }
+  liveSchedule();
+}
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&LIVE.cursor!==null)liveSchedule(); });
+async function liveApply(changes){
+  const kinds=new Set(changes.map(c=>String(c.kind||'')));
+  const has=p=>[...kinds].some(k=>k.indexOf(p)===0);
+  if(has('type.')||has('reltype.'))await loadKbTypes();
+  // memberships, tokens, flags, views and the like change nothing on the map
+  const relevant=changes.length>=200||['record.','relationship.','link.','tag.','layout.','owner.','sync.','type.','reltype.']
+    .some(p=>has(p));
+  if(!relevant)return;
+  if(LIVE.busy){ LIVE.again=true; return; }
+  LIVE.busy=true;
+  try{
+    do{ LIVE.again=false; await liveRefetch(); }while(LIVE.again);
+  }finally{ LIVE.busy=false; }
+}
+async function liveRefetch(){
+  if(!SESSION)return;
+  let out;
+  try{
+    const r=await fetch(API+'/structure',{cache:'no-cache',headers:{authorization:'Bearer '+SESSION.access_token}});
+    if(!r.ok)return;
+    out=await r.json();
+  }catch(e){ return; }
+  liveReconcile(out);
+}
+//: Bring D in line with a fresh structure payload, IN PLACE: existing nodes keep
+//: their objects (and so their place on screen); renamed or retyped ones change;
+//: gone ones go; new ones arrive. Content-layer nodes loaded on demand
+//: (topics, files, repos) stay with their edges.
+function liveReconcile(out){
+  const dec=decodeStructure(out);
+  const fresh=new Map(dec.nodes.map(n=>[n.id,n]));
+  const content=n=>CONTENT_TYPES.indexOf(n.t)>=0||n.t==='file';
+  const keep=[], seen=new Set();
+  for(const n of D.nodes){
+    const f=fresh.get(n.id);
+    if(!f){ if(content(n))keep.push(n); continue; }
+    seen.add(n.id);
+    for(const k of ['l','t','st','th','wid','eff','al','raw','legacy','dom','merged'])n[k]=f[k];
+    n.p=f.p; n.partial=true; DETAIL.delete(n.id);
+    const was=LIVE.xy.get(n.id);
+    if(f.x!==undefined&&(!was||was[0]!==f.x||was[1]!==f.y)&&was){ n.x=f.x; n.y=f.y; n.vx=0; n.vy=0; }
+    keep.push(n);
+  }
+  for(const f of dec.nodes)if(!seen.has(f.id))keep.push(f);
+  for(const f of dec.nodes)if(f.x!==undefined)LIVE.xy.set(f.id,[f.x,f.y]);
+  const ids=new Set(keep.map(n=>n.id));
+  const edges=dec.edges.slice();
+  for(const e of D.edges){
+    const a=idx.byId.get(e.s), b=idx.byId.get(e.t);
+    if((a&&content(a))||(b&&content(b))){ if(ids.has(e.s)&&ids.has(e.t))edges.push(e); }
+  }
+  D.nodes.length=0; for(const n of keep)D.nodes.push(n);
+  D.edges.length=0; for(const e of edges)if(ids.has(e.s)&&ids.has(e.t))D.edges.push(e);
+  window.__NP.counts=out.counts||window.__NP.counts;
+  idx=buildIndex(D); MODEL=null;
+  LIVE.applied++; LIVE.last=Date.now();
+  try{ window.__NP_LIVE_APPLIED=LIVE.applied; }catch(e){}
+  recompute(false,'live update');
+  try{ renderChips(); }catch(e){}
+  if(state.sel&&!isGroup(state.sel)){
+    if(idx.byId.has(state.sel))openNode(state.sel,{back:true,fromUrl:true});
+    else closePanel();
+  }
 }
 
 async function boot(){

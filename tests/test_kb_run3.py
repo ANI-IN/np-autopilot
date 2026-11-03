@@ -58,8 +58,9 @@ def _node(client, type_="topic", name="Graphs", **kw):
 # --- A1: one definition of "needs attention" ---------------------------------
 
 def test_attention_tile_list_and_sidebar_agree(admin, editor):
-    a = _node(editor, name="No owner, no links", owner_id=None)       # no owner + not connected
-    b = _node(editor, name="Owned", owner_id=USERS["editor"])         # not connected
+    # Run 6: "No owner" counts types whose "owner expected" is ON (modules; topics are not counted).
+    a = _node(editor, "module", name="No owner, no links", owner_id=None)       # no owner + not connected
+    b = _node(editor, "module", name="Owned", owner_id=USERS["editor"])         # not connected
     s, r = editor.post("/api/kb/resources", {"url": "https://github.com/ik-demo/x", "title": "X", "kind": "repo"})
     assert s == 201, r
     with owner() as c:
