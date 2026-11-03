@@ -57,7 +57,7 @@ Environment Variables -> tick **Preview** only -> "Select a custom Preview branc
 | `NP_SHARED_ACCOUNTS` | the same list as Production's |
 | `KB_SYNC_SECRET` | a new random value, 32+ characters (`python -c "import secrets; print(secrets.token_urlsafe(32))"`); the same value goes into the dev Vault in step 6 |
 | `KB_SYNC_ENABLED` | `true` (the kill switch: `false` stops every run) |
-| `KB_SYNC_BUDGET_SECONDS` | `50` (below the functions' 60 s `maxDuration` for `api/**` in vercel.json; unset, the code uses 10) |
+| `KB_SYNC_BUDGET_SECONDS` | `10` (the default; each run is a batch that resumes, well under the 60 s `maxDuration` in vercel.json; raise to 30-50 only if a measured batch needs it) |
 
 **Never set in Vercel:** `DEV_SUPABASE_SERVICE_ROLE_KEY` (under any name), the
 session-pooler URL, or any `DEV_` name itself. The app reads the names above
