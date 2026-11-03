@@ -29,10 +29,16 @@
   --text: #18181b;
   --text-2: #52525b;
   --text-3: #6b6b74;
-  --accent: #1d4ed8;
-  --accent-hover: #1e40af;
-  --accent-soft: #eef3ff;
-  --accent-text: #1d4ed8;
+  /* Interview Kickstart brand (run 6, F1; source in docs/DESIGN_SYSTEM.md "Brand"):
+     the logo's blue #3996D2, darkened to #2670A6 where it carries text (5.3:1 on white);
+     the logo's navy #324158 for the brand mark. */
+  --brand-blue: #3996D2;
+  --brand-navy: #324158;
+  --brand-mark: #324158;
+  --accent: #2670A6;
+  --accent-hover: #1d5c8b;
+  --accent-soft: #edf6fe;
+  --accent-text: #2670A6;
   --on-accent: #ffffff;
   --danger: #b91c1c; --danger-soft: #fef2f2;
   --warn: #a16207;   --warn-soft: #fefce8;
@@ -47,7 +53,7 @@
     --bg: #0f1012; --bg-subtle: #141518; --surface: #16171a; --surface-2: #1d1e22; --surface-hover: #222327;
     --border: #2a2b30; --border-strong: #3a3b42;
     --text: #ececef; --text-2: #a8a8b1; --text-3: #8d8d97;
-    --accent: #5b8cff; --accent-hover: #7aa2ff; --accent-soft: #172447; --accent-text: #8fb0ff; --on-accent: #0b1020;
+    --accent: #3996D2; --accent-hover: #5aaee6; --accent-soft: #12263a; --accent-text: #6fb8e8; --on-accent: #0b1020; --brand-mark: #3996D2;
     --danger: #f87171; --danger-soft: #2a1414; --warn: #facc15; --warn-soft: #29240e; --ok: #4ade80; --ok-soft: #10261a;
     --shadow-float: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
     --overlay: rgba(0, 0, 0, .55);
@@ -58,7 +64,7 @@
   --bg: #0f1012; --bg-subtle: #141518; --surface: #16171a; --surface-2: #1d1e22; --surface-hover: #222327;
   --border: #2a2b30; --border-strong: #3a3b42;
   --text: #ececef; --text-2: #a8a8b1; --text-3: #8d8d97;
-  --accent: #5b8cff; --accent-hover: #7aa2ff; --accent-soft: #172447; --accent-text: #8fb0ff; --on-accent: #0b1020;
+  --accent: #3996D2; --accent-hover: #5aaee6; --accent-soft: #12263a; --accent-text: #6fb8e8; --on-accent: #0b1020; --brand-mark: #3996D2;
   --danger: #f87171; --danger-soft: #2a1414; --warn: #facc15; --warn-soft: #29240e; --ok: #4ade80; --ok-soft: #10261a;
   --shadow-float: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
   --overlay: rgba(0, 0, 0, .55);
@@ -152,7 +158,7 @@ input::placeholder, textarea::placeholder { color: var(--text-3); }
 .sidebar { background: var(--bg-subtle); border-right: 1px solid var(--border); display: flex; flex-direction: column;
   padding: var(--s-3) var(--s-2); gap: var(--s-1); overflow-y: auto; overflow-x: hidden; }
 .brand { display: flex; align-items: center; gap: var(--s-2); height: 32px; padding: 0 var(--s-2); font-weight: var(--w-strong); }
-.brand-mark { width: 20px; height: 20px; border-radius: var(--radius); background: var(--accent); color: var(--on-accent);
+.brand-mark { width: 20px; height: 20px; border-radius: var(--radius); background: var(--brand-mark); color: var(--on-accent);
   display: inline-flex; align-items: center; justify-content: center; font: var(--w-strong) 11px/1 var(--font); flex: none; }
 .nav-search { display: flex; align-items: center; gap: var(--s-2); height: 32px; margin: var(--s-2) 0; padding: 0 var(--s-2);
   border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text-3); cursor: pointer; font: inherit; font-size: var(--fs-sm); width: 100%; }
@@ -634,3 +640,11 @@ kbd.on-btn { border-color: transparent; color: inherit; background: transparent;
 .deck-list a { min-width: 0; }
 .missing-col { max-width: 50%; flex: 0 1 auto; }
 .gate-card h1.brand { font-size: var(--fs-lg); padding: 0; }
+
+/* Interview Kickstart logo on the sign-in card (run 6, F1). The navy wordmark is lightened in dark mode. */
+.gate-logo { display: block; height: 32px; width: auto; margin-bottom: var(--s-3); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gate-logo { filter: brightness(0) invert(1); opacity: .9; } }
+:root[data-theme="dark"] .gate-logo { filter: brightness(0) invert(1); opacity: .9; }
+
+.min-w-0 { min-width: 0; }
+#sync-banner { margin: var(--s-2) var(--s-4); }

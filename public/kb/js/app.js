@@ -92,9 +92,15 @@ async function boot() {
 }
 
 // ------------------------------------------------------------------ sidebar
+/* Every page, for the palette's "Go to" and the browser tab's title (run 6, F2). */
+const PAGES = [['Dashboard', ''], ['All records', 'records'], ['Programs', 'programs'], ['Courses', 'courses'], ['Links', 'resources'],
+  ['Outline', 'outline'], ['Graph', 'graph'], ['Who teaches what', 'teaching'], ['Program timeline', 'timeline'],
+  ['Data quality', 'quality'], ['Approvals', 'approvals'], ['Activity', 'activity', 'editor'], ['Archived', 'archived'],
+  ['Guide', 'guide'], ['Settings', 'settings'], ['People', 'settings?tab=people', 'admin'], ['Members', 'settings?tab=members', 'admin'],
+  ['Sync', 'settings?tab=sync', 'admin']];
 const NAV = [
   ['Workspace', [['', 'Dashboard', 'layout-dashboard'], ['records', 'All records', 'list', 'records'], ['outline', 'Outline', 'list-tree'], ['graph', 'Graph', 'network']]],
-  ['Browse', [['programs', 'Programs', 'graduation-cap', 'program'], ['courses', 'Courses', 'book-open', 'course'], ['resources', 'Resources', 'link', 'resources'], ['teaching', 'Who teaches what', 'users'], ['timeline', 'Programme timeline', 'calendar-days']]],
+  ['Browse', [['programs', 'Programs', 'graduation-cap', 'program'], ['courses', 'Courses', 'book-open', 'course'], ['resources', 'Links', 'link', 'resources'], ['teaching', 'Who teaches what', 'users'], ['timeline', 'Program timeline', 'calendar-days']]],
   ['Maintain', [['quality', 'Data quality', 'shield-check', 'attention'], ['approvals', 'Approvals', 'circle-check', 'pending'], ['activity', 'Activity', 'history', null, 'editor'], ['archived', 'Archived', 'archive', 'archived']]],
 ];
 function renderSidebar() {
@@ -104,7 +110,7 @@ function renderSidebar() {
   sb.appendChild(el('div', { class: 'brand' }, el('span', { class: 'brand-mark', text: 'IK' }), el('span', { class: 'label-text truncate', text: 'Knowledge Base' }), el('span', { class: 'spacer label-text' }), collapse));
   sb.appendChild(el('button', { class: 'nav-search', type: 'button', 'data-testid': 'open-palette', onclick: openPalette, 'aria-label': 'Search or run a command' },
     icon('search'), el('span', { class: 'label-text', text: 'Search' }), el('span', { class: 'spacer' }), el('kbd', { text: /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K' })));
-  if (can('contributor')) sb.appendChild(el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-record', style: 'width:100%;margin-bottom:4px',
+  if (can('contributor')) sb.appendChild(el('button', { class: 'btn primary w-full mb-1', type: 'button', 'data-testid': 'new-record',
     onclick: () => newRecordFromContext() }, icon('plus'), el('span', { class: 'label-text', text: 'New record' })));
   const nav = el('nav', { class: 'nav', id: 'nav' });
   for (const [group, items] of NAV) {
@@ -118,7 +124,7 @@ function renderSidebar() {
   }
   sb.appendChild(nav);
   const user = el('button', { class: 'user-btn', type: 'button', 'data-testid': 'whoami', onclick: (e) => userMenu(e.currentTarget) },
-    avatar(S.me.user_id, 'lg'), el('span', { class: 'label-text col', style: 'gap:0;min-width:0' },
+    avatar(S.me.user_id, 'lg'), el('span', { class: 'label-text col gap-0 min-w-0' },
       el('span', { class: 'truncate', text: (S.session.user && S.session.user.email) || personName(S.me.user_id) }),
       el('span', { class: 'faint xs', text: 'Role: ' + S.me.role })));
   // Admin-only links come from /me, which includes them only for a role the
@@ -153,7 +159,7 @@ async function syncBanner() {
     const d = await api('GET', '/sync');
     const old = document.getElementById('sync-banner'); if (old) old.remove();
     if (!d.failing) return;
-    const b = el('div', { id: 'sync-banner', class: 'note-box warn row', role: 'alert', 'data-testid': 'sync-banner', style: 'margin:8px 16px' },
+    const b = el('div', { id: 'sync-banner', class: 'note-box warn row', role: 'alert', 'data-testid': 'sync-banner' },
       icon('triangle-alert', 'sm'), el('span', { class: 'spacer', text: 'The last sync from the original site failed. Edits here are safe; new source changes are not coming in.' }),
       el('a', { class: 'btn sm', href: '#/settings?tab=sync', text: 'Open the sync log' }));
     const main = $('#main') || document.body; main.prepend(b);
@@ -184,6 +190,8 @@ export function route() {
   const viewKey = key + '|' + (r.path[1] || '');
   const fn = ROUTES[key];
   const v = $('#view');
+  const page = PAGES.find(([, p]) => p === key) || (key === 'proposals' && ['Approvals']) || (key === 'r' && ['Record']);
+  document.title = (page ? page[0] + ' · ' : '') + 'IK Knowledge Base';
   if (viewKey !== lastView || r.q.__force) {
     lastView = viewKey;
     v.dataset.layout = LAYOUT[key] || 'contained';
@@ -226,8 +234,8 @@ function openPalette(prefill) {
   const commands = () => {
     const c = [];
     if (can('contributor')) S.types.forEach((t) => c.push({ group: 'Create', label: 'New ' + t.label.toLowerCase(), icon: typeIcon(t.key), fn: () => openRecordForm({ type: t.key, name: input.value.trim() }), testid: 'palette-create-' + t.key }));
-    [['Dashboard', ''], ['All records', 'records'], ['Outline', 'outline'], ['Graph', 'graph'], ['Resources', 'resources'], ['Data quality', 'quality'], ['Approvals', 'approvals'], ['Activity', 'activity'], ['Archived', 'archived'], ['Guide', 'guide'], ['Settings', 'settings']]
-      .forEach(([l, p]) => c.push({ group: 'Go to', label: l, icon: icon('arrow-right'), fn: () => { location.hash = '#/' + p; } }));
+    PAGES.filter(([, , role]) => !role || can(role))
+      .forEach(([l, p]) => c.push({ group: 'Go to', label: l, icon: icon('arrow-right'), fn: () => { location.hash = '#/' + p; }, testid: 'palette-go-' + (p.split('?')[0] || 'dashboard') }));
     c.push({ group: 'Commands', label: 'Toggle dark mode', icon: icon('moon'), fn: () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark') });
     return c;
   };
@@ -242,7 +250,9 @@ function openPalette(prefill) {
       const found = r.nodes.map((n) => ({ group: 'Records', label: n.name, sub: typeLabel(n.type) + (n.scope_name ? ' · ' + n.scope_name : ''), icon: typeIcon(n.type),
         fn: () => setQuery({ open: n.id, res: null }), testid: 'palette-node' }))
         .concat((r.resources || []).map((x) => ({ group: 'Resources', label: x.title, sub: x.url, icon: icon('link'), fn: () => setQuery({ res: x.id, open: null }), testid: 'palette-resource' })));
-      items = found.concat(cmds.filter((c) => c.group === 'Create').map((c) => Object.assign({}, c, { label: c.label + ' “' + q + '”' }))).concat(cmds.filter((c) => c.group !== 'Create'));
+      // An exact page name ("Settings", "Links") goes to that page first, never "Create 'Settings'" (run 6, F2).
+      const exact = cmds.filter((c) => c.group === 'Go to' && c.label.toLowerCase() === q.toLowerCase());
+      items = exact.concat(found).concat(cmds.filter((c) => c.group === 'Create').map((c) => Object.assign({}, c, { label: c.label + ' “' + q + '”' }))).concat(cmds.filter((c) => c.group !== 'Create' && !exact.includes(c)));
     } catch (e) { items = cmds; }
     active = 0; draw();
   };
