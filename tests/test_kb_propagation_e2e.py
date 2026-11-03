@@ -43,7 +43,10 @@ def server():
 @pytest.fixture(scope="module")
 def browser():
     with sync_playwright() as p:
-        b = p.chromium.launch(headless=True)
+        try:
+            b = p.chromium.launch(channel="chrome", headless=True)        # as tests/test_kb_e2e.py
+        except Exception:                                              # noqa: BLE001
+            b = p.chromium.launch(headless=True)
         yield b
         b.close()
 
@@ -65,6 +68,8 @@ def _page(browser, url, role="viewer"):
     page.errors = []
     page.on("pageerror", lambda e: page.errors.append(str(e)))
     page.on("console", lambda m: m.type == "error" and page.errors.append(m.text))
+    page.warns = []
+    page.on("console", lambda m: m.type == "warning" and page.warns.append(m.text))
     page.goto(url)
     return ctx, page
 
@@ -83,6 +88,14 @@ def _until(pages_conds: dict, t0: float, limit: float = LIMIT + 1.0) -> dict:
                     pass
         time.sleep(0.1)
     return got
+
+
+def _wait(page, js, timeout=8.0):
+    """page.wait_for_function compiles a string with eval, which the pages' CSP
+    refuses; page.evaluate does not."""
+    t0 = time.monotonic()
+    if _until({"x": (page, js)}, t0, timeout)["x"] is None:
+        pytest.fail(f"not within {timeout} s: {js}; errors {page.errors}; warnings {page.warns[-5:]}")
 
 
 def _graph_has(nid):
@@ -133,9 +146,9 @@ def test_change_propagation_matrix(server, browser):
         gctx, graph = _page(browser, server + f"/kb/#/graph/{course['id']}?depth=2")
         mctx, npmap = _page(browser, server + "/")
         contexts += [gctx, mctx]
-        graph.wait_for_function(_graph_has(m1["id"]), timeout=20000)
-        npmap.wait_for_function("window.__NP_LIVE && window.__NP_LIVE.cursor !== null && "
-                                f"window.__NP.data.nodes.some((n) => n.id === '{m1['id']}')", timeout=30000)
+        _wait(graph, _graph_has(m1["id"]), 20)
+        _wait(npmap, "window.__NP_LIVE && window.__NP_LIVE.cursor !== null && "
+                                f"window.__NP.data.nodes.some((n) => n.id === '{m1['id']}')", 30)
         time.sleep(0.5)
 
         def step(op, kind, action, gjs, mjs, gnote="", mnote=""):
@@ -185,7 +198,7 @@ def test_change_propagation_matrix(server, browser):
         step("relationship permanent delete (after archive)", "relationship.delete", lambda: ok(admin.delete(f"/api/kb/edges/{e['id']}")),
              _graph_fed, _map_refetched, "stays gone; feed applied", "stays gone; refetched")
         e = ok(admin.post("/api/kb/edges", {"type": "teaches", "source_id": ins["id"], "target_id": m1["id"]}))
-        graph.wait_for_function(f"!!window.__kbGraph.cy.getElementById('{e['id']}').length", timeout=8000)
+        _wait(graph, f"!!window.__kbGraph.cy.getElementById('{e['id']}').length", 8)
 
         # custom relationship types: a new type appears in the legend and filters with its own style
         def new_type():
@@ -210,8 +223,8 @@ def test_change_propagation_matrix(server, browser):
              "(() => { const l = document.querySelector('#legend [data-rel=mentors]'); return !!l && l.textContent.includes('coaches'); })()")
         ok(admin.post("/api/kb/types/edge", {"label": "guides", "inverse_label": "guided by", "rules": [{"source": "instructor", "target": "instructor"}]}))
         g2 = ok(admin.post("/api/kb/edges", {"type": "guides", "source_id": ins["id"], "target_id": ins3["id"]}))
-        graph.wait_for_function(f"!!window.__kbGraph.cy.getElementById('{g2['id']}').length", timeout=8000)
-        npmap.wait_for_function(_map_edge(ins["id"], ins3["id"], "guides"), timeout=8000)
+        _wait(graph, f"!!window.__kbGraph.cy.getElementById('{g2['id']}').length", 8)
+        _wait(npmap, _map_edge(ins["id"], ins3["id"], "guides"), 8)
         step("custom relationship type merge", "reltype.update",
              lambda: ok(admin.post("/api/kb/types/edge/guides/merge", {"into": "mentors"})),
              f"window.__kbGraph.cy.edges().filter((x) => x.data('type') === 'guides').length === 0 && window.__kbGraph.cy.edges().filter((x) => x.data('type') === 'mentors').length === 2",
@@ -291,7 +304,10 @@ def test_change_propagation_matrix(server, browser):
              lambda: ok(admin.post(f"/api/kb/nodes/{ins['id']}/account", {"email": "kbmatrix-person@interviewkickstart.com"})),
              _graph_fed, _map_refetched, "feed applied", "refetched")
 
-        assert graph.errors == [] and npmap.errors == [], (graph.errors, npmap.errors)
+        # A record deleted elsewhere answers 404 when the Graph page re-reads it (it then
+        # removes it): the browser logs that response; script errors are what must not occur.
+        real = lambda errs: [x for x in errs if not x.startswith("Failed to load resource: the server responded with a status of 404")]   # noqa: E731
+        assert real(graph.errors) == [] and real(npmap.errors) == [], (graph.errors, npmap.errors)
     finally:
         for c in contexts:
             c.close()

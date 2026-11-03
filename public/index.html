@@ -3640,7 +3640,9 @@ async function liveRefetch(){
 function liveReconcile(out){
   const dec=decodeStructure(out);
   const fresh=new Map(dec.nodes.map(n=>[n.id,n]));
-  const content=n=>CONTENT_TYPES.indexOf(n.t)>=0||n.t==='file';
+  // a type the structure defers (topics, files, repos, ...) loads on demand: kept
+  const deferred=new Set(out.deferred_types||[]);
+  const content=n=>deferred.has(n.t);
   const keep=[], seen=new Set();
   for(const n of D.nodes){
     const f=fresh.get(n.id);

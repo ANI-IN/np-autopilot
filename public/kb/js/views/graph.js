@@ -741,7 +741,8 @@ export function viewGraph(v, r) {
       cy.batch(() => moved.forEach((id) => { if (pos[id]) cy.getElementById(id).position(pos[id]); }));
       drawMini();
     }
-    if (info.refetch) { await refresh(); return; }
+    if (info.refetch) await refresh();
+    if (changes.length >= 200) return;          // a full page: the refresh above re-read what is on screen
     const rows = changes.filter((c) => c.table_name === 'nodes' || c.table_name === 'edges');
     if (rows.length) applyChanges(rows);
   });
