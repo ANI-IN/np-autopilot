@@ -5,7 +5,7 @@
   "outputDirectory": "public",
   "functions": {
     "api/**": {
-      "maxDuration": 15,
+      "maxDuration": 60,
       "excludeFiles": "{.drive-cache,knowledge,00-master,01-workflows,02-curriculum,03-instructors,04-programs,05-operations,06-analysis,tests,eval,docs,db,commands,.claude-plugin,.github,.vercel,.git}/**"
     }
   },
