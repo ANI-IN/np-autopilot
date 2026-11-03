@@ -223,3 +223,74 @@ Branch run6/b1-dataflow (worktree ../np-run6-b1), DBs kb_b1 / kbtest_b1, port 87
 - HANDOFF note: access to "/" unchanged (owner decision).
 - Finding for B5: GET /api/kb/quality takes ~36 s on real data — all of it `find_duplicate_nodes` (pre-existing, not B1).
 - No contract change requests. No BLOCKED items.
+## Run 6 — B2 report (knowledge graph: structure and navigation)
+
+Branch `run6/b2-graph` (worktree ../np-run6-b2). Server kb_b2 on :8772, tests on kbtest_b2.
+
+### What changed
+- `public/kb/js/views/graph.js` (rewritten on the same editing code): reads GET /api/kb/graph (contract §1) and
+  /api/kb/types (§3). `#/graph` is now the **whole graph** (was a start page); `#/graph/<id>` the neighbourhood
+  (focus=id, depth 1-2) with progressive expansion. Default arrangement **Hierarchy** (Program > Course > Domain >
+  Module > Week > Session in rows; topics, people, links and custom types as satellites under their record;
+  >8 of one type on one record = a bundle that opens on click / E / search). Arrangements: Hierarchy, Force (cose),
+  Radial (rings around the selected record), Saved positions (`?arrange=`, keys 1-4). Group by type / program /
+  course / domain / module with a box per group whose title folds it into one node (`?group=`). Legacy and archived
+  hidden unless "Show: Legacy / Archived" (`legacy=all`, `archived=1`, refetched). Legend = filter (checkbox per
+  type and relationship, "Only" per type, line colour + style swatch). Breadcrumbs for the focused record. Focus mode
+  off / 1 / 2 steps dims the rest (`?focus=`, key O). Search jumps into bundles and groups. Minimap (click/drag,
+  arrows, toggle M) and Fit. Labels never overlap (greedy declutter, hidden labels return on hover), semantic zoom,
+  faint cross-hierarchy edges, edges outside the hierarchy hidden below zoom 0.3. `?` shortcut sheet, hover handles
+  (connect, expand, focus, rename), first-visit hint, empty state with a New record action.
+  Editing kept as built (create, connect, rename, archive + Undo, move, saved views). The read API carries no
+  `version`: rename fetches it once when it starts (a known stale version still conflicts).
+- **Live:** `applyChanges(rows)` is the one entry point (dedupes by change id, handles `kind`/`node_ids` rows and the
+  old table_name/row_id shape, type changes restyle, >200 rows refetch). Fed by live.js `onLiveChange` and by the
+  page's own poll of `/changes?since=<head>` (4 s). Exposed as `window.__kbGraph.applyChanges` for B1.
+- New modules `public/kb/js/graph/`: `style.js` (types metadata -> Cytoscape rules, legend swatches, icons; pure,
+  shared with "/"), `layouts.js` (hierarchy / radial / grouped, pure), `labels.js`, `minimap.js`, `map.js` (adapter for
+  the "/" map). New `public/kb/graph.css` (tokens only, no new token).
+- `scripts/kb_graph_perf.py`: tree scenario shaped like the real data, `--base` read-only real-data mode, timings.
+- `docs/run6/GRAPH_PERF.md` (before/after), `docs/run6/b2-map.patch`, `tests/test_kb_graph_run6.py` (new).
+- `public/kb/index.html`: ONE marked line linking graph.css (for my testing; B3 owns the file).
+
+### Tests (kbtest_b2, browser lock taken each time)
+- `tests/test_kb_graph_run6.py`: **11 passed** (hierarchy default + bundles, legend filter, focus + breadcrumbs,
+  search into a bundle, minimap + fit, layout switch, legacy toggle, group fold/unfold, `?` sheet + hint + empty
+  state + hover handles, live change via the feed, label overlap = 0 in hierarchy/radial/force at zoom 1).
+- `tests/test_kb_e2e.py -k "graph or edge"`: **8 passed** (all run-3 graph editing tests, a11y + no-scroll on #/graph).
+  An earlier accidental run of the whole e2e file: 71 passed, 1 failed (the legend filter, since fixed).
+- `tests/test_taxonomy_single_source.py`: 6 passed. Layout functions also checked in node on real-shaped data (0 slot overlaps).
+- Real data on :8772: overview, group by domain, legacy=all, expand=all: **0 console errors/warnings, 0 label overlaps**.
+
+### Measurements (docs/run6/GRAPH_PERF.md)
+Real data overview: 3,087 records, 352 drawn, load 1.1 s, 58.7 fps. All 3,087 drawn: 2.6 s, 28.7 fps.
+Hub 5,000 (every record drawn): before 13.8 s / 1.0 fps, after 7.9 s / 4.1 fps (canvas). Hub 500: 1.8 s / 30.6 -> 1.1 s / 36.9.
+
+### Decisions (and how to reverse)
+1. `#/graph` opens the whole current graph instead of the start page (start chips dropped; search covers it).
+   Reverse: restore `startPage()` from fb25b56 for an empty path.
+2. Saved positions apply only in "Saved positions" (default for `?view=`); kb_realdata holds 3,228 shared positions
+   that would otherwise override the hierarchy. Dragging still saves. Reverse: default `opt.arrange` to 'saved'.
+3. WebGL only from 6,000 drawn records (slower than canvas on real-shaped graphs here). Reverse: `GL_FROM` in graph.js.
+4. Bundle threshold 9 satellites (`BUNDLE_FROM`), dashes solid above 400 lines, icons off above 400 records.
+5. Owner filter now uses `owner_record_id` (the run-5 owner record) instead of the account `owner_id`.
+6. Satellite anchor = deepest structural neighbour, then scope (scope_id can skip levels).
+
+### Contract change requests
+- §1 GET /api/kb/graph: add `version` to nodes and edges (and `note` to edges) so rename/edge editing need no extra
+  GET. Workaround in place (lazy fetch).
+
+### For the lead
+- index.html (kb): keep `<link rel="stylesheet" href="/kb/graph.css">` after kb.css (graph.js also adds it if missing).
+- "/" map, after B1 merges: `git apply docs/run6/b2-map.patch` (checked with `git apply --check` against this
+  branch's public/index.html; patched scripts pass `node --check`). It loads `/kb/js/graph/map.js` after sign-in:
+  type colours from /api/kb/types (lifted for the dark ground) into `C`, `window.__NP.look` (edgeColor/edgeDash), and
+  the hierarchy as the 3D view's home positions in `build3D`. If B1 changed those lines, apply by hand: (a) in
+  `afterSignIn` after `hideGate(); banner('');` the import block; (b) at the end of `build3D` the home-position loop.
+  NOT browser-tested on "/" (I must not edit index.html).
+- DESIGN_SYSTEM.md "Keyboard" graph line could add `?`, 1-4, O, M, +/- (not my file).
+- Not explained: one full run of the new test file hung after loading /api/kb/graph (killed at ~9 min); every run
+  since (3 full, 11 single) passed in ~2 min. Added guards for non-finite label boxes in labels.js.
+
+### Blocked
+Nothing.

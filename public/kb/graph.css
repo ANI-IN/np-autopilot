@@ -1,0 +1,39 @@
+/* Graph page (run 6, B2). Design-system tokens only (kb.css :root); no new tokens.
+   Floating layers (tools, breadcrumbs, minimap, hint) carry --shadow-float, as the
+   design system allows for floating elements only. */
+.graph-tools { align-items: center; }
+.graph-tools .graph-find { width: 220px; }
+.graph-tools select { height: 26px; font-size: var(--fs-sm); padding: 0 24px 0 8px; background-color: var(--surface); max-width: 160px; }
+.graph-tools .spacer { flex: 1; pointer-events: none; }
+
+.graph-crumbs { position: absolute; left: var(--s-3); top: calc(var(--s-3) + 34px); z-index: 2; display: flex; align-items: center; gap: 2px;
+  max-width: calc(100% - 2 * var(--s-3) - 200px); padding: 2px 4px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-float); font-size: var(--fs-xs); min-width: 0; overflow: hidden; }
+.graph-crumbs .sep { color: var(--text-3); display: inline-flex; flex: none; }
+.graph-crumb { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 6px; border: 0; border-radius: 4px; background: transparent;
+  color: var(--text-2); font: inherit; cursor: pointer; min-width: 0; max-width: 220px; }
+.graph-crumb:hover { background: var(--surface-hover); color: var(--text); }
+.graph-crumb.current { color: var(--text); font-weight: var(--w-strong); cursor: default; }
+.graph-crumb .type-icon { flex: none; }
+
+.minimap[hidden] { display: none; }
+.graph-mini-toggle { position: absolute; right: var(--s-3); bottom: calc(var(--s-3) + 126px); z-index: 2; background: var(--surface); }
+.minimap[hidden] + .graph-mini-toggle { bottom: var(--s-3); }
+
+.graph-hint { position: absolute; left: var(--s-3); bottom: var(--s-3); z-index: 2; display: flex; align-items: center; gap: var(--s-2);
+  max-width: calc(100% - 2 * var(--s-3) - 200px); padding: 4px 4px 4px 10px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-float); font-size: var(--fs-xs); color: var(--text-2); }
+.graph-hint[hidden] { display: none; }
+.graph-hint > span { min-width: 0; }
+
+.graph-empty { position: absolute; inset: 80px var(--s-5) auto; z-index: 1; max-width: 440px; }
+.graph-empty[hidden] { display: none; }
+
+.legend-item { cursor: pointer; border-radius: 4px; padding: 0 2px; }
+.legend-item:hover { background: var(--surface-hover); }
+.legend-item.off > span:not(.count) { color: var(--text-3); text-decoration: line-through; }
+.legend-item.off .legend-shape, .legend-item.off .legend-edge { opacity: 0.4; }
+.legend-edge { width: 18px; height: 6px; flex: none; }
+.legend-only { height: 20px; padding: 0 6px; font-size: var(--fs-xs); opacity: 0; }
+.legend-item:hover .legend-only, .legend-only:focus-visible { opacity: 1; }
+.legend-help { margin: -4px 0 0; }
