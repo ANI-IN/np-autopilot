@@ -43,15 +43,35 @@ def text(body: dict, field: str, *, required: bool = False, max_len: int,
     return v or None
 
 
+def name_problem(value, field: str = "name") -> str | None:
+    """THE record-name rule, or None when the name is acceptable. One rule for
+    every writer (run 6, F4 "one service layer"): name() below, so the API, the
+    MCP tools and the Sheets import, AND the sync from the original site's
+    tables (sync.desired_state), which used to carry its own copy of it.
+    A name is text; not empty once trimmed; at most NAME_MAX characters; and
+    never an e-mail address or a URL (CLAUDE.md: an `@` in a name cannot be a
+    name)."""
+    if not isinstance(value, str):
+        return f"{field} must be text"
+    s = value.strip()
+    if not s:
+        return f"{field} cannot be empty"
+    if len(s) > NAME_MAX:
+        return f"{field} is {len(s)} characters; the limit is {NAME_MAX}"
+    if "@" in s or re.search(r"https?://", s, re.I):
+        return f"{field} cannot contain an email address or a URL; put links in resources"
+    return None
+
+
 def name(body: dict, field: str = "name", *, required: bool = True) -> str | None:
-    v = text(body, field, required=required, max_len=NAME_MAX, allow_empty=False)
-    if v is None:
+    if field not in body or body[field] is None:
+        if required:
+            raise Invalid(f"{field} is required", field=field)
         return None
-    v = re.sub(r"\s+", " ", v)
-    if "@" in v or re.search(r"https?://", v, re.I):
-        raise Invalid(f"{field} cannot contain an email address or a URL; put links in "
-                      "resources", field=field)
-    return v
+    problem = name_problem(body[field], field)
+    if problem:
+        raise Invalid(problem, field=field)
+    return re.sub(r"\s+", " ", body[field].strip())
 
 
 def uid(value, field: str, *, required: bool = True) -> str | None:

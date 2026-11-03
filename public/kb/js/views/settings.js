@@ -350,19 +350,72 @@ function tagsTab(body) {
   }).catch((e) => body.appendChild(errorBox(e)));
 }
 
+/* Members (run 6, F4): add an IK colleague by e-mail before or after their
+   first sign-in (the role applies when they sign in), change a role, remove
+   one, and what each role can do in plain words (from the server, the same
+   text it enforces). The last admin can never be removed or demoted: the
+   database refuses it (0034) and this tab says so before anyone tries. Every
+   change appears in Activity. */
+const ROLE_KEYS = ['viewer', 'contributor', 'editor', 'admin'];
+const roleLabel = (r) => r.charAt(0).toUpperCase() + r.slice(1);
+const LAST_ADMIN = 'The last admin cannot be removed or demoted. Make someone else an admin first.';
+
 function membersTab(body) {
-  body.appendChild(el('div', { class: 'tab-intro' }, el('p', { text: 'Anyone with an IK profile is a viewer. Contributors edit and propose new records; editors create, archive and approve; admins also change types and roles.' })));
-  const ul = el('ul', { class: 'list bordered', 'data-testid': 'members' });
-  body.appendChild(ul);
-  api('GET', '/members').then((m) => m.items.forEach((x) => {
-    const remove = !you(x.user_id) ? el('button', { class: 'btn sm danger', type: 'button', 'data-testid': 'member-remove', text: 'Remove', onclick: async () => {
-      const ok = await confirmDialog({ title: 'Remove ' + (x.email || 'this person') + '?', body: 'Their knowledge-base role is removed (audited). If they can sign in to the main site they stay a viewer. You can grant a role again any time.', confirmLabel: 'Remove', danger: true });
-      if (!ok) return;
-      try { await api('POST', '/members/' + x.user_id + '/remove'); toast('Removed'); clear(body); membersTab(body); } catch (e) { failToast(e); } } }) : null;
-    const sel = el('select', { 'aria-label': 'Role for ' + (x.email || x.user_id), 'data-testid': 'member-role' }, ['viewer', 'contributor', 'editor', 'admin'].map((r) => el('option', { value: r, text: r.charAt(0).toUpperCase() + r.slice(1), selected: r === x.role })));
-    sel.addEventListener('change', async () => { try { await api('POST', '/members/' + x.user_id, { role: sel.value }); toast('Role updated'); } catch (e) { failToast(e); } });
-    ul.appendChild(el('li', null, el('div', { class: 'link-row roomy' }, avatar(x.user_id), el('span', { class: 'truncate grow', text: x.email || x.user_id }), you(x.user_id) ? el('span', { class: 'badge', text: 'You' }) : null, sel, remove)));
-  })).catch((e) => body.appendChild(errorBox(e)));
+  const reload = () => { clear(body); membersTab(body); };
+  body.appendChild(el('div', { class: 'tab-intro' }, el('p', { text: 'Add an IK colleague by their @interviewkickstart.com address, before or after their first sign-in: the role applies as soon as they sign in. Every change here appears in Activity.' })));
+  const email = el('input', { type: 'email', placeholder: 'name@interviewkickstart.com', 'aria-label': 'IK e-mail address', 'data-testid': 'invite-email', maxlength: '254', class: 'input-md', autocomplete: 'off' });
+  const role = el('select', { 'aria-label': 'Role for the new member', 'data-testid': 'invite-role' }, ROLE_KEYS.map((r) => el('option', { value: r, text: roleLabel(r), selected: r === 'contributor' })));
+  const err = el('div', { class: 'field-error', role: 'alert', 'data-testid': 'invite-error' });
+  const add = async () => {
+    err.textContent = '';
+    const v = email.value.trim().toLowerCase();
+    // A hint only: the server checks the domain and the database checks it again.
+    if (!/^[^@\s]+@interviewkickstart\.com$/.test(v)) { err.textContent = 'Enter an @interviewkickstart.com address: only IK Workspace accounts can sign in.'; email.focus(); return; }
+    try {
+      const out = await api('POST', '/members/invite', { email: v, role: role.value });
+      toast(out.status === 'applied' ? roleLabel(out.role) + ' role given to ' + v : v + ' added: ' + roleLabel(out.role) + ' from their first sign-in');
+      reload();
+    } catch (e) { err.textContent = e.message || 'Could not add this person'; }
+  };
+  email.addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); });
+  body.appendChild(el('div', { class: 'inline-form', 'data-testid': 'invite-form' }, email, role,
+    el('button', { class: 'btn primary', type: 'button', 'data-testid': 'invite-add', text: 'Add member', onclick: add })));
+  body.appendChild(err);
+  const ul = el('ul', { class: 'list bordered mt-3', 'data-testid': 'members' });
+  const pending = el('ul', { class: 'list bordered', 'data-testid': 'invites' });
+  const help = el('ul', { class: 'list bordered', 'data-testid': 'role-help' });
+  body.append(ul, el('h3', { class: 'mt-4', text: 'Waiting for their first sign-in' }), pending, el('h3', { class: 'mt-4', text: 'What each role can do' }), help);
+  api('GET', '/members').then((m) => {
+    (m.roles || []).forEach((x) => help.appendChild(el('li', { 'data-testid': 'role-help-row', 'data-role': x.role }, el('div', { class: 'link-row roomy' },
+      el('strong', { class: 'input-sm', text: x.label }), el('span', { class: 'small muted grow', text: x.can })))));
+    const admins = m.items.filter((x) => x.role === 'admin').length;
+    m.items.forEach((x) => {
+      const lastAdmin = x.role === 'admin' && admins <= 1;
+      const remove = !you(x.user_id) ? el('button', { class: 'btn sm danger', type: 'button', 'data-testid': 'member-remove', text: 'Remove', disabled: lastAdmin, title: lastAdmin ? LAST_ADMIN : null, onclick: async () => {
+        const ok = await confirmDialog({ title: 'Remove ' + (x.email || 'this person') + '?', body: 'Their knowledge-base role is removed (audited). If they can sign in to the main site they stay a viewer. You can grant a role again any time.', confirmLabel: 'Remove', danger: true });
+        if (!ok) return;
+        try { await api('POST', '/members/' + x.user_id + '/remove'); toast('Removed'); reload(); } catch (e) { failToast(e); } } }) : null;
+      const sel = el('select', { 'aria-label': 'Role for ' + (x.email || x.user_id), 'data-testid': 'member-role' }, ROLE_KEYS.map((r) => el('option', { value: r, text: roleLabel(r), selected: r === x.role, disabled: lastAdmin && r !== 'admin' })));
+      sel.addEventListener('change', async () => {
+        try { await api('POST', '/members/' + x.user_id, { role: sel.value }); toast('Role updated'); reload(); }
+        catch (e) { sel.value = x.role; failToast(e); } });
+      ul.appendChild(el('li', { 'data-testid': 'member-row' }, el('div', { class: 'link-row roomy' }, avatar(x.user_id), el('span', { class: 'truncate grow', text: x.email || x.user_id }),
+        you(x.user_id) ? el('span', { class: 'badge', text: 'You' }) : null,
+        lastAdmin ? el('span', { class: 'faint xs', 'data-testid': 'last-admin-note', text: LAST_ADMIN }) : null, sel, remove)));
+    });
+    if (!(m.invites || []).length) pending.appendChild(el('li', { class: 'link-row faint', text: 'Nobody is waiting.' }));
+    (m.invites || []).forEach((x) => {
+      const sel = el('select', { 'aria-label': 'Role for ' + x.email, 'data-testid': 'invite-row-role' }, ROLE_KEYS.map((r) => el('option', { value: r, text: roleLabel(r), selected: r === x.role })));
+      sel.addEventListener('change', async () => {
+        try { await api('POST', '/members/invites/' + x.id, { role: sel.value }); toast('Role updated'); } catch (e) { sel.value = x.role; failToast(e); } });
+      pending.appendChild(el('li', { 'data-testid': 'invite-row' }, el('div', { class: 'link-row roomy' }, icon('clock'), el('span', { class: 'truncate grow', text: x.email }),
+        el('span', { class: 'faint xs', text: 'added ' + ago(x.created_at) }), sel,
+        el('button', { class: 'btn sm danger', type: 'button', 'data-testid': 'invite-revoke', text: 'Withdraw', onclick: async () => {
+          const ok = await confirmDialog({ title: 'Withdraw the invitation for ' + x.email + '?', body: 'If they sign in later they are a viewer, like any IK colleague. The change is recorded in Activity.', confirmLabel: 'Withdraw', danger: true });
+          if (!ok) return;
+          try { await api('POST', '/members/invites/' + x.id + '/revoke'); toast('Withdrawn'); reload(); } catch (e) { failToast(e); } } }))));
+    });
+  }).catch((e) => body.appendChild(errorBox(e)));
 }
 function tokensTab(body) {
   body.appendChild(el('div', { class: 'tab-intro' }, el('p', { text: 'A token lets the AI assistant (Claude Code with the IK knowledge plugin) act as you, with your role. It is shown once. Anything it archives or deletes always needs a person’s approval.' })));

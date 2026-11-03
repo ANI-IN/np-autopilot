@@ -205,12 +205,67 @@ def create_node_type(conn, actor: Actor, body: dict) -> dict:
 
 def add_edge_rule(conn, actor: Actor, body: dict) -> dict:
     require(conn, "admin", "changing relationship rules")
+    if actor.actor_type == "ai":        # run 6 audit A1b
+        raise Forbidden("the AI assistant cannot change relationship rules")
     et = _edge_type(conn, v.text(body, "type", required=True, max_len=40))
     s = _type_id(conn, v.text(body, "source_type", required=True, max_len=40))
     t = _type_id(conn, v.text(body, "target_type", required=True, max_len=40))
     with _translate(conn, "rule"):
         return _q1(conn, "insert into kb.edge_type_rules (edge_type_id, source_type_id, target_type_id) "
                          "values (%s,%s,%s) returning id, version", (et["id"], s, t))
+
+
+# ---------------------------------------------------------------------------
+# The shared write rules (run 6, F4 "one service layer"). The API, the MCP
+# tools and the sync from the original site's tables (sync.py) all use these,
+# so one invalid input is refused by every path with the same rule and the
+# same sentence. The database enforces the same rules again (kb.check_edge,
+# kb.check_node_props); these give the sentence before the write.
+# ---------------------------------------------------------------------------
+
+def edge_rules(conn) -> set[tuple[str, str, str]]:
+    """Every live (relationship type, source type, target type) the type rules
+    allow: kb.edge_type_rules, the table kb.check_edge() enforces."""
+    return {(r["e"], r["s"], r["t"]) for r in _q(conn, """
+        select e.key as e, s.key as s, t.key as t from kb.edge_type_rules r
+          join kb.edge_types e on e.id = r.edge_type_id and e.archived_at is null
+          join kb.node_types s on s.id = r.source_type_id
+          join kb.node_types t on t.id = r.target_type_id
+         where r.archived_at is null""")}
+
+
+def edge_rule_problem(rules, etype: str, stype: str, ttype: str) -> str | None:
+    """The type-rule check for one relationship, or None when it is allowed.
+    The sentence is the database trigger's own (kb.check_edge, hint kb_edge_rule)."""
+    if (etype, stype, ttype) in rules:
+        return None
+    return f"edge type {etype} is not allowed from {stype} to {ttype}"
+
+
+def field_errors(conn, items) -> dict[int, tuple[str, str]]:
+    """The typed-field rule for many records in ONE round trip:
+    kb.field_value_error (0027), the function the database's own trigger
+    (kb.check_node_props) runs. `items` is a list of (the type's `fields`,
+    props). Returns {index: (field key, "<Label> <problem>")} for the first
+    failing field of each item, in the type's field order; archived fields
+    and absent values are not checked (as in the trigger)."""
+    if not items:
+        return {}
+    payload = json.dumps([{"fields": list(f or []), "props": p or {}} for f, p in items], default=str)
+    rows = _q(conn, """
+        select x.ix, x.key, x.label, x.err from (
+            select (i.ord - 1)::int as ix, f.pos, f.e ->> 'key' as key, f.e ->> 'label' as label,
+                   kb.field_value_error(f.e, i.item -> 'props' -> (f.e ->> 'key')) as err
+              from jsonb_array_elements(%s::jsonb) with ordinality as i(item, ord)
+             cross join lateral jsonb_array_elements(i.item -> 'fields') with ordinality as f(e, pos)
+             where coalesce((f.e ->> 'archived')::boolean, false) = false
+               and i.item -> 'props' ? (f.e ->> 'key')) x
+         where x.err is not null
+         order by x.ix, x.pos""", (payload,))
+    out: dict[int, tuple[str, str]] = {}
+    for r in rows:
+        out.setdefault(int(r["ix"]), (r["key"], f"{r['label']} {r['err']}"))
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -450,25 +505,26 @@ def _type_def(conn, key: str) -> dict:
 
 
 def validate_props(conn, tdef: dict, props: dict | None, *, creating: bool) -> dict:
-    """Field-by-field check with the database's own rules (kb.field_value_error),
-    so a form can highlight the failing field before anything is written."""
+    """Field-by-field check with the database's own rules (kb.field_value_error,
+    through field_errors: the rule the sync uses too), so a form can highlight
+    the failing field before anything is written."""
+    if props is not None and not isinstance(props, dict):
+        raise Invalid("props must be an object", field="props")        # run 6 audit A7
     props = dict(props or {})
-    for f in tdef["fields"]:
-        if f.get("archived"):
-            continue
+    live = [f for f in tdef["fields"] if not f.get("archived")]
+    for f in live:
         k = f["key"]
         if creating and k not in props and f.get("default") not in (None, ""):
             props[k] = f["default"]
-        val = props.get(k)
-        if val in ("", []):
+        if props.get(k) in ("", []):
             props.pop(k, None)
-            val = None
-        if val is not None:
-            err = (_q1(conn, "select kb.field_value_error(%s::jsonb, %s::jsonb) as e",
-                       (json.dumps(f), json.dumps(val))) or {}).get("e")
-            if err:
-                raise Invalid(f"{f['label']} {err}", field="props." + k)
-        elif creating and f.get("required"):
+    given = {k: x for k, x in props.items() if x is not None}
+    bad = field_errors(conn, [(live, given)]).get(0) if given and live else None
+    for f in live:
+        k = f["key"]
+        if bad and bad[0] == k:
+            raise Invalid(bad[1], field="props." + k)
+        if props.get(k) is None and creating and f.get("required"):
             raise Invalid(f"{f['label']} is required", field="props." + k)
     return props
 
@@ -884,6 +940,16 @@ def create_edge(conn, actor: Actor, body: dict) -> dict:
     if dupe:
         raise Duplicate("these two records are already connected by this relationship",
                         existing={"id": dupe["id"], "type": et["key"]})
+    # The type rule, through the same function the sync uses (edge_rule_problem).
+    # Only for two live, distinct records: a missing or archived end, or a
+    # self-link, keeps the database's own sentence (kb.check_edge checks those first).
+    ends = {str(r["id"]): r for r in _q(conn, """select n.id, t.key, n.archived_at from kb.nodes n
+                                                join kb.node_types t on t.id = n.type_id
+                                                where n.id = any(%s::uuid[])""", ([s, t],))}
+    if s != t and all(x in ends and not ends[x]["archived_at"] for x in (s, t)):
+        problem = edge_rule_problem(edge_rules(conn), et["key"], ends[s]["key"], ends[t]["key"])
+        if problem:
+            raise Invalid(problem, constraint=None, rule="kb_edge_rule")
     with _translate(conn, "relationship"):
         row = _q1(conn, "insert into kb.edges (edge_type_id, source_id, target_id, note, props) "
                         "values (%s,%s,%s,%s,%s) returning id",
@@ -1458,7 +1524,8 @@ def create_token(conn, actor: Actor, body: dict) -> dict:
         raise Forbidden("an AI client cannot mint tokens")
     name = v.text(body, "name", required=True, max_len=80, allow_empty=False)
     days = body.get("expires_in_days", 90)
-    if days is not None and (not isinstance(days, int) or isinstance(days, bool) or not 1 <= days <= 365):
+    # Every token expires (run 6 audit A10: `null` made one that never did).
+    if not isinstance(days, int) or isinstance(days, bool) or not 1 <= days <= 365:
         raise Invalid("expires_in_days must be 1-365", field="expires_in_days")
     raw = TOKEN_PREFIX + secrets.token_urlsafe(32)
     with _translate(conn, "token"):
@@ -1485,6 +1552,32 @@ def revoke_token(conn, actor: Actor, token_id: str) -> dict:
     return row
 
 
+#: What each role can do, in plain words, for Settings -> Members (run 6, F4).
+#: Written from what the service and the database actually enforce (0023 RLS,
+#: the require() calls above, proposals for contributors and the AI assistant).
+ROLE_HELP = (
+    {"role": "viewer", "label": "Viewer",
+     "can": "Reads everything in the knowledge base, flags problems, saves views and creates "
+            "their own API token. Every signed-in IK colleague is a viewer without being added."},
+    {"role": "contributor", "label": "Contributor",
+     "can": "Everything a viewer can, and edits records, relationships, links and tags. "
+            "New records, archiving and deleting are sent to an editor for approval."},
+    {"role": "editor", "label": "Editor",
+     "can": "Everything a contributor can, and creates, archives and restores directly, approves or "
+            "rejects proposals, manages tags and templates, and proposes changes to record types."},
+    {"role": "admin", "label": "Admin",
+     "can": "Everything an editor can, and applies type changes, adds and removes members and their "
+            "roles, links people to sign-ins, runs the sync and permanently deletes archived items. "
+            "The last admin can never be removed or demoted."},
+)
+
+
+def _role_arg(new_role) -> str:
+    if new_role not in ROLES[1:]:
+        raise Invalid("role must be viewer, contributor, editor or admin", field="role")
+    return new_role
+
+
 def list_members(conn) -> list[dict]:
     require(conn, "admin", "listing roles")
     # Emails through kb.people(): profiles are self-only under RLS, so a plain
@@ -1494,10 +1587,78 @@ def list_members(conn) -> list[dict]:
                        where m.archived_at is null order by m.role, p.email""")
 
 
+def list_invites(conn) -> list[dict]:
+    """People added by e-mail who have not signed in yet (0035). Admins only:
+    the rows carry addresses (RLS: member_invites_admin)."""
+    require(conn, "admin", "listing invitations")
+    return _q(conn, """select id, email, role, version, created_at from kb.member_invites
+                       where status = 'pending' and archived_at is null order by created_at, email""")
+
+
+def _ik_email(body: dict) -> str:
+    """An IK Workspace address, checked HERE (server side) and again by the
+    database (member_invites.email_is_ik). The domain is the sign-in domain
+    (web/lib/auth.ALLOWED_HD), not a parameter."""
+    from lib.auth import ALLOWED_HD
+    raw = v.text(body, "email", required=True, max_len=254, allow_empty=False)
+    email = raw.strip().lower()
+    local, at, dom = email.rpartition("@")
+    if not at or dom != ALLOWED_HD or not local or any(c.isspace() or c == "@" for c in local):
+        raise Invalid(f"enter an @{ALLOWED_HD} address: only IK Workspace accounts can sign in",
+                      field="email")
+    return email
+
+
+def invite_member(conn, actor: Actor, body: dict) -> dict:
+    """Add a person by their IK e-mail with a role, BEFORE their first sign-in.
+    The role is applied when they first sign in (0035, kb.apply_member_invite
+    on the profile the sign-up creates); if they have already signed in it is
+    applied now (kb.member_invites_resolve). The audit row carries no address."""
+    require(conn, "admin", "adding members")
+    if actor.actor_type == "ai":
+        raise Forbidden("the AI assistant cannot change roles")
+    v.only(body, {"email", "role"})
+    email = _ik_email(body)
+    new_role = _role_arg(body.get("role"))
+    pending = _q1(conn, """select id from kb.member_invites where email = %s and status = 'pending'
+                           and archived_at is null""", (email,))
+    with _translate(conn, "invitation"):
+        if pending:
+            row = _q1(conn, """update kb.member_invites set role = %s where id = %s
+                               returning id, email, role, status, user_id, version""", (new_role, pending["id"]))
+        else:
+            row = _q1(conn, """insert into kb.member_invites (email, role) values (%s, %s)
+                               returning id, email, role, status, user_id, version""", (email, new_role))
+    return row
+
+
+def set_invite_role(conn, actor: Actor, invite_id: str, new_role) -> dict:
+    require(conn, "admin", "changing an invitation")
+    new_role = _role_arg(new_role)
+    with _translate(conn, "invitation"):
+        row = _q1(conn, """update kb.member_invites set role = %s
+                           where id = %s and status = 'pending' and archived_at is null
+                           returning id, email, role, status, version""", (new_role, v.uid(invite_id, "id")))
+    if not row:
+        raise NotFound("no pending invitation with that id")
+    return row
+
+
+def revoke_invite(conn, actor: Actor, invite_id: str) -> dict:
+    """Withdraw an invitation before it is used (kept, archived, audited)."""
+    require(conn, "admin", "withdrawing an invitation")
+    with _translate(conn, "invitation"):
+        row = _q1(conn, """update kb.member_invites set status = 'revoked', archived_at = now()
+                           where id = %s and status = 'pending' and archived_at is null
+                           returning id, status""", (v.uid(invite_id, "id"),))
+    if not row:
+        raise NotFound("no pending invitation with that id")
+    return row
+
+
 def set_role(conn, actor: Actor, user_id: str, new_role: str) -> dict:
     require(conn, "admin", "granting roles")
-    if new_role not in ROLES[1:]:
-        raise Invalid("role must be viewer, contributor, editor or admin", field="role")
+    _role_arg(new_role)
     with _translate(conn, "membership"):
         return _q1(conn, """insert into kb.memberships (user_id, role) values (%s, %s)
                             on conflict (user_id) do update set role = excluded.role, archived_at = null, status = 'active'

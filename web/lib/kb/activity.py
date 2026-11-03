@@ -23,7 +23,7 @@ SOURCES = {"app": ("human",), "ai": ("ai",), "import": ("import",), "sync": ("sy
 ACTIONS = ("insert", "update", "delete")
 TABLES = ("nodes", "edges", "resources", "node_resources", "node_tags", "node_types", "edge_types",
           "edge_type_rules", "link_kinds", "proposals", "flags", "templates", "saved_views", "memberships",
-          "api_tokens", "import_runs", "tags")
+          "member_invites", "api_tokens", "import_runs", "tags")
 # Columns that change on every write and say nothing to a reader.
 NOISE = {"version", "updated_at", "updated_by", "search", "name_norm"}
 
@@ -92,6 +92,11 @@ def _shape(rows: list[dict]) -> list[dict]:
         b, a = r.get("before"), r.get("after")
         src = a or b or {}
         r["label"] = src.get("name") or src.get("title") or src.get("label") or src.get("email")
+        if r.get("table_name") in ("memberships", "member_invites") and src.get("role"):
+            # A role change reads as one (run 6, F4). An invitation's audit row
+            # has no address (0035), so the role and its state are the label.
+            r["label"] = f"Role: {src['role']}" + (f" ({src['status']})" if r["table_name"] == "member_invites"
+                                                     and src.get("status") else "")
         r["changes"] = diff(b, a) if r["action"] == "update" else []
     return rows
 

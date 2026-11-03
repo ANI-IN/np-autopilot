@@ -20,7 +20,8 @@ Routes (method, path after /api/kb):
   POST   /attachments/{id}/detach
   GET    /proposals   POST /proposals/{id}/approve | /reject
   GET    /tokens      POST /tokens      POST /tokens/{id}/revoke
-  GET    /members     POST /members/{user_id}   (admin)
+  GET    /members     POST /members/{user_id}   POST /members/{user_id}/remove   (admin)
+  POST   /members/invite {email, role}   POST /members/invites/{id} {role} | /invites/{id}/revoke  (admin)
   GET    /instructors?course=&q=   /nodes/{id}/validate
   GET    /quality/missing-resources | /quality/duplicates | /quality/link-candidates
   POST   /quality/link-results   (editor; records a link checker's results)
@@ -255,7 +256,15 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
             return 200, svc.revoke_token(conn, actor, rest[0])
     if head == "members":
         if method == "GET" and not rest:
-            return 200, {"items": svc.list_members(conn)}
+            return 200, {"items": svc.list_members(conn), "invites": svc.list_invites(conn),
+                         "roles": list(svc.ROLE_HELP)}
+        # Run 6, F4: add a person by e-mail before their first sign-in.
+        if method == "POST" and rest == ["invite"]:
+            return 201, svc.invite_member(conn, actor, body)
+        if method == "POST" and len(rest) == 2 and rest[0] == "invites":
+            return 200, svc.set_invite_role(conn, actor, rest[1], body.get("role"))
+        if method == "POST" and len(rest) == 3 and rest[0] == "invites" and rest[2] == "revoke":
+            return 200, svc.revoke_invite(conn, actor, rest[1])
         if method == "POST" and len(rest) == 1:
             return 200, svc.set_role(conn, actor, rest[0], body.get("role"))
         if method == "POST" and len(rest) == 2 and rest[1] == "remove":

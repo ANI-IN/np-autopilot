@@ -8,7 +8,7 @@ import { pageHead } from '../page.js';
 
 const ENTITY = { nodes: 'record', edges: 'relationship', resources: 'link', node_resources: 'attached link', node_tags: 'tag',
   node_types: 'record type', edge_types: 'relationship type', edge_type_rules: 'relationship rule', link_kinds: 'link kind', proposals: 'proposal',
-  flags: 'flag', templates: 'template', saved_views: 'saved view', memberships: 'role', api_tokens: 'API token', import_runs: 'import', tags: 'tag' };
+  flags: 'flag', templates: 'template', saved_views: 'saved view', memberships: 'role', member_invites: 'invitation', api_tokens: 'API token', import_runs: 'import', tags: 'tag' };
 const SOURCE_LABEL = { app: 'App', ai: 'AI assistant', import: 'Import', sync: 'Sync', system: 'System' };
 
 function verb(a) {

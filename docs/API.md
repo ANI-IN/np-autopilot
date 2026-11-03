@@ -67,7 +67,9 @@ the token owner and are attributed `actor_type=ai`. Every request runs as the
 | `POST /attachments/{id}/detach` | editor (contributor → proposal) | |
 | `GET /proposals?status=` · `POST /proposals/{id}/approve\|reject` | viewer · editor (humans only) | approve executes the change |
 | `GET /tokens` · `POST /tokens` · `POST /tokens/{id}/revoke` | own | raw token returned once |
-| `GET /members` · `POST /members/{user_id}` | admin | `{role}` |
+| `GET /members` · `POST /members/{user_id}` | admin | `{role}`. GET also returns `invites` (pending) and `roles` (what each role can do) |
+| `POST /members/invite` | admin | `{email, role}`: an @interviewkickstart.com address only (checked by the server and the database); applied now if they have signed in, else at their first sign-in (0035) |
+| `POST /members/invites/{id}` · `POST /members/invites/{id}/revoke` | admin | change a pending invitation's `{role}`, or withdraw it |
 | `GET /people` | viewer | members' `user_id, email, role` (owner names) |
 | `GET /types[?archived=1]` | viewer | record types (fields, placement, record counts), relationship types (rules, cardinality), link kinds, resource kinds, field kinds, palette |
 | `POST /types/node` / `PATCH /types/node/{key}` | admin (editor: 202 proposal) | safe changes only (docs/SCHEMA.md 0027); `replacements: {field: {old: new}}` for removed options in use; returns `warnings`, `converted_records` |

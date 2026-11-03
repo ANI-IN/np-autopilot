@@ -36,6 +36,8 @@ import uuid
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from . import validate as kbv
+
 REPO = Path(__file__).resolve().parents[3]
 MAPPING_FILE = REPO / "config" / "kb-projection-mapping.yaml"
 LOCK_KEY = 7302026          # pg advisory lock id for "kb sync"
@@ -177,12 +179,10 @@ def desired_state(conn, M: dict, source: str = "public") -> dict:
         p, lab = n["props"], (n["label"] or "").strip()
         if n["type"] == R["topic"] and p.get("not_a_topic"):
             rep["rejected"].append({"id": n["id"], "reason": f"marked not_a_topic ({p['not_a_topic']}) by the pipeline"}); continue
-        if not lab:
-            rep["rejected"].append({"id": n["id"], "reason": "empty name"}); continue
-        if "@" in lab or re.search(r"https?://", lab, re.I):
-            rep["rejected"].append({"id": n["id"], "reason": "name contains an e-mail address or a URL"}); continue
-        if len(lab) > 300:
-            rep["rejected"].append({"id": n["id"], "reason": "name longer than 300 characters"}); continue
+        # THE API's name rule (validate.name_problem), not a copy of it (run 6, F4).
+        problem = kbv.name_problem(lab)
+        if problem:
+            rep["rejected"].append({"id": n["id"], "reason": problem}); continue
         recs[n["id"]] = {"np": n["id"], "type": TYPE_MAP[n["type"]], "src_type": n["type"], "name": lab, "src": n,
                          "legacy": n["id"] in cat["legacy"]}
     # scope: the one container a record sits in (NP: a generic name always sits under what it belongs to)
@@ -263,6 +263,13 @@ def desired_state(conn, M: dict, source: str = "public") -> dict:
         r["tags"] = sorted((["boilerplate"] if p.get("boilerplate") else []) + (["legacy"] if r["legacy"] else []))
         r["owner_np"] = owner.get(r["np"]) if owner.get(r["np"]) in recs else None
         r["co_np"] = [x for x in co.get(r["np"], []) if x in recs and x != r["owner_np"]]
+    # THE API's typed-field rule (service.field_errors -> kb.field_value_error,
+    # the function the database trigger runs), for every record in one query.
+    # A value the KB would refuse is rejected with the API's own sentence
+    # (problems.field_value_rejected) and left out; the record itself is kept,
+    # so it is never flagged "removed at source" for one bad cell, and the run
+    # no longer fails the whole batch inside the trigger.
+    field_problems(conn, recs, rep)
     # curation notes -> body
     person_np = {n["label"]: n["id"] for n in nodes.values() if n["type"] == R["person"]}
     wf_np = {str(n["props"].get("workflow_id")): n["id"] for n in nodes.values() if n["type"] == R["workflow"]}
@@ -390,6 +397,28 @@ def desired_state(conn, M: dict, source: str = "public") -> dict:
             "categories": cat, "nodes": nodes, "edges": edges, "report": rep}
 
 
+def field_problems(conn, recs: dict, rep: dict) -> int:
+    """Leave out (and report) every prop value that breaks a typed field of the
+    record's KB type, by the same function the API uses (svc.field_errors).
+    Returns how many values were left out; on valid data it changes nothing."""
+    from . import service as svc
+    fields_of = {k: f for k, f in conn.execute(
+        "select key, fields from kb.node_types where archived_at is null").fetchall()}
+    pending = [r for r in recs.values() if r.get("props")]
+    dropped = 0
+    while pending:                       # one failing field per record per pass
+        bad = svc.field_errors(conn, [(fields_of.get(r["type"]) or [], r["props"]) for r in pending])
+        nxt = []
+        for ix, (key, message) in sorted(bad.items()):
+            r = pending[ix]
+            r["props"] = {k: x for k, x in r["props"].items() if k != key}
+            rep["problems"]["field_value_rejected"].append(f"{r['np']}: {message}")
+            dropped += 1
+            nxt.append(r)
+        pending = nxt
+    return dropped
+
+
 def _rec_content(r, kb_scope, kb_owner, kb_co):
     return {"name": r["name"], "props": r["props"], "scope": kb_scope, "body": r.get("body"),
             "legacy": r["legacy"], "review": r["review"], "tags": r["tags"], "owner": kb_owner, "co": kb_co}
@@ -476,7 +505,9 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
         q = lambda sql, p=(): conn.execute(sql, p).fetchall()             # noqa: E731
         types = {t["key"]: t["id"] for t in td.all_types(conn)["node_types"]}
         etypes = {e["key"]: e["id"] for e in td.all_types(conn)["edge_types"]}
-        rules = {(r["source"], r["target"], e["key"]) for e in td.all_types(conn)["edge_types"] for r in e["rules"]}
+        # The relationship type rules, by the API's own check (service.edge_rule_problem).
+        from . import service as svc
+        rules = svc.edge_rules(conn)
         smap = {(u, k): {"kb_id": str(i) if i else None, "checksum": c, "kb_checksum": kc, "removed": ra, "conflict": ca}
                 for u, k, i, c, kc, ra, ca in q("select unit, key, kb_id, checksum, kb_checksum, removed_at, conflict_at from kb.sync_map")}
         writes = 0
@@ -757,7 +788,7 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
             if not src or not tgt:
                 continue
             stype, ttype = D["recs"][d["src"]]["type"], D["recs"][d["tgt"]]["type"]
-            if (stype, ttype, d["type"]) not in rules:
+            if svc.edge_rule_problem(rules, d["type"], stype, ttype):
                 out["report"]["problems"]["relationship_not_allowed"].append(key); continue
             content = {"props": d["props"], "note": d["note"]}
             cs = _h(content)
