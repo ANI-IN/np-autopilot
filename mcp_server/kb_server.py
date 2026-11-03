@@ -199,6 +199,18 @@ def find_instructors(course_id: str | None = None, query: str | None = None) -> 
     return wrap(r["items"], [link(i["id"]) for i in r["items"]])
 
 
+@mcp.tool()
+def recent_activity(record_id: str | None = None, query: str | None = None, limit: int = 20) -> str:
+    """What changed recently: one plain sentence per change (who did what to which
+    record, old -> new), the same sentences the app's Activity page and CSV export
+    show. Optionally for one record (record_id) or matching a name, person or value
+    (query). Editors and admins read activity (an editor: their own and their
+    courses'); for anyone else the list is empty."""
+    r = call("GET", "/activity", params={"record": record_id, "q": query, "limit": max(1, min(int(limit), 100))})
+    items = [{"at": x["at"], "sentence": x["sentence"], "kind": x["kind"], "source": x["source"]} for x in r["items"]]
+    return wrap(items, [link(x["row_id"]) for x in r["items"] if x["table_name"] == "nodes" and x.get("exists_now")])
+
+
 # ---------------------------------------------------------------------------- write
 @mcp.tool()
 def create_node(type: str, name: str, summary: str | None = None, scope_id: str | None = None,
