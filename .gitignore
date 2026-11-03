@@ -123,3 +123,7 @@ docs/screenshots/b4/
 /test-results/
 /playwright-report/
 .run6/
+
+# run 6: screenshots of the REAL-data copy stay local (real names); demo screenshots are committed
+docs/run6/**/realdata/
+docs/run6/**/*np-map*.png

@@ -32,6 +32,21 @@ FIELD_KINDS = ("short_text", "long_text", "number", "date", "datetime", "duratio
 #: 0028 moved the built-in types onto it). AA non-text contrast on white.
 PALETTE = ("#1d4ed8", "#0369a1", "#0e7490", "#0f766e", "#15803d", "#4d7c0f", "#a16207",
            "#b45309", "#c2410c", "#b91c1c", "#be123c", "#475569")
+# Graph styles (run 6, docs/CONTRACTS.md §3): every custom type gets a distinct look.
+SHAPES = ("round-rectangle", "ellipse", "diamond", "hexagon", "triangle", "rectangle", "tag", "barrel")
+LINE_STYLES = ("solid", "dashed", "dotted")
+
+
+def edge_style(n: int) -> tuple[str, str]:
+    """The n-th custom relationship type's (colour, line style): every colour in
+    one style, then every colour in the next, so no two of the first 36 match."""
+    return PALETTE[n % len(PALETTE)], LINE_STYLES[(n // len(PALETTE)) % len(LINE_STYLES)]
+
+
+def node_shape(n: int) -> str:
+    return SHAPES[n % len(SHAPES)]
+
+
 CARDINALITIES = ("many_to_many", "one_to_many", "many_to_one", "one_to_one")
 TYPE_FIELDS = {"label", "plural", "description", "icon", "color", "fields", "allowed_parents",
                "parent_required", "default_status", "owner_rule", "is_container", "key"}
@@ -52,17 +67,25 @@ def all_types(conn, include_archived: bool = False) -> dict:
     arch = "" if include_archived else "where t.archived_at is null"
     nts = _q(conn, f"""select t.id, t.key, t.label, t.plural, t.description, t.icon, t.color, t.is_container,
                               t.fields, t.allowed_parents, t.parent_required, t.default_status, t.owner_rule,
-                              t.is_core, t.sort_order, t.version, t.archived_at,
+                              t.is_core, t.sort_order, t.version, t.archived_at, t.shape, t.owner_expected,
                               (select count(*) from kb.nodes n where n.type_id = t.id and n.archived_at is null) as records
                        from kb.node_types t {arch} order by t.sort_order, t.label""")
     ets = _q(conn, f"""select t.id, t.key, t.label, t.inverse_label, t.description, t.allow_self, t.cardinality,
                               t.is_core, t.version, t.archived_at, t.review_status, t.merged_into,
+                              t.color, t.line_style, t.created_at,
                               (select count(*) from kb.edges e where e.edge_type_id = t.id and e.archived_at is null) as edges
                        from kb.edge_types t {arch} order by t.label""")
     rules = _q(conn, """select r.id, r.edge_type_id, s.key as source, t.key as target from kb.edge_type_rules r
                         join kb.node_types s on s.id = r.source_type_id join kb.node_types t on t.id = r.target_type_id
                         where r.archived_at is null""")
+    # A type created before 0032 (or by a path that set no style) still gets a stable, distinct look.
+    unstyled = sorted((t for t in ets if not t["color"]), key=lambda t: (str(t["created_at"]), t["key"]))
+    for i, t in enumerate(unstyled):
+        t["color"], t["line_style"] = edge_style(i + len(ets))
+    for i, t in enumerate(t for t in nts if not t["shape"]):
+        t["shape"] = node_shape(i)
     for t in ets:
+        t.pop("created_at", None)
         t["rules"] = [{"id": r["id"], "source": r["source"], "target": r["target"]}
                       for r in rules if r["edge_type_id"] == t["id"]]
     lks = _q(conn, f"""select id, key, label, icon, patterns, defaults, sort_order, is_core, version, archived_at
@@ -219,6 +242,7 @@ def create_node_type(conn, actor: Actor, body: dict, approved: bool = False) -> 
     if not approved:
         _gate(conn, actor, "node_create", {**body, "key": key})
     vals.setdefault("color", PALETTE[len(_q(conn, "select 1 from kb.node_types")) % len(PALETTE)])
+    vals.setdefault("shape", node_shape(len(_q(conn, "select 1 from kb.node_types"))))
     vals.setdefault("icon", "box")
     cols = ["key"] + list(vals)
     with _translate(conn, "record type"):
@@ -567,10 +591,11 @@ def create_edge_type(conn, actor: Actor, body: dict, approved: bool = False) -> 
                       (body.get("reason") or "new relationship type " + vals["label"],
                        json.dumps({"op": "edge_create", "args": {**body, "key": key}}, default=str), actor.actor_type))
         raise NeedsApproval("relationship type proposed; an admin will review it in Approvals", proposal_id=row["id"])
-    cols = ["key"] + list(vals) + ["review_status"]
+    color, line_style = edge_style(len(_q(conn, "select 1 from kb.edge_types")))
+    cols = ["key"] + list(vals) + ["review_status", "color", "line_style"]
     with _translate(conn, "relationship type"):
         _q(conn, f"insert into kb.edge_types ({', '.join(cols)}) values ({', '.join(['%s'] * len(cols))})",
-           [key] + list(vals.values()) + ["reviewed" if reviewed else "unreviewed"])
+           [key] + list(vals.values()) + ["reviewed" if reviewed else "unreviewed", color, line_style])
         _set_rules(conn, key, body["rules"])
         if not reviewed:
             _q(conn, "insert into kb.proposals (action, target_table, target_id, reason, payload, actor_type) "

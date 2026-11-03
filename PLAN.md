@@ -1,3 +1,54 @@
+# PLAN — run 6 (FINAL): one source of truth, a better graph, legacy cleanup, polish, go-live rehearsal (2026-11-03)
+
+T0 = 2026-11-03 12:08. Memory: this file + PROGRESS.md ("Run 6 log"). Re-read both after any context reset.
+Brief: the RUN 6 message. Contracts: docs/CONTRACTS.md (lead-owned). Architecture: docs/ARCHITECTURE.md (top).
+No VERCEL_TOKEN in .env -> D2 (preview) is SKIPPED and said so at the top of HANDOFF.
+
+## Memory rules (the laptop ran out twice)
+- At most 3 subagents at once. ONE browser-test run at a time across all agents: take the lock with
+  `mkdir .run6/browser.lock` (fails = someone has it: wait and retry), and `rmdir .run6/browser.lock` when done.
+- Full suites: lead only, chunked, servers stopped. Streams run targeted tests only.
+
+## Workspaces (A4)
+| Stream | Worktree | Branch | Server DB (clone of kb_realdata) | Test DB (NP_TEST_DSN) | Port |
+|---|---|---|---|---|---|
+| B1 data flow | ../np-run6-b1 | run6/b1-dataflow | kb_b1 | kbtest_b1 | 8771 |
+| B2 graph | ../np-run6-b2 | run6/b2-graph | kb_b2 | kbtest_b2 | 8772 |
+| B3 UI/UX | ../np-run6-b3 | run6/b3-ui | kb_b3 | kbtest_b3 | 8773 |
+| B4 legacy cleanup | ../np-run6-b4 | run6/b4-legacy | kb_b4 | kbtest_b4 | 8774 |
+| B5 perf/QA | ../np-run6-b5 | run6/b5-perf | kb_b5 | kbtest_b5 | 8775 |
+
+Server: `KB_LOCAL_DB=kb_b1 python eval/kb_realdata_server.py 8771` (sign-in as on :8766).
+Tests: `NP_TEST_DSN=postgresql://postgres:postgres@127.0.0.1:54322/kbtest_b1 python -m pytest tests/test_kb_x.py`.
+Python: the main checkout's venv, `C:/Users/Lenovo/Desktop/np-autopilot/.venv/Scripts/python`.
+
+## File ownership (Phase B)
+Shared, LEAD ONLY (ask in PROGRESS.md): public/kb/js/app.js (router, sidebar), `:root` tokens in public/kb/kb.css,
+db/migrations/ (numbers reserved below), docs/CONTRACTS.md, web/lib/kb/graph.py, api/kb_routes.py
+(new routes by request; a stream may add a route block for ITS OWN feature at the end of `handle`,
+marked with its stream id), PLAN.md, HANDOFF.md, scripts/verify_all.sh.
+Migrations reserved: 0033 = B1. Others ask.
+
+| Stream | Owns |
+|---|---|
+| B1 | web/lib/data.py, new web/lib/kb/npmap.py, api/{structure,overview,node,neighbourhood,search,staffing,coverage,me}.py, public/index.html (until B1 merges; then B2 for the map's visual language), pipeline/gen_landing_stats.py, web/lib/kb/{sync,sync_api,service,workspace,activity}.py, public/kb/js/{live,realtime}.js, new public/kb/js/views/people.js, the dashboard "Owned by you" card, Data quality owner/legacy-domain lists, guide.md permission text, vercel.json (maxDuration), tests/test_kb_propagation*.py |
+| B2 | public/kb/js/views/graph.js, new public/kb/js/graph/*.js (style, layouts, legend, minimap, focus), public/kb/graph.css (new; the lead links it), public/vendor/ additions, scripts/kb_graph_perf.py; "/" visual language after B1 merges |
+| B3 | public/kb/js/views/* except graph.js and people.js; detail.js, form.js, page.js, relpicker.js; core.js internals (not signatures); kb.css below `:root`; public/kb/index.html; public/kb/guide.md copy (except B1's permission text); docs/run6/before|after |
+| B4 | docs/LEGACY_REMOVAL.md; removals it proves safe (after B1 merges, for old-table readers); redirects (api/index.py redirect table, by request) |
+| B5 | scripts/kb_explain.py, kb_perf.py, new perf scripts; indexes (migration by request); flaky-test fixes in tests/; docs/run6/AUDIT_FINDINGS.md; fixes it finds (in another stream's file: by request, or after that stream merges) |
+
+## Phases
+- [ ] 0 Run 5 verified and committed
+- [ ] A1 baseline (chunked tests; console errors + 1536px screenshots of every screen, :8766 and :8765) -> docs/run6/before/
+- [x] A2 docs/ARCHITECTURE.md (decision, diagram, reader inventory)
+- [x] A3 docs/CONTRACTS.md + 0032 (type styles, change kinds) + web/lib/kb/graph.py (GET /api/kb/graph) + tests/test_kb_contracts.py
+- [ ] A4 worktrees, databases, ports, ownership map (this file)
+- [ ] B1 + B2 + B3, then B4 + B5
+- [ ] C merge B1 -> B5, matrix after each, full chunked suite, click-through, cleanup
+- [ ] D1 dev DB, D2 SKIPPED (no token), D3 GO_LIVE.md + rehearsal on dev, D4 PR_DESCRIPTION.md
+- [ ] Finish: verify_all (chunked), matrix, 0 console errors, demo re-seeded, :8765 + :8766 running, HANDOFF, push
+
+---
 # PLAN — run 5: parity with NP Autopilot, owners, legacy, scheduled sync, dev database (2026-11-03)
 
 T0 = 2026-11-03 02:59. Memory: this file + PROGRESS.md ("Run 5 log"). Local real data: kb_realdata (:8766). Demo :8765 untouched.

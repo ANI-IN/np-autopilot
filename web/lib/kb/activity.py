@@ -142,7 +142,7 @@ def changes(conn, since: int | None, limit: int = 200) -> dict:
     if since is None:
         last = _q(conn, "select coalesce(max(id), 0) as m from kb.changes")
         return {"cursor": last[0]["m"], "changes": []}
-    rows = _q(conn, """select id, at, actor_id, actor_type, table_name, row_id, action, version
+    rows = _q(conn, """select id, at, actor_id, actor_type, table_name, row_id, action, version, kind, node_ids
                        from kb.changes where id > %s order by id limit %s""",
               (int(since), max(1, min(int(limit), 500))))
     return {"cursor": rows[-1]["id"] if rows else int(since), "changes": rows}

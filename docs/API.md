@@ -102,3 +102,14 @@ the token owner and are attributed `actor_type=ai`. Every request runs as the
 
 Tests: `tests/test_kb_api.py` (every family: success, 422, 403, 404, 409 conflict,
 409 duplicate), `tests/test_kb_concurrency.py`.
+
+## Run 6: the graph read API and the change-feed kinds
+
+- `GET /api/kb/graph`: every graph's records and relationships, filtered and paged
+  (`types`, `rels`, `legacy`, `archived`, `focus` + `depth`, `scope`, `limit`, `cursor`).
+  Shape, paging rule and errors: docs/CONTRACTS.md §1.
+- `GET /api/kb/changes?since=<id>`: each row now also carries `kind` (for example
+  `record.archive`, `relationship.create`, `reltype.update`, `layout.update`, `sync.run`) and
+  `node_ids` (the records to refresh). docs/CONTRACTS.md §2.
+- `GET /api/kb/types`: node types carry `shape` and `owner_expected`; relationship types carry
+  `color` and `line_style` (custom types get a distinct pair automatically). docs/CONTRACTS.md §3.

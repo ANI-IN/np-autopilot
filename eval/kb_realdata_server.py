@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import secrets
 import sys
 import time
@@ -32,7 +33,12 @@ sys.path.insert(0, str(HERE))
 import kb_dev_server as base                                          # noqa: E402
 
 DEMO = HERE / "demo"
-DB_URL = "postgresql://postgres:postgres@127.0.0.1:54322/kb_realdata"
+# KB_LOCAL_DB (run 6): a run-6 workstream serves its own clone (kb_<stream>) of
+# kb_realdata on its own port. Only a local database named kb_* is accepted.
+_DB_NAME = os.environ.get("KB_LOCAL_DB", "kb_realdata")
+if not re.fullmatch(r"kb_[a-z0-9_]{1,40}", _DB_NAME):
+    sys.exit("REFUSED: KB_LOCAL_DB must name a local kb_* database")
+DB_URL = f"postgresql://postgres:postgres@127.0.0.1:54322/{_DB_NAME}"
 TOKEN_TTL = 8 * 3600
 MAX_BODY = 16 * 1024
 SECRET = secrets.token_urlsafe(48)          # this process only; restarting signs everyone out

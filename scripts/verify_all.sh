@@ -124,7 +124,7 @@ check "ruff (errors + pyflakes) on KB code" uvx -q ruff@0.14.0 check --select E9
   eval/kb_local_stack.py scripts/kb_perf.py scripts/kb_load.py scripts/kb_explain.py scripts/kb_graph_perf.py \
   scripts/kb_screens.py scripts/kb_guide_shots.py pipeline/kb_import_projection.py eval/kb_realdata_db.py \
   eval/kb_realdata_server.py eval/kb_realdata_check.py tests/kb_support.py tests/test_kb_*.py tests/test_db_pooling.py \
-  pipeline/kb_legacy.py eval/kb_parity.py eval/kb_sync_proof.py eval/kb_run5_ui_check.py scripts/dev_db.py
+  pipeline/kb_legacy.py eval/kb_parity.py eval/kb_sync_proof.py eval/kb_run5_ui_check.py scripts/dev_db.py eval/kb_screens.py
 check "plugin server copy in sync" cmp mcp_server/kb_server.py plugins/ik-knowledge-assistant/server/kb_server.py
 check "plugin validates (--strict)" claude plugin validate plugins/ik-knowledge-assistant --strict
 
