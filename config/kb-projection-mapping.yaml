@@ -75,7 +75,8 @@ new_record_types:
 # Fields added to built-in KB types (additive, safe).
 type_fields:
   program: [{label: Family, kind: short_text}, {label: Document type, kind: short_text}]
-  domain: [{label: Cadence, kind: short_text}, {label: Stage, kind: short_text}, {label: Also known as, kind: long_text}]
+  domain: [{label: Cadence, kind: short_text}, {label: Stage, kind: short_text}, {label: Also known as, kind: long_text},
+           {label: Slug, kind: short_text, help: "The short identifier of a current domain in the mastersheet (the NP Autopilot map codes domains by it)."}]
   module: [{label: Granularity, kind: short_text}, {label: Sequence, kind: short_text}]
   session: [{label: Session kind, kind: short_text}, {label: Resource type, kind: short_text}]
   week: [{label: Week number, kind: number}]

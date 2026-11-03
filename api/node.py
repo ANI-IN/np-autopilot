@@ -5,20 +5,27 @@ from pathlib import Path
 # file sits one level above web/. The shared modules stay in web/lib.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 from lib import data                                                   # noqa: E402
+from lib.kb import npmap                                               # noqa: E402
+
+
+def _src():
+    """kb (default) or the old tables (NP_MAP_SOURCE=old, the rollback switch)."""
+    return npmap if npmap.enabled() else data
 
 
 def _node(conn, identity, params):
     node_id = (params.get("id") or "").strip()
-    n = data.node(conn, node_id)
+    src = _src()
+    n = src.node(conn, node_id)
     if n is None:
         # Indistinguishable from "exists but you may not see it", deliberately.
         # Saying "forbidden" would confirm the row exists, which for a withheld
         # hiring rejection is the disclosure itself.
         return {"error": "not_found"}, 0
-    out = {"node": n, "provenance": data.provenance(conn, node_id)}
+    out = {"node": n, "provenance": src.provenance(conn, node_id)}
     # B3, lazy panels: what the bulk /api/structure left out, on click.
     if str(params.get("detail") or "") == "1":
-        out.update(data.node_detail(conn, node_id))
+        out.update(src.node_detail(conn, node_id))
     return out, 1
 
 

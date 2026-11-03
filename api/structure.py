@@ -15,10 +15,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 from lib import data                                                   # noqa: E402
+from lib.kb import npmap                                               # noqa: E402
+
+
+def _src():
+    """kb (default) or the old tables (NP_MAP_SOURCE=old, the rollback switch)."""
+    return npmap if npmap.enabled() else data
 
 
 def _structure(conn, identity, params):
-    out = data.structure(conn)
+    out = _src().structure(conn)
     return out, out["n"]
 
 
@@ -27,6 +33,6 @@ def _structure(conn, identity, params):
 #: because the graph is behind auth: a browser may keep it, a shared cache may
 #: not. Five minutes, then revalidate (docs/DEFAULT-VIEW.md D3).
 ENDPOINT = ("structure", _structure,
-            {"etag": data.structure_etag,
+            {"etag": lambda conn: _src().structure_etag(conn),
              "cache": "private, max-age=300, must-revalidate",
              "compress": True})

@@ -9,11 +9,17 @@ from pathlib import Path
 # file sits one level above web/. The shared modules stay in web/lib.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 from lib import data                                                   # noqa: E402
+from lib.kb import npmap                                               # noqa: E402
+
+
+def _src():
+    """kb (default) or the old tables (NP_MAP_SOURCE=old, the rollback switch)."""
+    return npmap if npmap.enabled() else data
 
 
 def _neighbourhood(conn, identity, params):
     rels = [r for r in (params.get("rels") or "").split(",") if r]
-    out = data.neighbourhood(conn, (params.get("id") or "").strip(),
+    out = _src().neighbourhood(conn, (params.get("id") or "").strip(),
                              depth=params.get("depth", 1),
                              rels=rels or None,
                              limit=params.get("limit", 300))

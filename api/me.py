@@ -17,14 +17,18 @@ from pathlib import Path
 # Vercel discovers Python functions at /api in the project root, so this
 # file sits one level above web/. The shared modules stay in web/lib.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
+from lib.kb import npmap                                               # noqa: E402
 
 
 def _me(conn, identity, params):
     with conn.cursor() as cur:
         cur.execute("select np_role()")
         role = cur.fetchone()[0]
-        cur.execute("select count(*) from nodes")
-        visible = cur.fetchone()[0]
+        if npmap.enabled():
+            visible = npmap.visible_count(conn)
+        else:
+            cur.execute("select count(*) from nodes")
+            visible = cur.fetchone()[0]
     return {
         "subject": identity.subject,
         "email": identity.email,
