@@ -62,7 +62,7 @@ export function cyStyle(meta, tok, icons) {
     { selector: 'node', style: { 'background-color': NEUTRAL, shape: 'ellipse', width: 24, height: 24, label: 'data(label)',
       'font-size': 11, 'font-family': 'Inter, system-ui, sans-serif', 'font-weight': 400, color: text,
       'text-valign': 'bottom', 'text-halign': 'center', 'text-margin-y': 5, 'text-max-width': 130, 'text-wrap': 'ellipsis',
-      'text-background-color': bg, 'text-background-opacity': 0.85, 'text-background-padding': 2, 'text-background-shape': 'round-rectangle',
+      'text-background-color': bg, 'text-background-opacity': 0.85, 'text-background-padding': 2,
       'min-zoomed-font-size': 7, 'background-width': '58%', 'background-height': '58%', 'background-clip': 'none',
       'border-width': 0, 'transition-property': 'opacity', 'transition-duration': 0 } },
     { selector: 'edge', style: { width: 1.2, 'line-color': strong, 'target-arrow-color': strong, 'target-arrow-shape': 'triangle', 'arrow-scale': 0.7,

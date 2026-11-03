@@ -37,11 +37,13 @@ import { hierarchy, radial, grouped, structure } from '../graph/layouts.js';
 import { createMinimap } from '../graph/minimap.js';
 import { declutter, labelBoxes } from '../graph/labels.js';
 
-const GL_FROM = 800;           // WebGL renderer above this many drawn records (?renderer=webgl|canvas to compare)
+const GL_FROM = 6000;          // WebGL renderer above this many drawn records; measured slower than canvas on real-shaped graphs up to 5,000 (docs/run6/GRAPH_PERF.md); ?renderer=webgl forces it
 const BIG_FROM = 800;          // above: straight edges, texture while moving, edges hidden during motion
 const BUNDLE_FROM = 9;         // this many satellites of one type on one record become one bundle
 const EDGE_LOD_ZOOM = 0.3;     // below this zoom only the hierarchy's lines are drawn
 const POLL_MS = 4000;
+const DASH_UPTO = 400;       // above this many lines, dashed and dotted relationships draw solid
+const ICONS_UPTO = 400;      // icons inside the shapes only while few records are drawn (each is an image per frame)
 const ARRANGE = [['hierarchy', 'Hierarchy'], ['force', 'Force'], ['radial', 'Radial'], ['saved', 'Saved positions']];
 const isRecord = (n) => !n.id().startsWith('__');
 const humanActor = (c) => c.actor_type === 'human' || c.actor_type === 'user';
@@ -254,7 +256,7 @@ function buildGraph(v, r) {
         (adj.get(b.anchor) || []).forEach((e) => { if (mem.has(e.source) || mem.has(e.target)) types[e.type] = (types[e.type] || 0) + 1; });
         const rt = Object.keys(types).sort((x, y) => types[y] - types[x])[0] || 'related';
         const label = b.ids.length + ' ' + (look.plural || typeLabel(b.type, true) || b.type).toLowerCase();
-        const data = { id, label, type: b.type, color: look.color, rank: null, size: Math.round(Math.max(30, Math.min(76, 22 + Math.sqrt(b.ids.length) * 3.2))), count: b.ids.length, bundle: k };
+        const data = { id, label, type: b.type, color: look.color, rank: null, size: Math.round(Math.max(28, Math.min(44, 22 + Math.sqrt(b.ids.length) * 1.6))), count: b.ids.length, bundle: k };
         let bn = cy.getElementById(id);
         if (!bn.length) { const ap = cy.getElementById(b.anchor).position(); bn = cy.add({ group: 'nodes', data, classes: 'bundle', position: { x: ap.x, y: ap.y + 64 } }); } else bn.data(data);
         bn.toggleClass('folded', folded.has(b.anchor));
@@ -267,7 +269,7 @@ function buildGraph(v, r) {
         const look = opt.group === 'type' ? nodeLook(L, g) : nodeLook(L, (M.nodes.get(g) || first).type);
         const id = '__g:' + g; keepB.add(id);
         const data = { id, label: groupLabel(g, ids.length), type: opt.group === 'type' ? g : (M.nodes.get(g) || first).type, color: look.color, rank: look.rank,
-          size: Math.round(Math.max(36, Math.min(90, 26 + Math.sqrt(ids.length) * 4))), count: ids.length, group: g };
+          size: Math.round(Math.max(34, Math.min(52, 26 + Math.sqrt(ids.length) * 2))), count: ids.length, group: g };
         let gn = cy.getElementById(id);
         if (!gn.length) { const pp = cy.getElementById(ids[0]).position(); gn = cy.add({ group: 'nodes', data, classes: 'collapsed', position: { x: pp.x, y: pp.y } }); } else gn.data(data);
       });
@@ -317,8 +319,9 @@ function buildGraph(v, r) {
     cy.nodes().filter(isRecord).addClass('placed');
     const treeOn = (how === 'hierarchy' || how === 'saved') && opt.group !== 'type';
     const isS = (n) => n.data('rank') !== null && n.data('rank') !== undefined;
+    const many = cy.nodes().filter(isShown).length > 60;
     cy.batch(() => cy.edges().forEach((e) => { const t = treeOn && ((isS(e.source()) && isS(e.target())) || e.hasClass('bundle-edge')) && e.source().position('y') < e.target().position('y'); if (e.hasClass('tree') !== t) e.toggleClass('tree', t);
-      const x = treeOn && !t && !e.hasClass('bundle-edge') && cy.nodes().filter(isShown).length > 60; if (e.hasClass('cross') !== x) e.toggleClass('cross', x); }));
+      const x = treeOn && !t && !e.hasClass('bundle-edge') && many; if (e.hasClass('cross') !== x) e.toggleClass('cross', x); }));
     drawBoxes();
     if (rp && before.inside()) { const now = before.renderedPosition(); cy.panBy({ x: rp.x - now.x, y: rp.y - now.y }); }
     afterChange();
@@ -410,7 +413,25 @@ function buildGraph(v, r) {
       cy.edges().filter(isShown).forEach((e) => e.addClass(set.contains(e.source()) && set.contains(e.target()) ? 'focus-edge' : 'dim'));
     });
   }
+  /* Many lines on screen: dashes and dots cost a canvas a lot per frame, so the
+     lines go solid (their colour still says the relationship; the legend keeps
+     the style). */
+  let dashOff = false, bigMode = false, iconsOn = true;
+  function applyStyle() {
+    cy.style(cyStyle(meta(), tok, iconsOn ? icons : {})
+      // large graphs: Cytoscape's recipe -- straight "haystack" lines without arrows
+      .concat(bigMode ? [{ selector: 'edge', style: { 'curve-style': 'haystack', 'haystack-radius': 0, 'target-arrow-shape': 'none' } }] : [])
+      .concat(dashOff ? [{ selector: 'edge', style: { 'line-style': 'solid' } }] : []));
+  }
+  function dashes() {
+    const many = cy.edges().filter((e) => !e.hasClass('hidden')).length > DASH_UPTO;
+    const ic = drawn.length <= ICONS_UPTO;
+    if (many === dashOff && ic === iconsOn) return;
+    dashOff = many; iconsOn = ic;
+    applyStyle();
+  }
   function afterChange() {
+    dashes();
     applyFocus(); lod(); drawLegend(); drawCrumbs(); info.textContent = status(); if (mm) mm.invalidate(); relabel(); markPresence(); showEmpty();
     searchList.replaceChildren(...[...M.nodes.values()].slice(0, 400).map((n) => el('option', { value: n.name })));
   }
@@ -627,9 +648,10 @@ function buildGraph(v, r) {
     cy = window.cytoscape({ container: cyBox, minZoom: 0.03, maxZoom: 3, boxSelectionEnabled: true, selectionType: 'additive',
       renderer: useGL ? { name: 'canvas', webgl: true } : undefined,
       hideEdgesOnViewport: big, textureOnViewport: big, pixelRatio: big ? 1 : 'auto',
-      style: cyStyle(meta(), tok, icons) });
+      style: [] });
+    iconsOn = expect <= ICONS_UPTO;
     Object.assign(G, { cy, webgl: !!(useGL && cy.renderer() && cy.renderer().webgl) });
-    if (big) cy.style().selector('edge').style({ 'curve-style': 'haystack', 'haystack-radius': 0, 'target-arrow-shape': 'none' }).update();
+    bigMode = big; applyStyle();
     mm = createMinimap(cy, mini, tok, isRecord);
     let miniOn = true; try { miniOn = localStorage.getItem('kb_graph_minimap') !== '0'; } catch (e) { /* ignore */ }
     toggleMini(miniOn);
@@ -1055,7 +1077,7 @@ function buildGraph(v, r) {
     if (changes.length > 200) { await reload(); return; }
     if (changes.some((c) => /^(type|reltype)\./.test(c.kind || '') || c.table_name === 'node_types' || c.table_name === 'edge_types' || c.table_name === 'edge_type_rules')) {
       try { const t = await api('GET', '/types'); S.types = t.node_types; S.edgeTypes = t.edge_types; S.typeByKey = {}; S.types.forEach((x) => { S.typeByKey[x.key] = x; });
-        L = looks(meta()); icons = Object.assign(icons, await loadIcons(S.types.map((x) => x.icon))); cy.style(cyStyle(meta(), tok, icons)); } catch (e) { /* next change retries */ }
+        L = looks(meta()); icons = Object.assign(icons, await loadIcons(S.types.map((x) => x.icon))); applyStyle(); } catch (e) { /* next change retries */ }
     }
     const nodeIds = [...new Set(changes.filter((c) => c.table_name === 'nodes').map((c) => c.row_id))];
     const edgeIds = [...new Set(changes.filter((c) => c.table_name === 'edges').map((c) => c.row_id))];

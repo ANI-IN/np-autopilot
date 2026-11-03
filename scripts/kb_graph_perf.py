@@ -99,7 +99,12 @@ def seed_tree(n: int, rng: random.Random) -> None:
         c.execute("select set_config('kb.actor_type', 'system', false)")
         nt, et = _types(c)
         ids: dict[str, list] = {}
+        for t in [t for t in cnt if t not in nt and t != "topic"]:
+            cnt["topic"] += cnt.pop(t)
         for t in ("domain", "module", "week", "session", "topic", "instructor", "theme", "process", "team_member"):
+            if t not in nt:                      # a custom type the test database does not have: its share went to topics
+                ids[t] = []
+                continue
             ids[t] = [r[0] for r in c.execute(
                 "insert into kb.nodes (type_id, name) select %s, %s || ' ' || g from generate_series(1, %s) g returning id",
                 (nt[t], "Perf " + t.replace("_", " "), cnt[t])).fetchall()]
@@ -111,7 +116,7 @@ def seed_tree(n: int, rng: random.Random) -> None:
             for i, x in enumerate(ids[kind]):
                 m = ids["module"][i % len(ids["module"])]
                 edges.append((et[rel], m, x)); scope.append((m, x))
-        for i, x in enumerate(ids["process"]):
+        for i, x in enumerate(ids["process"] if ids["theme"] else []):
             edges.append((et["contains"], ids["theme"][i % len(ids["theme"])], x))
         for ins in ids["instructor"]:
             for m in rng.sample(ids["module"], min(3, len(ids["module"]))):
@@ -131,8 +136,9 @@ def measure(page, url: str, renderer: str) -> dict:
     fps = page.evaluate(FPS_JS, [0.5, 1.2])
     fps_far = page.evaluate(FPS_JS, [0.2, 0.45])
     gl = page.evaluate("() => !!window.__kbGraph.webgl")
+    timing = page.evaluate("() => window.__kbGraph.timing || null")     # fetch / project / arrange, ms
     return {"renderer": renderer + ("" if (renderer == "webgl") == gl else " (canvas: fell back)"), "load_ms": round(load_ms),
-            "drawn": drawn, "fps_labels": round(fps, 1), "fps_far": round(fps_far, 1)}
+            "drawn": drawn, "fps_labels": round(fps, 1), "fps_far": round(fps_far, 1), "timing": timing}
 
 
 def table(rows: list[dict]) -> None:
