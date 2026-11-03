@@ -202,7 +202,7 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
     if head == "graph" and rest == ["positions"]:
         if method == "GET":
             return 200, ws.graph_positions(conn, params)
-        if method in ("PUT", "POST"):
+        if method == "POST":            # PUT never reached here (KB_METHODS): run 6 audit A16
             return 200, ws.save_graph_positions(conn, actor, body)
         if method == "DELETE":
             return 200, ws.reset_graph_positions(conn, actor, params)

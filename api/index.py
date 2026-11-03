@@ -252,6 +252,9 @@ def _serve_write(path: str, environ, start_response):
     except Exception:                                                  # noqa: BLE001
         return _respond(start_response, 400,
                         {"error": "bad_request", "reason": "body is not JSON"})
+    if not isinstance(body, dict):      # run 6 audit A9b: an array body crashed the audit line below
+        return _respond(start_response, 400,
+                        {"error": "bad_request", "reason": "body must be an object"})
 
     try:
         with data.request_connection(identity.subject) as conn:
@@ -338,7 +341,7 @@ def _serve_kb(path: str, method: str, environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        if length > KB_MAX_BODY:
+        if length < 0 or length > KB_MAX_BODY:     # run 6 audit A11: read(-1) had no cap
             return _respond(start_response, 413, {"error": "too_large"})
         try:
             body = json.loads(environ["wsgi.input"].read(length) or b"{}") if length else {}

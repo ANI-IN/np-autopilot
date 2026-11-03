@@ -178,3 +178,19 @@ def test_types_carry_shape_owner_expected_and_relationship_styles(viewer, admin)
     assert len(custom) == 3
     styles = {(x["color"], x["line_style"]) for x in custom}
     assert len(styles) == 3, "every custom relationship type gets its own look"
+
+
+# --- run 6 audit fixes in the lead's files (A9b, A11) -------------------------
+
+def test_a_negative_content_length_is_refused(admin):
+    import io
+
+    from kb_support import token_for
+    env = {"REQUEST_METHOD": "POST", "PATH_INFO": "/api/kb/nodes", "QUERY_STRING": "",
+           "CONTENT_LENGTH": "-1", "wsgi.input": io.BytesIO(b'{"type": "topic", "name": "x"}'),
+           "HTTP_AUTHORIZATION": f"Bearer {token_for(USERS['admin'])}"}
+    out = {}
+    b"".join(admin.app(env, lambda status, headers: out.setdefault("status", status)))
+    assert out["status"].startswith("413"), out
+    with owner() as c:
+        assert c.execute("select count(*) from kb.nodes where name = 'x'").fetchone()[0] == 0
