@@ -10,7 +10,7 @@ There are three kinds of things in the knowledge base.
 
 - **Records** are the building blocks: a program, a course, a domain, a module, a week, a live session, a topic, an instructor. Each record has a type, a name, an owner and, depending on its type, some extra fields.
 - **Relationships** connect two records and say how they relate: a course **contains** a module, an instructor **teaches** a session, a module **covers** a topic.
-- **Links** (also called resources) are the files and pages that go with a record: KYP slides, a class recording, an assignment brief, a solutions repository on GitHub, a page on UpLevel.
+- **Links** are the files and pages that go with a record: KYP slides, a class recording, an assignment brief, a solutions repository on GitHub, a page on UpLevel. One link can be attached to several records; the **Links** page lists each one once.
 
 One example, from top to bottom: the course **System Design for Senior Engineers** contains the module **Scalability Fundamentals**, which contains **Week 1 · Caching and load balancing**, which contains the live session **Designing a URL shortener**. That session has two links: its slides and its recording.
 
@@ -23,6 +23,8 @@ One example, from top to bottom: the course **System Design for Senior Engineers
 - In a table, press **j** and **k** to move, **Enter** to open, **x** to select, and **/** to jump to the search box.
 - **Outline** shows programs and courses as a tree. It is the quickest way to see a whole course at once.
 - **Graph** shows what a record is connected to. Click a record to open it; double-click to expand its neighbours.
+- **Who teaches what** is a table of instructors against modules and live sessions. Each cell shows the role from the current mastersheet (**P** primary, **B1**–**B3** backups) or **T** when an older sheet says they taught it. Filter by domain, role or name, and export it as CSV.
+- **Program timeline** shows each program's modules week by week, with their live sessions and slide decks.
 
 ![The Outline: a program's courses, modules, weeks and sessions](/kb/guide/outline.png)
 
@@ -54,7 +56,7 @@ Paste the URL and the knowledge base recognises where it lives and picks an icon
 
 If the URL is already in the library, the form offers **Use existing** instead of making a duplicate. Use **Pick from library** to attach a link that is already there.
 
-To add a link to an existing record, open it, go to the **Links & resources** tab and click **Add link**.
+To add a link to an existing record, open it, go to the **Links** tab and click **Add link**.
 
 ## Connecting records
 
@@ -102,6 +104,12 @@ Changes other people make appear on your graph as they happen. A record someone 
 
 Two people can have the same record open. If someone saves a change while you are editing, a blue bar tells you. If you then save, you see **This record changed since you opened it**, with your version next to theirs. Choose **Use their version** (then re-apply your change), or, if you are an editor, **Overwrite with mine**. Nothing is ever overwritten silently.
 
+## Legacy records and the sync
+
+Most records come from the original NP Autopilot site, and a **sync** copies its changes in every hour (admins can also press **Sync now** in **Settings → Sync**). Only what changed is written. If you edited a record here and it also changed at the source, your edit is kept and the record is listed under **Sync conflicts** on Data quality. A row that disappears from the source is never deleted here: it is listed under **Removed at the source**, and you decide whether to archive it.
+
+A **legacy** record comes from the older sheets only (for example a module no current domain offers, or an instructor with no role in the current mastersheet). It carries a **Legacy** badge. Lists and the graph show current records; in **All records** use **Filter → Current and legacy** (or **Legacy only**), and in **Who teaches what** tick **Include legacy**. Legacy is not the same as archived: a legacy record is still live and can be edited; an archived one is hidden until someone restores it.
+
 ## Archive and permanent delete
 
 - **Archive** (from a record's **…** menu) hides the record from lists, the outline and the graph, along with its relationships and links. The confirmation shows exactly how many go with it. Nothing is deleted, and you can **Undo** straight away or **Restore** later.
@@ -137,7 +145,7 @@ Changing a type that is already in use is safe. Renaming is fine. Removing a fie
 
 **Maintain → Activity** lists every change: who made it (a person, the AI assistant working for a named person, an import, or the system), what they did, to which record (with a link, or marked **deleted** if it is gone), and when. Hover the time to see the exact date. For an update, each changed field shows its value before and after.
 
-Filter by person, action, kind of record, source (app, AI assistant, import, system) and dates, or search names and values. **Export CSV** downloads exactly what is shown.
+Filter by person, action, what changed (a record, a relationship, a link, a type…), source (app, AI assistant, import, sync, system) and dates, or search names and values. **Export CSV** downloads exactly what is shown.
 
 Admins see all activity. Editors see their own changes and everything about the courses and records they own. Everyone else sees a record's history in its **History** tab, which lists entries the same way. Nobody, admins included, can edit or delete an entry.
 
