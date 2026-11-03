@@ -314,7 +314,9 @@ def test_search_palette_and_list_filters(server, browser):
 
 def test_two_sessions_conflict_dialog(server, browser):
     _, n = Client(USERS["editor"]).post("/api/kb/nodes", {"type": "topic", "name": "Contested"})
-    a = page_as(browser, server, "contributor")
+    # Run 6 (B1): a contributor's field edit is a proposal (0033), never a conflict;
+    # the two writers are an admin and an editor (tests/test_kb_propagation.py covers the contributor).
+    a = page_as(browser, server, "admin")
     b = page_as(browser, server, "editor")
     open_record(a, server, n["id"])
     open_record(b, server, n["id"])
@@ -323,12 +325,12 @@ def test_two_sessions_conflict_dialog(server, browser):
     b.get_by_test_id("edit-summary").fill("Editor's version")
     b.get_by_test_id("panel-name").click()
     expect(b.get_by_test_id("panel-version")).to_have_text("v2")
-    a.get_by_test_id("edit-summary").fill("Contributor's version")
+    a.get_by_test_id("edit-summary").fill("Admin's first version")
     a.get_by_test_id("panel-name").click()
     expect(a.get_by_test_id("conflict-dialog")).to_be_visible()
-    expect(a.get_by_test_id("conflict-diff")).to_contain_text("Contributor's version")
+    expect(a.get_by_test_id("conflict-diff")).to_contain_text("Admin's first version")
     expect(a.get_by_test_id("conflict-diff")).to_contain_text("Editor's version")
-    expect(a.get_by_test_id("conflict-overwrite")).to_have_count(0)       # contributors cannot overwrite
+    expect(a.get_by_test_id("conflict-overwrite")).to_be_visible()          # editors and admins may overwrite
     a.get_by_test_id("conflict-reload").click()
     expect(a.get_by_test_id("panel-summary")).to_have_text("Editor's version")
     _, cur = Client(USERS["admin"]).get(f"/api/kb/nodes/{n['id']}")

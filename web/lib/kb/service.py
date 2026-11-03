@@ -336,7 +336,7 @@ def list_nodes(conn, params: dict) -> dict:
     elif legacy != "all":
         raise Invalid("legacy must be current, only or all", field="legacy")
     if str(params.get("no_owner") or "") in ("1", "true"):
-        where.append("n.owner_id is null and n.owner_record_id is null and n.type_id in (select id from kb.node_types where owner_expected)")
+        where.append("n.owner_id is null and n.owner_record_id is null")   # a plain list filter: every type
     if params.get("review_status"):
         where.append("n.review_status = %s"); args.append(params["review_status"])
     if params.get("parent"):

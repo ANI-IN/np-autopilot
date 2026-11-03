@@ -183,3 +183,35 @@ Decisions (run 3):
 - D49. Real-data screenshots (and every "/" map screenshot, which shows the pipeline's real instructor names even in the demo) stay LOCAL in git-ignored folders; only demo screenshots are committed. The brief asks for screenshots in docs/run6/before/, the hard rules forbid committing real data: the rule wins. Reverse: none needed.
 - D50. Contracts are backed by code before the split (0032 + graph.py written by the lead), so the streams build on a working API rather than a document.
 - [T+2:05] A1 baseline: docs/run6/BASELINE.md. Every screen at 1536 px on :8766 and :8765: 28 screens each, 0 console errors, 0 warnings. | VERIFIED
+
+## Run 6 — B1 report (data flow: every admin change appears everywhere)
+
+Branch run6/b1-dataflow (worktree ../np-run6-b1), DBs kb_b1 / kbtest_b1, port 8771. Migration 0033.
+
+**What changed**
+- **"/" map reads kb**: new `web/lib/kb/npmap.py` serves /api/structure, /overview, /node, /neighbourhood, /search, /staffing, /coverage, /me with data.py's shapes (contract §5), one in-memory model per change-feed state (0.8 s build on real data, then cached; structure 40 ms warm, 110 KB brotli). Vocabulary read backwards from config/kb-projection-mapping.yaml (no taxonomy literals); projection ids kept (`np:<id>`), KB-made records by uuid, artifacts as `link:<uuid>`; positions from kb.graph_positions (computed fallback). ETag = format + newest change id + counts + roles. Rollback: `NP_MAP_SOURCE=old` (data.py untouched). Keys the KB cannot supply listed in docs/ARCHITECTURE.md. `/api/stats` (no session, counts only via `kb.landing_stats()`) replaces public/stats.json at request time (file stays as fallback). Map polls /api/kb/changes every 2.5 s and reconciles in place; custom relationship types in its legend with their own colour/line style (KBREL from /api/kb/types). CSP hashes regenerated.
+- **Change events**: 0032's trigger already covered every audited table; verified per write path in tests (no table was missing). 
+- **Live updates**: public/kb/js/live.js = one policy by `kind` (patch from node_ids; refetch on type/reltype/tag/sync or >=200), reloads any view with S.listReload (lists, outline, dashboard, quality, approvals, Who teaches what / timeline via a 1-line edit), poll 2.5 s. Graph page (graph.js, minimal marked edits): follows every change incl. layout moves, reloads types, per-type edge colour/line style + legend swatch, merge updates edge type.
+- **Sync resumable**: phases with SAVED place (`kb.sync_runs.resume`), next run continues; finish never cut off. vercel.json maxDuration 15 -> 60 (justified in docs/run6/SYNC_TIMING.md + DEPLOYMENT.md). Domain `slug` field (0033 + mapping) so the map keeps SD1-SD4 codes.
+- **People**: web/lib/kb/people.py + routes (kb_routes B1 block): Settings -> People list + CSV preview (exact / normalised / suggested / ambiguous / none / invalid; writes nothing) and confirm; sign-in auto-link by e-mail, else by an UNAMBIGUOUS name (" (2)" suffix ignored; two same-name records never linked); "Claim this profile" proposals approved by admins; "Owned by you"; person_accounts readable by admins/self only (was editors); e-mails never in audit log, kb.changes or proposals (tested). UI: public/kb/js/views/people.js (peopleTab, ownedByYouCard, legacyExpertiseSection, noOwnerSection).
+- **Decisions**: owner_expected editable (typedefs + Settings checkbox, admins); "No owner" on dashboard/sidebar/Data quality counts only those types (the records list filter stays literal). Contributors: field edits -> `update` proposals (bulk too), archives proposals; links + relationships direct; DB trigger `kb.guard_contributor` (0033) refuses contributor UPDATEs on nodes and archive toggles on edges/resources/attachments. Guide permission text updated. Legacy domains still used as expertise listed on Data quality (7 on real data).
+- Tests adapted to the decisions (not weakened): test_kb_api (3), test_kb_rls (1), test_kb_workspace (1), test_kb_run3 (1), test_kb_concurrency (1), test_kb_sync (1), test_kb_e2e::test_two_sessions_conflict_dialog (writers are admin+editor; contributor path covered by API tests).
+
+**Tests run (kbtest_b1)**: 24 targeted files (all KB non-browser files + map/CSP/taxonomy/route tests): 324 passed, 3 skipped, 0 failed. New: tests/test_kb_propagation.py 12 passed (26 operations), tests/test_kb_people.py 7 passed, tests/test_kb_sync.py resume test. Browser: tests/test_kb_propagation_e2e.py 1 passed — 26 operations, every one on both pages, slowest 2.64 s (docs/run6/MATRIX.md); test_kb_e2e.py contributor/conflict/bulk subset 7 passed. NOT run by me: the other ~64 tests of test_kb_e2e.py (lead's full suite).
+**Migration 0033**: up/down/up on kbtest_b1 and kb_b1, clean; the slug field is archived (values kept) on down.
+**Measurements**: sync batches on kb_b1 (budget 10 s): no change 1 batch 2.3 s; 100 source changes 1 batch 4.8 s (286 writes); full first import into an empty KB 5 batches, 43.2 s, max 10.4 s/batch. Real-data smoke on :8771: map ready 1.5 s with 2,833 structure records, SD codes intact, 0 console errors; People 68 current person records; legacy-expertise 7.
+
+**Decisions taken (how to reverse)**
+- Sign-in auto-link by unambiguous name (not only e-mail): drop the name step in `kb.auto_link_person` (0033).
+- Contributors' relationships stay direct (only links named in the brief; relationships were not in the approval list): add edges to `kb.guard_contributor`.
+- Records-list "No owner" filter stays literal (all types); only counts follow owner_expected: add the owner_expected clause in service.list_nodes.
+- The map refetches the structure on a change (server-cached, 304 if unchanged) rather than per-node patching (its ids/format are projection-shaped): live block in public/index.html.
+- Archived (legacy) KB records are not on the map; KB-only types (course, custom) are carried in the structure.
+- `/api/stats` is public like stats.json (aggregate counts only): remove the route to make it session-only.
+- maxDuration 60 for api/** (the sync shares the single function).
+
+**For the lead**
+- Wiring already done minimally in this branch (marked "B1 (run 6)"): settings.js People tab + owner-expected checkbox (2 imports/4 lines), dashboard.js `right.appendChild(ownedByYouCard())`, quality.js `left.appendChild(legacyExpertiseSection())`, approvals.js ACTION update/claim + admin-only claim buttons, detail.js "Claim this profile" row, teaching.js `S.listReload`, graph.js live/style lines (B2 should keep: onLiveFeed handler, per-type edge colour/line, G.feed counter used by the matrix test).
+- HANDOFF note: access to "/" unchanged (owner decision).
+- Finding for B5: GET /api/kb/quality takes ~36 s on real data — all of it `find_duplicate_nodes` (pre-existing, not B1).
+- No contract change requests. No BLOCKED items.
