@@ -1,6 +1,8 @@
+> **Archived (run 6, G1, 2026-11-04).** Superseded by run 6: see README.md / docs/VISION_AND_ROADMAP.md / HANDOFF.md. Kept as history.
+
 # STATE — working brief for a session with no memory
 
-> **Resuming after a cleared session? Start with [docs/HANDOFF.md](HANDOFF.md)** —
+> **Resuming after a cleared session? Start with [docs/archive/HANDOFF.md](HANDOFF.md)** —
 > where things stand (LIVE since the 2026-09-30 window), what shipped, what is
 > still open from the window (do those first), the deploy procedure, the next
 > phase, every owner decision, risks, the working agreement and key commands.

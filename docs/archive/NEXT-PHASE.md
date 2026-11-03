@@ -1,3 +1,5 @@
+> **Archived (run 6, G1, 2026-11-04).** Superseded by run 6: see README.md / docs/VISION_AND_ROADMAP.md / HANDOFF.md. Kept as history.
+
 # NEXT PHASE — the whole New Programs job, as reusable plugins
 
 **A PLAN. Nothing here is built.** Asked for by the owner on 2026-09-30
@@ -41,7 +43,7 @@ answers to §4.4**, which stay open. Where it goes beyond §1–§4 below, it wi
   §3.4.
 - **Improvement by observation** (the team reports issues and ideas; weekly
   triage; small releases through preview → promote; a changelog on the site):
-  `docs/HANDOFF.md` §F.
+  `docs/archive/HANDOFF.md` §F.
 
 ## 0 · Where we start
 

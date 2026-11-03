@@ -19,7 +19,7 @@ changed parts (projection, verify, restore) **re-rehearsed the same day from
 | data rollback | `db/window/restore_projection.sh ~/.config/np-autopilot/window-20260930-2105` (fresh backup taken before step 5: old data `eba7c479…`, 3,146 nodes) |
 | mastersheet | live sheet version **2742**; the empty diff from 2736 was **accepted by the owner** (origin: hand, 2026-09-30) |
 | backups | `window-20260930-1133` and `window-20260930-2105` — **kept until the owner says** |
-| still open | step 7: the owner's click-through results; `measure_signed_in.py --phase post` — `docs/HANDOFF.md` §C |
+| still open | step 7: the owner's click-through results; `measure_signed_in.py --phase post` — `docs/archive/HANDOFF.md` §C |
 
 **Measured in this window:** preview `dpl_ECsTs345MrvKjBCEFwVCFDfTdda4`
 passed first; `vercel deploy --prebuilt --prod` did NOT take the domain (auto-

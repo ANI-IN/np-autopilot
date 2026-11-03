@@ -190,7 +190,7 @@ Live since the window of 2026-09-30 (`dpl_3HZSPGpQEsz9gogu9WofSGQdJR8r`).
 
 | decision | held by |
 |---|---|
-| **Launch the curriculum release now; expand the scope next** (`docs/NEXT-PHASE.md`) | — (order of work) |
+| **Launch the curriculum release now; expand the scope next** (`docs/archive/NEXT-PHASE.md`) | — (order of work) |
 | **Old and new domains stay SEPARATE**, never merged; current domains wear their code (`SD1 · Full Stack`, SD1–SD4); legacy carries a **legacy badge everywhere** it appears | `public/index.html` (domain labels, badges); `tests/test_default_view_labels.py` |
 | **The map is THE default for every type**: one network of every current type (domain hubs, modules, weeks, sessions, assignments, reviews, current decks, instructors with role-coloured edges, people, themes, workflows); topics, files, repos, curriculum docs and programmes stay behind their chips; legacy as collapsed groups | `test_the_default_map_holds_every_current_type` |
 | **Chips filter the map, not a list** (List is its own toggle); a filtered-out parent stays as a **ghost anchor**, so nothing is a bare dot | `test_a_chip_filters_the_map_not_a_list`, `test_sessions_alone_are_never_bare_dots`, `test_3d_chips_keep_ghost_anchors` |

@@ -1,3 +1,5 @@
+> **Archived (run 6, G1, 2026-11-04).** Superseded by run 6: see README.md / docs/VISION_AND_ROADMAP.md / HANDOFF.md. Kept as history.
+
 # ROADMAP — KB knowledge platform
 
 Ordered by value. Items marked **(owner)** need a human decision or credential.

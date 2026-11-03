@@ -15,7 +15,7 @@ any Production target or a production variable.
 |---|---|---|
 | Not production; the refs agree | `python scripts/dev_db.py check` | yes; Postgres 17 |
 | Backup before any change | `python scripts/dev_db.py backup` | `backups/dev_backup_20261102T221344Z.sql` (the project was empty) |
-| Migrations 0001 -> 0031 | `python scripts/dev_db.py migrate` | 31 applied |
+| Migrations 0001 -> 0031 | `python scripts/dev_db.py migrate` | 31 applied (run 5); the chain now reaches **0037** (0036 unused), applied on dev in run 6 |
 | Roll back and re-apply | `python scripts/dev_db.py rollback-test`; and, while still empty, the whole chain down to nothing and up again | 0031+0030 down/up: ok; 31 down / 31 up: ok |
 | The old tables | `python scripts/dev_db.py load-old-tables` | 13 projection tables, 65,598 rows, equal to the dump. User and account tables (profiles, shared_accounts, auth_hook_refusals, curation_audit) are **not** copied. |
 | First import + legacy step | `python scripts/dev_db.py import` | 25,226 units created in 245 s (over a ~175 ms pooler); legacy: 874 archived (35 domains, 166 modules, 673 instructors) |
@@ -57,7 +57,7 @@ Environment Variables -> tick **Preview** only -> "Select a custom Preview branc
 | `NP_SHARED_ACCOUNTS` | the same list as Production's |
 | `KB_SYNC_SECRET` | a new random value, 32+ characters (`python -c "import secrets; print(secrets.token_urlsafe(32))"`); the same value goes into the dev Vault in step 6 |
 | `KB_SYNC_ENABLED` | `true` (the kill switch: `false` stops every run) |
-| `KB_SYNC_BUDGET_SECONDS` | `10` (below the functions' 15 s cap in vercel.json) |
+| `KB_SYNC_BUDGET_SECONDS` | `50` (below the functions' 60 s `maxDuration` for `api/**` in vercel.json; unset, the code uses 10) |
 
 **Never set in Vercel:** `DEV_SUPABASE_SERVICE_ROLE_KEY` (under any name), the
 session-pooler URL, or any `DEV_` name itself. The app reads the names above
@@ -139,7 +139,7 @@ Switch off: `KB_SYNC_ENABLED=false` in Vercel (immediate, runs log "disabled"),
 or `select kb.sync_schedule_remove();` (no more calls). "Sync now" (Settings ->
 Sync, admins) works whatever the schedule.
 
-## Dev status (end of run 5)
+## Dev status (end of run 5; run 6 rows last)
 
 | | dev | local copy (:8766) |
 |---|---|---|
@@ -153,12 +153,19 @@ Sync, admins) works whatever the schedule.
 | Migrations | 0001-0031; run 5's two rolled back and re-applied; the whole chain rolled back and re-applied while empty | |
 | Sync | 2 runs (import, one sync): ok, 0 conflicts. No schedule installed yet (step 6 needs the deployment URL) | |
 | Admin | none yet: dev has no users. `ADMIN_EMAILS=<git e-mail>` dry run: "NO PROFILE ... sign in once first" (the git e-mail is not an IK address) | |
+| **Run 6 (2026-11-04)** | R3 legacy deletion on dev: 946 records permanently deleted; domains / modules live 4 / 20; sync after it: 0 created / 0 conflicts; RLS on 26/26 kb tables; migrations at 0037 | |
+| **Run 6: D2 preview** | **BLOCKED**: Vercel rejected the `VERCEL_TOKEN` in .env on 2026-11-04 ("token not valid"); nothing was deployed. Owner step below | |
+
+**Owner step for the preview (D2).** Create a new Vercel token with access to
+the project's team, put it in `.env` as `VERCEL_TOKEN`, run `vercel link`
+(the existing project), then `bash scripts/deploy_dev_preview.sh --check`
+(refusals only, nothing deployed) before the real deploy in step 3.
 
 **Measure the sync's time in region before relying on the schedule.** An
 unchanged run took 28.5 s from a laptop to dev (it reads ~65,000 source rows and
 ~25,000 sync-map rows over a ~175 ms link) and 1.1 s locally. From a Vercel
-function in the database's region it should be a few seconds, but the
-function cap is 15 s (vercel.json). After step 6, check Settings -> Sync: if a
-run shows "running" and never finishes, raise `maxDuration` for `api/**` (the
-plan allows up to 60 s on Hobby, more with Fluid compute) or run the sync from
-CI instead; a run killed by the cap is cleared as "abandoned" after 20 minutes.
+function in the database's region it should be a few seconds; the
+function cap is now 60 s (`maxDuration` for `api/**` in vercel.json) and each
+run is time-boxed by `KB_SYNC_BUDGET_SECONDS` (the next tick continues from
+`sync_runs.resume`, 0033). After step 6, check Settings -> Sync: if a run shows
+"running" and never finishes, lower the budget or run the sync from CI instead; a run killed by the cap is cleared as "abandoned" after 20 minutes.

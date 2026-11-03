@@ -481,7 +481,7 @@ on its own.
 > **Deployment shape (G3): ONE Vercel project, not two.** The explorer and the
 > plugin call the same handlers so the role boundary is single-sourced rather
 > than merely coordinated. Full argument, including the three conditions that
-> would reverse it, in [ONE-APP-OR-TWO.md](ONE-APP-OR-TWO.md).
+> would reverse it, in [ONE-APP-OR-TWO.md](archive/ONE-APP-OR-TWO.md).
 
 
 ### C.0 Verified — connected 2026-09-17

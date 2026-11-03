@@ -156,7 +156,7 @@ and restoring — `tests/test_d2a_approval_gate.py`.
 `.drive-cache/content-rowB/` now feeds the content model
 (`pipeline/07_build_content_graph.py`) and the merge (`08_merge_graphs.py`).
 The merged public half — 8,507 nodes — is projected to the LOCAL database
-only; production still holds the pre-crawl graph (`docs/HANDOFF.md` §A).
+only; production still holds the pre-crawl graph (`docs/archive/HANDOFF.md` §A).
 
 ### What D2 says today, and what is being proposed instead
 

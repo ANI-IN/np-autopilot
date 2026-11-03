@@ -1,3 +1,5 @@
+> **Archived (run 6, G1, 2026-11-04).** Superseded by run 6: see README.md / docs/VISION_AND_ROADMAP.md / HANDOFF.md. Kept as history.
+
 # HANDOFF
 
 **Written 2026-09-30, right after the launch window, so a fresh session can
@@ -179,7 +181,7 @@ freshness check → projection → verification); never `vercel ls`.
 
 ---
 
-# E · NEXT PHASE — `docs/NEXT-PHASE.md` (a plan only, awaiting the owner)
+# E · NEXT PHASE — `docs/archive/NEXT-PHASE.md` (a plan only, awaiting the owner)
 
 Nothing is built. The owner's direction of 2026-09-30 is recorded at the top
 of that file:
@@ -321,7 +323,7 @@ previous handoff's §F (`b1c8329:docs/HANDOFF.md`) and the files it names.
 | 20 of 20 modules confirmed | `config/owner-confirmations.yaml` |
 | Window paused; the new UI rejected on live; code rolled back to `dpl_5wWZ…`; next deploy by **promote** | `docs/WINDOW-RUNSHEET.md` ("Earlier state") |
 | NAM and DUP rows queued for later, not changed now | `docs/REVIEW-QUEUE.md` (NAM, DUP) |
-| The next-phase plan (plan only); **launch now, expand scope next** | `docs/NEXT-PHASE.md` |
+| The next-phase plan (plan only); **launch now, expand scope next** | `docs/archive/NEXT-PHASE.md` |
 | **B4 UI decisions**: separate old/new domains, SD labels, legacy badge; the map as the default; chips filter the map; ghost anchors; labels never dropped; floating and drag; focus; role order and colours; historical grouping; plain language; crisp rendering; one-URL state; search holds back not_a_topic; decks core; the local review mode; screenshots not committed | **`docs/DEFAULT-VIEW.md` D6** — *recorded while writing this handoff* |
 | **UI approved; 3D default, 2D one toggle away** (reconfirmed after the approval) | **`docs/DEFAULT-VIEW.md` D6** — *recorded while writing this handoff* |
 | **Slow-machine fallback to 2D** with "Try 3D anyway" | `docs/DEFAULT-VIEW.md` D6, `tests/test_default_view_labels.py` |
@@ -332,7 +334,7 @@ previous handoff's §F (`b1c8329:docs/HANDOFF.md`) and the files it names.
 | **Go-ahead for window steps 5–6** with a FRESH backup first | `docs/WINDOW-RUNSHEET.md` STATE |
 | **Keep the window backups until the owner says** | `docs/WINDOW-RUNSHEET.md` STATE, this file §C.3 |
 | **Production deploys and promotes are run by the owner** in their own terminal | this file §D |
-| **Next-phase direction**: team_member from Keka or a sheet, `reports_to`, `owns` with a role, Team tab, who-owns-what matrix; pods top-level (System Pod, then Agentic AI, then Data & Management) | **`docs/NEXT-PHASE.md` "Owner direction"** — *recorded while writing this handoff* |
+| **Next-phase direction**: team_member from Keka or a sheet, `reports_to`, `owns` with a role, Team tab, who-owns-what matrix; pods top-level (System Pod, then Agentic AI, then Data & Management) | **`docs/archive/NEXT-PHASE.md` "Owner direction"** — *recorded while writing this handoff* |
 | **Improvement-by-observation loop** | **this file §F** — *recorded while writing this handoff* |
 
 **Not recorded anywhere before this handoff** (only in commit messages or

@@ -25,7 +25,8 @@
 
 ## Tools
 
-`list_types` returns the workspace's record types with their custom fields,
+21 tools (`@mcp.tool()` in `mcp_server/kb_server.py`): 9 read, 6 write,
+2 approval, 4 validation. `list_types` returns the workspace's record types with their custom fields,
 relationship types with allowed pairs, link kinds and resource kinds; read it
 before creating records of a custom type. `create_node` and `update_node` take
 `props` (custom field values by key) and `create_node` takes `parent_ids`.
@@ -35,12 +36,14 @@ when the token's role is editor or above.
 
 | Group | Tool | Notes |
 |---|---|---|
-| Read | `search_knowledge(query, types?, limit?)` | full-text + trigram; resources by title/URL |
+| Read | `list_types()` | record types, fields, relationship types, link kinds |
+| | `search_knowledge(query, types?, limit?)` | full-text + trigram; resources by title/URL |
 | | `get_node(node_id)` | relationships in/out, resources, tags |
 | | `get_course(course)` / `get_program(program)` | by id or name |
 | | `get_related_resources(node_id, include_neighbours?)` | |
 | | `traverse_relationships(node_id, depth 1-2, types?)` | ≤300 nodes, reports `total`/`truncated` |
 | | `find_instructors(course_id?, query?)` | names only — no contact data exists |
+| | `recent_activity(record_id?, query?, limit≤100)` | **new (run 6)**: one plain sentence per change, the Activity page's sentences; editors and admins only (an editor: their own and their courses'), empty for anyone else |
 | Write | `create_node(type, name, summary?, scope_id? \| new_scope_type+new_scope_name)` | inline course/program creation |
 | | `update_node(node_id, version, …)` | stale version → conflict error naming the current version |
 | | `create_edge(type, source_id, target_id, note?)` | type rules, self-edge and duplicate checks |
@@ -80,7 +83,7 @@ not built.
 ## Verification (2026-11-02)
 
 - `tests/test_kb_mcp.py` (6 tests, all pass): spawns the server over stdio with
-  the official client SDK, lists tools (exactly the 19 above), calls every one,
+  the official client SDK, lists tools (exactly the 19 of that date; now 21 with `list_types` and `recent_activity`), calls every one,
   plus viewer-token write denied, editor-token archive → proposal, approval by a
   person executes it, expired/revoked/garbage tokens denied, missing
   `KB_MCP_TOKEN` → startup error naming it, link classification incl. redirects

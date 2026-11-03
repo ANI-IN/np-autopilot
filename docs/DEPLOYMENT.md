@@ -1,6 +1,6 @@
 # DEPLOYMENT — one Vercel project, and what holding the keys means
 
-One project, per [ONE-APP-OR-TWO.md](ONE-APP-OR-TWO.md). The explorer and the
+One project, per [ONE-APP-OR-TWO.md](archive/ONE-APP-OR-TWO.md). The explorer and the
 API are the same deployment and call the same handlers, so the role boundary is
 single-sourced rather than coordinated.
 

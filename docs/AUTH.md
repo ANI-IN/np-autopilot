@@ -679,7 +679,7 @@ The reversal section says, of revocation:
 2026-09-20 the entire `auth` schema was found empty — `users`, `identities`,
 `sessions`, `refresh_tokens` and `audit_log_entries` all at zero — while
 `public` was untouched. **The cause is not established and is recorded as
-unattributed** (see `docs/STATE.md`). What matters here is the consequence:
+unattributed** (see `docs/archive/STATE.md`). What matters here is the consequence:
 
 - the next Google sign-in created a **new** `auth.users` row with a **new**
   `user_id`;

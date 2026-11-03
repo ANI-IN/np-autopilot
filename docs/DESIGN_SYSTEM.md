@@ -40,6 +40,25 @@ Files:
 | `public/kb/js/views/*.js` | one module per screen |
 | `public/kb/guide.md` | the Guide's content (one plain-text file) |
 
+## Brand
+
+Source: interviewkickstart.com's Elementor kit
+(`https://interviewkickstart.com/wp-content/uploads/elementor/css/post-5.css`):
+`--e-global-color-primary` / text **#324158** (navy), **#3996D2** (blue),
+accent **#00D1B4** (teal), **#F0F3F6** (light grey); typography **Inter**. The
+header logo (`.../2025/05/620b3b133ad9178175a0f3bb_interviewkickstart-logo-1.svg`,
+fills #344158 and #3996D2) is saved as `public/kb/brand/ik-logo.svg` and shown
+on the sign-in card (`.gate-logo`, turned white in dark mode).
+
+How the brand maps to tokens (`--brand-blue` #3996D2, `--brand-navy` #324158):
+
+- light `--accent` / `--accent-text` **#2670A6**: the brand blue darkened to
+  5.3:1 for white text (#3996D2 itself is only 3.25:1 on white);
+- dark `--accent` **#3996D2** (5.8:1 with the dark label `--on-accent`
+  #0b1020), `--accent-text` #6fb8e8;
+- `--brand-mark` (the sidebar's "IK" square) navy #324158 light / blue
+  #3996D2 dark.
+
 ## Tokens
 
 All colours, sizes and motion are custom properties on `:root`, redefined for
@@ -53,14 +72,15 @@ choice is remembered per browser.
 | Space | 8px grid: `--s-1` 4 … `--s-7` 48 |
 | Shape | one radius, `--radius: 6px`; hairline 1px borders |
 | Neutrals | `--bg`, `--bg-subtle` (sidebar), `--surface`, `--surface-2`, `--surface-hover`, `--border`, `--border-strong`, `--text`, `--text-2`, `--text-3` |
-| Accent | one: deep blue `--accent` #1d4ed8 (light) / #5b8cff (dark), `--accent-soft`, `--accent-text` |
+| Accent | one: IK blue `--accent` #2670A6 (light) / #3996D2 (dark), `--accent-soft`, `--accent-text`, `--on-accent` (label on the accent); `--brand-blue`, `--brand-navy`, `--brand-mark` (see Brand) |
 | Status | `--danger`, `--warn`, `--ok` with `-soft` backgrounds |
 | Elevation | `--shadow-float` on floating layers only (menus, dialogs, sheets, toasts, bulk bar, minimap) |
 | Motion | `--motion` 150ms ease-out; 0ms under `prefers-reduced-motion` |
 | Layout | `--sidebar-w` 240 (56 folded), `--panel-w` 440 (resizable 360–860), `--row-h` 36 / 30 compact |
 
-No IK brand colour is recorded in the repo (PROGRESS D18), so the accent is a
-restrained deep blue. Never purple.
+The accent is the Interview Kickstart blue (see Brand; this replaces PROGRESS
+D18's restrained deep blue, chosen when no brand colour was recorded). Never
+purple.
 
 **Record-type hues** come from one accessible palette (`web/lib/kb/typedefs.py`
 `PALETTE`, applied to the built-in types by migration 0028). They colour a
@@ -69,7 +89,7 @@ lightened with `color-mix` to keep contrast.
 
 **Contrast** (WCAG AA, computed from the token values): body `--text` on `--bg`
 17.7:1 (light) / 16.1:1 (dark); `--text-2` 7.7 / 8.1; `--text-3` 5.3 / 5.8 (4.9 / 5.6
-on the sidebar); accent text 6.7 / 8.9; button label on the accent 6.7 / 6.0.
+on the sidebar); accent text 5.3 / 8.8; button label on the accent 5.3 / 5.8.
 Every palette hue is at least 4.9:1 on white (the AA threshold for icons is 3:1).
 
 ## Components
@@ -97,6 +117,8 @@ Every palette hue is at least 4.9:1 on white (the AA threshold for icons is 3:1)
 | Page header (run 3) | `pageHead({title, count, sub, actions})` | the one header every screen uses: title, count, one line of context, actions on the right |
 | Card | `.card` › `.card-head` + `.card-body` | hairline border, one radius, no shadow; dashboard blocks |
 | Tile | `.card.dash-tile` › `.tile` (`.v` value, `.k` label) | dashboard numbers, six equal tiles in `.dash-tiles` |
+| Dashboard (run 6) | `.dash` › `.dash-grid` › `.dash-tiles` + `.dash-cols` of `.dash-card`; `.dash-entry`, `.dash-sentence`, `.dash-first`, `.dash-actions`, `.dash-sub`, `.dash-types` | one screen, no 12-column grid (views/dashboard.js) |
+| Run-6 classes (B3) | `.tab-intro`, `.settings-body`, `.inline-form`, `.field-card`, `.type-editor`, `.editor-error`, `.swatch`, `.subhead`, `.record-page`, `.record-head`, `.record-meta`, `.text-block`, `.section`, `.rel-group-label`, `.conflict-diff`, `.impact-list`, `.url-line`, `.proposal-json`, `.queue`, `.form-note`, `.form-error`, `.link-card`, `.form-section`, `.figure-zoom`, `.view-toolbar`, `.timeline-head`, `.deck-list`, `.missing-col`, `.gate-card`, `.gate-logo` | the former inline styles of each screen, as classes (kb.css "run 6 (B3)") |
 | Popover | `popover(anchor, content, {alignRight})` | floating panel kept inside the viewport (flips above, clamps at both edges); Esc or outside click closes |
 | Segmented switch | `.segmented` with `role=radio` buttons | labelled choices such as row density |
 | Check list | `.check-list` | checkbox + label with a 10px gap, drag handle and ↑↓ buttons to reorder |
@@ -104,6 +126,14 @@ Every palette hue is at least 4.9:1 on white (the AA threshold for icons is 3:1)
 | Activity entry | `activityEntry(a)` (views/activity.js) | who · what · which (link or "deleted") · when (exact on hover) · field diffs; Activity page and every History tab |
 | Stacked dialog | `openDialog(content, {stack: true})` | opens over another dialog and returns to it on close |
 | Graph handles | `.graph-handles` | the hover toolbar beside a record on the graph: connect handle, expand, rename, presence |
+
+**Utilities (run 6, B3)** on the 8px grid, replacing inline styles (only
+data-driven values such as a type's colour or a bar's percentage stay inline):
+`.grow`, `.flex-none`, `.wrap`, `.start`, `.self-start`, `.nowrap`,
+`.pre-wrap`, `.right`, `.relative`, `.w-full`, `.fg`, `.min-w-0`,
+`.justify-end`, `.gap-0`/`-xs`/`-1`/`-2`/`-3`/`-5`, `.mb-1`–`3`, `.mt-1`–`5`,
+`.ml-2`, `.num-col`, `.toolbar-gap`, `.search-sm`, `.th-check`, `.th-when`,
+`.ico-slot`, `.indent`, `.sk-icon`, `.sk-block`, `.load-more`, `.panel-note`.
 
 Text that can be cut off with "…" always carries its full text as a tooltip:
 `el()` adds a `title` to any `.truncate` element given `text`.
@@ -125,7 +155,7 @@ the view:
 
 | Layout | Screens | Width |
 |---|---|---|
-| `full` | All records, Programs, Courses, Resources, Graph | the whole width (tables and the canvas use it) |
+| `full` | All records, Programs, Courses, Links, Graph | the whole width (tables and the canvas use it) |
 | `contained` | Dashboard, Outline, Data quality, Approvals, Activity, Archived, Settings | centred, at most `--page-max` (1440px) |
 | `reading` | Guide, a record as a page | content `--read-max` (760px) plus contents `--toc-w` (220px), centred together as one unit |
 
@@ -157,7 +187,9 @@ numbers (every number on the dashboard is a query).
 record · `Esc` closes the innermost layer · ⌘/Ctrl Enter saves a form. Every
 control is reachable with Tab; menus and comboboxes use arrow keys.
 
-Graph (when the canvas has focus): `N` new record · `F` fit · `/` find ·
-`Delete` archive the selection · arrows move the selection (Shift: further) ·
-`E` expand or collapse · `Esc` clear the selection. Double-click empty space to
+Graph (when the canvas has focus): `?` the shortcut sheet · `N` new record ·
+`F` fit · `/` find · `+` / `-` zoom in / out · `1`-`4` layouts (Hierarchy ·
+Force · Radial · Saved positions) · `O` focus mode (off, 1 step, 2 steps) ·
+`M` minimap · `Delete` archive the selection · arrows move the selection
+(Shift: further) · `E` expand or collapse · `Esc` clear the selection. Double-click empty space to
 create, double-click a record to rename it.

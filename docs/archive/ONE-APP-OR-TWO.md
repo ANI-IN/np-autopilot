@@ -1,3 +1,5 @@
+> **Archived (run 6, G1, 2026-11-04).** Superseded by run 6: see README.md / docs/VISION_AND_ROADMAP.md / HANDOFF.md. Kept as history.
+
 # One app or two? — the explorer and the plugin backend
 
 **G3.** Two clients now want the same graph: the browser explorer (E3) and the
