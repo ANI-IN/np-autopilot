@@ -26,7 +26,7 @@ ALL_TOOLS = {"search_knowledge", "get_node", "get_course", "get_program", "get_r
              "traverse_relationships", "find_instructors", "create_node", "update_node", "create_edge",
              "attach_resource", "create_course", "create_program", "archive_node", "archive_edge",
              "find_missing_resources", "find_duplicate_nodes", "check_broken_links", "validate_course_structure",
-             "list_types"}
+             "list_types", "recent_activity"}
 
 
 @pytest.fixture(scope="module")
@@ -110,6 +110,7 @@ def test_every_tool_end_to_end(base):
             dupes=await _call(s, "find_duplicate_nodes", threshold=0.5),
             validate=await _call(s, "validate_course_structure", course_id=course["result"]["id"]),
             links=await _call(s, "check_broken_links", limit=5),
+            activity=await _call(s, "recent_activity", query="MCP Program"),
             archive=await _call(s, "archive_node", node_id=topic["result"]["id"], reason="test proposal"),
             archive_edge=await _call(s, "archive_edge", edge_id=e1["result"]["id"], reason="test"),
             inline=inline, bad_edge=bad_edge, att=att, att2=att2, upd=upd, stale=stale, dup=dup)
@@ -137,6 +138,10 @@ def test_every_tool_end_to_end(base):
     assert out["validate"]["result"]["children"] >= 1
     assert out["links"]["result"]["checked"] == 1
     assert out["links"]["result"]["recorded"] is True      # an editor's token stores the results
+    # run 6 (F3): the same server-built sentences as the Activity page
+    assert any(x["sentence"].startswith("AI assistant (for ") and "created program 'MCP Program'" in x["sentence"]
+               for x in out["activity"]["result"]), out["activity"]
+    assert "@" not in json.dumps(out["activity"])
     # archive tools PROPOSE; nothing was archived
     assert out["archive"]["result"]["status"] == "approval_required"
     assert out["archive_edge"]["result"]["status"] == "approval_required"
