@@ -22,9 +22,10 @@ let fails = 0, timer = null, socketUp = false, pending = null;
 
 /* fn(others, all): `others` leaves out your own human writes (they are already
    on your screen); `all` is every change. */
-export function onLiveChange(fn) { listeners.push(fn); }
+/* Each returns an unsubscribe function: a view that subscribes per visit must call it when it is left (run 6, F7). */
+export function onLiveChange(fn) { listeners.push(fn); return () => { const i = listeners.indexOf(fn); if (i >= 0) listeners.splice(i, 1); }; }
 /* fn(changes, info) for every batch, yours included; info = classify(changes). */
-export function onLiveFeed(fn) { feedListeners.push(fn); }
+export function onLiveFeed(fn) { feedListeners.push(fn); return () => { const i = feedListeners.indexOf(fn); if (i >= 0) feedListeners.splice(i, 1); }; }
 
 const PATCH = ['record.', 'relationship.', 'link.', 'layout.', 'owner.'];
 const REFETCH = ['type.', 'reltype.', 'tag.', 'sync.'];

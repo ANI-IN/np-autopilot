@@ -72,7 +72,7 @@ export function track(state) {
   tracked = state;
   send(TOPIC, 'presence', { type: 'presence', event: 'track', payload: Object.assign({ user_id: S.me.user_id }, state) });
 }
-export function onPresence(fn) { presenceListeners.push(fn); }
+export function onPresence(fn) { presenceListeners.push(fn); return () => { const i = presenceListeners.indexOf(fn); if (i >= 0) presenceListeners.splice(i, 1); }; }
 export function others(recordId) {
   const out = [];
   Object.entries(presence).forEach(([k, metas]) => {

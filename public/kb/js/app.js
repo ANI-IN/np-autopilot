@@ -194,6 +194,8 @@ export function route() {
   document.title = (page ? page[0] + ' · ' : '') + 'IK Knowledge Base';
   if (viewKey !== lastView || r.q.__force) {
     lastView = viewKey;
+    // The view being left releases what it holds (run 6, F7: the graph's listeners, poll and canvas).
+    if (S.onLeave) { const f = S.onLeave; S.onLeave = null; try { f(); } catch (e) { console.warn('leaving a view', e); } }
     v.dataset.layout = LAYOUT[key] || 'contained';
     S.listReload = null; S.onSelect = null; S.onQueryChange = null; S.tableKeys = null;
     if (S.panel && S.panel.full) S.panel = null;          // leaving a full-page record

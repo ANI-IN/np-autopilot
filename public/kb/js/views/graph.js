@@ -1136,7 +1136,7 @@ function buildGraph(v, r) {
     G.synced = (G.synced || 0) + 1;
   }
   G.applyChanges = applyChanges;
-  onLiveChange((theirs) => { if (S.graph === G) applyChanges(theirs.filter((c) => c.table_name !== 'audit_log')); });
+  const offLive = onLiveChange((theirs) => { if (S.graph === G) applyChanges(theirs.filter((c) => c.table_name !== 'audit_log')); });
   /* Fallback: this page follows /changes from the graph's `head` itself, so it
      is live even where the shared feed is not running. */
   let pollTimer = null;
@@ -1157,7 +1157,15 @@ function buildGraph(v, r) {
     cy.batch(() => cy.nodes().filter(isRecord).forEach((n) => n.toggleClass('presence', others(n.id()).some((o) => o.editing))));
     if (handleNode) placeHandles();
   }
-  onPresence(() => { if (S.graph === G) markPresence(); });
+  const offPresence = onPresence(() => { if (S.graph === G) markPresence(); });
+  // Leaving the page (router leave hook): unsubscribe, stop polling, free the canvas (run 6, F7; B5's heap finding).
+  S.onLeave = () => {
+    offLive(); offPresence();
+    if (pollTimer) clearTimeout(pollTimer);
+    if (S.graph === G) S.graph = null;
+    try { if (cy) cy.destroy(); } catch (e) { /* already gone */ }
+    if (window.__kbGraph === G) window.__kbGraph = null;
+  };
   G.reload = reload;
   G.expand = (id) => expand(id);
   G.connect = (a, b) => connectPair(ref(cy.getElementById(a)), ref(cy.getElementById(b)), cy.getElementById(b).renderedPosition());
