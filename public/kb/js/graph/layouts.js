@@ -23,9 +23,9 @@ const ROW_GAP = 48, TREE_GAP = 72, LEAF_WRAP = 5;
 
 const byName = (a, b) => (a.label || '').localeCompare(b.label || '') || (a.id < b.id ? -1 : 1);
 
-/* Who hangs off whom. Structural records get a parent of a higher level (their
-   scope when it qualifies, else the nearest level); every other record gets an
-   anchor: its scope, else its deepest structural neighbour, else its most
+/* Who hangs off whom. Structural records get a parent of a higher level (the
+   nearest level among their neighbours, their scope first among equals); every other record gets an
+   anchor: its deepest structural neighbour, else its scope, else its most
    connected neighbour (strictly "bigger" than itself, so chains end). */
 export function structure(nodes, edges) {
   const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -37,16 +37,16 @@ export function structure(nodes, edges) {
   nodes.forEach((n) => {
     if (n.bundle) { anchor.set(n.id, n.bundle.anchor); return; }
     const near = nb.get(n.id).map((id) => byId.get(id));
+    // the nearest level wins; among equals, the record's scope, then by name
+    const pick = (list) => list.sort((a, b) => (b.rank - a.rank) || ((b.id === n.scope) - (a.id === n.scope)) || byName(a, b))[0];
     if (n.rank !== null && n.rank !== undefined) {
-      const up = near.filter((m) => m.rank !== null && m.rank !== undefined && m.rank < n.rank);
-      const sc = up.find((m) => m.id === n.scope);
-      const best = sc || up.sort((a, b) => (b.rank - a.rank) || byName(a, b))[0];
+      const best = pick(near.filter((m) => m.rank !== null && m.rank !== undefined && m.rank < n.rank));
       if (best) parent.set(n.id, best.id);
       return;
     }
-    if (n.scope && byId.has(n.scope) && n.scope !== n.id) { anchor.set(n.id, n.scope); return; }
-    const st = near.filter((m) => m.rank !== null && m.rank !== undefined).sort((a, b) => (b.rank - a.rank) || byName(a, b))[0];
+    const st = pick(near.filter((m) => m.rank !== null && m.rank !== undefined));
     if (st) { anchor.set(n.id, st.id); return; }
+    if (n.scope && byId.has(n.scope) && n.scope !== n.id) { anchor.set(n.id, n.scope); return; }
     const big = near.filter((m) => !m.bundle && bigger(m.id, n.id)).sort((a, b) => (deg(b.id) - deg(a.id)) || (a.id < b.id ? -1 : 1))[0];
     if (big) anchor.set(n.id, big.id);
   });

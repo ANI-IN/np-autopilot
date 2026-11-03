@@ -482,7 +482,7 @@ function buildGraph(v, r) {
     const out = []; let cur = id; const seen = new Set([id]);
     while (out.length < 8) {
       const rec = M.nodes.get(cur);
-      const up = (rec && rec.scope_id) || (lastStruct && (lastStruct.parent.get(cur) || lastStruct.anchor.get(cur))) || null;
+      const up = (lastStruct && (lastStruct.parent.get(cur) || lastStruct.anchor.get(cur))) || (rec && rec.scope_id) || (crumbName[cur] && crumbName[cur].scope) || null;
       if (!up || seen.has(up)) break;
       seen.add(up); out.unshift(up); cur = up;
       if (!M.nodes.has(up)) { if (crumbName[up] && crumbName[up].scope) { cur = up; continue; } break; }
@@ -600,7 +600,8 @@ function buildGraph(v, r) {
       ['M', 'Show or hide the minimap'], ['E', 'Expand or collapse the selected record’s neighbours (or open a bundle)'], ['Esc', 'Clear the selection']];
     if (canEdit) rows.splice(4, 0, ['N', 'New record at the centre (or double-click empty space)'], ['Delete', 'Archive the selection (Undo in the message)'],
       ['Arrows', 'Move the selection (Shift: further)'], ['Double-click', 'Rename a record'], ['Drag a handle', 'Connect two records']);
-    openDialog([el('h2', { text: 'Graph shortcuts' }), el('dl', { class: 'props', 'data-testid': 'graph-shortcuts' }, rows.map(([k, d]) => [el('dt', null, el('kbd', { text: k })), el('dd', { text: d })]))],
+    openDialog([el('h2', { text: 'Graph shortcuts' }), el('dl', { class: 'props', 'data-testid': 'graph-shortcuts' }, rows.map(([k, d]) => [el('dt', null, el('kbd', { text: k })), el('dd', { text: d })])),
+      el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Close', 'data-testid': 'graph-shortcuts-close', onclick: closeDialog }))],
       { label: 'Graph shortcuts', testid: 'graph-shortcuts-dialog' });
   }
   function toggleMini(force) {
@@ -1110,7 +1111,7 @@ function buildGraph(v, r) {
   async function poll() {
     if (S.graph !== G) return;
     try {
-      const x = await api('GET', '/changes' + qs({ since: head }));
+      const x = await api('GET', '/changes?since=' + encodeURIComponent(String(head || 0)));
       const rows = x.changes.filter((c) => !(c.actor_id === (S.me || {}).user_id && humanActor(c)));
       if (x.cursor > head) head = x.cursor;
       x.changes.forEach((c) => { if (!rows.includes(c)) seenChange.add(c.id); });
