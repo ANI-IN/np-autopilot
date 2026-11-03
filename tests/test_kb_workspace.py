@@ -93,8 +93,12 @@ def test_duplicate_name_check_while_typing(ed):
 
 def test_bulk_edit_and_bulk_archive(ed, contrib):
     ids = [ed.post("/api/kb/nodes", {"type": "topic", "name": f"B{i}"})[1]["id"] for i in range(3)]
+    # Run 6: a contributor's field changes become one proposal per record (0033); tags stay direct.
     s, out = contrib.post("/api/kb/nodes/bulk", {"ids": ids, "set": {"owner_id": USERS["contributor"], "status": "draft"},
                                                  "add_tags": ["batch"]})
+    assert s == 202 and out["count"] == 3
+    assert ed.get("/api/kb/nodes", "status=draft")[1]["items"] == []
+    s, out = ed.post("/api/kb/nodes/bulk", {"ids": ids, "set": {"owner_id": USERS["contributor"], "status": "draft"}})
     assert s == 200 and out["updated"] == 3
     items = ed.get("/api/kb/nodes", "status=draft")[1]["items"]
     assert {i["owner_id"] for i in items} == {USERS["contributor"]}

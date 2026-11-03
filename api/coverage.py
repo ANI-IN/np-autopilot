@@ -5,10 +5,16 @@ from pathlib import Path
 # file sits one level above web/. The shared modules stay in web/lib.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 from lib import data                                                   # noqa: E402
+from lib.kb import npmap                                               # noqa: E402
+
+
+def _src():
+    """kb (default) or the old tables (NP_MAP_SOURCE=old, the rollback switch)."""
+    return npmap if npmap.enabled() else data
 
 
 def _coverage(conn, identity, params):
-    return data.coverage(conn), 1
+    return _src().coverage(conn), 1
 
 
 #: (endpoint name, read function). The HTTP shell lives in api/index.py:

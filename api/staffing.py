@@ -11,6 +11,12 @@ from pathlib import Path
 # file sits one level above web/. The shared modules stay in web/lib.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 from lib import data                                                   # noqa: E402
+from lib.kb import npmap                                               # noqa: E402
+
+
+def _src():
+    """kb (default) or the old tables (NP_MAP_SOURCE=old, the rollback switch)."""
+    return npmap if npmap.enabled() else data
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from pipeline.lib import teaching                                      # noqa: E402
@@ -22,9 +28,13 @@ def _staffing(conn, identity, params):
     if not query:
         return {"error": "domain is required"}, 0
 
-    with conn.cursor() as cur:
-        cur.execute("select label from nodes where type = 'domain'")
-        labels = [r[0] for r in cur.fetchall()]
+    src = _src()
+    if src is npmap:
+        labels = npmap.domain_labels(conn)
+    else:
+        with conn.cursor() as cur:
+            cur.execute("select label from nodes where type = 'domain'")
+            labels = [r[0] for r in cur.fetchall()]
     # Ambiguity is RETURNED, never picked. Three bugs in this project came from
     # collapsing several plausible targets to the first one.
     match = resolve_name(query, labels)
@@ -33,7 +43,7 @@ def _staffing(conn, identity, params):
     if match is None:
         return {"error": f"no domain matching {query!r}", "known": sorted(labels)}, 0
 
-    sub = data.domain_subgraph(conn, match)
+    sub = src.domain_subgraph(conn, match)
     if not sub.get("domain"):
         return {"error": "not_found"}, 0
 

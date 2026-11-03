@@ -2,6 +2,7 @@
 import { S, el, add, clear, icon, typeIcon, api, ago, skeletonBlock, errorBox, plural, can } from '../core.js';
 import { pageHead } from '../page.js';
 import { kindLabel } from '../detail.js';
+import { legacyExpertiseSection } from './people.js';   // B1 (run 6)
 
 export function viewQuality(v) {
   v.appendChild(pageHead({ title: 'Data quality', sub: 'What is incomplete, unconnected, broken or flagged.' }));
@@ -27,6 +28,7 @@ export function viewQuality(v) {
       };
       const rec = (x, extra) => el('a', { class: 'link-row', href: '#/quality?open=' + x.id }, typeIcon(x.type), el('span', { class: 'truncate', text: x.name, style: 'color:var(--text);flex:1' }), extra ? el('span', { class: 'faint xs truncate', text: extra }) : null);
       left.appendChild(list('Records without an owner', q.unowned, (x) => rec(x), 'Every record has an owner.', 'q-unowned'));
+      left.appendChild(legacyExpertiseSection());   // B1 (run 6): legacy domains still referenced as expertise
       left.appendChild(list('Missing required fields', a.missing_required, (x) => rec(x, x.field), 'Every required field is filled in.', 'q-missing-required'));
       left.appendChild(list('Not connected to anything', q.orphans, (x) => rec(x), 'Every record has at least one relationship.', 'q-orphans'));
       left.appendChild(list('Relationships that no longer fit the rules', a.misfits, (x) => el('a', { class: 'link-row', href: '#/quality?open=' + x.source_id },

@@ -336,7 +336,7 @@ def list_nodes(conn, params: dict) -> dict:
     elif legacy != "all":
         raise Invalid("legacy must be current, only or all", field="legacy")
     if str(params.get("no_owner") or "") in ("1", "true"):
-        where.append("n.owner_id is null and n.owner_record_id is null")
+        where.append("n.owner_id is null and n.owner_record_id is null")   # a plain list filter: every type
     if params.get("review_status"):
         where.append("n.review_status = %s"); args.append(params["review_status"])
     if params.get("parent"):
@@ -717,6 +717,10 @@ def update_node(conn, actor: Actor, node_id: str, body: dict, *, force: bool = F
         sets.append("scope_id = %s"); args.append(sid)
     if not sets:
         raise Invalid("nothing to change")
+    if role(conn) == "contributor":
+        # Run 6 decision: contributors attach links and relationships directly;
+        # field edits go to Approvals (0033 enforces it in the database).
+        propose_update(conn, actor, node_id, body)
     if "name" in body or "scope" in body:
         new_name = args[0] if "name" in body else current["name"]
         new_scope = sid if "scope" in body else current["scope_id"]
@@ -1309,6 +1313,30 @@ def propose(conn, actor: Actor, action: str, table: str, target_id: str, reason=
                         proposal_id=row["id"])
 
 
+def propose_update(conn, actor: Actor, node_id: str, body: dict, reason=None) -> dict:
+    """A contributor's edit of a record, recorded for an editor to approve (run 6).
+    The payload is the edit itself (record fields only; never an e-mail address:
+    proposals are audited). Applied onto the record as it is when approved."""
+    require(conn, "contributor", "proposing an edit")
+    payload = {k: val for k, val in body.items() if k != "version"}
+    with _translate(conn, "proposal"):
+        row = _q1(conn, "insert into kb.proposals (action, target_table, target_id, reason, payload, actor_type) "
+                        "values ('update', 'nodes', %s, %s, %s, %s) returning id",
+                  (node_id, (reason or "")[:2000] or None, json.dumps(payload), actor.actor_type))
+    raise NeedsApproval("Your edit was sent for approval: an editor applies it in Approvals",
+                        proposal_id=row["id"])
+
+
+def claim_person(conn, actor: Actor, node_id: str, body: dict | None = None) -> dict:
+    """"This profile is me": a claim an admin approves in Approvals (0033).
+    Any signed-in member may claim a live instructor or team member record."""
+    nid = v.uid(node_id, "id")
+    reason = v.text(body or {}, "reason", max_len=2000) if body else None
+    with _translate(conn, "claim"):
+        pid = _q1(conn, "select kb.claim_person(%s, %s) as id", (nid, reason))["id"]
+    raise NeedsApproval("Claim sent: an admin confirms it in Approvals", proposal_id=pid)
+
+
 def list_proposals(conn, status: str = "pending") -> list[dict]:
     return _q(conn, """select p.id, p.action, p.target_table, p.target_id, p.reason, p.payload, p.actor_type,
                               p.status, p.created_by, p.created_at, p.decided_by, p.decided_at, p.version,
@@ -1333,8 +1361,20 @@ def decide_proposal(conn, actor: Actor, proposal_id: str, approve: bool, decisio
     if p["status"] != "pending":
         raise Conflict(f"this proposal was already {p['status']}", current=p)
     result = None
+    if p["action"] == "claim":
+        require(conn, "admin", "deciding a profile claim")
     if approve and p["action"] == "create":
         result = create_node(conn, Actor(actor.user_id, "human"), p["payload"], _approved=True)
+    elif approve and p["action"] == "update":
+        cur = _node_row(conn, str(p["target_id"]))
+        if not cur:
+            raise NotFound("the record of this edit no longer exists")
+        result = update_node(conn, Actor(actor.user_id, "human"), str(p["target_id"]),
+                             {**(p["payload"] or {}), "version": cur["version"]})
+    elif approve and p["action"] == "claim":
+        with _translate(conn, "claim"):
+            _q(conn, "select kb.apply_claim(%s)", (pid,))
+        result = {"id": str(p["target_id"])}
     elif approve and p["action"] == "type_change":
         from .typedefs import apply_type_change
         payload = p["payload"]
@@ -1662,12 +1702,14 @@ def quality_overview(conn, limit: int = 50) -> dict:
     Completeness per course/program = share of its contents (contains edges or
     scoped records) plus itself that carry at least one resource. Current
     records only: legacy (NP Autopilot's older sheets) is out of these counts;
-    "no owner" = no account owner and no owner by role (run 5)."""
+    "no owner" = no account owner and no owner by role (run 5), for the types
+    whose "owner expected" is ON (run 6)."""
     totals = _q1(conn, """select
         (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy) as live,
         (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and not exists (
             select 1 from kb.edges e where e.archived_at is null and (e.source_id = n.id or e.target_id = n.id))) as orphans,
-        (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and n.owner_id is null and n.owner_record_id is null) as no_owner,
+        (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and n.owner_id is null and n.owner_record_id is null
+           and n.type_id in (select id from kb.node_types where owner_expected)) as no_owner,
         (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and not exists (
             select 1 from kb.node_resources r where r.node_id = n.id and r.archived_at is null)) as no_resources,
         (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and coalesce(btrim(n.summary), '') = '') as no_summary""")
@@ -1692,6 +1734,7 @@ def quality_overview(conn, limit: int = 50) -> dict:
         order by completeness asc, c.name limit %s""", (limit,))
     unowned = _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
                           where n.archived_at is null and not n.is_legacy and n.owner_id is null and n.owner_record_id is null
+                            and t.owner_expected
                           order by t.sort_order, n.name_norm limit %s""", (limit,))
     links = _q1(conn, """select count(*) as resources,
                                 count(lc.resource_id) as checked,

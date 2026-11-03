@@ -395,8 +395,10 @@ def test_person_account_now_and_on_a_future_sign_in():
 def test_no_owner_counts_only_records_without_any_owner():
     sync()
     with owner() as c:
-        want = c.execute("""select count(*) from kb.nodes where archived_at is null and not is_legacy
-                            and owner_id is null and owner_record_id is null""").fetchone()[0]
+        # run 6: counted only for types whose "owner expected" is ON (0032)
+        want = c.execute("""select count(*) from kb.nodes n join kb.node_types t on t.id = n.type_id
+                            where n.archived_at is null and not n.is_legacy and t.owner_expected
+                            and n.owner_id is null and n.owner_record_id is null""").fetchone()[0]
         with_role = c.execute("select count(*) from kb.nodes where not is_legacy and owner_record_id is not null").fetchone()[0]
     assert with_role == 2                                    # mod_cur (P) and dom_cur (owned_by)
     assert Client(ADMIN).get("/api/kb/counts")[1]["attention"]["counts"]["no_owner"] == want
@@ -455,3 +457,29 @@ def test_a_failure_is_in_the_run_log_and_raises_the_admin_banner(monkeypatch):
     s, st = Client(ADMIN).get("/api/kb/sync")
     assert s == 200 and st["failing"] is True and st["last"]["status"] == "error"
     assert "mapping" in st["last"]["errors"][0]
+
+
+def test_a_stopped_run_saves_its_place_and_the_next_one_continues_there():
+    """Run 6 (B1): resumable in batches with SAVED progress. Every run stops
+    after its first batch; each next run starts where the last one stopped
+    (never from the beginning), and the chain ends in the same KB as one
+    uninterrupted run."""
+    from lib.kb import sync as engine
+    runs, prev = [], None
+    for _ in range(80):
+        out = sync(budget_seconds=0.0001, batch=1)
+        assert out["status"] == "ok"
+        assert out["resumed_from"] == prev                         # continued from the saved place
+        runs.append(out)
+        prev = out["resume"]
+        if not out["partial"]:
+            break
+    assert len(runs) > 3 and not runs[-1]["partial"]
+    phases = [r["resume"]["phase"] for r in runs if r["resume"]]
+    assert phases == sorted(phases, key=engine.PHASES.index)       # never went back to an earlier phase
+    with owner() as c:
+        assert c.execute("select resume from kb.sync_runs order by id desc limit 1").fetchone()[0] is None
+    after = (kb_count("nodes"), kb_count("edges", "archived_at is null"), kb_count("node_resources", "archived_at is null"))
+    full = sync()                                                  # a new pass from the beginning
+    assert full["resumed_from"] is None and full["created"] == {} and full["updated"] == {}
+    assert (kb_count("nodes"), kb_count("edges", "archived_at is null"), kb_count("node_resources", "archived_at is null")) == after

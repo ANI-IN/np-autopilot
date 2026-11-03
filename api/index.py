@@ -398,6 +398,23 @@ def app(environ, start_response):
     if path == "/api/config" and method == "GET":
         return _respond(start_response, 200, config.payload())
 
+    if path == "/api/stats" and method == "GET":
+        # Run 6 (B1): the landing page's numbers from the knowledge base at
+        # request time. Public like the static public/stats.json it replaces
+        # (the landing shows them before sign-in): aggregate counts only, read
+        # through kb.landing_stats() (0033), never a row. With NP_MAP_SOURCE=old
+        # it 404s and the page falls back to the static file.
+        from lib.kb import npmap
+        if not npmap.enabled():
+            return _respond(start_response, 404, {"error": "not_found"})
+        try:
+            with data.request_connection(None) as conn:
+                out = npmap.landing_stats(conn)
+        except Exception:                                              # noqa: BLE001
+            print(traceback.format_exc(), file=sys.stderr)
+            return _respond(start_response, 500, {"error": "internal"})
+        return _respond(start_response, 200, out)
+
     if path == "/api/session":
         if method != "POST":
             return _respond(start_response, 405,
@@ -465,4 +482,4 @@ def app(environ, start_response):
                     {"error": "not_found",
                      "reason": f"no endpoint at {path}",
                      "endpoints": sorted(READS) + sorted(WRITES)
-                                  + ["/api/config", "/api/session"]})
+                                  + ["/api/config", "/api/session", "/api/stats"]})

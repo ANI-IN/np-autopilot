@@ -3,6 +3,7 @@
 import { S, el, add, clear, icon, typeIcon, typeLabel, api, avatar, ago, skeletonBlock, errorBox, plural, you, can } from '../core.js';
 import { pageHead } from '../page.js';
 import { openRecordForm } from '../form.js';
+import { ownedByYouCard } from './people.js';   // B1 (run 6)
 
 export function viewDashboard(v) {
   v.appendChild(pageHead({ title: 'Dashboard', actions: can('contributor') ? [el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-record-dash', onclick: () => openRecordForm({}) }, icon('plus'), 'New record')] : null }));
@@ -21,6 +22,7 @@ export function viewDashboard(v) {
         stat('Changed in 7 days', d.totals.changed_7d, can('editor') ? '#/activity' : null)]);
       const left = el('div', { class: 'stack span-6', 'data-testid': 'dash-left' }), right = el('div', { class: 'stack span-6', 'data-testid': 'dash-right' });
       add(grid, [left, right]);
+      right.appendChild(ownedByYouCard());   // B1 (run 6): Owned by you
       // records by type
       const max = Math.max(1, ...d.counts.map((c) => c.n));
       const types = el('ul', { class: 'list', 'data-testid': 'dash-types' });

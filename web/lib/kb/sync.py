@@ -40,6 +40,8 @@ REPO = Path(__file__).resolve().parents[3]
 MAPPING_FILE = REPO / "config" / "kb-projection-mapping.yaml"
 LOCK_KEY = 7302026          # pg advisory lock id for "kb sync"
 STALE_MINUTES = 20          # a "running" run older than this is considered dead
+LAYOUT_SCALE = 4            # projection layout -> the KB graph's coordinates (npmap reads it back)
+SOURCE_NOTE = "Source"      # the note on a record's provenance links (one per cited file)
 
 
 # ---------------------------------------------------------------------------- mapping
@@ -221,13 +223,19 @@ def desired_state(conn, M: dict, source: str = "public") -> dict:
         if prim:
             owner[m] = prim[0][1]
         co[m] = [x[1] for x in lst if x not in prim[:1]]
+    dom_slug = {}                   # a current domain's mastersheet slug (from the modules it offers)
+    for _, rel, s, t, _p in edges:
+        slug = (nodes.get(t, {}).get("props") or {}).get("domain_slug")
+        if rel == R["domain_offers"] and slug:
+            dom_slug.setdefault(s, slug)
     for r in recs.values():
         p, t = r["src"]["props"], r["type"]
         f = {}
         if t == "program":
             f = {"family": p.get("family"), "document_type": p.get("doctype")}
         elif t == "domain":
-            f = {"cadence": p.get("cadence"), "stage": p.get("stage"), "also_known_as": _text(dom_alias.get(_norm(r["name"])))}
+            f = {"cadence": p.get("cadence"), "stage": p.get("stage"), "also_known_as": _text(dom_alias.get(_norm(r["name"]))),
+                 "slug": dom_slug.get(r["np"])}
         elif t == "module":
             f = {"granularity": p.get("granularity"), "sequence": _text(p.get("sequence"))}
         elif t == "session":
@@ -373,7 +381,7 @@ def desired_state(conn, M: dict, source: str = "public") -> dict:
     unres = 0
     for np_id, f in cites:
         if np_id in recs and f in file_link:
-            attach(np_id, file_link[f], "Source")
+            attach(np_id, file_link[f], SOURCE_NOTE)
         elif np_id in recs:
             unres += 1
     rep["read"].update({"citations": len(cites), "citations_without_a_link": unres})
@@ -414,9 +422,24 @@ def start_run(conn, trigger: str, actor_id: str | None) -> int | None:
                             (trigger, actor_id)).fetchone()[0]
 
 
+#: The order a run works in. A run that reaches its time budget saves the
+#: phase and the last key it finished (kb.sync_runs.resume, 0033); the next run
+#: continues there instead of walking every unit again (resumable sync, run 6).
+PHASES = ("records", "owners", "links", "relationships", "attachments", "removed")
+
+
+def resume_point(conn) -> dict | None:
+    """Where the last finished run stopped, when it stopped early (else None:
+    the next run starts a new pass from the beginning)."""
+    row = conn.execute("""select resume from kb.sync_runs where status not in ('skipped', 'running')
+                          order by id desc limit 1""").fetchone()
+    r = row[0] if row else None
+    return r if isinstance(r, dict) and r.get("phase") in PHASES else None
+
+
 def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool = True,
         budget_seconds: float | None = None, batch: int = 400, source: str = "public",
-        mapping: dict | None = None, operator: bool = False) -> dict:
+        mapping: dict | None = None, operator: bool = False, resume: bool = True) -> dict:
     """The whole sync. `conn` must be able to write the kb tables as their
     owner (CLI: the session pooler login; the API route resets the request
     role for an authorised caller). Preview (apply=False) runs everything in
@@ -435,7 +458,7 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
         conn.autocommit = False
     out = {"run_id": run_id, "created": Counter(), "updated": Counter(), "unchanged": Counter(), "conflicts": Counter(),
            "removed_at_source": Counter(), "restored_at_source": Counter(), "adopted": Counter(), "skipped_archived": Counter(),
-           "conflicts_cleared": Counter(), "errors": [], "partial": False}
+           "conflicts_cleared": Counter(), "errors": [], "partial": False, "resume": None, "resumed_from": None}
 
     def attribute():
         conn.execute("select set_config('kb.actor_type', 'sync', true), set_config('kb.actor_id', %s, true), "
@@ -457,6 +480,25 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
         smap = {(u, k): {"kb_id": str(i) if i else None, "checksum": c, "kb_checksum": kc, "removed": ra, "conflict": ca}
                 for u, k, i, c, kc, ra, ca in q("select unit, key, kb_id, checksum, kb_checksum, removed_at, conflict_at from kb.sync_map")}
         writes = 0
+        start = resume_point(conn) if (apply and resume) else None
+        out["resumed_from"] = start
+        start_ix = PHASES.index(start["phase"]) if start else 0
+        pos = dict(start) if start else {"phase": PHASES[0], "after": None}   # the last unit finished
+        flusher = [None]                               # the current phase's queue, flushed before stopping
+        stopping = [False]
+
+        def done_before(phase, key) -> bool:
+            """True for a unit the run we continue already finished."""
+            if start is None:
+                return False
+            i = PHASES.index(phase)
+            if i != start_ix:
+                return i < start_ix
+            after = start.get("after")
+            return after is not None and _key(key) <= _key(after)
+
+        def at(phase, key=None):
+            pos["phase"], pos["after"] = phase, key
 
         def checkpoint(force=False):
             nonlocal writes
@@ -464,7 +506,13 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
                 return
             if force or writes >= batch:
                 conn.commit(); writes = 0; attribute()
-            if budget_seconds and time.monotonic() - t0 > budget_seconds:
+            if budget_seconds and time.monotonic() - t0 > budget_seconds and not stopping[0]:
+                # Stop at a clean point: write what is queued, commit, save where we are.
+                stopping[0] = True
+                if flusher[0]:
+                    flusher[0]()
+                conn.commit(); attribute()
+                out["resume"] = dict(pos)
                 raise _OutOfTime()
 
         def mark(unit, key, kb_table, kb_id, checksum, kb_checksum):
@@ -526,8 +574,16 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
             checkpoint()
 
         # owners refer to records, so they are written in a second pass
+        flusher[0] = flush_recs
         for r in recs:
             key = r["np"]
+            rkey = [order.get(r["type"], 3), key]
+            if done_before("records", rkey):
+                m = smap.get(("record", key))
+                if m or key in ext:
+                    kb_rec[key] = m["kb_id"] if m else ext[key]
+                continue
+            at("records", rkey)
             scope = kb_rec.get(r["scope_np"]) if r["scope_np"] else None
             content = {"name": r["name"], "props": r["props"], "scope": scope, "body": r.get("body"), "legacy": r["legacy"],
                        "tags": r["tags"], "review": r["review"], "type": r["type"]}
@@ -574,10 +630,12 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
         # owners by role (second pass): only where the KB owner-by-role was not changed in the app
         owners_now = {str(i): (o, c, a) for i, o, c, a in q("""select id, owner_record_id, co_owner_record_ids, archived_at
                                                                from kb.nodes where external_id like 'np:%%'""")}
+        flusher[0] = None
         for r in recs:
             nid = kb_rec.get(r["np"])
-            if not nid:
+            if not nid or done_before("owners", [order.get(r["type"], 3), r["np"]]):
                 continue
+            at("owners", [order.get(r["type"], 3), r["np"]])
             want_o = kb_rec.get(r["owner_np"]) if r["owner_np"] else None
             want_c = [kb_rec[x] for x in r["co_np"] if x in kb_rec]
             okey = r["np"] + "#owners"
@@ -631,7 +689,15 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
             writes += len(new_links)
             new_links.clear()
             checkpoint()
-        for key, L in D["links"].items():
+        flusher[0] = flush_links
+        for key, L in sorted(D["links"].items()):
+            if done_before("links", key):
+                m = smap.get(("link", key))
+                hit = res_now.get(key)
+                if m or hit:
+                    kb_link[key] = m["kb_id"] if m else str(hit[0])
+                continue
+            at("links", key)
             lk = detect(L["url"])
             content = {"url": L["url"], "title": L["title"], "kind": L["kind"], "link_kind": lk, "tags": L["tags"]}
             cs = _h(content)
@@ -682,7 +748,11 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
             writes += len(new_rels)
             new_rels.clear()
             checkpoint()
-        for key, d in D["rels"].items():
+        flusher[0] = flush_rels
+        for key, d in sorted(D["rels"].items()):
+            if done_before("relationships", key):
+                continue
+            at("relationships", key)
             src, tgt = kb_rec.get(d["src"]), kb_rec.get(d["tgt"])
             if not src or not tgt:
                 continue
@@ -741,7 +811,11 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
             writes += len(new_att)
             new_att.clear()
             checkpoint()
-        for key, a in D["attachments"].items():
+        flusher[0] = flush_att
+        for key, a in sorted(D["attachments"].items()):
+            if done_before("attachments", key):
+                continue
+            at("attachments", key)
             nid, rid = kb_rec.get(a["rec"]), kb_link.get(a["link"])
             if not nid or not rid:
                 continue
@@ -776,7 +850,11 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
         live = {("record", k) for k in D["recs"]} | {("record", k + "#owners") for k in D["recs"]} | \
                {("link", k) for k in D["links"]} | {("relationship", k) for k in D["rels"]} | \
                {("attachment", k) for k in D["attachments"]}
-        for (unit, key), m in smap.items():
+        flusher[0] = None
+        for (unit, key), m in sorted(smap.items()):
+            if done_before("removed", unit + "|" + key):
+                continue
+            at("removed", unit + "|" + key)
             if (unit, key) in live or m["removed"] or key.endswith("#owners"):
                 continue
             conn.execute("update kb.sync_map set removed_at = now() where unit = %s and key = %s", (unit, key))
@@ -790,13 +868,15 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
             out["removed_at_source"][unit] += 1
             writes += 1; checkpoint()
 
+        # The rest (layout, legacy rules) is the run's short finish: it is never cut off.
+        stopping[0] = True
         # -- layout: only where nobody placed the record yet --------------------------------------
         pts = [(kb_rec[n], x, y) for n, (x, y) in D["layout"].items() if n in kb_rec]
         if pts:
             conn.execute("""insert into kb.graph_positions (layout, node_id, x, y)
-                            select 'default', n, x * 4, y * 4 from unnest(%s::uuid[], %s::float8[], %s::float8[]) u(n, x, y)
+                            select 'default', n, x * %s, y * %s from unnest(%s::uuid[], %s::float8[], %s::float8[]) u(n, x, y)
                             on conflict (layout, node_id) do nothing""",
-                         ([p[0] for p in pts], [p[1] for p in pts], [p[2] for p in pts]))
+                         (LAYOUT_SCALE, LAYOUT_SCALE, [p[0] for p in pts], [p[1] for p in pts], [p[2] for p in pts]))
         # -- legacy rules (pipeline/kb_legacy.py), on every run --------------------------------
         # Once adopted (kb.legacy_archive has rows), the legacy step applies on
         # every run; after `pipeline/kb_legacy.py restore` (which empties it)
@@ -808,7 +888,8 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
         out["status"] = "ok"
     except _OutOfTime:
         out["status"], out["partial"] = "ok", True
-        out["message"] = "time budget reached; the next run continues (the diff is recomputed)"
+        out["message"] = (f"time budget reached in {(out.get('resume') or {}).get('phase', 'setup')}; "
+                          "the next run continues from there")
     except Exception as exc:                                        # noqa: BLE001 - recorded, then re-raised
         conn.rollback()
         out["status"] = "error"
@@ -831,16 +912,25 @@ class _OutOfTime(Exception):
     pass
 
 
+def _key(k):
+    """Resume keys compare as JSON stores them (a record's key is [order, id])."""
+    return tuple(k) if isinstance(k, (list, tuple)) else (k,)
+
+
 def _finish(conn, run_id, out):
     conn.rollback()
     conn.autocommit = True
     counts = {k: dict(out[k]) for k in ("created", "updated", "conflicts", "removed_at_source", "restored_at_source", "adopted",
                                         "conflicts_cleared")}
     counts["partial"] = out.get("partial", False)
-    conn.execute("""update kb.sync_runs set finished_at = now(), status = %s, counts = %s, conflicts = %s, errors = %s, message = %s
+    # An error keeps the previous resume point: the next run retries from where
+    # the last good run stopped (its committed batches are kept either way).
+    resume = out.get("resume") if out["status"] == "ok" else out.get("resumed_from")
+    conn.execute("""update kb.sync_runs set finished_at = now(), status = %s, counts = %s, conflicts = %s, errors = %s, message = %s,
+                           resume = %s
                     where id = %s""",
                  (out["status"], json.dumps(counts, default=str), sum(dict(out["conflicts"]).values()),
-                  json.dumps(out["errors"]), out.get("message"), run_id))
+                  json.dumps(out["errors"]), out.get("message"), json.dumps(resume) if resume else None, run_id))
     conn.autocommit = False
 
 

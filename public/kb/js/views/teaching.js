@@ -64,6 +64,7 @@ export function viewTeaching(v, r) {
     } catch (e) { clear(box); box.appendChild(errorBox(e, () => load(rq))); }
   };
   load(q);
+  S.listReload = () => load((S.route && S.route.q) || r.q);   // B1 (run 6): live updates reload this view
   const keys = (x) => ['domain', 'role', 'legacy', 'q'].map((k) => x[k] || '').join('|');
   let last = keys(q);
   S.onQueryChange = (nr) => { if (keys(nr.q) !== last) { last = keys(nr.q); load(nr.q); } };
@@ -107,6 +108,7 @@ export function viewTimeline(v, r) {
     } catch (e) { clear(box); box.appendChild(errorBox(e, () => load(rq))); }
   };
   load(r.q);
+  S.listReload = () => load((S.route && S.route.q) || r.q);   // B1 (run 6): live updates reload this view
   let last = r.q.program || '';
   S.onQueryChange = (nr) => { if ((nr.q.program || '') !== last) { last = nr.q.program || ''; load(nr.q); } };
 }

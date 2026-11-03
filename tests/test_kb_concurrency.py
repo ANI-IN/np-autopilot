@@ -59,7 +59,8 @@ def test_two_editors_same_record_exactly_one_wins():
         return _run(role, fn)
 
     with ThreadPoolExecutor(2) as ex:
-        results = list(ex.map(lambda args: edit(*args), [("editor", "A"), ("contributor", "B")]))
+        # run 6: a contributor's edit is a proposal (0033); the race is between two writers
+        results = list(ex.map(lambda args: edit(*args), [("editor", "A"), ("admin", "B")]))
     wins = [r for r in results if isinstance(r, dict)]
     losses = [r for r in results if isinstance(r, Conflict)]
     assert len(wins) == 1 and len(losses) == 1, results

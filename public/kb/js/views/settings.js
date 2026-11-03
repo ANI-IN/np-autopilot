@@ -7,8 +7,9 @@ import { pageHead } from '../page.js';
 import { fieldInput } from '../form.js';
 import { loadTypes, refreshCounts } from '../app.js';
 import { kindLabel } from '../detail.js';
+import { peopleTab } from './people.js';             // B1 (run 6): Settings -> People
 
-const TABS = [['types', 'Record types'], ['relationships', 'Relationship types'], ['links', 'Link kinds'], ['tags', 'Tags'], ['members', 'Members'], ['tokens', 'API tokens'], ['templates', 'Templates'], ['sync', 'Sync']];
+const TABS = [['types', 'Record types'], ['relationships', 'Relationship types'], ['links', 'Link kinds'], ['tags', 'Tags'], ['members', 'Members'], ['people', 'People'], ['tokens', 'API tokens'], ['templates', 'Templates'], ['sync', 'Sync']];
 const ICONS = ['box', 'book-open', 'graduation-cap', 'layers', 'calendar-days', 'radio', 'lightbulb', 'circle-user', 'workflow', 'compass', 'briefcase', 'puzzle', 'target',
   'clipboard-list', 'file-text', 'presentation', 'notebook-pen', 'list-checks', 'scroll-text', 'book-marked', 'film', 'mic-vocal', 'star', 'flag', 'shapes', 'hash', 'inbox'];
 const FIELD_KIND_LABEL = { short_text: 'Short text', long_text: 'Long text', number: 'Number', date: 'Date', datetime: 'Date and time', duration: 'Duration (minutes)',
@@ -17,11 +18,11 @@ const FIELD_KIND_LABEL = { short_text: 'Short text', long_text: 'Long text', num
 export function viewSettings(v, r) {
   const tab = TABS.some(([k]) => k === r.q.tab) ? r.q.tab : 'types';
   v.appendChild(pageHead({ title: 'Settings', sub: 'Your role is ' + S.me.role + '.' }));
-  v.appendChild(el('div', { class: 'tabs', role: 'tablist' }, TABS.filter(([k]) => (k !== 'members' && k !== 'sync') || can('admin')).map(([k, l]) =>
+  v.appendChild(el('div', { class: 'tabs', role: 'tablist' }, TABS.filter(([k]) => (k !== 'members' && k !== 'sync' && k !== 'people') || can('admin')).map(([k, l]) =>
     el('a', { href: '#/settings?tab=' + k, role: 'tab', 'aria-selected': k === tab ? 'true' : 'false', 'data-testid': 'settings-tab-' + k, text: l }))));
   const body = el('div', { class: 'page-body', style: 'padding-top:16px' });
   v.appendChild(body);
-  ({ types: typesTab, relationships: relTab, links: linksTab, tags: tagsTab, members: membersTab, tokens: tokensTab, templates: templatesTab, sync: syncTab })[tab](body);
+  ({ types: typesTab, relationships: relTab, links: linksTab, tags: tagsTab, members: membersTab, people: peopleTab, tokens: tokensTab, templates: templatesTab, sync: syncTab })[tab](body);
   S.onQueryChange = (nr) => { if ((nr.q.tab || '') !== (r.q.tab || '')) { clear(v); viewSettings(v, nr); } };
 }
 const reloadSettings = async () => { await loadTypes(); const { rerender } = await import('../app.js'); rerender(); };
@@ -64,6 +65,8 @@ function typeEditor(t) {
   const defStatus = el('select', { 'aria-label': 'Default status' }, el('option', { value: 'active', text: 'Live', selected: t.default_status !== 'draft' }), el('option', { value: 'draft', text: 'Draft', selected: t.default_status === 'draft' }));
   const ownerRule = el('select', { 'aria-label': 'Owner rule' }, el('option', { value: 'creator', text: 'The creator owns it', selected: t.owner_rule !== 'none' }), el('option', { value: 'none', text: 'No owner until assigned', selected: t.owner_rule === 'none' }));
   const container = el('input', { type: 'checkbox', checked: !!t.is_container, 'aria-label': 'Other records can live inside it (like a course)' });
+  // B1 (run 6): "owner expected" decides whether "No owner" counts this type (admins change it)
+  const ownerExpected = el('input', { type: 'checkbox', checked: isNew ? false : !!t.owner_expected, disabled: !can('admin'), 'data-testid': 'type-owner-expected', 'aria-label': 'Records of this type should have an owner' });
   const fieldList = el('div', { class: 'col', 'data-testid': 'type-fields' });
   const previewBox = el('div', { class: 'col', style: 'gap:12px', 'data-testid': 'type-preview' });
   const err = el('div', { class: 'field-error', role: 'alert', 'data-testid': 'type-error' });
@@ -119,7 +122,9 @@ function typeEditor(t) {
       el('div', { class: 'form-section' }, el('div', { class: 'grid-2' }, fr('Name', label), fr('Plural', pluralIn)), fr('Description', desc), fr('Icon', iconGrid), fr('Colour', swatches, 'Used for the icon and dot only.')),
       el('div', { class: 'form-section' }, el('h3', { text: 'Fields' }), el('p', { class: 'faint xs', text: 'Keys are permanent. Archiving a field hides it and keeps its data. Changing a kind is allowed only if every existing value converts.' }), fieldList),
       el('div', { class: 'form-section' }, el('h3', { text: 'Placement and defaults' }), fr('Can be placed under', parents), el('label', { class: 'row small' }, parentReq, 'Must be placed under one of them'),
-        el('label', { class: 'row small' }, container, 'Other records can live inside it (like a course)'), el('div', { class: 'grid-2' }, fr('Default status', defStatus), fr('Owner', ownerRule))),
+        el('label', { class: 'row small' }, container, 'Other records can live inside it (like a course)'),
+        el('label', { class: 'row small' }, ownerExpected, 'Records of this type should have an owner (counted under “No owner” on Data quality)'),
+        el('div', { class: 'grid-2' }, fr('Default status', defStatus), fr('Owner', ownerRule))),
       el('div', { style: 'padding:0 24px 16px' }, err)),
     el('div', { class: 'form-section', style: 'border:0;background:var(--bg-subtle)' }, el('h3', { text: 'Preview of the form' }), previewBox));
   preview();
@@ -128,6 +133,7 @@ function typeEditor(t) {
     const body = { label: label.value.trim(), plural: pluralIn.value.trim() || undefined, description: desc.value.trim() || null, icon: icon_, color,
       fields: fields.filter((f) => f.label && f.label.trim()), allowed_parents: $$('input:checked', parents).map((c) => c.value), parent_required: parentReq.checked,
       default_status: defStatus.value, owner_rule: ownerRule.value, is_container: container.checked };
+    if (can('admin')) body.owner_expected = ownerExpected.checked;   // B1 (run 6)
     try {
       const out = isNew ? await api('POST', '/types/node', body) : await api('PATCH', '/types/node/' + t.key, Object.assign({ version: t.version }, body));
       closeSheet(true); toast(isNew ? 'Created the “' + out.label + '” type' : 'Saved' + (out.converted_records ? ' — converted ' + plural(out.converted_records, 'record') : ''));

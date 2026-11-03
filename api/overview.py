@@ -14,10 +14,16 @@ from pathlib import Path
 # file sits one level above web/. The shared modules stay in web/lib.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 from lib import data                                                   # noqa: E402
+from lib.kb import npmap                                               # noqa: E402
+
+
+def _src():
+    """kb (default) or the old tables (NP_MAP_SOURCE=old, the rollback switch)."""
+    return npmap if npmap.enabled() else data
 
 
 def _overview(conn, identity, params):
-    out = data.overview(conn)
+    out = _src().overview(conn)
     if out["truncated"]:
         out["note"] = (f"default view hit the {data.OVERVIEW_CAP}-node cap — a "
                        "TOOLING limit, not the shape of the graph. The landing "

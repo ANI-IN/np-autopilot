@@ -54,6 +54,58 @@ provenance edges) are shown through the record's links instead of as nodes.
 Access to `/` is unchanged (anyone with an NP role is at least a KB viewer,
 `kb.role()`).
 
+### How the map reads kb (run 6, B1: `web/lib/kb/npmap.py`)
+
+- **One module, the same shapes.** `npmap` answers /api/structure, /overview,
+  /node, /neighbourhood, /search, /staffing, /coverage and /me with
+  web/lib/data.py's response shapes (CONTRACTS §5), from ONE in-memory model of
+  the live KB per change-feed head (rebuilt when `max(kb.changes.id)` or the
+  live counts move; ~0.8 s on the real data, then cached per process).
+- **Vocabulary, translated back.** `config/kb-projection-mapping.yaml` read
+  backwards: KB type -> projection type (`session` -> the map's session type,
+  `team_member` -> person, ...; a type the projection never had keeps its KB
+  key and is carried in the structure); KB relationship (type, source type,
+  target type) -> projection relation, with `flip`; the teaching pair split on
+  the relationship's own props (`role` = current mastersheet, `older_role` =
+  older sheets, class dates read back from the note). Links attached with a
+  mapping note (Slides, Code, Assignment, ...) become the artifact nodes they
+  came from (`link:<resource id>`). No taxonomy literal in the code.
+- **Ids.** A record the sync brought in keeps its projection id
+  (`external_id` `np:<id>`), so shared links still open; a KB-made record uses
+  its uuid; /api/node and /api/neighbourhood accept either. Relationship ids
+  are 32-bit numbers derived from the KB ids (the wire format packs Uint32).
+- **Positions** from `kb.graph_positions` (layout `default`, the Graph page's
+  shared layout, divided by the sync's scale 4); a record with none is placed
+  next to its placed neighbours (deterministic), so the map never re-simulates.
+- **Current domains' codes** (SD1-SD4) come from the domain records' `slug`
+  field (0033; the sync fills it from the mastersheet), else the name.
+- **ETag** = format + newest change id + live counts + the caller's NP and KB
+  roles. **Landing numbers** (/api/stats, no session, counts only, through
+  `kb.landing_stats()`) replace `public/stats.json`, which stays as the fallback.
+- **Live.** The map polls `/api/kb/changes` every 2.5 s (it has no supabase-js;
+  every NP member is a KB viewer) and refetches the structure on a relevant
+  change (304 when nothing it shows changed); a relationship-type change also
+  refetches `/api/kb/types` (a custom type is drawn in the legend with its own
+  colour and line style). Positions, the camera and the open panel stay.
+
+**What the KB cannot supply** (the key stays, empty):
+
+| Key | Route | Why |
+|---|---|---|
+| `label_raw` | structure `raw`, /node | the KB keeps one name |
+| `sensitive` | /node | the KB holds no sensitive rows (`false`) |
+| provenance `sheet`, `row_num`, `col_num`, `col_name`, `page`, `within_cell`, `ordinal`, `prop`, `evidence`, `entered_at`, `sheet_count` | /node `provenance.corpus[]` | the KB keeps a cited file as a "Source" link (file name + Drive link only) |
+| `provenance.hand`, `hand_note` | /node | hand-entered provenance is not imported |
+| files as nodes (`file`), `delivers` file edges for unattached files | structure, /neighbourhood | files are links on records; only attached ones appear |
+| edge props `rank`, `basis`, `inferred`, `avg_rating`, `via_alias`, `subject_raw`, `cell_order`, `attached_*` | structure, /node detail | not imported (MIGRATION_MAPPING.md) |
+| node props outside `mapped_props` (`cross_validated`, `merge_ids`, `pipeline_status`, ...) | structure, /node | not imported |
+| archived (legacy) records | every route | the map shows what the KB holds: archived legacy records are not on the map |
+
+**Rollback:** `NP_MAP_SOURCE=old` (Vercel variable) serves every map route from
+the old tables again (web/lib/data.py, unchanged) and /api/stats 404s (the page
+falls back to `public/stats.json`). Nothing else changes; unset it to return
+to kb.
+
 ---
 
 # Architecture — KB workspace (knowledge platform)

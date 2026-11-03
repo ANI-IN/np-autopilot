@@ -5,6 +5,12 @@ from pathlib import Path
 # file sits one level above web/. The shared modules stay in web/lib.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "web"))
 from lib import data                                                   # noqa: E402
+from lib.kb import npmap                                               # noqa: E402
+
+
+def _src():
+    """kb (default) or the old tables (NP_MAP_SOURCE=old, the rollback switch)."""
+    return npmap if npmap.enabled() else data
 
 
 def _search(conn, identity, params):
@@ -12,7 +18,7 @@ def _search(conn, identity, params):
     if len(q) < 2:
         return {"results": [], "note": "query must be at least 2 characters"}, 0
     types = [t for t in (params.get("types") or "").split(",") if t]
-    rows = data.search(conn, q, types or None, params.get("limit", 50))
+    rows = _src().search(conn, q, types or None, params.get("limit", 50))
     return {"results": rows, "count": len(rows)}, len(rows)
 
 

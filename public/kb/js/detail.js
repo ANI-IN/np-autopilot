@@ -171,6 +171,11 @@ function propsGrid(st, editable) {
       editable ? el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'add-backup', text: 'Add', onclick: () => pick('Add a backup', (id) => saveNode(st, { co_owner_record_ids: ids.concat([id]) })) }) : null], 'panel-co-owner-records');
   }
   // A person record's sign-in: linked by e-mail now, or the first time they sign in.
+  // B1 (run 6): "Claim this profile" — any member; an admin approves it in Approvals
+  if (['instructor', 'team_member'].includes(n.type) && !n.account && !can('admin') && !S.myPerson) {
+    row('Is this you?', [el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'claim-profile', text: 'Claim this profile', onclick: async () => {
+      try { await api('POST', '/claims', { node_id: n.id }); } catch (e) { if (e.status === 202) { toast('Claim sent: an admin confirms it in Approvals'); return; } failToast(e, 'Not sent'); } } })], 'panel-claim');
+  }
   if (['instructor', 'team_member'].includes(n.type) && (n.account || can('admin'))) {
     const acc = n.account;
     row('Sign-in account', [acc ? el('span', { text: acc.email }) : el('span', { class: 'faint', text: 'Not linked' }),
