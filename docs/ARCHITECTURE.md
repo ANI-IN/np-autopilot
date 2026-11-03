@@ -183,3 +183,34 @@ pipeline/kb_admins.py        ── ADMIN_EMAILS bootstrap (operator, owner conn
 | `pipeline/kb_admins.py` | admin bootstrap |
 | `eval/kb_dev_server.py` | local server for the browser/MCP tests (never deployed) |
 | `scripts/verify_all.sh`, `scripts/kb_perf.py` | verification |
+
+## Connectors
+
+The sync (`web/lib/kb/sync.py`, `run`) is one engine; the source it reads is a
+**connector** (`web/lib/kb/connectors/`). Today there is one, NP Autopilot
+(`connectors/np_autopilot.py`), and `sync.run(conn, ...)` uses it by default:
+every call site, CLI flag, route, output key, checksum, lock and table is as
+before.
+
+| Step (`connectors/base.py`, `Connector`) | NP Autopilot |
+|---|---|
+| `name`, `actor_label` | `np_autopilot`, "Sync (NP Autopilot)" |
+| `load_config(conn)`: the mapping, checked against the taxonomy | `sync.load_mapping` (`config/kb-projection-mapping.yaml`) |
+| `desired_state(conn, config, **opts)`: records, links, relationships, attachments, layout, report, with the source's own rules | `sync.desired_state` (the old tables; `np_categories` for current vs legacy) |
+| `exclusions(conn)`: what must never be created again | `legacy_delete.excluded` (`kb.sync_exclusions`, 0037) |
+| `after_run(conn, out)`: the finishing step, never cut off by the budget | the legacy rules (`legacy.archive`), once adopted |
+
+The engine does everything else, the same for every source: the lock, the run
+log, the diff against `kb.sync_map`, the batched phases, conflicts, "removed
+at source", the time budget and resume, the layout, `actor_type='sync'`.
+
+A new source (Google Drive, Uplevel LMS, Atlassian) plugs in by subclassing
+`Connector`, returning the desired-state dict the docstring describes,
+registering an instance (`connectors.register`) and calling
+`sync.run(conn, connector=connectors.get("<name>"))`.
+`tests/test_kb_connectors.py` runs a fake one through the engine. Before a
+second source runs for real, the bookkeeping needs a `source` column
+(`sync_map`, `sync_runs`, `sync_exclusions`), a per-source external-id prefix
+(today `np:`) and a lock per source; an incremental cursor, source permissions
+and retries are not in the interface yet (`docs/VISION_AND_ROADMAP.md` §3,
+item 4).

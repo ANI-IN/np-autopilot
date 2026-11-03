@@ -148,8 +148,10 @@ def np_categories(nodes: dict, edges: list, R: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------- desired state
-def desired_state(conn, M: dict, source: str = "public") -> dict:
-    """`source`: the schema holding the old tables (tests use a synthetic one)."""
+def desired_state(conn, M: dict, source: str = "public", exclusions: tuple | None = None) -> dict:
+    """`source`: the schema holding the old tables (tests use a synthetic one).
+    `exclusions`: (rule on?, excluded ids) as legacy_delete.excluded returns
+    them (the NP Autopilot connector passes them); None reads them here."""
     if not re.fullmatch(r"[a-z_][a-z0-9_]{0,40}", source):
         raise ValueError("bad source schema name")
     q = lambda sql, p=(): conn.execute(sql.replace("public.", source + "."), p).fetchall()     # noqa: E731
@@ -191,7 +193,7 @@ def desired_state(conn, M: dict, source: str = "public") -> dict:
     # and neither is any source id the deletion removed. Their relationships
     # and attachments then have a missing end and are left out with them.
     from .legacy_delete import excluded as _excluded
-    rule_on, gone = _excluded(conn)
+    rule_on, gone = exclusions if exclusions is not None else _excluded(conn)
     excluded_np: set = set()
     if rule_on or gone:
         drop = [k for k, r in recs.items() if k in gone or (rule_on and (
@@ -488,12 +490,16 @@ def resume_point(conn) -> dict | None:
 
 def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool = True,
         budget_seconds: float | None = None, batch: int = 400, source: str = "public",
-        mapping: dict | None = None, operator: bool = False, resume: bool = True) -> dict:
+        mapping: dict | None = None, operator: bool = False, resume: bool = True, connector=None) -> dict:
     """The whole sync. `conn` must be able to write the kb tables as their
     owner (CLI: the session pooler login; the API route resets the request
     role for an authorised caller). Preview (apply=False) runs everything in
-    one transaction and rolls back."""
+    one transaction and rolls back. `connector` (web/lib/kb/connectors): the
+    source's steps (configuration, desired state, exclusions, finishing step);
+    default NP Autopilot, the only one today."""
     from . import typedefs as td
+    from . import connectors
+    src_conn = connector or connectors.get(connectors.DEFAULT)
     if not enabled():
         raise SyncDisabled("KB_SYNC_ENABLED is false: the sync is switched off")
     t0 = time.monotonic()
@@ -517,10 +523,10 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
 
     try:
         # inside the logged part: a bad mapping is a failed run (run log, admin banner), not a silent one
-        M = mapping or load_mapping()
+        M = mapping or src_conn.load_config(conn)
         attribute()
         ensure_config(conn, M, actor_id, operator)
-        D = desired_state(conn, M, source)
+        D = src_conn.desired_state(conn, M, source=source)
         out["report"] = D["report"]
         q = lambda sql, p=(): conn.execute(sql, p).fetchall()             # noqa: E731
         types = {t["key"]: t["id"] for t in td.all_types(conn)["node_types"]}
@@ -928,13 +934,9 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
                             select 'default', n, x * %s, y * %s from unnest(%s::uuid[], %s::float8[], %s::float8[]) u(n, x, y)
                             on conflict (layout, node_id) do nothing""",
                          (LAYOUT_SCALE, LAYOUT_SCALE, [p[0] for p in pts], [p[1] for p in pts], [p[2] for p in pts]))
-        # -- legacy rules (pipeline/kb_legacy.py), on every run --------------------------------
-        # Once adopted (kb.legacy_archive has rows), the legacy step applies on
-        # every run; after `pipeline/kb_legacy.py restore` (which empties it)
-        # the sync stops re-archiving until the step is run again.
-        from . import legacy as lg
-        if conn.execute("select exists (select 1 from kb.legacy_archive)").fetchone()[0]:
-            out["legacy"] = lg.archive(conn)
+        # -- the connector's finishing step (NP Autopilot: the legacy rules,
+        # pipeline/kb_legacy.py, on every run once adopted) --------------------------------
+        src_conn.after_run(conn, out)
         checkpoint(force=True)
         out["status"] = "ok"
     except _OutOfTime:
