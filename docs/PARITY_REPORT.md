@@ -88,3 +88,28 @@ Archived (kb.legacy_archive): **874** records: 35 legacy domain, 673 legacy inst
 - Still live and tagged legacy (hidden by default): 7 domain, 1213 instructor, 738 module, 42 program.
 
 Restore everything with one command: `SUPABASE_DB_URL_SESSION=<db> python pipeline/kb_legacy.py restore` (tested twice: 874 archived -> 874 restored, records / relationships / links back to 5,961 / 6,941 / 10,437 exactly). The permanent delete is prepared in HANDOFF.md and is not run.
+
+## Run 6 (R3): legacy domains and modules permanently deleted (owner-approved)
+
+Current domains are only Full Stack, Backend, Frontend and Test Engineering;
+every other domain, and every legacy module, was deleted from the KB (the
+old NP Autopilot tables are untouched). `pipeline/kb_legacy_delete.py`,
+`web/lib/kb/legacy_delete.py`, migration 0037 (the sync never re-creates them).
+
+| | local real-data copy (:8766) | DEV |
+|---|---|---|
+| Domains deleted | 42 | 42 |
+| Modules deleted | 904 | 904 |
+| Relationships removed with them | 3,844 | 3,844 |
+| Attachments removed with them | 1,040 | 1,040 |
+| Expertise links removed (the instructors stay) | 1,133 | 1,133 |
+| Records left without a parent (flagged) | 0 | 0 |
+| Links left unattached (flagged) | 0 | 0 |
+| Source ids excluded from the sync | 946 | 946 |
+| After: domains / modules live | 4 / 20 | 4 / 20 |
+| Next sync: created / conflicts | 0 / 0 | 0 / 0 |
+
+Restore: `pipeline/kb_legacy_delete.py restore backups/legacy_deleted_<db>_<time>.json`
+(rehearsed on a clone: every table's row count back exactly). The exports are in
+`backups/` (gitignored: real data). One side effect: with the duplicate legacy
+"Frontend" gone, the sync renamed "Frontend (2)" back to "Frontend".
