@@ -37,7 +37,7 @@ Click **New record** in the sidebar (or press **c**). Everything goes into one f
 
 If anything is wrong, nothing is saved and the problem is highlighted, so you can fix it and try again. After saving, the message at the bottom offers **Open** and, for a few seconds, **Undo**.
 
-If you are a **contributor**, the button says **Send for approval**: an editor reviews your new record in **Approvals** before it appears.
+If you are a **contributor**, the button says **Send for approval**: an editor reviews your new record in **Approvals** before it appears. The same goes for your changes to an existing record's fields: they wait in **Approvals** until an editor applies them. Links and relationships you add to existing records are saved straight away.
 
 The form saves a draft on your computer as you type. If you close it by accident, the next New record offers to restore it.
 
@@ -121,10 +121,10 @@ Changing a type that is already in use is safe. Renaming is fine. Removing a fie
 
 ## Roles
 
-- **Viewer**: sees everything, can flag things as incorrect.
-- **Contributor**: edits records, adds links and relationships, and sends new records and archive requests for approval.
+- **Viewer**: sees everything, can flag things as incorrect, and can claim their own person record (**Claim this profile**; an admin confirms it).
+- **Contributor**: attaches links and adds relationships to existing records directly; sends new records, field edits, archive requests and type changes for approval. The database enforces this, whatever tool is used.
 - **Editor**: creates and archives directly, approves proposals, and can overwrite a conflicting change.
-- **Admin**: everything an editor does, plus record types, relationship type review and merges, roles and permanent deletion. Admins also see a **Back to NP Autopilot** link in the sidebar.
+- **Admin**: everything an editor does, plus record types (including which types should have an owner), relationship type review and merges, roles, people's e-mail addresses (**Settings → People**), profile claims, and permanent deletion. Admins also see a **Back to NP Autopilot** link in the sidebar.
 
 ## Keeping things accurate
 

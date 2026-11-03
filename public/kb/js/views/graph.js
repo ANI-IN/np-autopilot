@@ -22,7 +22,8 @@ import { S, el, add, clear, icon, typeIcon, typeLabel, api, toast, failToast, qs
 import { pageHead } from '../page.js';
 import { relItems, relCombobox, createRelationshipType } from '../relpicker.js';
 import { openRecordForm } from '../form.js';
-import { onLiveChange } from '../live.js';
+import { onLiveChange, onLiveFeed } from '../live.js';   // B1 (run 6): onLiveFeed
+import { loadTypes } from '../app.js';                    // B1 (run 6)
 import { onPresence, others } from '../realtime.js';
 
 const SHAPES = { program: 'round-hexagon', course: 'round-rectangle', domain: 'round-pentagon', module: 'ellipse', week: 'round-tag',
@@ -142,6 +143,7 @@ export function viewGraph(v, r) {
       { selector: 'edge', style: { width: 1.2, 'line-color': tok('--border-strong', '#ccc'), 'target-arrow-color': tok('--border-strong', '#ccc'),
         'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'arrow-scale': 0.7, label: 'data(label)', 'font-size': 9, color: tok('--text-3', '#777'), 'text-rotation': 'autorotate', 'text-opacity': 0,
         'min-zoomed-font-size': 9 * LABELS_FROM_ZOOM } },
+      { selector: 'edge[color]', style: { 'line-color': 'data(color)', 'target-arrow-color': 'data(color)', 'line-style': 'data(lineStyle)' } },   // B1 (run 6)
       { selector: 'edge.hover, edge:selected', style: { 'text-opacity': 1, width: 2, 'line-color': tok('--accent', '#1d4ed8'), 'target-arrow-color': tok('--accent', '#1d4ed8') } },
       { selector: 'edge.ghost', style: { 'line-style': 'dashed', 'line-color': tok('--accent', '#1d4ed8'), 'target-arrow-color': tok('--accent', '#1d4ed8'), width: 2, label: '' } },
       { selector: '.hidden', style: { display: 'none' } },
@@ -165,7 +167,8 @@ export function viewGraph(v, r) {
   function zoomBy(f) { cy.zoom({ level: cy.zoom() * f, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } }); }
   const nodeData = (n) => ({ id: n.id, label: n.name, type: n.type, color: (S.typeByKey[n.type] || {}).color || n.color, degree: n.degree || 0,
     shape: SHAPES[n.type] || 'ellipse', owner: n.owner_id || null, scope: n.scope_id || null, version: n.version });
-  const edgeData = (e) => ({ id: e.id, source: e.source_id, target: e.target_id, label: e.label, type: e.type, note: e.note || '', version: e.version });
+  const edgeStyle = (k) => { const et = S.edgeTypes.find((x) => x.key === k) || {}; return { color: et.color || tok('--border-strong', '#ccc'), lineStyle: et.line_style || 'solid' }; };   // B1 (run 6)
+  const edgeData = (e) => Object.assign({ id: e.id, source: e.source_id, target: e.target_id, label: e.label, type: e.type, note: e.note || '', version: e.version }, edgeStyle(e.type));
   function toRendered(pos) { const pan = cy.pan(), z = cy.zoom(); return { x: pos.x * z + pan.x, y: pos.y * z + pan.y }; }
   function toModel(rp) { const pan = cy.pan(), z = cy.zoom(); return { x: (rp.x - pan.x) / z, y: (rp.y - pan.y) / z }; }
   function nodeAt(rp) {
@@ -192,11 +195,11 @@ export function viewGraph(v, r) {
       side.appendChild(el('label', { class: 'legend-item' }, cb, legendShape(SHAPES[t.key] || 'ellipse', t.color), el('span', { class: 'truncate', style: 'flex:1', text: t.plural }), el('span', { class: 'count', text: present[t.key] || 0 })));
     });
     side.appendChild(el('h3', { text: 'Relationships', style: 'margin-top:8px' }));
-    const types = {}; cy.edges(':not(.ghost)').forEach((e) => { const k = e.data('type'); types[k] = types[k] || { label: e.data('label'), n: 0 }; types[k].n++; });
+    const types = {}; cy.edges(':not(.ghost)').forEach((e) => { const k = e.data('type'); types[k] = types[k] || { label: (S.edgeTypes.find((x) => x.key === k) || {}).label || e.data('label'), n: 0 }; types[k].n++; });
     Object.keys(types).sort().forEach((k) => {
       const cb = el('input', { type: 'checkbox', checked: !edgeHidden[k], 'data-testid': 'graph-edge-filter-' + k, 'aria-label': 'Show ' + types[k].label });
       cb.addEventListener('change', () => { edgeHidden[k] = !cb.checked; applyFilter(); });
-      side.appendChild(el('label', { class: 'legend-item small' }, cb, el('span', { class: 'legend-line', 'aria-hidden': 'true' }), el('span', { class: 'truncate', style: 'flex:1', text: types[k].label }), el('span', { class: 'count', text: types[k].n })));
+      side.appendChild(el('label', { class: 'legend-item small' }, cb, el('span', { class: 'legend-line', 'aria-hidden': 'true', 'data-color': edgeStyle(k).color, 'data-line': edgeStyle(k).lineStyle, style: 'height:0;background:none;border-top:2px ' + edgeStyle(k).lineStyle + ' ' + edgeStyle(k).color }), el('span', { class: 'truncate', style: 'flex:1', text: types[k].label }), el('span', { class: 'count', text: types[k].n })));
     });
     side.appendChild(el('h3', { text: 'Filter', style: 'margin-top:8px' }));
     const owners = {}; cy.nodes(':not(.ghost):not(.cluster)').forEach((n) => { if (n.data('owner')) owners[n.data('owner')] = 1; });
@@ -719,11 +722,29 @@ export function viewGraph(v, r) {
     cy.add({ group: 'nodes', data: nodeData(Object.assign({ degree: 0 }, n)), position: pos, classes: 'placed' });
   }
   async function refresh() { await applyChanges([...cy.nodes(':not(.ghost):not(.cluster)').map((n) => ({ table_name: 'nodes', row_id: n.id() }))]); }
-  onLiveChange((theirs) => {
+  // B1 (run 6): follow EVERY change by its kind (docs/CONTRACTS.md §2): records and
+  // relationships are patched; positions move; a type or relationship-type change
+  // reloads the types and restyles; a tag/sync change or a full page of changes
+  // refreshes what is on screen.
+  onLiveFeed(async (changes, info) => {
     if (S.graph !== G) return;
-    const mine = theirs.filter((c) => c.table_name === 'nodes' || c.table_name === 'edges');
-    if (mine.length) applyChanges(mine);
+    if (info.types) {
+      await loadTypes();
+      cy.batch(() => cy.edges(':not(.ghost)').forEach((e) => e.data(Object.assign({ label: (S.edgeTypes.find((x) => x.key === e.data('type')) || {}).label || e.data('label') }, edgeStyle(e.data('type'))))));
+      cy.batch(() => cy.nodes(':not(.ghost):not(.cluster)').forEach((n) => n.data('color', (S.typeByKey[n.data('type')] || {}).color || n.data('color'))));
+      drawLegend();
+    }
+    const moved = [...new Set(changes.filter((c) => c.kind === 'layout.update').flatMap((c) => c.node_ids || []))].filter((id) => cy.getElementById(id).length);
+    if (moved.length) {
+      const pos = await savedPositions(moved);
+      cy.batch(() => moved.forEach((id) => { if (pos[id]) cy.getElementById(id).position(pos[id]); }));
+      drawMini();
+    }
+    if (info.refetch) { await refresh(); return; }
+    const rows = changes.filter((c) => c.table_name === 'nodes' || c.table_name === 'edges');
+    if (rows.length) applyChanges(rows);
   });
+  onLiveChange(() => {});
   function markPresence() {
     cy.batch(() => cy.nodes(':not(.ghost):not(.cluster)').forEach((n) => n.toggleClass('presence', others(n.id()).some((o) => o.editing))));
     if (handleNode) placeHandles();

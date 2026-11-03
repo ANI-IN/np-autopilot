@@ -6,7 +6,7 @@ import { pageHead } from '../page.js';
 import { refreshCounts, loadTypes } from '../app.js';
 import { mergeDialog } from './settings.js';
 
-const ACTION = { archive: 'Archive', delete: 'Delete', create: 'Create', type_change: 'Change types' };
+const ACTION = { archive: 'Archive', delete: 'Delete', create: 'Create', type_change: 'Change types', update: 'Edit', claim: 'Claim profile' };   // B1 (run 6): update, claim
 
 export function viewApprovals(v, r) {
   const tab = r.q.tab === 'reviews' ? 'reviews' : 'proposals';
@@ -33,7 +33,10 @@ async function loadProposals(box) {
       const detail = review ? 'An editor created this relationship type; it is already in use. Confirm it, rename it, or merge it into an existing type.'
         : x.action === 'type_change' && p.op === 'edge_create' ? 'New relationship type “' + ((p.args || {}).label || '') + '”' + ((p.args || {}).inverse_label ? ' / ' + p.args.inverse_label : '')
         : x.action === 'create' ? 'New ' + (p.type || 'record') + (p.parents && p.parents.length ? ' with placement' : '') + ((p.resources || []).length ? ', ' + p.resources.length + ' link(s)' : '')
-        : x.action === 'type_change' ? (p.op || '').replace('_', ' ') : x.target_table.replace('node_resources', 'link on a record').replace(/s$/, '');
+        : x.action === 'type_change' ? (p.op || '').replace('_', ' ')
+        : x.action === 'update' ? 'Edit: ' + Object.keys(p).join(', ')                                      // B1 (run 6)
+        : x.action === 'claim' ? 'Says this person record is them; approving links it to their sign-in'   // B1 (run 6)
+        : x.target_table.replace('node_resources', 'link on a record').replace(/s$/, '');
       const decide = (yes, extra) => async () => {
         try { const out = await api('POST', '/proposals/' + x.id + '/' + (yes ? 'approve' : 'reject'), extra);
           if (x.action === 'type_change') await loadTypes();
@@ -55,8 +58,8 @@ async function loadProposals(box) {
           const t = await api('GET', '/types'); const et = t.edge_types.find((e) => e.key === p.args.key);
           if (et) mergeDialog(et, t.edge_types, () => { loadProposals(box); refreshCounts(); loadTypes(); }); } }, icon('git-merge', 'sm'), 'Merge into…') : null,
         review && can('admin') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'review-rename', onclick: () => renameDialog(x, p, decide) }, 'Rename…') : null,
-        can(x.action === 'type_change' ? 'admin' : 'editor') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'reject', text: review ? 'Reject (archive if unused)' : 'Reject', onclick: decide(false) }) : null,
-        can(x.action === 'type_change' ? 'admin' : 'editor') ? el('button', { class: 'btn primary sm', type: 'button', 'data-testid': 'approve', text: review ? 'Confirm' : 'Approve', onclick: decide(true) }) : null)));
+        can(x.action === 'type_change' || x.action === 'claim' ? 'admin' : 'editor') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'reject', text: review ? 'Reject (archive if unused)' : 'Reject', onclick: decide(false) }) : null,
+        can(x.action === 'type_change' || x.action === 'claim' ? 'admin' : 'editor') ? el('button', { class: 'btn primary sm', type: 'button', 'data-testid': 'approve', text: review ? 'Confirm' : 'Approve', onclick: decide(true) }) : null)));
     });
     box.appendChild(ul);
   } catch (e) { clear(box).appendChild(errorBox(e, () => loadProposals(box))); }
