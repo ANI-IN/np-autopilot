@@ -1144,9 +1144,10 @@ function buildGraph(v, r) {
     if (S.graph !== G) return;
     try {
       const x = await api('GET', '/changes?since=' + encodeURIComponent(String(head || 0)));
-      const rows = x.changes.filter((c) => !(c.actor_id === (S.me || {}).user_id && humanActor(c)));
+      // Your own changes too: you may have made them in another tab or window (run 6, Section 7).
+      // applyChanges skips ids it has seen and re-reads each record, so an edit made here is a no-op.
+      const rows = x.changes;
       if (x.cursor > head) head = x.cursor;
-      x.changes.forEach((c) => { if (!rows.includes(c)) seenChange.add(c.id); });
       if (rows.length) await applyChanges(rows);
     } catch (e) { /* the next poll retries */ }
     if (S.graph === G) pollTimer = setTimeout(poll, document.hidden ? POLL_MS * 3 : POLL_MS);

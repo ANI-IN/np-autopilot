@@ -408,6 +408,17 @@ def _changed(cx: _Ctx, ent: list[dict], ch: list[dict], *, label_of=None) -> lis
         if a in (None, "", [], {}):
             return [_t(f"cleared the {name} of ")] + ent + [_t(" (was ")] + bv + [_t(")")]
         return [_t(f"changed the {name} of ")] + ent + [_t(" from ")] + bv + [_t(" to ")] + av
+    # A rename among other edits keeps its old -> new (run 6, Section 7): "renamed E to 'B' and updated its summary".
+    ren = next((c for c in ch if c["field"] in ("name", "title", "label") and isinstance(c["after"], str)), None)
+    if ren:
+        rest = []
+        for c in ch:
+            n = lab(c["field"])
+            if c is not ren and n not in rest:
+                rest.append(n)
+        if len(rest) > 4:
+            rest = rest[:3] + [f"{len(rest) - 3} more fields"]
+        return [_t("renamed ")] + ent + [_t(" to "), _val(ren["after"], quote=True), _t(f" and updated its {_and(rest)}")]
     names = []
     for c in ch:
         n = lab(c["field"])
