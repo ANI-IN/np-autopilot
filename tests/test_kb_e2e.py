@@ -85,6 +85,24 @@ def page_as(browser, base, role, viewport=(1440, 900)):
     return page
 
 
+def eventually(check, timeout: float = 10.0, what: str = "condition"):
+    """Poll `check` until it is true (run 6, B5: replaces fixed sleeps, which
+    raced the server and the re-render on a loaded machine)."""
+    deadline = time.monotonic() + timeout
+    while True:
+        if check():
+            return
+        if time.monotonic() > deadline:
+            raise AssertionError(f"{what} did not become true within {timeout} s")
+        time.sleep(0.1)
+
+
+def settled(page, timeout: float = 15000):
+    """The screen has finished loading: no skeleton and nothing aria-busy is
+    left (run 6, B5: replaces fixed waits before layout and a11y checks)."""
+    expect(page.locator(".skeleton, [aria-busy='true']")).to_have_count(0, timeout=timeout)
+
+
 def open_record(page, base, node_id):
     page.goto(base + f"#/records?open={node_id}")
     expect(page.get_by_test_id("panel-name")).to_be_visible()
@@ -210,8 +228,8 @@ def test_resource_lifecycle_and_reuse(server, browser):
     page.get_by_role("button", name="More actions").click()
     page.get_by_test_id("res-restore").click()
     expect(page.get_by_text("Archived ", exact=False).first).to_be_visible()
-    time.sleep(0.5)
-    assert len(Client(USERS["viewer"]).get(f"/api/kb/nodes/{b['id']}")[1]["resources"]) == 1
+    eventually(lambda: len(Client(USERS["viewer"]).get(f"/api/kb/nodes/{b['id']}")[1]["resources"]) == 1,
+               what="the restored link")
     assert page.errors == []
 
 
@@ -657,7 +675,7 @@ def test_no_horizontal_scroll_at_1024(server, browser, route):
     Client(USERS["editor"]).post("/api/kb/courses", {"name": "A course with a rather long name for layout testing"})
     page = page_as(browser, server, "admin", viewport=(1024, 768))
     page.goto(server + route)
-    page.wait_for_timeout(700)
+    settled(page)
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1"), route
     assert page.errors == []
 
@@ -680,8 +698,7 @@ def test_outline_quick_add_reorder_and_copy(server, browser):
     assert names().index("Alpha") < names().index("Beta")
     rows.filter(has_text="Beta").drag_to(rows.filter(has_text="Alpha"), target_position={"x": 40, "y": 4})
     expect(toast(page)).to_contain_text("Order saved")
-    page.wait_for_timeout(500)
-    assert names().index("Beta") < names().index("Alpha")
+    eventually(lambda: names().index("Beta") < names().index("Alpha"), what="the saved order")
     rows.filter(has_text="Outline Course").hover()
     rows.filter(has_text="Outline Course").get_by_test_id("outline-add").click()
     page.get_by_test_id("outline-add-module").click()
@@ -772,7 +789,9 @@ def test_guide_promises_undo_after_create_draft_restore_and_theme(server, browse
     page.keyboard.press("Escape")
     page.get_by_test_id("new-record").click()
     page.get_by_test_id("create-name").fill("Half-written idea")
-    page.wait_for_timeout(600)                                        # draft autosave is debounced
+    # the draft autosave is debounced: wait for the draft itself, not for a guess at the delay
+    page.wait_for_function("() => (JSON.parse(localStorage.getItem('kb_draft_new_record') || 'null') || {}).name"
+                           " === 'Half-written idea'")
     page.get_by_test_id("sheet-close").click()
     expect(page.get_by_test_id("confirm-dialog")).to_contain_text("Discard this draft?")
     page.get_by_test_id("confirm-ok").click()
@@ -832,10 +851,11 @@ def test_every_control_has_an_accessible_name(server, browser, route):
                                "resources": [{"url": "https://example.com/a11y", "title": "A11y link"}]})
     page = page_as(browser, server, "admin")
     page.goto(server + route + ("" if "?" in route else f"?open={c['id']}"))
-    page.wait_for_timeout(1200)
+    settled(page)
     assert page.evaluate(A11Y_SCRIPT) == [], route
     page.get_by_test_id("new-record").click()
-    page.wait_for_timeout(300)
+    expect(page.get_by_test_id("create-name")).to_be_visible()
+    settled(page)
     assert page.evaluate(A11Y_SCRIPT) == [], route + " + New record sheet"
 
 

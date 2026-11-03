@@ -377,3 +377,60 @@ Branch run6/b3-ui, worktree ../np-run6-b3. Servers: kb_b3 real-data copy on :877
 - Graph page chrome: unchanged here (graph.js is B2's); the sweep found no problems on it.
 - Note: once during this run my browser.lock directory disappeared while I held it (another agent removed
   it); I re-took it before every later run. I also ran one 2-second headless probe (a date input's focus style) without the lock; every other browser run held it.
+## Run 6 — B5 report
+
+Branch `run6/b5-perf` (from fb25b56, Phase A), worktree ../np-run6-b5, kb_b5 / kbtest_b5, port 8775. It started in parallel with B1 and B2 and before the B3 merge, so it covers the current endpoints and leaves fixes in B1's, B2's and lead files as requests (below).
+
+**What changed**
+- `web/lib/kb/duplicates.py` (new): an exact, prefix-filtered trigram similarity join. It returns the same pairs and scores as the old all-pairs SQL, keeps memory bounded (top 200 in a heap), is cached on the change-feed head, and gives a 422 for a non-numeric threshold. **Data quality went from 29 s to 53 ms on the server, and from 19.6 s to 0.88 s in the browser on real data.** This is the >45 s that B3 measured. The wiring patch for B1's `service.py`: `docs/run6/patches/b5-service-find-duplicates.patch`.
+- `db/migrations/0034_kb_perf_indexes` (reserved for B5): non-partial indexes on `edges(source_id)` and `edges(target_id)`, which take `graph?archived=1` from 1.0–1.4 s to 0.16–0.23 s. Also two database guards from the audit: the AI assistant is refused role, sign-in-link and permanent-delete writes (A1), and a request cannot leave the workspace without an admin (A2). Applied to kb_b5 and kbtest_b5, and proven by running up, down, up on both (triggers 6 → 0 → 6, indexes 2 → 0 → 2).
+- `public/kb/js/views/settings.js`: a non-admin who follows a link to an admin-only tab now gets Types, where before there were two 403 errors (A13). One line, which merges cleanly with B3.
+- `api/curate.py`: 400 for a malformed body (A9).
+- Tests: `tests/test_kb_duplicates.py` (15), `tests/test_kb_audit_run6.py` (8), `tests/test_kb_console_run6.py` (2: every screen and flow as admin and as viewer; it fails on any console error, page error or unhandled rejection).
+- Flaky tests: `tests/test_kb_e2e.py` (fixed sleeps replaced by `eventually()` / `settled()` / waiting for the draft itself) and `tests/test_kb_realtime.py` (proof by socket frames, not by the wall clock).
+- Scripts: `scripts/kb_realdata_profile.py` (every screen's requests, the map's routes, `/api/kb/graph`, EXPLAIN, at real-data size), `scripts/kb_browser_profile.py` (time to interactive, JS bytes, graph expand, heap over 50 graph opens). `kb_perf.py` and `kb_explain.py` now cover the run-6 endpoints.
+- Docs: `docs/run6/PERF.md` (before and after for every screen, the targets), `docs/run6/AUDIT_FINDINGS.md` (17 findings).
+
+**Tests run (kbtest_b5, targeted)**
+- 14 non-browser KB files, including duplicates and audit: **188 passed**.
+- `test_node_id_scheme`, `test_taxonomy_single_source`, `test_lazy_route_table`: 19 passed, 1 skipped.
+- Browser runs, with the lock held:
+  - the e2e tests whose waits I changed (`-k "resource_lifecycle or no_horizontal_scroll or outline_quick_add or draft_restore or accessible_name"`): **24 passed, 5 times in a row**;
+  - e2e and run3 tests touching settings, tokens, members and types: 13 passed;
+  - `test_kb_console_run6.py`: 2 passed, 5 runs, including one without the service patch.
+
+**Flaky tests: cause and fix**
+1. `test_resource_lifecycle_and_reuse`: `time.sleep(0.5)` and then an assertion on the server state raced the restore. Now it polls with `eventually()`.
+2. `test_no_horizontal_scroll_at_1024[*]` (11 cases): a fixed 700 ms wait raced rendering, so the check could run on a half-drawn page. Now it waits for `settled()` (no skeleton, nothing aria-busy).
+3. `test_outline_quick_add_reorder_and_copy`: a 500 ms wait after "Order saved" raced the re-render. Now `eventually()` checks the order.
+4. `test_guide_promises_undo_after_create_draft_restore_and_theme`: a 600 ms wait guessed the 400 ms debounce. Now it waits for the draft in localStorage.
+5. `test_every_control_has_an_accessible_name[*]` (10 cases): fixed 1,200 and 300 ms waits. Now `settled()`, and the sheet's name field must be visible.
+6. `test_kb_realtime.py`: `assert time.time() - t0 < 3.0` failed on a loaded machine even when the socket had delivered. It now records the admin page's WebSocket frames and change-feed fetches, and asserts that a `postgres_changes` frame arrived after the edit and that a feed fetch followed that frame.
+
+All 24 affected e2e cases passed 5 consecutive runs. **The realtime test was NOT run.** It runs only against the local stack's `postgres` database (the demo's), and running it there was refused as a change to a shared resource. With `NP_TEST_DSN=kbtest_b5` it skips. Unblock: the lead runs `NP_TEST_DSN=postgresql://postgres:postgres@127.0.0.1:54322/postgres python -m pytest tests/test_kb_realtime.py` five times, then re-seeds the demo.
+
+**Measurements** (docs/run6/PERF.md)
+- Targets met: every list and report screen is interactive in 0.21–0.88 s; graph expand has p50 90 ms and p95 129 ms; list and search p95 on the server is 10–40 ms; console errors are 0.
+- **Missed:** opening the graph on a record with 360 neighbours takes 2.7 s. About 2.3 s of that is the client-side Cytoscape layout in `graph.js` (B2).
+- Found:
+  - a graph memory leak of about 3 MB per opening (B2 and B1);
+  - the "/" map loads 1.49 MB of JS (B1 and B2);
+  - a local-only stall of about 40 ms for statements whose parameters exceed 8 KB (Docker Desktop on Windows).
+
+**Decisions made (each with how to reverse it)**
+- The duplicate finder lives in a new module and is wired by a patch, because `service.py` is B1's file. To reverse, do not apply the patch.
+- The AI and last-admin rules are enforced in the database (0034), not in B1's service code. That covers every path and needs no B1 change. To reverse, run `migrate.py down` (0034 down drops them) or remove that part of 0034.
+- The last-admin rule binds only request connections (`role` = `authenticated`), so that operator scripts and fixtures can still manage memberships.
+- `add_edge_rule` for `ai` is not refused in the database, because inline relationship types created by the AI write rules. It is left to B1 (A1b).
+- `similarity` keeps the old wire format (numeric rounded to 3 places, serialised by `default=str`).
+
+**Requests for the lead and other streams** (exact fixes in AUDIT_FINDINGS.md and PERF.md)
+- Apply `docs/run6/patches/b5-service-find-duplicates.patch` (B1's `service.py`) after B1 merges. Without it, Data quality stays at about 29 s.
+- Lead, `kb_routes.py:222`: pass the raw `threshold` (A4). Lead, `index.py`: a negative Content-Length (A11) and an array body in `_serve_write` (A9b). Lead: `PUT /graph/positions` is dead code (A16). Lead, `graph.py`: keep the id list on the server (PERF).
+- B1: A1b, A5, A6, A7, A8, A10, A12, and `onLiveChange` / `onPresence` returning an unsubscribe function.
+- B2: `graph.js` unsubscribes and calls `cy.destroy()` when the view is left (the leak), and paints the first frame without a long layout.
+- Contract change request: none.
+
+**BLOCKED**
+- `tests/test_kb_realtime.py`: the 5 consecutive runs (see above).
+- The "/" map's routes should be profiled again after B1 moves them to kb: `python scripts/kb_realdata_profile.py --db kb_b5 --only "map /"`.

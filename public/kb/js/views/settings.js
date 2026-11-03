@@ -16,7 +16,8 @@ const FIELD_KIND_LABEL = { short_text: 'Short text', long_text: 'Long text', num
   url: 'URL', single_select: 'Single select', multi_select: 'Multi select', person: 'Person', reference: 'Record reference', checkbox: 'Checkbox' };
 
 export function viewSettings(v, r) {
-  const tab = TABS.some(([k]) => k === r.q.tab) ? r.q.tab : 'types';
+  const visible = TABS.filter(([k]) => (k !== 'members' && k !== 'sync') || can('admin'));   // an admin-only tab by link: show Types (B5)
+  const tab = visible.some(([k]) => k === r.q.tab) ? r.q.tab : 'types';
   v.appendChild(pageHead({ title: 'Settings', sub: 'Your role is ' + S.me.role + '.' }));
   v.appendChild(el('div', { class: 'tabs', role: 'tablist' }, TABS.filter(([k]) => (k !== 'members' && k !== 'sync' && k !== 'people') || can('admin')).map(([k, l]) =>
     el('a', { href: '#/settings?tab=' + k, role: 'tab', 'aria-selected': k === tab ? 'true' : 'false', 'data-testid': 'settings-tab-' + k, text: l }))));
