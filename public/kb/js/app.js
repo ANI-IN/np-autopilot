@@ -16,6 +16,7 @@ import { viewSettings } from './views/settings.js';
 import { viewGuide } from './views/guide.js';
 import { viewActivity } from './views/activity.js';
 import { viewTeaching, viewTimeline } from './views/teaching.js';
+import { aliasTarget } from './aliases.js';
 
 const ROUTES = {
   '': viewDashboard, records: viewRecords, programs: viewRecords, courses: viewRecords, resources: viewResources,
@@ -183,7 +184,11 @@ let lastView = null;
 export function rerender() { lastView = null; route(); }
 export function route() {
   closeMenu();
-  const r = parseHash(); S.route = r;
+  const r = parseHash();
+  // An old, bookmarked address goes to its page (F6, aliases.js); replace() keeps it out of the history.
+  const moved = aliasTarget(r.path, r.q);
+  if (moved) { location.replace(moved); return; }
+  S.route = r;
   const key = r.path[0] || '';
   $$('#sidebar [data-nav]').forEach((a) => a.classList.toggle('active', a.dataset.nav === (key || 'dashboard') ||
     (key === 'proposals' && a.dataset.nav === 'approvals')));

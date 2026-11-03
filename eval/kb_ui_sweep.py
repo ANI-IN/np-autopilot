@@ -5,13 +5,15 @@ report layout and accessibility problems that a screenshot can hide:
   - horizontal scroll (the document or the page container wider than the view)
   - text cut off ("…" or a line clamp) with no tooltip carrying the full text
   - controls with no accessible name
+  - elements running past the viewport's right edge, and controls overlapping
+    each other (F6: the two checks of the retired scripts/kb_screens.py)
   - console errors and page errors
 
 LOCAL servers only. Prints counts and selectors, never record content, so it is
 safe on the real-data copy. One browser, one page, sequential (memory).
 
   python eval/kb_ui_sweep.py --base http://localhost:8773 --email ... --password ... \
-      [--widths 1024,1280,1536,1920,2560] [--themes light,dark] [--shots DIR] [--only records,quality]
+      [--widths 1024,1280,1536,1920,2560] [--themes light,dark] [--dpr 1,2] [--shots DIR] [--only records,quality]
 """
 from __future__ import annotations
 
@@ -36,7 +38,7 @@ SCREENS = [
 ]
 
 CHECKS = r"""() => {
-  const out = {hscroll: false, truncated: [], unnamed: []};
+  const out = {hscroll: false, truncated: [], unnamed: [], edge: [], overlap: []};
   const view = document.getElementById('view');
   const de = document.documentElement;
   out.hscroll = de.scrollWidth > window.innerWidth + 1 || (view && view.scrollWidth > view.clientWidth + 1);
@@ -57,6 +59,23 @@ CHECKS = r"""() => {
     if (!visible(e)) return;
     if (!name(e)) out.unnamed.push(sel(e));
   });
+  const vw = document.documentElement.clientWidth;
+  for (const e of document.querySelectorAll('#app *')) {
+    const r = e.getBoundingClientRect();
+    if (!r.width || !r.height) continue;
+    const cs = getComputedStyle(e);
+    if (cs.visibility === 'hidden' || cs.opacity === '0') continue;
+    if (r.right > vw + 1 && cs.position !== 'fixed' && !e.closest('.table-wrap, .tabs, #cy, .graph-canvas')) out.edge.push(sel(e));
+  }
+  const ctl = Array.from(document.querySelectorAll('#app button, #app a.btn, #app input, #app select')).filter((e) => visible(e) && getComputedStyle(e).visibility !== 'hidden');
+  for (let i = 0; i < ctl.length; i++) for (let j = i + 1; j < ctl.length; j++) {
+    if (ctl[i].contains(ctl[j]) || ctl[j].contains(ctl[i])) continue;
+    const a = ctl[i].getBoundingClientRect(), b = ctl[j].getBoundingClientRect();
+    const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    if (ox > 4 && oy > 4) out.overlap.push(sel(ctl[i]) + ' / ' + sel(ctl[j]));
+  }
+  out.edge = [...new Set(out.edge)].slice(0, 12);
+  out.overlap = [...new Set(out.overlap)].slice(0, 12);
   out.truncated = [...new Set(out.truncated)].slice(0, 12);
   out.unnamed = [...new Set(out.unnamed)].slice(0, 12);
   return out;
@@ -71,6 +90,7 @@ def main() -> int:
     ap.add_argument("--widths", default="1024,1280,1536,1920,2560")
     ap.add_argument("--themes", default="light,dark")
     ap.add_argument("--height", type=int, default=900)
+    ap.add_argument("--dpr", default="1", help="device pixel ratios, e.g. 1,2 (the shots' density)")
     ap.add_argument("--shots", default="")
     ap.add_argument("--only", default="")
     ap.add_argument("--json", default="")
@@ -84,8 +104,9 @@ def main() -> int:
     problems = 0
     with sync_playwright() as p:
         b = p.chromium.launch(channel="chrome", headless=True)
-        for theme in a.themes.split(","):
-            ctx = b.new_context(viewport={"width": 1536, "height": a.height}, color_scheme=theme)
+        for theme, dpr in [(t, float(d)) for t in a.themes.split(",") for d in a.dpr.split(",")]:
+            ctx = b.new_context(viewport={"width": 1536, "height": a.height}, color_scheme=theme, device_scale_factor=dpr)
+            tag = theme if dpr == 1 else f"{theme}@{dpr:g}x"
             page = ctx.new_page()
             current = {"k": "sign-in"}
             page.on("console", lambda m: m.type == "error" and report.setdefault(current["k"], {}).setdefault("console", []).append(m.text[:200]))
@@ -112,16 +133,16 @@ def main() -> int:
                 def check(name):
                     res = page.evaluate(CHECKS)
                     entry = report.setdefault(current["k"], {})
-                    for k in ("hscroll", "truncated", "unnamed"):
+                    for k in ("hscroll", "truncated", "unnamed", "edge", "overlap"):
                         if res[k]:
                             entry[k] = res[k]
                     if a.shots:
-                        d = Path(a.shots) / f"{theme}-{w}"
+                        d = Path(a.shots) / f"{tag}-{w}"
                         d.mkdir(parents=True, exist_ok=True)
                         page.screenshot(path=str(d / f"{name}.png"))
 
                 for name, route in screens:
-                    current["k"] = f"{theme}/{w}/{name}"
+                    current["k"] = f"{tag}/{w}/{name}"
                     page.goto(a.base + "/kb/" + route)
                     settle()
                     check(name)
@@ -145,7 +166,7 @@ def main() -> int:
                            ("type-editor", "#/settings?tab=types", "[data-testid=edit-type-module]"),
                            ("edge-type-dialog", "#/settings?tab=relationships", "[data-testid=new-edge-type]")]
                 for name, route, click in layers:
-                    current["k"] = f"{theme}/{w}/{name}"
+                    current["k"] = f"{tag}/{w}/{name}"
                     page.goto(a.base + "/kb/" + route)
                     settle()
                     if click:

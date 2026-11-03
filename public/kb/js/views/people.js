@@ -5,11 +5,9 @@
      only in case or spacing, suggested near matches to confirm one by one,
      ambiguous names to resolve by hand — and nothing is written until the
      admin confirms. Pending profile claims link to Approvals.
-   - ownedByYouCard(): the dashboard card "Owned by you" (records owned by your
-     account or by your person record); on load it asks the server to link you
-     (by e-mail, else by an unambiguous name) and, when your name is shared,
-     offers "This is me" (a claim an admin approves).
-   - noOwnerSection() / legacyExpertiseSection(): Data quality lists.
+   - legacyExpertiseSection(): a Data quality list.
+   (The dashboard's "Owned by you" is views/dashboard.js since F1; a claim is
+   made from the record panel, detail.js. F6 removed the unused copies here.)
    E-mail addresses are shown to admins only (the server's RLS decides). */
 import { S, el, add, clear, icon, typeIcon, typeLabel, api, toast, failToast, skeletonRows, empty, errorBox, plural, can } from '../core.js';
 
@@ -107,37 +105,6 @@ function renderPreview(box, res, after) {
     el('div', { class: 'row', style: 'gap:8px;margin-top:8px' }, confirm, el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onclick: () => clear(box) }))]);
 }
 
-// ------------------------------------------------------------------ dashboard: Owned by you
-export function ownedByYouCard() {
-  const body = el('div', { class: 'card-body', 'data-testid': 'owned-by-you' }, skeletonRows(3));
-  const card = el('section', { class: 'card' }, el('div', { class: 'card-head' }, el('h2', { text: 'Owned by you' })), body);
-  (async () => {
-    try {
-      const me = await api('POST', '/my/link');
-      S.myPerson = me.person || null;
-      const out = await api('GET', '/my/owned');
-      clear(body);
-      if (me.status === 'ambiguous' && me.candidates && me.candidates.length && !(me.pending_claims || []).length) {
-        body.appendChild(el('div', { class: 'note-box', 'data-testid': 'claim-box', style: 'margin-bottom:8px' },
-          el('p', { class: 'small', text: 'More than one person record carries your name. Which one is you? An admin confirms it.' }),
-          el('ul', { class: 'list' }, me.candidates.map((c) => el('li', { class: 'link-row' }, typeIcon(c.type), el('a', { href: '#/records?open=' + c.id, text: c.name, class: 'truncate', style: 'flex:1' }),
-            el('button', { class: 'btn sm', type: 'button', 'data-testid': 'claim-this', text: 'This is me', onclick: async (ev) => {
-              try { await api('POST', '/claims', { node_id: c.id }); } catch (e) { if (e.status === 202) { toast('Claim sent: an admin confirms it in Approvals'); ev.target.closest('.note-box').remove(); return; } failToast(e, 'Not sent'); }
-            } }))))));
-      }
-      (me.pending_claims || []).forEach((p) => body.appendChild(el('p', { class: 'faint small', 'data-testid': 'claim-pending', text: 'Your claim on “' + p.name + '” is waiting for an admin.' })));
-      if (out.person) body.appendChild(el('p', { class: 'faint xs', style: 'margin-bottom:6px' }, 'Your person record: ', el('a', { href: '#/records?open=' + out.person.id, text: out.person.name })));
-      if (!out.items.length) { body.appendChild(el('p', { class: 'faint small', text: out.person ? 'Nothing is owned by you or your person record yet.' : 'Nothing is owned by you yet.' })); return; }
-      const ul = el('ul', { class: 'list' });
-      out.items.slice(0, 8).forEach((x) => ul.appendChild(el('li', null, el('a', { class: 'link-row', href: '#/records?open=' + x.id, 'data-testid': 'owned-row' },
-        typeIcon(x.type), el('span', { class: 'truncate', style: 'flex:1;color:var(--text)', text: x.name }), el('span', { class: 'faint xs', text: x.how })))));
-      body.appendChild(ul);
-      if (out.total > 8) body.appendChild(el('p', { class: 'faint xs', style: 'margin-top:4px', text: 'and ' + (out.total - 8) + ' more' }));
-    } catch (e) { clear(body).appendChild(errorBox(e)); }
-  })();
-  return card;
-}
-
 // ------------------------------------------------------------------ Data quality lists
 function qualityList(title, tid, emptyText, load, row) {
   const ul = el('ul', { class: 'list bordered', 'data-testid': tid }, el('li', { class: 'link-row faint', text: 'Loading…' }));
@@ -148,11 +115,6 @@ function qualityList(title, tid, emptyText, load, row) {
     out.items.forEach((x) => ul.appendChild(el('li', null, row(x))));
   }).catch((e) => { clear(ul).appendChild(el('li', null, errorBox(e))); });
   return el('section', null, el('div', { class: 'row', style: 'margin-bottom:8px' }, el('h2', { text: title }), count), ul);
-}
-export function noOwnerSection() {
-  return qualityList('No owner (types that expect one)', 'q-no-owner-expected', 'Every record of a type that expects an owner has one.',
-    () => api('GET', '/quality/no-owner?limit=100'),
-    (x) => el('a', { class: 'link-row', href: '#/quality?open=' + x.id }, typeIcon(x.type), el('span', { class: 'truncate', style: 'flex:1;color:var(--text)', text: x.name }), el('span', { class: 'faint xs', text: typeLabel(x.type) })));
 }
 export function legacyExpertiseSection() {
   return qualityList('Legacy domains still referenced as expertise', 'q-legacy-expertise', 'No legacy domain is anyone’s current expertise.',

@@ -17,15 +17,13 @@ import { S, api, $, clear, el, add } from './core.js';
 import { connectRealtime } from './realtime.js';
 
 const POLL_MS = 2500;
-const listeners = [], feedListeners = [];
+const listeners = [];
 let fails = 0, timer = null, socketUp = false, pending = null;
 
 /* fn(others, all): `others` leaves out your own human writes (they are already
    on your screen); `all` is every change. */
-/* Each returns an unsubscribe function: a view that subscribes per visit must call it when it is left (run 6, F7). */
+/* Returns an unsubscribe function: a view that subscribes per visit must call it when it is left (run 6, F7). */
 export function onLiveChange(fn) { listeners.push(fn); return () => { const i = listeners.indexOf(fn); if (i >= 0) listeners.splice(i, 1); }; }
-/* fn(changes, info) for every batch, yours included; info = classify(changes). */
-export function onLiveFeed(fn) { feedListeners.push(fn); return () => { const i = feedListeners.indexOf(fn); if (i >= 0) feedListeners.splice(i, 1); }; }
 
 const PATCH = ['record.', 'relationship.', 'link.', 'layout.', 'owner.'];
 const REFETCH = ['type.', 'reltype.', 'tag.', 'sync.'];
@@ -44,7 +42,6 @@ function emit(changes) {
   const others = changes.filter((c) => c.actor_id !== S.me.user_id || c.actor_type !== 'human');
   listeners.forEach((fn) => { try { fn(others, changes); } catch (e) { console.warn('live listener', e); } });
   const info = classify(changes);
-  feedListeners.forEach((fn) => { try { fn(changes, info); } catch (e) { console.warn('live listener', e); } });
   if (info.relevant) refreshViews(info);
 }
 

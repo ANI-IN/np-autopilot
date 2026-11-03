@@ -1,3 +1,5 @@
+> **Archived (run 6, F6, 2026-11-04):** the 2026-09-10 handover list, superseded by `docs/ROADMAP.md`, `HANDOFF.md` and `docs/HANDOFF.md`; kept as history. Inventory: `docs/LEGACY_REMOVAL.md`.
+
 # NEXT
 
 Handover, ordered by value. Baseline to regress against is at the bottom of
