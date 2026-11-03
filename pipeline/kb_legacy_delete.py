@@ -34,7 +34,9 @@ def main() -> int:
     if not url:
         raise SystemExit("SUPABASE_DB_URL_SESSION is not set")
     from pipeline.lib import db
-    if db.production_reason(url) and os.environ.get("NP_ALLOW_LEGACY_DELETE_ON_PRODUCTION") != "yes":
+    u = urlparse(url)
+    is_prod = db.PROD_PROJECT_REF in (u.hostname or "") or db.PROD_PROJECT_REF in (u.username or "")
+    if is_prod and os.environ.get("NP_ALLOW_LEGACY_DELETE_ON_PRODUCTION") != "yes":
         raise SystemExit("REFUSED: this is production; see docs/GO_LIVE.md (legacy deletion step)")
     import psycopg
     from lib.kb import legacy_delete as ld
@@ -52,8 +54,8 @@ def main() -> int:
                 conn.rollback()
             else:
                 data = ld.export(conn, p)
-                dbname = (urlparse(url).path or "/db").strip("/") or "db"
-                dbname = "dev" if db.production_reason(url) is None and "pooler" in (urlparse(url).hostname or "") else dbname
+                # the file name says which database, never its host: local name, or "supabase"
+                dbname = "supabase" if db.production_reason(url) else ((u.path or "/db").strip("/") or "db")
                 path = REPO / "backups" / f"legacy_deleted_{dbname}_{datetime.now():%Y%m%d_%H%M%S}.json"
                 ld.write_export(data, path)
                 check = json.loads(path.read_text(encoding="utf-8"))        # the file must read back before anything is deleted

@@ -15,6 +15,8 @@ an IP: every message is scrubbed. Counts and ids only.
     python scripts/dev_db.py import             # first import as the operator (no admin yet), then the legacy step
     python scripts/dev_db.py sync               # one sync run (operator)
     python scripts/dev_db.py verify             # counts vs kb_realdata (:8766), RLS, migrations, last sync
+    python scripts/dev_db.py legacy-plan        # run 6 R3: what the permanent legacy deletion would remove
+    python scripts/dev_db.py legacy-delete      # run 6 R3: export to backups/, then delete (owner-approved)
 """
 from __future__ import annotations
 
@@ -285,9 +287,18 @@ def _parity(c) -> dict:
             "archived by the legacy step": q("select count(*) from kb.legacy_archive")}
 
 
+def cmd_legacy_plan() -> int:
+    return run_child(["pipeline/kb_legacy_delete.py", "plan"])
+
+
+def cmd_legacy_delete() -> int:
+    """Run 6 R3 (owner-approved): export to backups/, then the permanent deletion."""
+    return run_child(["pipeline/kb_legacy_delete.py", "delete"])
+
+
 COMMANDS = {"check": cmd_check, "status": cmd_status, "backup": cmd_backup, "migrate": cmd_migrate,
             "rollback-test": cmd_rollback_test, "load-old-tables": cmd_load_old_tables, "import": cmd_import,
-            "sync": cmd_sync, "verify": cmd_verify}
+            "sync": cmd_sync, "verify": cmd_verify, "legacy-plan": cmd_legacy_plan, "legacy-delete": cmd_legacy_delete}
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 or sys.argv[1] not in COMMANDS:
