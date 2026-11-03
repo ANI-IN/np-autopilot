@@ -582,7 +582,7 @@ published the whole row-B branch was stopped by the check, not by the record.
 
 `main` as pushed, last on 2026-09-20T22:24Z: **107 commits**, every analysis
 and design document (`07-risks.md` itself, R17, R18, R20's description of the
-upload, `docs/CACHE-EXPOSURE.md`, `docs/STATE.md` with the Supabase project ref,
+upload, `docs/CACHE-EXPOSURE.md`, `docs/archive/STATE.md` with the Supabase project ref,
 Vercel project id and account topology), and **`knowledge/graph.json` — the
 public half: 1,915 instructor names, 43 internal staff with titles**, 922
 modules, 92 workflows.

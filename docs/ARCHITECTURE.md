@@ -143,20 +143,31 @@ pipeline/kb_admins.py        ── ADMIN_EMAILS bootstrap (operator, owner conn
    bypassed — tested directly in `tests/test_kb_rls.py` / `test_kb_schema.py`.
 4. **Never the whole graph.** Pages ≤200, neighbourhoods ≤2 hops and ≤300 nodes,
    with `total`/`truncated` reported.
-5. **Additive.** New schema, new routes, new page. The pipeline projection, the
-   explorer and the curation tables are untouched.
+5. ~~**Additive.** New schema, new routes, new page. The pipeline projection, the
+   explorer and the curation tables are untouched.~~ **Superseded by the run-6
+   decision at the top of this file:** `kb` is the single source of truth and
+   the map at `/` (the old explorer) now reads `kb` (`web/lib/kb/npmap.py`);
+   the old tables remain only as the sync's intake. Schema changes stay
+   additive (every migration has a `.down.sql`).
 
 ## Collaboration model
 
 - **Optimistic locking** everywhere: writes carry `version`; mismatch → 409 with
   the current record; the UI shows a field diff and offers reload, or overwrite
   for editors.
-- **Change feed** instead of Supabase Realtime: `GET /api/kb/changes?since=<audit
-  id>` (RLS-scoped) polled every 4 s while the tab is visible, with exponential
-  back-off on failure and a refetch on recovery. Lists refresh; an open record
-  that changed elsewhere reloads (or warns, if you are mid-edit). Chosen because
-  the CSP allows only same-origin connections and the app has no supabase-js;
-  Realtime is a ROADMAP item.
+- **Change feed with Supabase Realtime** (docs/CONTRACTS.md §2): every audited
+  write appends a content-free row to `kb.changes` (0029; `kind` and `node_ids`
+  since 0032), which is in the `supabase_realtime` publication (0028), so
+  Realtime forwards it under the subscriber's RLS. `public/kb/js/realtime.js`
+  opens the socket only when `GET /api/kb/realtime` returns a configuration
+  (the deployment allows that origin, `KB_REALTIME_ORIGIN`); the socket only
+  says THAT something changed, and `public/kb/js/live.js` then fetches the rows
+  from `GET /api/kb/changes?since=<id>`. **Polling is the fallback:** every
+  2.5 s while the tab is visible (slower when hidden or the socket is up),
+  exponential back-off on failure. A page patches the records in `node_ids`;
+  a type, relationship-type, tag or sync change, or more than 200 changes,
+  means refetch. An open record that changed elsewhere reloads (or warns, if
+  you are mid-edit).
 - **Optimistic UI** for inline edits and tags, rolled back with a toast on error.
 
 ## Why these choices
@@ -174,9 +185,21 @@ pipeline/kb_admins.py        ── ADMIN_EMAILS bootstrap (operator, owner conn
 | Path | Role |
 |---|---|
 | `db/migrations/0022–0026` | schema, RLS, import runs, token resolution, course shape + link health + people |
+| `db/migrations/0027–0029` | custom types and link kinds; accessible palette + Realtime publication; named actors, append-only audit log, `kb.changes`, graph positions |
+| `db/migrations/0030–0031` | legacy flag, owners from roles, `person_accounts`, `sync_map`/`sync_runs`, `legacy_archive`; the sync schedule (pg_cron) |
+| `db/migrations/0032–0037` | CONTRACTS schema (shapes, relationship colours, change `kind`/`node_ids`); data flow and people; perf indexes + AI/last-admin guards; member invites; sync exclusions (0036 is unused). Details: docs/SCHEMA.md |
 | `web/lib/kb/{service,validate,errors}.py` | rules |
+| `web/lib/kb/{typedefs,workspace,activity,legacy}.py` | custom types; bulk actions, outline, templates, dashboard; activity log and change feed; reversible legacy archive |
+| `web/lib/kb/graph.py` | the one graph read API, `GET /api/kb/graph` (CONTRACTS §1) |
+| `web/lib/kb/npmap.py` | the NP Autopilot map's routes at `/`, read from kb (CONTRACTS §5) |
+| `web/lib/kb/people.py` | person records linked to sign-in accounts (owners become people) |
+| `web/lib/kb/duplicates.py` | near-duplicate records (trigram similarity) |
+| `web/lib/kb/legacy_delete.py` | owner-approved permanent deletion of legacy domains/modules (CLI `pipeline/kb_legacy_delete.py`) |
+| `web/lib/kb/views.py` | read-only views: Who teaches what, Programme timeline |
+| `web/lib/kb/sync.py`, `web/lib/kb/sync_api.py` | the one-way sync old tables → kb; its cron route, "Sync now" and run log |
 | `api/kb_routes.py`, `api/index.py::_serve_kb` | HTTP |
-| `public/kb/{index.html,kb.css,kb.js}` | UI (design system in `docs/DESIGN_SYSTEM.md`) |
+| `public/kb/{index.html,kb.css}`, `public/kb/js/*.js`, `public/kb/js/views/*.js` | UI (design system in `docs/DESIGN_SYSTEM.md`); `live.js` + `realtime.js` live updates |
+| `public/kb/js/graph/{style,layouts,labels,minimap,map}.js` | the graph's visual language and layouts, shared by the Graph page and the map at `/` (`map.js` is the `/` adapter) |
 | `mcp_server/kb_server.py` | MCP server |
 | `plugins/ik-knowledge-assistant/` | Claude Code plugin (MCP config + 2 skills) |
 | `pipeline/kb_import_sheets.py`, `pipeline/lib/kb_sheets.py`, `config/kb-sheets-mapping.yaml` | Sheets import |

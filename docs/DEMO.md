@@ -10,12 +10,16 @@ server, fictional data. Nothing here touches production, Vercel or Google.
 npx -y supabase@2.118.0 start --workdir db/local
 export SUPABASE_DB_URL_SESSION=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 export SUPABASE_DB_URL_TRANSACTION=postgresql://postgres.pooler-dev:postgres@127.0.0.1:6543/postgres
-.venv/Scripts/python pipeline/migrate.py up          # through 0029 (bin/python on macOS/Linux)
+.venv/Scripts/python pipeline/migrate.py up          # every pending migration, through the latest (0037) (bin/python on macOS/Linux)
 .venv/Scripts/python eval/kb_demo_seed.py            # demo users + fictional data (re-runnable)
 .venv/Scripts/python eval/kb_demo_server.py 8765     # leave running; prints READY 8765
 ```
 
-Open **http://localhost:8765/local-login**.
+Open **http://localhost:8765/local-login**. After signing in you land on the
+**Dashboard**: one screen, no scrolling (key numbers, what needs attention, the
+newest activity, quick actions, what you own, records by type). The sidebar's
+Browse group holds Programs, Courses, **Links** (the resources),
+Who teaches what and **Program timeline**.
 
 ## Sign in
 
@@ -51,8 +55,8 @@ origin in the page's security policy.
 ## Demo data (`eval/kb_demo_seed.py`)
 
 2 programs, 4 domains, 4 courses, 9 modules, 12 weeks, 13 live sessions,
-6 instructors, 12 topics, 1 process, 25 resources (slides, recordings,
-assignments, solutions, GitHub repos), 96 relationships. All fictional: the
+6 instructors, 12 topics, 1 process, 25 links (slides, recordings,
+assignments, solutions, GitHub repos; "Links" in the sidebar), 96 relationships. All fictional: the
 people, schedules and URLs. Deliberate gaps for **Data quality**:
 
 - the module **Interview Strategy** has no owner;

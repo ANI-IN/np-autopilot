@@ -127,3 +127,34 @@ docs/screenshots/b4/
 # run 6: screenshots of the REAL-data copy stay local (real names); demo screenshots are committed
 docs/run6/**/realdata/
 docs/run6/**/*np-map*.png
+
+# --- run 6, G1 repository audit (2026-11-04) ---
+# Backups and database dumps anywhere in the tree (not only /backups/).
+backups/
+*.dump
+*.backup
+*.sql.gz
+# Test and tool output.
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+node_modules/
+*.log
+# Local scratch and editor leftovers.
+scratch/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~
+.claude/settings.local.json
+# The template stays tracked: the later `.env*` line above re-ignored it.
+!.env.example

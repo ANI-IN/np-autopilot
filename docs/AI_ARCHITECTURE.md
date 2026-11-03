@@ -1,6 +1,7 @@
 # AI architecture — designs for the next sessions
 
-Built in this run: the MCP server (19 tools), per-user tokens with
+Built in this run: the MCP server (21 tools since run 6, incl. `list_types` and
+`recent_activity`; list in docs/MCP.md), per-user tokens with
 `actor_type='ai'` attribution, proposals for every AI archive/delete, and two
 skills in a Claude Code plugin. Everything below is **design only** — no
 half-built UI or code exists for it.

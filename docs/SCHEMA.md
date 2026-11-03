@@ -1,4 +1,4 @@
-# KB schema (`kb.*`) — migrations 0022–0029
+# KB schema (`kb.*`) — migrations 0022–0037
 
 The authored knowledge base lives in its own Postgres schema, `kb`. The pipeline's
 projection tables in `public` (`nodes`, `edges`, `node_sources`, …) are untouched:
@@ -205,3 +205,67 @@ Realtime forwards changes through the subscriber's RLS.
 - Down refuses while relationship types are unreviewed or merged, or saved
   layouts exist; otherwise restores 0028's audit function, policy and
   publication.
+
+## Sync, owners, contracts, people, invites (0030–0037, runs 5–6)
+
+From the `.up.sql` files; each has a `.down.sql`. 0036 is unused.
+
+- **0030 — legacy flag, owners from roles, sync bookkeeping.**
+  `kb.nodes` gains `is_legacy` (bool, set by import/sync only; hidden from
+  default lists and counts), `owner_record_id` (the Primary's person record)
+  and `co_owner_record_ids uuid[]` (Backups in order). New tables:
+  `kb.person_accounts` (`node_id` PK → a person record, `email` unique
+  case-insensitively, `user_id`, `linked_at`; triggers resolve the e-mail to an
+  account and apply the record owners; a profile insert links on sign-in);
+  `kb.sync_map` (PK `unit, key`; `unit` record | link | relationship |
+  attachment; `kb_table`, `kb_id`, `checksum`, `kb_checksum`, `first_seen`,
+  `last_seen`, `last_written`, `removed_at` (gone at source, flagged never
+  deleted), `conflict_at`, `conflict_checksum`; editor+ read);
+  `kb.sync_runs` (`id`, `started_at`, `finished_at`, `status` running | ok |
+  error | skipped, `trigger` cron | manual | cli, `actor_id`, `counts`,
+  `conflicts`, `errors`, `message`; admin read); `kb.legacy_archive`
+  (`node_id`, `archived_at`, `reason`: what the legacy step archived, so it can
+  be restored; editor+ read). `kb.actor_type()` learns `sync`.
+- **0031 — the sync schedule.** `kb.sync_schedule_install(endpoint, cron =
+  '0 * * * *')` and `kb.sync_schedule_remove()`: pg_cron + pg_net POST to
+  `/api/cron/kb-sync` with the secret read from Vault (`kb_sync_secret`) when
+  the job fires. Owner only; a no-op message where pg_cron is absent.
+- **0032 — the schema behind docs/CONTRACTS.md.** `kb.node_types.shape`
+  (round-rectangle | ellipse | diamond | hexagon | triangle | rectangle | tag |
+  barrel; built-ins seeded) and `owner_expected` (bool); `kb.edge_types.color`
+  (`#rrggbb`) and `line_style` (solid | dashed | dotted; built-ins seeded);
+  `kb.changes.kind` and `kb.changes.node_ids uuid[]`, derived by `kb.audit()`
+  through `kb.change_kind()` / `kb.change_node_ids()`. `kb.change_only()`
+  triggers emit content-free change rows (no audit row) for `graph_positions`
+  (`layout.update`), `person_accounts` (`owner.account`) and finished
+  `sync_runs` (`sync.run`).
+- **0033 — data flow and people.** The `domain` type gains a `slug` field (the
+  map's SD1–SD4 codes; the sync fills it). `kb.landing_stats()` (SECURITY
+  DEFINER, counts only, for the signed-out landing page). `kb.sync_runs.resume`
+  (jsonb: where a time-boxed run stopped). `kb.proposals.action` adds `update`
+  and `claim`. `kb.guard_contributor()` triggers on nodes, edges, resources and
+  node_resources: a contributor's field edits, archives and restores must go
+  through Approvals. `kb.person_accounts.linked_by` (admin | csv |
+  sign_in_email | sign_in_name | claim); addresses readable by admins and the
+  person only. Functions: `kb.person_name_key`, `person_name_of`,
+  `auto_link_person` (on sign-in: by e-mail, else an unambiguous name),
+  `link_me`, `person_candidates_for_me`, `claim_person`, `apply_claim`; the
+  sign-in trigger `kb.profile_links_person()` is replaced.
+- **0034 — performance indexes and two guards.** `edges_source_all_idx` and
+  `edges_target_all_idx` (full, not partial: reads that include archived
+  relationships). `kb.refuse_ai_admin()` triggers: an AI token cannot change
+  memberships or person_accounts, nor delete nodes, edges or resources.
+  `kb.keep_an_admin()` on memberships: a request can never leave the
+  workspace without an admin.
+- **0035 — member invites.** `kb.member_invites` (`id`, `email` lower-case
+  `@interviewkickstart.com` only, `role` admin | editor | contributor | viewer,
+  `status` pending | applied | revoked, `user_id`, `applied_at`, the standard
+  authorship/`version`/`archived_at` columns; one pending invite per address;
+  admin only, refused to AI). Applied at once if the account exists, else on
+  first sign-in (`kb.apply_member_invite()` on `public.profiles`). `kb.audit()`
+  drops the `email` column for this table. `kb.role()` counts a membership only
+  for a caller with an IK profile.
+- **0037 — sync exclusions.** `kb.sync_exclusions` (PK `unit, key`; `unit` rule
+  | record, `reason`, `created_at`): rules the sync applies (key
+  `np_legacy_domains_modules`) and source rows it must never create again,
+  written by `web/lib/kb/legacy_delete.py`. Admins read; only the owner writes.

@@ -11,7 +11,7 @@ generated, with a recommendation and an ID to answer by.
 **Count convention.** A row is **answered** once the owner has decided it —
 including "leave unresolved", which is a decision, not a pending question
 (PPL-09 `Reginald`, 2026-09-30). A row is **open** only while it has no owner
-answer. `docs/HANDOFF.md` §E uses the same convention.
+answer. `docs/archive/HANDOFF.md` §E uses the same convention.
 
 **A recommendation is not a decision.** Where it says *needs owner knowledge*,
 the evidence genuinely does not settle it and a guess would be the
