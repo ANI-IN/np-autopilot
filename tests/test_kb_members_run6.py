@@ -157,9 +157,12 @@ def test_every_change_is_in_activity_and_no_address_enters_the_audit_log(admin):
         assert changes, "invitations appear in the change feed"
     s, act = admin.get("/api/kb/activity", "table=member_invites,memberships")
     assert s == 200
-    labels = {(a["table_name"], a["label"]) for a in act["items"]}
-    assert ("member_invites", "Role: editor (pending)") in labels
-    assert any(t == "memberships" and lab and lab.startswith("Role: ") for t, lab in labels)
+    # Activity reads as sentences (run 6, F3): the invitation names the role, never the address.
+    sentences = [(a["table_name"], a["sentence"]) for a in act["items"]]
+    assert any(t == "member_invites" and "invited a person as editor" in x for t, x in sentences), sentences
+    assert any(t == "member_invites" and "changed an invitation from editor to contributor" in x for t, x in sentences), sentences
+    assert any(t == "memberships" and ("as editor" in x or "to editor" in x) for t, x in sentences), sentences
+    assert all("@" not in x for _, x in sentences)
 
 
 def test_the_last_admin_can_never_be_removed_or_demoted(admin):
