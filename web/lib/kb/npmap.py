@@ -132,10 +132,15 @@ def _q(conn, sql, args=()):
         return cur.fetchall()
 
 
-def head(conn) -> tuple[int, bool, str]:
-    """(newest change id, may read the KB, the caller's KB role)."""
-    r = _q(conn, "select coalesce((select max(id) from kb.changes), 0), kb.role_at_least('viewer'), kb.role()")[0]
-    return int(r[0]), bool(r[1]), str(r[2])
+def head(conn) -> tuple[str, bool, str]:
+    """(a fingerprint of the KB's state, may read the KB, the caller's KB role).
+    The fingerprint is the newest change id, plus the live counts so that a
+    database whose change feed was emptied (a demo re-seed) never matches a
+    model built before."""
+    r = _q(conn, """select coalesce((select max(id) from kb.changes), 0), kb.role_at_least('viewer'), kb.role(),
+                           (select count(*) from kb.nodes), (select count(*) from kb.edges),
+                           (select count(*) from kb.node_resources)""")[0]
+    return f"{r[0]}.{r[3]}.{r[4]}.{r[5]}", bool(r[1]), str(r[2])
 
 
 def model(conn) -> dict:
@@ -154,7 +159,7 @@ def _empty(h):
     return {"head": h, "nodes": {}, "edges": [], "adj": defaultdict(list), "by_kb": {}, "extra": {}}
 
 
-def _build(conn, h: int) -> dict:
+def _build(conn, h: str) -> dict:
     X = mapping()
     R, tb, notes = X["R"], X["type_back"], X["notes"]
     scale = X["scale"]
@@ -332,10 +337,21 @@ def _node_row(m, n, full=False) -> dict:
 
 
 # ---------------------------------------------------------------------------- the routes (data.py's shapes)
+def _in_structure(t: str) -> bool:
+    """The structure layer's types, and every type the projection never had (a
+    course, a type made in the KB): the map carries them so they can be found,
+    opened and followed; the deferred content types still load on demand."""
+    return t in STRUCTURE_TYPES or (t not in DEFERRED_TYPES and t not in _known_types())
+
+
+def _known_types() -> set:
+    return set(_tax.node_type_names())
+
+
 def structure(conn) -> dict:
     m = model(conn)
     prov = mapping()["provenance"]
-    keep = {i for i, n in m["nodes"].items() if n["type"] in STRUCTURE_TYPES}
+    keep = {i for i, n in m["nodes"].items() if _in_structure(n["type"])}
     nodes = [(i, n["type"], n["label"], None, n["props"], n["x"], n["y"])
              for i, n in sorted(m["nodes"].items()) if i in keep]
     edges = sorted(((e[0], e[1], e[2], e[3], e[4]) for e in m["edges"]
@@ -391,7 +407,7 @@ def node_detail(conn, node_id: str) -> dict:
     prov = mapping()["provenance"]
     edges = [e for e in m["adj"].get(nid, ()) if e[1] != prov]
     nbrs = sorted({_other(e, nid) for e in edges})
-    nbrs = [i for i in nbrs if m["nodes"][i]["type"] in STRUCTURE_TYPES]
+    nbrs = [i for i in nbrs if _in_structure(m["nodes"][i]["type"])]
     keep = set(nbrs) | {nid}
     return {"edges": [_edge_row(e) for e in edges if e[2] in keep and e[3] in keep],
             "neighbours": [_node_row(m, m["nodes"][i], full=True) for i in nbrs]}

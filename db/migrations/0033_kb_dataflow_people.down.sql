@@ -7,6 +7,7 @@ drop function if exists kb.link_me();
 drop function if exists kb.person_candidates_for_me();
 drop function if exists kb.auto_link_person(uuid);
 drop function if exists kb.person_name_of(uuid);
+drop function if exists kb.person_name_key(text);
 
 create or replace function kb.profile_links_person() returns trigger
 language plpgsql security definer set search_path = pg_catalog, public

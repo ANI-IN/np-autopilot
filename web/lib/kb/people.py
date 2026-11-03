@@ -41,6 +41,12 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").strip()).lower()
 
 
+def _key(s: str) -> str:
+    """= kb.person_name_key (0033): case and spacing ignored, and the " (2)" the
+    import adds to keep two same-name records apart is not part of the name."""
+    return _norm(re.sub(r"\s*\(\d+\)\s*$", "", s or ""))
+
+
 def _persons(conn) -> list[dict]:
     return _q(conn, """select n.id, n.name, n.name_norm, t.key as type, n.is_legacy,
                               pa.email, pa.user_id, pa.linked_at, pa.linked_by
@@ -115,7 +121,7 @@ def csv_preview(conn, actor: Actor, body: dict) -> dict:
     by_exact, by_norm = {}, {}
     for p in persons:
         by_exact.setdefault(p["name"], []).append(p)
-        by_norm.setdefault(p["name_norm"], []).append(p)
+        by_norm.setdefault(_key(p["name"]), []).append(p)
     names = list(by_norm)
     taken = {p["email"]: p for p in persons if p["email"]}
 
@@ -130,7 +136,7 @@ def csv_preview(conn, actor: Actor, body: dict) -> dict:
             out.append(item)
             continue
         exact = by_exact.get(r["name"]) or []
-        norm = by_norm.get(_norm(r["name"])) or []
+        norm = by_norm.get(_key(r["name"])) or []
         if len(exact) == 1 and len(norm) == 1:
             item["status"], item["match"] = "exact", brief(exact[0])
         elif len(norm) == 1:
@@ -139,7 +145,7 @@ def csv_preview(conn, actor: Actor, body: dict) -> dict:
             # never picked for the admin: two records with this name are two people
             item["status"], item["candidates"] = "ambiguous", [brief(p) for p in norm]
         else:
-            near = difflib.get_close_matches(_norm(r["name"]), names, n=3, cutoff=NEAR)
+            near = difflib.get_close_matches(_key(r["name"]), names, n=3, cutoff=NEAR)
             cands = [p for nm in near for p in by_norm[nm]]
             item["status"] = "suggested" if cands else "none"
             if cands:

@@ -101,11 +101,18 @@ drop policy person_accounts_select on kb.person_accounts;
 create policy person_accounts_select on kb.person_accounts for select to authenticated
     using ((select kb.role_at_least('admin')) or user_id = (select auth.uid()));
 
+-- A person's name for matching: case and spacing ignored, and the " (2)" the
+-- import adds to keep two same-name records apart is not part of the name (two
+-- records named "Sam Twin" and "Sam Twin (2)" are two people with ONE name).
+create or replace function kb.person_name_key(t text) returns text
+language sql immutable parallel safe set search_path = pg_catalog
+as $$ select kb.norm(regexp_replace(coalesce(t, ''), '\s*\(\d+\)\s*$', '')) $$;
+
 -- The person records a signed-in account can be: live instructors and team members.
 create or replace function kb.person_name_of(p_user uuid) returns text
 language sql stable security definer set search_path = pg_catalog, public
 as $$
-    select kb.norm(coalesce(
+    select kb.person_name_key(coalesce(
         nullif(btrim(to_jsonb(u) -> 'raw_user_meta_data' ->> 'full_name'), ''),
         nullif(btrim(to_jsonb(u) -> 'raw_user_meta_data' ->> 'name'), ''),
         regexp_replace(split_part(u.email, '@', 1), '[._-]+', ' ', 'g')))
@@ -143,7 +150,7 @@ begin
     if coalesce(nm, '') = '' then return 'none'; end if;
     select array_agg(n.id) into hits
       from kb.nodes n join kb.node_types t on t.id = n.type_id
-     where t.key in ('instructor', 'team_member') and n.archived_at is null and n.name_norm = nm
+     where t.key in ('instructor', 'team_member') and n.archived_at is null and kb.person_name_key(n.name) = nm
        and not exists (select 1 from kb.person_accounts pa where pa.node_id = n.id);
     if hits is null then return 'none'; end if;
     if array_length(hits, 1) > 1 then return 'ambiguous'; end if;
@@ -168,7 +175,7 @@ as $$
     select n.id, n.name, t.key
       from kb.nodes n join kb.node_types t on t.id = n.type_id
      where kb.role_at_least('viewer') and t.key in ('instructor', 'team_member') and n.archived_at is null
-       and n.name_norm = kb.person_name_of(auth.uid())
+       and kb.person_name_key(n.name) = kb.person_name_of(auth.uid())
        and not exists (select 1 from kb.person_accounts pa where pa.node_id = n.id and pa.user_id is not null)
      order by n.is_legacy, n.name
 $$;
