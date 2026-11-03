@@ -33,7 +33,7 @@ def main() -> int:
         page.fill("#password", "ik-demo-local")
         page.click("#submit")
         page.wait_for_url("**/kb/**")
-        page.wait_for_selector("[data-testid=dashboard] .grid-12")
+        page.wait_for_selector("[data-testid=dash-grid]")
         ids = page.evaluate("""async () => { const s = JSON.parse(localStorage.getItem('np_session'));
             const get = async (q) => (await (await fetch('/api/kb/nodes?' + q, { headers: { authorization: 'Bearer ' + s.access_token } })).json()).items;
             return { course: (await get('type=course&limit=1&sort=name'))[0].id, module: (await get('type=module&limit=1&sort=name'))[0].id }; }""")

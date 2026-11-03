@@ -96,7 +96,7 @@ Every palette hue is at least 4.9:1 on white (the AA threshold for icons is 3:1)
 | Progress | `.bar` `.ok` `.warn` `.danger` | completeness |
 | Page header (run 3) | `pageHead({title, count, sub, actions})` | the one header every screen uses: title, count, one line of context, actions on the right |
 | Card | `.card` › `.card-head` + `.card-body` | hairline border, one radius, no shadow; dashboard blocks |
-| Tile | `.card.span-2` › `.tile` (`.v` value, `.k` label) | dashboard numbers, six equal tiles on the 12-column grid |
+| Tile | `.card.dash-tile` › `.tile` (`.v` value, `.k` label) | dashboard numbers, six equal tiles in `.dash-tiles` |
 | Popover | `popover(anchor, content, {alignRight})` | floating panel kept inside the viewport (flips above, clamps at both edges); Esc or outside click closes |
 | Segmented switch | `.segmented` with `role=radio` buttons | labelled choices such as row density |
 | Check list | `.check-list` | checkbox + label with a 10px gap, drag handle and ↑↓ buttons to reorder |
@@ -129,8 +129,10 @@ the view:
 | `contained` | Dashboard, Outline, Data quality, Approvals, Activity, Archived, Settings | centred, at most `--page-max` (1440px) |
 | `reading` | Guide, a record as a page | content `--read-max` (760px) plus contents `--toc-w` (220px), centred together as one unit |
 
-The dashboard is a 12-column grid: six equal tiles (2 columns each), then two
-equal columns (6 each) whose last cards stretch so both end level.
+The dashboard fits one screen (run 6, F1): `.dash-grid` holds a row of six
+equal tiles (`.dash-tiles`, three per row below 1100px), then three equal
+columns (`.dash-cols`) whose cards end level. The old 12-column `.grid-12` /
+`.span-*` utilities were removed in F6 (docs/LEGACY_REMOVAL.md).
 
 ### Large screens
 

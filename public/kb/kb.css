@@ -198,11 +198,6 @@ input::placeholder, textarea::placeholder { color: var(--text-3); }
 .card-head h2 { font-size: var(--fs-md); }
 .card-body { padding: var(--s-3) var(--s-4) var(--s-4); }
 .card-hint { font-size: var(--fs-xs); color: var(--text-3); margin: 0 0 var(--s-2); }
-/* Dashboard: a symmetrical 12-column grid. */
-.grid-12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s-4); align-items: stretch; }
-.span-2 { grid-column: span 2; } .span-3 { grid-column: span 3; } .span-4 { grid-column: span 4; } .span-6 { grid-column: span 6; } .span-12 { grid-column: span 12; }
-.grid-12 > .card { display: flex; flex-direction: column; min-width: 0; }
-.grid-12 > .card > .card-body { flex: 1; }
 .tile { display: flex; flex-direction: column; gap: 2px; padding: var(--s-3) var(--s-4); color: inherit; text-decoration: none; min-width: 0; }
 a.tile:hover { background: var(--surface-hover); text-decoration: none; }
 .tile .v { font-size: var(--fs-title); font-weight: var(--w-strong); font-variant-numeric: tabular-nums; line-height: 28px; }
@@ -362,7 +357,7 @@ tr:hover .row-actions, tr.cursor .row-actions, tr:focus-within .row-actions { op
 .form-section h3 { color: var(--text); }
 .menu { position: fixed; z-index: 60; min-width: 200px; max-width: 360px; max-height: 360px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow-float); padding: 4px; animation: fade var(--motion); }
-.menu [role="menuitem"], .menu [role="option"], .menu .menu-item { display: flex; align-items: center; gap: var(--s-2); width: 100%; min-height: 30px; padding: 4px var(--s-2);
+.menu [role="menuitem"], .menu [role="option"] { display: flex; align-items: center; gap: var(--s-2); width: 100%; min-height: 30px; padding: 4px var(--s-2);
   border: 0; background: transparent; border-radius: 4px; color: var(--text); font: inherit; font-size: var(--fs-sm); cursor: pointer; text-align: left; }
 .menu [role="menuitem"]:hover, .menu [role="option"]:hover, .menu .active, .menu [aria-selected="true"] { background: var(--surface-hover); }
 .menu .menu-sep { height: 1px; background: var(--border); margin: 4px 0; }
@@ -434,7 +429,6 @@ tr:hover .row-actions, tr.cursor .row-actions, tr:focus-within .row-actions { op
 .graph-presence { font-size: var(--fs-xs); color: var(--ok); padding: 0 6px; white-space: nowrap; }
 .graph-anchor { position: absolute; width: 1px; height: 1px; pointer-events: none; }
 .graph-rename { position: absolute; z-index: 4; width: 220px; height: 28px; font-size: var(--fs-sm); box-shadow: var(--shadow-float); }
-.legend-line { width: 14px; height: 2px; background: var(--border-strong); flex: none; }
 .legend-item { display: flex; align-items: center; gap: var(--s-2); min-height: 26px; }
 .legend-shape { width: 14px; height: 14px; flex: none; color: var(--type); }
 /* Guide (A6): content (~760px) and contents (~220px) centred together as one unit. */
@@ -494,7 +488,6 @@ tr:hover .row-actions, tr.cursor .row-actions, tr:focus-within .row-actions { op
   .app .label-text, .app .nav-group-label, .app .nav a .count, .app .nav-search kbd { display: none; }
   .graph-wrap { grid-template-columns: minmax(0, 1fr); } .graph-side { display: none; }
 }
-@media (max-width: 1180px) { .grid-12 > .span-6 { grid-column: span 12; } .grid-12 > .span-2 { grid-column: span 4; } }
 
 /* ------------------------------------------------------------------ relationship rows (A7) */
 /* Relationship and record side by side, so neither list hides the other
@@ -550,8 +543,7 @@ tr:hover .row-actions, tr.cursor .row-actions, tr:focus-within .row-actions { op
 .sk-icon { width: 16px; height: 16px; flex: none; }
 .sk-block { padding: var(--s-4) var(--s-5); }
 .toolbar-gap { height: var(--s-3); }
-.bar.w-80 { width: 80px; flex: none; } .bar.w-100 { width: 100px; flex: none; } .bar.w-120 { width: 120px; flex: none; }
-.type-col { width: 120px; flex: none; }
+.bar.w-80 { width: 80px; flex: none; } .bar.w-100 { width: 100px; flex: none; }
 .th-check { width: 44px; } .th-actions { width: 72px; } .th-kind { width: 150px; } .th-owner { width: 64px; } .th-used { width: 80px; }
 .th-when { width: 110px; } .th-updated { width: 96px; } .th-who { width: 160px; } .th-row-actions { width: 300px; }
 .search-sm { width: 200px; } .input-md { width: 300px; } .input-sm { width: 160px; }
