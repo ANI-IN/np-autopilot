@@ -1158,12 +1158,15 @@ function buildGraph(v, r) {
     if (handleNode) placeHandles();
   }
   const offPresence = onPresence(() => { if (S.graph === G) markPresence(); });
-  // Leaving the page (router leave hook): unsubscribe, stop polling, free the canvas (run 6, F7; B5's heap finding).
+  // Leaving the page (router leave hook): unsubscribe, stop polling, drop the global references (run 6, F7; B5's heap finding).
   S.onLeave = () => {
     offLive(); offPresence();
     if (pollTimer) clearTimeout(pollTimer);
     if (S.graph === G) S.graph = null;
-    try { if (cy) cy.destroy(); } catch (e) { /* already gone */ }
+    // cy.destroy() frees Cytoscape's own window listeners (without it the heap still grew ~0.5 MB per
+    // visit). Deferred, so a debounced redraw or the minimap's next frame that is already queued runs first.
+    const old = cy;
+    setTimeout(() => { try { if (old && !old.destroyed()) old.destroy(); } catch (e) { /* already gone */ } }, 1500);
     if (window.__kbGraph === G) window.__kbGraph = null;
   };
   G.reload = reload;

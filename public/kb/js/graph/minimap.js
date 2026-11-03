@@ -35,7 +35,7 @@ export function createMinimap(cy, canvas, tok, isRecord) {
     if (x2 > x1 && y2 > y1) ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
   }
   function invalidate() { dirty = true; schedule(); }
-  function schedule() { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; draw(); }); } }
+  function schedule() { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; if (!cy.destroyed()) draw(); }); } }
   function moveTo(e) {
     if (!map) return;
     const r = canvas.getBoundingClientRect();
