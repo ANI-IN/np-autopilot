@@ -93,7 +93,7 @@ export function createRelationshipType(o) {
       } catch (e) { /* the save re-checks */ }
     }, 250);
     function showDuplicate(x) {
-      clear(dup).appendChild(el('div', { class: 'note-box warn row', style: 'flex-wrap:wrap' }, icon('triangle-alert', 'sm'),
+      clear(dup).appendChild(el('div', { class: 'note-box warn row wrap' }, icon('triangle-alert', 'sm'),
         el('span', null, 'Already exists: ', el('strong', { text: x.label }), x.inverse_label ? ' (other way: ' + x.inverse_label + ')' : '', '.'),
         el('span', { class: 'spacer' }), el('button', { class: 'btn sm', type: 'button', 'data-testid': 'newrel-use-existing', text: 'Use “' + x.label + '”',
           onclick: () => { closeDialog(); finish(S.edgeTypes.find((e) => e.key === x.key) || null); } })));

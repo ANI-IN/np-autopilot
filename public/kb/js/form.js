@@ -58,10 +58,10 @@ export function fieldInput(f, val, onChange, opts) {
     case 'single_select': { const s = el('select', { 'data-testid': tid, 'aria-label': f.label }, el('option', { value: '', text: '—' }), (f.options || []).map((o) => el('option', { value: o.value, text: o.label, selected: o.value === val })));
       s.addEventListener('change', () => commit(s.value)); return s; }
     case 'multi_select': {
-      const box = el('div', { class: 'row', style: 'flex-wrap:wrap;gap:8px', 'data-testid': tid });
+      const box = el('div', { class: 'row wrap', 'data-testid': tid });
       (f.options || []).forEach((o) => { const c = el('input', { type: 'checkbox', checked: (val || []).includes(o.value), 'aria-label': o.label });
         c.addEventListener('change', () => onChange($$('input', box).map((x, i) => (x.checked ? f.options[i].value : null)).filter(Boolean)));
-        box.appendChild(el('label', { class: 'row small', style: 'gap:4px' }, c, o.label)); });
+        box.appendChild(el('label', { class: 'row small gap-1' }, c, o.label)); });
       return box; }
     case 'person': { const s = el('select', { 'data-testid': tid, 'aria-label': f.label }, el('option', { value: '', text: '—' }), S.people.map((p) => el('option', { value: p.user_id, text: personName(p.user_id), selected: p.user_id === val })));
       s.addEventListener('change', () => commit(s.value)); return s; }
@@ -82,7 +82,7 @@ function placementPicker(typeKey, initial, testid, single) {
   const rows = [];
   function parentsOf(k) { const t = S.typeByKey[k]; return (t && t.allowed_parents) || []; }
   function addRow(pre) {
-    const row = el('div', { class: 'col', style: 'gap:4px' });
+    const row = el('div', { class: 'col gap-1' });
     const state = { value: null, nested: null };
     const allowed = parentsOf(typeKey);
     const cb = combobox({ testid: (testid || 'placement') + '-picker', label: 'Belongs to', placeholder: 'Search ' + allowed.map((k) => typeLabel(k, true).toLowerCase()).join(', ') + '…',
@@ -90,7 +90,7 @@ function placementPicker(typeKey, initial, testid, single) {
       onCreateRequest: (it, done) => done({ id: 'new:' + it.type + ':' + it.name, label: it.name + ' (new ' + typeLabel(it.type).toLowerCase() + ')', icon: typeIcon(it.type), type: it.type, isNew: true, name: it.name }),
       value: pre ? [pre] : [],
       onChange: (v) => { state.value = v; drawNested(); } });
-    const nestedBox = el('div', { style: 'margin-left:16px' });
+    const nestedBox = el('div', { class: 'indent' });
     function drawNested() {
       clear(nestedBox); state.nested = null;
       if (state.value && state.value.isNew && parentsOf(state.value.type).length) {
@@ -100,7 +100,7 @@ function placementPicker(typeKey, initial, testid, single) {
       }
     }
     const rm = el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Remove placement', onclick: () => { rows.splice(rows.indexOf(state), 1); row.remove(); } }, icon('x', 'sm'));
-    row.append(el('div', { class: 'row' }, el('div', { style: 'flex:1;min-width:0' }, cb), rm), nestedBox);
+    row.append(el('div', { class: 'row' }, el('div', { class: 'grow' }, cb), rm), nestedBox);
     state.value = pre || null;
     state.spec = () => {
       const v = state.value; if (!v) return null;
@@ -111,7 +111,7 @@ function placementPicker(typeKey, initial, testid, single) {
     rows.push(state);
     list.insertBefore(row, addBtn);
   }
-  const addBtn = el('button', { class: 'btn ghost sm', type: 'button', style: 'align-self:flex-start', 'data-testid': (testid || 'placement') + '-add', onclick: () => addRow() }, icon('plus', 'sm'), 'Add another place');
+  const addBtn = el('button', { class: 'btn ghost sm self-start', type: 'button', 'data-testid': (testid || 'placement') + '-add', onclick: () => addRow() }, icon('plus', 'sm'), 'Add another place');
   list.appendChild(addBtn);
   if (single) addBtn.hidden = true;                // a new parent has one place
   (initial && initial.length ? initial : [null]).forEach((p) => addRow(p));
@@ -127,7 +127,7 @@ function placementPicker(typeKey, initial, testid, single) {
 function relationshipRows(typeKey, getName, testid) {
   const box = el('div', { class: 'col', 'data-testid': testid || 'rel-rows' });
   const rows = [];
-  const addBtn = el('button', { class: 'btn ghost sm', type: 'button', style: 'align-self:flex-start', 'data-testid': 'add-relationship', onclick: () => addRow() }, icon('plus', 'sm'), 'Add relationship');
+  const addBtn = el('button', { class: 'btn ghost sm self-start', type: 'button', 'data-testid': 'add-relationship', onclick: () => addRow() }, icon('plus', 'sm'), 'Add relationship');
   function addRow() {
     const st = { opt: null, target: null, note: '' };
     const tgtHost = el('div', { class: 'rel-target' });
@@ -180,12 +180,12 @@ function relationshipRows(typeKey, getName, testid) {
 function linkRows(testid) {
   const box = el('div', { class: 'col', 'data-testid': testid || 'link-rows' });
   const rows = [];
-  const addBtn = el('button', { class: 'btn ghost sm', type: 'button', style: 'align-self:flex-start', 'data-testid': 'add-link', onclick: () => addRow() }, icon('plus', 'sm'), 'Add link');
+  const addBtn = el('button', { class: 'btn ghost sm self-start', type: 'button', 'data-testid': 'add-link', onclick: () => addRow() }, icon('plus', 'sm'), 'Add link');
   const pickBtn = el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'pick-link', onclick: () => addRow(true) }, icon('library', 'sm'), 'Pick from library');
   function addRow(fromLibrary) {
     const st = { existing: null, row: null };
-    const url = el('input', { type: 'url', placeholder: 'Paste a URL — Drive, Docs, Slides, UpLevel, GitHub, YouTube, Zoom…', 'aria-label': 'URL', 'data-testid': 'link-url', style: 'flex:1' });
-    const kindIcon = el('span', { class: 'type-icon', style: 'width:20px' }, icon('link'));
+    const url = el('input', { type: 'url', placeholder: 'Paste a URL — Drive, Docs, Slides, UpLevel, GitHub, YouTube, Zoom…', 'aria-label': 'URL', 'data-testid': 'link-url', class: 'grow' });
+    const kindIcon = el('span', { class: 'type-icon w-20' }, icon('link'));
     const msg = el('div', { class: 'xs', 'data-testid': 'link-msg' });
     const title = el('input', { placeholder: 'Title', 'aria-label': 'Title', 'data-testid': 'link-title' });
     const kind = kindSelect('link', 'link-kind');
@@ -193,7 +193,7 @@ function linkRows(testid) {
     const purpose = el('input', { placeholder: 'Purpose — why it is attached here', 'aria-label': 'Purpose', 'data-testid': 'link-purpose' });
     const owner = el('select', { 'aria-label': 'Link owner' }, S.people.map((p) => el('option', { value: p.user_id, text: personName(p.user_id) + (you(p.user_id) ? ' (you)' : ''), selected: you(p.user_id) })));
     const tags = el('input', { placeholder: 'Tags, comma separated', 'aria-label': 'Link tags' });
-    const details = el('div', { class: 'col', style: 'gap:6px' }, el('div', { class: 'grid-2' }, title, kind), desc, purpose, el('div', { class: 'grid-2' }, owner, tags));
+    const details = el('div', { class: 'col gap-2' }, el('div', { class: 'grid-2' }, title, kind), desc, purpose, el('div', { class: 'grid-2' }, owner, tags));
     const lib = combobox({ testid: 'link-library', label: 'Find a link in the library', placeholder: 'Search the library by title or URL',
       source: async (q) => (await api('GET', '/resources' + qs({ q, limit: 10 }))).items.map((r) => ({ id: r.id, label: r.title, sub: r.url, icon: icon(linkKindFor(r).icon), r })),
       onChange: (v) => { st.existing = v ? v.r : null; drawExisting(); } });
@@ -219,8 +219,8 @@ function linkRows(testid) {
     url.addEventListener('input', check);
     kind.addEventListener('change', () => { st.kindTouched = true; });
     const rm = el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Remove link row', onclick: () => { rows.splice(rows.indexOf(st), 1); row.remove(); } }, icon('x', 'sm'));
-    const row = el('div', { class: 'col', style: 'gap:6px;padding:8px;border:1px solid var(--border);border-radius:6px', 'data-testid': 'link-row-form' },
-      fromLibrary ? el('div', { class: 'row' }, el('div', { style: 'flex:1;min-width:0' }, lib), rm) : el('div', { class: 'row' }, kindIcon, url, rm), msg, fromLibrary ? purpose : details);
+    const row = el('div', { class: 'link-card', 'data-testid': 'link-row-form' },
+      fromLibrary ? el('div', { class: 'row' }, el('div', { class: 'grow' }, lib), rm) : el('div', { class: 'row' }, kindIcon, url, rm), msg, fromLibrary ? purpose : details);
     if (fromLibrary) { details.hidden = true; }
     st.row = row;
     st.value = () => {
@@ -249,7 +249,7 @@ function section(title, content, opts) {
   opts = opts || {};
   const count = el('span', { class: 'count' });
   const d = el('details', { class: 'form-section', open: !!opts.open, 'data-testid': 'section-' + opts.key },
-    el('summary', null, icon('chevron-right', 'sm chev'), title, count, opts.hint ? el('span', { class: 'faint xs', style: 'font-weight:400', text: opts.hint }) : null), content);
+    el('summary', null, icon('chevron-right', 'sm chev'), title, count, opts.hint ? el('span', { class: 'faint xs hint', text: opts.hint }) : null), content);
   d.setCount = (n) => { count.textContent = n ? String(n) : ''; };
   return d;
 }
@@ -287,7 +287,7 @@ export function openRecordForm(o) {
     fieldRow('Name', name, true, null, 'name'), dupBox, templateRow,
     fieldRow('Summary', summary, false, 'One line: what is this?', 'summary'),
     el('div', { class: 'grid-2' }, fieldRow('Status', status), fieldRow('Review status', review)));
-  const requiredFields = el('div', { class: 'col', style: 'gap:12px' });
+  const requiredFields = el('div', { class: 'col gap-3' });
   basics.appendChild(requiredFields);
 
   // --- optional sections
@@ -306,23 +306,23 @@ export function openRecordForm(o) {
   const tagsCb = combobox({ multi: true, testid: 'tags', label: 'Tags', placeholder: 'Add tags', value: ((n && n.tags) || []).map((t) => ({ id: t.name, label: '#' + t.name })),
     source: async (q) => (await api('GET', '/tags')).items.filter((t) => !q || t.name.includes(q.toLowerCase())).slice(0, 10).map((t) => ({ id: t.name, label: '#' + t.name })),
     create: (q) => [{ id: q, label: 'Create tag “' + q + '”' }], onCreateRequest: (it, done) => done({ id: it.id.replace(/^new:/, ''), label: '#' + it.id.replace(/^new:/, '') }) });
-  const optionalFields = el('div', { class: 'col', style: 'gap:12px' });
+  const optionalFields = el('div', { class: 'col gap-3' });
 
   const sPlace = section('Placement', placement, { key: 'placement', open: !editing, hint: 'where it belongs' });
   const sRels = section('Relationships', rels, { key: 'relationships' });
-  const sLinks = section('Links and resources', links, { key: 'links', open: !editing });
-  const sPeople = section('People', el('div', { class: 'col', style: 'gap:12px' }, fieldRow('Primary owner', owner, false, 'Defaults to you.'), fieldRow('Secondary owners', coOwners),
+  const sLinks = section('Links', links, { key: 'links', open: !editing });
+  const sPeople = section('People', el('div', { class: 'col gap-3' }, fieldRow('Primary owner', owner, false, 'Defaults to you.'), fieldRow('Secondary owners', coOwners),
     editing ? null : fieldRow('Instructors', instructors, false, 'Linked with “teaches”.'), editing ? null : fieldRow('Subject experts (SMEs)', smes)), { key: 'people' });
   const sTags = section('Tags', tagsCb, { key: 'tags' });
   const sFields = section('More fields', optionalFields, { key: 'fields' });
 
   let existingBlock = null;
   if (editing) {
-    existingBlock = el('div', { class: 'note-box', style: 'margin:16px 24px 0' }, 'Placement, relationships and links of this record are edited on its tabs; anything you add here is added to them.');
+    existingBlock = el('div', { class: 'note-box form-note' }, 'Placement, relationships and links of this record are edited on its tabs; anything you add here is added to them.');
   }
   const form = el('form', { novalidate: true, 'data-testid': 'record-form', onsubmit: (e) => { e.preventDefault(); submit(false); } },
-    contributorOnly ? el('div', { class: 'note-box accent', style: 'margin:16px 24px 0', 'data-testid': 'proposal-note' }, icon('circle-check', 'sm'), ' As a contributor, your new record is sent to an editor for approval. You will see it in Approvals.') : null,
-    existingBlock, basics, sPlace, sRels, sLinks, sPeople, sTags, sFields, el('div', { style: 'padding:0 24px' }, err));
+    contributorOnly ? el('div', { class: 'note-box accent form-note', 'data-testid': 'proposal-note' }, icon('circle-check', 'sm'), ' As a contributor, your new record is sent to an editor for approval. You will see it in Approvals.') : null,
+    existingBlock, basics, sPlace, sRels, sLinks, sPeople, sTags, sFields, el('div', { class: 'form-error' }, err));
 
   function onTypeChange() {
     const t = S.typeByKey[typeKey];
@@ -396,7 +396,7 @@ export function openRecordForm(o) {
     }
   }
   const submitBtn = el('button', { class: 'btn primary', type: 'button', 'data-testid': 'create-submit', onclick: () => submit(false) },
-    editing ? 'Save changes' : contributorOnly ? 'Send for approval' : 'Create', el('kbd', { text: /Mac/.test(navigator.platform) ? '⌘↵' : 'Ctrl↵', style: 'border-color:transparent;color:inherit;background:transparent' }));
+    editing ? 'Save changes' : contributorOnly ? 'Send for approval' : 'Create', el('kbd', { class: 'on-btn', text: /Mac/.test(navigator.platform) ? '⌘↵' : 'Ctrl↵' }));
   const anotherBtn = editing ? null : el('button', { class: 'btn', type: 'button', 'data-testid': 'create-another', text: contributorOnly ? 'Send and add another' : 'Create and add another', onclick: () => submit(true) });
 
   async function submit(another) {
@@ -483,7 +483,7 @@ export function openRecordForm(o) {
   sheet.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit(false); } });
   onTypeChange();
   if (!editing && draft && !o.type && !o.name && (draft.name || draft.summary)) {
-    const note = el('div', { class: 'note-box row', style: 'margin:16px 24px 0', 'data-testid': 'draft-restore' }, icon('history', 'sm'),
+    const note = el('div', { class: 'note-box row form-note', 'data-testid': 'draft-restore' }, icon('history', 'sm'),
       el('span', { class: 'spacer', text: 'You have an unsaved draft from ' + new Date(draft.at).toLocaleString() + '.' }),
       el('button', { class: 'btn sm', type: 'button', text: 'Restore', onclick: () => { name.value = draft.name || ''; summary.value = draft.summary || ''; note.remove(); checkName(); } }),
       el('button', { class: 'btn ghost sm', type: 'button', text: 'Discard', onclick: () => { try { localStorage.removeItem(DRAFT_KEY); } catch (e) { /* ignore */ } note.remove(); } }));

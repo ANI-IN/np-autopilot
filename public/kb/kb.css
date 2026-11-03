@@ -108,12 +108,12 @@ a:hover { text-decoration: underline; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 .btn.danger { color: var(--danger); }
-.btn.danger.solid { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn.danger.solid { background: var(--danger); border-color: var(--danger); color: var(--on-accent); }
 .btn.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
 .btn.ghost:hover { background: var(--surface-hover); color: var(--text); }
 .btn.sm { height: 26px; padding: 0 8px; font-size: var(--fs-xs); }
 .btn.icon { width: 32px; padding: 0; } .btn.sm.icon { width: 26px; }
-kbd { font: 500 11px/16px var(--mono); padding: 0 5px; border: 1px solid var(--border-strong); border-radius: 4px; color: var(--text-3); background: var(--surface); }
+kbd { font: 400 11px/16px var(--mono); padding: 0 5px; border: 1px solid var(--border-strong); border-radius: 4px; color: var(--text-3); background: var(--surface); }
 
 /* ------------------------------------------------------------------ inputs */
 input, select, textarea { font: inherit; font-size: var(--fs-md); color: var(--text); background: var(--surface);
@@ -240,7 +240,8 @@ a.tile:hover { background: var(--surface-hover); text-decoration: none; }
   font-size: var(--fs-sm); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;
   display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
 .tabs button:hover, .tabs a:hover { color: var(--text); text-decoration: none; }
-.tabs [aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: var(--w-strong); }
+/* The selected tab keeps the regular weight: a bold label would widen it and shift the tabs beside it. */
+.tabs [aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
 
 /* ------------------------------------------------------------------ table */
 .table-wrap { border-top: 1px solid var(--border); }
@@ -319,7 +320,7 @@ tr:hover .row-actions, tr.cursor .row-actions, tr:focus-within .row-actions { op
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
 .sk-row { display: flex; align-items: center; gap: var(--s-3); height: var(--row-h); padding: 0 var(--s-5); border-bottom: 1px solid var(--border); }
 .empty { padding: var(--s-7) var(--s-5); text-align: left; max-width: 480px; }
-.empty .i { width: 20px; height: 20px; color: var(--text-3); margin-bottom: var(--s-2); }
+.empty > .i { width: 20px; height: 20px; color: var(--text-3); margin-bottom: var(--s-2); }
 .empty p { color: var(--text-2); margin: var(--s-1) 0 var(--s-3); font-size: var(--fs-sm); }
 .error-box { margin: var(--s-4) var(--s-5); padding: var(--s-3) var(--s-4); border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border));
   background: var(--danger-soft); color: var(--text); border-radius: var(--radius); font-size: var(--fs-sm); }
@@ -389,7 +390,7 @@ tr:hover .row-actions, tr.cursor .row-actions, tr:focus-within .row-actions { op
 .toasts { position: fixed; bottom: var(--s-4); right: var(--s-4); display: flex; flex-direction: column; gap: var(--s-2); z-index: 70; }
 .toast { display: flex; align-items: center; gap: var(--s-3); min-height: 40px; padding: 6px 6px 6px 12px; background: var(--text); color: var(--bg);
   border-radius: var(--radius); box-shadow: var(--shadow-float); font-size: var(--fs-sm); max-width: 420px; animation: slide var(--motion); }
-.toast.err { background: var(--danger); color: #fff; }
+.toast.err { background: var(--danger); color: var(--on-accent); }
 .toast button { border: 0; background: transparent; color: inherit; font: inherit; font-weight: var(--w-strong); cursor: pointer; padding: 4px 8px; border-radius: 4px; text-decoration: underline; }
 .gate { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); z-index: 80; }
 .gate-card { width: min(400px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: var(--s-3); }
@@ -500,16 +501,136 @@ tr:hover .row-actions, tr.cursor .row-actions, tr:focus-within .row-actions { op
 
 /* run 5: role badges (P, B1-B3), the teaching matrix, the programme timeline */
 .role-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 18px; padding: 0 4px; border-radius: 4px;
-  font-size: 11px; font-weight: 600; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+  font-size: var(--fs-xs); font-weight: var(--w-strong); background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
 .role-badge.r-primary { background: var(--accent); color: var(--on-accent); border-color: transparent; }
-.role-badge.r-none { opacity: .65; font-weight: 500; }
-.matrix-wrap { overflow: auto; max-height: calc(100vh - 220px); border: 1px solid var(--border); border-radius: 8px; }
-.table.matrix th.rot { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; max-height: 180px; font-weight: 500; padding: 6px 2px; }
-.table.matrix td.cell { text-align: center; padding: 2px; min-width: 28px; }
-.table.matrix .sticky-col { position: sticky; left: 0; background: var(--bg); z-index: 1; white-space: nowrap; text-align: left; }
-.timeline-lane { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
-.timeline-week { flex: 0 0 240px; display: flex; flex-direction: column; gap: 8px; }
-.timeline-week-head { font-weight: 600; font-size: 12px; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
-.timeline-card { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; background: var(--surface); }
-.timeline-card ul { margin: 0; padding-left: 16px; }
+.role-badge.r-none { color: var(--text-2); font-weight: var(--w-regular); }
+.matrix-wrap { overflow: auto; max-height: calc(100vh - 220px); border: 1px solid var(--border); border-radius: var(--radius); }
+/* The matrix sizes its columns to their content (fixed layout would clip the
+   turned headers); each header is turned, capped at 160px and cut with "…",
+   with the full name in its tooltip. */
+.table.matrix { table-layout: auto; width: auto; min-width: 100%; }
+.table.matrix thead th { vertical-align: bottom; height: auto; padding-top: var(--s-2); padding-bottom: var(--s-2); }
+.table.matrix th.rot { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; font-weight: var(--w-regular); padding: var(--s-2) 2px; text-align: left; vertical-align: top; }
+.table.matrix th.rot > a { display: inline-block; max-height: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; }
+.table.matrix td.cell { text-align: center; padding: 2px; min-width: 32px; }
+.table.matrix .sticky-col { position: sticky; left: 0; background: var(--bg); z-index: 2; white-space: nowrap; text-align: left; font-weight: var(--w-regular); }
+.table.matrix thead th.sticky-col { z-index: 3; vertical-align: bottom; }
+.table.matrix tbody tr { cursor: default; }
+.timeline-lane { display: flex; gap: var(--s-3); overflow-x: auto; padding-bottom: var(--s-2); }
+.timeline-week { flex: 0 0 240px; display: flex; flex-direction: column; gap: var(--s-2); }
+.timeline-week-head { font-weight: var(--w-strong); font-size: var(--fs-xs); color: var(--text-2); }
+.timeline-card { border: 1px solid var(--border); border-radius: var(--radius); padding: var(--s-2) var(--s-3); display: flex; flex-direction: column; gap: var(--s-1); background: var(--surface); min-width: 0; }
+.timeline-card a { overflow-wrap: anywhere; }
+.timeline-card ul { margin: 0; padding-left: var(--s-4); }
 @media (max-width: 640px) { .timeline-week { flex-basis: 200px; } }
+
+/* ------------------------------------------------------------------ run 6 (B3): one-off inline styles, as classes */
+/* Layout utilities on the 8px grid. Only data-driven values (a type's colour,
+   an avatar hue, a bar's percentage, a resizable column's width) stay inline. */
+.grow { flex: 1; min-width: 0; } .flex-none { flex: none; } .wrap { flex-wrap: wrap; } .start { align-items: flex-start; }
+.self-start { align-self: flex-start; } .nowrap { white-space: nowrap; } .pre-wrap { white-space: pre-wrap; } .right { text-align: right; }
+.relative { position: relative; } .w-full { width: 100%; } .fg { color: var(--text); }
+.gap-0 { gap: 0; } .gap-xs { gap: 2px; } .gap-1 { gap: var(--s-1); } .gap-2 { gap: var(--s-2); } .gap-3 { gap: var(--s-3); } .gap-5 { gap: var(--s-5); }
+.mb-1 { margin-bottom: var(--s-1); } .mb-2 { margin-bottom: var(--s-2); } .mb-3 { margin-bottom: var(--s-3); }
+.mt-1 { margin-top: var(--s-1); } .mt-2 { margin-top: var(--s-2); } .mt-3 { margin-top: var(--s-3); } .mt-4 { margin-top: var(--s-4); } .mt-5 { margin-top: var(--s-5); }
+.ml-2 { margin-left: var(--s-2); }
+.num-col { width: 40px; flex: none; text-align: right; font-variant-numeric: tabular-nums; }
+.link-row.roomy { padding: var(--s-2) var(--s-3); }
+.panel-note { margin: 0 var(--s-5) var(--s-3); }
+.load-more { justify-content: center; padding: var(--s-4); }
+.sk-icon { width: 16px; height: 16px; flex: none; }
+.sk-block { padding: var(--s-4) var(--s-5); }
+.toolbar-gap { height: var(--s-3); }
+.bar.w-80 { width: 80px; flex: none; } .bar.w-100 { width: 100px; flex: none; } .bar.w-120 { width: 120px; flex: none; }
+.type-col { width: 120px; flex: none; }
+.th-check { width: 44px; } .th-actions { width: 72px; } .th-kind { width: 150px; } .th-owner { width: 64px; } .th-used { width: 80px; }
+.th-when { width: 110px; } .th-updated { width: 96px; } .th-who { width: 160px; } .th-row-actions { width: 300px; }
+.search-sm { width: 200px; } .input-md { width: 300px; } .input-sm { width: 160px; }
+.tag-input { width: 110px; height: 26px; }
+.indent { margin-left: var(--s-4); }
+.ico-slot { width: 16px; flex: none; display: inline-block; }
+.type-icon.w-20 { width: 20px; }
+
+/* Focus: every interactive element shows the same ring, including ones whose
+   own state sets a box-shadow (the active sidebar link, the cursor row). */
+.nav a:focus-visible, .user-btn:focus-visible, .nav-search:focus-visible, .btn:focus-visible, .tabs [role="tab"]:focus-visible,
+.link-row:focus-visible, a.tile:focus-visible, .segmented button:focus-visible, .chip button:focus-visible, .token button:focus-visible,
+.tree-row .twisty:focus-visible, .figure-zoom:focus-visible, .inline-edit:focus-visible, .panel-resize:focus-visible, .menu button:focus-visible {
+  outline: none; box-shadow: var(--focus); }
+.table tbody tr:focus-visible td { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent); }
+.panel-resize:focus-visible { background: color-mix(in srgb, var(--accent) 35%, transparent); }
+input[type="checkbox"]:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent); outline-offset: 2px; box-shadow: none; }
+
+/* Reduced motion: no transitions, animations or smooth scrolling anywhere. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0s !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; scroll-behavior: auto !important; }
+}
+
+/* Settings tabs: one intro row (what the tab is for, its one action). */
+.tab-intro { display: flex; align-items: center; gap: var(--s-3); min-height: 32px; margin-bottom: var(--s-3); }
+.tab-intro > p { flex: 1; min-width: 0; color: var(--text-2); font-size: var(--fs-sm); }
+.settings-body { padding-top: var(--s-4); }
+.inline-form { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.field-card { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--radius); }
+.field-card.archived { opacity: .6; }
+.type-editor { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+.type-editor > .editor-main { border-right: 1px solid var(--border); }
+.type-editor > .editor-preview { border: 0; background: var(--bg-subtle); }
+.editor-error { padding: 0 var(--s-5) var(--s-4); }
+@media (max-width: 900px) { .type-editor { grid-template-columns: minmax(0, 1fr); } .type-editor > .editor-main { border-right: 0; } }
+.swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; background: var(--sw); cursor: pointer; padding: 0; }
+.swatch[aria-pressed="true"] { border-color: var(--text); }
+.subhead { margin: var(--s-4) 0 var(--s-2); font-size: var(--fs-sm); color: var(--text); }
+
+/* Activity filters: one grid, so the row never leaves a lone control behind. */
+.toolbar.filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--s-2); align-items: end; padding: 0 0 var(--s-3); }
+.toolbar.filters > .filter.wide { grid-column: span 2; }
+.toolbar.filters > .filter > input, .toolbar.filters > .filter > select, .toolbar.filters > .filter .combo-box { width: 100%; }
+.toolbar.filters > .btn { justify-self: start; }
+
+/* A record as a page (reading layout): header, properties, tabs and body share
+   one centred column, so every hairline starts and ends at the same place. */
+.record-page { max-width: calc(var(--read-max) + var(--toc-w)); margin: 0 auto; padding-top: var(--s-2); }
+.record-page > .tabs { padding: 0 var(--s-5); }
+.record-head { border-bottom: 0; padding-bottom: var(--s-2); }
+.record-head > .row:first-child { margin-bottom: var(--s-2); align-items: flex-start; }
+.record-meta { margin-top: var(--s-1); flex-wrap: wrap; }
+.text-block { white-space: pre-wrap; font-size: var(--fs-md); }
+.section h3 + .text-block, .section h3 + .inline-edit, .section h3 + textarea { margin-top: var(--s-1); }
+.section .text-block + h3, .section .inline-edit + h3, .section textarea + h3 { margin-top: var(--s-4); }
+.rel-group-label { margin: var(--s-2) 0 2px; }
+.conflict-diff { display: grid; grid-template-columns: 100px minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-2) var(--s-3); font-size: var(--fs-sm); }
+.impact-list { margin: 0; padding-left: 18px; }
+.url-line { display: block; margin-top: var(--s-1); }
+.proposal-json { white-space: pre-wrap; max-height: 50vh; overflow: auto; }
+
+/* Approvals and reviews: one row per item, the page's side padding. */
+.queue > li { border-bottom: 1px solid var(--border); }
+.queue > li > .link-row { padding: var(--s-3) var(--s-5); align-items: flex-start; border-radius: 0; }
+
+/* New record form */
+.form-note { margin: var(--s-4) var(--s-5) 0; }
+.form-error { padding: 0 var(--s-5); }
+.link-card { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-2); border: 1px solid var(--border); border-radius: var(--radius); }
+.form-section > summary .hint { font-weight: var(--w-regular); }
+kbd.on-btn { border-color: transparent; color: inherit; background: transparent; }
+
+/* Guide: screenshots are 2x captures shown at their real size (width = half the pixels, set on load),
+   never wider than the column. */
+.guide img { height: auto; }
+.figure-zoom { width: auto; max-width: 100%; }
+
+/* Teaching matrix and timeline toolbars use the page's side padding. */
+.view-toolbar { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; padding: 0 var(--s-5) var(--s-3); }
+.view-toolbar label.row { gap: var(--s-1); }
+.timeline-head { display: flex; align-items: baseline; gap: var(--s-2); flex-wrap: wrap; margin-bottom: var(--s-2); }
+.page-body > .section:first-child { padding-top: 0; }
+.avatar.system { --av: #475569; }
+.justify-end { justify-content: flex-end; }
+/* A contained screen's list or table that runs edge to edge inside the page width. */
+#view[data-layout="contained"] > .contained { max-width: var(--page-max); margin-inline: auto; }
+.deck-list { list-style: none; margin: 0; padding: var(--s-1) 0 0; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
+.deck-list li { display: flex; align-items: center; gap: var(--s-1); min-width: 0; color: var(--text-3); }
+.deck-list a { min-width: 0; }
+.missing-col { max-width: 50%; flex: 0 1 auto; }
+.gate-card h1.brand { font-size: var(--fs-lg); padding: 0; }

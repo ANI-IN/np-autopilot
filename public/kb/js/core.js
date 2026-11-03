@@ -293,14 +293,14 @@ export function closeSheet(silent) {
 export function skeletonRows(n, cols) {
   const w = el('div', { 'aria-busy': 'true', 'aria-label': 'Loading' });
   for (let i = 0; i < (n || 8); i++) {
-    w.appendChild(el('div', { class: 'sk-row' }, el('div', { class: 'skeleton', style: 'width:16px;height:16px' }),
+    w.appendChild(el('div', { class: 'sk-row' }, el('div', { class: 'skeleton sk-icon' }),
       el('div', { class: 'skeleton', style: 'width:' + (30 + (i * 7) % 25) + '%' }), el('span', { class: 'spacer' }),
       (cols || 2) > 1 ? el('div', { class: 'skeleton', style: 'width:12%' }) : null, el('div', { class: 'skeleton', style: 'width:8%' })));
   }
   return w;
 }
 export function skeletonBlock(lines) {
-  const w = el('div', { class: 'col', style: 'padding:16px 24px', 'aria-busy': 'true' });
+  const w = el('div', { class: 'col sk-block', 'aria-busy': 'true', 'aria-label': 'Loading' });
   for (let i = 0; i < (lines || 6); i++) w.appendChild(el('div', { class: 'skeleton', style: 'width:' + (90 - (i * 13) % 50) + '%' }));
   return w;
 }
@@ -312,7 +312,7 @@ export function errorBox(e, retry) {
   const msg = e.status === 403 ? 'You do not have access to this. Ask an admin for a role that allows it.' :
     e.status === 0 ? e.message : (e.message || 'Something went wrong.') + ' Try again; if it keeps happening, tell the knowledge base admin.';
   return el('div', { class: 'error-box', role: 'alert' }, el('strong', { text: 'Could not load this. ' }), msg,
-    retry ? el('div', { style: 'margin-top:8px' }, el('button', { class: 'btn sm', type: 'button', text: 'Try again', onclick: retry })) : null);
+    retry ? el('div', { class: 'mt-2' }, el('button', { class: 'btn sm', type: 'button', text: 'Try again', onclick: retry })) : null);
 }
 
 // ------------------------------------------------------------------ routing helpers

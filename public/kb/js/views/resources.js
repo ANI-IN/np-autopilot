@@ -1,14 +1,16 @@
-/* Resources: the link library, reused across records. */
+/* Links (the Resources page): the link library, reused across records. */
 import { S, el, add, clear, icon, api, toast, failToast, avatar, ago, qs, host, setQuery, skeletonRows, empty, errorBox, debounce,
   openDialog, closeDialog, can, plural, menu } from '../core.js';
 import { linkKindFor, detectLinkKind, kindSelect } from '../form.js';
 import { kindLabel } from '../detail.js';
+import { pageHead } from '../page.js';
 
 export function viewResources(v, r) {
   let f = { q: r.q.q || '', kind: r.q.kind || '', link_kind: r.q.link_kind || '', status: r.q.status || 'live' };
-  const count = el('span', { class: 'sub', 'data-testid': 'result-count' });
-  v.appendChild(el('div', { class: 'page-head' }, el('h1', { text: 'Resources' }), count, el('span', { class: 'spacer' }),
-    can('contributor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-resource', onclick: () => newResourceDialog() }, icon('plus'), 'New link') : null));
+  const count = el('span', { class: 'count title-count', 'data-testid': 'result-count', 'aria-live': 'polite' });
+  const head = pageHead({ title: 'Links', actions: can('contributor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-resource', onclick: () => newResourceDialog() }, icon('plus'), 'New link') : null });
+  head.querySelector('.page-title').appendChild(count);
+  v.appendChild(head);
   const search = el('input', { placeholder: 'Search title or URL', 'aria-label': 'Search links', 'data-testid': 'res-filter', value: f.q });
   search.addEventListener('input', debounce(() => setQuery({ q: search.value.trim() || null }, true), 250));
   const lkBtn = el('button', { class: 'btn', type: 'button', 'data-testid': 'res-service', onclick: (e) => menu(e.currentTarget, [{ label: 'Any service', fn: () => setQuery({ link_kind: null }) }]
@@ -16,7 +18,7 @@ export function viewResources(v, r) {
   const kindBtn = el('button', { class: 'btn', type: 'button', 'data-testid': 'res-kind-filter', onclick: (e) => menu(e.currentTarget, [{ label: 'Any kind', fn: () => setQuery({ kind: null }) }]
     .concat(S.resourceKinds.map((k) => ({ label: kindLabel(k), fn: () => setQuery({ kind: k }) })))) }, icon('shapes', 'sm'), f.kind ? kindLabel(f.kind) : 'Kind');
   const stBtn = el('button', { class: 'btn ghost', type: 'button', onclick: () => setQuery({ status: f.status === 'archived' ? null : 'archived' }) }, icon('archive', 'sm'), f.status === 'archived' ? 'Showing archived' : 'Archived');
-  v.append(el('div', { style: 'height:12px' }), el('div', { class: 'toolbar' }, el('div', { class: 'input-icon search' }, icon('search'), search), lkBtn, kindBtn, el('span', { class: 'spacer' }), stBtn));
+  v.append(el('div', { class: 'toolbar-gap' }), el('div', { class: 'toolbar' }, el('div', { class: 'input-icon search' }, icon('search'), search), lkBtn, kindBtn, el('span', { class: 'spacer' }), stBtn));
   const host_ = el('div', { class: 'table-wrap' }), foot = el('div', { class: 'table-foot' });
   v.append(host_, foot);
   let items = [], cursor = null;
@@ -30,7 +32,7 @@ export function viewResources(v, r) {
   S.listReload = () => load(false);
   function draw() {
     clear(host_);
-    count.textContent = plural(items.length, 'link') + (cursor ? '+' : '');
+    count.textContent = cursor ? items.length + '+ links' : plural(items.length, 'link');
     if (!items.length) { host_.appendChild(f.q || f.kind || f.link_kind ? empty('Nothing matches', 'Try a different search or service.', null, 'search') : empty('No links yet', 'Add slides, recordings and repos from a record, or here.', can('contributor') ? el('button', { class: 'btn sm', type: 'button', text: 'New link', onclick: () => newResourceDialog() }) : null, 'link')); clear(foot); return; }
     const tb = el('tbody');
     items.forEach((x) => {
@@ -44,8 +46,8 @@ export function viewResources(v, r) {
         el('td', { class: 'num faint', text: x.used_by ? String(x.used_by) : '' }),
         el('td', { class: 'faint', text: ago(x.updated_at) })));
     });
-    host_.appendChild(el('table', { class: 'table' }, el('thead', null, el('tr', null, el('th', { text: 'Link' }), el('th', { style: 'width:150px', text: 'Kind' }),
-      el('th', { class: 'col-optional', style: 'width:64px', text: 'Owner' }), el('th', { class: 'num', style: 'width:80px', text: 'Used by' }), el('th', { style: 'width:96px', text: 'Updated' }))), tb));
+    host_.appendChild(el('table', { class: 'table' }, el('thead', null, el('tr', null, el('th', { text: 'Link' }), el('th', { class: 'th-kind', text: 'Kind' }),
+      el('th', { class: 'col-optional th-owner', text: 'Owner' }), el('th', { class: 'num th-used', text: 'Used by' }), el('th', { class: 'th-updated', text: 'Updated' }))), tb));
     clear(foot); add(foot, [el('span', { text: 'Showing ' + items.length }), el('span', { class: 'spacer' }), cursor ? el('button', { class: 'btn sm', type: 'button', text: 'Load more', onclick: () => load(true) }) : null]);
   }
   S.onQueryChange = (nr) => {

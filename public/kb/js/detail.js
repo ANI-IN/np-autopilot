@@ -74,26 +74,27 @@ export function reloadPanel() { if (S.panel) { S.panel.stale = false; loadInto(S
 
 // ------------------------------------------------------------------ record
 function crumbs(n) {
-  const c = el('nav', { class: 'crumbs', 'aria-label': 'Breadcrumb', 'data-testid': 'breadcrumb', style: 'flex:1 1 0;min-width:0' });
+  const c = el('nav', { class: 'crumbs grow', 'aria-label': 'Breadcrumb', 'data-testid': 'breadcrumb' });
   (n.breadcrumb || []).forEach((b) => { c.append(el('a', { href: '#/records?open=' + b.id, text: b.name }), icon('chevron-right', 'sm')); });
-  c.append(el('span', { class: 'row', style: 'gap:4px' }, typeIcon(n.type, 'sm'), typeLabel(n.type)));
+  c.append(el('span', { class: 'row gap-1' }, typeIcon(n.type, 'sm'), typeLabel(n.type)));
   return c;
 }
 
 function renderNode(st, keepTab) {
-  const n = st.node, host = clear(st.host), editable = can('contributor') && !n.archived_at;
+  const n = st.node, editable = can('contributor') && !n.archived_at;
+  // As a page, everything sits in one centred column (reading layout).
+  const host = st.full ? clear(st.host).appendChild(el('div', { class: 'record-page', 'data-testid': 'record-page' })) : clear(st.host);
   const tab = keepTab && st.tab ? st.tab : 'overview';
   st.tab = tab;
   // header
-  const acts = el('div', { class: 'row', style: 'gap:2px;flex:none' });
+  const acts = el('div', { class: 'row gap-xs flex-none' });
   if (!st.full) acts.appendChild(el('a', { class: 'btn ghost sm icon', href: '#/r/' + n.id, title: 'Open as a page', 'aria-label': 'Open as a page', 'data-testid': 'open-full' }, icon('maximize-2', 'sm')));
   else acts.appendChild(el('a', { class: 'btn ghost sm', href: '#/records?open=' + n.id, 'data-testid': 'back-to-list' }, icon('arrow-left', 'sm'), 'Back to list'));
   acts.appendChild(el('a', { class: 'btn ghost sm icon', href: '#/graph/' + n.id, title: 'Show in graph', 'aria-label': 'Show in graph', 'data-testid': 'open-graph' }, icon('network', 'sm')));
   if (editable) acts.appendChild(el('button', { class: 'btn sm', type: 'button', 'data-testid': 'edit-record', onclick: () => openRecordForm({ edit: n }) }, icon('pencil', 'sm'), 'Edit'));
   acts.appendChild(el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'More actions', 'data-testid': 'more-actions', onclick: (e) => moreMenu(e.currentTarget, st) }, icon('ellipsis')));
   if (!st.full) acts.appendChild(el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Close details', 'data-testid': 'close-panel', onclick: () => closePanel() }, icon('x')));
-  const head = el('div', { class: 'section', style: 'border-bottom:0;padding-bottom:8px' + (st.full ? ';max-width:900px' : '') },
-    el('div', { class: 'row', style: 'margin-bottom:8px;align-items:flex-start' }, crumbs(n), acts));
+  const head = el('div', { class: 'section record-head' }, el('div', { class: 'row' }, crumbs(n), acts));
   const title = el('h1', { class: editable ? 'inline-edit' : '', 'data-testid': 'panel-name', text: n.name, contenteditable: editable ? 'true' : null,
     spellcheck: 'false', 'aria-label': 'Name', role: editable ? 'textbox' : null });
   if (editable) {
@@ -101,28 +102,28 @@ function renderNode(st, keepTab) {
     title.addEventListener('blur', () => { const v = title.textContent.replace(/\s+/g, ' ').trim(); if (v && v !== n.name) saveNode(st, { name: v }); else title.textContent = n.name; });
   }
   head.appendChild(title);
-  const meta = el('div', { class: 'row small faint', style: 'margin-top:6px;flex-wrap:wrap' },
+  const meta = el('div', { class: 'row small faint record-meta' },
     n.status !== 'active' ? el('span', { class: 'badge ' + (n.archived_at ? 'danger' : 'warn'), text: n.archived_at ? 'Archived' : 'Draft' }) : null,
     n.review_status === 'needs_review' ? el('span', { class: 'badge warn', text: 'Needs review' }) : n.review_status === 'approved' ? el('span', { class: 'badge ok', text: 'Reviewed' }) : null,
     n.is_legacy ? el('span', { class: 'badge', 'data-testid': 'legacy-badge', title: 'From the older sheets (NP Autopilot: legacy)', text: 'Legacy' }) : null,
     el('span', { 'data-testid': 'panel-version', text: 'v' + n.version }), el('span', { text: '·' }), el('span', { text: 'Updated ' + ago(n.updated_at) }),
-    el('span', { id: 'presence', class: 'row', style: 'gap:4px' }));
+    el('span', { id: 'presence', class: 'row gap-1' }));
   head.appendChild(meta);
   host.appendChild(head);
-  if (n.archived_at) host.appendChild(el('div', { class: 'note-box warn', style: 'margin:0 24px 12px' }, 'Archived ' + ago(n.archived_at) + '. It is hidden from lists and the graph. ',
+  if (n.archived_at) host.appendChild(el('div', { class: 'note-box warn panel-note' }, 'Archived ' + ago(n.archived_at) + '. It is hidden from lists and the graph. ',
     can('editor') ? 'Restore it, or delete it permanently from Archived.' : 'An editor can restore it.'));
-  if (n.sync && n.sync.conflict_at) host.appendChild(el('div', { class: 'note-box warn', style: 'margin:0 24px 12px', 'data-testid': 'sync-conflict' },
+  if (n.sync && n.sync.conflict_at) host.appendChild(el('div', { class: 'note-box warn panel-note', 'data-testid': 'sync-conflict' },
     'Changed at the source since it was edited here: the sync kept your edit and did not overwrite it. Compare with the original site and update by hand if needed.'));
-  if (n.sync && n.sync.removed_at) host.appendChild(el('div', { class: 'note-box warn', style: 'margin:0 24px 12px', 'data-testid': 'sync-removed' },
+  if (n.sync && n.sync.removed_at) host.appendChild(el('div', { class: 'note-box warn panel-note', 'data-testid': 'sync-removed' },
     'Removed at source ' + ago(n.sync.removed_at) + ': the row no longer exists in the original site. Kept here; archive it if it is no longer needed.'));
-  (n.flags || []).forEach((f) => host.appendChild(el('div', { class: 'note-box warn row', style: 'margin:0 24px 8px', 'data-testid': 'flag-banner' }, icon('flag', 'sm'),
+  (n.flags || []).forEach((f) => host.appendChild(el('div', { class: 'note-box warn row panel-note', 'data-testid': 'flag-banner' }, icon('flag', 'sm'),
     el('span', { class: 'spacer', text: 'Flagged as incorrect: ' + f.reason }), el('a', { class: 'btn sm', href: '#/approvals?tab=reviews', text: 'Review' }))));
   // properties
   host.appendChild(propsGrid(st, editable));
   // tabs
   const tabs = el('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Record sections' });
   const body = el('div', { 'data-testid': 'panel-tab-body' });
-  const defs = [['overview', 'Overview'], ['links', 'Links & resources', n.resources.length], ['relationships', 'Relationships', n.outgoing.length + n.incoming.length], ['history', 'History']];
+  const defs = [['overview', 'Overview'], ['links', 'Links', n.resources.length], ['relationships', 'Relationships', n.outgoing.length + n.incoming.length], ['history', 'History']];
   defs.forEach(([k, label, count]) => tabs.appendChild(el('button', { type: 'button', role: 'tab', 'aria-selected': k === tab ? 'true' : 'false', 'data-testid': 'tab-' + k,
     onclick: () => { st.tab = k; tabs.querySelectorAll('[role=tab]').forEach((b) => b.setAttribute('aria-selected', b.dataset.testid === 'tab-' + k ? 'true' : 'false')); drawTab(st, body, editable); } },
     label, count !== undefined ? el('span', { class: 'count', text: count }) : null)));
@@ -166,7 +167,7 @@ function propsGrid(st, editable) {
   }
   if ((n.co_owner_records || []).length || (editable && n.owner_record)) {
     const ids = (n.co_owner_records || []).map((r) => r.id);
-    row('Backups', [(n.co_owner_records || []).map((r, i) => el('span', { class: 'row', style: 'gap:2px' }, personLink(r, 'B' + (i + 1)),
+    row('Backups', [(n.co_owner_records || []).map((r, i) => el('span', { class: 'row gap-xs' }, personLink(r, 'B' + (i + 1)),
       editable ? el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Remove backup ' + r.name, onclick: () => saveNode(st, { co_owner_record_ids: ids.filter((x) => x !== r.id) }) }, icon('x', 'sm')) : null)),
       editable ? el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'add-backup', text: 'Add', onclick: () => pick('Add a backup', (id) => saveNode(st, { co_owner_record_ids: ids.concat([id]) })) }) : null], 'panel-co-owner-records');
   }
@@ -188,7 +189,7 @@ function propsGrid(st, editable) {
       } }) : null], 'panel-account');
   }
   // placement
-  const placed = el('div', { class: 'row', style: 'flex-wrap:wrap;gap:4px' });
+  const placed = el('div', { class: 'row wrap gap-1' });
   (n.parents || []).forEach((p) => placed.appendChild(el('span', { class: 'token' }, typeIcon(p.node_type, 'sm'), el('a', { href: '#/records?open=' + p.node_id, text: p.node_name, class: 'truncate' }),
     editable ? el('button', { type: 'button', 'aria-label': 'Remove from ' + p.node_name, onclick: () => removeEdge(st, p, 'Removed from ' + p.node_name) }, icon('x', 'sm')) : null)));
   if (!(n.parents || []).length) placed.appendChild(el('span', { class: 'faint', text: t.allowed_parents && t.allowed_parents.length ? 'Not placed yet' : '—' }));
@@ -196,10 +197,10 @@ function propsGrid(st, editable) {
     onclick: () => placementDialog(st) }));
   row('Belongs to', placed, 'panel-scope');
   // tags
-  const tags = el('div', { class: 'row', style: 'flex-wrap:wrap;gap:4px', 'data-testid': 'panel-tags' });
+  const tags = el('div', { class: 'row wrap gap-1', 'data-testid': 'panel-tags' });
   n.tags.forEach((g) => tags.appendChild(el('span', { class: 'token' }, '#' + g.name, editable ? el('button', { type: 'button', 'aria-label': 'Remove tag ' + g.name, onclick: () => untag(st, g) }, icon('x', 'sm')) : null)));
   if (editable) {
-    const tin = el('input', { placeholder: 'Add tag', 'aria-label': 'Add tag', style: 'width:110px;height:26px', 'data-testid': 'tag-input' });
+    const tin = el('input', { placeholder: 'Add tag', 'aria-label': 'Add tag', class: 'tag-input', 'data-testid': 'tag-input' });
     tin.addEventListener('keydown', (e) => { if (e.key === 'Enter' && tin.value.trim()) { e.preventDefault(); addTag(st, tin.value.trim()); } });
     tags.appendChild(tin);
   } else if (!n.tags.length) tags.appendChild(el('span', { class: 'faint', text: 'None' }));
@@ -214,10 +215,10 @@ function propsGrid(st, editable) {
   // completeness
   if (n.completeness) {
     const c = n.completeness, score = c.tree_score !== undefined ? c.tree_score : c.score;
-    row('Completeness', [el('div', { class: 'bar ' + (score >= 80 ? 'ok' : score >= 50 ? 'warn' : 'danger'), style: 'width:80px' }, el('span', { style: 'width:' + score + '%' })),
+    row('Completeness', [el('div', { class: 'bar w-80 ' + (score >= 80 ? 'ok' : score >= 50 ? 'warn' : 'danger') }, el('span', { style: 'width:' + score + '%' })),
       el('span', { class: 'tabular small', text: score + '%' }), c.missing.length ? el('span', { class: 'faint small truncate', text: 'Missing: ' + c.missing.join(', ') }) : null], 'panel-completeness');
   }
-  return el('div', { class: 'section', style: st.full ? 'max-width:900px' : '' }, dl);
+  return el('div', { class: 'section' }, dl);
 }
 
 function drawTab(st, body, editable) {
@@ -225,13 +226,13 @@ function drawTab(st, body, editable) {
   const n = st.node;
   if (st.tab === 'overview') {
     const sec = el('div', { class: 'section' });
-    sec.append(el('h3', { text: 'Summary', style: 'margin-bottom:4px' }), textBlock(st, 'summary', n.summary, editable, 'Add a one-line summary…', 2000));
-    sec.append(el('h3', { text: 'Notes', style: 'margin:16px 0 4px' }), textBlock(st, 'body', n.body, editable, 'Add notes…', 100000));
+    sec.append(el('h3', { text: 'Summary' }), textBlock(st, 'summary', n.summary, editable, 'Add a one-line summary…', 2000));
+    sec.append(el('h3', { text: 'Notes' }), textBlock(st, 'body', n.body, editable, 'Add notes…', 100000));
     body.appendChild(sec);
     const c = n.completeness;
     if (c && c.weakest && c.weakest.length) {
       const ul = el('ul', { class: 'list' });
-      c.weakest.slice(0, 6).forEach((w) => ul.appendChild(el('li', null, el('a', { class: 'link-row', href: '#/records?open=' + w.id }, typeIcon(w.type), el('span', { class: 'truncate', text: w.name }), el('span', { class: 'spacer' }), el('span', { class: 'faint xs truncate', text: w.missing.join(', ') }), el('span', { class: 'tabular small', text: w.score + '%' })))));
+      c.weakest.slice(0, 6).forEach((w) => ul.appendChild(el('li', null, el('a', { class: 'link-row', href: '#/records?open=' + w.id }, typeIcon(w.type), el('span', { class: 'truncate grow', text: w.name }), el('span', { class: 'faint xs truncate missing-col', text: 'Missing: ' + w.missing.join(', ') }), el('span', { class: 'tabular small', text: w.score + '%' })))));
       body.appendChild(el('div', { class: 'section' }, el('div', { class: 'section-head' }, el('h3', { text: 'Needs work inside this ' + typeLabel(n.type).toLowerCase() })), ul));
     }
   } else if (st.tab === 'links') {
@@ -246,8 +247,8 @@ function drawTab(st, body, editable) {
 }
 
 function textBlock(st, field, value, editable, placeholder, max) {
-  const div = el('div', { class: editable ? 'inline-edit' : '', 'data-testid': 'panel-' + field, 'data-placeholder': editable ? placeholder : '—', tabindex: editable ? '0' : null,
-    role: editable ? 'button' : null, 'aria-label': editable ? 'Edit ' + field : null, style: 'white-space:pre-wrap;font-size:14px' }, value || '');
+  const div = el('div', { 'data-testid': 'panel-' + field, 'data-placeholder': editable ? placeholder : '—', tabindex: editable ? '0' : null,
+    role: editable ? 'button' : null, 'aria-label': editable ? 'Edit ' + (field === 'body' ? 'notes' : field) : null, class: (editable ? 'inline-edit ' : '') + 'text-block' }, value || '');
   if (!editable) { if (!value) div.textContent = '—'; return div; }
   const start = () => {
     const ta = el('textarea', { maxlength: String(max), rows: field === 'body' ? '8' : '3', 'aria-label': field, 'data-testid': 'edit-' + field }, value || '');
@@ -271,10 +272,10 @@ export function linkRow(r, opts) {
     text: health.status === 'needs_auth' ? 'Needs sign-in' : 'Broken' + (health.http_status ? ' ' + health.http_status : '') }) : null;
   return el('div', { class: 'link-row', 'data-testid': 'link-row' },
     el('span', { class: 'type-icon', title: lk.label }, icon(lk.icon || 'link')),
-    el('div', { class: 'col', style: 'gap:0;min-width:0;flex:1' },
-      el('div', { class: 'row', style: 'gap:6px' }, el('a', { href: r.url, target: '_blank', rel: 'noopener noreferrer', class: 'truncate strong', text: r.title, style: 'color:var(--text)' }),
+    el('div', { class: 'col gap-0 grow' },
+      el('div', { class: 'row gap-2' }, el('a', { href: r.url, target: '_blank', rel: 'noopener noreferrer', class: 'truncate strong fg', text: r.title }),
         el('span', { class: 'badge', text: kindLabel(r.kind) }), hb),
-      el('div', { class: 'row faint xs', style: 'gap:6px' }, el('span', { text: lk.label }), el('span', { text: '·' }), el('span', { class: 'truncate', text: host(r.url) }),
+      el('div', { class: 'row faint xs gap-2' }, el('span', { text: lk.label }), el('span', { text: '·' }), el('span', { class: 'truncate', text: host(r.url) }),
         r.note ? el('span', { text: '·' }) : null, r.note ? el('span', { class: 'truncate', text: r.note }) : null)),
     r.owner_id ? avatar(r.owner_id) : null,
     el('span', { class: 'actions' }, opts.actions || null));
@@ -323,9 +324,9 @@ function relationshipsTab(st, editable) {
   rows.forEach((r) => { (groups[r.label] = groups[r.label] || []).push(r); });
   const box = el('div', { 'data-testid': 'panel-relationships' });
   Object.keys(groups).sort().forEach((label) => {
-    box.appendChild(el('div', { class: 'faint xs', style: 'margin:8px 0 2px', text: label }));
+    box.appendChild(el('div', { class: 'faint xs rel-group-label', text: label }));
     groups[label].forEach((r) => box.appendChild(el('div', { class: 'link-row', 'data-testid': 'rel' }, typeIcon(r.e.node_type),
-      el('a', { href: '#/records?open=' + r.e.node_id, class: 'truncate', text: r.e.node_name, style: 'color:var(--text)' }),
+      el('a', { href: '#/records?open=' + r.e.node_id, class: 'truncate fg', text: r.e.node_name }),
       r.e.props && r.e.props.role ? el('span', { class: 'role-badge', 'data-testid': 'rel-role', title: ROLE_LABEL[r.e.props.role] || r.e.props.role, text: ROLE_SHORT[r.e.props.role] || r.e.props.role }) : null,
       r.e.node_legacy ? el('span', { class: 'badge', text: 'Legacy' }) : null,
       r.e.note ? el('span', { class: 'faint xs truncate', text: r.e.note }) : null, el('span', { class: 'spacer' }),
@@ -369,7 +370,7 @@ export async function loadHistory(box, path, recordId) {
     clear(box);
     if (!h.length) { box.appendChild(el('p', { class: 'faint small', text: 'No history.' })); return; }
     box.appendChild(el('ul', { class: 'entries', 'data-testid': 'history-list' }, h.map((a) => activityEntry(a, { inRecord: true, all: true }))));
-    if (can('editor') && recordId) box.appendChild(el('a', { class: 'btn ghost sm', style: 'margin-top:8px', href: '#/activity?record=' + recordId, 'data-testid': 'history-in-activity' }, icon('history', 'sm'), 'Open in Activity'));
+    if (can('editor') && recordId) box.appendChild(el('a', { class: 'btn ghost sm mt-2', href: '#/activity?record=' + recordId, 'data-testid': 'history-in-activity' }, icon('history', 'sm'), 'Open in Activity'));
   } catch (e) { clear(box).appendChild(errorBox(e)); }
 }
 
@@ -394,7 +395,7 @@ export async function archiveNode(st) {
   const reason = await confirmDialog({ title: (isEditor ? 'Archive' : 'Propose archiving') + ' “' + n.name + '”?', danger: isEditor, confirmLabel: isEditor ? 'Archive' : 'Send for approval', withReason: !isEditor,
     reasonPlaceholder: 'Why should it be archived? (helps the editor decide)',
     body: el('div', { class: 'col', 'data-testid': 'archive-impact' }, el('p', { class: 'small', text: 'Archiving hides it from lists, the outline and the graph. Nothing is deleted.' }),
-      el('ul', { class: 'small', style: 'margin:0;padding-left:18px' }, el('li', { text: plural(imp.edges, 'relationship') + ' will be archived with it' }), el('li', { text: plural(imp.resources, 'link') + ' will be archived with it' }),
+      el('ul', { class: 'small impact-list' }, el('li', { text: plural(imp.edges, 'relationship') + ' will be archived with it' }), el('li', { text: plural(imp.resources, 'link') + ' will be archived with it' }),
         imp.scoped_records ? el('li', { text: plural(imp.scoped_records, 'record') + ' belong to it and stay, without it' }) : null),
       el('p', { class: 'faint small', text: 'You can restore it any time' + (isEditor ? ', or delete it permanently later from Archived.' : '.') })) });
   if (!reason) return;
@@ -465,7 +466,7 @@ export async function saveNode(st, changes, force) {
   }
 }
 function conflictDialog(st, mine, changes, current) {
-  const diff = el('div', { 'data-testid': 'conflict-diff', style: 'display:grid;grid-template-columns:100px 1fr 1fr;gap:6px 12px;font-size:13px' },
+  const diff = el('div', { class: 'conflict-diff', 'data-testid': 'conflict-diff' },
     el('div', { class: 'faint', text: 'Field' }), el('div', { class: 'faint', text: 'Your change' }), el('div', { class: 'faint', text: 'Saved now (v' + current.version + ')' }));
   const fmt = (v) => (v === null || v === undefined || v === '' ? '—' : typeof v === 'object' ? JSON.stringify(v) : String(v));
   ['name', 'summary', 'body', 'status', 'review_status', 'owner_id', 'props'].forEach((f) => {
@@ -510,7 +511,7 @@ function renderResource(st) {
   const r = st.res, host = clear(st.host), editable = can('contributor') && !r.archived_at;
   host.setAttribute('data-testid', 'res-panel');
   const lk = linkKindFor(r);
-  const acts = el('div', { class: 'row', style: 'gap:2px' },
+  const acts = el('div', { class: 'row gap-xs' },
     editable ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'res-edit', onclick: () => resourceEdit(st) }, icon('pencil', 'sm'), 'Edit') : null,
     el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'More actions', onclick: (e) => menu(e.currentTarget, [
       { label: 'Flag as incorrect', icon: 'flag', fn: () => flagDialog('resources', r.id, r.title) },
@@ -521,11 +522,11 @@ function renderResource(st) {
       r.archived_at && can('admin') ? { label: 'Delete permanently', icon: 'trash-2', danger: true, testid: 'res-hard-delete', fn: () => hardDelete('resources', r.id, r.title, () => closePanel()) } : null,
     ], { alignRight: true }) }, icon('ellipsis')),
     el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Close details', onclick: () => closePanel() }, icon('x')));
-  host.appendChild(el('div', { class: 'section', style: 'border-bottom:0' },
-    el('div', { class: 'row', style: 'margin-bottom:8px' }, el('span', { class: 'crumbs' }, icon(lk.icon, 'sm'), lk.label), el('span', { class: 'spacer' }), acts),
+  host.appendChild(el('div', { class: 'section record-head' },
+    el('div', { class: 'row mb-2' }, el('span', { class: 'crumbs' }, icon(lk.icon, 'sm'), lk.label), el('span', { class: 'spacer' }), acts),
     el('h1', { text: r.title, 'data-testid': 'res-title' }),
-    el('a', { href: r.url, target: '_blank', rel: 'noopener noreferrer', class: 'small truncate', style: 'display:block;margin-top:4px', text: r.url })));
-  if (r.archived_at) host.appendChild(el('div', { class: 'note-box warn', style: 'margin:0 24px 12px', text: 'Archived ' + ago(r.archived_at) + '. Its attachments were archived with it.' }));
+    el('a', { href: r.url, target: '_blank', rel: 'noopener noreferrer', class: 'small truncate url-line', text: r.url })));
+  if (r.archived_at) host.appendChild(el('div', { class: 'note-box warn panel-note', text: 'Archived ' + ago(r.archived_at) + '. Its attachments were archived with it.' }));
   const dl = el('dl', { class: 'props' });
   const health = r.link_health;
   add(dl, [el('dt', { text: 'Kind' }), el('dd', null, el('span', { class: 'badge', text: kindLabel(r.kind) })),
@@ -533,19 +534,19 @@ function renderResource(st) {
     el('dt', { text: 'Owner' }), el('dd', null, avatar(r.owner_id), r.owner_id ? personName(r.owner_id) : el('span', { class: 'faint', text: 'No owner' })),
     el('dt', { text: 'Link health' }), el('dd', null, health ? el('span', { class: 'badge ' + (health.status === 'ok' ? 'ok' : health.status === 'needs_auth' ? 'warn' : 'danger'), text: (health.status === 'ok' ? 'Working' : health.status === 'needs_auth' ? 'Needs sign-in' : 'Broken') + (health.http_status ? ' · HTTP ' + health.http_status : '') }) : el('span', { class: 'faint', text: 'Not checked yet' }), health ? el('span', { class: 'faint xs', text: 'checked ' + ago(health.checked_at) }) : null),
     el('dt', { text: 'Tags' }), el('dd', null, (r.tags || []).length ? r.tags.map((t) => el('span', { class: 'token', text: '#' + t })) : el('span', { class: 'faint', text: 'None' })),
-    el('dt', { text: 'Description' }), el('dd', { text: r.description || '—', style: 'white-space:pre-wrap' })]);
+    el('dt', { text: 'Description' }), el('dd', { text: r.description || '—', class: 'pre-wrap' })]);
   const compDd = el('dd', { 'data-testid': 'res-completeness' }, el('span', { class: 'faint', text: '…' }));
   add(dl, [el('dt', { text: 'Completeness' }), compDd]);
   api('GET', '/resources/' + r.id + '/completeness').then((c) => {
-    clear(compDd).append(el('div', { class: 'bar ' + (c.score >= 80 ? 'ok' : c.score >= 50 ? 'warn' : 'danger'), style: 'width:80px' }, el('span', { style: 'width:' + c.score + '%' })),
+    clear(compDd).append(el('div', { class: 'bar w-80 ' + (c.score >= 80 ? 'ok' : c.score >= 50 ? 'warn' : 'danger') }, el('span', { style: 'width:' + c.score + '%' })),
       el('span', { class: 'tabular small', text: c.score + '%' }), c.missing.length ? el('span', { class: 'faint small truncate', text: 'Missing: ' + c.missing.join(', ') }) : null);
   }).catch(() => clear(compDd));
   host.appendChild(el('div', { class: 'section' }, dl));
   const used = el('ul', { class: 'list bordered', 'data-testid': 'res-used-by' });
-  r.nodes.forEach((x) => used.appendChild(el('li', null, el('a', { class: 'link-row', href: '#/records?open=' + x.id }, typeIcon(x.type), el('span', { class: 'truncate', text: x.name, style: 'color:var(--text)' }), x.note ? el('span', { class: 'faint xs truncate', text: '— ' + x.note }) : null))));
+  r.nodes.forEach((x) => used.appendChild(el('li', null, el('a', { class: 'link-row', href: '#/records?open=' + x.id }, typeIcon(x.type), el('span', { class: 'truncate fg', text: x.name }), x.note ? el('span', { class: 'faint xs truncate', text: '— ' + x.note }) : null))));
   host.appendChild(el('div', { class: 'section' }, el('div', { class: 'section-head' }, el('h3', { text: 'Used by ' + plural(r.nodes.length, 'record') })),
     r.nodes.length ? used : el('p', { class: 'faint small', text: 'Not attached to any record.' })));
-  const hist = el('div', { class: 'section' }, el('h3', { text: 'History', style: 'margin-bottom:4px' }));
+  const hist = el('div', { class: 'section' }, el('h3', { text: 'History', class: 'mb-1' }));
   host.appendChild(hist); const hb = el('div'); hist.appendChild(hb); loadHistory(hb, '/resources/' + r.id + '/history');
 }
 async function archiveResource(st) {
