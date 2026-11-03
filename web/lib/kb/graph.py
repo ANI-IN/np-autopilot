@@ -92,7 +92,7 @@ def read(conn, params: dict) -> dict:
 
     nodes = _q(conn, """
         select n.id, t.key as type, n.name, n.status, n.scope_id, n.is_legacy,
-               n.archived_at is not null as archived, n.owner_record_id, n.external_id,
+               n.archived_at is not null as archived, n.owner_record_id, n.external_id, n.version,
                (select count(*) from kb.edges e where (%(archived)s or e.archived_at is null)
                   and (e.source_id = n.id or e.target_id = n.id)) as degree
         from kb.nodes n join kb.node_types t on t.id = n.type_id
@@ -103,7 +103,7 @@ def read(conn, params: dict) -> dict:
     edge_sql = scope_cte + """
         select e.id, et.key as type, e.source_id as source, e.target_id as target,
                e.props ->> 'role' as role, (s.is_legacy or tn.is_legacy) as is_legacy,
-               e.archived_at is not null as archived
+               e.archived_at is not null as archived, e.version, e.note
         from kb.edges e join kb.edge_types et on et.id = e.edge_type_id
         join kb.nodes s on s.id = e.source_id
         join kb.nodes tn on tn.id = e.target_id

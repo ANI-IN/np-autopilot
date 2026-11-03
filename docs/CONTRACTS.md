@@ -35,10 +35,10 @@ runs as the caller under RLS.
   "nodes": [{"id": "uuid", "type": "module", "name": "…", "status": "…",
              "scope_id": "uuid|null", "is_legacy": false, "archived": false,
              "owner_record_id": "uuid|null", "external_id": "np:…|null",
-             "degree": 4}],
+             "version": 3, "degree": 4}],
   "edges": [{"id": "uuid", "type": "teaches", "source": "uuid", "target": "uuid",
              "role": "primary|backup_1|backup_2|backup_3|null",
-             "is_legacy": false, "archived": false}],
+             "is_legacy": false, "archived": false, "version": 1, "note": "…|null"}],
   "total_nodes": 3087, "truncated": false, "next_cursor": null,
   "head": 123456
 }
@@ -53,6 +53,8 @@ runs as the caller under RLS.
   change feed from `head`.
 - **Focus mode** ignores `cursor` and returns at most `limit` records nearest
   first; `truncated` tells the client that more exist.
+- **`version`** (records and relationships) and **`note`** (relationships) were added in run 6
+  at stream B2's request, so the graph can edit without a second fetch.
 - **Errors:** 422 for an invalid parameter (with `field`), 404 for an unknown
   `focus` or `scope`.
 

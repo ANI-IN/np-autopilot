@@ -73,6 +73,9 @@ def test_graph_pages_return_every_record_and_relationship_exactly_once(admin, vi
     assert sorted(seen_n) == sorted(t["id"] for t in topics)
     assert len(seen_e) == len(set(seen_e)) == 6
     assert page["head"] == _head(viewer)
+    assert all(isinstance(n["version"], int) for n in page["nodes"])
+    s, g = viewer.get("/api/kb/graph")
+    assert all(isinstance(e["version"], int) and "note" in e for e in g["edges"])
 
 
 def test_graph_filters_legacy_archived_focus_and_scope(admin, viewer):
