@@ -174,7 +174,8 @@ function buildGraph(v, r) {
   // ---------------------------------------------------------------- projection: model -> what is drawn
   const nodeData = (n) => { const k = nodeLook(L, n.type); return { id: n.id, label: n.name, type: n.type, color: k.color, rank: k.rank, scope: n.scope_id,
     owner: n.owner_record_id, version: n.version, degree: n.degree }; };
-  const edgeData = (e) => ({ id: e.id, source: e.source, target: e.target, type: e.type, label: edgeLook(L, e.type).label + (e.role ? ' (' + e.role.replace('_', ' ') + ')' : ''), version: e.version });
+  const edgeData = (e) => { const k = edgeLook(L, e.type); return { id: e.id, source: e.source, target: e.target, type: e.type, label: k.label + (e.role ? ' (' + e.role.replace('_', ' ') + ')' : ''),
+    version: e.version, color: k.color, lineStyle: k.style }; };
   function passes(n) {
     if (n.id === center) return true;
     if (hidden[n.type]) return false;
@@ -236,7 +237,7 @@ function buildGraph(v, r) {
         if (bundled.has(n.id)) { if (c.length) c.remove(); return; }
         const flags = { hidden: !wantIds.has(n.id), folded: folded.has(n.id), legacy: n.is_legacy, archived: n.archived, center: n.id === center };
         if (!c.length) { addN.push({ group: 'nodes', data: nodeData(n), position: { x: 0, y: 0 }, classes: Object.keys(flags).filter((k) => flags[k]).join(' ') }); return; }
-        const d = nodeData(n); if (c.data('label') !== d.label || c.data('version') !== d.version || c.data('type') !== d.type || c.data('owner') !== d.owner) c.data(d);
+        const d = nodeData(n); if (c.data('label') !== d.label || c.data('version') !== d.version || c.data('type') !== d.type || c.data('owner') !== d.owner || c.data('color') !== d.color) c.data(d);
         Object.entries(flags).forEach(([k, on]) => cls(c, k, on));
       });
       if (addN.length) cy.add(addN);
@@ -245,6 +246,8 @@ function buildGraph(v, r) {
         const c = cy.getElementById(e.id);
         const flags = { hidden: !!edgeHidden[e.type], legacy: e.is_legacy, archived: e.archived };
         if (!c.length) { if (cy.getElementById(e.source).length && cy.getElementById(e.target).length) addE.push({ group: 'edges', data: edgeData(e), classes: Object.keys(flags).filter((k) => flags[k]).join(' ') }); return; }
+        // a merge changes a relationship's type; a type rename or restyle changes its look
+        const d = edgeData(e); if (c.data('type') !== d.type || c.data('version') !== d.version || c.data('label') !== d.label || c.data('color') !== d.color) c.data(d);
         Object.entries(flags).forEach(([k, on]) => cls(c, k, on));
       });
       if (addE.length) cy.add(addE);
@@ -1073,11 +1076,18 @@ function buildGraph(v, r) {
     if (S.graph !== G || !cy) return;
     changes = changes.filter((c) => { if (c.id === undefined || c.id === null) return true; if (seenChange.has(c.id)) return false; seenChange.add(c.id); return true; });
     if (!changes.length) return;
+    G.feed = (G.feed || 0) + 1;            // batches received (tests and diagnostics)
     changes.forEach((c) => { if (c.id > head) head = c.id; });
     if (changes.length > 200) { await reload(); return; }
     if (changes.some((c) => /^(type|reltype)\./.test(c.kind || '') || c.table_name === 'node_types' || c.table_name === 'edge_types' || c.table_name === 'edge_type_rules')) {
       try { const t = await api('GET', '/types'); S.types = t.node_types; S.edgeTypes = t.edge_types; S.typeByKey = {}; S.types.forEach((x) => { S.typeByKey[x.key] = x; });
         L = looks(meta()); icons = Object.assign(icons, await loadIcons(S.types.map((x) => x.icon))); applyStyle(); } catch (e) { /* next change retries */ }
+    }
+    // A layout save moves records only where saved positions are what is shown.
+    const moved = [...new Set(changes.filter((c) => c.kind === 'layout.update').flatMap((c) => c.node_ids || []))].filter((id) => cy.getElementById(id).length);
+    if (moved.length && opt.arrange === 'saved') {
+      const pos = await savedPositions();
+      cy.batch(() => moved.forEach((id) => { if (pos[id]) cy.getElementById(id).position(pos[id]); }));
     }
     const nodeIds = [...new Set(changes.filter((c) => c.table_name === 'nodes').map((c) => c.row_id))];
     const edgeIds = [...new Set(changes.filter((c) => c.table_name === 'edges').map((c) => c.row_id))];

@@ -142,6 +142,7 @@ export function legendLine(look) {
   const NS = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', '0 0 18 6'); svg.setAttribute('class', 'legend-edge'); svg.setAttribute('aria-hidden', 'true');
+  svg.dataset.color = look.color; svg.dataset.line = look.style;
   const l = document.createElementNS(NS, 'line');
   l.setAttribute('x1', '1'); l.setAttribute('y1', '3'); l.setAttribute('x2', '17'); l.setAttribute('y2', '3');
   l.setAttribute('stroke', look.color); l.setAttribute('stroke-width', '2');

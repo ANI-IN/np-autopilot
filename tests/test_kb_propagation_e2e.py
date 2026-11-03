@@ -207,7 +207,7 @@ def test_change_propagation_matrix(server, browser):
             ok(admin.post("/api/kb/edges", {"type": "mentors", "source_id": ins["id"], "target_id": ins2["id"]}))
             return t
         t = step("custom relationship type create (+ a relationship of it)", "reltype.create", new_type,
-                 "(() => { const f = document.querySelector('[data-testid=graph-edge-filter-mentors]'); const sw = f && f.parentElement.querySelector('.legend-line');"
+                 "(() => { const f = document.querySelector('[data-testid=graph-edge-filter-mentors]'); const sw = f && f.parentElement.querySelector('.legend-edge');"
                  " const e = window.__kbGraph.cy.edges().filter((x) => x.data('type') === 'mentors'); "
                  " return !!(f && sw && sw.dataset.color && e.length && e[0].data('color') === sw.dataset.color); })()",
                  "(() => { const l = document.querySelector('#legend [data-rel=mentors]'); return !!(l && l.dataset.color) && "
@@ -257,11 +257,16 @@ def test_change_propagation_matrix(server, browser):
         cur = ok(admin.get(f"/api/kb/nodes/{m1['id']}"))
         step("owner (account and by role)", "record.owner",
              lambda: ok(admin.patch(f"/api/kb/nodes/{m1['id']}", {"version": cur["version"], "owner_id": USERS["editor"], "owner_record_id": ins["id"]})),
-             f"window.__kbGraph.cy.getElementById('{m1['id']}').data('owner') === '{USERS['editor']}'", _map_refetched, "owner filter data", "refetched")
+             # the Graph page's owner filter is by owner record (run 6, B2 decision); the account owner is in the panel
+             f"window.__kbGraph.cy.getElementById('{m1['id']}').data('owner') === '{ins['id']}'", _map_refetched, "owner filter data", "refetched")
         v0 = graph.evaluate(f"window.__kbGraph.cy.getElementById('{m1['id']}').data('version')")
         step("bulk edit", "record.update",
              lambda: ok(admin.post("/api/kb/nodes/bulk", {"ids": [m1["id"]], "set": {"status": "draft"}})),
              f"window.__kbGraph.cy.getElementById('{m1['id']}').data('version') > {v0}", _map_refetched, "patched", "refetched")
+        # saved positions apply where they are shown: the "Saved positions" arrangement (run 6, B2 decision)
+        graph.evaluate(f"location.hash = '#/graph/{course['id']}?depth=2&arrange=saved'")
+        _wait(graph, f"window.__kbGraph && window.__kbGraph.cy && {_graph_has(m1['id'])}", 20)
+        time.sleep(1)
         step("graph edit (a position moved)", "layout.update",
              lambda: ok(admin.post("/api/kb/graph/positions", {"positions": [{"node_id": m1["id"], "x": 812.0, "y": -412.0}]})),
              f"Math.round(window.__kbGraph.cy.getElementById('{m1['id']}').position('x')) === 812",

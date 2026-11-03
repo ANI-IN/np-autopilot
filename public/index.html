@@ -3494,6 +3494,15 @@ async function afterSignIn(){
   }
   hideGate();
   banner('');
+  // Run 6 (B2): the knowledge base's visual language, shared with its Graph page
+  // (public/kb/js/graph/style.js via map.js): type colours from GET /api/kb/types,
+  // lifted for the dark ground; relationship colours and dashes; the hierarchy
+  // as the 3D view's home positions. Decoration only: on any failure the map
+  // keeps its own colours and layout.
+  import('/kb/js/graph/map.js').then((L)=>L.mapLanguage(window.__NP.api, SESSION&&SESSION.access_token)).then((lang)=>{
+    Object.assign(C, lang.onDark); window.__NP.look=lang;
+    try{ draw(); if(typeof refresh3D==='function') refresh3D(); }catch(e){}
+  }).catch(()=>{});
   // Admin only, and hidden rather than disabled: a control you cannot use is
   // an invitation to ask why.
   const cb=document.getElementById('curbtn');
@@ -4115,6 +4124,13 @@ function build3D(){
   }
   const ids=new Set(nodes.map(x=>x.id));
   for(const e of E)if(ids.has(e.s)&&ids.has(e.t))links.push({source:e.s,target:e.t,c:e.c||null,minor:!!e.minor});
+  // Run 6 (B2): home positions from the shared hierarchy layout (Program > Course >
+  // Domain > Module > Week > Session in rows, satellites under their record).
+  const look=window.__NP.look;
+  if(look&&look.home){
+    const H=look.home(nodes.filter(x=>!x.ghost).map(x=>({id:x.id,t:x.t})), links.map(l=>({s:l.source,t:l.target})));
+    for(const x of nodes){ const p=H.get(x.id); if(p){ x.hx=p.x*0.6; x.hy=-p.y*0.6; } }
+  }
   return {nodes,links};
 }
 //: PURE: what focus lights up, and where the camera goes
