@@ -651,3 +651,24 @@ kbd.on-btn { border-color: transparent; color: inherit; background: transparent;
 
 .min-w-0 { min-width: 0; }
 #sync-banner { margin: var(--s-2) var(--s-4); }
+
+/* Dashboard on one screen (run 6, F1): numbers, then three equal columns that
+   fill what is left of the window; each card shows only what fits. */
+.dash { padding-bottom: var(--s-3); }
+.dash-grid { display: flex; flex-direction: column; gap: var(--s-3); }
+.dash-tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--s-3); }
+.dash-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-3); align-items: stretch;
+  height: max(320px, calc(100vh - 220px)); }
+.dash-card { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.dash-card > .card-body { flex: 1; min-height: 0; overflow: hidden; }
+.dash-entry { display: flex; align-items: baseline; gap: var(--s-2); padding: 6px 0; border-bottom: 1px solid var(--border); }
+.dash-entry:last-child { border-bottom: 0; }
+.dash-sentence { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dash-first { border-top: 1px solid var(--border); padding-top: var(--s-2); }
+.dash-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.dash-sub { font-size: var(--fs-xs); font-weight: var(--w-strong); color: var(--text-3); margin-bottom: var(--s-1); }
+.dash-types { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+.dash-types .chip { display: inline-flex; align-items: center; gap: var(--s-1); padding: 2px var(--s-2); border: 1px solid var(--border);
+  border-radius: var(--radius); font-size: var(--fs-xs); color: var(--text); text-decoration: none; }
+.dash-types .chip:hover { background: var(--surface-hover); }
+@media (max-width: 1100px) { .dash-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } .dash-cols { grid-template-columns: 1fr; height: auto; } }

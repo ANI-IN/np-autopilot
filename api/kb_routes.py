@@ -151,9 +151,16 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
         return 200, svc.update_attachment(conn, actor, rest[0], body)
     if head == "dashboard" and method == "GET":
         def _dash():
+            # Run 6 (F1): ONE request for the whole one-screen dashboard: totals,
+            # attention, records by type, the six newest activity sentences
+            # (editors and above, as on the Activity page) and what you own.
+            from lib.kb import people as pp
             out = svc.dashboard(conn)
             out["attention"] = ws.needs_attention(conn)
             out["completeness"] = ws.course_completeness(conn)
+            out["owned"] = pp.owned_by_me(conn, actor, {"limit": "5"})
+            out["recent_sentences"] = (act.activity(conn, {"limit": "6", "group": "1"})["items"]
+                                       if svc.role(conn) in ("editor", "admin") else [])
             return out
         return 200, _cached(conn, actor, "dashboard", _dash)
     if head == "counts" and method == "GET":

@@ -863,7 +863,8 @@ def test_every_control_has_an_accessible_name(server, browser, route):
 
 def _records_with_issues():
     ed = Client(USERS["editor"])
-    _, a = ed.post("/api/kb/nodes", {"type": "topic", "name": "Unowned topic", "owner_id": None})
+    # Run 6: "No owner" counts types whose "owner expected" is ON (modules), not topics.
+    _, a = ed.post("/api/kb/nodes", {"type": "module", "name": "Unowned module", "owner_id": None})
     _, b = ed.post("/api/kb/nodes", {"type": "topic", "name": "Lonely topic"})
     _, r = ed.post("/api/kb/resources", {"url": "https://github.com/ik-demo/broken", "title": "Broken repo", "kind": "repo"})
     with owner() as c:
