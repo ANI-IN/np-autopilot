@@ -379,3 +379,40 @@ the database's connection limit:
   under transaction pooling.
 - Never run `api/index.py` under a multi-threaded server without a lock: the
   warm connection is per process (the local dev servers serialise API calls).
+
+---
+
+## Scheduled sync (run 5)
+
+The original site's tables (public.nodes, edges, ...) keep feeding the
+knowledge base until the KB is the only place to edit. One engine,
+`web/lib/kb/sync.py`, does the first import (CLI) and every scheduled run.
+
+**Where each part runs, and why (Vercel's limits).**
+
+| Part | Runs in | Why |
+|---|---|---|
+| The schedule | the database: pg_cron + pg_net (migration 0031), calling `POST /api/cron/kb-sync` with `Authorization: Bearer $KB_SYNC_SECRET` (the secret read from Vault when the job fires) | Vercel Cron fires on **Production deployments only**, so a preview (dev) would never sync; and a Hobby plan allows one run a day. The database schedule works the same for dev and production, and its interval is any cron expression (hourly by default). |
+| The work | the Vercel function `api/index.py` -> `web/lib/kb/sync_api.py` | It needs the app's code (mapping, validation) and the transaction pooler the functions already use. |
+| Time | `KB_SYNC_BUDGET_SECONDS` (default 10) < `maxDuration` 15 (vercel.json) | A run stops cleanly at the budget and records itself "ok (continues)"; the next tick recomputes the diff from scratch, so nothing is lost or done twice. An unchanged run takes ~1-5 s (reads + checksums, no writes). |
+| The first import | a laptop/CI: `pipeline/kb_import_projection.py apply --as <admin>` (or `--operator` on a database with no admin yet) | ~25,000 writes: set-based (pipelined batches), 18 s locally, minutes over a distant pooler; not a 15-second job. |
+
+**Rules (tests/test_kb_sync.py has one test each).** Incremental: a unit is
+written only when its source checksum changed (kb.sync_map). Idempotent: a
+re-run writes nothing. One at a time: a transaction-scoped advisory lock around
+claiming the run (kb.sync_runs; a "running" row older than 20 minutes is
+considered dead). A record edited in the KB since the sync wrote it is never
+overwritten: it becomes a **conflict** on Data quality (and on the record). A
+source row that disappears is flagged **removed at source** (the record is
+kept, marked for review; its relationships and links are archived, and come back
+if the row does). Records created in the KB are never touched (no sync_map row).
+The legacy rules apply on every run (kb.legacy_archive; `pipeline/kb_legacy.py`).
+Writes are attributed to actor "Sync" (Activity).
+
+**Switches.** `KB_SYNC_ENABLED=false` (Vercel variable) stops every run, cron
+and "Sync now"; `select kb.sync_schedule_remove();` stops the calls.
+Settings -> Sync (admins) shows the run log and has "Sync now"; admins see a
+banner while the last run failed.
+
+**Setting it up:** docs/DEV_DEPLOY.md step 6 (the same SQL in production, with
+the production URL and no bypass secret).

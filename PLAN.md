@@ -1,3 +1,30 @@
+# PLAN — run 5: parity with NP Autopilot, owners, legacy, scheduled sync, dev database (2026-11-03)
+
+T0 = 2026-11-03 02:59. Memory: this file + PROGRESS.md ("Run 5 log"). Local real data: kb_realdata (:8766). Demo :8765 untouched.
+Only remote DB allowed: the DEV project (ref checked != production yqmzjgzhxhihnpbgqmeh: OK, agrees with DEV_SUPABASE_URL).
+
+NP Autopilot reference (public/index.html, run on :8766 against the old tables, read through its own functions):
+domains 4 current + 42 legacy (legacy = offers no current module); modules 20 current + 904 legacy (legacy = no domain_slug;
+721 legacy modules have no domain); instructors 25 with a current-mastersheet role + 1,886 older sheets; programmes 42 (all older sheets);
+roles on 57 taught_by edges (tier mastersheet): primary 23, backup_1 20, backup_2 11, backup_3 3.
+
+Design:
+- web/lib/kb/sync.py = the import engine (moved from pipeline/kb_import_projection.py, which becomes the CLI): desired state from the
+  old tables -> diff against kb.sync_map checksums -> write only changes; conflicts flagged; removed-at-source flagged; legacy rules.
+- 0030: kb.nodes.is_legacy, owner_record_id, co_owner_record_ids; kb.person_accounts (email -> account, resolved on sign-in);
+  kb.sync_map, kb.sync_runs, kb.legacy_archive; actor_type 'sync'.
+- Production schedule: Vercel cron -> POST /api/kb/sync (CRON_SECRET), time-boxed, transaction-scoped advisory lock (works through
+  the transaction pooler); Settings -> Sync "Sync now"; KB_SYNC_ENABLED=false kill switch.
+
+- [x] 1 parity: NP logic mirrored (np_categories) + parity script reading NP's own model; topics unmerged; legacy flag; roles on teaches
+- [x] 2 owners: roles -> owner/co-owner records; person_accounts linking by email on sign-in; Data quality "no owner"
+- [x] 3 legacy archive (reversible, re-runnable) + restore + prepared permanent-delete command
+- [x] 4 sync: engine, run log, lock, conflicts, removed-at-source, API + cron route + Settings -> Sync + banner, tests, local proof
+- [x] 5 views: Who teaches what (matrix), Programme timeline
+- [x] 6 dev: backup, migrate, fill old tables, import + legacy, sync, admin (morning step: no users on dev yet), verify, DEV_DEPLOY.md, deploy_dev_preview.sh
+- [ ] Finish: verify_all, servers, HANDOFF, push
+
+---
 # PLAN — real-data rehearsal (local copy of production), 2026-11-03
 
 T0 = 2026-11-03 00:48 (Step 0 dump). Memory: this file + PROGRESS.md ("Real-data run" log).

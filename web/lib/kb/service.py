@@ -75,7 +75,20 @@ def begin(conn, actor: Actor) -> None:
 
 
 def role(conn) -> str:
-    return (_q1(conn, "select kb.role() as r") or {}).get("r", "none")
+    r = (_q1(conn, "select kb.role() as r") or {}).get("r", "none")
+    if r != "admin" and _operator(conn):
+        return "admin"
+    return r
+
+
+def _operator(conn) -> bool:
+    """An operator command (pipeline/kb_import_projection.py --operator): the
+    connection is the kb tables' OWNER, which RLS does not bind anyway, and it
+    asked for operator mode in this transaction. A request connection runs as
+    `authenticated` and can never be the owner, so this grants it nothing."""
+    return bool((_q1(conn, """select current_setting('kb.operator', true) = 'on'
+                                     and current_user = (select tableowner from pg_tables
+                                                         where schemaname = 'kb' and tablename = 'nodes') as ok""") or {}).get("ok"))
 
 
 def require(conn, want: str, doing: str) -> str:
@@ -206,7 +219,8 @@ def add_edge_rule(conn, actor: Actor, body: dict) -> dict:
 
 _NODE_COLS = """n.id, n.name, n.summary, n.body, n.status, n.version, n.props, n.scope_id,
     n.owner_id, n.co_owners, n.review_status, n.external_id, n.created_by, n.updated_by, n.created_at, n.updated_at,
-    n.archived_at, t.key as type, t.label as type_label, t.color as type_color,
+    n.archived_at, n.is_legacy, n.owner_record_id, n.co_owner_record_ids,
+    t.key as type, t.label as type_label, t.color as type_color,
     sc.name as scope_name, st.key as scope_type"""
 _NODE_FROM = """kb.nodes n join kb.node_types t on t.id = n.type_id
     left join kb.nodes sc on sc.id = n.scope_id left join kb.node_types st on st.id = sc.type_id"""
@@ -223,19 +237,28 @@ def get_node(conn, node_id: str, *, detail: bool = True) -> dict:
         raise NotFound(f"no record with id {node_id}")
     if not detail:
         return node
+    ids = [x for x in [node.get("owner_record_id")] + list(node.get("co_owner_record_ids") or []) if x]
+    names = {str(r["id"]): r for r in _q(conn, """select n.id, n.name, t.key as type from kb.nodes n
+             join kb.node_types t on t.id = n.type_id where n.id = any(%s::uuid[])""", ([str(i) for i in ids],))} if ids else {}
+    node["owner_record"] = names.get(str(node["owner_record_id"])) if node.get("owner_record_id") else None
+    node["co_owner_records"] = [names[str(i)] for i in (node.get("co_owner_record_ids") or []) if str(i) in names]
+    node["account"] = _q1(conn, "select email, user_id, linked_at from kb.person_accounts where node_id = %s", (node_id,))
+    node["sync"] = _q1(conn, """select removed_at, conflict_at from kb.sync_map where unit = 'record' and kb_id = %s
+                                 and key not like '%%#owners' limit 1""", (node_id,))
     node["tags"] = _q(conn, """select g.id, g.name, g.color from kb.node_tags nt
                                join kb.tags g on g.id = nt.tag_id where nt.node_id = %s
                                order by g.name_norm""", (node_id,))
     node["outgoing"] = _q(conn, """
-        select e.id, e.version, e.note, et.key as type, et.label, o.id as node_id, o.name as node_name,
-               ot.key as node_type, o.archived_at as node_archived_at
+        select e.id, e.version, e.note, e.props, et.key as type, et.label, o.id as node_id, o.name as node_name,
+               ot.key as node_type, o.archived_at as node_archived_at, o.is_legacy as node_legacy
         from kb.edges e join kb.edge_types et on et.id = e.edge_type_id
         join kb.nodes o on o.id = e.target_id join kb.node_types ot on ot.id = o.type_id
         where e.source_id = %s and e.archived_at is null order by et.label, o.name_norm limit 200""",
         (node_id,))
     node["incoming"] = _q(conn, """
-        select e.id, e.version, e.note, et.key as type, coalesce(et.inverse_label, et.label) as label,
-               o.id as node_id, o.name as node_name, ot.key as node_type, o.archived_at as node_archived_at
+        select e.id, e.version, e.note, e.props, et.key as type, coalesce(et.inverse_label, et.label) as label,
+               o.id as node_id, o.name as node_name, ot.key as node_type, o.archived_at as node_archived_at,
+               o.is_legacy as node_legacy
         from kb.edges e join kb.edge_types et on et.id = e.edge_type_id
         join kb.nodes o on o.id = e.source_id join kb.node_types ot on ot.id = o.type_id
         where e.target_id = %s and e.archived_at is null order by et.label, o.name_norm limit 200""",
@@ -304,8 +327,16 @@ def list_nodes(conn, params: dict) -> dict:
         args.append(v.uid(params["tag"], "tag"))
     if str(params.get("flagged") or "") in ("1", "true"):
         where.append("exists (select 1 from kb.flags f where f.target_id = n.id and f.status = 'open')")
+    # Legacy (NP Autopilot's "older sheets") is hidden by default and filterable.
+    legacy = str(params.get("legacy") or "current")
+    if legacy == "current":
+        where.append("not n.is_legacy")
+    elif legacy == "only":
+        where.append("n.is_legacy")
+    elif legacy != "all":
+        raise Invalid("legacy must be current, only or all", field="legacy")
     if str(params.get("no_owner") or "") in ("1", "true"):
-        where.append("n.owner_id is null")
+        where.append("n.owner_id is null and n.owner_record_id is null")
     if params.get("review_status"):
         where.append("n.review_status = %s"); args.append(params["review_status"])
     if params.get("parent"):
@@ -604,13 +635,43 @@ def create_node(conn, actor: Actor, body: dict, *, _approved: bool = False) -> d
     return out
 
 
+PERSON_TYPES = ("instructor", "team_member")
+
+
+def _require_person_records(conn, ids, field):
+    if not ids:
+        return
+    ok = _q1(conn, """select count(*) as c from kb.nodes n join kb.node_types t on t.id = n.type_id
+                      where n.id = any(%s::uuid[]) and t.key = any(%s) and n.archived_at is null""",
+             ([str(i) for i in ids], list(PERSON_TYPES)))["c"]
+    if ok != len(set(map(str, ids))):
+        raise Invalid("owners by role must be live instructor or team member records", field=field)
+
+
+def set_person_account(conn, actor: Actor, node_id: str, body: dict) -> dict:
+    """Link a person record (instructor, team member) to a sign-in by e-mail.
+    Resolves now if that person has signed in, otherwise the first time they
+    do (kb.profile_links_person); then they own what the record owns by role."""
+    require(conn, "admin", "linking a person to a sign-in account")
+    nid = v.uid(node_id, "id")
+    _require_person_records(conn, [nid], "id")
+    if body.get("email") in (None, ""):
+        _q(conn, "delete from kb.person_accounts where node_id = %s", (nid,))
+        return {"node_id": str(nid), "email": None, "user_id": None}
+    email = v.text(body, "email", required=True, max_len=254, allow_empty=False).strip().lower()
+    with _translate(conn, "person account"):
+        _q(conn, """insert into kb.person_accounts (node_id, email) values (%s, %s)
+                    on conflict (node_id) do update set email = excluded.email""", (nid, email))
+    return _q1(conn, "select node_id, email, user_id, linked_at from kb.person_accounts where node_id = %s", (nid,))
+
+
 def update_node(conn, actor: Actor, node_id: str, body: dict, *, force: bool = False) -> dict:
     """Optimistic: `version` must match, else Conflict with the current record.
     `force` (editor+) overwrites a newer version deliberately."""
     require(conn, "contributor", "editing a record")
     node_id = v.uid(node_id, "id")
     v.only(body, {"version", "name", "summary", "body", "scope", "owner_id", "co_owners", "status",
-                  "review_status", "props"})
+                  "review_status", "props", "owner_record_id", "co_owner_record_ids"})
     expected = v.version(body)
     if force:
         require(conn, "editor", "overwriting someone else's change")
@@ -635,6 +696,17 @@ def update_node(conn, actor: Actor, node_id: str, body: dict, *, force: bool = F
         sets.append("props = %s"); args.append(json.dumps(props))
     if "co_owners" in body:
         sets.append("co_owners = %s"); args.append([v.uid(x, "co_owners") for x in (body.get("co_owners") or [])])
+    # Owners by role: person RECORDS (instructors, team members). They become
+    # account owners when the person record is linked to a sign-in (kb.person_accounts).
+    if "owner_record_id" in body:
+        rid = v.uid(body["owner_record_id"], "owner_record_id", required=False)
+        if rid:
+            _require_person_records(conn, [rid], "owner_record_id")
+        sets.append("owner_record_id = %s"); args.append(rid)
+    if "co_owner_record_ids" in body:
+        ids = [v.uid(x, "co_owner_record_ids") for x in (body.get("co_owner_record_ids") or [])]
+        _require_person_records(conn, ids, "co_owner_record_ids")
+        sets.append("co_owner_record_ids = %s::uuid[]"); args.append(ids)
     if "review_status" in body:
         sets.append("review_status = %s")
         args.append(v.choice(body, "review_status", ("none", "needs_review", "approved")))
@@ -1310,10 +1382,12 @@ def changes(conn, since: int | None, limit: int = 200) -> dict:
 def dashboard_totals(conn) -> dict:
     counts = _q(conn, """select t.key, t.label, t.color, count(n.id) as n
                          from kb.node_types t left join kb.nodes n on n.type_id = t.id and n.archived_at is null
+                              and not n.is_legacy
                          where t.archived_at is null group by t.key, t.label, t.color, t.sort_order
                          order by t.sort_order""")
     totals = _q1(conn, """select
-        (select count(*) from kb.nodes where archived_at is null) as nodes,
+        (select count(*) from kb.nodes where archived_at is null and not is_legacy) as nodes,
+        (select count(*) from kb.nodes where archived_at is null and is_legacy) as legacy,
         (select count(*) from kb.edges where archived_at is null) as edges,
         (select count(*) from kb.resources where archived_at is null) as resources,
         (select count(*) from kb.nodes where archived_at is not null) as archived,
@@ -1586,22 +1660,24 @@ def find_instructors(conn, *, course_id: str | None = None, q: str | None = None
 def quality_overview(conn, limit: int = 50) -> dict:
     """The data-quality dashboard: counts first, then the records to act on.
     Completeness per course/program = share of its contents (contains edges or
-    scoped records) plus itself that carry at least one resource."""
+    scoped records) plus itself that carry at least one resource. Current
+    records only: legacy (NP Autopilot's older sheets) is out of these counts;
+    "no owner" = no account owner and no owner by role (run 5)."""
     totals = _q1(conn, """select
-        (select count(*) from kb.nodes n where n.archived_at is null) as live,
-        (select count(*) from kb.nodes n where n.archived_at is null and not exists (
+        (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy) as live,
+        (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and not exists (
             select 1 from kb.edges e where e.archived_at is null and (e.source_id = n.id or e.target_id = n.id))) as orphans,
-        (select count(*) from kb.nodes n where n.archived_at is null and n.owner_id is null) as no_owner,
-        (select count(*) from kb.nodes n where n.archived_at is null and not exists (
+        (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and n.owner_id is null and n.owner_record_id is null) as no_owner,
+        (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and not exists (
             select 1 from kb.node_resources r where r.node_id = n.id and r.archived_at is null)) as no_resources,
-        (select count(*) from kb.nodes n where n.archived_at is null and coalesce(btrim(n.summary), '') = '') as no_summary""")
+        (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and coalesce(btrim(n.summary), '') = '') as no_summary""")
     orphans = _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
-                          where n.archived_at is null and not exists (select 1 from kb.edges e where e.archived_at is null
+                          where n.archived_at is null and not n.is_legacy and not exists (select 1 from kb.edges e where e.archived_at is null
                                 and (e.source_id = n.id or e.target_id = n.id))
                           order by n.updated_at desc limit %s""", (limit,))
     courses = _q(conn, """
         with c as (select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
-                   where n.archived_at is null and t.is_container),
+                   where n.archived_at is null and not n.is_legacy and t.is_container),
         kids as (select c.id as cid, k.id as kid from c
                  join kb.edges e on e.source_id = c.id and e.archived_at is null
                  join kb.edge_types et on et.id = e.edge_type_id and et.key = 'contains'
@@ -1615,7 +1691,7 @@ def quality_overview(conn, limit: int = 50) -> dict:
         from c join members m on m.cid = c.id group by c.id, c.name, c.type
         order by completeness asc, c.name limit %s""", (limit,))
     unowned = _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
-                          where n.archived_at is null and n.owner_id is null
+                          where n.archived_at is null and not n.is_legacy and n.owner_id is null and n.owner_record_id is null
                           order by t.sort_order, n.name_norm limit %s""", (limit,))
     links = _q1(conn, """select count(*) as resources,
                                 count(lc.resource_id) as checked,

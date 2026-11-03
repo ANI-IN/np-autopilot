@@ -15,15 +15,17 @@ import { viewArchived } from './views/archived.js';
 import { viewSettings } from './views/settings.js';
 import { viewGuide } from './views/guide.js';
 import { viewActivity } from './views/activity.js';
+import { viewTeaching, viewTimeline } from './views/teaching.js';
 
 const ROUTES = {
   '': viewDashboard, records: viewRecords, programs: viewRecords, courses: viewRecords, resources: viewResources,
   outline: viewOutline, graph: viewGraph, quality: viewQuality, approvals: viewApprovals, proposals: viewApprovals,
   archived: viewArchived, settings: viewSettings, guide: viewGuide, r: renderFullRecord, activity: viewActivity,
+  teaching: viewTeaching, timeline: viewTimeline,
 };
 /* Page template widths (B1): tables and the graph use the full width; reading
    content is centred at a readable measure; everything else is contained. */
-const LAYOUT = { records: 'full', programs: 'full', courses: 'full', resources: 'full', graph: 'full', guide: 'reading', r: 'reading' };
+const LAYOUT = { records: 'full', programs: 'full', courses: 'full', resources: 'full', graph: 'full', teaching: 'full', timeline: 'full', guide: 'reading', r: 'reading' };
 
 // ------------------------------------------------------------------ theme
 function applyTheme(t) {
@@ -80,6 +82,7 @@ async function boot() {
   try { if (localStorage.getItem('kb_sidebar') === 'collapsed') $('#app').classList.add('collapsed'); } catch (e) { /* ignore */ }
   renderSidebar();
   refreshCounts();
+  syncBanner();
   window.addEventListener('hashchange', route);
   window.addEventListener('popstate', route);
   document.addEventListener('keydown', globalKeys);
@@ -91,7 +94,7 @@ async function boot() {
 // ------------------------------------------------------------------ sidebar
 const NAV = [
   ['Workspace', [['', 'Dashboard', 'layout-dashboard'], ['records', 'All records', 'list', 'records'], ['outline', 'Outline', 'list-tree'], ['graph', 'Graph', 'network']]],
-  ['Browse', [['programs', 'Programs', 'graduation-cap', 'program'], ['courses', 'Courses', 'book-open', 'course'], ['resources', 'Resources', 'link', 'resources']]],
+  ['Browse', [['programs', 'Programs', 'graduation-cap', 'program'], ['courses', 'Courses', 'book-open', 'course'], ['resources', 'Resources', 'link', 'resources'], ['teaching', 'Who teaches what', 'users'], ['timeline', 'Programme timeline', 'calendar-days']]],
   ['Maintain', [['quality', 'Data quality', 'shield-check', 'attention'], ['approvals', 'Approvals', 'circle-check', 'pending'], ['activity', 'Activity', 'history', null, 'editor'], ['archived', 'Archived', 'archive', 'archived']]],
 ];
 function renderSidebar() {
@@ -143,6 +146,20 @@ function userMenu(anchor) {
     ...(S.me.admin_links || []).flatMap((l) => ['-', { label: l.label, icon: 'arrow-left', testid: l.testid, fn: () => { location.href = l.href; } }]),
   ]);
 }
+/* Admins: a banner while the last sync run failed (Settings -> Sync has the log). */
+async function syncBanner() {
+  if (!can('admin')) return;
+  try {
+    const d = await api('GET', '/sync');
+    const old = document.getElementById('sync-banner'); if (old) old.remove();
+    if (!d.failing) return;
+    const b = el('div', { id: 'sync-banner', class: 'note-box warn row', role: 'alert', 'data-testid': 'sync-banner', style: 'margin:8px 16px' },
+      icon('triangle-alert', 'sm'), el('span', { class: 'spacer', text: 'The last sync from the original site failed. Edits here are safe; new source changes are not coming in.' }),
+      el('a', { class: 'btn sm', href: '#/settings?tab=sync', text: 'Open the sync log' }));
+    const main = $('#main') || document.body; main.prepend(b);
+  } catch (e) { /* the banner is decoration */ }
+}
+
 export async function refreshCounts() {
   try {
     const d = await api('GET', '/counts');

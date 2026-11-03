@@ -53,6 +53,7 @@ from lib.kb import activity as act                                    # noqa: E4
 from lib.kb import service as svc                                      # noqa: E402
 from lib.kb import typedefs as td                                      # noqa: E402
 from lib.kb import workspace as ws                                     # noqa: E402
+from lib.kb.errors import Forbidden as kb_routes_forbidden               # noqa: E402
 from lib.kb.errors import KbError, NotFound, Invalid                    # noqa: E402
 
 TYPED = {"courses": "course", "programs": "program"}
@@ -176,6 +177,24 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
         return 200, svc.search(conn, params.get("q", ""),
                                types=str(types).split(",") if types else None,
                                limit=_int(params.get("limit"), 20))
+    if head == "sync":
+        # Settings -> Sync: the run log and "Sync now" (admins); web/lib/kb/sync_api.py
+        from lib.kb import sync_api
+        svc.require(conn, "admin", "the sync")
+        if method == "GET" and not rest:
+            return 200, sync_api.status(conn)
+        if method == "POST" and rest == ["run"]:
+            if actor.actor_type == "ai":
+                raise kb_routes_forbidden("the AI assistant cannot start a sync")
+            return 200, sync_api.run_now("manual", str(actor.user_id))
+    if head == "views" and method == "GET" and rest in (["teaching"], ["timeline"]):
+        from lib.kb import views
+        return 200, (views.teaching_matrix if rest == ["teaching"] else views.programme_timeline)(conn, params)
+    if head == "quality" and rest == ["sync"] and method == "GET":
+        svc.require(conn, "editor", "sync conflicts")
+        return 200, ws.sync_issues(conn)
+    if head == "nodes" and len(rest) == 2 and rest[1] == "account" and method in ("POST", "DELETE"):
+        return 200, svc.set_person_account(conn, actor, rest[0], body if method == "POST" else {})
     if head == "graph" and rest == ["positions"]:
         if method == "GET":
             return 200, ws.graph_positions(conn, params)

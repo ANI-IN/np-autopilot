@@ -28,8 +28,24 @@ artifact_kind:
   assignment: assignment
   assignment_review: doc
 
-# Roles some projection types and relationships play in the import.
+# Roles some projection types and relationships play in the import. The
+# current/legacy split and the owners follow NP Autopilot (public/index.html).
 roles:
+  module: module
+  domain: domain
+  instructor: instructor
+  programme: program              # every programme is from the older sheets
+  domain_offers: offers           # a domain offering a current module makes it current
+  session: class_session
+  deck: slide_deck
+  deck_link: presented_with
+  expertise: expert_in
+  programme_covers: covers        # programme -> domain (a legacy module's domain)
+  programme_contains: contains    # programme -> module
+  session_link: delivers_session
+  topic_link: covers_topic        # a topic sits under its only module (scope)
+  owner_link: owned_by            # a domain's owner (team member)
+  co_owner_link: supported_by     # a domain's co-owners
   topic: content_topic            # merged by name; not_a_topic rows rejected
   person: person                  # curation notes from people.yaml
   workflow: workflow              # curation notes and owner suggestions
@@ -37,6 +53,40 @@ roles:
   placement: [contains, offers, delivers_session, scheduled_in]
   teaching: teaches               # role and class dates become the note
   teaching_reversed: taught_by
+
+# KB record types the import creates (when missing).
+new_record_types:
+  - key: team_member
+    label: Team member
+    plural: Team members
+    icon: users
+    color: "#475569"
+    description: An IK team member named in the corpus (owner, supporter or deliverer of a domain or process).
+    fields: [{label: Team, kind: short_text}, {label: Title, kind: short_text}, {label: Seniority, kind: short_text},
+             {label: Also known as, kind: long_text}]
+  - key: theme
+    label: Theme
+    plural: Themes
+    icon: shapes
+    color: "#0e7490"
+    description: A group of operational processes (workflows).
+    fields: [{label: Theme id, kind: short_text}]
+
+# Fields added to built-in KB types (additive, safe).
+type_fields:
+  program: [{label: Family, kind: short_text}, {label: Document type, kind: short_text}]
+  domain: [{label: Cadence, kind: short_text}, {label: Stage, kind: short_text}, {label: Also known as, kind: long_text}]
+  module: [{label: Granularity, kind: short_text}, {label: Sequence, kind: short_text}]
+  session: [{label: Session kind, kind: short_text}, {label: Resource type, kind: short_text}]
+  week: [{label: Week number, kind: number}]
+  process: [{label: Workflow id, kind: short_text}, {label: Effort, kind: short_text}, {label: Steps, kind: long_text},
+            {label: Alerts, kind: long_text}, {label: Tools, kind: long_text},
+            {label: Suggested owner, kind: short_text, help: "Unconfirmed suggestion from the workflow-owner sheet; not an owner."}]
+
+# Allowed parents added to KB types (placement).
+placement:
+  process: [theme]
+  week: [module, course]
 
 # KB relationship types the import creates (when missing) for relationships the
 # KB has no built-in type for. Reviewed (the import runs as an admin).

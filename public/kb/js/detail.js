@@ -104,12 +104,17 @@ function renderNode(st, keepTab) {
   const meta = el('div', { class: 'row small faint', style: 'margin-top:6px;flex-wrap:wrap' },
     n.status !== 'active' ? el('span', { class: 'badge ' + (n.archived_at ? 'danger' : 'warn'), text: n.archived_at ? 'Archived' : 'Draft' }) : null,
     n.review_status === 'needs_review' ? el('span', { class: 'badge warn', text: 'Needs review' }) : n.review_status === 'approved' ? el('span', { class: 'badge ok', text: 'Reviewed' }) : null,
+    n.is_legacy ? el('span', { class: 'badge', 'data-testid': 'legacy-badge', title: 'From the older sheets (NP Autopilot: legacy)', text: 'Legacy' }) : null,
     el('span', { 'data-testid': 'panel-version', text: 'v' + n.version }), el('span', { text: '·' }), el('span', { text: 'Updated ' + ago(n.updated_at) }),
     el('span', { id: 'presence', class: 'row', style: 'gap:4px' }));
   head.appendChild(meta);
   host.appendChild(head);
   if (n.archived_at) host.appendChild(el('div', { class: 'note-box warn', style: 'margin:0 24px 12px' }, 'Archived ' + ago(n.archived_at) + '. It is hidden from lists and the graph. ',
     can('editor') ? 'Restore it, or delete it permanently from Archived.' : 'An editor can restore it.'));
+  if (n.sync && n.sync.conflict_at) host.appendChild(el('div', { class: 'note-box warn', style: 'margin:0 24px 12px', 'data-testid': 'sync-conflict' },
+    'Changed at the source since it was edited here: the sync kept your edit and did not overwrite it. Compare with the original site and update by hand if needed.'));
+  if (n.sync && n.sync.removed_at) host.appendChild(el('div', { class: 'note-box warn', style: 'margin:0 24px 12px', 'data-testid': 'sync-removed' },
+    'Removed at source ' + ago(n.sync.removed_at) + ': the row no longer exists in the original site. Kept here; archive it if it is no longer needed.'));
   (n.flags || []).forEach((f) => host.appendChild(el('div', { class: 'note-box warn row', style: 'margin:0 24px 8px', 'data-testid': 'flag-banner' }, icon('flag', 'sm'),
     el('span', { class: 'spacer', text: 'Flagged as incorrect: ' + f.reason }), el('a', { class: 'btn sm', href: '#/approvals?tab=reviews', text: 'Review' }))));
   // properties
@@ -144,6 +149,44 @@ function propsGrid(st, editable) {
     [{ label: 'No owner', fn: () => saveNode(st, { owner_id: null }) }].concat(S.people.filter((p) => p.role !== 'viewer').map((p) => ({ node: el('span', { class: 'row' }, avatar(p.user_id), personName(p.user_id) + (you(p.user_id) ? ' (you)' : '')), testid: 'owner-option', fn: () => saveNode(st, { owner_id: p.user_id }) }))), { testid: 'owner-menu' }) }));
   row('Owner', ownerDd, 'panel-owner');
   if ((n.co_owners || []).length) row('Co-owners', n.co_owners.map((u) => avatar(u)));
+  // Owners by role (P Primary; B1-B3 Backups): person records. They become the
+  // account owner when that person's record is linked to a sign-in.
+  const personLink = (r, badge) => el('span', { class: 'token' }, badge ? el('span', { class: 'role-badge', text: badge }) : null, typeIcon(r.type, 'sm'),
+    el('a', { href: '#/records?open=' + r.id, text: r.name, class: 'truncate' }));
+  const pick = (title, cb) => {
+    const c = combobox({ label: title, placeholder: 'Search instructors and team members…', testid: 'owner-record-picker', openOnFocus: true,
+      source: nodeSource(['instructor', 'team_member']), onChange: (x) => { if (x) { closeDialog(); cb(x.id); } } });
+    openDialog([el('h2', { text: title }), c, el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }))], { label: title });
+  };
+  if (n.owner_record || editable) {
+    row('Owner by role', [n.owner_record ? personLink(n.owner_record, 'P') : el('span', { class: 'faint', text: 'None' }),
+      editable ? el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'change-owner-record', text: 'Change',
+        onclick: (e) => menu(e.currentTarget, [{ label: 'Choose a person…', fn: () => pick('Primary owner', (id) => saveNode(st, { owner_record_id: id })) },
+          n.owner_record ? { label: 'Remove', danger: true, fn: () => saveNode(st, { owner_record_id: null }) } : null]) }) : null], 'panel-owner-record');
+  }
+  if ((n.co_owner_records || []).length || (editable && n.owner_record)) {
+    const ids = (n.co_owner_records || []).map((r) => r.id);
+    row('Backups', [(n.co_owner_records || []).map((r, i) => el('span', { class: 'row', style: 'gap:2px' }, personLink(r, 'B' + (i + 1)),
+      editable ? el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Remove backup ' + r.name, onclick: () => saveNode(st, { co_owner_record_ids: ids.filter((x) => x !== r.id) }) }, icon('x', 'sm')) : null)),
+      editable ? el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'add-backup', text: 'Add', onclick: () => pick('Add a backup', (id) => saveNode(st, { co_owner_record_ids: ids.concat([id]) })) }) : null], 'panel-co-owner-records');
+  }
+  // A person record's sign-in: linked by e-mail now, or the first time they sign in.
+  if (['instructor', 'team_member'].includes(n.type) && (n.account || can('admin'))) {
+    const acc = n.account;
+    row('Sign-in account', [acc ? el('span', { text: acc.email }) : el('span', { class: 'faint', text: 'Not linked' }),
+      acc ? el('span', { class: 'badge ' + (acc.user_id ? 'ok' : 'warn'), 'data-testid': 'account-state', text: acc.user_id ? 'Linked' : 'Waiting for first sign-in' }) : null,
+      can('admin') ? el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'link-account', text: acc ? 'Change' : 'Link', onclick: () => {
+        const inp = el('input', { type: 'email', value: acc ? acc.email : '', 'aria-label': 'E-mail', 'data-testid': 'account-email', placeholder: 'name@interviewkickstart.com' });
+        const err = el('div', { class: 'field-error', role: 'alert' });
+        openDialog([el('h2', { text: 'Link to a sign-in account' }),
+          el('p', { class: 'small muted', text: 'When this person signs in with this e-mail (or already has), they become the owner of everything this record owns by role.' }), inp, err,
+          el('div', { class: 'actions' }, acc ? el('button', { class: 'btn danger', type: 'button', text: 'Unlink', onclick: async () => { try { await api('DELETE', '/nodes/' + n.id + '/account'); closeDialog(); reloadPanel(true); } catch (e) { err.textContent = e.message; } } }) : null,
+            el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }),
+            el('button', { class: 'btn primary', type: 'button', 'data-testid': 'account-save', text: 'Link', onclick: async () => {
+              try { const r = await api('POST', '/nodes/' + n.id + '/account', { email: inp.value.trim() }); closeDialog(); toast(r.user_id ? 'Linked: they now own this record’s work' : 'Saved: links on their first sign-in'); reloadPanel(true); }
+              catch (e) { err.textContent = e.message; } } }))], { label: 'Link account' });
+      } }) : null], 'panel-account');
+  }
   // placement
   const placed = el('div', { class: 'row', style: 'flex-wrap:wrap;gap:4px' });
   (n.parents || []).forEach((p) => placed.appendChild(el('span', { class: 'token' }, typeIcon(p.node_type, 'sm'), el('a', { href: '#/records?open=' + p.node_id, text: p.node_name, class: 'truncate' }),
@@ -283,6 +326,8 @@ function relationshipsTab(st, editable) {
     box.appendChild(el('div', { class: 'faint xs', style: 'margin:8px 0 2px', text: label }));
     groups[label].forEach((r) => box.appendChild(el('div', { class: 'link-row', 'data-testid': 'rel' }, typeIcon(r.e.node_type),
       el('a', { href: '#/records?open=' + r.e.node_id, class: 'truncate', text: r.e.node_name, style: 'color:var(--text)' }),
+      r.e.props && r.e.props.role ? el('span', { class: 'role-badge', 'data-testid': 'rel-role', title: ROLE_LABEL[r.e.props.role] || r.e.props.role, text: ROLE_SHORT[r.e.props.role] || r.e.props.role }) : null,
+      r.e.node_legacy ? el('span', { class: 'badge', text: 'Legacy' }) : null,
       r.e.note ? el('span', { class: 'faint xs truncate', text: r.e.note }) : null, el('span', { class: 'spacer' }),
       editable ? el('span', { class: 'actions' }, el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Remove relationship', title: can('editor') ? 'Remove' : 'Propose removal',
         onclick: () => removeEdge(st, r.e, 'Removed “' + label + ' ' + r.e.node_name + '”') }, icon('x', 'sm'))) : null)));
@@ -309,6 +354,10 @@ function placementDialog(st) {
         try { await api('POST', '/edges', { type: 'contains', source_id: chosen.id, target_id: st.node.id }); closeDialog(); toast('Added to ' + chosen.label); reloadPanel(true); }
         catch (e) { failToast(e, 'Not added'); } } }))], { label: 'Add placement' });
 }
+
+// Roles from the current mastersheet (NP Autopilot): P Primary, B1-B3 Backups.
+export const ROLE_SHORT = { primary: 'P', backup_1: 'B1', backup_2: 'B2', backup_3: 'B3' };
+export const ROLE_LABEL = { primary: 'Primary', backup_1: 'Backup 1', backup_2: 'Backup 2', backup_3: 'Backup 3' };
 
 // ------------------------------------------------------------------ history
 /* A record's History tab: the same entry component as the Activity page, so

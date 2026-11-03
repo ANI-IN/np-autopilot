@@ -8,7 +8,7 @@ import { fieldInput } from '../form.js';
 import { loadTypes, refreshCounts } from '../app.js';
 import { kindLabel } from '../detail.js';
 
-const TABS = [['types', 'Record types'], ['relationships', 'Relationship types'], ['links', 'Link kinds'], ['tags', 'Tags'], ['members', 'Members'], ['tokens', 'API tokens'], ['templates', 'Templates']];
+const TABS = [['types', 'Record types'], ['relationships', 'Relationship types'], ['links', 'Link kinds'], ['tags', 'Tags'], ['members', 'Members'], ['tokens', 'API tokens'], ['templates', 'Templates'], ['sync', 'Sync']];
 const ICONS = ['box', 'book-open', 'graduation-cap', 'layers', 'calendar-days', 'radio', 'lightbulb', 'circle-user', 'workflow', 'compass', 'briefcase', 'puzzle', 'target',
   'clipboard-list', 'file-text', 'presentation', 'notebook-pen', 'list-checks', 'scroll-text', 'book-marked', 'film', 'mic-vocal', 'star', 'flag', 'shapes', 'hash', 'inbox'];
 const FIELD_KIND_LABEL = { short_text: 'Short text', long_text: 'Long text', number: 'Number', date: 'Date', datetime: 'Date and time', duration: 'Duration (minutes)',
@@ -17,11 +17,11 @@ const FIELD_KIND_LABEL = { short_text: 'Short text', long_text: 'Long text', num
 export function viewSettings(v, r) {
   const tab = TABS.some(([k]) => k === r.q.tab) ? r.q.tab : 'types';
   v.appendChild(pageHead({ title: 'Settings', sub: 'Your role is ' + S.me.role + '.' }));
-  v.appendChild(el('div', { class: 'tabs', role: 'tablist' }, TABS.filter(([k]) => k !== 'members' || can('admin')).map(([k, l]) =>
+  v.appendChild(el('div', { class: 'tabs', role: 'tablist' }, TABS.filter(([k]) => (k !== 'members' && k !== 'sync') || can('admin')).map(([k, l]) =>
     el('a', { href: '#/settings?tab=' + k, role: 'tab', 'aria-selected': k === tab ? 'true' : 'false', 'data-testid': 'settings-tab-' + k, text: l }))));
   const body = el('div', { class: 'page-body', style: 'padding-top:16px' });
   v.appendChild(body);
-  ({ types: typesTab, relationships: relTab, links: linksTab, tags: tagsTab, members: membersTab, tokens: tokensTab, templates: templatesTab })[tab](body);
+  ({ types: typesTab, relationships: relTab, links: linksTab, tags: tagsTab, members: membersTab, tokens: tokensTab, templates: templatesTab, sync: syncTab })[tab](body);
   S.onQueryChange = (nr) => { if ((nr.q.tab || '') !== (r.q.tab || '')) { clear(v); viewSettings(v, nr); } };
 }
 const reloadSettings = async () => { await loadTypes(); const { rerender } = await import('../app.js'); rerender(); };
@@ -394,4 +394,40 @@ function templatesTab(body) {
       can('editor') ? el('button', { class: 'btn sm', type: 'button', text: 'Remove', onclick: async () => { try { await api('POST', '/templates/' + x.id + '/archive'); clear(body); templatesTab(body);
         toast('Removed', { action: { label: 'Undo', fn: async () => { await api('POST', '/templates/' + x.id + '/restore'); clear(body); templatesTab(body); } } }); } catch (e) { failToast(e); } } }) : null))));
   }).catch((e) => body.appendChild(errorBox(e)));
+}
+
+// ------------------------------------------------------------------ sync (admins)
+/* The original site's tables -> the KB, on a schedule (hourly by default; the
+   schedule lives in the database) and on demand. Edits made here are never
+   overwritten: they become conflicts on Data quality. */
+function syncTab(body) {
+  const host = el('div', { 'data-testid': 'sync-tab' }, skeletonRows(4));
+  body.appendChild(host);
+  const load = () => api('GET', '/sync').then((d) => {
+    clear(host);
+    const btn = el('button', { class: 'btn primary', type: 'button', 'data-testid': 'sync-now', disabled: !d.enabled, onclick: async () => {
+      btn.disabled = true; btn.textContent = 'Syncing…';
+      try { const r = await api('POST', '/sync/run'); toast(r.status === 'ok' ? (r.partial ? 'Sync ran out of time; the next run continues' : 'Sync finished') : r.status === 'skipped' ? 'A sync is already running' : 'Sync failed: ' + (r.message || r.status)); }
+      catch (e) { failToast(e); }
+      load();
+    } }, icon('refresh-cw'), 'Sync now');
+    add(host, [
+      el('div', { class: 'row', style: 'margin-bottom:12px;gap:12px' },
+        el('p', { class: 'muted small', style: 'flex:1', text: 'Copies changes from the original site into the knowledge base: hourly by default, or now. Only changed rows are written; a record edited here is never overwritten (it is flagged on Data quality); a row removed at the source is flagged, never deleted.' }),
+        btn),
+      d.enabled ? null : el('div', { class: 'note-box warn', 'data-testid': 'sync-disabled', text: 'The sync is switched off (KB_SYNC_ENABLED=false).' }),
+      d.failing ? el('div', { class: 'note-box warn', 'data-testid': 'sync-failing', text: 'The last sync failed: ' + ((d.last.errors || [])[0] || d.last.message || 'see the log below') }) : null,
+      el('h3', { class: 'small', style: 'margin:16px 0 6px', text: 'Run log' }),
+      d.runs.length ? el('table', { class: 'table', 'data-testid': 'sync-runs' },
+        el('thead', {}, el('tr', {}, ['Started', 'Trigger', 'Status', 'Changes', 'Conflicts', 'Took'].map((h) => el('th', { text: h })))),
+        el('tbody', {}, d.runs.map((r) => el('tr', { 'data-testid': 'sync-run' },
+          el('td', { text: ago(r.started_at), title: String(r.started_at) }), el('td', { text: r.trigger === 'cron' ? 'Schedule' : r.trigger === 'manual' ? (r.actor_id ? personName(r.actor_id) : 'Sync now') : 'Command line' }),
+          el('td', {}, el('span', { class: 'badge ' + (r.status === 'ok' ? 'ok' : r.status === 'error' ? 'danger' : 'warn'), text: r.status === 'ok' && r.counts && r.counts.partial ? 'ok (continues)' : r.status })),
+          el('td', { class: 'small', text: r.counts ? (['created', 'updated', 'removed_at_source'].map((k) => k.replace(/_/g, ' ') + ' ' + Object.values(r.counts[k] || {}).reduce((a, b) => a + b, 0)).join(' · ')) : (r.message || '') }),
+          el('td', { text: String(r.conflicts || 0) }),
+          el('td', { text: r.finished_at ? Math.max(0, Math.round((new Date(r.finished_at) - new Date(r.started_at)) / 1000)) + ' s' : '…' }))))) :
+        empty('No runs yet', 'The first run happens on the next schedule, or press Sync now.', null, 'refresh-cw'),
+    ]);
+  }).catch((e) => { clear(host); host.appendChild(errorBox(e, load)); });
+  load();
 }

@@ -139,3 +139,36 @@ name and scope are both kept: the second as "Name (2)", marked for review.
   in the app is never moved back.
 - The import is one transaction, attributed to the named admin as an import
   (Activity: "Import (run by …)").
+
+## Run 5: parity with NP Autopilot, owners, the sync
+
+The import is now the sync engine `web/lib/kb/sync.py`
+(`pipeline/kb_import_projection.py` is its CLI); docs/PARITY_REPORT.md proves
+the result against NP Autopilot's own model.
+
+- **Current vs legacy follows NP Autopilot** (public/index.html): a module
+  without `domain_slug` is legacy (`adaptNode`); a domain is current when it
+  `offers` a current module (`model()`); an instructor is current when it is an
+  end of a `tier: mastersheet` edge (`currentInstructors()`); every programme
+  is from the older sheets. Legacy records carry `is_legacy` and the tag
+  `legacy`, are hidden from default lists and counts, and are filterable.
+- **No merging by name.** One record per source row (topics: 2,733 of 2,770;
+  37 rejected by the shape rules). A generic name sits under the record it
+  belongs to (scope); a remaining same-name pair is kept apart with "(2)".
+- **Roles.** `teaches` (instructor -> module) carries `props.role` = primary /
+  backup_1..3, ONLY from the current mastersheet (`taught_by`,
+  `instructor_role`); the older sheets' role is kept as `props.older_role`.
+- **Owners by role.** Module: the mastersheet primary -> `owner_record_id`;
+  the backups in order -> `co_owner_record_ids`. Domain: `owned_by` -> owner
+  record, `supported_by` -> backups. A person record linked to a sign-in
+  (`kb.person_accounts`, by e-mail, now or at their first sign-in) makes that
+  person the account owner / co-owner of the same records.
+- **Incremental.** kb.sync_map keeps, per unit (record, link, relationship,
+  link on a record), the source checksum and a hash of what the sync wrote;
+  only changes are written, an app edit becomes a conflict, a vanished row is
+  flagged "removed at source". Details: docs/DEPLOYMENT.md "Scheduled sync".
+- **Mapping keys** added in `config/kb-projection-mapping.yaml`: `roles`
+  (module, domain, instructor, programme, domain_offers, programme_covers,
+  programme_contains, session_link, topic_link, owner_link, co_owner_link,
+  session, deck, deck_link, expertise), `new_record_types`, `type_fields`,
+  `placement`. All are checked against config/taxonomy.yaml at start.

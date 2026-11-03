@@ -206,7 +206,8 @@ def reorder(conn, actor: Actor, body: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 def _record_checks(r: dict, tdef: dict, links: int, placed: bool) -> list[dict]:
-    checks = [{"check": "owner", "ok": r["owner_id"] is not None, "label": "Has an owner"},
+    # an owner by role (P, run 5) counts: the record has an owner, linked to a sign-in or not yet
+    checks = [{"check": "owner", "ok": r["owner_id"] is not None or r.get("owner_record_id") is not None, "label": "Has an owner"},
               {"check": "summary", "ok": bool((r["summary"] or "").strip()), "label": "Has a summary"}]
     for f in tdef["fields"]:
         if f.get("required") and not f.get("archived"):
@@ -223,7 +224,7 @@ def _record_checks(r: dict, tdef: dict, links: int, placed: bool) -> list[dict]:
 def completeness_map(conn, ids: list | None = None) -> dict:
     """{node_id: {score, missing: [labels]}} for live records (or `ids`)."""
     types = {t["id"]: t for t in _q(conn, "select id, key, fields, allowed_parents from kb.node_types")}
-    rows = _q(conn, """select n.id, n.type_id, n.owner_id, n.summary, n.props,
+    rows = _q(conn, """select n.id, n.type_id, n.owner_id, n.owner_record_id, n.summary, n.props,
                               (select count(*) from kb.node_resources nr where nr.node_id = n.id and nr.archived_at is null) as links,
                               exists (select 1 from kb.edges e join kb.edge_types et on et.id = e.edge_type_id and et.key = 'contains'
                                       where e.target_id = n.id and e.archived_at is null) as placed
@@ -287,19 +288,20 @@ def resource_completeness(conn, rid: str) -> dict:
 
 def needs_attention(conn, limit: int = 12) -> dict:
     no_owner = _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
-                           where n.archived_at is null and n.owner_id is null order by n.updated_at desc limit %s""", (limit,))
+                           where n.archived_at is null and not n.is_legacy and n.owner_id is null and n.owner_record_id is null
+                           order by n.updated_at desc limit %s""", (limit,))
     broken = _q(conn, """select r.id, r.title as name, lc.http_status from kb.resources r
                          join kb.link_checks lc on lc.resource_id = r.id
                          where r.archived_at is null and lc.status in ('broken', 'forbidden', 'unreachable', 'timeout')
                          order by lc.checked_at desc limit %s""", (limit,))
     orphans = _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
-                          where n.archived_at is null and not exists (select 1 from kb.edges e where e.archived_at is null
+                          where n.archived_at is null and not n.is_legacy and not exists (select 1 from kb.edges e where e.archived_at is null
                                 and (e.source_id = n.id or e.target_id = n.id)) order by n.updated_at desc limit %s""", (limit,))
     missing = []
     for t in _q(conn, "select id, key, label, fields from kb.node_types where archived_at is null"):
         req = [f for f in t["fields"] if f.get("required") and not f.get("archived")]
         for f in req:
-            for r in _q(conn, """select id, name from kb.nodes where type_id = %s and archived_at is null
+            for r in _q(conn, """select id, name from kb.nodes where type_id = %s and archived_at is null and not is_legacy
                                  and coalesce(props->>%s, '') in ('', '[]') limit %s""", (t["id"], f["key"], limit)):
                 missing.append({**r, "type": t["key"], "field": f["label"]})
     flagged = _q(conn, """select f.id as flag_id, f.target_id as id, coalesce(n.name, r.title) as name, f.reason, f.target_table
@@ -328,25 +330,48 @@ ATTENTION_KEYS = ("no_owner", "missing_required", "broken_links", "flagged", "or
 BROKEN = "('broken', 'forbidden', 'unreachable', 'timeout')"
 
 
+ATTENTION_KEYS = ATTENTION_KEYS + ("sync_conflicts", "removed_at_source")
+
+
 def attention_counts(conn) -> dict:
+    """Current records only (legacy is NP Autopilot's "older sheets": hidden
+    from the default counts). "No owner" = no account owner AND no owner by
+    role. Sync conflicts and rows removed at source come from kb.sync_map
+    (editors and admins see them; RLS)."""
     c = _q1(conn, f"""select
-        (select count(*) from kb.nodes where archived_at is null and owner_id is null) as no_owner,
+        (select count(*) from kb.nodes where archived_at is null and not is_legacy
+          and owner_id is null and owner_record_id is null) as no_owner,
         (select count(*) from kb.link_checks lc join kb.resources r on r.id = lc.resource_id
           where r.archived_at is null and lc.status in {BROKEN}) as broken_links,
-        (select count(*) from kb.nodes n where n.archived_at is null and not exists (select 1 from kb.edges e
+        (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and not exists (select 1 from kb.edges e
           where e.archived_at is null and (e.source_id = n.id or e.target_id = n.id))) as orphans,
         (select count(*) from kb.flags where status = 'open') as flagged,
         (select count(*) from kb.nodes n join kb.node_types t on t.id = n.type_id
           cross join lateral jsonb_array_elements(t.fields) f
-          where n.archived_at is null and t.archived_at is null and coalesce((f ->> 'required')::boolean, false)
+          where n.archived_at is null and not n.is_legacy and t.archived_at is null and coalesce((f ->> 'required')::boolean, false)
             and not coalesce((f ->> 'archived')::boolean, false)
             and coalesce(n.props ->> (f ->> 'key'), '') in ('', '[]')) as missing_required,
         (select count(*) from kb.edges e join kb.nodes s on s.id = e.source_id join kb.nodes t on t.id = e.target_id
           where e.archived_at is null and s.archived_at is null and t.archived_at is null
             and not exists (select 1 from kb.edge_type_rules r where r.edge_type_id = e.edge_type_id
-                and r.archived_at is null and r.source_type_id = s.type_id and r.target_type_id = t.type_id)) as misfits""")
+                and r.archived_at is null and r.source_type_id = s.type_id and r.target_type_id = t.type_id)) as misfits,
+        (select count(*) from kb.sync_map where conflict_at is not null and removed_at is null) as sync_conflicts,
+        (select count(*) from kb.sync_map where removed_at is not null and unit = 'record') as removed_at_source""")
     counts = {k: int(c[k] or 0) for k in ATTENTION_KEYS}
     return {"counts": counts, "total": sum(counts.values())}
+
+
+def sync_issues(conn, limit: int = 50) -> dict:
+    """Data quality: records the sync could not update because they were edited
+    in the KB, and records whose source row disappeared (flagged, never deleted)."""
+    rows = lambda cond: _q(conn, f"""select m.unit, m.key, m.kb_id as id, coalesce(n.name, r.title) as name, t.key as type,
+            m.conflict_at, m.removed_at
+        from kb.sync_map m left join kb.nodes n on m.kb_table = 'nodes' and n.id = m.kb_id
+        left join kb.node_types t on t.id = n.type_id
+        left join kb.resources r on m.kb_table = 'resources' and r.id = m.kb_id
+        where {cond} order by coalesce(m.conflict_at, m.removed_at) desc limit %s""", (limit,))   # noqa: E731
+    return {"conflicts": rows("m.conflict_at is not null and m.removed_at is null"),
+            "removed_at_source": rows("m.removed_at is not null and m.unit = 'record'")}
 
 
 def course_completeness(conn) -> list[dict]:

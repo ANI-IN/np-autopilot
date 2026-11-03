@@ -293,9 +293,23 @@ def test_replace_all_switch_conditions_are_still_false():
         other = [r[0] for r in cur.fetchall()]
         assert not other, f"a new audit table exists ({other}); check what it watches"
         # (2) nothing schedules the projection
+        # The condition is "the PROJECTION is scheduled", not "pg_cron exists".
+        # Migration 0031 installs pg_cron for one job only, 'kb-sync', which POSTs
+        # to /api/cron/kb-sync: the KB sync READS the projected tables and never
+        # rebuilds them. So: any other job, or a job whose command touches the
+        # projection, still fails here.
         cur.execute("select count(*) from pg_available_extensions "
                     "where name='pg_cron' and installed_version is not null")
-        assert cur.fetchone()[0] == 0, (
-            "pg_cron is installed: if it schedules the projection, replace-all "
-            "truncates 68,379 rows unattended on a timer. Switch to the set-diff."
-        )
+        if cur.fetchone()[0]:
+            cur.execute("select jobname, command from cron.job")
+            jobs = cur.fetchall()
+            others = [j for j, _ in jobs if j != "kb-sync"]
+            assert not others, (
+                f"pg_cron schedules {others}: if any of these runs the projection, "
+                "replace-all truncates 68,379 rows unattended on a timer. Switch to the set-diff."
+            )
+            for _, command in jobs:
+                assert "/api/cron/kb-sync" in command and not re.search(
+                    r"project_graph|\b(truncate|delete\s+from|insert\s+into)\b", command, re.I), (
+                    "the kb-sync job no longer only calls the KB sync endpoint: check it "
+                    "does not run the projection")

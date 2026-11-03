@@ -19,7 +19,7 @@ from datetime import datetime
 from . import validate as v
 from .errors import Invalid
 
-SOURCES = {"app": ("human",), "ai": ("ai",), "import": ("import",), "system": ("system",)}
+SOURCES = {"app": ("human",), "ai": ("ai",), "import": ("import",), "sync": ("sync",), "system": ("system",)}
 ACTIONS = ("insert", "update", "delete")
 TABLES = ("nodes", "edges", "resources", "node_resources", "node_tags", "node_types", "edge_types",
           "edge_type_rules", "link_kinds", "proposals", "flags", "templates", "saved_views", "memberships",
@@ -56,12 +56,15 @@ def label_actors(conn, rows: list[dict]) -> list[dict]:
             r["actor_label"] = "AI assistant" + (f" (for {person})" if person else "")
         elif t == "import":
             r["actor_label"] = "Import" + (f" (run by {person})" if person else "")
+        elif t == "sync":
+            # the scheduled sync from the original site; "Sync now" names who started it
+            r["actor_label"] = "Sync" + (f" (started by {person})" if person else "")
         elif t == "system" or not r.get("actor_id"):
             r["actor_label"] = "System"
         else:
             r["actor_label"] = person
         r["actor_email"] = email
-        r["source"] = {"human": "app", "ai": "ai", "import": "import"}.get(t, "system")
+        r["source"] = {"human": "app", "ai": "ai", "import": "import", "sync": "sync"}.get(t, "system")
     return rows
 
 

@@ -423,6 +423,24 @@ def app(environ, start_response):
             status, out = 500, {"error": "internal"}
         return _respond(start_response, status, out, no_store=True)
 
+    if path == "/api/cron/kb-sync":
+        # The scheduled sync (docs/DEPLOYMENT.md "Scheduled sync"): called by the
+        # database's pg_cron + pg_net with a secret. No user session reaches it,
+        # and nothing but the secret opens it.
+        if method not in ("GET", "POST"):
+            return _respond(start_response, 405, {"error": "method_not_allowed"})
+        from lib.kb import sync_api
+        if not sync_api.cron_authorised(environ.get("HTTP_AUTHORIZATION")):
+            return _respond(start_response, 401, {"error": "unauthorised"}, no_store=True)
+        try:
+            out = sync_api.run_now("cron", None)
+        except Exception:                                              # noqa: BLE001
+            print(traceback.format_exc(), file=sys.stderr)
+            return _respond(start_response, 500, {"error": "internal"}, no_store=True)
+        code = 200 if out.get("status") in ("ok", "skipped", "disabled") else 500
+        return _respond(start_response, code, {k: out.get(k) for k in ("status", "run_id", "partial", "message", "seconds")},
+                        no_store=True)
+
     if path.startswith("/api/kb/"):
         return _serve_kb(path, method, environ, start_response)
 

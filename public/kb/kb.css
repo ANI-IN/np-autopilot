@@ -497,3 +497,19 @@ tr:hover .row-actions, tr.cursor .row-actions, tr:focus-within .row-actions { op
 .menu[data-testid="rel-type-menu"] { max-width: 480px; }
 .menu[data-testid="rel-type-menu"] .menu-label { position: sticky; top: -4px; background: var(--surface); }
 @media (max-width: 900px) { .rel-row { grid-template-columns: minmax(0, 1fr) auto; } .rel-row > .rel-target { grid-column: 1 / 2; } }
+
+/* run 5: role badges (P, B1-B3), the teaching matrix, the programme timeline */
+.role-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 18px; padding: 0 4px; border-radius: 4px;
+  font-size: 11px; font-weight: 600; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+.role-badge.r-primary { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+.role-badge.r-none { opacity: .65; font-weight: 500; }
+.matrix-wrap { overflow: auto; max-height: calc(100vh - 220px); border: 1px solid var(--border); border-radius: 8px; }
+.table.matrix th.rot { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; max-height: 180px; font-weight: 500; padding: 6px 2px; }
+.table.matrix td.cell { text-align: center; padding: 2px; min-width: 28px; }
+.table.matrix .sticky-col { position: sticky; left: 0; background: var(--bg); z-index: 1; white-space: nowrap; text-align: left; }
+.timeline-lane { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+.timeline-week { flex: 0 0 240px; display: flex; flex-direction: column; gap: 8px; }
+.timeline-week-head { font-weight: 600; font-size: 12px; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+.timeline-card { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; background: var(--surface); }
+.timeline-card ul { margin: 0; padding-left: 16px; }
+@media (max-width: 640px) { .timeline-week { flex-basis: 200px; } }

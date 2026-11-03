@@ -9,7 +9,7 @@ import { pageHead } from '../page.js';
 const ENTITY = { nodes: 'record', edges: 'relationship', resources: 'link', node_resources: 'attached link', node_tags: 'tag',
   node_types: 'record type', edge_types: 'relationship type', edge_type_rules: 'relationship rule', link_kinds: 'link kind', proposals: 'proposal',
   flags: 'flag', templates: 'template', saved_views: 'saved view', memberships: 'role', api_tokens: 'API token', import_runs: 'import', tags: 'tag' };
-const SOURCE_LABEL = { app: 'App', ai: 'AI assistant', import: 'Import', system: 'System' };
+const SOURCE_LABEL = { app: 'App', ai: 'AI assistant', import: 'Import', sync: 'Sync', system: 'System' };
 
 function verb(a) {
   const b = a.before || {}, f = a.after || {};
@@ -42,7 +42,7 @@ export function activityEntry(a, opts) {
     el('span', { class: 'diff-del', text: fmt(c.before).slice(0, 160) }), icon('arrow-right', 'sm'), el('span', { class: 'diff-add', text: fmt(c.after).slice(0, 160) }))));
   const when = new Date(a.at);
   return el('li', { class: 'entry', 'data-testid': 'activity-entry' },
-    a.actor_type === 'human' && a.actor_id ? avatar(a.actor_id) : el('span', { class: 'avatar', style: '--av:#475569', title: a.actor_label }, icon(a.actor_type === 'ai' ? 'sparkles' : a.actor_type === 'import' ? 'upload' : 'settings', 'sm')),
+    a.actor_type === 'human' && a.actor_id ? avatar(a.actor_id) : el('span', { class: 'avatar', style: '--av:#475569', title: a.actor_label }, icon(a.actor_type === 'ai' ? 'sparkles' : a.actor_type === 'import' ? 'upload' : a.actor_type === 'sync' ? 'refresh-cw' : 'settings', 'sm')),
     el('div', { class: 'entry-body' },
       el('div', { class: 'entry-line' }, el('strong', { 'data-testid': 'activity-actor', text: who }), ' ' + verb(a) + ' ',
         opts.inRecord && (a.table_name === 'nodes' || a.table_name === 'resources') ? 'this'

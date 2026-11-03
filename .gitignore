@@ -122,3 +122,4 @@ docs/screenshots/b4/
 /backups/
 /test-results/
 /playwright-report/
+.run6/

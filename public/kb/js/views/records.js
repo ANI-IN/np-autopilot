@@ -62,7 +62,7 @@ export function viewRecords(v, r) {
           try { const x = await api('POST', '/views', { name: name.value.trim(), shared: shared.checked, config: Object.assign(currentConfig(), { fixed }) }); closeDialog(); views.push(x); applyView(x); loadViews(); }
           catch (e) { failToast(e, 'Not saved'); } } }))], { label: 'Save view' });
   }
-  function currentConfig() { const c = {}; ['q', 'type', 'parent', 'owner', 'tag', 'status', 'flagged', 'review', 'sort'].forEach((k) => { if (f[k]) c[k] = f[k]; }); return c; }
+  function currentConfig() { const c = {}; ['q', 'type', 'parent', 'owner', 'tag', 'status', 'flagged', 'review', 'legacy', 'sort'].forEach((k) => { if (f[k]) c[k] = f[k]; }); return c; }
 
   // toolbar
   const search = el('input', { placeholder: 'Search', 'aria-label': 'Search records', 'data-testid': 'filter-q', value: f.q || '' });
@@ -97,6 +97,9 @@ export function viewRecords(v, r) {
     items.push({ label: 'Needs review', icon: 'badge-check', fn: () => setQuery({ review: 'needs_review', view: null }) });
     items.push({ label: 'Flagged as incorrect', icon: 'flag', testid: 'filter-flagged', fn: () => setQuery({ flagged: '1', view: null }) });
     items.push({ label: 'Archived', icon: 'archive', fn: () => setQuery({ status: 'archived', view: null }) });
+    items.push('-');
+    items.push({ label: 'Legacy only (older sheets)', icon: 'history', testid: 'filter-legacy', fn: () => setQuery({ legacy: 'only', view: null }) });
+    items.push({ label: 'Current and legacy', icon: 'layers', testid: 'filter-legacy-all', fn: () => setQuery({ legacy: 'all', view: null }) });
     menu(anchor, items, { testid: 'filter-menu' });
   }
   function pickDialog(title, cb, apply) {
@@ -191,12 +194,13 @@ export function viewRecords(v, r) {
     if (f.status && f.status !== 'live') chip('Status', f.status, 'status');
     if (f.flagged) chip('Is', 'flagged', 'flagged');
     if (f.review) chip('Review', 'needs review', 'review');
+    if (f.legacy) chip('Legacy', f.legacy === 'only' ? 'only' : 'included', 'legacy');
     if (f.parent) { const c = chip('In', '…', 'parent'); api('GET', '/nodes/' + f.parent).then((n) => { const b = $('[data-testid="chip-parent"] b', chips); if (b) b.textContent = n.name; }).catch(() => {}); }
   }
 
   function params(extra) {
     return Object.assign({ q: f.q, type: fixed || f.type, parent: f.parent, tag: f.tag, status: f.status || 'live', flagged: f.flagged ? 1 : null,
-      review_status: f.review, sort: f.sort || 'updated', owner: f.owner === 'me' ? S.me.user_id : (f.owner && f.owner !== 'none' ? f.owner : null), no_owner: f.owner === 'none' ? 1 : null }, extra || {});
+      review_status: f.review, legacy: f.legacy || 'current', sort: f.sort || 'updated', owner: f.owner === 'me' ? S.me.user_id : (f.owner && f.owner !== 'none' ? f.owner : null), no_owner: f.owner === 'none' ? 1 : null }, extra || {});
   }
   async function load(more) {
     if (!more) { clear(tableHost).appendChild(skeletonRows(10, 3)); items = []; cursor = null; selected.clear(); cur = -1; drawBulk(); }
@@ -211,7 +215,7 @@ export function viewRecords(v, r) {
     clear(tableHost);
     count.textContent = total === null ? '' : plural(total, 'record');
     if (!items.length) {
-      const filtered = f.q || f.type || f.parent || f.owner || f.tag || f.flagged || f.review || (f.status && f.status !== 'live');
+      const filtered = f.q || f.type || f.parent || f.owner || f.tag || f.flagged || f.review || f.legacy || (f.status && f.status !== 'live');
       tableHost.appendChild(filtered ? empty('Nothing matches', 'Try fewer filters or a different search.', el('button', { class: 'btn sm', type: 'button', text: 'Clear filters', onclick: () => { location.hash = '#/' + r.path[0]; } }), 'search')
         : empty('No ' + title.toLowerCase() + ' yet', 'Create the first one; it takes one form.', can('contributor') ? el('button', { class: 'btn primary sm', type: 'button', text: 'New ' + (fixed ? typeLabel(fixed).toLowerCase() : 'record'), onclick: () => openRecordForm(fixed ? { type: fixed } : {}) }) : null, 'inbox', 'creating-records'));
       clear(foot); return;
@@ -341,7 +345,7 @@ export function viewRecords(v, r) {
 
 function filtersFrom(q, fixed) {
   const f = {};
-  ['q', 'type', 'parent', 'owner', 'tag', 'tag_name', 'status', 'flagged', 'review', 'sort', 'view'].forEach((k) => { if (q[k]) f[k] = q[k]; });
+  ['q', 'type', 'parent', 'owner', 'tag', 'tag_name', 'status', 'flagged', 'review', 'legacy', 'sort', 'view'].forEach((k) => { if (q[k]) f[k] = q[k]; });
   if (q.scope) f.parent = q.scope;
   if (fixed) delete f.type;
   return f;

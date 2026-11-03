@@ -123,7 +123,8 @@ check "ruff (errors + pyflakes) on KB code" uvx -q ruff@0.14.0 check --select E9
   pipeline/lib/kb_sheets.py eval/kb_dev_server.py eval/kb_demo_server.py eval/kb_demo_seed.py \
   eval/kb_local_stack.py scripts/kb_perf.py scripts/kb_load.py scripts/kb_explain.py scripts/kb_graph_perf.py \
   scripts/kb_screens.py scripts/kb_guide_shots.py pipeline/kb_import_projection.py eval/kb_realdata_db.py \
-  eval/kb_realdata_server.py eval/kb_realdata_check.py tests/kb_support.py tests/test_kb_*.py tests/test_db_pooling.py
+  eval/kb_realdata_server.py eval/kb_realdata_check.py tests/kb_support.py tests/test_kb_*.py tests/test_db_pooling.py \
+  pipeline/kb_legacy.py eval/kb_parity.py eval/kb_sync_proof.py eval/kb_run5_ui_check.py scripts/dev_db.py
 check "plugin server copy in sync" cmp mcp_server/kb_server.py plugins/ik-knowledge-assistant/server/kb_server.py
 check "plugin validates (--strict)" claude plugin validate plugins/ik-knowledge-assistant --strict
 
@@ -155,7 +156,9 @@ check "deploy guard: eval/ and tests/ never ship" "$PY" -m pytest -q -p no:cache
 step "full test suite (local DB, browser E2E, MCP, concurrency)"
 LOG="$(mktemp)"
 rc=0
-"$PY" -m pytest tests -q -p no:cacheprovider -rfE > "$LOG" 2>&1 || rc=$?
+# --color=no: with colour codes the FAILED/ERROR lines below would not match and a
+# failing suite would compare as "no new failures".
+"$PY" -m pytest tests -q -p no:cacheprovider -rfE --color=no > "$LOG" 2>&1 || rc=$?
 tail -1 "$LOG"
 # pytest: 0 all passed, 1 some failed — anything else means the suite did not run properly.
 if [ "$rc" -ne 0 ] && [ "$rc" -ne 1 ]; then
@@ -164,6 +167,10 @@ elif ! grep -qE '[0-9]+ passed' "$LOG"; then
   bad "pytest reported no passing tests"; tail -30 "$LOG"
 else
   { grep -E '^(FAILED|ERROR) ' "$LOG" || true; } | sed 's/ - .*//' | LC_ALL=C sort -u > "$LOG.fail"
+  # A summary that reports failures must yield their names, or the comparison is meaningless.
+  if grep -qE '[0-9]+ (failed|error)' "$LOG" && [ ! -s "$LOG.fail" ]; then
+    bad "pytest reported failures but none could be read by name"; tail -5 "$LOG"
+  fi
   KBFAIL="$(grep -c 'test_kb_' "$LOG.fail" || true)"
   if [ "$KBFAIL" = "0" ]; then ok "all KB tests pass"; else bad "$KBFAIL KB test(s) failed"; grep test_kb_ "$LOG.fail"; fi
   LC_ALL=C sort -u docs/baseline-failures.txt > "$LOG.base"

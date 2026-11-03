@@ -1,3 +1,208 @@
+# HANDOFF — run 5: parity with NP Autopilot, owners, legacy, scheduled sync, dev database (2026-11-03)
+
+Branch `auto/knowledge-platform-20261102`. Nothing deployed, nothing on `main`,
+production never contacted. The local real-data copy (:8766) holds the new
+import; the fictional demo (:8765) is unchanged. Decisions D39-D47 and the
+timeline are in PROGRESS.md ("Run 5 log").
+
+## 1. Parity with NP Autopilot: zero unexplained differences
+
+`docs/PARITY_REPORT.md` (re-run: `python eval/kb_parity.py`). NP's side is
+read from NP Autopilot itself (its own `model()` and `currentInstructors()`,
+evaluated in the browser on :8766); the import now uses the same rules.
+
+| | NP Autopilot | KB |
+|---|---|---|
+| Domains current / legacy | 4 / 42 | 4 / 42 (same ids) |
+| Modules current / legacy | 20 / 904 | 20 / 904 (same ids) |
+| Instructors current / all | 25 / 1,911 | 25 / 1,911 (same ids) |
+| Programmes (older sheets) | 42 | 42 |
+| Roles P / B1 / B2 / B3 | 23 / 20 / 11 / 3 | 23 / 20 / 11 / 3 (same 57 instructor-module-role triples) |
+| Sessions, decks, weeks of 10 current modules | | identical, module by module |
+| Topics | 2,770 | 2,733: 37 rejected by the import's shape rules (explained; ids in the run report) |
+
+- The brief asked for 5 current domains side by side: NP Autopilot has **4**;
+  all 4 are in the report.
+- Name merges are undone. There is one record per source row; a generic name
+  sits under the record it belongs to, and 5 remaining same-name pairs are
+  kept apart with "(2)".
+- Legacy is hidden by default (lists, counts, dashboard, Data quality) and can
+  be filtered: All records → Filter → "Legacy only" / "Current and legacy".
+
+## 2. Owners from roles
+
+- **Current modules:** all 20 have the mastersheet primary (P) as owner, and
+  B1-B3 in order as backups (48 backup slots across the KB).
+- **Domains:** `owned_by` maps to the owner and `supported_by` to the backups.
+  The 4 current domains have no owner in NP's data, so they have none here
+  either. 6 of the 7 legacy domains kept live have one.
+- **Edits and display:** shown on the record (Owner by role: P, then B1, B2, ...).
+  Editors change them there; only instructor and team-member records are
+  accepted.
+- **Sign-in accounts:** an admin links a person record to a sign-in by e-mail
+  (record panel → "Sign-in account"). It resolves at once, or on that
+  person's first sign-in; from then on that person is the account owner /
+  co-owner of everything their record owns by role.
+- **0 links today.** The data has no e-mail addresses, because contact columns
+  are never imported.
+- **"No owner" on Data quality** now counts only current records with neither
+  kind of owner: **3,067**, made up of 2,733 topics, 134 sessions, 92 processes,
+  43 team members, 25 instructors, 20 weeks, 16 themes and 4 domains. NP's
+  data has no owners for those.
+
+## 3. Legacy archive (reversible)
+
+Archived (`kb.legacy_archive`): **874 records**, made up of 35 legacy domains,
+166 legacy modules and 673 legacy instructors. Their relationships and links
+are archived with them.
+
+Not archived, and reported by id in PARITY_REPORT:
+- **7 legacy domains**, because 23 current-instructor expertise links point at
+  them (D44).
+- **17 legacy modules / instructors** that are connected to a current item.
+- **1,932** legacy modules / instructors with no domain at all (NP's
+  "unlinked"). These are left live and stay tagged legacy.
+
+```
+# restore everything the legacy step archived (one command; tested twice: counts back exactly)
+SUPABASE_DB_URL_SESSION=<db> python pipeline/kb_legacy.py restore
+# re-apply (also re-applied by every sync once adopted)
+SUPABASE_DB_URL_SESSION=<db> python pipeline/kb_legacy.py archive
+```
+
+**Permanent delete: prepared, NOT run. It needs the owner's go-ahead.** It
+removes only what the legacy step archived and is still archived; their
+relationships and links go with them (cascade), and the audit log keeps every
+row. It cannot be restored afterwards except from a backup. In psql, as the
+owner, after a backup:
+
+```sql
+begin;
+select count(*) from kb.nodes n join kb.legacy_archive la on la.node_id = n.id where n.archived_at is not null;  -- expect 874
+delete from kb.nodes n using kb.legacy_archive la where n.id = la.node_id and n.archived_at is not null;
+commit;
+```
+
+## 4. The sync: how it works, how to switch it off
+
+`web/lib/kb/sync.py` is one engine for the first import (CLI) and every
+scheduled run. docs/DEPLOYMENT.md "Scheduled sync" has the full design.
+
+**Schedule.**
+- The database (pg_cron + pg_net, migration 0031) calls
+  `POST /api/cron/kb-sync` hourly; the interval is any cron expression.
+- The call carries a Bearer secret, read from Vault at fire time.
+- Vercel Cron was not used: it fires on Production only and allows one run a
+  day on Hobby.
+
+**Each run.**
+- The function runs one batch within `KB_SYNC_BUDGET_SECONDS` (10 s, under
+  the 15 s function cap), and the next tick continues.
+- It writes only units whose source changed (checksums in `kb.sync_map`); an
+  unchanged re-run writes nothing.
+- One run at a time (DB lock).
+- A record edited in the KB is never overwritten: it becomes a **conflict** on
+  Data quality and on the record.
+- A row gone from the source is flagged **"removed at source"**, never
+  deleted.
+- KB-created records are never touched, and the legacy rules apply on every run.
+- In Activity the actor is **"Sync"**.
+
+**Admins.** Settings → Sync shows the run log and has **Sync now**. A banner
+appears while the last run failed.
+
+**Switch off.**
+- `KB_SYNC_ENABLED=false` (Vercel variable) stops everything.
+- `select kb.sync_schedule_remove();` stops the calls.
+
+**Verified locally.**
+- 24 tests in tests/test_kb_sync.py, one per rule.
+- On :8766 through "Sync now" (eval/kb_sync_proof.py): change, add, remove,
+  and a conflict with an app edit, then undo: PASS.
+- The cron route with and without the secret: 401 / 200.
+- The schedule install/remove in the local stack's pg_cron.
+- Not yet verified: the container → deployment HTTP leg. It runs on dev in
+  the morning.
+
+**New views:**
+- **Who teaches what:** instructors × modules and sessions with P/B1-B3
+  badges; filters for domain, role, name and legacy; CSV export.
+- **Programme timeline:** programmes by week, with sessions and slide decks.
+
+eval/kb_run5_ui_check.py: PASS, 0 page errors.
+
+## 5. Dev database: ready
+
+Full table in docs/DEV_DEPLOY.md, "Dev status".
+
+- **Checks:** the ref differs from production. Backed up to `backups/`.
+- **Migrations:** 0001-0031 applied. Run 5's two rolled back and re-applied;
+  while the database was still empty, the whole chain was also rolled back and
+  re-applied.
+- **Data:** the old tables were loaded from `backups/prod_data.sql`
+  (projection tables only, no user tables). Then the import, the legacy step
+  and one sync, as the operator (no admin exists yet).
+- **Result:** every count and the parity numbers equal :8766, and RLS is on
+  for all 25 kb tables.
+- **Admin:** a dry run with `ADMIN_EMAILS=<git e-mail>` reports "NO PROFILE". Dev
+  has no users, and the git e-mail is not an IK address, so this is a morning
+  step.
+- **Measure in region:** an unchanged sync took 28.5 s from this laptop over a
+  ~175 ms link (1.1 s locally). Check it on Vercel against the 15 s cap
+  (DEV_DEPLOY.md, "Dev status").
+
+## 6. Morning: deploy the dev preview (docs/DEV_DEPLOY.md)
+
+1. `vercel login`, `vercel link`.
+2. Add the Preview variables for branch `auto/knowledge-platform-20261102`
+   only (DEV_DEPLOY.md step 2; never Production). New: `KB_SYNC_SECRET`,
+   `KB_SYNC_ENABLED=true`, `KB_SYNC_BUDGET_SECONDS=10`.
+3. Run `bash scripts/deploy_dev_preview.sh --check`, then
+   `bash scripts/deploy_dev_preview.sh`. It deploys a preview and runs the
+   smoke tests.
+4. Set up Google sign-in for the branch URL (step 5): the Google client's
+   JavaScript origin, Supabase dev → Google provider, the before-user-created
+   hook, and URL configuration.
+5. Sign in once at `<branch URL>/kb/`. Then run:
+   `SUPABASE_DB_URL_SESSION="$DEV_SUPABASE_DB_URL" ADMIN_EMAILS=<you>@interviewkickstart.com python pipeline/kb_admins.py`
+6. Set up the schedule (step 6): two Vault secrets (sync, plus Vercel's
+   protection bypass), then
+   `select kb.sync_schedule_install('https://<branch host>/api/cron/kb-sync');`
+   Check that the next run appears in Settings → Sync as "Schedule", and how
+   long it took.
+7. Link two or three person records to sign-ins and check that ownership
+   follows.
+
+## 7. Production go-live checklist (in order; nothing done yet)
+
+1. Read PARITY_REPORT.md and confirm D44: 7 legacy domains stay live because
+   current instructors point at them.
+2. Merge the branch through review. Production is at migration 0021.
+3. Back up production (read-only `pg_dump`, as in Step 0) into `backups/`.
+4. Run `pipeline/migrate.py status`, then `up` (0022-0031), on the production
+   session pooler during a quiet hour. Each migration has a rollback.
+5. Run the first import: `pipeline/kb_import_projection.py apply --operator`
+   (or `--as <admin>` once one exists). It took 245 s over a far pooler;
+   expect less in region.
+6. Run `pipeline/kb_legacy.py archive`. `restore` is the undo.
+7. Admins sign in, then run `ADMIN_EMAILS=... pipeline/kb_admins.py`.
+8. Vercel **Production** variables: add `KB_SYNC_SECRET` (new, 32+ chars),
+   `KB_SYNC_ENABLED=true` and `KB_SYNC_BUDGET_SECONDS=10`, next to the existing
+   ones.
+9. Deploy production (`vercel --prod` from main), then the smoke tests of
+   DEV_DEPLOY step 4.
+10. In production: `vault.create_secret(<KB_SYNC_SECRET>, 'kb_sync_secret')`,
+    then `kb.sync_schedule_install('https://<prod host>/api/cron/kb-sync')`.
+    No bypass secret is needed. Watch the first scheduled run and its
+    duration.
+11. Link person records to sign-ins (owners by role become account owners).
+12. Watch Data quality for sync conflicts and rows removed at source in the
+    first week.
+13. Later, with the owner's confirmation: run the prepared permanent delete of
+    the 874 archived legacy records (§3), after a fresh backup.
+
+---
+
 # HANDOFF — real production data, local rehearsal (2026-11-03)
 
 A copy of production's data now runs locally, migrated into the knowledge

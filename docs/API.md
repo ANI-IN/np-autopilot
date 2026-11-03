@@ -31,7 +31,7 @@ the token owner and are attributed `actor_type=ai`. Every request runs as the
 | `GET /types` · `POST /types/node` · `POST /types/rule` | viewer · admin · admin | node/edge types and allowed pairs |
 | `GET /dashboard` | viewer | counts per type, totals, needs-attention lists and counts, completeness, 20 recent changes (empty below editor; run 3). Cached per caller until the next change |
 | `GET /counts` | viewer | the sidebar's numbers: totals and `attention {counts, total}`, the same definition as the dashboard (run 3) |
-| `GET /activity` | editor (admin: all; editor: own + scope, enforced by RLS) | `actor`, `action`, `table`, `source` (app, ai, import, system), `record`, `from`, `to`, `q`, `cursor`, `limit`; `format=csv` returns `{filename, csv}`. Each item: actor_label, source, label, exists_now, changes [{field, before, after}] |
+| `GET /activity` | editor (admin: all; editor: own + scope, enforced by RLS) | `actor`, `action`, `table`, `source` (app, ai, import, sync, system), `record`, `from`, `to`, `q`, `cursor`, `limit`; `format=csv` returns `{filename, csv}`. Each item: actor_label, source, label, exists_now, changes [{field, before, after}] |
 | `GET /nodes/{id}/history` | viewer | through `kb.record_history`; same item shape as `/activity` |
 | `GET /changes?since=` | viewer | the collaboration feed (`kb.changes`), no row content |
 | `GET /graph/positions?layout=&ids=` / `POST` `{layout, positions}` / `DELETE ?layout=` | viewer / contributor | saved graph layout; never changes records |
@@ -90,6 +90,14 @@ the token owner and are attributed `actor_type=ai`. Every request runs as the
 | `GET /instructors?course=&q=` | viewer | |
 | `GET /quality` | viewer | totals, completeness, orphans, `unowned`, `links` (checked/ok/needs-sign-in/broken + broken list), duplicates |
 | `GET /quality/missing-resources?type=` · `/quality/duplicates?threshold=` · `/quality/link-candidates` | viewer | |
+| `GET /nodes?legacy=current\|only\|all` | viewer | run 5: legacy records (NP Autopilot's "older sheets") are left out unless asked for (`current`, the default) |
+| `PATCH /nodes/{id}` `{owner_record_id, co_owner_record_ids}` | contributor | run 5: owners by role (P; B1-B3 in order); live instructor or team member records only (422 otherwise) |
+| `POST /nodes/{id}/account` `{email}` · `DELETE /nodes/{id}/account` | admin | run 5: link a person record to a sign-in; resolves now or at their first sign-in, then they own what the record owns by role |
+| `GET /views/teaching?domain=&role=&legacy=&q=` | viewer | run 5, "Who teaches what": `{instructors, columns, cells [{instructor_id, target_id, role, tier}], domains, counts}` |
+| `GET /views/timeline` | viewer | run 5, "Programme timeline": programmes -> weeks -> modules with sessions and decks |
+| `GET /quality/sync` | editor | run 5: `{conflicts, removed_at_source}` from the sync |
+| `GET /sync` · `POST /sync/run` | admin (not the AI assistant) | run 5: the run log, `enabled`, `failing`; "Sync now" (one time-boxed run) |
+| `POST /api/cron/kb-sync` (outside `/api/kb`) | `Authorization: Bearer $KB_SYNC_SECRET` only (no user session) | run 5: the scheduled run; 401 without the secret or with one shorter than 24 characters |
 | `POST /quality/link-results` | editor | `{results: [{id, status, http?, redirected_to?}]}` ≤200; stores the last check per resource. The server never fetches a URL itself |
 
 Tests: `tests/test_kb_api.py` (every family: success, 422, 403, 404, 409 conflict,
