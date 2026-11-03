@@ -219,7 +219,7 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
     if head == "quality" and method == "GET" and rest == ["missing-resources"]:
         return 200, {"items": svc.find_missing_resources(conn, params.get("type"), _int(params.get("limit"), 100))}
     if head == "quality" and method == "GET" and rest == ["duplicates"]:
-        return 200, {"items": svc.find_duplicate_nodes(conn, float(params.get("threshold", 0.6)),
+        return 200, {"items": svc.find_duplicate_nodes(conn, params.get("threshold", 0.6),
                                                        _int(params.get("limit"), 50))}
     if head == "quality" and method == "GET" and rest == ["link-candidates"]:
         return 200, {"items": svc.resources_for_link_check(conn, _int(params.get("limit"), 50),
