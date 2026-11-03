@@ -77,7 +77,7 @@ class TestAgainstTheDatabase:
                 cols = [d.name for d in cur.description]
                 want = {(r[0], r[2]): dict(zip(cols, r)) for r in cur.fetchall()}
             got = duplicates.find(conn, threshold, 200)
-            full = duplicates._all_pairs(conn, threshold)
+            full = duplicates._all_pairs(conn, threshold, keep=None)
         assert want, "the fixture must produce duplicates"
         assert {(p["a_id"], p["b_id"]): p for p in full} == want
         assert got == full[:200]
@@ -94,6 +94,23 @@ class TestAgainstTheDatabase:
         with as_user(USERS["editor"]) as conn:
             again = duplicates.find(conn, 0.6, 200)
         assert victim not in {p["a_id"] for p in again} | {p["b_id"] for p in again}
+
+    @pytest.mark.parametrize("bad", ["nan", "inf", "abc", None])
+    def test_a_bad_threshold_is_a_422_not_a_500(self, bad):
+        from lib.kb.errors import Invalid
+        with as_user(USERS["editor"]) as conn:
+            with pytest.raises(Invalid):
+                duplicates.find(conn, bad, 50)
+
+    def test_many_near_identical_names_stay_bounded(self):
+        with owner() as c:
+            c.execute("select set_config('kb.actor_type', 'system', false)")
+            c.execute("insert into kb.nodes (type_id, name) select (select id from kb.node_types where key = 'module'), "
+                      "'bounded twin ' || g from generate_series(1000, 1599) g")
+        with as_user(USERS["editor"]) as conn:
+            got = duplicates.find(conn, 0.6, 500)
+            assert len(got) == duplicates.MAX_LIMIT
+            assert [p["similarity"] for p in got] == sorted((p["similarity"] for p in got), reverse=True)
 
     def test_a_non_member_sees_nothing(self):
         from kb_support import OUTSIDER

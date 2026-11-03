@@ -24,14 +24,18 @@ api/kb_routes.py `_cached`.
 """
 from __future__ import annotations
 
+import heapq
 import math
 import struct
 from collections import defaultdict
 from decimal import ROUND_HALF_UP, Decimal
 
+from .errors import Invalid
+
 _EPS = 1e-9
 _CACHE: dict = {}
 _CACHE_MAX = 32
+MAX_LIMIT = 200
 
 
 def _f32(x: float) -> float:
@@ -44,8 +48,8 @@ def _numeric3(sim: float) -> Decimal:
     return Decimal(f"{sim:.6g}").quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
 
 
-def similar_pairs(records: list[tuple], threshold: float) -> list[tuple[int, int, float]]:
-    """records: (group, trigrams). Returns (i, j, similarity) for every pair of
+def similar_pairs(records: list[tuple], threshold: float):
+    """records: (group, trigrams). Yields (i, j, similarity) for every pair of
     records in the same group whose trigram-set Jaccard similarity, as float4,
     is >= threshold. Exact (no pair is missed): the prefix, length and
     positional filters only discard pairs that cannot reach the threshold."""
@@ -60,7 +64,6 @@ def similar_pairs(records: list[tuple], threshold: float) -> list[tuple[int, int
     sets = [frozenset(r[2]) for r in recs]
     coef = t / (1 + t)
     index: dict = defaultdict(list)
-    out = []
     ceil = math.ceil
     for xi, (orig, grp, s) in enumerate(recs):
         k = len(s)
@@ -89,32 +92,38 @@ def similar_pairs(records: list[tuple], threshold: float) -> list[tuple[int, int
                 inter = len(sx & sy)
                 sim = _f32(inter / (k + len(sy) - inter))
                 if sim >= t:
-                    out.append((recs[yi][0], orig, sim))
-    return out
+                    yield recs[yi][0], orig, sim
 
 
-def _all_pairs(conn, threshold: float) -> list[dict]:
+def _all_pairs(conn, threshold: float, keep: int | None = MAX_LIMIT) -> list[dict]:
+    """The `keep` most similar pairs (all of them when keep is None), most
+    similar first, then by record id. Memory stays bounded by `keep` however
+    many pairs qualify (a type full of near-identical names)."""
     with conn.cursor() as cur:
         cur.execute("""select n.id, n.name, t.key as type, n.type_id, extensions.show_trgm(n.name_norm) as grams
                        from kb.nodes n join kb.node_types t on t.id = n.type_id
-                       where n.archived_at is null""")
+                       where n.archived_at is null order by n.id""")
         rows = cur.fetchall()
-    pairs = []
-    for i, j, sim in similar_pairs([(r[3], r[4]) for r in rows], threshold):
-        a, b = rows[i], rows[j]
-        if str(a[0]) > str(b[0]):
-            a, b = b, a
-        pairs.append({"a_id": a[0], "a_name": a[1], "b_id": b[0], "b_name": b[1], "type": a[2],
-                      "similarity": _numeric3(sim)})
-    pairs.sort(key=lambda p: (-p["similarity"], p["type"], str(p["a_id"]), str(p["b_id"])))
-    return pairs
+    # Rows are in id order, so the lower index is the lower id (the `a` side).
+    found = ((min(i, j), max(i, j), _numeric3(sim))
+             for i, j, sim in similar_pairs([(r[3], r[4]) for r in rows], threshold))
+    rank = lambda p: (p[2], -p[0], -p[1])                                   # noqa: E731
+    best = sorted(found, key=rank, reverse=True) if keep is None else heapq.nlargest(keep, found, key=rank)
+    return [{"a_id": rows[i][0], "a_name": rows[i][1], "b_id": rows[j][0], "b_name": rows[j][1],
+             "type": rows[i][2], "similarity": sim} for i, j, sim in best]
 
 
 def find(conn, threshold: float = 0.6, limit: int = 50) -> list[dict]:
     """Near-duplicates by trigram similarity within a type. RANKS; never merges.
     Same contract as service.find_duplicate_nodes."""
-    threshold = min(max(float(threshold), 0.3), 0.99)
-    limit = min(int(limit), 200)
+    try:
+        threshold, limit = float(threshold), int(limit)
+    except (TypeError, ValueError):
+        raise Invalid("threshold must be a number and limit a whole number", field="threshold") from None
+    if not math.isfinite(threshold):
+        raise Invalid("threshold must be a number between 0.3 and 0.99", field="threshold")
+    threshold = min(max(threshold, 0.3), 0.99)
+    limit = max(0, min(limit, MAX_LIMIT))
     with conn.cursor() as cur:
         cur.execute("""select coalesce((select max(id) from kb.changes), 0),
                               current_setting('request.jwt.claims', true), kb.role()""")
