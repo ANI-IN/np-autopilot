@@ -42,7 +42,7 @@ ACTIONS = ("insert", "update", "delete")
 CHANGE_ONLY = ("graph_positions", "person_accounts", "sync_runs")
 TABLES = ("nodes", "edges", "resources", "node_resources", "node_tags", "node_types", "edge_types",
           "edge_type_rules", "link_kinds", "proposals", "flags", "templates", "saved_views", "memberships",
-          "api_tokens", "import_runs", "tags") + CHANGE_ONLY
+          "member_invites", "api_tokens", "import_runs", "tags") + CHANGE_ONLY
 #: `op`: what happened, by the kind's verb (kb.changes.kind, 0032).
 OPS = {
     "create": (["%.create", "%.insert"], []),
@@ -92,7 +92,7 @@ NOUN = {"nodes": ("record", "records"), "edges": ("relationship", "relationships
         "node_types": ("record type", "record types"), "edge_types": ("relationship type", "relationship types"),
         "edge_type_rules": ("relationship rule", "relationship rules"), "link_kinds": ("link kind", "link kinds"),
         "proposals": ("proposal", "proposals"), "flags": ("flag", "flags"), "templates": ("template", "templates"),
-        "saved_views": ("saved view", "saved views"), "memberships": ("member", "members"),
+        "saved_views": ("saved view", "saved views"), "memberships": ("member", "members"), "member_invites": ("invitation", "invitations"),
         "api_tokens": ("API token", "API tokens"), "import_runs": ("import", "imports"),
         "graph_positions": ("layout move", "layout moves"), "person_accounts": ("sign-in account", "sign-in accounts"),
         "sync_runs": ("sync run", "sync runs")}
@@ -681,6 +681,19 @@ def _describe(cx: _Ctx, r: dict, *, flip: bool = False) -> tuple[list[dict], str
         if b.get("role") != a.get("role"):
             return [_t("changed the role of ")] + who + [_t(" from "), _val(_humane(b.get("role"))), _t(" to "), _val(_humane(a.get("role")))], None, None
         return [_t("updated the membership of ")] + who, None, None
+
+    if tbl == "member_invites":
+        # The audit row carries no address (0035): the sentence names the role only.
+        if r["action"] == "insert":
+            st = " (applied at once: they had signed in)" if a.get("status") == "applied" else " (applied when they first sign in)"
+            return [_t("invited a person as "), _val(_humane(a.get("role"))), _t(st)], None, None
+        if a.get("status") == "revoked" and b.get("status") != "revoked":
+            return [_t("withdrew an invitation as "), _val(_humane(b.get("role")))], None, None
+        if a.get("status") == "applied" and b.get("status") != "applied":
+            return [_t("an invitation as "), _val(_humane(a.get("role"))), _t(" was applied at sign-in")], None, None
+        if b.get("role") != a.get("role"):
+            return [_t("changed an invitation from "), _val(_humane(b.get("role"))), _t(" to "), _val(_humane(a.get("role")))], None, None
+        return [_t("updated an invitation")], None, None
 
     if tbl == "api_tokens":
         ent = [_t("the API token "), _val(src.get("name") or "unnamed", quote=True)]

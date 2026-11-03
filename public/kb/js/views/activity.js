@@ -14,7 +14,7 @@ import { pageHead } from '../page.js';
 
 const ENTITY = { nodes: 'record', edges: 'relationship', resources: 'link', node_resources: 'attached link', node_tags: 'tag on a record',
   tags: 'tag', node_types: 'record type', edge_types: 'relationship type', edge_type_rules: 'relationship rule', link_kinds: 'link kind',
-  proposals: 'proposal', flags: 'flag', templates: 'template', saved_views: 'saved view', memberships: 'role', api_tokens: 'API token',
+  proposals: 'proposal', flags: 'flag', templates: 'template', saved_views: 'saved view', memberships: 'role', member_invites: 'invitation', api_tokens: 'API token',
   graph_positions: 'graph layout', person_accounts: 'sign-in account', sync_runs: 'sync run' };
 const SOURCE_LABEL = { app: 'App', graph: 'Graph', ai: 'AI assistant', import: 'Import', sync: 'Sync', system: 'System' };
 const OPS = [['create', 'Created'], ['update', 'Updated'], ['owner', 'Owner changes'], ['archive', 'Archived'], ['restore', 'Restored'],

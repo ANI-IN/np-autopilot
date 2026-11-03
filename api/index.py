@@ -36,7 +36,7 @@ sys.path.insert(0, str(HERE.parent / "web"))
 sys.path.insert(0, str(HERE))
 
 from lib import data                                                   # noqa: E402
-from lib.auth import AuthError                                         # noqa: E402
+from lib.auth import AuthError, DomainRefused                          # noqa: E402
 from lib.guard import audit, bearer, identify                                  # noqa: E402
 
 import config                                                          # noqa: E402
@@ -91,13 +91,28 @@ def endpoint_options(name: str) -> dict:
 
 MAX_BODY = 16 * 1024
 
-#: Applied to every response. The CSP and HSTS for static assets come from
-#: vercel.json; these are the ones that matter on a JSON body.
-BASE_HEADERS = [
-    ("content-type", "application/json"),
+#: Applied to every response. vercel.json sets the page policy for every path;
+#: these are set here as well (run 6, F5) so an API response carries them
+#: whatever serves it (the local servers, a preview, a misrouted header rule):
+#: a JSON body needs no source at all, may never be framed, and is HTTPS only.
+#: There is deliberately NO access-control-allow-origin: the API is same-origin
+#: only, and tests/test_kb_access_sweep.py fails if any response grows one.
+SECURITY_HEADERS = [
     ("x-content-type-options", "nosniff"),
     ("referrer-policy", "no-referrer"),
+    ("content-security-policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"),
+    ("x-frame-options", "DENY"),
+    ("strict-transport-security", "max-age=63072000; includeSubDomains; preload"),
 ]
+BASE_HEADERS = [("content-type", "application/json"), *SECURITY_HEADERS]
+
+
+def _refused(start_response, exc: AuthError):
+    """401 when there is no valid session; 403 when the session is valid but
+    for an account outside the IK domain (DomainRefused, checked per request)."""
+    if isinstance(exc, DomainRefused):
+        return _respond(start_response, 403, {"error": "forbidden", "reason": str(exc)}, no_store=True)
+    return _respond(start_response, 401, {"error": "unauthorised", "reason": str(exc)})
 
 
 def _respond(start_response, status: int, body: dict, *, no_store: bool = False,
@@ -170,8 +185,7 @@ def _not_modified(start_response, etag: str, cache: str):
     start_response("304 Not Modified",
                    [("etag", etag), ("cache-control", cache),
                     ("vary", "Authorization, Accept-Encoding"),
-                    ("x-content-type-options", "nosniff"),
-                    ("referrer-policy", "no-referrer")])
+                    *SECURITY_HEADERS])
     return [b""]
 
 
@@ -193,8 +207,7 @@ def _serve_read(path: str, params: dict, environ, start_response):
     try:
         identity = identify(_Headers(environ))
     except AuthError as exc:
-        return _respond(start_response, 401,
-                        {"error": "unauthorised", "reason": str(exc)})
+        return _refused(start_response, exc)
     name, fn = endpoint_for(path)
     opts = endpoint_options(name)
     etag = None
@@ -237,8 +250,7 @@ def _serve_write(path: str, environ, start_response):
     try:
         identity = identify(_Headers(environ))
     except AuthError as exc:
-        return _respond(start_response, 401,
-                        {"error": "unauthorised", "reason": str(exc)})
+        return _refused(start_response, exc)
     try:
         length = int(environ.get("CONTENT_LENGTH") or 0)
     except ValueError:
@@ -331,8 +343,7 @@ def _serve_kb(path: str, method: str, environ, start_response):
         else:
             identity = identify(_Headers(environ))
     except AuthError as exc:
-        return _respond(start_response, 401,
-                        {"error": "unauthorised", "reason": str(exc)})
+        return _refused(start_response, exc)
     if method not in KB_METHODS:
         return _respond(start_response, 405, {"error": "method_not_allowed"})
     body = None

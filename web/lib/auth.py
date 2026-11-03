@@ -44,6 +44,32 @@ class AuthError(Exception):
     """Rejection. The message says which check failed, for the audit log."""
 
 
+class DomainRefused(AuthError):
+    """A VALID session for an account outside the IK Workspace domain.
+
+    Answered 403, not 401: the token is genuine, the account is simply not one
+    this application serves. Raised by require_allowed_domain() on EVERY data
+    request (run 6, F5), not only at sign-in: the Google `hd` hint and the
+    migration-0007 hook decide who may create an account, and this decides,
+    request by request, who may use one. An account whose address was changed
+    away from the domain after sign-up is refused here.
+    """
+
+
+def require_allowed_domain(identity: "Identity") -> "Identity":
+    """The server-side domain check, per request. The address comes from the
+    VERIFIED Supabase token's `email` claim (auth.users.email, set by GoTrue
+    from the Google sign-in), never from user_metadata. Exactly one `@`, and
+    the part after it is exactly ALLOWED_HD: `x@interviewkickstart.com.evil`
+    and `x@notinterviewkickstart.com` are both refused."""
+    email = (identity.email or "").strip().lower()
+    local, at, domain = email.rpartition("@")
+    if not at or not local or "@" in local or domain != ALLOWED_HD:
+        raise DomainRefused(f"this account is not an @{ALLOWED_HD} Workspace account; "
+                            "only IK colleagues can use this application")
+    return identity
+
+
 @dataclass(frozen=True)
 class Identity:
     subject: str

@@ -28,7 +28,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from lib import data                                                   # noqa: E402
-from lib.auth import AuthError, verify_supabase_token                  # noqa: E402
+from lib.auth import AuthError, require_allowed_domain, verify_supabase_token  # noqa: E402
 
 
 def bearer(headers) -> str | None:
@@ -57,7 +57,10 @@ def identify(headers):
     token = bearer(headers)
     if not token:
         raise AuthError("no bearer token")
-    return verify_supabase_token(token)
+    # Run 6, F5: the IK domain is checked HERE, on every request, server side
+    # (DomainRefused -> 403). Sign-in (Google `hd`, the 0007 hook) is not the
+    # only gate: a session for any other address is refused by every route.
+    return require_allowed_domain(verify_supabase_token(token))
 
 
 def audit(identity, endpoint: str, params: dict, rows: int,
@@ -110,7 +113,10 @@ def serve(endpoint: str, fn):
             try:
                 identity = identify(self.headers)
             except AuthError as exc:
-                self._send(401, {"error": "unauthorised", "reason": str(exc)})
+                from lib.auth import DomainRefused
+                self._send(403 if isinstance(exc, DomainRefused) else 401,
+                           {"error": "forbidden" if isinstance(exc, DomainRefused) else "unauthorised",
+                            "reason": str(exc)})
                 return
             try:
                 with data.request_connection(identity.subject) as conn:
