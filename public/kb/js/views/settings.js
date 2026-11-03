@@ -20,7 +20,7 @@ export function viewSettings(v, r) {
   v.appendChild(pageHead({ title: 'Settings', sub: 'Your role is ' + S.me.role + '.' }));
   v.appendChild(el('div', { class: 'tabs', role: 'tablist' }, TABS.filter(([k]) => (k !== 'members' && k !== 'sync' && k !== 'people') || can('admin')).map(([k, l]) =>
     el('a', { href: '#/settings?tab=' + k, role: 'tab', 'aria-selected': k === tab ? 'true' : 'false', 'data-testid': 'settings-tab-' + k, text: l }))));
-  const body = el('div', { class: 'page-body', style: 'padding-top:16px' });
+  const body = el('div', { class: 'page-body settings-body' });
   v.appendChild(body);
   ({ types: typesTab, relationships: relTab, links: linksTab, tags: tagsTab, members: membersTab, people: peopleTab, tokens: tokensTab, templates: templatesTab, sync: syncTab })[tab](body);
   S.onQueryChange = (nr) => { if ((nr.q.tab || '') !== (r.q.tab || '')) { clear(v); viewSettings(v, nr); } };
@@ -33,14 +33,14 @@ function proposalOr(e, okMsg) {
 
 // ------------------------------------------------------------------ record types
 function typesTab(body) {
-  add(body, [el('div', { class: 'row', style: 'margin-bottom:12px' }, el('p', { class: 'muted small', style: 'flex:1', text: can('admin') ? 'Add types and fields; they appear in the New record form, tables, filters, search, the graph, CSV and the AI tools.' : can('editor') ? 'Editors can propose type changes; an admin approves them in Approvals.' : 'Only admins change types.' }),
+  add(body, [el('div', { class: 'tab-intro' }, el('p', { text: can('admin') ? 'Add types and fields; they appear in the New record form, tables, filters, search, the graph, CSV and the AI tools.' : can('editor') ? 'Editors can propose type changes; an admin approves them in Approvals.' : 'Only admins change types.' }),
     can('editor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-type', onclick: () => typeEditor(null) }, icon('plus'), 'New record type') : null)]);
   const ul = el('ul', { class: 'list bordered', 'data-testid': 'types' });
   api('GET', '/types?archived=1').then((t) => {
-    t.node_types.forEach((x) => ul.appendChild(el('li', { 'data-testid': 'type-row' }, el('div', { class: 'link-row', style: 'padding:10px 12px' },
+    t.node_types.forEach((x) => ul.appendChild(el('li', { 'data-testid': 'type-row' }, el('div', { class: 'link-row roomy' },
       el('span', { class: 'type-icon', style: '--type:' + x.color }, icon(x.icon || 'box')), el('strong', { text: x.label }), el('span', { class: 'faint xs mono', text: x.key }),
       x.is_core ? el('span', { class: 'badge', text: 'Built-in' }) : null, x.archived_at ? el('span', { class: 'badge danger', text: 'Archived' }) : null,
-      el('span', { class: 'faint xs truncate', style: 'flex:1', text: (x.fields.filter((f) => !f.archived).length ? plural(x.fields.filter((f) => !f.archived).length, 'field') + ' · ' : '') + plural(x.records, 'record') }),
+      el('span', { class: 'faint xs truncate grow', text: (x.fields.filter((f) => !f.archived).length ? plural(x.fields.filter((f) => !f.archived).length, 'field') + ' · ' : '') + plural(x.records, 'record') }),
       can('editor') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'edit-type-' + x.key, onclick: () => typeEditor(x) }, 'Edit') : null))));
   }).catch((e) => body.appendChild(errorBox(e)));
   body.appendChild(ul);
@@ -54,13 +54,13 @@ function typeEditor(t) {
   const label = el('input', { value: t.label, 'data-testid': 'type-label', 'aria-label': 'Name', maxlength: '80', autofocus: true });
   const pluralIn = el('input', { value: t.plural || '', 'data-testid': 'type-plural', 'aria-label': 'Plural', maxlength: '80' });
   const desc = el('input', { value: t.description || '', 'aria-label': 'Description', maxlength: '500', placeholder: 'One line, shown in the New record form' });
-  const iconGrid = el('div', { class: 'row', style: 'flex-wrap:wrap;gap:4px', 'data-testid': 'type-icons' });
+  const iconGrid = el('div', { class: 'row wrap gap-1', 'data-testid': 'type-icons' });
   const drawIcons = () => { clear(iconGrid); ICONS.forEach((n) => iconGrid.appendChild(el('button', { type: 'button', class: 'btn sm icon' + (n === icon_ ? ' primary' : ''), 'aria-label': 'Icon ' + n, 'aria-pressed': n === icon_ ? 'true' : 'false', onclick: () => { icon_ = n; drawIcons(); preview(); } }, icon(n, 'sm')))); };
-  const swatches = el('div', { class: 'row', style: 'gap:6px', 'data-testid': 'type-colors' });
-  const drawSw = () => { clear(swatches); S.palette.forEach((c) => swatches.appendChild(el('button', { type: 'button', 'aria-label': 'Colour ' + c, 'aria-pressed': c === color ? 'true' : 'false',
-    style: 'width:22px;height:22px;border-radius:50%;border:2px solid ' + (c === color ? 'var(--text)' : 'transparent') + ';background:' + c + ';cursor:pointer', onclick: () => { color = c; drawSw(); preview(); } }))); };
-  const parents = el('div', { class: 'row', style: 'flex-wrap:wrap;gap:10px', 'data-testid': 'type-parents' }, S.types.filter((x) => x.key !== t.key).map((x) =>
-    el('label', { class: 'row small', style: 'gap:4px' }, el('input', { type: 'checkbox', value: x.key, checked: (t.allowed_parents || []).includes(x.key) }), typeIcon(x.key, 'sm'), x.label)));
+  const swatches = el('div', { class: 'row gap-2', 'data-testid': 'type-colors' });
+  const drawSw = () => { clear(swatches); S.palette.forEach((c) => swatches.appendChild(el('button', { type: 'button', class: 'swatch', 'aria-label': 'Colour ' + c, 'aria-pressed': c === color ? 'true' : 'false',
+    style: '--sw:' + c, onclick: () => { color = c; drawSw(); preview(); } }))); };
+  const parents = el('div', { class: 'row wrap gap-3', 'data-testid': 'type-parents' }, S.types.filter((x) => x.key !== t.key).map((x) =>
+    el('label', { class: 'row small gap-1' }, el('input', { type: 'checkbox', value: x.key, checked: (t.allowed_parents || []).includes(x.key) }), typeIcon(x.key, 'sm'), x.label)));
   const parentReq = el('input', { type: 'checkbox', checked: !!t.parent_required, 'aria-label': 'Must be placed under a parent' });
   const defStatus = el('select', { 'aria-label': 'Default status' }, el('option', { value: 'active', text: 'Live', selected: t.default_status !== 'draft' }), el('option', { value: 'draft', text: 'Draft', selected: t.default_status === 'draft' }));
   const ownerRule = el('select', { 'aria-label': 'Owner rule' }, el('option', { value: 'creator', text: 'The creator owns it', selected: t.owner_rule !== 'none' }), el('option', { value: 'none', text: 'No owner until assigned', selected: t.owner_rule === 'none' }));
@@ -68,13 +68,13 @@ function typeEditor(t) {
   // B1 (run 6): "owner expected" decides whether "No owner" counts this type (admins change it)
   const ownerExpected = el('input', { type: 'checkbox', checked: isNew ? false : !!t.owner_expected, disabled: !can('admin'), 'data-testid': 'type-owner-expected', 'aria-label': 'Records of this type should have an owner' });
   const fieldList = el('div', { class: 'col', 'data-testid': 'type-fields' });
-  const previewBox = el('div', { class: 'col', style: 'gap:12px', 'data-testid': 'type-preview' });
+  const previewBox = el('div', { class: 'col gap-3', 'data-testid': 'type-preview' });
   const err = el('div', { class: 'field-error', role: 'alert', 'data-testid': 'type-error' });
 
   function drawFields() {
     clear(fieldList);
     fields.forEach((f, i) => {
-      const lab = el('input', { value: f.label || '', placeholder: 'Field label', 'aria-label': 'Field label', 'data-testid': 'field-label', style: 'flex:1' });
+      const lab = el('input', { value: f.label || '', placeholder: 'Field label', 'aria-label': 'Field label', 'data-testid': 'field-label', class: 'grow' });
       lab.addEventListener('input', () => { f.label = lab.value; preview(); });
       const kind = el('select', { 'aria-label': 'Field kind', 'data-testid': 'field-kind' }, S.fieldKinds.map((k) => el('option', { value: k, text: FIELD_KIND_LABEL[k] || k, selected: f.kind === k })));
       kind.addEventListener('change', () => { f.kind = kind.value; drawFields(); preview(); });
@@ -84,27 +84,27 @@ function typeEditor(t) {
       help.addEventListener('input', () => { f.help = help.value; preview(); });
       const extra = el('div');
       if (f.kind === 'single_select' || f.kind === 'multi_select') {
-        const opts = el('input', { value: (f.options || []).map((o) => (o.label || o.value)).join(', '), placeholder: 'Options, comma separated', 'aria-label': 'Options', 'data-testid': 'field-options', style: 'width:100%' });
+        const opts = el('input', { value: (f.options || []).map((o) => (o.label || o.value)).join(', '), placeholder: 'Options, comma separated', 'aria-label': 'Options', 'data-testid': 'field-options', class: 'w-full' });
         opts.addEventListener('input', () => { const old = f.options || []; f.options = opts.value.split(',').map((s) => s.trim()).filter(Boolean).map((l) => { const ex = old.find((o) => o.label === l || o.value === l); return ex || { value: l.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || l, label: l }; }); preview(); });
         extra.appendChild(opts);
       }
       if (f.kind === 'reference') {
-        extra.appendChild(el('div', { class: 'row', style: 'flex-wrap:wrap;gap:8px' }, el('span', { class: 'faint xs', text: 'May point at:' }), S.types.map((x) => {
+        extra.appendChild(el('div', { class: 'row wrap' }, el('span', { class: 'faint xs', text: 'May point at:' }), S.types.map((x) => {
           const c = el('input', { type: 'checkbox', checked: (f.ref_types || []).includes(x.key), 'aria-label': x.label });
           c.addEventListener('change', () => { f.ref_types = (f.ref_types || []).filter((k) => k !== x.key).concat(c.checked ? [x.key] : []); preview(); });
-          return el('label', { class: 'row xs', style: 'gap:3px' }, c, x.label);
+          return el('label', { class: 'row xs gap-1' }, c, x.label);
         })));
       }
-      const def = f.kind === 'checkbox' || f.kind === 'reference' || f.kind === 'person' ? null : el('input', { value: f.default === undefined ? '' : String(f.default), placeholder: 'Default (optional)', 'aria-label': 'Default value', style: 'width:160px' });
+      const def = f.kind === 'checkbox' || f.kind === 'reference' || f.kind === 'person' ? null : el('input', { value: f.default === undefined ? '' : String(f.default), placeholder: 'Default (optional)', 'aria-label': 'Default value', class: 'input-sm' });
       if (def) def.addEventListener('input', () => { const val = def.value.trim(); if (!val) delete f.default; else f.default = f.kind === 'number' || f.kind === 'duration' ? Number(val) : val; });
-      fieldList.appendChild(el('div', { class: 'col', style: 'gap:6px;padding:10px;border:1px solid var(--border);border-radius:6px' + (f.archived ? ';opacity:.6' : ''), 'data-testid': 'field-row' },
-        el('div', { class: 'row' }, lab, kind, el('label', { class: 'row small', style: 'gap:4px' }, req, 'Required'),
+      fieldList.appendChild(el('div', { class: 'field-card' + (f.archived ? ' archived' : ''), 'data-testid': 'field-row' },
+        el('div', { class: 'row' }, lab, kind, el('label', { class: 'row small gap-1' }, req, 'Required'),
           f.key ? el('span', { class: 'faint xs mono', title: 'Internal key — never changes', text: f.key }) : null,
           el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'field-remove', text: f.key && !isNew ? (f.archived ? 'Restore' : 'Archive') : 'Remove',
             onclick: () => { if (f.key && !isNew) f.archived = !f.archived; else fields.splice(i, 1); drawFields(); preview(); } })),
         el('div', { class: 'row' }, help, def), extra));
     });
-    fieldList.appendChild(el('button', { class: 'btn ghost sm', type: 'button', style: 'align-self:flex-start', 'data-testid': 'add-field', onclick: () => { fields.push({ label: '', kind: 'short_text', required: false }); drawFields(); const ls = $$('[data-testid=field-label]', fieldList); ls[ls.length - 1].focus(); } }, icon('plus', 'sm'), 'Add field'));
+    fieldList.appendChild(el('button', { class: 'btn ghost sm self-start', type: 'button', 'data-testid': 'add-field', onclick: () => { fields.push({ label: '', kind: 'short_text', required: false }); drawFields(); const ls = $$('[data-testid=field-label]', fieldList); ls[ls.length - 1].focus(); } }, icon('plus', 'sm'), 'Add field'));
   }
   function preview() {
     clear(previewBox);
@@ -117,16 +117,16 @@ function typeEditor(t) {
   pluralIn.addEventListener('input', () => { pluralIn.dataset.touched = '1'; });
   drawIcons(); drawSw(); drawFields();
   const fr = (l, input, help) => el('label', { class: 'field' }, el('span', { class: 'label', text: l }), input, help ? el('span', { class: 'help', text: help }) : null);
-  const form = el('div', { style: 'display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr)' },
-    el('div', { style: 'border-right:1px solid var(--border)' },
+  const form = el('div', { class: 'type-editor' },
+    el('div', { class: 'editor-main' },
       el('div', { class: 'form-section' }, el('div', { class: 'grid-2' }, fr('Name', label), fr('Plural', pluralIn)), fr('Description', desc), fr('Icon', iconGrid), fr('Colour', swatches, 'Used for the icon and dot only.')),
       el('div', { class: 'form-section' }, el('h3', { text: 'Fields' }), el('p', { class: 'faint xs', text: 'Keys are permanent. Archiving a field hides it and keeps its data. Changing a kind is allowed only if every existing value converts.' }), fieldList),
       el('div', { class: 'form-section' }, el('h3', { text: 'Placement and defaults' }), fr('Can be placed under', parents), el('label', { class: 'row small' }, parentReq, 'Must be placed under one of them'),
         el('label', { class: 'row small' }, container, 'Other records can live inside it (like a course)'),
         el('label', { class: 'row small' }, ownerExpected, 'Records of this type should have an owner (counted under “No owner” on Data quality)'),
         el('div', { class: 'grid-2' }, fr('Default status', defStatus), fr('Owner', ownerRule))),
-      el('div', { style: 'padding:0 24px 16px' }, err)),
-    el('div', { class: 'form-section', style: 'border:0;background:var(--bg-subtle)' }, el('h3', { text: 'Preview of the form' }), previewBox));
+      el('div', { class: 'editor-error' }, err)),
+    el('div', { class: 'form-section editor-preview' }, el('h3', { text: 'Preview of the form' }), previewBox));
   preview();
   const save = el('button', { class: 'btn primary', type: 'button', 'data-testid': 'type-save', text: isNew ? (can('admin') ? 'Create type' : 'Propose type') : (can('admin') ? 'Save' : 'Propose change'), onclick: async () => {
     err.textContent = '';
@@ -158,7 +158,7 @@ function replacementsDialog(t, fields, body, failures) {
   const selects = [];
   const rows = Object.entries(byField).map(([label, vals]) => {
     const fdef = fields.find((x) => x.label === label);
-    return Array.from(vals).map((old) => { const s = el('select', { 'aria-label': 'Replace ' + old }, (fdef.options || []).map((o) => el('option', { value: o.value, text: o.label }))); selects.push([fdef.key, old, s]); return el('div', { class: 'row small' }, el('span', { style: 'flex:1', text: label + ': “' + old + '” → ' }), s); });
+    return Array.from(vals).map((old) => { const s = el('select', { 'aria-label': 'Replace ' + old }, (fdef.options || []).map((o) => el('option', { value: o.value, text: o.label }))); selects.push([fdef.key, old, s]); return el('div', { class: 'row small' }, el('span', { class: 'grow', text: label + ': “' + old + '” → ' }), s); });
   });
   openDialog([el('h2', { text: 'Choose replacements' }), el('p', { class: 'muted small', text: 'These options are in use. Records holding them get the replacement you choose.' }), rows,
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }),
@@ -176,7 +176,7 @@ async function archiveType(t) {
       const dst = S.typeByKey[to.value];
       (t.fields || []).filter((f) => !f.archived).forEach((f) => {
         const s = el('select', { 'aria-label': 'Map ' + f.label, 'data-key': f.key }, el('option', { value: '', text: 'Drop this value' }), (dst.fields || []).filter((g) => !g.archived).map((g) => el('option', { value: g.key, text: g.label, selected: g.key === f.key || g.label === f.label })));
-        mapBox.appendChild(el('div', { class: 'row small' }, el('span', { style: 'flex:1', text: f.label + ' →' }), s));
+        mapBox.appendChild(el('div', { class: 'row small' }, el('span', { class: 'grow', text: f.label + ' →' }), s));
       });
       if (!mapBox.children.length) mapBox.appendChild(el('p', { class: 'faint small', text: 'This type has no fields to map.' }));
     };
@@ -197,12 +197,12 @@ async function archiveType(t) {
 
 // ------------------------------------------------------------------ relationship types
 function relTab(body) {
-  add(body, el('div', { class: 'row', style: 'margin-bottom:12px' }, el('p', { class: 'muted small', style: 'flex:1', text: 'What can be connected to what. Removing an allowed pair never deletes existing relationships; they are listed on Data quality.' }),
+  add(body, el('div', { class: 'tab-intro' }, el('p', { text: 'What can be connected to what. Removing an allowed pair never deletes existing relationships; they are listed on Data quality.' }),
     can('contributor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-edge-type', onclick: () => edgeEditor(null) }, icon('plus'), can('editor') ? 'New relationship type' : 'Propose relationship type') : null));
   const ul = el('ul', { class: 'list bordered' });
   ul.setAttribute('data-testid', 'edge-types');
-  api('GET', '/types').then((t) => t.edge_types.forEach((x) => ul.appendChild(el('li', { 'data-testid': 'edge-type-row', 'data-key': x.key }, el('div', { class: 'link-row', style: 'padding:10px 12px;align-items:flex-start' },
-    el('div', { class: 'col', style: 'gap:2px;flex:1;min-width:0' }, el('div', { class: 'row' }, el('strong', { text: x.label }), x.inverse_label ? el('span', { class: 'faint xs', text: '/ ' + x.inverse_label }) : null,
+  api('GET', '/types').then((t) => t.edge_types.forEach((x) => ul.appendChild(el('li', { 'data-testid': 'edge-type-row', 'data-key': x.key }, el('div', { class: 'link-row roomy start' },
+    el('div', { class: 'col gap-xs grow' }, el('div', { class: 'row' }, el('strong', { text: x.label }), x.inverse_label ? el('span', { class: 'faint xs', text: '/ ' + x.inverse_label }) : null,
       x.is_core ? el('span', { class: 'badge', text: 'Built-in' }) : null, x.review_status === 'unreviewed' ? el('span', { class: 'badge warn', 'data-testid': 'edge-unreviewed', text: 'Awaiting review' }) : null,
       x.cardinality !== 'many_to_many' ? el('span', { class: 'badge', text: x.cardinality.replace(/_/g, ' ') }) : null),
       el('div', { class: 'faint xs', text: x.rules.map((r) => typeLabel(r.source) + ' → ' + typeLabel(r.target)).join(' · ') })),
@@ -265,7 +265,7 @@ function edgeEditor(x) {
     const tg = el('select', { 'aria-label': 'Target type' }, S.types.map((t) => el('option', { value: t.key, text: t.label, selected: r && r.target === t.key })));
     const row = el('div', { class: 'row', 'data-rule': '1' }, s, el('span', { class: 'faint', text: '→' }), tg, el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Remove pair', onclick: () => row.remove() }, icon('x', 'sm')));
     rules.insertBefore(row, addBtn); };
-  const addBtn = el('button', { class: 'btn ghost sm', type: 'button', style: 'align-self:flex-start', onclick: () => addRule(null) }, icon('plus', 'sm'), 'Add allowed pair');
+  const addBtn = el('button', { class: 'btn ghost sm self-start', type: 'button', onclick: () => addRule(null) }, icon('plus', 'sm'), 'Add allowed pair');
   rules.appendChild(addBtn);
   (x.rules.length ? x.rules : [null]).forEach(addRule);
   const err = el('div', { class: 'field-error', role: 'alert' });
@@ -284,11 +284,11 @@ function edgeEditor(x) {
 
 // ------------------------------------------------------------------ link kinds
 function linksTab(body) {
-  add(body, el('div', { class: 'row', style: 'margin-bottom:12px' }, el('p', { class: 'muted small', style: 'flex:1', text: 'Where links live. A pasted URL is matched against these patterns, in order, to pick the icon and default kind.' }),
+  add(body, el('div', { class: 'tab-intro' }, el('p', { text: 'Where links live. A pasted URL is matched against these patterns, in order, to pick the icon and default kind.' }),
     can('editor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': 'new-link-kind', onclick: () => linkEditor(null) }, icon('plus'), 'New link kind') : null));
   const ul = el('ul', { class: 'list bordered', 'data-testid': 'link-kinds' });
-  S.linkKinds.forEach((x) => ul.appendChild(el('li', null, el('div', { class: 'link-row', style: 'padding:10px 12px' }, icon(x.icon), el('strong', { text: x.label }), x.is_core ? el('span', { class: 'badge', text: 'Built-in' }) : null,
-    el('span', { class: 'faint xs mono truncate', style: 'flex:1', text: (x.patterns || []).join('  ·  ') || 'everything else' }),
+  S.linkKinds.forEach((x) => ul.appendChild(el('li', null, el('div', { class: 'link-row roomy' }, icon(x.icon), el('strong', { text: x.label }), x.is_core ? el('span', { class: 'badge', text: 'Built-in' }) : null,
+    el('span', { class: 'faint xs mono truncate grow', text: (x.patterns || []).join('  ·  ') || 'everything else' }),
     x.defaults && x.defaults.kind ? el('span', { class: 'badge', text: kindLabel(x.defaults.kind) }) : null,
     can('editor') ? el('button', { class: 'btn sm', type: 'button', onclick: () => linkEditor(x) }, 'Edit') : null))));
   body.appendChild(ul);
@@ -317,14 +317,14 @@ function linkEditor(x) {
 /* Rename, merge into another tag, archive (shows how many records carry it;
    Undo puts it back on them). */
 function tagsTab(body) {
-  body.appendChild(el('p', { class: 'muted small', style: 'margin-bottom:12px', text: 'Tags are added on records. Here an editor renames them, merges duplicates, or archives one: its records simply lose the tag.' }));
+  body.appendChild(el('div', { class: 'tab-intro' }, el('p', { text: 'Tags are added on records. Here an editor renames them, merges duplicates, or archives one: its records simply lose the tag.' })));
   const ul = el('ul', { class: 'list bordered', 'data-testid': 'tags' });
   body.appendChild(ul);
   const reload = () => { clear(body); tagsTab(body); };
   api('GET', '/tags').then((t) => {
     if (!t.items.length) ul.appendChild(el('li', { class: 'link-row faint', text: 'No tags yet.' }));
-    t.items.forEach((x) => ul.appendChild(el('li', { 'data-testid': 'tag-row', 'data-name': x.name }, el('div', { class: 'link-row', style: 'padding:8px 12px' },
-      icon('tag'), el('strong', { text: '#' + x.name }), el('span', { class: 'faint xs', style: 'flex:1', text: plural(x.used_by, 'record') }),
+    t.items.forEach((x) => ul.appendChild(el('li', { 'data-testid': 'tag-row', 'data-name': x.name }, el('div', { class: 'link-row roomy' },
+      icon('tag'), el('strong', { text: '#' + x.name }), el('span', { class: 'faint xs grow', text: plural(x.used_by, 'record') }),
       can('editor') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'tag-rename', text: 'Rename', onclick: () => {
         const name = el('input', { value: x.name, 'aria-label': 'Tag name', 'data-testid': 'tag-name' });
         const err = el('div', { class: 'field-error', role: 'alert' });
@@ -350,7 +350,7 @@ function tagsTab(body) {
 }
 
 function membersTab(body) {
-  body.appendChild(el('p', { class: 'muted small', style: 'margin-bottom:12px', text: 'Anyone with an IK profile is a viewer. Contributors edit and propose new records; editors create, archive and approve; admins also change types and roles.' }));
+  body.appendChild(el('div', { class: 'tab-intro' }, el('p', { text: 'Anyone with an IK profile is a viewer. Contributors edit and propose new records; editors create, archive and approve; admins also change types and roles.' })));
   const ul = el('ul', { class: 'list bordered', 'data-testid': 'members' });
   body.appendChild(ul);
   api('GET', '/members').then((m) => m.items.forEach((x) => {
@@ -360,39 +360,39 @@ function membersTab(body) {
       try { await api('POST', '/members/' + x.user_id + '/remove'); toast('Removed'); clear(body); membersTab(body); } catch (e) { failToast(e); } } }) : null;
     const sel = el('select', { 'aria-label': 'Role for ' + (x.email || x.user_id), 'data-testid': 'member-role' }, ['viewer', 'contributor', 'editor', 'admin'].map((r) => el('option', { value: r, text: r.charAt(0).toUpperCase() + r.slice(1), selected: r === x.role })));
     sel.addEventListener('change', async () => { try { await api('POST', '/members/' + x.user_id, { role: sel.value }); toast('Role updated'); } catch (e) { failToast(e); } });
-    ul.appendChild(el('li', null, el('div', { class: 'link-row', style: 'padding:8px 12px' }, avatar(x.user_id), el('span', { class: 'truncate', style: 'flex:1', text: x.email || x.user_id }), you(x.user_id) ? el('span', { class: 'badge', text: 'You' }) : null, sel, remove)));
+    ul.appendChild(el('li', null, el('div', { class: 'link-row roomy' }, avatar(x.user_id), el('span', { class: 'truncate grow', text: x.email || x.user_id }), you(x.user_id) ? el('span', { class: 'badge', text: 'You' }) : null, sel, remove)));
   })).catch((e) => body.appendChild(errorBox(e)));
 }
 function tokensTab(body) {
-  body.appendChild(el('p', { class: 'muted small', style: 'margin-bottom:12px', text: 'A token lets the AI assistant (Claude Code with the IK knowledge plugin) act as you, with your role. It is shown once. Anything it archives or deletes always needs a person’s approval.' }));
-  const name = el('input', { placeholder: 'Token name, e.g. “laptop Claude Code”', 'aria-label': 'Token name', 'data-testid': 'token-name', maxlength: '80', style: 'width:300px' });
+  body.appendChild(el('div', { class: 'tab-intro' }, el('p', { text: 'A token lets the AI assistant (Claude Code with the IK knowledge plugin) act as you, with your role. It is shown once. Anything it archives or deletes always needs a person’s approval.' })));
+  const name = el('input', { placeholder: 'Token name, e.g. “laptop Claude Code”', 'aria-label': 'Token name', 'data-testid': 'token-name', maxlength: '80', class: 'input-md' });
   const days = el('select', { 'aria-label': 'Expires after' }, [['30', '30 days'], ['90', '90 days'], ['365', '1 year']].map(([v, l]) => el('option', { value: v, text: l, selected: v === '90' })));
   const out = el('div');
-  const list = el('ul', { class: 'list bordered', 'data-testid': 'tokens', style: 'margin-top:12px' });
+  const list = el('ul', { class: 'list bordered mt-3', 'data-testid': 'tokens' });
   const load = async () => { try { const t = await api('GET', '/tokens'); clear(list);
     if (!t.items.length) list.appendChild(el('li', { class: 'link-row faint', text: 'No tokens.' }));
-    t.items.forEach((x) => list.appendChild(el('li', { 'data-testid': 'token-row' }, el('div', { class: 'link-row', style: 'padding:8px 12px' }, icon('key-round'), el('strong', { text: x.name }), el('span', { class: 'faint xs mono', text: x.prefix + '…' }),
-      el('span', { class: 'faint xs', style: 'flex:1', text: x.revoked_at ? 'revoked' : 'expires ' + (x.expires_at ? new Date(x.expires_at).toLocaleDateString() : 'never') + (x.last_used_at ? ' · used ' + ago(x.last_used_at) : ' · never used') }),
+    t.items.forEach((x) => list.appendChild(el('li', { 'data-testid': 'token-row' }, el('div', { class: 'link-row roomy' }, icon('key-round'), el('strong', { text: x.name }), el('span', { class: 'faint xs mono', text: x.prefix + '…' }),
+      el('span', { class: 'faint xs grow', text: x.revoked_at ? 'revoked' : 'expires ' + (x.expires_at ? new Date(x.expires_at).toLocaleDateString() : 'never') + (x.last_used_at ? ' · used ' + ago(x.last_used_at) : ' · never used') }),
       !x.revoked_at ? el('button', { class: 'btn sm danger', type: 'button', 'data-testid': 'token-revoke', text: 'Revoke', onclick: async () => {
         if (!(await confirmDialog({ title: 'Revoke “' + x.name + '”?', body: 'Anything using this token stops working immediately.', confirmLabel: 'Revoke', danger: true }))) return;
         try { await api('POST', '/tokens/' + x.id + '/revoke'); toast('Revoked'); load(); } catch (e) { failToast(e); } } }) : null)))); }
     catch (e) { list.appendChild(errorBox(e)); } };
-  body.append(el('div', { class: 'row' }, name, days, el('button', { class: 'btn primary', type: 'button', 'data-testid': 'token-create', text: 'Create token', onclick: async () => {
+  body.append(el('div', { class: 'inline-form' }, name, days, el('button', { class: 'btn primary', type: 'button', 'data-testid': 'token-create', text: 'Create token', onclick: async () => {
     if (!name.value.trim()) { name.focus(); return; }
     try { const t = await api('POST', '/tokens', { name: name.value.trim(), expires_in_days: Number(days.value) }); name.value = '';
-      const val = el('input', { readonly: true, value: t.token, 'data-testid': 'token-value', 'aria-label': 'New token', class: 'mono', style: 'flex:1', onfocus: (e) => e.target.select() });
-      clear(out).appendChild(el('div', { class: 'note-box accent col', style: 'margin-top:12px' }, el('strong', { text: 'Copy this token now — it will not be shown again.' }),
+      const val = el('input', { readonly: true, value: t.token, 'data-testid': 'token-value', 'aria-label': 'New token', class: 'mono grow', onfocus: (e) => e.target.select() });
+      clear(out).appendChild(el('div', { class: 'note-box accent col mt-3' }, el('strong', { text: 'Copy this token now — it will not be shown again.' }),
         el('div', { class: 'row' }, val, el('button', { class: 'btn sm', type: 'button', text: 'Copy', onclick: () => { val.select(); if (navigator.clipboard) navigator.clipboard.writeText(t.token); toast('Copied'); } }))));
       load(); } catch (e) { failToast(e); } } })), out, list);
   load();
 }
 function templatesTab(body) {
-  body.appendChild(el('p', { class: 'muted small', style: 'margin-bottom:12px', text: 'Save a course or program as a template from its “…” menu. New record → Course → “Start from” creates a copy of its structure.' }));
+  body.appendChild(el('div', { class: 'tab-intro' }, el('p', { text: 'Save a course or program as a template from its “…” menu. New record → Course → “Start from” creates a copy of its structure.' })));
   const ul = el('ul', { class: 'list bordered', 'data-testid': 'templates' });
   body.appendChild(ul);
   api('GET', '/templates').then((t) => {
     if (!t.items.length) ul.appendChild(el('li', { class: 'link-row faint', text: 'No templates yet.' }));
-    t.items.forEach((x) => ul.appendChild(el('li', null, el('div', { class: 'link-row', style: 'padding:8px 12px' }, typeIcon(x.root_type), el('strong', { text: x.name }), el('span', { class: 'faint xs', style: 'flex:1', text: plural(x.top_level || 0, 'top-level item') + ' · ' + ago(x.created_at) }),
+    t.items.forEach((x) => ul.appendChild(el('li', null, el('div', { class: 'link-row roomy' }, typeIcon(x.root_type), el('strong', { text: x.name }), el('span', { class: 'faint xs grow', text: plural(x.top_level || 0, 'top-level item') + ' · ' + ago(x.created_at) }),
       can('editor') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'template-rename', text: 'Rename', onclick: () => {
         const name = el('input', { value: x.name, 'aria-label': 'Template name' });
         openDialog([el('h2', { text: 'Rename template' }), name, el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }),
@@ -418,12 +418,12 @@ function syncTab(body) {
       load();
     } }, icon('refresh-cw'), 'Sync now');
     add(host, [
-      el('div', { class: 'row', style: 'margin-bottom:12px;gap:12px' },
-        el('p', { class: 'muted small', style: 'flex:1', text: 'Copies changes from the original site into the knowledge base: hourly by default, or now. Only changed rows are written; a record edited here is never overwritten (it is flagged on Data quality); a row removed at the source is flagged, never deleted.' }),
+      el('div', { class: 'tab-intro' },
+        el('p', { text: 'Copies changes from the original site into the knowledge base: hourly by default, or now. Only changed rows are written; a record edited here is never overwritten (it is flagged on Data quality); a row removed at the source is flagged, never deleted.' }),
         btn),
       d.enabled ? null : el('div', { class: 'note-box warn', 'data-testid': 'sync-disabled', text: 'The sync is switched off (KB_SYNC_ENABLED=false).' }),
       d.failing ? el('div', { class: 'note-box warn', 'data-testid': 'sync-failing', text: 'The last sync failed: ' + ((d.last.errors || [])[0] || d.last.message || 'see the log below') }) : null,
-      el('h3', { class: 'small', style: 'margin:16px 0 6px', text: 'Run log' }),
+      el('h3', { class: 'subhead', text: 'Run log' }),
       d.runs.length ? el('table', { class: 'table', 'data-testid': 'sync-runs' },
         el('thead', {}, el('tr', {}, ['Started', 'Trigger', 'Status', 'Changes', 'Conflicts', 'Took'].map((h) => el('th', { text: h })))),
         el('tbody', {}, d.runs.map((r) => el('tr', { 'data-testid': 'sync-run' },

@@ -44,13 +44,13 @@ export function viewOutline(v, r) {
     const score = n.completeness;
     const adds = childTypes(n.type);
     const row = el('div', { class: 'tree-row', 'data-testid': 'outline-row', draggable: parent && can('contributor') ? 'true' : null },
-      parent && can('contributor') ? el('span', { class: 'grip', title: 'Drag to reorder' }, icon('grip-vertical', 'sm')) : el('span', { style: 'width:16px' }),
+      parent && can('contributor') ? el('span', { class: 'grip', title: 'Drag to reorder' }, icon('grip-vertical', 'sm')) : el('span', { class: 'ico-slot' }),
       twisty, typeIcon(n.type), el('a', { class: 'name truncate', href: '#/outline?open=' + n.id + (root ? '&root=' + root : ''), text: n.name, onclick: (e) => { e.preventDefault(); setQuery({ open: n.id }); } }),
       n.status === 'draft' ? el('span', { class: 'badge warn', text: 'Draft' }) : null,
       el('span', { class: 'spacer' }),
       el('span', { class: 'row-actions' }, adds.length && can('contributor') ? el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'outline-add',
         onclick: (e) => quickAdd(e.currentTarget, n, adds) }, icon('plus', 'sm'), 'Add') : null),
-      n.links ? el('span', { class: 'faint xs row', style: 'gap:2px', title: n.links + ' link(s)' }, icon('link', 'sm'), n.links) : null,
+      n.links ? el('span', { class: 'faint xs row gap-xs', title: n.links + ' link(s)' }, icon('link', 'sm'), n.links) : null,
       score !== null && score !== undefined ? el('span', { class: 'xs tabular ' + (score >= 80 ? 'faint' : ''), style: score < 50 ? 'color:var(--danger)' : score < 80 ? 'color:var(--warn)' : '', title: 'Completeness', text: score + '%' }) : null);
     if (parent) dnd(row, n, parent);
     li.appendChild(row);

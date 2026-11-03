@@ -24,6 +24,7 @@ function lightbox(src, alt) {
     el('button', { class: 'btn ghost icon', type: 'button', 'aria-label': 'Close', onclick: closeDialog }, icon('x'))),
   el('img', { src, alt: alt || '', class: 'lightbox-img', 'data-testid': 'guide-lightbox' })], { label: alt || 'Screenshot', wide: true, cls: 'lightbox' });
 }
+const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 export function render(md) {
@@ -47,7 +48,7 @@ export function render(md) {
       const src = img[2].startsWith('/kb/guide/') ? img[2] : '';
       // Click (or Enter) to see the screenshot full size (A6).
       doc.appendChild(el('figure', null, el('button', { class: 'figure-zoom', type: 'button', 'aria-label': 'Enlarge: ' + (img[1] || 'screenshot'), 'data-testid': 'guide-figure', onclick: () => lightbox(src, img[1]) },
-        el('img', { src, alt: img[1], loading: 'lazy', decoding: 'async' })), img[1] ? el('figcaption', { text: img[1] }) : null));
+        el('img', { src, alt: img[1], loading: 'lazy', decoding: 'async', onload: (e) => { const i = e.target; if (!i.getAttribute('width')) i.setAttribute('width', String(Math.round(i.naturalWidth / 2))); } })), img[1] ? el('figcaption', { text: img[1] }) : null));
       return;
     }
     if ((m = /^\s*(-|\d+\.)\s+(.*)$/.exec(line))) {
@@ -69,8 +70,8 @@ export function viewGuide(v, r) {
   fetch('/kb/guide.md', { cache: 'no-store' }).then((res) => { if (!res.ok) throw new Error('The guide could not be loaded (' + res.status + ').'); return res.text(); }).then((md) => {
     const { doc, toc } = render(md);
     clear(box);
-    box.append(doc, el('nav', { class: 'guide-toc', 'aria-label': 'Guide contents' }, el('div', { class: 'faint xs', text: 'On this page', style: 'margin-bottom:6px' }),
-      toc.map(([id, t]) => el('a', { href: '#/guide?s=' + id, onclick: (e) => { e.preventDefault(); const h = document.getElementById('g-' + id); if (h) h.scrollIntoView({ behavior: 'smooth' }); }, text: t }))));
+    box.append(doc, el('nav', { class: 'guide-toc', 'aria-label': 'Guide contents' }, el('div', { class: 'faint xs mb-2', text: 'On this page' }),
+      toc.map(([id, t]) => el('a', { href: '#/guide?s=' + id, onclick: (e) => { e.preventDefault(); const h = document.getElementById('g-' + id); if (h) h.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth' }); }, text: t }))));
     const want = r.q.s;
     if (want) { const h = document.getElementById('g-' + want) || Array.from(doc.querySelectorAll('h2')).find((x) => x.id.includes(want)); if (h) setTimeout(() => h.scrollIntoView(), 50); }
   }).catch((e) => { clear(box).appendChild(errorBox(e)); });

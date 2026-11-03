@@ -14,7 +14,7 @@ export function viewApprovals(v, r) {
   v.appendChild(el('div', { class: 'tabs', role: 'tablist' },
     el('a', { href: '#/approvals', role: 'tab', 'aria-selected': tab === 'proposals' ? 'true' : 'false', 'data-testid': 'tab-proposals' }, 'Proposals'),
     el('a', { href: '#/approvals?tab=reviews', role: 'tab', 'aria-selected': tab === 'reviews' ? 'true' : 'false', 'data-testid': 'tab-reviews' }, icon('flag', 'sm'), 'Reviews')));
-  const box = el('div', { 'data-testid': tab === 'reviews' ? 'reviews' : 'proposals' }, skeletonRows(5));
+  const box = el('div', { class: 'contained', 'data-testid': tab === 'reviews' ? 'reviews' : 'proposals' }, skeletonRows(5));
   v.appendChild(box);
   const load = tab === 'reviews' ? () => loadReviews(box) : () => loadProposals(box);
   S.listReload = load; load();
@@ -26,7 +26,7 @@ async function loadProposals(box) {
     const items = (await api('GET', '/proposals')).items;
     clear(box);
     if (!items.length) { box.appendChild(empty('Nothing waiting', 'When a contributor or the AI assistant proposes a change, it appears here for an editor to approve.', null, 'circle-check', 'roles')); return; }
-    const ul = el('ul', { class: 'list' });
+    const ul = el('ul', { class: 'list queue' });
     items.forEach((x) => {
       const p = x.payload || {};
       const review = x.action === 'type_change' && p.op === 'edge_review';
@@ -44,15 +44,15 @@ async function loadProposals(box) {
           loadProposals(box); refreshCounts(); }
         catch (e) { failToast(e, 'Not decided'); }
       };
-      ul.appendChild(el('li', { 'data-testid': 'proposal', style: 'border-bottom:1px solid var(--border)' }, el('div', { class: 'link-row', style: 'padding:12px 24px;align-items:flex-start' },
-        x.created_by ? avatar(x.created_by) : el('span', { class: 'avatar', style: '--av:#475569' }, icon('star', 'sm')),
-        el('div', { class: 'col', style: 'gap:2px;flex:1;min-width:0' },
+      ul.appendChild(el('li', { 'data-testid': 'proposal' }, el('div', { class: 'link-row' },
+        x.created_by ? avatar(x.created_by) : el('span', { class: 'avatar system' }, icon('star', 'sm')),
+        el('div', { class: 'col gap-xs grow' },
           el('div', { class: 'row' }, el('span', { class: 'badge ' + (x.action === 'create' ? 'accent' : 'warn'), text: review ? 'Review relationship type' : p.op === 'edge_create' ? 'New relationship type' : ACTION[x.action] || x.action }),
             el('strong', { class: 'truncate', text: x.target_label || (p.args && p.args.label) || '(record)' })),
           el('div', { class: 'faint xs' }, (x.actor_type === 'ai' ? 'The AI assistant' : you(x.created_by) ? 'You' : personName(x.created_by) || 'Someone') + ' · ' + detail + ' · ' + ago(x.created_at)),
           x.reason && x.action !== 'create' ? el('div', { class: 'small', text: '“' + x.reason + '”' }) : null),
         x.target_id && x.target_table === 'nodes' ? el('a', { class: 'btn ghost sm', href: '#/approvals?open=' + x.target_id }, 'View') : null,
-        x.action === 'create' ? el('button', { class: 'btn ghost sm', type: 'button', onclick: () => openDialog([el('h2', { text: 'Proposed record' }), el('pre', { class: 'mono', style: 'white-space:pre-wrap;max-height:50vh;overflow:auto', text: JSON.stringify(p, null, 2) }),
+        x.action === 'create' ? el('button', { class: 'btn ghost sm', type: 'button', onclick: () => openDialog([el('h2', { text: 'Proposed record' }), el('pre', { class: 'mono proposal-json', text: JSON.stringify(p, null, 2) }),
           el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Close', onclick: closeDialog }))], { label: 'Proposed record', wide: true }) }, 'Details') : null,
         review && can('admin') ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'review-merge', onclick: async () => {
           const t = await api('GET', '/types'); const et = t.edge_types.find((e) => e.key === p.args.key);
@@ -80,7 +80,7 @@ async function loadReviews(box) {
     const items = (await api('GET', '/flags?status=open')).items;
     clear(box);
     if (!items.length) { box.appendChild(empty('No open reviews', 'When someone flags a record or link as incorrect, the owner sees it here.', null, 'flag', 'keeping-things-accurate')); return; }
-    const ul = el('ul', { class: 'list' });
+    const ul = el('ul', { class: 'list queue' });
     items.forEach((f) => {
       const close = (outcome) => () => {
         const ta = el('textarea', { rows: '2', placeholder: outcome === 'resolve' ? 'What did you change?' : 'Why is it fine as it is?', 'aria-label': 'Resolution', 'data-testid': 'flag-resolution' });
@@ -90,9 +90,9 @@ async function loadReviews(box) {
             catch (e) { failToast(e, 'Not closed'); } } }))], { label: 'Close flag' });
       };
       const href = f.target_table === 'nodes' ? '#/approvals?tab=reviews&open=' + f.target_id : '#/approvals?tab=reviews&res=' + f.target_id;
-      ul.appendChild(el('li', { 'data-testid': 'review', style: 'border-bottom:1px solid var(--border)' }, el('div', { class: 'link-row', style: 'padding:12px 24px;align-items:flex-start' },
+      ul.appendChild(el('li', { 'data-testid': 'review' }, el('div', { class: 'link-row' },
         avatar(f.created_by),
-        el('div', { class: 'col', style: 'gap:2px;flex:1;min-width:0' },
+        el('div', { class: 'col gap-xs grow' },
           el('div', { class: 'row' }, f.target_type === 'resource' ? icon('link') : typeIcon(f.target_type), el('a', { href, class: 'strong truncate', text: f.target_name || '(deleted)' }),
             f.assigned_to && you(f.assigned_to) ? el('span', { class: 'badge accent', text: 'Assigned to you' }) : f.assigned_to ? el('span', { class: 'faint xs', text: 'Owner: ' + personName(f.assigned_to) }) : el('span', { class: 'badge warn', text: 'No owner' })),
           el('div', { class: 'small', text: '“' + f.reason + '”' }),

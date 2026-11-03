@@ -301,3 +301,79 @@ Nothing.
 ## Run 6 resume (owner: "Yes, resume"), T0 = 2026-11-04 02:15, stop new work at 05:15
 - [T+0:00] Free memory 2.49 GB (the owner's Chrome holds 1.8 GB; nothing of ours running). VERCEL_TOKEN now in .env -> D2 back in scope.
 - D51. Stay on Windows, not WSL: Docker Desktop already runs the WSL VM; a second toolchain (venv, Chromium, deps) costs setup time and memory for no measured gain. Reverse: none.
+## Run 6 — B3 report (UI/UX across every page)
+
+Branch run6/b3-ui, worktree ../np-run6-b3. Servers: kb_b3 real-data copy on :8773, then the demo
+(eval/kb_demo_server.py, read-only screenshots) on :8773; both stopped. Detail: docs/run6/UI_REVIEW.md.
+
+### What changed
+- **kb.css (below `:root` only)**: a "run 6 (B3)" section — utilities on the 8px grid, named components
+  (`.tab-intro`, `.record-page`, `.field-card`, `.type-editor`, `.queue`, `.contained`, `.deck-list`,
+  `.view-toolbar`, `.swatch`, …), one focus ring for every interactive element, reduced motion for every
+  animation/transition, the Activity filter grid, the teaching matrix header fix. Existing rules fixed:
+  `.empty > .i` (the help icon in every empty state was 20px), selected tab no longer bold (neighbours
+  shifted), danger button / error toast text `--on-accent` (white on #f87171 was 2.8:1 in dark), one
+  radius and weights 400/600 only (matrix, timeline, `kbd`).
+- **JS (views/* except graph.js and people.js, detail.js, form.js, core.js internals, page.js unchanged)**:
+  165 of 180 inline `style:` values became classes; the 15 left are data-driven (type colour, avatar hue,
+  swatch, bar %, resizable column width). `pageHead` now used by All records, Programs, Courses and Links.
+  Record as a page = one centred column. Teaching matrix headers readable (were clipped to 3–4 letters).
+  Timeline decks one line each (overlapped on real data). Guide screenshots at real size. Data quality says
+  when it is slow. Archived/Approvals lists keep to the page width.
+- **Copy**: Resources page titled "Links", record tab and form section "Links", "Program timeline",
+  Activity filter "What changed", plurals instead of "(s)". guide.md: Links, Who teaches what, Program
+  timeline, a new "Legacy records and the sync" section; B1's contributor/link permission text untouched.
+- **public/kb/index.html**: the sign-in gate has an `h1` and a labelled region.
+- **New**: eval/kb_ui_sweep.py (every screen × widths × themes, plus `--layers` for panels, sheets,
+  dialogs, menus; counts and selectors only), tests/test_kb_ui_run6.py, docs/run6/after/ (demo; 1536 light
+  all 28 screens; 1280/1920/2560 and dark for the 11 main screens; quantised PNGs, 4.2 MB),
+  docs/run6/UI_REVIEW.md.
+
+### Tests (NP_TEST_DSN = kbtest_b3, browser lock held for every run)
+- tests/test_kb_ui_run6.py: 34 passed (20 without a browser: contrast both themes, avatar hues, one
+  radius/two weights, no one-off inline styles per file; 14 in Chrome: no horizontal scroll at 1024 on all
+  22 screens + record page + panel in light and dark, accessible names and tooltips on every screen,
+  names on 10 layers, focus ring on 40 Tab stops × 6 screens, keyboard path (palette search → record →
+  menu → Esc → Settings tabs → Activity search), reduced motion, centred record page, tabs do not shift).
+  One earlier run had 1 failure: the first page load of the module waited >5 s for `whoami` (server warm-
+  up); the wait is now 20 s and the two later full runs passed (34/34 each, the last after the guide.md edit).
+- tests/test_kb_e2e.py in three chunks: 71 of 71 passed (test_quality_dashboard_and_csv_export failed once
+  on the same first-load 5 s `whoami` wait in its chunk and passed on the re-run; not touched by B3).
+- After the guide.md and final CSS edits: e2e guide/tablet/no-horizontal-scroll subset 14 passed.
+- tests/test_deploy_guard.py: 8 passed.
+- Sweeps on the real-data copy (1024/1536/2560, light and dark, plus layers at 1024/1536): 0 horizontal
+  scroll, 0 unnamed controls, 0 cut text without a tooltip, 0 console errors. eval/kb_screens.py after sets:
+  0 console errors, 0 warnings, 28 screens × 5 sets.
+
+### Measurements
+- Contrast (computed from kb.css): lowest text pair 4.64:1 (faint text on a hovered row, light); every
+  pair the components use ≥ 4.5:1 in both themes; avatar hues ≥ 4.99:1 with white.
+- Real data: Data quality takes more than 45 s to load on kb_b3 (/api/kb/quality + /dashboard over
+  3,087 records); everything else loads within the sweep's wait. For B5/B1 (not a UI fix).
+
+### Decisions (and how to reverse)
+- Selected tabs keep the regular weight (colour + underline only) so neighbours do not move. Reverse:
+  put `font-weight: var(--w-strong)` back on `.tabs [aria-selected="true"]`.
+- "Resources" page titled "Links" (the Guide's and the record tab's term). Reverse: title in
+  views/resources.js.
+- After screenshots are quantised to 256 colours to keep the repo small. Reverse: re-run eval/kb_screens.py.
+- Demo after-screenshots were taken from a demo server started in this worktree against the shared demo
+  database, read-only (no saves; the New record sheet is closed with Esc).
+
+### Requests to the lead (files B3 does not own)
+1. app.js NAV: `['resources', 'Resources', …]` → `'Links'`; `['timeline', 'Programme timeline', …]` →
+   `'Program timeline'` (pages now say Links / Program timeline).
+2. app.js palette "Go to": add `['Who teaches what', 'teaching']`, `['Program timeline', 'timeline']`, and
+   rename `Resources` → `Links`.
+3. app.js palette ordering: typing an exact page name ("Settings") and Enter runs "New program
+   “Settings”" because Create commands rank above Go to. Put Go-to matches before Create commands.
+4. app.js `renderSidebar`: the New record button's inline `style: 'width:100%;margin-bottom:4px'` and the
+   user label's `style: 'gap:0;min-width:0'` → classes `w-full mb-1` and `gap-0` (they exist in kb.css).
+5. DESIGN_SYSTEM.md: document the run-6 utility classes and components (lead-owned doc).
+- No contract change requests.
+
+### Blocked / not done
+- Settings → People tab: B1's people.js is not on this branch; reviewed when B1 merges.
+- Graph page chrome: unchanged here (graph.js is B2's); the sweep found no problems on it.
+- Note: once during this run my browser.lock directory disappeared while I held it (another agent removed
+  it); I re-took it before every later run. I also ran one 2-second headless probe (a date input's focus style) without the lock; every other browser run held it.

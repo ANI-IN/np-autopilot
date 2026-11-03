@@ -33,7 +33,7 @@ export function activityEntry(a, opts) {
   const kind = ENTITY[a.table_name] || a.table_name.replace(/_/g, ' ');
   const target = opts.inRecord && (a.table_name === 'nodes' || a.table_name === 'resources') ? 'this' :
     a.label ? (a.exists_now === false || a.action === 'delete'
-      ? el('span', null, el('strong', { text: a.label }), el('span', { class: 'badge', style: 'margin-left:6px', text: 'deleted', 'data-testid': 'entry-deleted' }))
+      ? el('span', null, el('strong', { text: a.label }), el('span', { class: 'badge ml-2', text: 'deleted', 'data-testid': 'entry-deleted' }))
       : a.table_name === 'nodes' ? el('a', { href: '#/' + (S.route ? S.route.path.join('/') : '') + qs(Object.assign({}, S.route ? S.route.q : {}, { open: a.row_id })), text: a.label })
         : a.table_name === 'resources' ? el('a', { href: '#/resources?res=' + a.row_id, text: a.label }) : el('strong', { text: a.label })) : null;
   const diffs = el('div', { class: 'diff-list' });
@@ -42,13 +42,13 @@ export function activityEntry(a, opts) {
     el('span', { class: 'diff-del', text: fmt(c.before).slice(0, 160) }), icon('arrow-right', 'sm'), el('span', { class: 'diff-add', text: fmt(c.after).slice(0, 160) }))));
   const when = new Date(a.at);
   return el('li', { class: 'entry', 'data-testid': 'activity-entry' },
-    a.actor_type === 'human' && a.actor_id ? avatar(a.actor_id) : el('span', { class: 'avatar', style: '--av:#475569', title: a.actor_label }, icon(a.actor_type === 'ai' ? 'sparkles' : a.actor_type === 'import' ? 'upload' : a.actor_type === 'sync' ? 'refresh-cw' : 'settings', 'sm')),
+    a.actor_type === 'human' && a.actor_id ? avatar(a.actor_id) : el('span', { class: 'avatar system', title: a.actor_label }, icon(a.actor_type === 'ai' ? 'sparkles' : a.actor_type === 'import' ? 'upload' : a.actor_type === 'sync' ? 'refresh-cw' : 'settings', 'sm')),
     el('div', { class: 'entry-body' },
       el('div', { class: 'entry-line' }, el('strong', { 'data-testid': 'activity-actor', text: who }), ' ' + verb(a) + ' ',
         opts.inRecord && (a.table_name === 'nodes' || a.table_name === 'resources') ? 'this'
           : a.table_name === 'node_resources' || a.table_name === 'node_tags' ? [target || 'a ' + kind]
             : ['the ' + kind + ' ', target],
-        a.source && a.source !== 'app' ? el('span', { class: 'badge', style: 'margin-left:6px', text: SOURCE_LABEL[a.source] }) : null),
+        a.source && a.source !== 'app' ? el('span', { class: 'badge ml-2', text: SOURCE_LABEL[a.source] }) : null),
       diffs.children.length ? diffs : null),
     el('time', { class: 'faint xs entry-time', datetime: a.at, title: when.toLocaleString(), text: ago(a.at) }));
 }
@@ -73,17 +73,17 @@ export function viewActivity(v, r) {
   search.addEventListener('input', debounce(() => set('q', search.value.trim()), 300));
   const date = (k, label) => el('label', { class: 'filter' }, el('span', { class: 'faint xs', text: label }),
     el('input', { type: 'date', 'aria-label': label, 'data-testid': 'activity-' + k, value: q[k] ? q[k].slice(0, 10) : '', onchange: (e) => set(k, e.target.value ? (k === 'to' ? e.target.value + 'T23:59:59' : e.target.value) : null) }));
-  const bar = el('div', { class: 'toolbar filters' }, el('label', { class: 'filter', style: 'flex:1;min-width:180px' }, el('span', { class: 'faint xs', text: 'Search' }), search),
-    el('label', { class: 'filter', style: 'min-width:200px' }, el('span', { class: 'faint xs', text: 'Person' }), actor),
+  const bar = el('div', { class: 'toolbar filters' }, el('label', { class: 'filter wide' }, el('span', { class: 'faint xs', text: 'Search' }), search),
+    el('div', { class: 'filter' }, el('span', { class: 'faint xs', text: 'Person' }), actor),
     sel('action', 'Action', [['insert', 'Created'], ['update', 'Updated (incl. archive, restore)'], ['delete', 'Deleted permanently']]),
-    sel('table', 'Entity', Object.entries(ENTITY).filter(([k]) => !['api_tokens', 'node_tags'].includes(k)).map(([k, l]) => [k, l[0].toUpperCase() + l.slice(1)])),
+    sel('table', 'What changed', Object.entries(ENTITY).filter(([k]) => !['api_tokens', 'node_tags'].includes(k)).map(([k, l]) => [k, l[0].toUpperCase() + l.slice(1)])),
     sel('source', 'Source', Object.entries(SOURCE_LABEL)), date('from', 'From'), date('to', 'To'),
     Object.keys(q).some((k) => ['actor', 'action', 'table', 'source', 'from', 'to', 'q', 'record'].includes(k))
       ? el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'activity-clear', onclick: () => { location.hash = '#/activity'; } }, icon('x', 'sm'), 'Clear filters') : null);
   const body = el('div', { class: 'page-body' }, bar,
     q.record ? el('div', { class: 'notice', 'data-testid': 'activity-record-filter' }, icon('filter', 'sm'), 'Showing one record’s activity. ', el('a', { href: '#/activity', text: 'Show everything' })) : null);
   const list = el('ul', { class: 'entries', 'data-testid': 'activity-list' });
-  const more = el('div', { class: 'row', style: 'justify-content:center;padding:16px' });
+  const more = el('div', { class: 'row load-more' });
   const box = el('div', { class: 'card' }, skeletonRows(8));
   body.appendChild(box); v.appendChild(body);
   const params = () => { const p = {}; ['actor', 'action', 'table', 'source', 'from', 'to', 'q', 'record'].forEach((k) => { if (q[k]) p[k] = q[k]; }); return p; };

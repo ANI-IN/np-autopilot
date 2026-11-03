@@ -4,6 +4,7 @@
 import { S, el, add, $, $$, clear, icon, typeIcon, typeLabel, api, toast, failToast, avatar, personName, ago, qs, menu, popover, can, setQuery,
   skeletonRows, empty, errorBox, debounce, openDialog, closeDialog, combobox, nodeSource, confirmDialog, plural, you } from '../core.js';
 import { openRecordForm, fieldDisplay } from '../form.js';
+import { pageHead } from '../page.js';
 
 const FIXED = { programs: 'program', courses: 'course' };
 const COLS = [['scope', 'Course / program'], ['owner', 'Owner'], ['links', 'Links'], ['updated', 'Updated']];
@@ -19,10 +20,12 @@ export function viewRecords(v, r) {
   let f = filtersFrom(r.q, fixed);
   let items = [], cursor = null, total = null, selected = new Set(), cur = -1, views = [];
 
-  const count = el('span', { class: 'sub', 'data-testid': 'result-count' });
-  v.appendChild(el('div', { class: 'page-head' }, el('h1', { text: title }), count, el('span', { class: 'spacer' }),
-    can('contributor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': fixed ? 'new-' + fixed : 'new-record-page',
-      onclick: () => openRecordForm(fixed ? { type: fixed } : {}) }, icon('plus'), fixed ? 'New ' + typeLabel(fixed).toLowerCase() : 'New record') : null));
+  // The one page header (pageHead); the count is live, so it is added after.
+  const count = el('span', { class: 'count title-count', 'data-testid': 'result-count', 'aria-live': 'polite' });
+  const head = pageHead({ title, actions: can('contributor') ? el('button', { class: 'btn primary', type: 'button', 'data-testid': fixed ? 'new-' + fixed : 'new-record-page',
+    onclick: () => openRecordForm(fixed ? { type: fixed } : {}) }, icon('plus'), fixed ? 'New ' + typeLabel(fixed).toLowerCase() : 'New record') : null });
+  head.querySelector('.page-title').appendChild(count);
+  v.appendChild(head);
 
   // saved views (D6)
   const tabs = el('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Saved views', 'data-testid': 'saved-views' });
@@ -77,8 +80,8 @@ export function viewRecords(v, r) {
     el('button', { class: 'btn ghost', type: 'button', 'data-testid': 'view-options', onclick: (e) => optionsMenu(e.currentTarget) }, icon('sliders-horizontal', 'sm'), 'View'),
     el('button', { class: 'btn ghost', type: 'button', 'data-testid': 'export-csv', onclick: exportCsv }, icon('download', 'sm'), 'Export'));
   const chips = el('div', { class: 'chips', 'data-testid': 'filter-chips' });
-  v.append(el('div', { style: 'height:12px' }), toolbar, chips);
-  const tableHost = el('div', { class: 'table-wrap' + (p.compact ? ' compact' : ''), style: 'position:relative' });
+  v.append(el('div', { class: 'toolbar-gap' }), toolbar, chips);
+  const tableHost = el('div', { class: 'table-wrap relative' + (p.compact ? ' compact' : '') });
   const foot = el('div', { class: 'table-foot' });
   v.append(tableHost, foot);
   const bulk = el('div', { class: 'bulk-bar', hidden: true, 'data-testid': 'bulk-bar' });
@@ -135,7 +138,7 @@ export function viewRecords(v, r) {
           el('span', { class: 'grip', title: 'Drag to reorder', 'aria-hidden': 'true' }, icon('grip-vertical', 'sm')),
           el('label', null, el('input', { type: 'checkbox', checked: c.on, 'data-testid': c.field ? 'col-field-' + c.field.key : 'col-' + c.id,
             onchange: (e) => { setColumn(c, e.target.checked); draw(); } }), el('span', { class: 'truncate', text: c.label })),
-          el('span', { class: 'row', style: 'gap:0' },
+          el('span', { class: 'row gap-0' },
             el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Move ' + c.label + ' up', onclick: () => { moveBy(c.id, -1); drawList(); draw(); } }, icon('chevron-up', 'sm')),
             el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Move ' + c.label + ' down', onclick: () => { moveBy(c.id, 1); drawList(); draw(); } }, icon('chevron-down', 'sm'))));
         list.appendChild(li);
@@ -225,10 +228,10 @@ export function viewRecords(v, r) {
     const shown = columnOrder().filter((c) => c.on);
     const nameTh = el('th', { class: 'resizable', text: 'Name', style: p.widths && p.widths.name ? 'width:' + p.widths.name + 'px' : null });
     nameTh.appendChild(resizer('name', nameTh));
-    const head = el('tr', null, el('th', { style: 'width:44px' }, allBox), nameTh,
+    const head = el('tr', null, el('th', { class: 'th-check' }, allBox), nameTh,
       shown.map((c) => { const th = el('th', { class: 'resizable' + (c.id === 'links' ? ' num' : '') + (['scope', 'links'].includes(c.id) || c.field ? ' col-optional' : ''),
         style: 'width:' + colWidth(c.id) + 'px', text: c.label, 'data-testid': c.field ? 'th-field-' + c.field.key : 'th-' + c.id }); th.appendChild(resizer(c.id, th)); return th; }),
-      el('th', { style: 'width:72px', 'aria-label': 'Actions' }));
+      el('th', { class: 'th-actions', 'aria-label': 'Actions' }));
     const tb = el('tbody');
     items.forEach((n, i) => {
       const box = el('input', { type: 'checkbox', 'aria-label': 'Select ' + n.name, checked: selected.has(n.id), 'data-testid': 'row-check',
