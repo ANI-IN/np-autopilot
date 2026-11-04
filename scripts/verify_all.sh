@@ -6,6 +6,8 @@
 #   bash scripts/verify_all.sh --reset-db      # also: wipe the LOCAL Supabase DB, apply every migration from 0001
 #   bash scripts/verify_all.sh --perf          # also: seed 5k/15k synthetic and measure p50/p95
 #   bash scripts/verify_all.sh --load          # also: 25 simulated people for 2 minutes (conflicts, races, audit check)
+#   bash scripts/verify_all.sh --skip-browser  # the suite without the 6 Playwright files: on a 16 GB laptop run
+#                                              # those one file at a time (docs/operations/testing.md §3)
 #
 # Run from inside the repository (any subdirectory). Needs: git, Docker + the local
 # Supabase stack (db/local/setup.sh), the .venv (Python 3.12), uv/uvx, Node, and the
@@ -63,10 +65,11 @@ for p in api/index.py web/lib/kb/service.py public/kb/js/app.js public/kb/guide.
   need_path "$p"
 done
 
-FRESH=0; RESET=0; PERF=0; LOAD=0
+FRESH=0; RESET=0; PERF=0; LOAD=0; NOBROWSER=0
 for a in "$@"; do
   case "$a" in
     --fresh-clone) FRESH=1;; --reset-db) RESET=1;; --perf) PERF=1;; --load) LOAD=1;;
+    --skip-browser) NOBROWSER=1;;
     *) die "unknown option: $a";;
   esac
 done
@@ -158,7 +161,14 @@ LOG="$(mktemp)"
 rc=0
 # --color=no: with colour codes the FAILED/ERROR lines below would not match and a
 # failing suite would compare as "no new failures".
-"$PY" -m pytest tests -q -p no:cacheprovider -rfE --color=no > "$LOG" 2>&1 || rc=$?
+IGNORE=()
+if [ "$NOBROWSER" = 1 ]; then
+  # Every file that drives a browser. Not a skip: they are reported as NOT RUN
+  # below and must be run on their own, one file at a time.
+  for f in $(grep -lE "playwright|page_as|chromium" tests/*.py); do IGNORE+=("--ignore=$f"); done
+  echo "  NOTE: --skip-browser: NOT RUN here, run each on its own: ${IGNORE[*]//--ignore=/}"
+fi
+"$PY" -m pytest tests -q -p no:cacheprovider -rfE --color=no "${IGNORE[@]}" > "$LOG" 2>&1 || rc=$?
 tail -1 "$LOG"
 # pytest: 0 all passed, 1 some failed — anything else means the suite did not run properly.
 if [ "$rc" -ne 0 ] && [ "$rc" -ne 1 ]; then

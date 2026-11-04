@@ -194,7 +194,7 @@ def test_change_propagation_matrix(server, browser):
         step("relationship update (role, note)", "relationship.update",
              lambda: ok(admin.patch(f"/api/kb/edges/{e['id']}", {"version": e["version"], "note": "matrix note", "props": {"role": "backup_1"}})),
              f"window.__kbGraph.cy.getElementById('{e['id']}').data('note') === 'matrix note'",
-             f"window.__NP.data.edges.some((x) => x.p && x.p.instructor_role === 'backup_1')")
+             "window.__NP.data.edges.some((x) => x.p && x.p.instructor_role === 'backup_1')")
         step("relationship archive", "relationship.archive", lambda: ok(admin.post(f"/api/kb/edges/{e['id']}/archive")),
              f"!window.__kbGraph.cy.getElementById('{e['id']}').length", f"!({_map_edge(ins['id'], m1['id'])})")
         step("relationship permanent delete (after archive)", "relationship.delete", lambda: ok(admin.delete(f"/api/kb/edges/{e['id']}")),
@@ -208,7 +208,7 @@ def test_change_propagation_matrix(server, browser):
                                                        "rules": [{"source": "instructor", "target": "instructor"}]}))
             ok(admin.post("/api/kb/edges", {"type": "mentors", "source_id": ins["id"], "target_id": ins2["id"]}))
             return t
-        t = step("custom relationship type create (+ a relationship of it)", "reltype.create", new_type,
+        step("custom relationship type create (+ a relationship of it)", "reltype.create", new_type,
                  "(() => { const f = document.querySelector('[data-testid=graph-edge-filter-mentors]'); const sw = f && f.parentElement.querySelector('.legend-edge');"
                  " const e = window.__kbGraph.cy.edges().filter((x) => x.data('type') === 'mentors'); "
                  " return !!(f && sw && sw.dataset.color && e.length && e[0].data('color') === sw.dataset.color); })()",
@@ -229,7 +229,7 @@ def test_change_propagation_matrix(server, browser):
         _wait(npmap, _map_edge(ins["id"], ins3["id"], "guides"), 8)
         step("custom relationship type merge", "reltype.update",
              lambda: ok(admin.post("/api/kb/types/edge/guides/merge", {"into": "mentors"})),
-             f"window.__kbGraph.cy.edges().filter((x) => x.data('type') === 'guides').length === 0 && window.__kbGraph.cy.edges().filter((x) => x.data('type') === 'mentors').length === 2",
+             "window.__kbGraph.cy.edges().filter((x) => x.data('type') === 'guides').length === 0 && window.__kbGraph.cy.edges().filter((x) => x.data('type') === 'mentors').length === 2",
              _map_edge(ins["id"], ins3["id"], "mentors"))
         for x in ok(admin.get("/api/kb/graph", "rels=mentors"))["edges"]:
             ok(admin.post(f"/api/kb/edges/{x['id']}/archive"))

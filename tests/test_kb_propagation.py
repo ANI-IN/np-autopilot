@@ -19,7 +19,6 @@ from __future__ import annotations
 import base64
 import json
 import struct
-import time
 
 import pytest
 
@@ -255,7 +254,7 @@ def test_custom_relationship_types_create_rename_merge_archive(admin, viewer):
 
     s, t2 = admin.post("/api/kb/types/edge", {"label": "guides", "inverse_label": "guided by",
                                               "rules": [{"source": "instructor", "target": "instructor"}]})
-    e2 = _edge(admin, "guides", a, c)
+    _edge(admin, "guides", a, c)
     cur = _cursor(viewer)
     s, out = admin.post("/api/kb/types/edge/guides/merge", {"into": "mentors"})
     assert s == 200, out
@@ -286,7 +285,7 @@ def test_record_type_and_field_changes(admin, viewer):
     assert "type.create" in _kinds(_feed(viewer, cur))
     w = _node(admin, "workshop", "Graph Workshop", props={"venue": "Room 1"})
     assert {x["id"]: x["type"] for x in _graph(viewer)["nodes"]}[w["id"]] == "workshop"
-    m = _map(viewer)[0]
+    _map(viewer)
     s, nd = viewer.get("/api/node", f"id={w['id']}")
     assert nd["node"]["type"] == "workshop" and nd["node"]["props"]["venue"] == "Room 1"
     _row("record type create (+ a record of it)", "type.create", True, True, True)

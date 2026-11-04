@@ -92,8 +92,16 @@ running. Running them together has run the machine out of memory.
 ```
 
 `verify_all.sh` runs the whole suite in one pytest process, browser files
-included; on a 16 GB machine close everything else first, or run the browser
-files separately as above.
+included. On a 16 GB machine use `bash scripts/verify_all.sh --skip-browser`
+(every check and the suite without the six browser files, still compared with
+the baseline), then run each browser file on its own as above.
+
+Run `test_kb_graph_run6.py` **one test per process**
+(`pytest "tests/test_kb_graph_run6.py::<test>"`): two of its tests hang when
+run back to back in one process (a known test-isolation defect; each passes
+alone, and it doesn't happen in normal use). A test with no output for 10
+minutes counts as hung: stop it, re-run it once on its own, and never count
+it as passed.
 
 `test_kb_propagation_e2e.py` writes its change matrix (operation, latency) to
 `kb_change_matrix.md` in the system temp folder and prints the path; nothing

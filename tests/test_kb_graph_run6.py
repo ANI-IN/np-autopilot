@@ -250,7 +250,7 @@ def test_group_by_type_folds_and_unfolds(server, browser):
     assert not _shown(page, ids["topics"][0]["id"])
     expect(page.get_by_test_id("graph-info")).to_contain_text("3 in 1 folded group")
     page.evaluate("() => window.__kbGraph.cy.getElementById('__g:topic').emit('tap')")
-    page.wait_for_function(f"() => window.__kbGraph.cy.getElementById('__g:topic').length === 0")
+    page.wait_for_function("() => window.__kbGraph.cy.getElementById('__g:topic').length === 0")
     assert _shown(page, ids["topics"][0]["id"])
     assert page.errors == []
 
