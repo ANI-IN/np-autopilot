@@ -30,18 +30,31 @@ fi
 $CLI start --workdir "$HERE" | grep -viE 'key|secret|jwt|token' || true
 
 cd "$REPO"
+# The repo's own virtualenv if there is one (a Windows venv has no python3),
+# else python3. Override with PYTHON=...
+if [[ -n "${PYTHON:-}" ]]; then PY="$PYTHON"
+elif [[ -x .venv/Scripts/python.exe ]]; then PY=.venv/Scripts/python.exe
+elif [[ -x .venv/bin/python ]]; then PY=.venv/bin/python
+else PY=python3; fi
 export SUPABASE_DB_URL_SESSION="$SESSION" SUPABASE_DB_URL_TRANSACTION="$TRANSACTION"
 scratch="$(mktemp -d)"
-python3 pipeline/migrate.py up
+"$PY" pipeline/migrate.py up
 # ALWAYS redirect these two, or a local projection overwrites public/stats.json
-# and BUILD_LOG.md, which describe production.
+# and BUILD_LOG.md, which describe production. The freshness gate guards
+# production projections; this one only ever writes the loopback stack above
+# (the same override scripts/verify_all.sh and tests/conftest.py use).
+NP_FRESHNESS_SKIP="local stack setup (db/local/setup.sh), never production" \
 NP_LANDING_STATS="$scratch/stats.json" NP_BUILD_LOG="$scratch/BUILD_LOG.md" \
-    python3 pipeline/project_graph.py
-python3 pipeline/curation.py import
+    "$PY" pipeline/project_graph.py
+"$PY" pipeline/curation.py import
 # The shared team mailbox, so the 0014 shared-account tests exercise the
 # derivation instead of skipping. A bare auth.users row, as GoTrue would write;
 # 0015's trigger gives it its member profile.
-psql -q "$SESSION" -c "insert into auth.users (id, email, created_at)
-    select gen_random_uuid(), '$SHARED', now()
-    where not exists (select 1 from auth.users where lower(email) = '$SHARED')"
+"$PY" - "$SESSION" "$SHARED" <<'PYEOF'
+import sys, psycopg
+with psycopg.connect(sys.argv[1], autocommit=True) as c:
+    c.execute("""insert into auth.users (id, email, created_at)
+                 select gen_random_uuid(), %(e)s::text, now()
+                 where not exists (select 1 from auth.users where lower(email) = %(e)s::text)""", {"e": sys.argv[2]})
+PYEOF
 echo "local test database ready: $SESSION (transaction pooler: 6543)"
