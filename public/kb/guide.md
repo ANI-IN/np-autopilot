@@ -22,7 +22,7 @@ One example, from top to bottom: the course **System Design for Senior Engineers
 - **All records** is a table of everything. Use **Filter** to narrow it (by type, course, owner, tag, status, flagged); each filter shows as a chip you can remove. **Save view** keeps a set of filters as a tab; tick "Share with the team" to let everyone use it.
 - In a table, press **j** and **k** to move, **Enter** to open, **x** to select, and **/** to jump to the search box.
 - **Outline** shows programs and courses as a tree. It is the quickest way to see a whole course at once.
-- **Graph** shows what a record is connected to. Click a record to open it; double-click to expand its neighbours.
+- **Graph** shows the whole knowledge base, or one record and what it is connected to. Click a record to open it; the **+** next to a record expands its neighbours (if you cannot edit, double-clicking a record does the same).
 - **Who teaches what** is a table of instructors against modules and live sessions. Each cell shows the role from the current mastersheet (**P** primary, **B1**–**B3** backups) or **T** when an older sheet says they taught it. Filter by domain, role or name, and export it as CSV.
 - **Program timeline** shows each program's modules week by week, with their live sessions and slide decks.
 
@@ -106,16 +106,18 @@ Two people can have the same record open. If someone saves a change while you ar
 
 ## Legacy records and the sync
 
-Most records come from the original NP Autopilot site, and a **sync** copies its changes in every hour (admins can also press **Sync now** in **Settings → Sync**). Only what changed is written. If you edited a record here and it also changed at the source, your edit is kept and the record is listed under **Sync conflicts** on Data quality. A row that disappears from the source is never deleted here: it is listed under **Removed at the source**, and you decide whether to archive it.
+Most records come from the original NP Autopilot site, and a **sync** copies its changes in every hour (admins can also press **Sync now** in **Settings → Sync**). Only what changed is written. If you edited a record here and it also changed at the source, your edit is kept and the record is listed under **Sync conflicts** on Data quality. A record that disappears from the source is never deleted here: it is marked for review and listed under **Removed at the source**, and you decide whether to archive it. A relationship or link that disappears from the source is archived, and can be restored from **Archived**. The sync never brings back something you archived, and never touches records created here.
 
-A **legacy** record comes from the older sheets only (for example a module no current domain offers, or an instructor with no role in the current mastersheet). It carries a **Legacy** badge. Lists and the graph show current records; in **All records** use **Filter → Current and legacy** (or **Legacy only**), and in **Who teaches what** tick **Include legacy**. Legacy is not the same as archived: a legacy record is still live and can be edited; an archived one is hidden until someone restores it.
+A **legacy** record comes from the older sheets only (for example an instructor with no role in the current mastersheet, or a programme from the older sheets). It carries a **Legacy** badge. Lists and the graph show current records; in **All records** use **Filter → Current and legacy** (or **Legacy only (older sheets)**), on the **Graph** tick **Show legacy**, and in **Who teaches what** tick **Include legacy (older sheets)**. Legacy is not the same as archived: a legacy record is still live and can be edited; an archived one is hidden until someone restores it.
+
+With the owner's approval, the legacy domains and legacy modules are deleted permanently (only the four current domains stay), and the sync is told never to bring them back. Legacy instructors, topics, sessions and programmes stay. If a record sat inside a deleted one, it is kept and listed on Data quality so you can give it a new place.
 
 ## Archive and permanent delete
 
 - **Archive** (from a record's **…** menu) hides the record from lists, the outline and the graph, along with its relationships and links. The confirmation shows exactly how many go with it. Nothing is deleted, and you can **Undo** straight away or **Restore** later.
 - Everything archived is on the **Archived** page. Admins can **Delete permanently** from there. You have to type the name to confirm, the dialog lists what is removed with it, and the deletion is recorded.
 
-Removing a single relationship or link from a record is immediate and offers **Undo**.
+Removing a single relationship or link from a record is immediate and offers **Undo**. If you are a contributor, it is sent to **Approvals** instead, like any other archive.
 
 ## Record types and fields
 
@@ -129,10 +131,16 @@ Changing a type that is already in use is safe. Renaming is fine. Removing a fie
 
 ## Roles
 
+Everyone who signs in with an @interviewkickstart.com Google account is at least a viewer.
+
 - **Viewer**: sees everything, can flag things as incorrect, and can claim their own person record (**Claim this profile**; an admin confirms it).
-- **Contributor**: attaches links and adds relationships to existing records directly; sends new records, field edits, archive requests and type changes for approval. The database enforces this, whatever tool is used.
-- **Editor**: creates and archives directly, approves proposals, and can overwrite a conflicting change.
-- **Admin**: everything an editor does, plus record types (including which types should have an owner), relationship type review and merges, roles, people's e-mail addresses (**Settings → People**), profile claims, and permanent deletion. Admins also see a **Back to NP Autopilot** link in the sidebar.
+- **Contributor**: attaches links and adds relationships to existing records directly; sends new records, field edits, archive requests and new relationship types for approval. The database enforces this, whatever tool is used.
+- **Editor**: creates, edits, archives and restores directly, approves proposals, and can overwrite a conflicting change. An editor's changes to record types go to an admin for approval.
+- **Admin**: everything an editor does, plus record types (including which types should have an owner), relationship type review and merges, roles, people's e-mail addresses (**Settings → People**), profile claims, the sync (**Settings → Sync**), and permanent deletion. Admins also see a **Back to NP Autopilot** link in the sidebar.
+
+Admins give roles in **Settings → Members**. To add someone who has not signed in yet, invite them by their @interviewkickstart.com address with a role: the role applies the first time they sign in. The last admin cannot be removed or made a lower role; make someone else an admin first.
+
+The AI assistant (Claude with your API token, **Settings → API tokens**) acts with your role, but anything it archives always waits for a person's approval, and it can never approve, change roles, start a sync or delete permanently.
 
 ## Keeping things accurate
 
@@ -143,7 +151,7 @@ Changing a type that is already in use is safe. Renaming is fine. Removing a fie
 
 ## Activity
 
-**Maintain → Activity** lists every change: who made it (a person, the AI assistant working for a named person, an import, or the system), what they did, to which record (with a link, or marked **deleted** if it is gone), and when. Hover the time to see the exact date. For an update, each changed field shows its value before and after.
+**Maintain → Activity** lists every change: who made it (a person, the AI assistant working for a named person, an import, the sync, or the system), what they did, to which record (with a link, or marked **deleted** if it is gone), and when. Hover the time to see the exact date. For an update, each changed field shows its value before and after.
 
 Filter by person, action, what changed (a record, a relationship, a link, a type…), source (app, AI assistant, import, sync, system) and dates, or search names and values. **Export CSV** downloads exactly what is shown.
 
@@ -153,4 +161,4 @@ Admins see all activity. Editors see their own changes and everything about the 
 
 ## Who to contact
 
-For access, a new role or a new record type, ask a knowledge base admin (listed in Settings → Members). For problems with the app, contact the New Programs team.
+For access, a new role or a new record type, ask a knowledge base admin; if you do not know who that is, ask the New Programs team. For problems with the app, contact the New Programs team.

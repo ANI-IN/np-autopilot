@@ -10,8 +10,8 @@ the lead, so that every stream sees them at the same time.
 
 ## 1. Graph read API — `GET /api/kb/graph`
 
-One endpoint behind every graph: the knowledge base Graph page, and the NP
-Autopilot map at `/`. Implemented in `web/lib/kb/graph.py` (`read`), and it
+The graph endpoint of the knowledge base Graph page. (The NP Autopilot map at `/`
+reads kb through its own routes, §5, served by `web/lib/kb/npmap.py`.) Implemented in `web/lib/kb/graph.py` (`read`), and it
 runs as the caller under RLS.
 
 ### Query parameters (all optional)

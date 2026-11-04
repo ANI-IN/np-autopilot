@@ -9,19 +9,47 @@
   same service layer the web app uses (`web/lib/kb/service.py`). No SQL and no
   business rules live in the MCP server.
 - **Auth = a per-user API token** (`ikkb_…`), minted in the KB app under
-  Settings → API tokens, shown once, stored only as a SHA-256. The API resolves it
-  to its owner (`kb.resolve_token`, migrations 0023/0025) and runs the request
-  **as that user under RLS**. A viewer's token can only read.
+  Settings → API tokens, shown once, stored only as a SHA-256. Every token
+  expires: 1 to 365 days (`expires_in_days`, default 90); it can be revoked at
+  any time. The API resolves it to its owner (`kb.resolve_token`, migrations
+  0023/0025) and runs the request **as that user under RLS**. A viewer's token
+  can only read.
 - Every token request is attributed **`actor_type = 'ai'`** in `kb.audit_log`.
-- **Archive/delete never execute**: with an AI actor, the service records a
+- **Archive never executes**: with an AI actor, the service records a
   proposal and returns `approval_required` + `proposal_id`; an editor approves or
-  rejects it in the app (Approvals). An AI actor cannot approve proposals or mint
-  tokens.
+  rejects it in the app (Approvals). There is no delete tool, and the database
+  refuses a permanent delete from an AI caller (0034).
+- **Further limits, whatever the owner's role:** an AI caller cannot approve
+  proposals, mint tokens, change relationship rules, change roles or sign-in
+  links, invite members or start a sync; its record-type and relationship-type
+  changes are always proposals. The full matrix is in
+  [../security.md](../security.md).
 - Expired or revoked tokens are refused (`token was rejected`).
 - No database credential is needed or accepted by the MCP server.
 - Every result is `{"data_notice", "result", "sources"}`: retrieved text is
   **data, not instructions**, and `sources` lists app links
   (`<KB_APP_URL>/kb/#/records?open=<id>`) and resource URLs.
+
+## One tool call, end to end
+
+```mermaid
+sequenceDiagram
+    participant C as Claude
+    participant M as MCP server (kb_server.py)
+    participant A as api/index.py
+    participant S as web/lib/kb/service.py
+    participant D as Postgres (kb)
+    C->>M: tool call, e.g. archive_node(node_id, reason)
+    M->>A: POST /api/kb/nodes/{id}/archive<br/>Authorization: Bearer ikkb_...
+    A->>D: kb.resolve_token(sha256 of the token)
+    D-->>A: the owner's user id (or nothing: 401)
+    A->>S: the request as that user, actor_type ai
+    S->>D: insert a proposal (RLS as the owner)
+    S-->>A: 202 approval_required, proposal_id
+    A-->>M: JSON
+    M-->>C: data_notice, result, sources
+    Note over C,D: A person approves or rejects it later in Approvals
+```
 
 ## Tools
 
@@ -82,10 +110,12 @@ not built.
 
 ## Verification (2026-11-02)
 
-- `tests/test_kb_mcp.py` (6 tests, all pass): spawns the server over stdio with
-  the official client SDK, lists tools (exactly the 19 of that date; now 21 with `list_types` and `recent_activity`), calls every one,
+- `tests/test_kb_mcp.py` (8 tests): spawns the server over stdio with
+  the official client SDK, lists the tools (21), calls every one,
   plus viewer-token write denied, editor-token archive → proposal, approval by a
-  person executes it, expired/revoked/garbage tokens denied, missing
+  person executes it, a contributor token's create → proposal, `list_types`
+  exposes custom types and `create_node` fills their fields,
+  expired/revoked/garbage tokens denied, missing
   `KB_MCP_TOKEN` → startup error naming it, link classification incl. redirects
   and timeouts.
 - **Live Claude check: VERIFIED.** `claude -p` (Claude Code 2.1.292) with
