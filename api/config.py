@@ -11,8 +11,8 @@ All three are PUBLIC by design and none is a secret:
 They are served rather than baked into the HTML so that the same page works
 against a preview deployment without an edit, and so a rotated key does not
 need a rebuild. `SUPABASE_SERVICE_ROLE_KEY` is never read in this file, and
-`tests/test_no_service_key_in_client.py` asserts it appears in no file the
-browser can fetch.
+CI (`.github/workflows/ci.yml`, "no secrets in anything the browser fetches")
+checks that it appears in no file the browser can fetch.
 """
 import os
 

@@ -12,7 +12,7 @@ is in [docs/project-history/](docs/project-history/README.md).
 
 - **One source of truth:** every view reads the `kb` schema, including the NP
   Autopilot map at `/` (`web/lib/kb/npmap.py`; rollback `NP_MAP_SOURCE=old`).
-  `GET /api/kb/graph` is the one graph API. The change feed carries a kind and
+  `GET /api/kb/graph` serves the Graph page; the map's routes read kb too. The change feed carries a kind and
   the affected records, and every page updates within about 3 s (26 operations
   checked on the Graph page and on `/`).
 - **Graph:** hierarchy layout by default, plus force, radial and saved positions;

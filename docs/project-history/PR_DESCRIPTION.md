@@ -31,7 +31,8 @@ owner-approved legacy cleanup removes 42 legacy domains and 904 legacy modules.
 - **One source of truth (run 6):**
   - The "/" map's routes read the KB (`web/lib/kb/npmap.py`), keeping their
     response shapes. `NP_MAP_SOURCE=old` is the rollback.
-  - `GET /api/kb/graph` is the one graph API.
+  - `GET /api/kb/graph` is the Graph page's API; the map's own routes read kb
+    through `npmap.py`.
   - The change feed carries `kind` and `node_ids`, and every page updates
     within ~3 s. docs/run6/MATRIX.md covers 26 operations on both pages.
 - **Graph (run 6):**

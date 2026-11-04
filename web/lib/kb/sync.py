@@ -1,7 +1,8 @@
 """The sync: the original site's tables (public.nodes, edges, node_sources,
 node_layout, people, ...) -> the knowledge base, until the KB becomes the only
 place to edit. One engine for the first import (pipeline/kb_import_projection.py,
-CLI) and the scheduled runs (POST /api/kb/sync: Vercel cron or "Sync now").
+CLI) and the scheduled runs (pg_cron -> POST /api/cron/kb-sync, or "Sync now"
+-> /api/kb/sync).
 
 Every run:
   1. builds the DESIRED KB state from the old tables, with NP Autopilot's own
