@@ -288,7 +288,7 @@ that depend on access nobody has yet.
 | 1 | Sync and schedule alerting (stale, failed, conflict spike) to one channel | **H**: today a stopped sync is invisible until someone looks | L | 1–2 | Slack webhook (owner) |
 | 2 | Production backup check + weekly `kb` dump + one restore drill | **H**: the KB now holds edits that exist nowhere else | L | 2–3 | Production access (owner) |
 | 3 | Schedule the intake: passes 0–4 + projection in one worker, after switching `project_graph.py` to a set-diff | **H**: without it, "hourly sync" copies a stale projection | M | 5–8 | Worker host + Drive key as a secret (owner) |
-| 4 | Namespace the sync (`source` on `sync_map`, `sync_runs`, `sync_exclusions`; `kb.connectors`; one lock per connector) and move NP's code behind the connector interface | **M**: no user-visible change, and every later source needs it | M | 4–6 | none |
+| 4 | Namespace the sync (`source` on `sync_map`, `sync_runs`, `sync_exclusions`; `kb.connectors`; one lock per connector) (the connector interface itself exists since run 6, `web/lib/kb/connectors/`) | **M**: no user-visible change, and every later source needs it | M | 4–6 | none |
 | 5 | `kb.jobs` with retries, back-off and dead letters; worker uses it | **M**: needed before any slow work (extraction, embedding) | M | 3–5 | 3, 4 |
 | 6 | Drive connector: documents as resources + redacted text, incremental by Changes API cursor, same folder scope | **H**: the first time the KB holds what documents *say* | H | 10–15 | 4, 5 |
 | 7 | Source ACLs (`kb.source_acl`, RLS on resources/chunks, group cache) | **H**: required before 6 goes beyond the NP folder; it is the main risk | H | 8–12 | 6; Directory API scope (owner decision) |
@@ -297,6 +297,33 @@ that depend on access nobody has yet.
 | 10 | Per-user OAuth for remote MCP (Claude.ai connector) | **M**: lets non-engineers use it without a local server | M | 5–8 | none (can run in parallel) |
 | 11 | Uplevel LMS connector | **M**: programme delivery data in one place | H | 10–20 | 4–7; API access and scope (owner) |
 | 12 | Atlassian connector | **L–M**: valuable, but it duplicates what Confluence search already gives | H | 10–20 | 4–7; space permission mapping |
+
+The same order as a timeline. Working days for one engineer, using the
+middle of each estimate, from an illustrative start date; owner dependencies
+(access, a worker host, the Slack webhook) can move any bar. Items 11 and 12
+are left out: they start only when a named team asks.
+
+```mermaid
+gantt
+  title Roadmap (illustrative; working days for one engineer)
+  dateFormat YYYY-MM-DD
+  axisFormat %d %b
+  excludes weekends
+  section Now
+  1 Sync and schedule alerting        :a1, 2026-11-09, 2d
+  2 Backup check, dump, restore drill :a2, 2026-11-09, 3d
+  section Freshness and slow work
+  3 Scheduled intake worker           :a3, after a2, 7d
+  4 Namespace the sync per connector  :a4, after a2, 5d
+  5 Jobs with retries and back-off    :a5, after a3, 4d
+  section Documents with permissions
+  6 Drive connector                   :a6, after a5, 13d
+  7 Source ACLs                       :a7, after a5, 10d
+  section Search and AI
+  8 Hybrid search (pgvector)          :a8, after a6, 7d
+  9 MCP passages and hybrid search    :a9, after a8, 3d
+  10 Per-user OAuth for remote MCP    :a10, after a5, 7d
+```
 
 Order: 1–2 now (about a week, low risk). Then 3–5, which make the system
 honest about freshness and ready for slow work. Then 6–7 together, because
