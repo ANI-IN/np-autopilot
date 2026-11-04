@@ -124,7 +124,7 @@ def test_an_ik_email_without_hd_is_refused():
                  "claims": {"email": f"someone@{IK}"}})
     assert err is not None, (
         "an IK email address with no hd claim was accepted — that is exactly "
-        "the identity docs/AUTH.md says we refuse")
+        "the identity docs/architecture/auth.md says we refuse")
     assert "hosted-domain" in err["message"]
 
 

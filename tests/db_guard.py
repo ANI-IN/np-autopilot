@@ -12,7 +12,7 @@ opens, autocommit ones, and any subprocess it spawns. A write raises
 WHAT IT DOES NOT STOP: a session setting is a default, so a test that
 deliberately runs `SET TRANSACTION READ WRITE` first can still write
 (tests/read_only_canaries.py, canary 5 — pinned as a known gap). Refusing that
-needs a database role without write privileges: HANDOFF §D post-launch.
+needs a database role without write privileges: docs/operations/testing.md §4, "Known gap".
 
 It is VERIFIED before the test runs, never assumed: a pooler that dropped the
 startup option would otherwise leave the test running unguarded while looking

@@ -3,7 +3,7 @@
    fallback whenever the socket is unavailable or drops. Either way, listeners
    get the same audit-row shaped changes.
 
-   Run 6 (B1): ONE live-update policy for every page (docs/CONTRACTS.md §2).
+   Run 6 (B1): ONE live-update policy for every page (docs/architecture/contracts.md §2).
    Every change carries `kind` and `node_ids`. A page patches the records named
    in `node_ids`; a type, relationship-type, tag or sync change, or more than
    200 changes at once, means "refetch" instead. Without being asked, this

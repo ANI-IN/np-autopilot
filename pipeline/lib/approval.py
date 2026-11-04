@@ -1,7 +1,7 @@
 """Read D2a's approval block, and refuse while it is blank.
 
 `pipeline/project_graph.py` refuses `--scope full` and points at
-`docs/INGEST-SCOPE-REVERSAL.md`, whose approval block is deliberately empty.
+`docs/project-history/decisions/INGEST-SCOPE-REVERSAL.md`, whose approval block is deliberately empty.
 This is the same mechanism for the row-B content crawl, and it exists because
 `docs/PRE-CRAWL-DECISIONS.md` itself records the failure it prevents:
 

@@ -15,7 +15,7 @@ Interview Kickstart's New Programs (NP) knowledge, in one deployment:
 **The `kb` schema is the single source of truth** (run 6). Every page,
 including the map at `/`, reads `kb`. The pipeline's old tables in `public`
 are only its *intake*: a scheduled one-way sync copies them into `kb`.
-Background: `docs/ARCHITECTURE.md`. Where this could go next:
+Background: `docs/architecture/overview.md`. Where this could go next:
 `docs/VISION_AND_ROADMAP.md`.
 
 **Read `CLAUDE.md` before touching the pipeline.** It holds the safety rules
@@ -36,7 +36,7 @@ summarised under "Rules that are not optional" below.
  KB (kb.*)  RLS on every table · triggers: version, audit log, archive cascade
         │  every write → kb.changes (the change feed; Realtime, or polling /api/kb/changes)
         ├──► /api/kb/*   api/kb_routes.py → web/lib/kb/service.py (the one rulebook) ──► /kb/
-        ├──► /api/kb/graph (docs/CONTRACTS.md §1) ──► the KB Graph page AND the map at "/"
+        ├──► /api/kb/graph (docs/architecture/contracts.md §1) ──► the KB Graph page AND the map at "/"
         ├──► /api/structure, /node, /neighbourhood, /search, /overview, /staffing,
         │    /coverage, /me   (the map's routes, web/lib/kb/npmap.py, read from kb)
         └──► mcp_server/kb_server.py (an HTTP client of /api/kb/*, your own token)
@@ -46,7 +46,7 @@ Every request enters `api/index.py` (one WSGI app on Vercel). Identity is
 checked there before any database connection. Requests run as Postgres role
 `authenticated` with the caller's claims, so RLS applies. The map can be
 switched back to the old tables with `NP_MAP_SOURCE=old` (rollback only:
-`docs/ARCHITECTURE.md`, "Rollback").
+`docs/architecture/overview.md`, "Rollback").
 
 | Path | What it is |
 |---|---|
@@ -106,7 +106,7 @@ Vercel (per environment), in Supabase Vault, or in your shell.
 
 | Name | Used by | Purpose |
 |---|---|---|
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | app (`/api/config`) | public by design (`docs/DEPLOYMENT.md`) |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | app (`/api/config`) | public by design (`docs/operations/deployment.md`) |
 | `SUPABASE_DB_URL_TRANSACTION` | app | transaction pooler (port 6543), every request; the session pooler and the direct host are refused |
 | `SUPABASE_DB_URL_SESSION` | CLIs, migrations | session pooler (owner); laptop/CI only, **never set in Vercel** |
 | `SUPABASE_JWT_SECRET` | app | only for HS256 projects |
@@ -129,7 +129,7 @@ Vercel (per environment), in Supabase Vault, or in your shell.
 | `NP_ALLOW_LEGACY_DELETE_ON_PRODUCTION` | `web/lib/kb/legacy_delete.py` | explicit gate for the owner-approved legacy delete |
 
 `SUPABASE_SERVICE_ROLE_KEY` is never set in Vercel. The dev deployment's
-`DEV_*` variables are described in `docs/DEV_DEPLOY.md`.
+`DEV_*` variables are described in `docs/operations/dev-deploy.md`.
 
 ---
 
@@ -144,7 +144,7 @@ Vercel (per environment), in Supabase Vault, or in your shell.
 
 Open `http://localhost:8765/local-login`. The demo accounts and the password
 login exist only in the local stack and `eval/` (never deployed). Details,
-sign-ins and reset: `docs/DEMO.md`. Running the KB tests wipes `kb` data, so
+sign-ins and reset: `docs/operations/local-demo.md`. Running the KB tests wipes `kb` data, so
 re-run the seed afterwards.
 
 ### Real-data copy, http://localhost:8766
@@ -152,7 +152,7 @@ re-run the seed afterwards.
 A separate local database (`kb_realdata`) built from a read-only production
 dump in the gitignored `backups/`. Server: `eval/kb_realdata_server.py 8766`.
 It binds 127.0.0.1 and refuses non-local databases. Build steps:
-`docs/DEMO.md`, "The real-data copy". Never copy anything from it into code,
+`docs/operations/local-demo.md`, "The real-data copy". Never copy anything from it into code,
 tests, docs or commits.
 
 ---
@@ -211,7 +211,7 @@ records from coming back. One run at a time, time-boxed, resumable.
 
 - **Schedule:** pg_cron + pg_net in the database (migration 0031), hourly by
   default, calling `/api/cron/kb-sync` with the Vault secret. Set up as in
-  `docs/DEV_DEPLOY.md` step 6.
+  `docs/operations/dev-deploy.md` step 6.
 - **By hand:** Settings → Sync → **Sync now** (admins), which also shows the
   run log. Admins see a banner while the last run failed.
 - **Off:** `KB_SYNC_ENABLED=false` stops every run. `select kb.sync_schedule_remove();`
@@ -219,7 +219,7 @@ records from coming back. One run at a time, time-boxed, resumable.
 - The sync only copies what the pipeline last projected. Passes 0–4 and
   `project_graph.py` are still run by hand (`pipeline/README.md`).
 
-Details: `docs/DEPLOYMENT.md` "Scheduled sync", `docs/run6/SYNC_TIMING.md`.
+Details: `docs/operations/deployment.md` "Scheduled sync".
 
 ---
 
@@ -239,7 +239,7 @@ export KB_API_URL=...  KB_MCP_TOKEN=...      # set in your shell
 ```
 
 A multi-user remote (Claude.ai) deployment needs per-user OAuth, which is not
-built. See `docs/MCP.md`.
+built. See `docs/integrations/mcp.md`.
 
 The repository's marketplace (`.claude-plugin/marketplace.json`) also lists
 the older `np-autopilot` plugin. Its commands (`commands/`: `/staffing`,
@@ -253,11 +253,11 @@ committed `knowledge/graph.json` snapshot, not the live KB.
 One Vercel project (`vercel.json`; `api/index.py` is the only function). Read,
 in order:
 
-- `docs/DEPLOYMENT.md`: variables, Supabase Auth, pooling, the scheduled sync,
+- `docs/operations/deployment.md`: variables, Supabase Auth, pooling, the scheduled sync,
   checks after deploying.
-- `docs/DEV_DEPLOY.md`: the dev database and the Vercel preview.
+- `docs/operations/dev-deploy.md`: the dev database and the Vercel preview.
   `scripts/dev_db.py` refuses the production project.
-- `docs/GO_LIVE.md`: the production go-live steps (being written by the lead
+- `docs/operations/GO_LIVE.md`: the production go-live steps (being written by the lead
   in run 6).
 
 Migrations: `pipeline/migrate.py up` with `SUPABASE_DB_URL_SESSION`. Each
@@ -318,7 +318,7 @@ The full text is in `CLAUDE.md`. In short:
   graph is never projected or committed.
 - **Counts are floors, not totals.** Entity scans have not read every file.
   Never quote person, instructor or module counts as totals.
-- **Thresholds rank or warn. They never silently exclude** (`10-threshold-audit.md`).
+- **Thresholds rank or warn. They never silently exclude** (CLAUDE.md §4).
 - **`config/taxonomy.yaml` is the only source of type names**
   (`tests/test_taxonomy_single_source.py`).
 - **One rulebook:** KB rules live in `web/lib/kb/service.py` and its siblings,
@@ -330,7 +330,7 @@ The full text is in `CLAUDE.md`. In short:
 
 ## More docs
 
-`docs/ARCHITECTURE.md` · `docs/CONTRACTS.md` · `docs/API.md` ·
-`docs/SCHEMA.md` · `docs/DESIGN_SYSTEM.md` · `docs/MCP.md` · `docs/DEMO.md` ·
-`docs/AUTH.md` · `docs/CONTACT-DATA.md` · `docs/VISION_AND_ROADMAP.md` ·
-`HANDOFF.md` · `BUILD_LOG.md` · `pipeline/README.md`
+`docs/architecture/overview.md` · `docs/architecture/contracts.md` · `docs/integrations/http-api.md` ·
+`docs/architecture/schema.md` · `docs/architecture/design-system.md` · `docs/integrations/mcp.md` · `docs/operations/local-demo.md` ·
+`docs/architecture/auth.md` · `docs/CONTACT-DATA.md` · `docs/VISION_AND_ROADMAP.md` ·
+`docs/project-history/HANDOFF.md` · `BUILD_LOG.md` · `pipeline/README.md`

@@ -1,4 +1,4 @@
-"""Run 6 (B5) audit fixes, docs/run6/AUDIT_FINDINGS.md: the database refuses
+"""Run 6 (B5) audit fixes: the database refuses
 the AI assistant the admin-only powers (A1), a request cannot leave the
 workspace without an admin (A2), and the curation endpoint answers a malformed
 body with 400 (A9). Local DB only."""

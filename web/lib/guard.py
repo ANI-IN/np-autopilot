@@ -68,7 +68,7 @@ def audit(identity, endpoint: str, params: dict, rows: int,
     """One line per request. §E.4 wants the QUERY, not just that access happened.
 
     Written to stdout, which Vercel captures. It names an ACCOUNT, and
-    docs/AUTH.md says plainly that an account is not necessarily a person —
+    docs/architecture/auth.md says plainly that an account is not necessarily a person —
     shared team mailboxes exist and this cannot tell them apart beyond a
     configured list.
     """

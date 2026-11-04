@@ -123,7 +123,7 @@ KB_ROUTES = [
 
 #: The special cases in api/index.py's app(): (method, the statuses EVERY caller gets).
 PUBLIC_OR_SECRET = {
-    # Public by design (docs/run6/SECURITY_SWEEP.md): what a browser needs to start a sign-in.
+    # Public by design (run 6 security sweep): what a browser needs to start a sign-in.
     "/api/config": ("GET", {200}),
     # Public by decision (SECURITY_SWEEP.md): the landing numbers, counts only (kb.landing_stats);
     # 404 when the map reads the old tables (NP_MAP_SOURCE=old).

@@ -13,7 +13,7 @@ WHY THIS AND NOT ALEMBIC / SQITCH / THE SUPABASE CLI, in three lines:
   3. The Supabase CLI would work, but it links the repo to a hosted project and
      owns the migration table. Plain SQL over psycopg keeps the database
      reachable by the same connection string everything else uses, and keeps
-     `docs/DEPLOYMENT.md` to "set one env var".
+     `docs/operations/deployment.md` to "set one env var".
 
 Usage:
     python3 pipeline/migrate.py status

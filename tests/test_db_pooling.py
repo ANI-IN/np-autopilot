@@ -1,6 +1,6 @@
 """Request-scoped connections must use Supabase's TRANSACTION pooler (6543),
 never the session pooler (5432) or the direct host: many Vercel instances each
-holding a warm connection would exhaust the session pool (docs/DEPLOYMENT.md,
+holding a warm connection would exhaust the session pool (docs/operations/deployment.md,
 "Connection pooling"). No database needed."""
 from __future__ import annotations
 

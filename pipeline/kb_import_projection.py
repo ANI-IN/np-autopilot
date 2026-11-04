@@ -2,7 +2,7 @@
 """The projection (the original site's tables) -> the KB: the first import and
 any manual sync from a laptop or CI. The engine is web/lib/kb/sync.py (the same
 code the scheduled sync runs); the mapping is config/kb-projection-mapping.yaml;
-docs/MIGRATION_MAPPING.md explains it.
+docs/architecture/import-mapping.md explains it.
 
     SUPABASE_DB_URL_SESSION=<db> python pipeline/kb_import_projection.py preview --as <admin email> [--report out.json]
     SUPABASE_DB_URL_SESSION=<db> python pipeline/kb_import_projection.py apply   --as <admin email> [--report out.json]

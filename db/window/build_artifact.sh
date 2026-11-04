@@ -10,7 +10,7 @@
 # --prebuilt` then uploaded the project HONOURING .vercelignore, and Vercel
 # failed on the first missing one (ENOENT readlink 01-corpus-inventory.md).
 # The rehearsal had built the artifact but never deployed it — "prebuilt
-# deploy was never exercised against Vercel" (07-risks.md R23).
+# deploy was never exercised against Vercel" (docs/operations/risk-register.md R23).
 #
 # Pruning uses git's own matcher on .vercelignore (gitignore semantics,
 # `!README.md` included), in a throwaway repository inside the artifact.

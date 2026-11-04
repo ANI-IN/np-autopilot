@@ -32,7 +32,7 @@ FIELD_KINDS = ("short_text", "long_text", "number", "date", "datetime", "duratio
 #: 0028 moved the built-in types onto it). AA non-text contrast on white.
 PALETTE = ("#1d4ed8", "#0369a1", "#0e7490", "#0f766e", "#15803d", "#4d7c0f", "#a16207",
            "#b45309", "#c2410c", "#b91c1c", "#be123c", "#475569")
-# Graph styles (run 6, docs/CONTRACTS.md §3): every custom type gets a distinct look.
+# Graph styles (run 6, docs/architecture/contracts.md §3): every custom type gets a distinct look.
 SHAPES = ("round-rectangle", "ellipse", "diamond", "hexagon", "triangle", "rectangle", "tag", "barrel")
 LINE_STYLES = ("solid", "dashed", "dotted")
 

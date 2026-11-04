@@ -7,7 +7,7 @@
 #
 # Generated 2026-09-30 from a clean clone with no database, the same
 # checkout CI gets. Almost all are DB tests (no database in CI — they run
-# against the local Supabase stack, HANDOFF.md §I) or need gitignored
+# against the local Supabase stack, docs/operations/testing.md §1) or need gitignored
 # corpus / withheld / build files that must never be committed.
 # Total: 272 (187 + 85 KB tests, 2026-11-02). (+6 on 2026-09-30, window step 6: the read-only write canaries
 # run through a REAL pooler, which CI has not.)

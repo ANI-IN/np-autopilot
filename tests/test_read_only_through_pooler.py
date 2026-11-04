@@ -11,7 +11,7 @@ Two layers:
 - unit tests on a fake driver — run everywhere, CI included;
 - behaviour tests through a real pooler — run when NP_TEST_SESSION_POOLER_DSN
   (and NP_TEST_TRANSACTION_POOLER_DSN) point at one; the local Supabase stack
-  has both (HANDOFF §I).
+  has both (docs/operations/testing.md §4).
 """
 from __future__ import annotations
 
@@ -146,7 +146,7 @@ def test_every_write_is_refused_through_the_session_pooler(through_session_poole
 @pytest.mark.xfail(strict=True, reason=(
     "KNOWN GAP, pinned: a session setting is a default, so an explicit "
     "SET TRANSACTION READ WRITE can still write. Refusing it needs a database "
-    "role without write privileges (HANDOFF §D post-launch). strict: this "
+    "role without write privileges (docs/operations/testing.md §4). strict: this "
     "test fails the day the gap closes, so the pin cannot go stale."))
 def test_set_transaction_read_write_then_a_write_is_refused(through_session_pooler):
     import read_only_canaries as rc

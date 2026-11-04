@@ -1,4 +1,4 @@
 #!/bin/sh
-# Refuse to push to a public repository (07-risks.md R18, R21).
+# Refuse to push to a public repository (docs/operations/risk-register.md R18, R21).
 # Enable once per clone:  git config core.hooksPath .githooks
 exec python3 "$(git rev-parse --show-toplevel)/pipeline/check_repo_private.py"

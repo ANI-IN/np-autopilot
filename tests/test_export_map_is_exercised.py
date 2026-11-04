@@ -10,7 +10,7 @@ hand-export matched byte for byte.
 
 On 2026-09-20 it stopped being safe to leave alone. A native Google Sheet named
 `links` appeared **inside the corpus folder** — the scale-up registry
-(`docs/REGISTRY-INVENTORY.md` §0). `EXPORT_MAP` maps spreadsheets to `.xlsx`, so
+(`docs/project-history/REGISTRY-INVENTORY.md` §0). `EXPORT_MAP` maps spreadsheets to `.xlsx`, so
 the next pass 0 run would have exported it: the first firing ever, on an
 unexercised code path, on a file that decides the corpus boundary.
 

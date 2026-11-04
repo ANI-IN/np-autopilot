@@ -124,8 +124,9 @@ docs/screenshots/b4/
 /playwright-report/
 .run6/
 
-# run 6: screenshots of the REAL-data copy stay local (real names); demo screenshots are committed
-docs/run6/**/realdata/
+# run 6: screenshots of the REAL-data copy stay local (real names). The realdata
+# folders are covered by the generic docs/**/realdata*/ line below; the map
+# screenshot is not.
 docs/run6/**/*np-map*.png
 
 # --- run 6, G1 repository audit (2026-11-04) ---
@@ -158,3 +159,20 @@ tmp/
 .claude/settings.local.json
 # The template stays tracked: the later `.env*` line above re-ignored it.
 !.env.example
+
+# --- repository cleanup (2026-11-04) ---
+# Pass 5/8 local outputs (untracked 2026-11; regenerate from graph.json + content_graph.json)
+knowledge/merged_graph.json
+knowledge/_graph_data.json
+knowledge/_graph_files.json
+knowledge/_graph_logic.mjs
+# Every withheld half, present and future (today only graph-/content_graph-sensitive are listed)
+knowledge/*-sensitive.json
+# Future run work directories, not only run 6
+.run*/
+# Real-data screenshots anywhere under docs, any run (today: docs/run6/**/realdata/ only)
+docs/**/realdata*/
+docs/**/*realdata*.png
+# Other key formats
+*.p12
+*.pfx

@@ -6,7 +6,7 @@ Two signature classes, added at different times for the same reason.
 TWO CLASSES, AND WHY THE SECOND ONE EXISTS
 ------------------------------------------
 The payroll class came first. The **contact** class was added 2026-09-20 after a
-near-miss: the first draft of `docs/REGISTRY-INVENTORY.md` — a document whose
+near-miss: the first draft of `docs/project-history/REGISTRY-INVENTORY.md` — a document whose
 subject is that the registry leaks contact data — reproduced four instructors'
 personal email addresses verbatim. They were redacted before the commit, by
 hand, because nothing here would have caught them.
@@ -107,7 +107,7 @@ CONTACT_HEADERS = [
 
 #: MEASURED 2026-09-20 WITH THIS EXACT LIST, the same way PROSE_OCCURRENCES was.
 #: Across every tracked file, the densest legitimate prose is
-#: `docs/CACHE-EXPOSURE.md` and `01-corpus-inventory.md` at 10 occurrences each,
+#: `docs/CACHE-EXPOSURE.md` and `docs/project-history/design/01-corpus-inventory.md` at 10 occurrences each,
 #: then `docs/CONTACT-DATA.md` and `docs/A7B.md` at 9 — every one of them the
 #: project's own record of why contact data is excluded. (This module itself
 #: reaches 14 and is SELF_EXEMPT.)
@@ -182,7 +182,8 @@ SELF_EXEMPT = {
 
 #: USES, NOT MENTIONS — the same distinction tests/test_login_flow.py had to
 #: learn for SERVICE_ROLE. The first version of this check flagged seven files:
-#: 01-corpus-inventory.md, 07-risks.md, BUILD_LOG.md, config/taxonomy.yaml,
+#: docs/project-history/design/01-corpus-inventory.md,
+#: docs/operations/risk-register.md, BUILD_LOG.md, config/taxonomy.yaml,
 #: docs/CACHE-EXPOSURE.md, pipeline/00_fetch_drive.py and
 #: tests/test_fetch_time_exclusion.py — every one of them PROSE DESCRIBING THE
 #: EXCLUSION. A check that cannot tell a prohibition from its own description is
@@ -200,8 +201,8 @@ SELF_EXEMPT = {
 #:
 #: 50 IS MEASURED, NOT GUESSED, and CLAUDE.md §4 says a cutoff must answer "what
 #: would a correct answer excluded by this look like?". Measured across the
-#: repository: the most signature-dense prose is 01-corpus-inventory.md at 7
-#: occurrences, then 07-risks.md at 6 and CACHE-EXPOSURE.md at 3. The real
+#: repository: the most signature-dense prose is design/01-corpus-inventory.md at 7
+#: occurrences, then risk-register.md at 6 and CACHE-EXPOSURE.md at 3. The real
 #: payroll workbook carries 342,821. That is five orders of magnitude of
 #: separation, so 50 excludes nothing but a dump of fewer than ~10 employee rows
 #: — which is not the 5,387-person file this exists to stop. A data-shaped file

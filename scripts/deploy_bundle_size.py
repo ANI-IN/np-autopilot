@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """What the deploy ships, counted: files and bytes, and the dependency count
-(run 6, F6; recorded in docs/LEGACY_REMOVAL.md before and after the cleanup).
+(run 6, F6; recorded in docs/operations/legacy-removal.md before and after the cleanup).
 
 THE SET. vercel.json serves public/ as static files and bundles the Python
 function from api/, whose imports reach web/, pipeline/lib/ (and

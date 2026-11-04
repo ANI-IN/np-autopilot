@@ -9,7 +9,7 @@
      lang.edgeColor('teaches')                                     // a relationship's colour
      L.homePositions(nodes, edges)                                 // the hierarchy layout
 
-   The map keeps its own type keys (docs/CONTRACTS.md §5: its response shapes
+   The map keeps its own type keys (docs/architecture/contracts.md §5: its response shapes
    are frozen); MAP_TYPE says which knowledge base type each one is. A map type
    without a match keeps the map's own colour. */
 import { RANK, looks, nodeLook, edgeLook } from './style.js';

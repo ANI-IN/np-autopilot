@@ -9,7 +9,7 @@ noticed: the page everybody sees and nobody re-reads.
 
 IT READS THE PROJECTION, NOT graph.json, AND THAT IS DELIBERATE. There are two
 graphs in this project and confusing them has already produced three wrong
-figures (STATE.md §1). `knowledge/graph.json` is the PIPELINE graph — 5,048
+figures. `knowledge/graph.json` is the PIPELINE graph — 5,048
 nodes, provenance and sensitive rows included — and it is not what the explorer
 serves. `projection_meta` is the row the projection writes about itself, so a
 landing page built from it cannot describe a graph the visitor is not looking at.
@@ -73,8 +73,8 @@ def collect(conn) -> dict:
         "provenance_records": sources,
         "files": files,
         "by_type": by_type,
-        # WHICH GRAPH, SAID ON THE PAGE. STATE.md §1 records three wrong
-        # figures produced by confusing the pipeline graph with the
+        # WHICH GRAPH, SAID ON THE PAGE. Three wrong figures were
+        # produced by confusing the pipeline graph with the
         # projection. The landing page reads the projection; that is now a
         # field rather than a fact a reader has to already know.
         "describes": ("the PROJECTION — knowledge/graph.json merged with "

@@ -14,7 +14,7 @@ holding 2.73 GiB of learner uploads. It is left in its arrival order rather than
 folded in, because *"the first pass did not know the scale"* is part of what
 this document records.
 
-Evidence throughout is [`REGISTRY-INVENTORY.md`](REGISTRY-INVENTORY.md).
+Evidence throughout is [`REGISTRY-INVENTORY.md`](project-history/REGISTRY-INVENTORY.md).
 
 | | decision | status |
 |---|---|---|
@@ -156,7 +156,7 @@ and restoring — `tests/test_d2a_approval_gate.py`.
 `.drive-cache/content-rowB/` now feeds the content model
 (`pipeline/07_build_content_graph.py`) and the merge (`08_merge_graphs.py`).
 The merged public half — 8,507 nodes — is projected to the LOCAL database
-only; production still holds the pre-crawl graph (`docs/archive/HANDOFF.md` §A).
+only; production still holds the pre-crawl graph (the 2026-09-30 handoff, §A; in git history).
 
 ### What D2 says today, and what is being proposed instead
 

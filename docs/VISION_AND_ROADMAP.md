@@ -24,7 +24,7 @@ work.
 |---|---|---|
 | One store of record, `kb` schema, RLS on every table, triggers for version, audit and archive cascade | `db/migrations/0022_kb_schema.up.sql`, `0023_kb_rls.up.sql` | Good. Keep it. |
 | One rulebook (validation, roles, optimistic locking, proposals) | `web/lib/kb/service.py`, `validate.py`, `typedefs.py` | Good. Every new entry point must go through it. |
-| An append-only change feed (`kb.changes`, `kind`, `node_ids`) | `0032_kb_contracts.up.sql`, `docs/CONTRACTS.md` §2 | Good. This is what change tracking and indexing will read. |
+| An append-only change feed (`kb.changes`, `kind`, `node_ids`) | `0032_kb_contracts.up.sql`, `docs/architecture/contracts.md` §2 | Good. This is what change tracking and indexing will read. |
 | Configurable record and relationship types, enforced in the database | `0027_kb_custom_types.up.sql`, `web/lib/kb/typedefs.py` | Good. New sources add types, not code. |
 | An incremental, conflict-aware sync from the pipeline's tables | `web/lib/kb/sync.py`, `kb.sync_map` / `kb.sync_runs` (`0030`), resume (`0033`), exclusions (`0037`) | The right pattern, wired to one source. See §3. |
 | A schedule | pg_cron + pg_net calling `/api/cron/kb-sync` (`0031_kb_sync_schedule.up.sql`, `api/index.py`) | Enough for one hourly job. Not a job runner. |
@@ -74,7 +74,7 @@ per-job retry with back-off. A failed run is retried only because the next
 tick runs the whole diff again, and its errors are kept in
 `kb.sync_runs.errors`. This works for one hourly job of about 25,000 units:
 an unchanged run takes 2.3 s and a first import takes 5 batches
-(`docs/run6/SYNC_TIMING.md`). It will not work for document extraction
+(measured in run 6). It will not work for document extraction
 (downloads, parsing, embeddings), which takes minutes per file and must run
 outside a 60 s function.
 
@@ -86,7 +86,7 @@ pgvector and no embedding anywhere (grep `vector|embedding` finds nothing).
 **The bigger fact: there is little text to search.** The sync brings in
 names, mapped props and curation notes as `body` (`sync.py`, "curation
 notes -> body"). A cited file becomes a "Source" link with only its name and
-Drive URL (`docs/ARCHITECTURE.md`, "What the KB cannot supply"). Document
+Drive URL (`docs/architecture/overview.md`, "What the KB cannot supply"). Document
 content never reaches `kb`. The content crawl (`pipeline/06_crawl_content.py`)
 writes redacted text into the pipeline's cache, not into the KB.
 
@@ -123,8 +123,8 @@ restore for production. Whatever Supabase provides depends on the plan and
 is not checked in.
 
 **G10. Remote MCP is single-user.** The HTTP transport binds 127.0.0.1 and
-uses one server-side token (`docs/MCP.md`, "Claude.ai (remote)"). Per-user
-OAuth is designed (`docs/AI_ARCHITECTURE.md`) and not built.
+uses one server-side token (`docs/integrations/mcp.md`, "Claude.ai (remote)"). Per-user
+OAuth is designed (on paper only) and not built.
 
 ---
 
@@ -242,7 +242,7 @@ file. Do not start one until §3.1 and §3.2 have run in production for a month.
 
 The MCP server is already the right shape: a thin HTTP client, the caller's
 own token, RLS as that user, retrieved text marked as data, `sources` on every
-answer (`mcp_server/kb_server.py`, `docs/MCP.md`). Extend it, do not replace it:
+answer (`mcp_server/kb_server.py`, `docs/integrations/mcp.md`). Extend it, do not replace it:
 
 1. Have `search_knowledge` call the hybrid search, and add
    `get_passages(query, k)`, which returns permitted chunks with their
@@ -271,7 +271,7 @@ answer (`mcp_server/kb_server.py`, `docs/MCP.md`). Extend it, do not replace it:
 - **Recovery runbooks.** Cover four cases: (a) a bad sync (`KB_SYNC_ENABLED=false`,
   then `select kb.sync_schedule_remove();`, then restore or archive by
   `actor_type='sync'` in a time window); (b) a bad map read (`NP_MAP_SOURCE=old`,
-  `docs/ARCHITECTURE.md` "Rollback"); (c) a leaked token (revoke in Settings →
+  `docs/architecture/overview.md` "Rollback"); (c) a leaked token (revoke in Settings →
   API tokens); (d) a source ACL mistake (turn off the connector, purge its
   chunks).
 

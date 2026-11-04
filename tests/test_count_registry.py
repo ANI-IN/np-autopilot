@@ -1,6 +1,6 @@
 """The registry crawler counts and stops, and can prove it counted everything.
 
-`REGISTRY-INVENTORY.md` was a floor and said so. This pass is supposed to be a
+`docs/project-history/REGISTRY-INVENTORY.md` was a floor and said so. This pass is supposed to be a
 count, and "we enumerated everything" is exactly the kind of claim that is
 comfortable to make and hard to check — so each of the three ways
 exhaustiveness breaks silently gets a test that breaks it.

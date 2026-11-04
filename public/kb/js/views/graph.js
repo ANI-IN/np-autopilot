@@ -24,7 +24,7 @@
    Live       applyChanges(rows) is the single entry point for change-feed rows (the
               shared feed in live.js, and this page's own poll of /changes from `head`).
    Rendering  Cytoscape's canvas renderer; its WebGL renderer above GL_FROM drawn
-              records (docs/run6/GRAPH_PERF.md). */
+              records (measured in run 6). */
 import { S, el, add, clear, icon, typeIcon, typeLabel, api, toast, failToast, qs, setQuery, empty, errorBox, combobox, nodeSource,
   openDialog, closeDialog, confirmDialog, can, popover, closeMenu, debounce, plural, personName } from '../core.js';
 import { pageHead } from '../page.js';
@@ -37,7 +37,7 @@ import { hierarchy, radial, grouped, structure } from '../graph/layouts.js';
 import { createMinimap } from '../graph/minimap.js';
 import { declutter, labelBoxes } from '../graph/labels.js';
 
-const GL_FROM = 6000;          // WebGL renderer above this many drawn records; measured slower than canvas on real-shaped graphs up to 5,000 (docs/run6/GRAPH_PERF.md); ?renderer=webgl forces it
+const GL_FROM = 6000;          // WebGL renderer above this many drawn records; measured slower than canvas on real-shaped graphs up to 5,000 (run 6); ?renderer=webgl forces it
 const BIG_FROM = 800;          // above: straight edges, texture while moving, edges hidden during motion
 const BUNDLE_FROM = 9;         // this many satellites of one type on one record become one bundle
 const EDGE_LOD_ZOOM = 0.3;     // below this zoom only the hierarchy's lines are drawn
@@ -1064,7 +1064,7 @@ function buildGraph(v, r) {
   }
 
   // ---------------------------------------------------------------- live sync
-  /* The single entry point for change-feed rows (docs/CONTRACTS.md §2): the
+  /* The single entry point for change-feed rows (docs/architecture/contracts.md §2): the
      shared feed (live.js, B1) and this page's own poll both call it. Rows
      carry table_name + row_id (+ kind, node_ids from 0032). A record or
      relationship that was archived or deleted disappears; a renamed one updates

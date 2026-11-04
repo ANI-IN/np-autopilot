@@ -1,7 +1,7 @@
 /* Supabase Realtime over a plain WebSocket (Phoenix channel protocol), with
    presence. Used only when GET /api/kb/realtime returns a configuration, which
    the server does only when the deployment allows that origin in the security
-   policy's connect-src (KB_REALTIME_ORIGIN; see docs/DEPLOYMENT.md). Otherwise
+   policy's connect-src (KB_REALTIME_ORIGIN; see docs/operations/deployment.md). Otherwise
    this is a no-op and live.js polls. Any socket error → onDown → polling.
 
    The socket only says THAT something changed (a kb.changes insert (0029), which

@@ -12,7 +12,7 @@ through web/lib/kb/service.py under that admin's RLS, attributed in the audit
 log with actor_type='import'. There is no owner-privileged write path.
 
 Refuses to --apply against a production database unless --allow-production is
-given explicitly (docs/MIGRATION_REPORT.md has the procedure, backup first).
+given explicitly (take a backup first).
 
 Live fetch uses a service-account key PATH (NP_DRIVE_SA_KEY), scope
 spreadsheets.readonly, and the spreadsheet id from --sheet-id or KB_SHEETS_ID.

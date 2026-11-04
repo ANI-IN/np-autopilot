@@ -68,7 +68,7 @@ def test_the_landing_page_describes_the_projection_not_the_pipeline_graph():
 
     5,048 nodes / 36,677 edges is the PIPELINE graph. The explorer serves the
     projection. Three published figures have already been wrong by carrying one
-    into a statement about the other (STATE.md §1), and the landing page is
+    into a statement about the other, and the landing page is
     exactly where that would happen next.
     """
     stats = json.loads(STATS.read_text(encoding="utf-8"))

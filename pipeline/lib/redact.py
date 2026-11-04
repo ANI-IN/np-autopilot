@@ -1,9 +1,9 @@
 """The contact-data control for CONTENT, applied before anything reaches disk.
 
-This is `docs/SCALE-PLAN.md` Q3's answer for the row-B content crawl.
+This is `docs/project-history/decisions/SCALE-PLAN.md` Q3's answer for the row-B content crawl.
 `lib/sources.py` is an allow-list over `(file, sheet, column)` and a document
 or a slide has none of those three, so the control has to MOVE rather than
-widen — `docs/REGISTRY-INVENTORY.md` §8 Q3, in those words.
+widen — `docs/project-history/REGISTRY-INVENTORY.md` §8 Q3, in those words.
 
 TWO THINGS THIS DELIBERATELY DOES NOT DO.
 

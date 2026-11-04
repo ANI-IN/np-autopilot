@@ -457,8 +457,8 @@ def test_no_api_route_connects_as_owner_or_service_role():
     """
     read_key = re.compile(r"environ(\.get\(|\[)\s*[\"']\w*SERVICE_ROLE")
     # BOTH TREES. This scanned only `web/` while every HTTP route lives in
-    # `api/` — eleven files, none of them ever opened by the check that STATE.md
-    # cites as proof no API route holds the key. It passed because it was
+    # `api/` — eleven files, none of them ever opened by the check that the old state record
+    # cited as proof no API route holds the key. It passed because it was
     # looking in the wrong place, not because the key was absent.
     # DECISIONS §A.7b instance 8.
     scanned = sorted(list((REPO / "web").rglob("*.py"))

@@ -44,7 +44,7 @@ def _configure() -> None:
     stack.configure_env(st)
     # Live updates over Supabase Realtime (D2): the origin comes from the local
     # stack's own status, never a literal. The page's connect-src gets exactly
-    # that origin (http + ws), as docs/DEPLOYMENT.md describes for production.
+    # that origin (http + ws), as docs/operations/deployment.md describes for production.
     origin = st["API_URL"].rstrip("/")
     os.environ["KB_REALTIME_ORIGIN"] = origin
     ws = "ws" + origin[len("http"):]

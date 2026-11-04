@@ -92,7 +92,7 @@ def test_the_build_script_prunes_before_building_and_checks_after():
 
 
 def test_the_runsheet_checks_the_map_before_deploying():
-    rs = (REPO / "docs" / "WINDOW-RUNSHEET.md").read_text(encoding="utf-8")
+    rs = (REPO / "docs" / "operations" / "window-runsheet.md").read_text(encoding="utf-8")
     step4 = next(l for l in rs.splitlines() if l.startswith("| 4 |"))
     assert step4.index("check_function_map.py") < step4.index("--prod")
     assert "vercel deploy --prebuilt`" in step4 or "preview" in step4

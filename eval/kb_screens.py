@@ -2,10 +2,11 @@
 """Run 6: screenshot every screen and record every browser console error and
 warning, on a LOCAL server (the real-data copy or the demo). Used for the
 before (A1) and after (B3, Phase C) sets. Prints counts only; real data stays
-in the screenshots, which live under docs/run6/ (local servers only).
+in the screenshots, which go to the gitignored .measure/screens by default
+(local servers only; never commit them).
 
   python eval/kb_screens.py --base http://localhost:8766 --password ik-realdata-local \
-      --email realdata-admin@interviewkickstart.com --out docs/run6/before/realdata [--width 1536] [--dark]
+      --email realdata-admin@interviewkickstart.com [--out .measure/screens/realdata] [--width 1536] [--dark]
 
 Writes <out>/<NN>-<screen>.png and <out>/console.json; exit 1 on a page error.
 One browser, one page, sequential (the laptop's memory).
@@ -38,7 +39,7 @@ def main() -> int:
     ap.add_argument("--base", required=True)
     ap.add_argument("--email", required=True)
     ap.add_argument("--password", required=True)
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--out", default=".measure/screens")
     ap.add_argument("--width", type=int, default=1536)
     ap.add_argument("--height", type=int, default=900)
     ap.add_argument("--dark", action="store_true")

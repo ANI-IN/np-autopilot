@@ -67,7 +67,7 @@ def load_merged(*, include_sensitive: bool = False) -> dict:
 
     THE DEFAULT IS FALSE HERE AND TRUE IN `load_graph`, deliberately. This is
     what the projection reads, and the projection's scope is a decision
-    recorded in `docs/INGEST-SCOPE-REVERSAL.md` whose approval block is blank.
+    recorded in `docs/project-history/decisions/INGEST-SCOPE-REVERSAL.md` whose approval block is blank.
     A default of True would mean the safe path is the one the caller has to
     remember to ask for.
 

@@ -7,7 +7,7 @@ and, when the target was a folder, recursed into it. That is fine for a corpus
 which is one folder owned by the B2C account — a shortcut there can only point
 somewhere already controlled.
 
-It is not fine for the scale-up. `docs/REGISTRY-INVENTORY.md` measured ~1 file
+It is not fine for the scale-up. `docs/project-history/REGISTRY-INVENTORY.md` measured ~1 file
 in 10 in the registry folders as a shortcut, and a shortcut's target may live
 anywhere in Drive. Following them means **the corpus boundary is whatever a
 third party linked to.**

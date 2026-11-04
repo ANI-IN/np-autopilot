@@ -23,7 +23,7 @@ source:
 
 # The corpus copy. Kept in the graph as a SUPERSEDED source — not deleted,
 # not read for facts. (Its SD1/1 instructor row was always there; the parser
-# dropped it — see DECISIONS / HANDOFF. Superseding it is about which sheet is
+# dropped it — see docs/DECISIONS.md. Superseding it is about which sheet is
 # authoritative, not about that bug.)
 superseded:
   - drive_id: 1f4T6u2mcWjeJuBa02_E_Svrid4BbaCnB
@@ -49,7 +49,7 @@ excluded:
   - tab: Instructor(FullStack)
     reason: an older staffing table, superseded by the Full Stack tab's instructor block
   - tab: Interview Repo
-    reason: module -> question-bank links; candidate for a later release (HANDOFF §D.8), not ingested
+    reason: module -> question-bank links; candidate for a later release, not ingested
   - tab: Upskill Guide
     reason: out of scope for this release
   - tab: Cloud Engineering

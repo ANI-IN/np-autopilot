@@ -109,13 +109,3 @@ def restore(conn) -> dict:
                         where id = any(%s::uuid[]) and archived_at is not null""", (ids,)).rowcount
     conn.execute("delete from kb.legacy_archive where node_id = any(%s::uuid[])", (ids,))
     return {"restored": n, "entries_cleared": len(ids)}
-
-
-#: The PREPARED permanent delete (not run; owner confirmation required). It
-#: removes only records the legacy step archived and that are still archived;
-#: kb.nodes' admin-only, archived-only delete rule applies, and the audit log
-#: keeps every row.
-PERMANENT_DELETE_SQL = """
-delete from kb.nodes n using kb.legacy_archive la
- where n.id = la.node_id and n.archived_at is not null;
-"""

@@ -2,7 +2,7 @@
 
 This reverses part of Q3's default: until now a profile was created only by an
 administrator running pipeline/grant_access.py. The reversal is recorded in
-docs/AUTH.md, because it changes what "a profile grants access" means.
+docs/architecture/auth.md, because it changes what "a profile grants access" means.
 
 WHAT THESE TESTS ARE FOR. The auto path must be incapable of three things, and
 each has its own test rather than being argued from the SQL:

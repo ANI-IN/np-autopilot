@@ -23,7 +23,7 @@ facts:
       Source links are rendered without an "you may not have access" caveat.
       This is NOT a statement that every link works: a file whose export was
       refused still gets its Drive link because canDownload false stops an
-      export, not a human opening it (docs/DOWNLOAD-DISABLED-FILES.md), and a
+      export, not a human opening it (docs/project-history/DOWNLOAD-DISABLED-FILES.md), and a
       link that 404s is a broken link, not a permission problem. Where a link
       is ABSENT the UI says which kind is missing and why, rather than
       implying access.

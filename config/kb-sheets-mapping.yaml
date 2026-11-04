@@ -1,5 +1,5 @@
 # Google Sheets → KB import mapping (pipeline/kb_import_sheets.py).
-# docs/MIGRATION_MAPPING.md explains every rule here.
+# docs/architecture/import-mapping.md explains every rule here.
 #
 # AN ALLOW-LIST OF COLUMNS, like pipeline/lib/sources.py: only the headers named
 # below are ever read. A header that looks like contact data (email, phone,

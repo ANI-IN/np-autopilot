@@ -9,7 +9,7 @@ dropped, because the reasoning is what makes the decision re-checkable if it is
 reopened.**
 
 The trigger was small: the instructor panel could show a LinkedIn link. The data
-exists — `01-corpus-inventory.md` counts **4,524 distinct LinkedIn URLs**
+exists — `docs/project-history/design/01-corpus-inventory.md` counts **4,524 distinct LinkedIn URLs**
 corpus-wide, in `Instructors Directory.xlsx`, `Data and Management.xlsx` and
 `Resource Collection Mastersheet`. Nothing is in the graph because **D4 strips
 contact fields (email / phone / LinkedIn / Discord) at extraction**.
@@ -87,7 +87,7 @@ same type with different props.
 
 ## 2 · `acceler-presales-plugin` is the live case, and we are not the exception
 
-`04-reference-review.md` §0 records it: a **public** repository, proprietary
+The external-reference review (§0; removed 2026-11-04, in git history) records it: a **public** repository, proprietary
 licence, containing client names, deal sizes up to $537M, and **123 instructor
 LinkedIn URLs**. Our own audit flagged it as third-party PII exposure, fetched
 anonymously with no credential.
@@ -116,7 +116,7 @@ D11: *removing someone from the org stops future updates but does not remove the
 graph snapshot already sitting in their local plugin cache.*
 
 Contact data in a snapshot **outlives its deletion from the graph**. Revocation,
-which `AUTH.md` describes as immediate and durable, stops being either.
+which `docs/architecture/auth.md` describes as immediate and durable, stops being either.
 
 So if this were ever done, the placement is not a choice: **API-only, never in
 the snapshot.** That is consistent with §E.1 (cached snapshot + authenticated API
@@ -126,8 +126,8 @@ people would want the link.
 
 ## 4 · Which role
 
-Not `member`. `member` is every IK employee, and `STATE.md` holds the graph at
-`member`-only while R18 is open.
+Not `member`. `member` is every IK employee, and the project's state record (since removed) held the graph at
+`member`-only while R18 was open.
 
 `recruiting` is the only candidate — it already sees the hiring funnel. But note
 what that implies: **the link would be visible for exactly the population where
@@ -162,7 +162,7 @@ So: if the argument for LinkedIn is contact, it admits email and phone and
 should be refused with them. If the argument is disambiguation, **it does not
 require projecting anything**, and D4 stands untouched.
 
-One caveat against over-claiming "it's public anyway": `01-corpus-inventory.md`
+One caveat against over-claiming "it's public anyway": `docs/project-history/design/01-corpus-inventory.md`
 records a **LinkedIn-enrichment sheet with member identifiers**. Enrichment data
 is not a self-published profile, and treating it as one would be wrong on the
 facts before it was wrong on the principle.
@@ -228,7 +228,7 @@ because it exists and is easy, not because a traversal needs it.
 
 This is the population with a real question — *who is this instructor,
 professionally* — and a real relationship. It is also, exactly,
-**acceler's population**. `04-reference-review.md` §0 records them publishing
+**acceler's population**. The external-reference review (§0, in git history) records them publishing
 **123 instructor LinkedIn URLs** in a repository that turned out public, and our
 own audit called it third-party PII exposure. **Population (2) is 497 — four
 times acceler's, and the same kind.**

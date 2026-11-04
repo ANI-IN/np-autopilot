@@ -2,7 +2,7 @@
 """B3 before/after, LOCALLY: the same instrument both times.
 
 Runs the real app (eval/local_server.py: only guard.identify stubbed) over the
-local Supabase stack and measures what docs/PERF-BASELINE.md reports:
+local Supabase stack and measures:
 
   page       5 cold loads, each a fresh browser context: TTFB, first contentful
              paint, FIRST GRAPH FRAME (the structure view's first frame with

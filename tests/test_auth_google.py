@@ -217,7 +217,7 @@ def test_a_known_shared_account_is_flagged(signing, monkeypatch):
 
     If people sign in as it, several humans resolve to one identity and the §E.4
     audit trail cannot answer its own question. It cannot be detected from a
-    token, so known addresses are configured and flagged. docs/AUTH.md says the
+    token, so known addresses are configured and flagged. docs/architecture/auth.md says the
     log identifies an account, not a person.
     """
     make, jwks, _ = signing

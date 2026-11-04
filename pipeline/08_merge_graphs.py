@@ -7,8 +7,9 @@ join is a HUMAN DECISION read from config/module-merges.yaml. Fusing them would
 put an answer sheet inside a build step and make the build unreproducible
 whenever the answers change.
 
-Writes `knowledge/merged_graph.json`. That file is what a projection should
-read once Phase B lands; nothing here projects.
+Writes `knowledge/merged_graph.json` (gitignored; a local output, not
+tracked). The projection and every reader merge in memory instead
+(graphio.load_merged) and never read the file; nothing here projects.
 """
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Run 6 contracts (docs/CONTRACTS.md): the graph read API, the change feed's
+"""Run 6 contracts (docs/architecture/contracts.md): the graph read API, the change feed's
 kind / node_ids, and the type styles. Local DB only."""
 from __future__ import annotations
 

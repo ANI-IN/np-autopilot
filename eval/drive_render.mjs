@@ -2,6 +2,8 @@
 // string inlined into graph.html) against the real payload.
 // Exercises: search, type/theme filters, component split, edge cap, click-through.
 // Does NOT exercise: canvas painting, real mouse events, browser layout.
+// knowledge/_graph_logic.mjs and _graph_data.json are gitignored local outputs
+// of pass 5: run `python pipeline/05_render_html.py` first on a fresh clone.
 import {readFileSync} from 'node:fs';
 import {buildIndex, components, search, visible, degreeMap, neighboursOf}
   from '../knowledge/_graph_logic.mjs';

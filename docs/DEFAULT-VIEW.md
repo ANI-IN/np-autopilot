@@ -1,7 +1,9 @@
 # DEFAULT VIEW — owner decisions, 2026-09-29
 
-Approved by Animesh Kumar. This replaces the bounded ~60-node overview that
-`web/lib/data.py::overview()` serves today. Phase B builds from this file.
+Approved by Animesh Kumar. This replaced the bounded ~60-node overview that
+`web/lib/data.py::overview()` served at the time. Phase B built from this file.
+Today the map routes are served from `kb` by `web/lib/kb/npmap.py`;
+`web/lib/data.py` serves them only under the `NP_MAP_SOURCE=old` rollback.
 
 ---
 
@@ -44,7 +46,7 @@ the Velaga/Velega alias and PPL-11's `Bharath`. The edge count is unchanged. **3
 
 `file` rises 1,440 → 1,957 because the 508 unavailable-content nodes were
 typed `live_class` and are now typed `file`. They are still **marked, never
-dropped** — `docs/DOWNLOAD-DISABLED-FILES.md` is unchanged.
+dropped** — `docs/project-history/DOWNLOAD-DISABLED-FILES.md` is unchanged.
 
 ---
 
@@ -104,11 +106,10 @@ origin: hand)**: the index sped up search only for the table owner (18.5 →
 1.4 ms); under RLS it gains nothing, because `ILIKE` is not LEAKPROOF and the
 policy must run first, so the planner can never use it. Search stays ~9 ms
 p50, and a SECURITY DEFINER search would duplicate the visibility rules
-(`docs/PERF-BASELINE.md` §B3);
+(measured in B3);
 item 4 unchanged — the canvas is 2D and no WebGL path was built, since B3's
 scope was the other five. Locally: settled 135 ms, default-view payload
-127,261 B brotli (target ≤ 150 KB). Production figures are Phase D's
-(`docs/PERF-BASELINE.md`).
+127,261 B brotli (target ≤ 150 KB). Production figures are Phase D's.
 
 Targets, against a measured ~360 ms Vercel cold-start + RTT floor:
 
@@ -190,7 +191,7 @@ Live since the window of 2026-09-30 (`dpl_3HZSPGpQEsz9gogu9WofSGQdJR8r`).
 
 | decision | held by |
 |---|---|
-| **Launch the curriculum release now; expand the scope next** (`docs/archive/NEXT-PHASE.md`) | — (order of work) |
+| **Launch the curriculum release now; expand the scope next** (the NEXT-PHASE plan, archived; in git history) | — (order of work) |
 | **Old and new domains stay SEPARATE**, never merged; current domains wear their code (`SD1 · Full Stack`, SD1–SD4); legacy carries a **legacy badge everywhere** it appears | `public/index.html` (domain labels, badges); `tests/test_default_view_labels.py` |
 | **The map is THE default for every type**: one network of every current type (domain hubs, modules, weeks, sessions, assignments, reviews, current decks, instructors with role-coloured edges, people, themes, workflows); topics, files, repos, curriculum docs and programmes stay behind their chips; legacy as collapsed groups | `test_the_default_map_holds_every_current_type` |
 | **Chips filter the map, not a list** (List is its own toggle); a filtered-out parent stays as a **ghost anchor**, so nothing is a bare dot | `test_a_chip_filters_the_map_not_a_list`, `test_sessions_alone_are_never_bare_dots`, `test_3d_chips_keep_ghost_anchors` |

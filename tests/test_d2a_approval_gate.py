@@ -6,7 +6,7 @@ privacy consequences, and until this file existed the answer was "nothing" —
 the block could be blanked and the crawler would run regardless.
 
 Modelled on `project_graph.py`'s `--scope full` refusal, which points at
-`docs/INGEST-SCOPE-REVERSAL.md`. The difference worth keeping: that refusal is
+`docs/project-history/decisions/INGEST-SCOPE-REVERSAL.md`. The difference worth keeping: that refusal is
 DERIVED (it queries `pg_policies` for the thing it claims is missing) rather
 than asserted, so it stops refusing when the condition is met and starts again
 if the condition is removed. This gate has the same shape — it reads the block

@@ -11,4 +11,4 @@ Python 3.12+ with `mcp` and `httpx` (`pip install mcp==1.30.0 httpx==0.28.1`).
 
 `server/kb_server.py` is a copy of `mcp_server/kb_server.py` (a plugin cannot
 reference files outside its own root). `tests/test_kb_plugin.py` fails if the
-two differ. See docs/MCP.md for behaviour and security.
+two differ. See docs/integrations/mcp.md for behaviour and security.

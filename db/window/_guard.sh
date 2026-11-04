@@ -1,5 +1,5 @@
 # Sourced by the window scripts. Refuses an output/input directory inside the
-# repository or under a synced folder (07-risks.md R22): a copy of production
+# repository or under a synced folder (docs/operations/risk-register.md R22): a copy of production
 # must never land where iCloud or the Drive backup would carry it off.
 guard_dir() {
   local d; d="$(cd "$1" 2>/dev/null && pwd -P)" || { echo "REFUSED: $1 does not exist"; exit 2; }

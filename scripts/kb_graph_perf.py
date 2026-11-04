@@ -15,7 +15,7 @@ LOCAL ONLY. Two ways to run it:
      hub   one hub with N-1 neighbours (+ ~2N relationships among them), opened as
            #/graph/<hub>?limit=N&bundle=0 -- every record drawn (the run-3 measurement;
            a page without bundling ignores bundle=0, so it also measures the old page)
-     tree  shaped like the real data (docs/run6/GRAPH_PERF.md): domains > modules >
+     tree  shaped like the real data (run 6 measurement): domains > modules >
            weeks / sessions, ~88 % topics under modules, instructors teaching modules,
            themes > processes, team members. Opened as the whole-graph overview #/graph
            (default: satellites bundled) and #/graph?expand=all (every record drawn).

@@ -1,6 +1,6 @@
 """A `production_only` test cannot write — proved against the local stack.
 
-The tests marked `production_only` run against production (HANDOFF.md §D.4),
+The tests marked `production_only` run against production (docs/operations/testing.md §4),
 so "they are read-only" has to be a property of the connection, not of how
 they happen to be written. These canaries attempt the writes a careless test
 could make and assert each is refused by the server.

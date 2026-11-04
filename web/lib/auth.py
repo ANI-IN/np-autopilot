@@ -83,7 +83,7 @@ class Identity:
         """Best-effort. A shared team mailbox resolves several humans to one id.
 
         Cannot be detected reliably from a token — Google does not say. Named
-        here so docs/AUTH.md can be honest that the audit log identifies an
+        here so docs/architecture/auth.md can be honest that the audit log identifies an
         ACCOUNT, not a person, and so a known shared address is at least flagged.
         """
         local = self.email.split("@", 1)[0].lower()

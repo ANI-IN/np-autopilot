@@ -20,14 +20,14 @@ forks 0 · stars 0 · watchers 0 · collaborators: ANI-IN only
 ```
 
 **Every document in this project states the repo is private.** `README.md`
-("`ANI-IN/np-autopilot`, private, no collaborators"), `NEXT.md`, `docs/AUDIT.md`,
+("`ANI-IN/np-autopilot`, private, no collaborators"), `NEXT.md`, `docs/AUDIT.md` (now `docs/project-history/audit.md`),
 `docs/DECISIONS.md` §F, and doc 07 **R16** — which flags the *reference
 implementation* being public as a risk **while contrasting it against this repo
 being private**. The assumption was never checked against the API until now.
 
 **Set to private immediately on discovery.** Exposure window ≈ 8 days, and the
 repository was subsequently **deleted and recreated** — different immutable id
-(1363038448 → 1374030791), different node_id, `private: true`. See `07-risks.md`
+(1363038448 → 1374030791), different node_id, `private: true`. See `docs/operations/risk-register.md`
 R18 for the full pair.
 
 ### What was publicly readable during that window
@@ -51,7 +51,7 @@ names the reference implementation's client accounts and its `$940M` figure.
 ### What was NOT exposed
 
 **The corpus itself was never committed.** All seven directories are gitignored,
-and the git-history scan in `docs/AUDIT.md` §5 confirmed no corpus file has ever
+and the git-history scan in `docs/project-history/audit.md` §5 confirmed no corpus file has ever
 been added. So the 8,001 email addresses, 8,074 phone numbers and 4,524 LinkedIn
 URLs were **not** in the public repo — they live only in the corpus and now in
 `.drive-cache/`.

@@ -6,7 +6,7 @@ timeline") and moved People into Settings, so public/kb/js/aliases.js maps the
 addresses a person would have typed or bookmarked to the page they became, and
 the router replaces the address before it looks up ROUTES. One test per alias.
 
-No server path was removed in run 6 (docs/LEGACY_REMOVAL.md "Redirects"); the
+No server path was removed in run 6 (docs/operations/legacy-removal.md "Redirects"); the
 server half asserts that every server path that existed before run 6 is still
 routed (a 405 for the wrong method, never a 404), without a database.
 

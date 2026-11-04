@@ -274,7 +274,7 @@ def cmd_verify() -> int:
 
 
 def _parity(c) -> dict:
-    """The numbers docs/PARITY_REPORT.md checks against NP Autopilot."""
+    """The numbers the parity check (eval/kb_parity.py) compares with NP Autopilot."""
     q = lambda sql: c.execute(sql).fetchone()[0]                         # noqa: E731
     by = lambda typ, leg: q(f"""select count(*) from kb.nodes n join kb.node_types t on t.id = n.type_id
                                 where t.key = '{typ}' and n.is_legacy = {leg}""")       # noqa: E731

@@ -4,7 +4,7 @@
 SCOPE CHANGED 2026-09-18, migration 0015. `member` is no longer granted here:
 a verified IK Workspace identity gets it automatically at signup, because the
 manual step gated membership of the company — which layers 0 and 3 already
-decide — rather than gating anything this script could refuse. docs/AUTH.md
+decide — rather than gating anything this script could refuse. docs/architecture/auth.md
 records that as a reversal, with the reasoning and what it does NOT change.
 
 This remains the only way to grant `recruiting` or `admin`, which are the roles

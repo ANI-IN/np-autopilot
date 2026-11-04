@@ -10,7 +10,7 @@ before anything is committed to.
 
 WHY IT IS BUILT TO PROVE EXHAUSTIVENESS
 ---------------------------------------
-`docs/REGISTRY-INVENTORY.md` was a floor — 37 folders of at least 187 — and it
+`docs/project-history/REGISTRY-INVENTORY.md` was a floor — 37 folders of at least 187 — and it
 said so on every page. This is not a floor, and the difference has to be
 demonstrated rather than asserted. Three things break exhaustiveness silently,
 and all three were already visible in that inventory:
@@ -76,7 +76,7 @@ SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 #: The registry, transcribed from the `links` sheet. Hand-entered on purpose:
 #: the sheet is excluded from ingestion (it is configuration, not corpus), so
 #: the repository holds the scope rather than depending on a file it refuses to
-#: read. `docs/REGISTRY-INVENTORY.md` §0 records the five rows verbatim.
+#: read. `docs/project-history/REGISTRY-INVENTORY.md` §0 records the five rows verbatim.
 REGISTRY = [
     ("A", "Applied Agentic AI- Whole Content folder",
      "1yHZYpbJTjfxumTMU5qNvfSuLXLImJpad"),

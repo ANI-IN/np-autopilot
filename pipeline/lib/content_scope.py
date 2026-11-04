@@ -16,7 +16,7 @@ from typing import NamedTuple
 # Scope. The REGISTRY declares it; readability never does.
 # --------------------------------------------------------------------------
 #
-# `docs/REGISTRY-INVENTORY.md` §12: row C is shared `anyone`/reader, so for C
+# `docs/project-history/REGISTRY-INVENTORY.md` §12: row C is shared `anyone`/reader, so for C
 # "the account can read it" and "it is in scope" are connected by the public
 # internet. The crawler must never use the first as a proxy for the second.
 #
@@ -65,7 +65,7 @@ _DECK_MIMES = {
 def may_extract_people(mime: str) -> bool:
     """D1. False for every deck shape, at any confidence, with any flag.
 
-    `docs/REGISTRY-INVENTORY.md` §7 measured why: four `Name, Role, Company`
+    `docs/project-history/REGISTRY-INVENTORY.md` §7 measured why: four `Name, Role, Company`
     tuples on registry decks, two fabricated, structurally identical to the two
     real ones — and one fabricated name is also a rated instructor elsewhere.
     The distinction an extractor would have to make is not in the artefact.

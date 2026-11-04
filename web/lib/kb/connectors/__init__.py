@@ -1,5 +1,5 @@
 """The sources the sync engine (web/lib/kb/sync.py) can run: name -> connector.
-The interface is connectors/base.py; docs/ARCHITECTURE.md, "Connectors",
+The interface is connectors/base.py; docs/architecture/overview.md, "Connectors",
 says how a new source plugs in."""
 from __future__ import annotations
 

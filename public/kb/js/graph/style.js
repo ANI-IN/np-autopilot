@@ -2,7 +2,7 @@
    DOM state, so both graphs share it -- the knowledge base Graph page and the
    NP Autopilot map at "/" (which loads it with a dynamic import()).
 
-   Input is the type metadata from GET /api/kb/types (docs/CONTRACTS.md §3):
+   Input is the type metadata from GET /api/kb/types (docs/architecture/contracts.md §3):
      node_types[]  key, label, plural, icon, color, shape, is_container
      edge_types[]  key, label, color, line_style
    Output:

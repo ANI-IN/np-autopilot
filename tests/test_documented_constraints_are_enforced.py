@@ -1,7 +1,8 @@
 """Constraints the documents assert, that nothing in the program checked.
 
-Found by running DECISIONS §A.7b instance 9's question over STATE.md,
-DECISIONS.md, AUTH.md and 07-risks.md: *for every constraint these assert, what
+Found by running DECISIONS §A.7b instance 9's question over STATE.md (since
+deleted), DECISIONS.md, AUTH.md (now docs/architecture/auth.md) and the risk
+register (docs/operations/risk-register.md): *for every constraint these assert, what
 in the program would fail if it stopped being true?* 113 constraint-shaped
 statements, 54 naming a concrete artefact, 24 distinct system constraints — and
 five with no test at all.
@@ -136,7 +137,7 @@ def test_employee_ids_are_evidence_never_a_key():
 
 
 # ---------------------------------------------------------------------------
-# 4. profiles.domain_is_ik — AUTH.md. The DATABASE enforces it; nothing
+# 4. profiles.domain_is_ik — docs/architecture/auth.md. The DATABASE enforces it; nothing
 #    verified the enforcement still existed.
 # ---------------------------------------------------------------------------
 
@@ -154,12 +155,12 @@ def test_the_domain_check_constraint_still_exists():
         names = {r[0] for r in cur.fetchall()}
     assert "domain_is_ik" in names, (
         f"profiles.domain_is_ik is gone; CHECK constraints present: {sorted(names)}. "
-        "AUTH.md says the domain rule lives in the database so a route that "
+        "docs/architecture/auth.md says the domain rule lives in the database so a route that "
         "forgot to check cannot create a row that bypasses it.")
 
 
 # ---------------------------------------------------------------------------
-# 5. pipeline/ never runs on Vercel — STATE.md
+# 5. pipeline/ never runs on Vercel
 # ---------------------------------------------------------------------------
 
 def test_vercelignore_excludes_every_pipeline_entrypoint():

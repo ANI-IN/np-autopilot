@@ -529,8 +529,8 @@ def structure(conn) -> dict:
 
     B3: COLUMNAR, LAID OUT, AND WITHOUT THE PANEL. Coordinates come from
     node_layout (computed at projection); panel-only properties are left for
-    /api/node?detail=1. 2.59 MB of JSON became a few hundred KB — see
-    docs/perf/.
+    /api/node?detail=1. 2.59 MB of JSON became a few hundred KB (measured
+    before and after B3).
 
     PROVENANCE IS STILL UNREACHABLE HERE. `sourced_from` is excluded, so the
     degree-18,134 file hubs cannot enter the payload.

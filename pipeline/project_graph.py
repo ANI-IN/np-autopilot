@@ -380,7 +380,7 @@ def main() -> int:
                 "can contain a connection string)\n"
                 "An unverifiable path is treated as an incomplete one.\n"
                 "Projecting the sensitive half is a recorded decision either "
-                "way — see\ndocs/INGEST-SCOPE-REVERSAL.md, whose approval block "
+                "way — see\ndocs/project-history/decisions/INGEST-SCOPE-REVERSAL.md, whose approval block "
                 "is blank.")
         if missing:
             sys.exit(
@@ -392,7 +392,7 @@ def main() -> int:
                 "looks identical to having worked.")
         # The path is READY and that is not the same as APPROVED. Projecting
         # 1,902 rows about named external people is a recorded decision, not a
-        # flag someone passes — docs/INGEST-SCOPE-REVERSAL.md carries the
+        # flag someone passes — docs/project-history/decisions/INGEST-SCOPE-REVERSAL.md carries the
         # approval block and it is deliberately blank.
         sys.exit(
             "--scope full is refused: the RLS path is ready, the DECISION is not.\n"
@@ -400,7 +400,7 @@ def main() -> int:
             "  np_can_see_sensitive() : present\n"
             "\nProjecting the sensitive half is 277 hiring rejections and 1,625\n"
             "in-pipeline candidates about named external people. That is a\n"
-            "recorded decision under R6 — see docs/INGEST-SCOPE-REVERSAL.md,\n"
+            "recorded decision under R6 — see docs/project-history/decisions/INGEST-SCOPE-REVERSAL.md,\n"
             "whose approval block is blank. Fill it in, then remove this refusal\n"
             "in the same commit so the record and the capability arrive together.\n"
             "\nAND DECIDE THIS TOO, because approving the scope decides it\n"
@@ -412,8 +412,8 @@ def main() -> int:
             "That is safe only while the sensitive half is not projected, which\n"
             "is the thing you are about to change. Should the default, automatic\n"
             "role still read what --scope full projects?\n"
-            "  docs/AUTH.md -> 'Say it plainly'\n"
-            "  docs/INGEST-SCOPE-REVERSAL.md -> 'A dependency that did not exist'")
+            "  docs/architecture/auth.md -> 'Say it plainly'\n"
+            "  docs/project-history/decisions/INGEST-SCOPE-REVERSAL.md -> 'A dependency that did not exist'")
 
     # PUBLIC HALF ONLY. include_sensitive=False is the whole scope decision, in
     # one argument, rather than a filter applied later that someone can forget.

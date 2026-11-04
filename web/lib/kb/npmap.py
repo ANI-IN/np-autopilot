@@ -1,8 +1,8 @@
 """The NP Autopilot map ("/") read from the knowledge base (run 6, B1).
 
-docs/ARCHITECTURE.md (top): `kb` is the single source of truth. The map's
+docs/architecture/overview.md (top): `kb` is the single source of truth. The map's
 routes (/api/structure, /overview, /node, /neighbourhood, /search, /staffing,
-/coverage, /me) keep the RESPONSE SHAPES of web/lib/data.py (docs/CONTRACTS.md
+/coverage, /me) keep the RESPONSE SHAPES of web/lib/data.py (docs/architecture/contracts.md
 §5: frozen) and read kb instead of the old projection tables.
 
 THE VOCABULARY IS TRANSLATED BACK, never written out here. The map speaks the
@@ -32,7 +32,7 @@ collisions are resolved deterministically within one model).
 ONE MODEL PER CHANGE-FEED HEAD. Every route answers from one in-memory model of
 the live KB, rebuilt when the newest kb.changes id moves (any write anywhere
 moves it) and cached per process for that head and the caller's ability to
-read the KB (RLS: every member reads the same rows, docs/ARCHITECTURE.md).
+read the KB (RLS: every member reads the same rows, docs/architecture/overview.md).
 
 ROLLBACK: NP_MAP_SOURCE=old serves the old tables (web/lib/data.py) again.
 """
@@ -386,7 +386,7 @@ def provenance(conn, node_id: str) -> dict:
     """The KB keeps provenance as the record's "Source" links (the sync made one
     per cited file): shown as corpus rows with the file's name and link. The
     sheet / row / column detail of the old node_sources is not in the KB
-    (listed in docs/ARCHITECTURE.md), so those keys are empty."""
+    (listed in docs/architecture/overview.md), so those keys are empty."""
     m = model(conn)
     nid = resolve(conn, node_id)
     kid = m["nodes"][nid]["kb_id"] if nid else None

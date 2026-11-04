@@ -521,7 +521,7 @@ def main() -> int:
 
     # THE FIRST THING THIS PASS DOES. A blank block refuses the crawl and names
     # the file, the way project_graph.py --scope full names
-    # docs/INGEST-SCOPE-REVERSAL.md.
+    # docs/project-history/decisions/INGEST-SCOPE-REVERSAL.md.
     try:
         ok = approval.require_d2a()
     except approval.NotApproved as exc:

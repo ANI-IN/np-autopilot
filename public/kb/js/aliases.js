@@ -1,5 +1,5 @@
 /* Old addresses that people may have bookmarked, and where they live now
-   (run 6, F6; docs/LEGACY_REMOVAL.md "Redirects"). No DOM, no imports, so a
+   (run 6, F6; docs/operations/legacy-removal.md "Redirects"). No DOM, no imports, so a
    test can load it with node. The router (app.js) replaces the address, so the
    old one does not stay in the browser history.
 

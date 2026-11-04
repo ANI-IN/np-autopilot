@@ -85,7 +85,8 @@ def test_prose_describing_the_exclusion_is_not_flagged():
     0 and the fetch-time exclusion test. A check that cannot tell a prohibition
     from its own description is one that gets silenced by deleting the comment.
     """
-    documented = [REPO / "01-corpus-inventory.md", REPO / "07-risks.md",
+    documented = [REPO / "docs" / "project-history" / "design" / "01-corpus-inventory.md",
+                  REPO / "docs" / "operations" / "risk-register.md",
                   REPO / "docs" / "CACHE-EXPOSURE.md"]
     flagged = {p for p, _ in chk.scan()}
     for doc in documented:
@@ -106,7 +107,11 @@ def test_the_threshold_still_separates_prose_from_data():
     quietly flagging documentation or quietly passing a dump.
     """
     worst_prose = 0
-    for doc in REPO.glob("*.md"):
+    # The root docs, plus the former root docs moved under docs/ on 2026-11-04
+    # (the densest prose, design/01-corpus-inventory.md, is among them).
+    prose = [*REPO.glob("*.md"), *REPO.glob("docs/project-history/**/*.md"),
+             REPO / "docs" / "operations" / "risk-register.md"]
+    for doc in prose:
         _, occ = _scan_one(doc)
         worst_prose = max(worst_prose, occ)
     assert worst_prose < chk.PROSE_OCCURRENCES, (
@@ -126,7 +131,7 @@ def test_the_script_exits_nonzero_when_it_finds_something(tmp_path):
 # ---------------------------------------------------------------------------
 # CONTACT SIGNATURE CLASS — added 2026-09-20.
 #
-# The incident: the first draft of docs/REGISTRY-INVENTORY.md carried four
+# The incident: the first draft of docs/project-history/REGISTRY-INVENTORY.md carried four
 # instructors' personal email addresses. It was redacted by hand. Nothing in
 # the repository would have caught it, because this guard's signatures were
 # payroll-only — the A7B question-3 shape, about this repository rather than
@@ -219,7 +224,7 @@ def test_prose_about_contact_columns_is_not_flagged():
     """
     documented = [REPO / "docs" / "CONTACT-DATA.md",
                   REPO / "docs" / "CACHE-EXPOSURE.md",
-                  REPO / "docs" / "REGISTRY-INVENTORY.md",
+                  REPO / "docs" / "project-history" / "REGISTRY-INVENTORY.md",
                   REPO / "CLAUDE.md"]
     flagged = {p for p, _ in chk.scan()}
     for doc in documented:
@@ -238,7 +243,7 @@ def test_the_contact_header_threshold_still_separates_prose_from_data():
 
     Asserts the measured gap the threshold sits in. Measured 2026-09-20 with
     the shipped matcher, the densest legitimate prose was CACHE-EXPOSURE.md and
-    01-corpus-inventory.md at 10 each, against a threshold of 100. If
+    design/01-corpus-inventory.md at 10 each, against a threshold of 100. If
     documentation grows denser, or the signature list widens, this fails here
     rather than by quietly flagging the documentation.
 

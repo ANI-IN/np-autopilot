@@ -207,7 +207,7 @@ rules would still exclude 336 people — **84 of them for holding a PhD, Dr or M
 long multi-part names that are disproportionately South Asian.** Noise removal
 that correlates with a category of person is not noise removal.
 
-Full audit in `10-threshold-audit.md`.
+Full audit: git history (the 2026-09-10 threshold audit).
 
 ---
 

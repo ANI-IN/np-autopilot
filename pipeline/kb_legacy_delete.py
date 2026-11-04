@@ -10,7 +10,7 @@ modules (run 6 resume, R3). Rules: web/lib/kb/legacy_delete.py. Counts only.
     SUPABASE_DB_URL_SESSION=<db> python pipeline/kb_legacy_delete.py restore <export.json>
         put every exported row back (same ids) and switch the sync exclusions off
 
-Refuses production unless NP_ALLOW_LEGACY_DELETE_ON_PRODUCTION=yes (GO_LIVE.md
+Refuses production unless NP_ALLOW_LEGACY_DELETE_ON_PRODUCTION=yes (docs/operations/GO_LIVE.md
 step; never set in this repo's runs).
 """
 from __future__ import annotations
@@ -37,7 +37,7 @@ def main() -> int:
     u = urlparse(url)
     is_prod = db.PROD_PROJECT_REF in (u.hostname or "") or db.PROD_PROJECT_REF in (u.username or "")
     if is_prod and os.environ.get("NP_ALLOW_LEGACY_DELETE_ON_PRODUCTION") != "yes":
-        raise SystemExit("REFUSED: this is production; see docs/GO_LIVE.md (legacy deletion step)")
+        raise SystemExit("REFUSED: this is production; see docs/operations/GO_LIVE.md (legacy deletion step)")
     import psycopg
     from lib.kb import legacy_delete as ld
     with psycopg.connect(url) as conn:

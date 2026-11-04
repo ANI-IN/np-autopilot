@@ -1,4 +1,4 @@
-"""The one graph read API (run 6, docs/CONTRACTS.md §1): GET /api/kb/graph.
+"""The one graph read API (run 6, docs/architecture/contracts.md §1): GET /api/kb/graph.
 
 Behind every graph: the knowledge base Graph page and the NP Autopilot map at
 "/". Runs as the caller (RLS decides what is visible). Lead-owned: a change to

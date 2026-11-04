@@ -41,7 +41,7 @@ _TARGET_IS_PRODUCTION = False
 PRODUCTION_ONLY_SKIP = (
     "production_only: asserts on production's own rows (real identities, the "
     "live projection) — run read-only with NP_ALLOW_PROD_TESTS=1 against "
-    "production, HANDOFF.md §D.4")
+    "production, docs/operations/testing.md §4")
 
 
 def pytest_configure(config):
@@ -58,7 +58,7 @@ def pytest_configure(config):
     With no DSN set, the tests default to the Supabase CLI local stack
     (db.LOCAL_TEST_DSN / LOCAL_TEST_DSN_TRANSACTION, or NP_TEST_DSN /
     NP_TEST_DSN_TRANSACTION) when it is listening, and skip when it is not.
-    HANDOFF.md §I is the procedure.
+    docs/operations/testing.md §1 is the procedure.
     """
     global _DATABASE, _TARGET_IS_PRODUCTION
     config.addinivalue_line(
@@ -86,7 +86,7 @@ def pytest_configure(config):
                 "  The database tests insert, delete and re-project; run "
                 "against production they rewrite it.\n"
                 "  Run them against the local PostgreSQL instead "
-                "(HANDOFF.md §I), or unset the variable to skip them.\n"
+                "(docs/operations/testing.md §1), or unset the variable to skip them.\n"
                 f"  To run against production deliberately: "
                 f"{db.ALLOW_PROD_TESTS}=1")
         if reason:

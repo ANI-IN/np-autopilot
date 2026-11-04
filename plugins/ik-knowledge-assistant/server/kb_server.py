@@ -40,7 +40,7 @@ class Config:
         missing = [v for v in ("KB_MCP_TOKEN",) if not os.environ.get(v)]
         if missing:
             raise SystemExit(f"kb_server: missing required environment variable(s): {', '.join(missing)}. "
-                             "Create a token in the KB app → Settings → API tokens (docs/MCP.md).")
+                             "Create a token in the KB app → Settings → API tokens (docs/integrations/mcp.md).")
         self.token = os.environ["KB_MCP_TOKEN"]
         if not self.token.startswith("ikkb_"):
             raise SystemExit("kb_server: KB_MCP_TOKEN does not look like a KB API token (ikkb_…)")

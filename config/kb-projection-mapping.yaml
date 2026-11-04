@@ -1,5 +1,5 @@
 # The projection (public.*) -> KB (kb.*) mapping used by
-# pipeline/kb_import_projection.py. Explained in docs/MIGRATION_MAPPING.md.
+# pipeline/kb_import_projection.py. Explained in docs/architecture/import-mapping.md.
 #
 # Every projection type and relationship named here must exist in
 # config/taxonomy.yaml (the importer checks at start and refuses otherwise),
@@ -124,7 +124,7 @@ attachments:
   - {rel: introduces, source: curriculum_doc, target: module, record: target, note: Introduces this module}
 
 # properties the import carries over, per projection type (the rest are listed
-# as unmapped in docs/MIGRATION_REPORT.md)
+# as unmapped in the import report)
 mapped_props:
   program: [family, doctype]
   domain: [cadence, stage, uplevel_link, drive_folder_url]

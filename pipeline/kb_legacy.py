@@ -6,8 +6,8 @@ reversibly (web/lib/kb/legacy.py has the rules). Counts and ids only.
     SUPABASE_DB_URL_SESSION=<db> python pipeline/kb_legacy.py archive    # archive (re-runnable); the sync then keeps applying it
     SUPABASE_DB_URL_SESSION=<db> python pipeline/kb_legacy.py restore    # one command restores everything (and stops the sync re-applying it)
 
-Permanent deletion is NOT offered here: it waits for the owner's confirmation
-(the prepared SQL is in HANDOFF.md and web/lib/kb/legacy.py PERMANENT_DELETE_SQL).
+Permanent deletion is not done here: it lives in pipeline/kb_legacy_delete.py
+(owner-approved; for production see docs/operations/GO_LIVE.md step 6).
 """
 from __future__ import annotations
 

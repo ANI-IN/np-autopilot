@@ -9,7 +9,7 @@ tables NP reads. The KB side is read from kb.* (external_id 'np:<id>' ties the
 two). Every difference is listed with its reason; an unexplained difference
 fails the run (exit 1).
 
-    python eval/kb_parity.py [--write docs/PARITY_REPORT.md]
+    python eval/kb_parity.py [--write .measure/parity.json]
 
 Output: ids and counts only, never names or values.
 """

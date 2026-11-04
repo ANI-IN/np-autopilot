@@ -20,14 +20,14 @@ SESSION = "SUPABASE_DB_URL_SESSION"
 #: no session state. See DECISIONS §C.1.
 TRANSACTION = "SUPABASE_DB_URL_TRANSACTION"
 
-#: The production Supabase project (STATE.md §2). Named so that a test run can
+#: The production Supabase project. Named so that a test run can
 #: recognise it and refuse — see `production_reason()`.
 PROD_PROJECT_REF = "yqmzjgzhxhihnpbgqmeh"
 #: Every Supabase-managed host: the poolers (`*.pooler.supabase.com`) and the
 #: direct connection (`db.<ref>.supabase.co`). None of them is a test database.
 _SUPABASE_HOST_SUFFIXES = (".supabase.com", ".supabase.co")
 #: Where the database tests go by default: the Supabase CLI local stack
-#: (`db/local/`, HANDOFF.md §I) — Supabase's own Postgres image, auth schema,
+#: (`db/local/`, docs/operations/testing.md §1) — Supabase's own Postgres image, auth schema,
 #: roles and RLS, so a pass here says something true about production. The
 #: password is the stack's fixed local default, not a secret. Override with
 #: NP_TEST_DSN.
@@ -162,7 +162,7 @@ def assert_transaction_pooler(url: str) -> None:
         raise RuntimeError(
             f"{TRANSACTION} must use the transaction pooler (port {TRANSACTION_POOLER_PORT}); "
             f"it points at port {u.port}. On Vercel the session pooler is exhausted by "
-            "instances holding their warm connection. See docs/DEPLOYMENT.md.")
+            "instances holding their warm connection. See docs/operations/deployment.md.")
     assert_not_direct(url)
 
 

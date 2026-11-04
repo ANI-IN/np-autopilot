@@ -36,7 +36,7 @@ intention, not a control — and the next person will trust it as a control.
 been false since the policy it described was built.
 
 **Ask it of:** every "never", "must" and "always" in `CLAUDE.md`, `STATE.md`,
-`AUTH.md` and the risk register. A sweep of 24 such constraints found **five
+`AUTH.md` (now `docs/architecture/auth.md`) and the risk register. A sweep of 24 such constraints found **five
 with no test**.
 
 ### 3 · When a guarantee HOLDS, do we know which mechanism holds it — and is it the one we think?
@@ -366,7 +366,7 @@ assert.** `_missing_recruiting_path()` now queries `pg_policies` and `pg_proc`
 and refuses on what is actually absent, so it stops refusing when the path is
 built and starts again if someone drops it. The remaining refusal is honest about
 what it is — a **decision** that has not been taken, pointing at
-`docs/INGEST-SCOPE-REVERSAL.md`, whose approval block is blank.
+`docs/project-history/decisions/INGEST-SCOPE-REVERSAL.md`, whose approval block is blank.
 
 **The question this adds to the list:** for any constraint a document asserts,
 *what in the program would fail if it stopped being true?* If the answer is
@@ -377,7 +377,8 @@ say so, or the control should be built.
 
 Instance 9 asked: *for every constraint these documents assert, what in the
 program would fail if it stopped being true?* Run as a sweep over `STATE.md`,
-`DECISIONS.md`, `AUTH.md` and `07-risks.md` — 113 constraint-shaped statements,
+`DECISIONS.md`, `AUTH.md` and `07-risks.md` (now `docs/architecture/auth.md` and
+`docs/operations/risk-register.md`) — 113 constraint-shaped statements,
 54 naming a concrete artefact, **24 distinct system constraints, of which five
 had no test**.
 
@@ -388,7 +389,7 @@ The five are not a random five, and that is the observation:
 | workbooks open `read_only=True` | `CLAUDE.md` §1 | the corpus is a live Drive mirror |
 | no pipeline script shadows a stdlib module | `CLAUDE.md` §3 | **`inspect.py` cost a full run** |
 | employee ids are evidence, never the key | `CLAUDE.md` §2a | **`IK-294` maps to two people** |
-| `profiles.domain_is_ik` still exists | `AUTH.md` | the domain rule lives in the database |
+| `profiles.domain_is_ik` still exists | `docs/architecture/auth.md` | the domain rule lives in the database |
 | `pipeline/` never runs on Vercel | `STATE.md` | — |
 
 > **The constraints with the best stories behind them were the least likely to

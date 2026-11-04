@@ -44,12 +44,11 @@ RESERVED = re.compile(r"@(?:example\.(?:com|net|org)|[\w.-]*\.(?:example|test|"
 TRACKED_GRAPH_ARTEFACTS = [
     "knowledge/graph.json",
     "knowledge/files.json",
-    "knowledge/_graph_data.json",
     "knowledge/content_graph.json",
-    # Pass 8's output. A NEW tracked graph artefact is exactly the thing this
-    # list exists to catch, and adding it here is not optional: the merged
-    # graph carries every instructor node both halves contribute.
-    "knowledge/merged_graph.json",
+    # A NEW tracked graph artefact is exactly the thing this list exists to
+    # catch, and adding it here is not optional. Pass 8's merged_graph.json and
+    # pass 5's _graph_data.json are gitignored local outputs since 2026-11-04,
+    # so they reach no clone; if either is ever tracked again, list it here.
 ]
 
 

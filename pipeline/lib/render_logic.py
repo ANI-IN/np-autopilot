@@ -3,6 +3,8 @@
 Inlined into the HTML (which must stay self-contained) AND written to
 knowledge/_graph_logic.mjs so it can be executed headlessly by
 eval/drive_render.mjs. One definition, two consumers — no drift.
+knowledge/_graph_logic.mjs and _graph_data.json / _graph_files.json are
+gitignored local outputs of pass 5: run pipeline/05_render_html.py first.
 """
 
 LOGIC = r"""

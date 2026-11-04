@@ -1,5 +1,5 @@
 /* IK Knowledge Base — design system. Tokens first, then components, then
-   layouts. Documented in docs/DESIGN_SYSTEM.md. One accent, one radius, an
+   layouts. Documented in docs/architecture/design-system.md. One accent, one radius, an
    8px grid, hairline borders, shadows only on floating layers. */
 
 @font-face {
@@ -29,7 +29,7 @@
   --text: #18181b;
   --text-2: #52525b;
   --text-3: #6b6b74;
-  /* Interview Kickstart brand (run 6, F1; source in docs/DESIGN_SYSTEM.md "Brand"):
+  /* Interview Kickstart brand (run 6, F1; source in docs/architecture/design-system.md "Brand"):
      the logo's blue #3996D2, darkened to #2670A6 where it carries text (5.3:1 on white);
      the logo's navy #324158 for the brand mark. */
   --brand-blue: #3996D2;

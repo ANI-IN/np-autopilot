@@ -110,7 +110,7 @@ def sign_out(access_token: str, *, opener=None) -> None:
     stolen refresh token stops working. Clearing browser storage — which is what
     "log out" usually means in a single-page app — leaves the refresh token
     valid for anyone who copied it. The access token itself stays valid until it
-    expires; that is a property of stateless JWTs and is stated in docs/AUTH.md
+    expires; that is a property of stateless JWTs and is stated in docs/architecture/auth.md
     rather than papered over.
     """
     _post("logout?scope=global", {}, bearer=access_token, opener=opener)

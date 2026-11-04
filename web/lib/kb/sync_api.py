@@ -1,6 +1,6 @@
 """The sync's HTTP side: the protected cron route, "Sync now", the run log.
 
-Where it runs (docs/DEPLOYMENT.md, "Scheduled sync"): the SCHEDULE lives in the
+Where it runs (docs/operations/deployment.md, "Scheduled sync"): the SCHEDULE lives in the
 database (pg_cron + pg_net in each Supabase project, dev and production alike,
 calling this deployment's /api/cron/kb-sync with a secret from Vault); the WORK
 runs here, in the Vercel function, under a time budget below the function's

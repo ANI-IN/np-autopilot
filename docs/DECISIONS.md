@@ -17,7 +17,7 @@ amendment the collision check forced.
 | §A.5 property-level provenance | **FIXED (minimal + `establishes`).** Hand sources reach the node and name which properties they justify. `hand-provenance` is now a falsifiable validate category. |
 | §B.4 calendar-derived fields | **FIXED.** Edges store `class_dates`; the five derived values are computed at read time. Proven day-independent across three `NP_AS_OF` probes. |
 | §F.2 sensitive split | **DONE**, and it covered three files, not one — `resolved.json` and `candidates.json` carried the same funnel and were committed. |
-| §F.2 history rewrite | **PLANNED, NOT RUN.** `docs/HISTORY-REWRITE-PLAN.md`, awaiting four answers. |
+| §F.2 history rewrite | **PLANNED, NOT RUN.** `docs/project-history/decisions/HISTORY-REWRITE-PLAN.md`, awaiting four answers. |
 | §G workflow management | **CLOSED — out of scope.** |
 | Migration baseline | **FROZEN** at `0165f164e104d6ad`, `config/migration-baseline.yaml`. Verifier passes 32/32 file-against-file and fails on four injected migration mistakes. |
 | Track 1 — Supabase connection | **STILL BLOCKED.** See §C.0. |
@@ -63,7 +63,7 @@ types — but per your instruction the design requirement stands regardless, and
 > edges is what the build produces, provenance and sensitive rows included. The
 > web app talks to the *projected public* graph: **3,146 nodes / 4,021 edges,
 > 526 KiB**. Carrying a number from this table into a statement about the
-> explorer has already produced three wrong figures — see `STATE.md` §1.
+> explorer has already produced three wrong figures.
 
 | | |
 |---|---|
@@ -481,7 +481,7 @@ on its own.
 > **Deployment shape (G3): ONE Vercel project, not two.** The explorer and the
 > plugin call the same handlers so the role boundary is single-sourced rather
 > than merely coordinated. Full argument, including the three conditions that
-> would reverse it, in [ONE-APP-OR-TWO.md](archive/ONE-APP-OR-TWO.md).
+> would reverse it, in ONE-APP-OR-TWO.md (archived, since removed; in git history).
 
 
 ### C.0 Verified — connected 2026-09-17

@@ -2,7 +2,7 @@
 
 The repository was public for eight days (R18), and the replacement created to
 remediate it was itself created PUBLIC and stayed so for 13 days (R21) while
-STATE.md said "private". Both times the record said one thing and nothing
+the project's state record said "private". Both times the record said one thing and nothing
 checked the system that would show the other. This checks it.
 
 Two ways to ask, and both are the real question:
@@ -88,7 +88,7 @@ def main(argv: list[str]) -> int:
         print(f"{repo}: {reason}")
         return 0
     print(f"REFUSED: {repo} is {reason}.\n"
-          "  This repository must be private (07-risks.md R18, R21). Nothing "
+          "  This repository must be private (docs/operations/risk-register.md R18, R21). Nothing "
           "should be pushed to it until it is.")
     return 1
 

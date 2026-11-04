@@ -5,7 +5,7 @@ For EVERY write path in the brief, performed as an admin (the sync and the
 import as themselves), this asserts:
   1. the change feed (GET /api/kb/changes, what every open page polls) carries
      the expected `kind` with the records to refresh in `node_ids`
-     (docs/CONTRACTS.md §2);
+     (docs/architecture/contracts.md §2);
   2. GET /api/kb/graph (the Graph page) returns the new state;
   3. the NP Autopilot map's routes ("/": /api/structure, /api/node, /api/search)
      return it too, read from kb (web/lib/kb/npmap.py), and the structure's

@@ -10,7 +10,8 @@ the write returns, how long each page takes to show it WITHOUT a reload, and
 fails above 5 seconds. Neither page has Supabase Realtime here (the local
 server has none): this is the polling fallback, the slower path.
 
-The table is printed and written to docs/run6/MATRIX.md.
+The table is printed and written to kb_change_matrix.md in the system temp
+folder (the path is printed); nothing is written into the repository.
 
 Browser runs are ONE AT A TIME across the run-6 agents: take the lock first
 (`mkdir .run6/browser.lock` in the main checkout), remove it after.
@@ -18,6 +19,7 @@ Browser runs are ONE AT A TIME across the run-6 agents: take the lock first
 from __future__ import annotations
 
 import json
+import tempfile
 import time
 from pathlib import Path
 
@@ -376,7 +378,7 @@ def _write_matrix():
               "\"feed applied\" / \"refreshed\": the page received the change and re-read what it shows; the change",
               "has no mark of its own on that page (a tag, a link, an owner on the map, a permanently",
               "deleted record that the archive had already removed)."]
-    out = REPO / "docs" / "run6" / "MATRIX.md"
-    out.parent.mkdir(parents=True, exist_ok=True)
+    out = Path(tempfile.gettempdir()) / "kb_change_matrix.md"
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n" + "\n".join(lines))
+    print(f"\nchange matrix written to {out}")

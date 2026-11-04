@@ -43,7 +43,7 @@ merges:
 
   # CORRECTED 2026-09-30: this said the mastersheet cell was BLANK. It never
   # was — the row read `Week 1/5: Databases` and the parser skipped the `:`
-  # (HANDOFF §D.3, CLAUDE.md §6). SD1/1's roles are Konstantinos Pappas,
+  # (CLAUDE.md §6). SD1/1's roles are Konstantinos Pappas,
   # Ashish Kaila, Nikhil Kolekar. The merge decision itself is unchanged: the
   # legacy instructors stay legacy-tier and are never shown as sheet roles.
   - id: MOD-01

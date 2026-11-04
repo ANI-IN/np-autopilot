@@ -15,7 +15,7 @@ WHAT A SUCCESSFUL SIGN-IN DOES NOT GRANT. A session is not access. `np_role()`
 returns 'none' without a `profiles` row, every policy is default-deny, and so a
 brand-new IK employee who signs in successfully sees zero nodes and is told so
 in those words. Provisioning stays a deliberate act by an operator
-(`pipeline/grant_access.py`), exactly as docs/AUTH.md already claimed:
+(`pipeline/grant_access.py`), exactly as docs/architecture/auth.md already claimed:
 *"layer 3 permits an account to exist; a profile is what gives it data."*
 """
 from __future__ import annotations

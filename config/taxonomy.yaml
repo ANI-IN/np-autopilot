@@ -1062,12 +1062,12 @@ excluded:
         Excluding it is a scope decision, not a privacy one: a configuration
         file must not become a `file` node with provenance rows, because the
         graph would then cite the crawl list as evidence about the corpus.
-        See docs/REGISTRY-INVENTORY.md §0 and docs/PRE-CRAWL-DECISIONS.md.
+        See docs/project-history/REGISTRY-INVENTORY.md §0 and docs/PRE-CRAWL-DECISIONS.md.
       sheets_dropped: 1
       known_cost: >
         It is the only record IN DRIVE of which folders are in scope. That is
         why its five rows are transcribed verbatim into
-        docs/REGISTRY-INVENTORY.md §0 — losing the file must not lose the
+        docs/project-history/REGISTRY-INVENTORY.md §0 — losing the file must not lose the
         scope, and the repository now holds a hand-entered copy of it.
         This entry also makes `links` the FIRST native Google file the export
         map would ever have exported. Excluding it means the export path stays

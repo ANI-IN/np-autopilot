@@ -49,7 +49,7 @@ SKIP_DIRS = {"pipeline", "config", "tests", "knowledge", ".git",
 # Our own root-level documents. NEXT.md was missed and became a corpus file
 # node on the very next refresh — the count check caught it again.
 OWN_DOCS = {"README.md", "BUILD_LOG.md", "CLAUDE.md", "NEXT.md", "LICENSE",
-            "CONTRIBUTING.md", "CHANGELOG.md"}
+            "CONTRIBUTING.md", "CHANGELOG.md", "SECURITY.md"}
 
 
 def sniff(path: Path) -> str:

@@ -455,7 +455,7 @@ def app(environ, start_response):
         return _respond(start_response, status, out, no_store=True)
 
     if path == "/api/cron/kb-sync":
-        # The scheduled sync (docs/DEPLOYMENT.md "Scheduled sync"): called by the
+        # The scheduled sync (docs/operations/deployment.md "Scheduled sync"): called by the
         # database's pg_cron + pg_net with a secret. No user session reaches it,
         # and nothing but the secret opens it.
         if method not in ("GET", "POST"):

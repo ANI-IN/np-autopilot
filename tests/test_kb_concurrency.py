@@ -8,7 +8,7 @@
   * 20 parallel edge creates while the shared endpoint is archived → every
     edge either refused or archived with it, never live and orphaned.
 
-Timings are printed for docs/TEST_RESULTS.md.
+Timings are printed.
 """
 from __future__ import annotations
 

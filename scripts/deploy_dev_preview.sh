@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Deploy the knowledge platform to a Vercel PREVIEW wired to the DEV database
-# (docs/DEV_DEPLOY.md). Never Production, never the production database.
+# (docs/operations/dev-deploy.md). Never Production, never the production database.
 #
 #   bash scripts/deploy_dev_preview.sh            # checks, deploy (preview), smoke tests
 #   bash scripts/deploy_dev_preview.sh --check    # the checks only; deploys nothing
 #
 # Needs: the Vercel CLI, logged in (`vercel login`, or VERCEL_TOKEN), the project
-# linked (`vercel link`), and the Preview variables of docs/DEV_DEPLOY.md set for
+# linked (`vercel link`), and the Preview variables of docs/operations/dev-deploy.md set for
 # THIS branch. Needs DEV_SUPABASE_URL (environment or .env) to know the dev
 # project. Prints no secret, URL of a database, host or IP from any env file.
 #
@@ -59,7 +59,7 @@ val() { grep -E "^$1=" "$TMP" | head -1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/'
 
 grep -q "$PROD_REF" "$TMP" && die "a Preview variable for $BRANCH names the production project"
 for v in SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_DB_URL_TRANSACTION GOOGLE_OAUTH_CLIENT_ID NP_ALLOWED_HD KB_SYNC_SECRET; do
-  [ -n "$(val "$v")" ] || die "$v is not set for Preview / $BRANCH (docs/DEV_DEPLOY.md, step 2)"
+  [ -n "$(val "$v")" ] || die "$v is not set for Preview / $BRANCH (docs/operations/dev-deploy.md, step 2)"
 done
 case "$(val SUPABASE_URL)" in *"$DEV_REF"*) ;; *) die "SUPABASE_URL is not the dev project" ;; esac
 case "$(val SUPABASE_DB_URL_TRANSACTION)" in *"$DEV_REF"*) ;; *) die "SUPABASE_DB_URL_TRANSACTION is not the dev project" ;; esac
@@ -78,7 +78,7 @@ TARGET="$(vercel inspect "$URL" "${TOKEN_ARGS[@]}" 2>&1 | grep -iE '^\s*target' 
 case "$TARGET" in *production*|*Production*) die "the CLI reports a production deployment: stop and investigate" ;; esac
 echo "deployed (preview): $URL"
 
-# Smoke tests (docs/DEV_DEPLOY.md, step 4). A protected preview answers 401 to
+# Smoke tests (docs/operations/dev-deploy.md, step 4). A protected preview answers 401 to
 # anonymous requests unless VERCEL_BYPASS (Protection Bypass for Automation) is set.
 H=()
 [ -n "${VERCEL_BYPASS:-}" ] && H=(-H "x-vercel-protection-bypass: $VERCEL_BYPASS")
@@ -91,4 +91,4 @@ check "/api/kb/me needs a session"           "$(code "$URL/api/kb/me")" 401
 check "/api/cron/kb-sync refuses no secret"  "$(code -X POST "$URL/api/cron/kb-sync")" 401
 check "/local-login does not exist"          "$(code "$URL/local-login")" 404
 [ "$fail" = 0 ] || die "smoke tests failed (above)"
-echo "smoke tests passed. Next: docs/DEV_DEPLOY.md step 5 (Google sign-in) and step 6 (the schedule)."
+echo "smoke tests passed. Next: docs/operations/dev-deploy.md step 5 (Google sign-in) and step 6 (the schedule)."

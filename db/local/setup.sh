@@ -13,7 +13,7 @@
 #   db/local/setup.sh          # start (first run pulls ~2 GB of images), then seed
 #   db/local/setup.sh --stop   # stop; data is kept in the Docker volume
 #
-# Needs Docker (here: `colima start`) and Node for npx. HANDOFF.md §I.
+# Needs Docker (here: `colima start`) and Node for npx. docs/operations/testing.md §1.
 set -euo pipefail
 
 CLI="npx -y supabase@2.118.0"          # PINNED. Change deliberately, and re-run the suite.

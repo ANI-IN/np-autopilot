@@ -204,7 +204,7 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
     if head == "nodes" and len(rest) == 2 and rest[1] == "account" and method in ("POST", "DELETE"):
         return 200, svc.set_person_account(conn, actor, rest[0], body if method == "POST" else {})
     if head == "graph" and not rest and method == "GET":
-        # The one graph read API (docs/CONTRACTS.md §1): the Graph page and the "/" map.
+        # The one graph read API (docs/architecture/contracts.md §1): the Graph page and the "/" map.
         from lib.kb import graph
         return 200, graph.read(conn, params)
     if head == "graph" and rest == ["positions"]:
