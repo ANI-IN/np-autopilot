@@ -1,3 +1,166 @@
+# HANDOFF — Run 6 (final): one source of truth, a better graph, legacy cleanup, security, go-live rehearsal (2026-11-04)
+
+Branch `auto/knowledge-platform-20261102` is pushed. Nothing is on `main` and nothing is on Production.
+
+**Preview: none.** On 2026-11-04 Vercel rejected the `VERCEL_TOKEN` in `.env`: the CLI says "The token passed with --token is not valid" and the API answers "User not found". See "Action required" 1.
+
+**Final verification in progress** (see the "Full suite" row). At the end, only the real-data server (**http://localhost:8766/local-login**) and the local database will be left running; the demo server stays off.
+
+Logs: PROGRESS.md, sections "Run 6 log" and "Run 6 resume".
+
+## Status
+
+Evidence for every row is in PROGRESS.md.
+
+| Area | Status | Evidence |
+|---|---|---|
+| One source of truth: every view, including the "/" map, reads kb | **VERIFIED** | docs/ARCHITECTURE.md; the map's own tests (179 passed); rollback switch `NP_MAP_SOURCE=old` |
+| Live updates everywhere, through the change feed and its kinds | **VERIFIED** | matrix: all 26 operations on the Graph page and on "/" (docs/run6/MATRIX.md); slowest about 2.6 s |
+| Permanent deletion of legacy domains and modules, locally and on DEV | **VERIFIED** | 946 deleted in each; restore rehearsed with every table's row count back exactly; the next sync created 0 and found 0 conflicts |
+| IK branding and the one-screen dashboard | **VERIFIED** | eval/kb_fit_check.py: fits at 1536×730 and 1920×1080; 0 page errors |
+| Navigation: sidebar names match page titles, the palette reaches every page, old bookmarks redirect | **VERIFIED** | browser tests for the dashboard, palette and accessibility: 15 passed; tests/test_kb_redirects_run6.py |
+| Activity as plain sentences (who, what, which record, old → new) | **VERIFIED** | tests/test_kb_activity_run6.py, one sentence per matrix operation; the workflow check (26 of 26) |
+| Members by invitation; the last admin can't be removed | **VERIFIED** | tests/test_kb_members_run6.py |
+| IK accounts only, checked on every request; security headers; access sweep | **VERIFIED** | tests/test_kb_access_sweep.py; docs/run6/SECURITY_SWEEP.md |
+| One validation layer: the sync and the UI reject the same input | **VERIFIED** | tests/test_kb_one_validation.py |
+| Graph: hierarchy, layouts, focus, legend, minimap, labels | **VERIFIED, one PARTIAL** | 11 of 11 tests pass, each in its own process. Tests 7 and 8 hang when run back to back in one process (a test-isolation defect; not seen in normal use). |
+| Performance and memory | **VERIFIED** | every screen interactive in 0.26–0.74 s from a cold load; expand p95 48 ms; heap 6.0 → 9.6 MB over 50 graph openings (it was 9 → 165 MB) |
+| Legacy code cleanup | **VERIFIED** | docs/LEGACY_REMOVAL.md has the evidence for each item; bundle 4,984,241 → 4,982,126 bytes; 19 dependencies |
+| Connector interface, with the NP Autopilot sync behind it | **VERIFIED** | tests/test_kb_connectors.py; the sync test suites pass unchanged |
+| Dev database and go-live rehearsal | **VERIFIED for the database steps, NOT DONE for the Vercel steps** | docs/GO_LIVE.md, "Rehearsal on dev"; the Vercel steps need a working token |
+| Preview deploy (D2) | **BLOCKED** | token rejected; the owner step is below |
+| 10-minute memory session | **CUT** (allowed by the cut order) | replaced by the 50-opening heap check |
+| Full suite | **Final verification in progress** | scripts/verify_all.sh: static checks and security spot checks PASS. Non-browser tests (2026-11-04 11:03): 1,336 passed, 15 failed, 52 skipped. 13 of those 15 are in main's baseline; the other 2 were pipeline-docs checks, fixed and passing since. The 6 browser test files have not been re-run yet: the earlier full run hung at `test_kb_graph_run6.py::test_group_by_type_folds_and_unfolds` (the known isolation defect). They will be run one file at a time, graph tests one per process. |
+
+**Known limitations:**
+- On the Graph page, group-by-type takes about 40 s on the first run with the test data. It's slow, not wrong.
+- The 25-user load test and the 5,000-node benchmark were not re-run, per the memory rules.
+- The old explorer's read paths in `web/lib/data.py` stay until production runs on kb (marked "remove after go-live" in LEGACY_REMOVAL.md).
+
+## Legacy deletion (owner-approved): counts and restore
+
+**Kept:** the current domains Full Stack, Backend Engineering, Frontend and Test Engineering. Once the duplicate legacy "Frontend" was gone, the sync renamed "Frontend (2)" back to "Frontend".
+
+**Deleted**, with the same counts in the local copy and on DEV:
+- 42 domains and 904 modules
+- 3,844 relationships and 1,040 attachments
+- 1,133 expertise links (the instructors stay)
+
+No record was left without a parent.
+
+**The sync never re-creates them.** Migration 0037 adds `kb.sync_exclusions`, which holds NP Autopilot's own legacy rule plus the 946 deleted ids. This is tested. NP Autopilot's old tables are untouched.
+
+**Exports** (real data, gitignored): `backups/legacy_deleted_kb_realdata_*.json` (local) and `backups/legacy_deleted_supabase_*.json` (DEV).
+
+**Restore:** `SUPABASE_DB_URL_SESSION=<db> python pipeline/kb_legacy_delete.py restore <export.json>`.
+
+**Production:** GO_LIVE.md step 6. Not run.
+
+## What each workstream delivered
+
+- **B1, data flow:**
+  - The "/" map reads kb through `npmap.py`, with the same response shapes as before.
+  - Change kinds, and live updates everywhere.
+  - Sync batches that resume where they stopped; the function limit (`maxDuration`) is 60 s.
+  - People:
+    - an e-mail on person records;
+    - CSV upload with a match preview;
+    - linking at sign-in;
+    - claims;
+    - "Owned by you".
+  - Decisions applied:
+    - "owner expected" per record type;
+    - contributors' edits go to Approvals, enforced in the database;
+    - the legacy domains still used as expertise are listed on Data quality.
+- **B2, graph:**
+  - One graph experience, built on `GET /api/kb/graph`.
+  - Layouts: hierarchy, force, radial, saved positions.
+  - Grouping and bundles.
+  - Navigation: legend as filter, breadcrumbs, focus mode, search-jump, minimap, labels that never overlap, and a `?` shortcut sheet.
+  - The same visual language on "/".
+- **B3, UI:**
+  - Every screen reviewed at 1280–2560 px in both themes.
+  - 165 of 180 inline styles moved to classes.
+  - AA contrast; the record page is one centred column.
+  - Wording unified ("Links", "Program timeline").
+- **B5, performance and QA:**
+  - Data quality: 29 s → 0.05 s.
+  - Edge indexes.
+  - Guards on AI tokens and on the last admin.
+  - Deterministic waits in the browser tests.
+  - 17 audit findings fixed (docs/run6/AUDIT_FINDINGS.md).
+- **Resume (F1–F7, G):**
+  - IK brand and the one-screen dashboard; navigation fixes; Activity as sentences.
+  - Members by invitation; the server-side IK check, headers and access sweep.
+  - Legacy code cleanup, the memory-leak fix, and the connector interface.
+  - Docs: README, VISION_AND_ROADMAP, GO_LIVE, PR_DESCRIPTION.
+
+## Brand source
+
+The source is interviewkickstart.com itself:
+- **Colours and font:** the Elementor kit `wp-content/uploads/elementor/css/post-5.css`, whose `--e-global-color-*` variables give navy #324158, blue #3996D2, teal #00D1B4 and light #F0F3F6. The font is Inter.
+- **Logo:** the header SVG, with fills #344158 and #3996D2, saved as `public/kb/brand/ik-logo.svg`.
+
+The accent is #2670A6 in light mode (the brand blue darkened to 5.3:1 so it can carry text) and #3996D2 in dark mode (5.8:1). Details are in docs/DESIGN_SYSTEM.md, section "Brand".
+
+## Security sweep
+
+Full details: docs/run6/SECURITY_SWEEP.md.
+
+- **Sign-in:** IK accounts only, re-checked on the server on every request: the KB API, the "/" map's routes and the change feed. A valid non-IK session gets 403; no session gets 401.
+- **Route sweep:** every route was called as anonymous, a non-IK account, viewer, contributor, editor and admin, and each answered as designed. A new route fails the test until it is listed.
+- **Database functions:** `authenticated` and `anon` can't run the owner-only SECURITY DEFINER functions.
+- **Headers:** every response carries CSP, HSTS, nosniff, X-Frame-Options and Referrer-Policy. There's no CORS anywhere.
+- **Cron secret:** compared in constant time; at least 24 characters.
+- **MCP tokens:** hashed, valid for 1–365 days, revocable. They can't grant roles, link accounts or permanently delete.
+- **No secret reaches the browser.**
+- **Decisions:**
+  - `/api/stats` stays public: counts only, exactly what the old static file showed.
+  - No in-process rate limiter: it would limit nothing on serverless. Use a Vercel Firewall rule if one is needed.
+- **Git history:** the secret scan in verify_all finds no secret-shaped strings, so there's nothing to rotate.
+
+## Top 5 roadmap items
+
+From docs/VISION_AND_ROADMAP.md §7.
+
+1. Alerts for the sync and its schedule (stale, failed, conflict spike), sent to one channel. Value H, complexity L, 1–2 days.
+2. A production backup check, a weekly kb dump, and a restore drill. Value H, complexity L, 2–3 days.
+3. Schedule the intake: the Drive passes 0–4 and the projection in one worker, with the projection rewritten as a set-diff. Value H, complexity M, 5–8 days.
+4. Namespace the sync per source: a connectors table, one lock per connector. Value M, complexity M.
+5. A job table with retries and back-off, needed before any slow work such as extraction or embeddings. Value M, complexity M, 3–5 days.
+
+## Updated 7-minute leadership demo (on :8766)
+
+1. **Dashboard (1 min):** one screen with the numbers, what needs attention, and recent activity in plain sentences.
+2. **Graph (1.5 min):** the hierarchy Program → Course → Domain → Module. Focus a domain, filter with the legend, and search to jump to a record.
+3. **Live sync (1 min):** open "/" (NP Autopilot) next to it. Rename a module in /kb/: both update within seconds.
+4. **Who teaches what and Program timeline (1 min):** the P and B1–B3 roles, taken from the mastersheet.
+5. **Activity (1 min):** who changed what, from what to what; a sync run reads as one sentence.
+6. **Settings → Members (0.5 min):** invite someone by IK e-mail before their first sign-in; the last admin can't be removed.
+7. **Data quality (1 min):** records with no owner (only for types that need one), legacy expertise, conflicts. Finish on GO_LIVE.md.
+
+## Action required from owner
+
+In order, through to production.
+
+1. **Vercel token:**
+   - Create one at vercel.com/account/tokens with access to the team that owns the project, and replace `VERCEL_TOKEN` in `.env`.
+   - Run `vercel link`, then `bash scripts/deploy_dev_preview.sh --check`, then the same script without `--check`. It deploys to Preview only (docs/DEV_DEPLOY.md, steps 2–6).
+2. **Google sign-in for the preview:**
+   - Add the branch URL as an authorised JavaScript origin.
+   - On Supabase DEV: the Google provider, the before-user-created hook, and the URL configuration (DEV_DEPLOY.md, step 5).
+3. **Make yourself admin on DEV:** sign in once on the preview, then run `ADMIN_EMAILS=<you>@interviewkickstart.com python pipeline/kb_admins.py` against DEV.
+4. **Decide:** may a shared mailbox (from `NP_SHARED_ACCOUNTS`) hold an editor or admin role in the KB? See SECURITY_SWEEP.md.
+5. **Decide:** keep access to "/" as it is today: any IK account with an NP role. Run 6 didn't change it.
+6. **Decide:** whether to stop tracking these. Both stay in git history either way.
+   - The older screenshots in docs/screenshots/, which likely show real names.
+   - The large generated graph files, such as knowledge/merged_graph.json.
+7. **Review and merge the PR** (docs/PR_DESCRIPTION.md).
+8. **Production:** follow docs/GO_LIVE.md, including step 6, the **permanent legacy deletion**. It exports first, and the restore is tested. After that step, rollback means the export or the step-1 backup.
+9. **After go-live:** remove the old-table read paths (marked "remove after go-live" in LEGACY_REMOVAL.md).
+
+---
+
 # HANDOFF — run 5: parity with NP Autopilot, owners, legacy, scheduled sync, dev database (2026-11-03)
 
 Branch `auto/knowledge-platform-20261102`. Nothing deployed, nothing on `main`,
