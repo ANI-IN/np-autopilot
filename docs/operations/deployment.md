@@ -5,6 +5,35 @@ Vercel project, split at the route level). The explorer and the
 API are the same deployment and call the same handlers, so the role boundary is
 single-sourced rather than coordinated.
 
+## From a laptop to production
+
+```mermaid
+flowchart LR
+    subgraph Local["Local (this machine)"]
+        L1["Supabase CLI stack in Docker<br/>db/local/setup.sh"]
+        L2["eval/ servers :8765 / :8766<br/>/local-login, never deployed"]
+        L3["scripts/verify_all.sh, pytest"]
+    end
+    subgraph Dev["Dev: Vercel Preview + DEV database"]
+        D1["scripts/dev_db.py<br/>check, backup, migrate, import, verify"]
+        D2["scripts/deploy_dev_preview.sh<br/>refuses Production"]
+        D3["smoke tests, schedule in the DEV database"]
+    end
+    subgraph Prod["Production (owner only)"]
+        P1["GO_LIVE.md steps 0 to 14"]
+        P2["vercel --prod from main"]
+        P3["schedule in the production database"]
+    end
+    L1 --> L2 --> L3 --> D1 --> D2 --> D3 --> P1 --> P2 --> P3
+```
+
+Local work never touches Vercel or Supabase's hosted projects
+([local-demo.md](local-demo.md), [testing.md](testing.md)). The dev step uses a
+separate Supabase project and Preview deployments only
+([dev-deploy.md](dev-deploy.md)). Production follows
+[GO_LIVE.md](GO_LIVE.md). Every variable is listed in
+[environment-variables.md](environment-variables.md).
+
 ---
 
 ## The shared account, and the key it can read
@@ -125,6 +154,14 @@ that ordering directly.
 A session is not access. Signing in successfully with an IK Workspace account
 yields `np_role() = 'none'` and zero rows, and `/api/me` says so in words
 rather than presenting an empty canvas.
+
+> **Changed by migration 0015 (2026-09-18).** A first sign-in by an IK
+> Workspace account now creates its `profiles` row with role `member`
+> automatically (`grant_member_on_signup`), so a new colleague reads the map
+> and is a KB viewer at once. `grant_access.py` remains the way to grant
+> `recruiting` or site `admin`, and `revoke` (which deletes the profile) is
+> how access is removed. KB roles are separate:
+> [authentication-and-authorisation.md](../workflows/authentication-and-authorisation.md).
 
 ```
 python3 pipeline/grant_access.py list                    # who exists, who waits
@@ -255,8 +292,9 @@ vercel env add ...                # the server-side variables above
 vercel --prod
 ```
 
-`vercel.json` already pins: `public` as the static root, `api/*.py` on
-the Python 3.12 runtime with a 15-second cap, and a CSP with **no
+`vercel.json` already pins: `public` as the static root, the `icn1` region,
+the `api/**` functions with a 60-second cap (`maxDuration`; Python 3.12+ per
+`pyproject.toml`), and a CSP with **no
 `unsafe-inline` on `script-src`** — the page's two inline blocks are pinned by
 SHA-256 hash, and `test_csp_pins_the_inline_scripts_by_hash` recomputes them, so
 editing the HTML without updating the header fails in CI instead of shipping an
@@ -338,7 +376,9 @@ from the HTML so a new dependency cannot be added silently, and
 
 ## KB live updates over Supabase Realtime (optional; run 2, D2)
 
-Without configuration the KB workspace polls `/api/kb/changes` every 4 seconds.
+Without configuration the KB workspace polls `/api/kb/changes` every 2.5
+seconds while the tab is visible (`public/kb/js/live.js`), and so does the "/"
+map.
 To switch on Realtime (and presence: "Priya is editing"):
 
 1. Apply migrations 0028 and 0029 (0029 publishes `kb.changes`, the

@@ -40,8 +40,9 @@ origin in the page's security policy.
 
 ### How the local sign-in works, and why production is unaffected
 
-- `/local-login` exists only in `eval/kb_demo_server.py`. `eval/` is excluded from
-  every deploy (`.vercelignore`). The production app and its code have no password
+- `/local-login` exists only in the local servers in `eval/`
+  (`eval/kb_demo_server.py`, and `eval/kb_realdata_server.py` below). `eval/` is
+  excluded from every deploy (`.vercelignore`, and `excludeFiles` in `vercel.json`). The production app and its code have no password
   login; `public/kb/index.html` is unchanged (the demo server rewrites its
   "Sign in" link to `/local-login` in memory).
 - The page posts email + password to the demo server, which asks the **local**

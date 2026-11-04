@@ -46,6 +46,21 @@ the value, so nothing lands in shell history). In the dashboard: Settings ->
 Environment Variables -> tick **Preview** only -> "Select a custom Preview branch"
 -> `auto/knowledge-platform-20261102`.
 
+> **Note (2026-11-04): the Vercel project has no connected Git repository**,
+> so Vercel refuses branch-scoped Preview variables (the branch option above
+> needs Git). Two ways forward:
+>
+> - **Connect Git** (Settings -> Git). First set the **Production branch** and
+>   an **Ignored Build Step** so that pushes to `main` do not deploy
+>   Production on their own; then scope the variables to this branch as above.
+> - Or set the variables for **all Preview deployments** (no branch). That is
+>   safe here because previews of this project come only from the CLI
+>   (`scripts/deploy_dev_preview.sh`), never from pushes.
+>
+> `SUPABASE_JWT_SECRET` is not needed when the dev project publishes ES256
+> JWKS (signing keys with a `kid`): `web/lib/auth.py` then verifies tokens
+> against the project's JWKS and never reads the secret.
+
 | Vercel variable (Preview, this branch) | Value |
 |---|---|
 | `SUPABASE_URL` | `DEV_SUPABASE_URL` |
@@ -135,8 +150,9 @@ select status_code, created from net._http_response order by created desc limit 
 select id, trigger, status, conflicts from kb.sync_runs order by id desc limit 3;
 ```
 
-Switch off: `KB_SYNC_ENABLED=false` in Vercel (immediate, runs log "disabled"),
-or `select kb.sync_schedule_remove();` (no more calls). "Sync now" (Settings ->
+Switch off: `KB_SYNC_ENABLED=false` in Vercel (after a redeploy, every call
+answers `{"status": "disabled"}` and no run is logged), or
+`select kb.sync_schedule_remove();` (no more calls, at once). "Sync now" (Settings ->
 Sync, admins) works whatever the schedule.
 
 ## Dev status (end of run 5; run 6 rows last)
