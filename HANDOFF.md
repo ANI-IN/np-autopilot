@@ -2,7 +2,7 @@
 
 Branch `auto/knowledge-platform-20261102` is pushed. Nothing is on `main` and nothing is on Production.
 
-**Preview: none.** On 2026-11-04 Vercel rejected the `VERCEL_TOKEN` in `.env`: the CLI says "The token passed with --token is not valid" and the API answers "User not found". See "Action required" 1.
+**Preview: none yet.** The new `VERCEL_TOKEN` works (team and project confirmed; project linked), but the preview has no variables: Vercel refuses branch-scoped Preview variables because the project has **no connected Git repository**, and setting them for all Previews was outside this run's permissions. See "Action required" 1.
 
 **Final verification in progress** (see the "Full suite" row). At the end, only the real-data server (**http://localhost:8766/local-login**) and the local database will be left running; the demo server stays off.
 
@@ -28,9 +28,9 @@ Evidence for every row is in PROGRESS.md.
 | Legacy code cleanup | **VERIFIED** | docs/LEGACY_REMOVAL.md has the evidence for each item; bundle 4,984,241 → 4,982,126 bytes; 19 dependencies |
 | Connector interface, with the NP Autopilot sync behind it | **VERIFIED** | tests/test_kb_connectors.py; the sync test suites pass unchanged |
 | Dev database and go-live rehearsal | **VERIFIED for the database steps, NOT DONE for the Vercel steps** | docs/GO_LIVE.md, "Rehearsal on dev"; the Vercel steps need a working token |
-| Preview deploy (D2) | **BLOCKED** | token rejected; the owner step is below |
+| Preview deploy (D2) | **BLOCKED (owner step)** | Token OK (API 200). Branch-scoped variables refused: "Project np-autopilot does not have a connected Git repository". No variable written, nothing deployed. |
 | 10-minute memory session | **CUT** (allowed by the cut order) | replaced by the 50-opening heap check |
-| Full suite | **Final verification in progress** | scripts/verify_all.sh: static checks and security spot checks PASS. Non-browser tests (2026-11-04 11:03): 1,336 passed, 15 failed, 52 skipped. 13 of those 15 are in main's baseline; the other 2 were pipeline-docs checks, fixed and passing since. The 6 browser test files have not been re-run yet: the earlier full run hung at `test_kb_graph_run6.py::test_group_by_type_folds_and_unfolds` (the known isolation defect). They will be run one file at a time, graph tests one per process. |
+| Full suite | **VERIFIED: no new failures vs main** | Static + security spot checks PASS. Non-browser: 1,336 passed, 15 failed (13 in main's baseline; 2 docs checks fixed, 3/3 since). Browser, one file at a time: e2e 70/71 (the 1 passed alone; first run at 2.5 GB free), UI 29/34 → fixed (each test now closes its pages) → **34/34**, console 2/2, realtime 1/1, propagation 1/1, graph **11/11** one per process. Fit check PASS (1536×730 and 1920×1080). |
 
 **Known limitations:**
 - On the Graph page, group-by-type takes about 40 s on the first run with the test data. It's slow, not wrong.
@@ -143,9 +143,9 @@ From docs/VISION_AND_ROADMAP.md §7.
 
 In order, through to production.
 
-1. **Vercel token:**
-   - Create one at vercel.com/account/tokens with access to the team that owns the project, and replace `VERCEL_TOKEN` in `.env`.
-   - Run `vercel link`, then `bash scripts/deploy_dev_preview.sh --check`, then the same script without `--check`. It deploys to Preview only (docs/DEV_DEPLOY.md, steps 2–6).
+1. **Vercel Preview variables** (the token is fine now):
+   - Either connect the Git repository to the Vercel project (Settings → Git) so variables can be scoped to the branch `auto/knowledge-platform-20261102`; **first set the Production branch and an "Ignored Build Step"** so pushes to `main` do not auto-deploy Production. Or add the variables for **Preview (all branches)**: previews of this project only come from the CLI.
+   - The names and values: docs/DEV_DEPLOY.md step 2 (`SUPABASE_JWT_SECRET` not needed: the dev project signs with ES256; `NP_SHARED_ACCOUNTS` optional). Then `bash scripts/deploy_dev_preview.sh --check`, then without `--check`. Preview only.
 2. **Google sign-in for the preview:**
    - Add the branch URL as an authorised JavaScript origin.
    - On Supabase DEV: the Google provider, the before-user-created hook, and the URL configuration (DEV_DEPLOY.md, step 5).

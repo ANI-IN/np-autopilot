@@ -164,6 +164,16 @@ def browser():
 CONTEXTS: list = []
 
 
+@pytest.fixture(autouse=True)
+def _close_pages():
+    """Close each test's pages when it ends. Kept open until the module ended,
+    every page kept polling the change feed, and by the last tests of a full
+    run the shell could not finish loading within the timeout."""
+    yield
+    while CONTEXTS:
+        CONTEXTS.pop().close()
+
+
 @pytest.fixture(scope="module")
 def data():
     """A small curriculum, created once for the module: a course with a long
