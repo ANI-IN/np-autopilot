@@ -1,3 +1,202 @@
+# HANDOFF — FINAL: pending items, preview, production-ready repository (2026-11-04)
+
+Branch `auto/knowledge-platform-20261102` is pushed (last commit: see `git log`). Nothing is on `main`, and nothing touched Production or its settings.
+
+**Preview: BLOCKED on one owner step.**
+- **The new token works.** The `VERCEL_TOKEN` in `.env` returns 200 from the API, its team owns `np-autopilot`, and the project is linked.
+- **The preview has no variables.** Vercel refuses variables scoped to this branch: "Project np-autopilot does not have a connected Git repository".
+- **Not done in this run, on purpose:**
+  - Connecting the repository. That is a project-wide change, and it can make pushes to `main` deploy Production.
+  - Setting the variables for all Previews. The session's safety check refused it as wider than branch-only.
+- **Result:** no variable written, nothing deployed. See "Action required" 1.
+
+Left running: the real-data server, **http://localhost:8766/local-login**, and the local database. The demo server is off.
+
+The README links here. The previous top section (run 6) follows this one. The run log is [PROGRESS.md](PROGRESS.md).
+
+## Status
+
+| Item | Status | Evidence |
+|---|---|---|
+| Browser test files, one at a time | **VERIFIED** | see "Final verification" below |
+| Dashboard fit check | **VERIFIED** | `eval/kb_fit_check.py` on :8766. 1536×730: document 730/730. 1920×1080: 1080/1080. 9 API calls, 0 errors |
+| D2 preview deploy and smoke test | **BLOCKED (owner step 1)** | token OK (API 200, project linked). Branch-scoped Preview variables refused: no connected Git repository |
+| D3 GO_LIVE steps 8–11 rehearsed on the preview | **NOT DONE** (needs D2) | steps 0–7 rehearsed on DEV (run 6). Steps 3, 5 and 6 corrected against the code, see below |
+| Finish items: PROGRESS, demo re-seed, commit and push | **VERIFIED** | demo re-seeded (63 records); every phase committed and pushed |
+| Repository cleanup | **VERIFIED** | 31 moved, 314 deleted, 28 added; checkout 96.1 MB (803 files) → 33.5 MB (517 files); guard tests show no new failures |
+| Standard repository files | **VERIFIED** | CONTRIBUTING, SECURITY, CHANGELOG, PR template, issue templates (bug, feature; blank issues off), .editorconfig. No LICENSE: the owner decides |
+| Documentation with Mermaid diagrams | **VERIFIED** | 34 diagrams, 34 rendered (list below); every doc checked against the code |
+| Every Markdown link resolves | **VERIFIED** | `python scripts/check_md_links.py`: 0 broken (new permanent script) |
+| README quick start from a fresh clone | **VERIFIED, after 3 fixes** | `db/local/setup.sh` failed on Windows (see below); fixed, then setup, seed, demo server, `/local-login` 200 and `/kb/` 200 all from a fresh clone |
+| `git ls-files` hygiene | **VERIFIED** | no `.env`, keys, backups, real data, local config or run artefacts. The plugin's `.mcp.json` holds only placeholders |
+| Section 7 workflows after the cleanup | **VERIFIED** | `eval/kb_workflow_check.py` on :8766: 26/26 |
+| Full suite after the cleanup | **VERIFIED: no new failures vs main** | see "Final verification" |
+| Preview redeploy after the cleanup | **NOT DONE** (needs D2) | — |
+
+### Final verification (after the cleanup and the docs)
+
+All runs on 2026-11-04, after every cleanup and docs commit:
+
+- **`bash scripts/verify_all.sh --skip-browser`: VERIFY: ALL PASS** (14:37–14:45).
+  - Static checks, including ruff, which was fixed in this run.
+  - Plugin copy and validation.
+  - No server key names in the browser bundle.
+  - `.env` is not tracked.
+  - No secret-shaped strings in history.
+  - RLS on every kb table.
+  - The deploy guard.
+  - All KB tests pass.
+  - Non-browser suite: **1,338 passed, 13 failed, 50 skipped. All 13 are in main's baseline, so no new failures.**
+- **Browser files, one at a time** (14:27–14:37). No test hung, so the 10-minute rule never triggered.
+
+  | File | Result |
+  |---|---|
+  | `test_kb_e2e.py` | 71/71 |
+  | `test_kb_ui_run6.py` | 34/34 |
+  | `test_kb_console_run6.py` | 2/2 |
+  | `test_kb_realtime.py` | 1/1 |
+  | `test_kb_propagation_e2e.py` | 1/1 (the 26-operation matrix) |
+  | `test_kb_graph_run6.py` | **11/11, one test per process** |
+
+- **Section 7 workflows** (`eval/kb_workflow_check.py` on :8766): **26/26**.
+  - The checks are made in the API, the database, the Graph page (about 3.3–3.9 s), the "/" map (under 0.1 s) and the Activity sentences.
+  - The error paths pass too: 422 naming the field, 409 with the current record, and the network dropped and back.
+- **Fit check:** PASS at 1536×730 and 1920×1080.
+- **Link check:** 0 broken.
+- **Diagrams:** 34 of 34 render.
+- **Fresh-clone quick start:** works.
+
+### Found and fixed in this run
+
+- **Browser tests:** in a full run, 5 UI tests timed out waiting for the shell. Every test's browser context stayed open until the file ended, each still polling the change feed. Each test now closes its own pages. The UI file passes 34/34 in 60 s (it was 29/34 in 243 s).
+- **`db/local/setup.sh` failed from a fresh clone on Windows:**
+  - It ran `python3`, which in an activated venv is the system Python.
+  - It needed `psql`, which Git Bash doesn't have.
+  - The mastersheet freshness gate blocked the local projection.
+  - All three are fixed. The freshness gate gets the same local-only reason `verify_all.sh` already uses.
+- **GO_LIVE.md, checked against the code:**
+  - Step 3's rollback was wrong: `migrate.py down` refuses once the import has data, so the rollback is to restore the step-1 backup.
+  - Steps 5–6: `kb_legacy_delete.py` refuses production for `plan` and `restore` too, so both carry the explicit gate.
+- **deployment.md:**
+  - Change feed polling is 2.5 s, not 4 s.
+  - The function limit is 60 s, not 15 s.
+  - A first IK sign-in creates a `member` profile (migration 0015).
+- **The "/" map reads kb through its own routes** (`npmap.py`), not `GET /api/kb/graph`. contracts.md, the PR description and the CHANGELOG said otherwise.
+- **The in-app Guide:**
+  - Graph gestures.
+  - The real legacy filter labels.
+  - Roles: everyone starts as a viewer.
+  - Invitations and the last-admin rule.
+  - Permanent deletion.
+  - "Who to contact" no longer points viewers at an admin-only tab.
+- **http-api.md role rows, and mcp.md:**
+  - http-api.md: duplicating a record needs editor; a contributor's `PATCH` becomes a 202 proposal; approvals of type changes and claims need admin; the missing routes are added.
+  - mcp.md: token expiry, and the test count.
+- **Dead code removed:**
+  - `PERMANENT_DELETE_SQL`, which had no callers.
+  - `eval/kb_run5_ui_check.py`, replaced by the UI sweep.
+- **Tests no longer write into `docs/`.** The change matrix goes to the temp folder.
+- **New:**
+  - `scripts/check_md_links.py`.
+  - `verify_all.sh --skip-browser`, for 16 GB laptops: it lists the browser files as NOT RUN, to run one at a time.
+
+## Repository cleanup
+
+The full record is in the commit messages (53ce69c and those after it).
+
+| | Count | Notes |
+|---|---|---|
+| **Removed** | 314 files | `docs/run6/` (112), `docs/redesign/` (162 images), `docs/inventory/`, `docs/perf/`, `docs/archive/`, `docs/screenshots/*.png` (no references; likely real names), 8 superseded reports, 6 root design docs, `ENV_SETUP.md`, `eval/kb_run5_ui_check.py`, `knowledge/.gitkeep` |
+| **Untracked, kept on disk and gitignored** | 4 files | `knowledge/merged_graph.json` (21 MB), `_graph_data.json`, `_graph_files.json`, `_graph_logic.mjs`. They are generated and nothing reads them from git. This settles the earlier owner decision on `merged_graph.json` |
+| **Moved** | 31 files | process logs to `docs/project-history/`; docs into `architecture/`, `operations/`, `integrations/`; Phase 0 design docs to `project-history/design/`; open plans to `project-history/decisions/`; `07-risks.md` to `docs/operations/risk-register.md` |
+| **Added** | 28 files | the standard repository files, the docs index, the history page, 11 architecture, security and integration docs, 7 workflow docs, 5 operations docs, the link checker |
+| **Size** | | tracked checkout 96.1 MB → 33.5 MB, 803 → 517 files. The git pack stays 61.5 MiB: history keeps everything, and only the history rewrite plan (`decisions/HISTORY-REWRITE-PLAN.md`) would shrink it |
+| **Root** | 6 Markdown files | README, CLAUDE, CONTRIBUTING, SECURITY, CHANGELOG, BUILD_LOG, plus the tool configs |
+
+**Kept on purpose, with the reason:**
+- `BUILD_LOG.md` stays at the root: every pipeline pass appends to it, and a test pins the path.
+- `knowledge/graph.json`, `content_graph.json` and `graph.html` stay tracked: code loads them at import and the CI renderer uses them. CI can't rebuild them yet.
+- The pipeline's decision records stay in `docs/`, because code and tests read them by path: `PRE-CRAWL-DECISIONS.md` (the crawl gate), `ACCEPTANCE-CHECKLIST.md` (5 tests) and `baseline-failures.txt`.
+
+**Not changed (recommendations):**
+- Exclude `scripts/` from the deploy (about 100 KB uploaded for nothing). It changes the bundle, so do it with a preview to check.
+- `.vercelignore` and `deploy_bundle_size.py` name a `pipeline/__init__.py` that doesn't exist.
+- Comments inside the CSP-hashed inline scripts of `public/index.html`, and inside migrations (which are checksummed), still name old doc paths. Editing them changes the hashes.
+
+## Documentation map
+
+The full index is [docs/README.md](../README.md).
+
+- **Architecture:** `overview` (system context, containers, service layer, request sequence), `data-model` (5 entity diagrams plus the intake mapping), `knowledge-graph`, `single-source-of-truth`, `contracts`, `schema`, `auth`, `import-mapping`, `design-system`.
+- **Workflows:** CRUD and change propagation, sync, sign-in and roles, approvals, owner linking, legacy deletion and restore, MCP and Claude.
+- **Operations:** deployment, dev-deploy, GO_LIVE, environment variables, backups and restore, monitoring and troubleshooting, runbook, testing, local demo, legacy removal, window runsheet, risk register.
+- **Security:** `docs/security.md` (access model, role × action matrix, secrets) and the root `SECURITY.md`.
+- **Integrations:** connectors (framework, lifecycle, how to add Google Drive, Uplevel and Atlassian), MCP, HTTP API.
+- **Also:** `VISION_AND_ROADMAP.md` (now with a roadmap timeline), the project history, CONTRIBUTING, CHANGELOG.
+
+## Diagrams and validation
+
+Each diagram was rendered on its own with `@mermaid-js/mermaid-cli` 11.17.1 (Mermaid 11). **34 of 34 render.** Two were also checked by eye: the README overview, and the core entity diagram against the real `kb` columns.
+
+| File | Diagrams |
+|---|---|
+| README.md | 1 flowchart (architecture) |
+| architecture/overview.md | 3 flowcharts, 1 sequence |
+| architecture/data-model.md | 5 erDiagrams, 1 flowchart |
+| architecture/knowledge-graph.md | 2 flowcharts |
+| architecture/single-source-of-truth.md | 2 flowcharts |
+| security.md | 1 flowchart |
+| integrations/connectors.md | 1 stateDiagram |
+| integrations/mcp.md | 1 sequence |
+| workflows/ (7 files) | crud 2, sync 1, auth 2, approvals 1, owner-linking 1, legacy 1, mcp 1 |
+| operations/ | deployment 1, GO_LIVE 1 (step order; step 6 is the point of no return), backups 1, monitoring 1, runbook 1 |
+| VISION_AND_ROADMAP.md | 1 gantt (roadmap) |
+| project-history/audit.md | 1 flowchart (pre-existing) |
+
+## Known limitations
+
+- **Preview:** neither the preview nor GO_LIVE steps 8–11 has been exercised (owner step 1).
+- **Graph tests:** two tests in `test_kb_graph_run6.py` hang when run back to back in one process. Each passes alone; run that file one test per process.
+- **One flaky browser test:** `test_kb_e2e.py` failed once at the start of a run with 2.5 GB free and passed alone. It is counted as failed, then passed alone, not as a pass.
+- **Graph page:** group-by-type takes about 40–50 s the first time on the test data.
+- **AI tokens with an admin owner:** the AI can review and merge relationship types, restore records, manage tags and templates, and read the sync log. Nothing in the service or the database stops it. It still can't grant roles, link accounts, approve, start a sync or delete permanently. Documented in `docs/security.md`; see owner decision 6.
+- **Connector contract:** the engine needs all four config keys from `load_config`, hard-codes the `np:` id prefix and ignores `actor_label` (documented in `docs/integrations/connectors.md`).
+- **Not re-run, per the memory rules:** the 25-user load test and the 5,000-node benchmark.
+- **The old explorer's read paths** in `web/lib/data.py` stay until production runs on kb (`docs/operations/legacy-removal.md`).
+- **No LICENSE file:** that is the owner's decision.
+
+## Action required from owner
+
+In order, through to production.
+
+1. **Vercel Preview variables.** The token is fine now. Choose one:
+   - **(a)** Connect the Git repository (Vercel → Settings → Git) so the variables can be scoped to `auto/knowledge-platform-20261102`. **First** set the Production branch, and an Ignored Build Step so that pushes don't deploy Production.
+   - **(b)** Add the variables for **Preview (all branches)**. Previews of this project come only from the CLI.
+
+   The names and their sources are in `docs/operations/dev-deploy.md` step 2:
+   - `SUPABASE_JWT_SECRET` isn't needed: the dev project signs with ES256 keys.
+   - `NP_SHARED_ACCOUNTS` is optional.
+   - Create a new `KB_SYNC_SECRET`.
+
+   Then run `bash scripts/deploy_dev_preview.sh --check`, then the same command without `--check`. It deploys to Preview only.
+2. **Google sign-in on the preview:**
+   - Add the preview URL as an authorised JavaScript origin of the Google client.
+   - On Supabase DEV, set up the Google provider, the before-user-created hook and the URL configuration (dev-deploy.md step 5).
+   - Put the same `KB_SYNC_SECRET` in DEV's Vault and install the schedule (step 6).
+3. **Make yourself admin on DEV:** sign in once on the preview, then run `ADMIN_EMAILS=<you>@interviewkickstart.com python pipeline/kb_admins.py` against DEV.
+4. **Rehearse GO_LIVE steps 8–11 on the preview,** and record the timings in GO_LIVE.md. This includes one sync timed on Vercel.
+5. **Decide:** may a shared mailbox (`NP_SHARED_ACCOUNTS`) hold an editor or admin role in the KB? See `docs/security.md`.
+6. **Decide:** should an admin-owned AI token be limited further? It can currently review relationship types, restore records and manage tags and templates. See "Known limitations".
+7. **Decide:** a LICENSE for the repository, if any.
+8. **Decide:** whether to run the history rewrite (`docs/project-history/decisions/HISTORY-REWRITE-PLAN.md`). The deleted screenshots, likely with real names, and the large graph files are still in git history. Rewriting history needs every clone to re-clone, and it is not something this run may do.
+9. **Review and merge the PR** (`docs/project-history/PR_DESCRIPTION.md`).
+10. **Production:** follow `docs/operations/GO_LIVE.md`, including step 6, the **permanent legacy deletion**. It exports first and the restore is tested. After that step, rolling back means the export or the step-1 backup.
+11. **After go-live:**
+    - Remove the old-table read paths (`docs/operations/legacy-removal.md`).
+    - Consider excluding `scripts/` from the deploy, checked against a preview.
+
+---
+
 # HANDOFF — Run 6 (final): one source of truth, a better graph, legacy cleanup, security, go-live rehearsal (2026-11-04)
 
 Branch `auto/knowledge-platform-20261102` is pushed. Nothing is on `main` and nothing is on Production.

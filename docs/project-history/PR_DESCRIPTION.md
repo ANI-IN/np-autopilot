@@ -14,7 +14,8 @@ and Activity. Access is limited to IK accounts, checked on the server on every
 request. Roles go from viewer to admin and are enforced in the database. The
 owner-approved legacy cleanup removes 42 legacy domains and 904 legacy modules.
 
-86 commits, 519 files; runs 2–6 (see HANDOFF.md, PROGRESS.md).
+98 commits, 341 files changed against `main`; runs 2–6 plus the final cleanup
+(see HANDOFF.md, PROGRESS.md in this folder).
 
 ## Changes, grouped
 
@@ -69,8 +70,15 @@ owner-approved legacy cleanup removes 42 legacy domains and 904 legacy modules.
   - Data: permanent deletion with export and restore
     (`pipeline/kb_legacy_delete.py`). The sync exclusions (0037) stop the
     deleted records coming back.
-- **Docs:** README (rewritten), ARCHITECTURE, CONTRACTS, GO_LIVE,
-  VISION_AND_ROADMAP, DEV_DEPLOY, SCHEMA, DESIGN_SYSTEM.
+- **Repository (final):** process logs moved to `docs/project-history/`;
+  outdated reports, screenshots and the archive folder removed (git history
+  keeps them); four generated graph files untracked; the tracked checkout goes
+  from 96.1 MB to 33.5 MB. CONTRIBUTING, SECURITY, CHANGELOG, PR and issue
+  templates, `.editorconfig`, `scripts/check_md_links.py`, and
+  `verify_all.sh --skip-browser`.
+- **Docs:** the README rewritten; `docs/README.md` indexes architecture,
+  workflows, operations, security and integrations docs, with 34 Mermaid
+  diagrams, each rendered.
 
 ## Migrations (production is at 0021)
 
@@ -122,6 +130,8 @@ in run 5 the whole chain did.
 
 ## Rollout
 
-Follow [docs/GO_LIVE.md](../operations/GO_LIVE.md): backup → migrations → first import
+Follow [docs/operations/GO_LIVE.md](../operations/GO_LIVE.md): backup → migrations → first import
 (operator) → legacy step → legacy deletion → sync → Production variables →
 deploy → smoke tests → schedule → admins → people.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
