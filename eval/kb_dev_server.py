@@ -104,6 +104,9 @@ def make_app(configure=None, extra=None):
 
 class _Threaded(ThreadingMixIn, WSGIServer):
     daemon_threads = True
+    # The page opens about 30 ES modules at once. socketserver's default queue of 5
+    # overflows, Windows refuses the rest, one module never loads, and the page stays blank.
+    request_queue_size = 128
 
 
 class _Quiet(WSGIRequestHandler):

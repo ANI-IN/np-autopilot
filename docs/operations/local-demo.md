@@ -68,6 +68,26 @@ people, schedules and URLs. Deliberate gaps for **Data quality**:
 
 The resource URLs are fictional and do not open real files.
 
+The `/` map shows **0 current domains + 4 legacy** and **0 current instructors +
+6 from older sheets** on this data, while the workspace shows them as current.
+That is the demo only: the map counts a domain as current through its
+`domain_offers` relationships and an instructor through a mastersheet role, and
+the seed has neither. On the real-data copy the same chips match the database.
+
+## Before a deploy: the journey check
+
+With the demo seeded and its server on 8765:
+
+```bash
+.venv/Scripts/python eval/kb_journey_check.py    # PASS/FAIL per step; exit 1 on any FAIL
+.venv/Scripts/python eval/kb_demo_seed.py        # it leaves synthetic records: reset
+```
+
+It signs in for real as each role, sends a contributor's record through an
+editor's approval in the UI, watches it reach the open Graph page and `/` map,
+checks what each role and Claude's token must never do, and runs the MCP server
+over stdio. [testing.md](testing.md) covers the suites.
+
 ## Reset
 
 ```bash

@@ -46,6 +46,10 @@ the value, so nothing lands in shell history). In the dashboard: Settings ->
 Environment Variables -> tick **Preview** only -> "Select a custom Preview branch"
 -> `auto/knowledge-platform-20261102`.
 
+> **Note (2026-11-05): the owner chose all Preview deployments**, never
+> Production, and asked for the deployment to wait until the local end-to-end
+> test passes. Nothing is set yet.
+>
 > **Note (2026-11-04): the Vercel project has no connected Git repository**,
 > so Vercel refuses branch-scoped Preview variables (the branch option above
 > needs Git). Two ways forward:
