@@ -74,6 +74,13 @@ def test_presence_and_realtime_live_update_between_two_people():
             e = login("demo-editor@interviewkickstart.com")
             assert a.evaluate("(async () => (await import('/kb/js/realtime.js')).realtimeActive())()") is True
             expect(a.get_by_test_id("presence")).to_contain_text("demo editor is viewing", timeout=15000)
+            # After idle Realtime joins seconds before it can deliver; the socket's
+            # promise starts at this frame. test_kb_realtime_gap.py covers the gap.
+            for _ in range(120):
+                if any("Subscribed to PostgreSQL" in f for f in frames):
+                    break
+                a.wait_for_timeout(250)
+            assert any("Subscribed to PostgreSQL" in f for f in frames), "Realtime never confirmed the subscription"
             e.get_by_test_id("panel-summary").click()
             expect(a.get_by_test_id("presence")).to_contain_text("demo editor is editing", timeout=15000)
             e.get_by_test_id("edit-summary").fill("changed over realtime")

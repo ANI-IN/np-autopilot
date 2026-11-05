@@ -162,7 +162,7 @@ flowchart LR
   admins and to the person who made them.
 - **Polling.** [`public/kb/js/live.js`](../../public/kb/js/live.js) polls every
   **2.5 s** while the tab is visible, 15 s while it is hidden, backs off up to
-  60 s after failures, and slows to 20 s while a Realtime socket is up.
+  60 s after failures, and slows to 20 s once Realtime confirms its subscription.
 - **Realtime (optional).** When `GET /api/kb/realtime` returns a configuration
   (only if `KB_REALTIME_ORIGIN` is set and equals `SUPABASE_URL`, see
   [environment-variables.md](../operations/environment-variables.md)),
@@ -170,6 +170,8 @@ flowchart LR
   channel on inserts into `kb.changes`. The socket only says that something
   changed; the page still fetches the rows through the API, under RLS. If the
   socket drops, polling resumes on its own.
+  The page counts the socket as up only at Realtime's "Subscribed to PostgreSQL".
+  After idle, the join is acknowledged seconds before a change can be delivered.
 - **The policy** (contracts §2). `classify()` looks at each change's `kind`:
   `record.`, `relationship.`, `link.`, `layout.` and `owner.` changes are
   patched by their `node_ids`; `type.`, `reltype.`, `tag.` and `sync.` changes,

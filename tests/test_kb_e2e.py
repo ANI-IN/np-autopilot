@@ -69,9 +69,11 @@ def _drop_custom():
         c.execute("delete from kb.edge_types where not is_core")
 
 
-def page_as(browser, base, role, viewport=(1440, 900)):
+def page_as(browser, base, role, viewport=(1440, 900), before=None):
     ctx = browser.new_context(viewport={"width": viewport[0], "height": viewport[1]}, accept_downloads=True)
     CONTEXTS.append(ctx)
+    if before:
+        before(ctx)
     sess = json.dumps({"access_token": token_for(USERS[role], ttl=3600), "expires_at": int(time.time()) + 3600,
                        "user": {"email": f"kbtest-{role}@interviewkickstart.com"}})
     ctx.add_init_script(f"localStorage.setItem('np_session', {json.dumps(sess)}); if (!sessionStorage.getItem('kbt')) {{ localStorage.removeItem('kb_draft_new_record'); sessionStorage.setItem('kbt', '1'); }}")

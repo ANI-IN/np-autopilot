@@ -63,7 +63,7 @@ async function refreshViews(info) {
 export function startLive() {
   api('GET', '/changes').then((r) => { S.feedCursor = r.cursor; }).catch(() => {}).finally(schedule);
   connectRealtime({
-    onUp: () => { socketUp = true; },
+    onUp: () => { socketUp = true; tick(false); },   // one fetch: a change just before the subscription has no event
     onDown: () => { socketUp = false; },
     onChange: () => tick(true),          // the socket says "something changed": fetch the RLS-scoped rows
   });

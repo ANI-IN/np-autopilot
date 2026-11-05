@@ -3,6 +3,9 @@
    the server does only when the deployment allows that origin in the security
    policy's connect-src (KB_REALTIME_ORIGIN; see docs/operations/deployment.md). Otherwise
    this is a no-op and live.js polls. Any socket error → onDown → polling.
+   onUp means "Subscribed to PostgreSQL", not the join: after idle, Realtime
+   acknowledges the join seconds before it can deliver a change, and live.js
+   slows its polling on onUp.
 
    The socket only says THAT something changed (a kb.changes insert (0029), which
    Realtime filters through the same RLS as every read); live.js then fetches
@@ -46,9 +49,10 @@ function open() {
     let msg; try { msg = JSON.parse(m.data); } catch (e) { return; }
     // Only the reply to OUR join decides up/down (track and other pushes reply too).
     if (msg.event === 'phx_reply' && msg.topic === TOPIC && msg.ref === joinRef) {
-      if (msg.payload && msg.payload.status === 'ok') { handlers.onUp(); if (tracked) track(tracked); }
+      if (msg.payload && msg.payload.status === 'ok') { if (tracked) track(tracked); }
       else { handlers.onDown(); ws.close(); }
-    } else if (msg.event === 'postgres_changes') handlers.onChange(msg.payload);
+    } else if (msg.event === 'system' && msg.payload && msg.payload.status === 'ok' && msg.payload.extension === 'postgres_changes') handlers.onUp();
+    else if (msg.event === 'postgres_changes') handlers.onChange(msg.payload);
     else if (msg.event === 'presence_state') { presence = {}; mergePresence(msg.payload, {}); }
     else if (msg.event === 'presence_diff') mergePresence(msg.payload.joins || {}, msg.payload.leaves || {});
     else if (msg.event === 'phx_error' || msg.event === 'system' && msg.payload && msg.payload.status === 'error') { handlers.onDown(); }
