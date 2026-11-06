@@ -852,7 +852,8 @@ function buildGraph(v, r) {
   }
   function rename(n) {
     if (!canEdit) return;
-    ensureVersion(n);
+    // The version this rename started from: a live update while typing must still conflict.
+    const started = ensureVersion(n).then(() => n.data('version'));
     const b = n.renderedBoundingBox({ includeLabels: true });
     const input = el('input', { class: 'graph-rename', value: n.data('label'), 'aria-label': 'Rename ' + n.data('label'), 'data-testid': 'graph-rename-input',
       style: 'left:' + Math.max(4, (b.x1 + b.x2) / 2 - 110) + 'px;top:' + (b.y2 - 16) + 'px' });
@@ -862,17 +863,17 @@ function buildGraph(v, r) {
       if (done) return; done = true; input.remove(); cyBox.focus();
       const nm = input.value.trim();
       if (!save || !nm || nm === n.data('label')) return;
-      await saveName(n, nm, false);
+      await saveName(n, nm, false, await started);
     };
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); finish(true); } if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(false); } });
     input.addEventListener('blur', () => finish(true));
   }
-  async function saveName(n, nm, force) {
+  async function saveName(n, nm, force, version) {
     await ensureVersion(n);
     const old = n.data('label');
     n.data('label', nm);
     try {
-      const u = await api('PATCH', '/nodes/' + n.id() + (force ? '?force=1' : ''), { version: n.data('version'), name: nm });
+      const u = await api('PATCH', '/nodes/' + n.id() + (force ? '?force=1' : ''), { version: version ?? n.data('version'), name: nm });
       n.data('version', u.version); const rec = M.nodes.get(n.id()); if (rec) { rec.name = nm; rec.version = u.version; }
       toast('Renamed', { action: { label: 'Undo', fn: () => saveName(n, old, false) } });
       relabel(); drawCrumbs();

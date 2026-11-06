@@ -1169,6 +1169,12 @@ def test_b3_graph_rejects_an_invalid_connection_with_a_reason(server, browser):
     assert page.errors == []
 
 
+def _open_rename(page, node_id, label):
+    """Double-click a record and check the rename opened on that record."""
+    page.mouse.dblclick(*page.evaluate(f"window.__kbGraph.renderedPosition('{node_id}')"))
+    expect(page.get_by_test_id("graph-rename-input")).to_have_attribute("aria-label", f"Rename {label}")
+
+
 def test_b3_two_people_edit_the_graph_at_once(server, browser):
     ed = Client(USERS["editor"])
     _, course = ed.post("/api/kb/courses", {"name": "Shared Canvas"})
@@ -1177,21 +1183,23 @@ def test_b3_two_people_edit_the_graph_at_once(server, browser):
     b = page_as(browser, server, "admin", viewport=(1536, 900))
     _graph(a, server, course["id"])
     _graph(b, server, course["id"])
-    # A adds a record and connects it; B sees both arrive without reloading
-    _, extra = ed.post("/api/kb/nodes", {"type": "module", "name": "Arrives live", "parents": [course["id"]]})
-    b.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{extra['id']}').length === 1", timeout=20000)
-    # both rename the same record: the second save gets the conflict dialog
-    a.mouse.dblclick(*a.evaluate(f"window.__kbGraph.renderedPosition('{mod['id']}')"))
+    # both rename the same record. B starts first, and A's rename reaches B's page
+    # live while B is still typing: B's save must conflict, not overwrite A's name.
+    _open_rename(b, mod["id"], "Shared Module")
+    b.get_by_test_id("graph-rename-input").fill("Name from B")
+    b.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{mod['id']}').data('version') != null")
+    _open_rename(a, mod["id"], "Shared Module")
     a.get_by_test_id("graph-rename-input").fill("Name from A")
     a.keyboard.press("Enter")
     expect(toast(a)).to_contain_text("Renamed")
-    b.mouse.dblclick(*b.evaluate(f"window.__kbGraph.renderedPosition('{mod['id']}')"))
-    b.evaluate("window.__kbGraph.cy.nodes().forEach((n) => n.data('version', Math.min(n.data('version') || 1, 1)))")   # B still holds v1
-    b.get_by_test_id("graph-rename-input").fill("Name from B")
-    b.keyboard.press("Enter")
+    b.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{mod['id']}').data('label') === 'Name from A'", timeout=20000)
+    b.get_by_test_id("graph-rename-input").press("Enter")
     expect(b.get_by_test_id("conflict-dialog")).to_contain_text("Name from A")
     b.get_by_test_id("conflict-reload").click()
     assert Client(USERS["viewer"]).get(f"/api/kb/nodes/{mod['id']}")[1]["name"] == "Name from A"
+    # A adds a record and connects it; B sees both arrive without reloading
+    _, extra = ed.post("/api/kb/nodes", {"type": "module", "name": "Arrives live", "parents": [course["id"]]})
+    b.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{extra['id']}').length === 1", timeout=20000)
     assert a.errors == [] and b.errors == []
 
 
