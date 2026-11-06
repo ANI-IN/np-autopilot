@@ -70,8 +70,16 @@ S="$(val KB_SYNC_SECRET)"; [ "${#S}" -ge 24 ] || die "KB_SYNC_SECRET must be at 
 echo "checks passed: Preview variables for $BRANCH point at the dev project, transaction pooler, no service key"
 [ "$CHECK_ONLY" = 1 ] && exit 0
 
+# The preview's functions run next to the DEV database, not where production runs.
+# vercel.json pins icn1 because production's database is in Seoul; the DEV project is
+# in eu-west-1, so from icn1 every query crossed Asia to Europe (~1 s per request,
+# 6-7 s to sign in; measured 2026-11-07). --regions applies to this deployment only;
+# vercel.json and production are unchanged.
+REGION="${DEV_PREVIEW_REGION:-dub1}"
+case "$REGION" in [a-z][a-z][a-z][0-9]) ;; *) die "DEV_PREVIEW_REGION must be a Vercel region id like dub1" ;; esac
+
 # Deploy: a preview (no --prod, explicit --target=preview).
-OUT="$(vercel deploy --target=preview --yes "${TOKEN_ARGS[@]}" 2>/dev/null)" || die "vercel deploy failed"
+OUT="$(vercel deploy --target=preview --regions "$REGION" --yes "${TOKEN_ARGS[@]}" 2>/dev/null)" || die "vercel deploy failed"
 URL="$(printf '%s\n' "$OUT" | grep -Eo 'https://[a-z0-9.-]+\.vercel\.app' | tail -1)"
 [ -n "$URL" ] || die "no deployment URL in the CLI output"
 TARGET="$(vercel inspect "$URL" "${TOKEN_ARGS[@]}" 2>&1 | grep -iE '^\s*target' | head -1 || true)"
@@ -103,5 +111,7 @@ check "/api/kb/me needs a session"           "$(code "$URL/api/kb/me")" 401
 check "/api/cron/kb-sync refuses no secret"  "$(code -X POST "$URL/api/cron/kb-sync")" 401
 check "/local-login does not exist"          "$(code "$URL/local-login")" 404
 check "the alias serves /kb/"                "$(code "https://$ALIAS/kb/")" 200
+RAN="$(curl -s -o /dev/null -D - "${H[@]}" "https://$ALIAS/api/config" | tr -d '\r' | sed -nE 's/^[Xx]-[Vv]ercel-[Ii]d: ([a-z0-9:]+).*/\1/p' | awk -F'::' '{print $(NF-1)}')"
+check "functions run in $REGION"             "$RAN" "$REGION"
 [ "$fail" = 0 ] || die "smoke tests failed (above)"
 echo "smoke tests passed. Next: docs/operations/dev-deploy.md step 5 (Google sign-in) and step 6 (the schedule)."

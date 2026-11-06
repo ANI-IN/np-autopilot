@@ -22,6 +22,7 @@ works-locally-fails-on-Vercel cause.
 from __future__ import annotations
 
 import json
+import threading
 import os
 import sys
 from contextlib import contextmanager
@@ -48,18 +49,28 @@ class DepthExceeded(Exception):
     """Asked for a traversal deeper than the cap."""
 
 
-#: ONE CONNECTION PER WARM FUNCTION INSTANCE, reused across invocations.
+#: ONE IDLE WARM CONNECTION PER FUNCTION INSTANCE, reused across invocations.
 #:
 #: Opening a connection to Supabase measured 1.3 s from a laptop to
 #: ap-northeast-2 — in-region from Vercel it is far less, but it was being paid
-#: on EVERY request, warm or cold. A Vercel Python function handles one request
-#: at a time per instance, so a module-level connection is not shared
-#: concurrently.
+#: on EVERY request, warm or cold.
 #:
-#: WHAT MAKES THIS SAFE IS THE ROLLBACK, not the caching. See the finally:
+#: A REQUEST CHECKS IT OUT; IT IS NEVER SHARED. This used to assume "a Vercel
+#: Python function handles one request at a time per instance". Fluid compute
+#: breaks that: one instance serves concurrent requests, and with one shared
+#: connection a fast request's closing rollback ended a slow request's
+#: transaction mid-way (its identity vanished; the dashboard answered 403 to an
+#: admin on the DEV preview, 2026-11-07), and two callers could run statements
+#: under each other's claims. Now `_WARM` holds the connection only while it is
+#: idle: a request takes it under `_LOCK` (or opens its own when another request
+#: holds it) and hands it back afterwards if the slot is empty, else closes it.
+#:
+#: WHAT MAKES REUSE SAFE IS THE ROLLBACK, not the caching. See the finally:
 #: block below, and tests/test_warm_connection_isolation.py, which asserts that
-#: a second request on a reused connection cannot see the first one's identity.
+#: a second request on a reused connection cannot see the first one's identity,
+#: and that concurrent requests never share a connection.
 _WARM = None
+_LOCK = threading.Lock()
 
 #: ONE ROUND TRIP, not two. `set_config('role', ..., true)` is what `SET LOCAL
 #: ROLE` does, and both settings are still transaction-LOCAL — which is the
@@ -70,20 +81,39 @@ _SETUP_SQL = ("select set_config('request.jwt.claims', %s, true),"
 
 
 def _warm_connection():
+    """Check out a connection for ONE request: the idle warm one if there is
+    one, else a new one. Nobody else can hold it until `_give_back`."""
     global _WARM
-    if _WARM is None or getattr(_WARM, "closed", True):
-        _WARM = _db.connect(_db.TRANSACTION)
-    return _WARM
+    with _LOCK:
+        conn, _WARM = _WARM, None
+    if conn is not None and not getattr(conn, "closed", True):
+        return conn
+    return _db.connect(_db.TRANSACTION)
 
 
-def _discard():
+def _give_back(conn):
+    """Keep `conn` as the idle warm connection if the slot is empty; else close it."""
     global _WARM
-    dead, _WARM = _WARM, None
-    if dead is not None:
-        try:
-            dead.close()
-        except Exception:                                              # noqa: BLE001
-            pass
+    if conn is None or getattr(conn, "closed", True):
+        return
+    with _LOCK:
+        if _WARM is None:
+            _WARM, conn = conn, None
+    if conn is not None:
+        _close(conn)
+
+
+def _close(conn):
+    try:
+        conn.close()
+    except Exception:                                                  # noqa: BLE001
+        pass
+
+
+def _discard(conn):
+    """Drop a connection nobody should inherit. It is never put back."""
+    if conn is not None:
+        _close(conn)
 
 
 def _reset_or_discard(conn):
@@ -91,7 +121,9 @@ def _reset_or_discard(conn):
     try:
         conn.rollback()
     except Exception:                                                  # noqa: BLE001
-        _discard()
+        _discard(conn)
+    else:
+        _give_back(conn)
 
 
 def _begin(conn, claims_json: str):
@@ -109,7 +141,6 @@ def request_connection(identity_subject: str | None):
     than impossible, because "impossible" would be an exception a route could
     catch and work around.
     """
-    global _WARM
     claims = {"role": "authenticated"}
     if identity_subject:
         claims["sub"] = str(identity_subject)
@@ -129,7 +160,7 @@ def request_connection(identity_subject: str | None):
         if not (conn.closed or getattr(conn, "broken", False)):
             _reset_or_discard(conn)
             raise
-        _discard()
+        _discard(conn)
         conn = _warm_connection()          # a failure here propagates: no loop
         try:
             _begin(conn, claims_json)
@@ -146,14 +177,14 @@ def request_connection(identity_subject: str | None):
         # commit, and never skip it on a path that returns early.
         #
         # If the rollback itself fails the connection is not in a state anyone
-        # should inherit, so it is dropped rather than reused.
+        # should inherit, so it is dropped rather than reused. Only a connection
+        # that rolled back cleanly goes back to the idle slot.
         try:
             conn.rollback()
         except Exception:
-            try:
-                conn.close()
-            finally:
-                _WARM = None
+            _discard(conn)
+        else:
+            _give_back(conn)
 
 
 def _rows(cur) -> list[dict]:
