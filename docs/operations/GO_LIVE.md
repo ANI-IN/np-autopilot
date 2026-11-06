@@ -45,7 +45,7 @@ unless `NP_ALLOW_LEGACY_DELETE_ON_PRODUCTION=yes` is set for that command.
 |---|---|---|---|---|
 | 0 | Merge the branch (reviewed PR, docs/project-history/PR_DESCRIPTION.md) | GitHub | — | revert the merge commit |
 | 1 | **Backup** (read-only) | `pg_dump --no-owner --no-privileges -n public -n kb "$PROD_SESSION_URL" -f backups/prod_before_golive_<date>.sql` (see `scripts/dev_db.py backup` for the exact flags) | 1 min (59 MB) | nothing changed |
-| 2 | **Migrations 0022–0037** | `SUPABASE_DB_URL_SESSION=$PROD python pipeline/migrate.py status`, then `up` | 7 s for 0032–0037; 0022–0031 measured in run 5 (under 1 min) | `python pipeline/migrate.py down --to 0021` (each has a `.down.sql`; rehearsed on dev: 0037→0031 down and up again; run 5: the whole chain) |
+| 2 | **Migrations 0022–0038** (0036 unused; 0038 is an index only) | `SUPABASE_DB_URL_SESSION=$PROD python pipeline/migrate.py status`, then `up` | 7 s for 0032–0037; 0022–0031 measured in run 5 (under 1 min) | `python pipeline/migrate.py down --to 0021` (each has a `.down.sql`; rehearsed on dev: 0037→0031 down and up again; run 5: the whole chain) |
 | 3 | **First import** (operator mode: no KB admin exists yet) | `SUPABASE_DB_URL_SESSION=$PROD python pipeline/kb_import_projection.py apply --operator --report backups/prod-import.json` | 245 s (25,226 units) | restore the step-1 backup: once the import has written sync state, `migrate.py down` refuses at 0030 and 0029 ([runbook.md](runbook.md) §2); the old tables are never written |
 | 4 | **Legacy step** (reversible archive of legacy instructors etc.) | `python pipeline/kb_legacy.py archive` | < 10 s | `python pipeline/kb_legacy.py restore` |
 | 5 | **Plan the legacy deletion** | `NP_ALLOW_LEGACY_DELETE_ON_PRODUCTION=yes python pipeline/kb_legacy_delete.py plan` (the production gate applies to `plan` too; it changes nothing) | < 2 s | — (read only). Expect: 4 current domains kept (Full Stack, Backend, Frontend, Test Engineering), 42 domains and 904 modules to delete, 0 records left without a parent. **Stop if the numbers differ.** |
@@ -60,6 +60,50 @@ unless `NP_ALLOW_LEGACY_DELETE_ON_PRODUCTION=yes` is set for that command.
 | 14 | Watch the first scheduled sync (Settings → Sync: trigger "Schedule", status ok, its duration under the function cap) and Data quality for conflicts in the first week | — | — | `KB_SYNC_ENABLED=false` |
 
 Total hands-on time: about 45 minutes, plus the first scheduled sync.
+
+## Before go-live: plan changes (checked 2026-11-07, prices USD excl. tax)
+
+| Change | Why | Monthly cost |
+|---|---|---|
+| **Vercel Hobby → Pro** (1 developer seat) | Hobby is limited to non-commercial personal use; a company's internal tool needs Pro | $20 (includes $20 usage credit), +$20 per extra deployer |
+| **Supabase production org → Pro** | Free has no backups and pauses projects after a week of inactivity; Pro gives 7 days of daily backups and no pausing | $25 (the $10 compute credit covers one Micro project) |
+| Keep DEV in a separate Free org | plans cannot be mixed within one org; DEV may pause when idle | $0 |
+| Optional: Supabase PITR (7 days) | recovery finer than daily | +$100 |
+| GitHub repo → private (before Phase 4) | the owner's request; CLI deploys upload local files, so deployment does not depend on the repo being public | $0 |
+
+Minimum about **$45/month** plus usage above the included amounts. Sources:
+vercel.com/docs/limits/fair-use-guidelines, vercel.com/pricing, supabase.com/pricing,
+supabase.com/docs/guides/platform/backups, docs.github.com (repository visibility).
+Making the repo private does not undo anything already exposed: rotate any secret
+that was ever committed (none found by the history scan in `verify_all.sh`).
+
+## Notes added 2026-11-07
+
+**Live updates over Realtime at go-live (recommended).** Without it, every open
+tab polls `/api/kb/changes` every 2.5 s (map and workspace separately). After
+step 8, and before step 9's deploy:
+
+1. `KB_REALTIME_ORIGIN=https://<production ref>.supabase.co python scripts/kb_csp_origin.py`
+   adds that origin (https and wss) to `connect-src` in vercel.json; commit it.
+   `--check` validates; `--clear` removes it again.
+2. `vercel env add KB_REALTIME_ORIGIN production` with the same value (it must
+   equal `SUPABASE_URL`).
+3. After step 9, check in a browser that the workspace receives changes without
+   polling (two tabs: an edit in one shows in the other within a second or two).
+
+Rollback: remove the variable and redeploy; the page falls back to polling on its own.
+docs/operations/deployment.md "KB live updates over Supabase Realtime" has the details.
+
+**Fluid compute and the connection fix.** The Vercel project runs Fluid compute:
+one instance serves concurrent requests. `web/lib/data.py` gives each request its
+own database connection (checked out, never shared). Before that fix one
+request's rollback could end another's transaction, and two callers could run
+statements under each other's identity. The fix went to production alone as a
+hotfix on 2026-11-07: deployment `dpl_HzgySKhJxwLDxXdxtK1JqERR9Xr5`, promoted
+20:46 UTC on 2026-11-06, verified by the owner's sign-in; `main` = `7be3b4c`.
+Fluid stays on. Keep the per-request checkout in any future change to `data.py`
+(`tests/test_warm_connection_isolation.py::test_concurrent_requests_never_share_a_connection`).
+
 
 ## Smoke tests (step 10)
 

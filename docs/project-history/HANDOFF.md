@@ -238,7 +238,7 @@ Each diagram was rendered on its own with `@mermaid-js/mermaid-cli` 11.17.1 (Mer
 - **Preview:** neither the preview nor GO_LIVE steps 8–11 has been exercised (owner step 1).
 - **Graph tests:** two tests in `test_kb_graph_run6.py` hang when run back to back in one process. Each passes alone; run that file one test per process.
 - **One flaky browser test:** `test_kb_e2e.py` failed once at the start of a run with 2.5 GB free and passed alone. It is counted as failed, then passed alone, not as a pass.
-- **Graph page:** group-by-type takes about 40–50 s the first time on the test data.
+- **Graph page:** ~~group-by-type takes about 40–50 s the first time on the test data~~. Corrected 2026-11-07: that was the test harness serialising a Cytoscape object returned by `page.evaluate`; in the app, grouping takes well under a second (735 ms on real data) and a fold about 8 ms.
 - **AI tokens with an admin owner:** the AI can review and merge relationship types, restore records, manage tags and templates, and read the sync log. Nothing in the service or the database stops it. It still can't grant roles, link accounts, approve, start a sync or delete permanently. Documented in `docs/security.md`; see owner decision 6.
 - **Connector contract:** the engine needs all four config keys from `load_config`, hard-codes the `np:` id prefix and ignores `actor_label` (documented in `docs/integrations/connectors.md`).
 - **Not re-run, per the memory rules:** the 25-user load test and the 5,000-node benchmark.

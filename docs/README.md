@@ -64,6 +64,16 @@ want to do. New here? Read the [README](../README.md), then
 | [integrations/http-api.md](integrations/http-api.md) | The HTTP API |
 | [VISION_AND_ROADMAP.md](VISION_AND_ROADMAP.md) | Where the platform goes next, with the prioritised roadmap |
 
+## Design and plans (2026-11-07)
+
+| Document | What it covers |
+|---|---|
+| [project-history/PLAN-2026-11-07.md](project-history/PLAN-2026-11-07.md) | The approved plan: decisions 1–13, phases, Phase 5 (plugin platform), plan improvements |
+| [design/phase1/README.md](design/phase1/README.md) | UX audit, target navigation, three visual directions (HTML mockups), what ships when |
+| [design/phase4-pilot-plan.md](design/phase4-pilot-plan.md) | Ingestion, extraction and search: source inventory, design, embeddings, scheduled runs, the pilot, the quality test set |
+| [design/phase5-plugin-platform.md](design/phase5-plugin-platform.md) | The Claude plugin platform: one MCP server, OAuth for Claude.ai, internal plugin catalog, plugins → tools → missing data |
+| [design/team-test-script.md](design/team-test-script.md) | A 10-minute test script and feedback form for NP team members |
+
 ## The pipeline's decision records
 
 These belong to the intake pipeline. Code and tests read several of them, so
