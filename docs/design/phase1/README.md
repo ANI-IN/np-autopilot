@@ -10,6 +10,14 @@ fictional content; open them in a browser:
 | B · Atlas | [direction-b.html](direction-b.html) | Dark-first, map-led. Map and workspace share one look: top bar, deep navy, the graph one click away |
 | C · Studio | [direction-c.html](direction-c.html) | Search-first, spacious. Warm neutral canvas, larger type, cards; home opens on one big search box |
 
+Screenshots (1440 px wide, in [screenshots/](screenshots/)):
+
+| Direction | Home | Search results | Record page | Program view |
+|---|---|---|---|---|
+| A · Clarity | ![](screenshots/direction-a-home.png) | ![](screenshots/direction-a-search.png) | ![](screenshots/direction-a-record.png) | ![](screenshots/direction-a-program.png) |
+| B · Atlas | ![](screenshots/direction-b-home.png) | ![](screenshots/direction-b-search.png) | ![](screenshots/direction-b-record.png) | ![](screenshots/direction-b-program.png) |
+| C · Studio | ![](screenshots/direction-c-home.png) | ![](screenshots/direction-c-search.png) | ![](screenshots/direction-c-record.png) | ![](screenshots/direction-c-program.png) |
+
 Each file has the same four screens (Home, Search results, Record page, Program
 view) and the same content, so only the visual system and layout differ.
 `python docs/design/phase1/build_mockups.py` regenerates them.
