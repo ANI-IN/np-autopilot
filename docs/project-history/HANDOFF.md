@@ -1,3 +1,36 @@
+# HANDOFF: DEV preview deployed, Google sign-in working, manual testing (2026-11-07)
+
+Branch `auto/knowledge-platform-20261102` is pushed. Nothing is on `main`. Production (Vercel Production and the production Supabase project) was not touched.
+
+**The preview is live** at the fixed alias **https://np-autopilot-kb-dev.vercel.app**, wired to the DEV Supabase project, behind Vercel's deployment protection. The owner signs in with an IK Google account and holds the KB admin role on DEV. Manual testing by the owner is under way; issues come back to this branch.
+
+## What was done
+
+| Step | Result |
+|---|---|
+| Vercel variables | 8 set for **Preview (all previews)**, never Production; the 6 Production variables untouched (`docs/operations/dev-deploy.md` step 2) |
+| DEV database | Was missing migration **0035** (member invites). Backed up first (`backups/`, gitignored), then applied; DEV now matches the chain exactly (36 migrations, same tables and functions, RLS on everywhere) |
+| Deploy | `scripts/deploy_dev_preview.sh --check`, then the deploy; the script now moves a fixed alias to each preview (`DEV_PREVIEW_ALIAS`) |
+| Smoke tests | 6/6 in the script, plus: config names DEV, security headers, forged tokens refused, a wrong sync secret refused, the alias protected (302 to Vercel's login without access) |
+| Sync | One call through `/api/cron/kb-sync` with the secret: ok, 0 changes, 22.9 s. Vault holds the sync secret and the Vercel bypass; the hourly `kb-sync` cron job targets the alias |
+| Google sign-in | The owner configured the Google client and DEV's Auth (provider, before-user-created hook, URL configuration); a first sign-in created the profile; `pipeline/kb_admins.py` granted KB admin on DEV, audited, and `kb.role()` evaluates to admin under RLS |
+| Access | Through a Vercel shareable link on the alias (30-day expiry). Deployment protection stays on; the link is kept out of the repo |
+| Drive | The service account was restored and re-keyed; the key lives outside the repo. The Drive corpus is reduced to one file on purpose for initial testing; nothing was run on it |
+
+## Known limitations
+
+- **Live updates poll every 2.5 s on the preview:** Realtime needs `KB_REALTIME_ORIGIN` and a `connect-src` change in `vercel.json`, which production shares.
+- **The map at `/` labels every account "member":** that is the map's profile role (migration 0015), separate from the KB role.
+- **The reduced Drive corpus has no extractable files** (its one file is the excluded crawl registry). Restoring the full corpus is on the backlog; no pipeline, import or sync runs on the reduced corpus without the owner's approval, and a smaller corpus must never be read as deletions.
+
+## Next
+
+1. The owner's manual test pass on the preview; fixes on this branch, redeployed with `bash scripts/deploy_dev_preview.sh` (the alias and the access link stay the same).
+2. Then GO_LIVE steps 8–11 rehearsed on the preview, with timings.
+3. Open the PR, review, merge; production via `docs/operations/GO_LIVE.md`.
+
+---
+
 # HANDOFF: local end-to-end test before the preview deploy (2026-11-06)
 
 Branch `auto/knowledge-platform-20261102` is pushed. Nothing is on `main`, and nothing touched Vercel or Production in this run.
