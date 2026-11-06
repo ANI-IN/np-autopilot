@@ -1,29 +1,29 @@
 /* Boot, sidebar, router, ⌘K palette, keyboard shortcuts, live updates. */
 import { S, el, add, $, $$, clear, icon, typeIcon, typeLabel, api, toast, failToast, loadSession, setSignedOutHandler, parseHash,
-  setQuery, avatar, personName, menu, debounce, can, qs, closeDialog, closeMenu } from './core.js';
+  setQuery, avatar, personName, menu, debounce, can, qs, closeDialog, closeMenu, skeletonBlock, errorBox } from './core.js';
 import { startLive, onLiveChange } from './live.js';
 import { openRecordPanel, closePanel, renderFullRecord } from './detail.js';
 import { openRecordForm } from './form.js';
-import { viewDashboard } from './views/dashboard.js';
-import { viewRecords } from './views/records.js';
-import { viewResources } from './views/resources.js';
-import { viewGraph } from './views/graph.js';
-import { viewOutline } from './views/outline.js';
-import { viewQuality } from './views/quality.js';
-import { viewApprovals } from './views/approvals.js';
-import { viewArchived } from './views/archived.js';
-import { viewSettings } from './views/settings.js';
-import { viewGuide } from './views/guide.js';
-import { viewActivity } from './views/activity.js';
-import { viewTeaching, viewTimeline } from './views/teaching.js';
 import { aliasTarget } from './aliases.js';
 
+/* Each view's module loads the first time its page opens (2026-11-07): the whole
+   app (~450 KB, ~30 files) used to download before the first page could render.
+   A loader is the dynamic import; the browser caches it, so a second visit, and a
+   sidebar hover that prefetched it, cost nothing. */
+const lazy = (path, name) => () => import(path).then((m) => m[name]);
 const ROUTES = {
-  '': viewDashboard, records: viewRecords, programs: viewRecords, courses: viewRecords, resources: viewResources,
-  outline: viewOutline, graph: viewGraph, quality: viewQuality, approvals: viewApprovals, proposals: viewApprovals,
-  archived: viewArchived, settings: viewSettings, guide: viewGuide, r: renderFullRecord, activity: viewActivity,
-  teaching: viewTeaching, timeline: viewTimeline,
+  '': lazy('./views/dashboard.js', 'viewDashboard'), records: lazy('./views/records.js', 'viewRecords'),
+  programs: lazy('./views/records.js', 'viewRecords'), courses: lazy('./views/records.js', 'viewRecords'),
+  resources: lazy('./views/resources.js', 'viewResources'), outline: lazy('./views/outline.js', 'viewOutline'),
+  graph: lazy('./views/graph.js', 'viewGraph'), quality: lazy('./views/quality.js', 'viewQuality'),
+  approvals: lazy('./views/approvals.js', 'viewApprovals'), proposals: lazy('./views/approvals.js', 'viewApprovals'),
+  archived: lazy('./views/archived.js', 'viewArchived'), settings: lazy('./views/settings.js', 'viewSettings'),
+  guide: lazy('./views/guide.js', 'viewGuide'), r: () => Promise.resolve(renderFullRecord),
+  activity: lazy('./views/activity.js', 'viewActivity'), teaching: lazy('./views/teaching.js', 'viewTeaching'),
+  timeline: lazy('./views/teaching.js', 'viewTimeline'),
 };
+/* Prefetch a page's module when the pointer or focus reaches its sidebar link. */
+function prefetchView(nav) { const load = ROUTES[nav === 'dashboard' ? '' : nav]; if (load) load().catch(() => {}); }
 /* Page template widths (B1): tables and the graph use the full width; reading
    content is centred at a readable measure; everything else is contained. */
 const LAYOUT = { records: 'full', programs: 'full', courses: 'full', resources: 'full', graph: 'full', teaching: 'full', timeline: 'full', guide: 'reading', r: 'reading' };
@@ -86,7 +86,8 @@ async function boot() {
   document.body.dataset.role = S.me.role;
   try { if (localStorage.getItem('kb_sidebar') === 'collapsed') $('#app').classList.add('collapsed'); } catch (e) { /* ignore */ }
   renderSidebar();
-  refreshCounts();
+  // The dashboard's reply fills the counts itself; any other page asks for them.
+  if ((parseHash().path[0] || '') !== '') refreshCounts();
   syncBanner();
   window.addEventListener('hashchange', route);
   window.addEventListener('popstate', route);
@@ -133,6 +134,9 @@ function renderSidebar() {
     nav.appendChild(g);
   }
   sb.appendChild(nav);
+  // Hover or focus on a page link starts loading that page's module.
+  const warm = (e) => { const a = e.target.closest && e.target.closest('[data-nav]'); if (a) prefetchView(a.dataset.nav); };
+  sb.addEventListener('pointerover', warm); sb.addEventListener('focusin', warm);
   const user = el('button', { class: 'user-btn', type: 'button', 'data-testid': 'whoami', onclick: (e) => userMenu(e.currentTarget) },
     avatar(S.me.user_id, 'lg'), el('span', { class: 'label-text col gap-0 min-w-0' },
       el('span', { class: 'truncate', text: (S.session.user && S.session.user.email) || personName(S.me.user_id) }),
@@ -172,9 +176,10 @@ async function syncBanner() {
   } catch (e) { /* the banner is decoration */ }
 }
 
-export async function refreshCounts() {
+/* Fill the sidebar counts from a /counts reply, or from the dashboard's reply,
+   which carries the same totals (2026-11-07: a dashboard landing no longer asks twice). */
+function applyCounts(d) {
   try {
-    const d = await api('GET', '/counts');
     const byType = {}; d.counts.forEach((c) => { byType[c.key] = c.n; });
     const vals = { records: d.totals.nodes, program: byType.program, course: byType.course, resources: d.totals.resources,
       pending: d.totals.pending_proposals || '', archived: d.totals.archived || '',
@@ -183,9 +188,13 @@ export async function refreshCounts() {
     S.counts = vals;
   } catch (e) { /* counts are decoration */ }
 }
+export async function refreshCounts() {
+  try { applyCounts(await api('GET', '/counts')); } catch (e) { /* counts are decoration */ }
+}
+S.applyCounts = applyCounts; S.refreshCounts = refreshCounts;
 
 // ------------------------------------------------------------------ router
-let lastView = null;
+let lastView = null, routeSeq = 0;
 export function rerender() { lastView = null; route(); }
 export function route() {
   closeMenu();
@@ -198,7 +207,7 @@ export function route() {
   $$('#sidebar [data-nav]').forEach((a) => a.classList.toggle('active', a.dataset.nav === (key || 'dashboard') ||
     (key === 'proposals' && a.dataset.nav === 'approvals')));
   const viewKey = key + '|' + (r.path[1] || '');
-  const fn = ROUTES[key];
+  const load = ROUTES[key];
   const v = $('#view');
   const page = PAGES.find(([, p]) => p === key) || (key === 'proposals' && ['Approvals']) || (key === 'r' && ['Record']);
   document.title = (page ? page[0] + ' · ' : '') + 'IK Knowledge Base';
@@ -210,8 +219,15 @@ export function route() {
     S.listReload = null; S.onSelect = null; S.onQueryChange = null; S.tableKeys = null;
     if (S.panel && S.panel.full) S.panel = null;          // leaving a full-page record
     clear(v); v.scrollTop = 0;
-    if (!fn) v.appendChild(el('div', { class: 'page-body' }, el('div', { class: 'empty' }, el('h2', { text: 'Page not found' }), el('p', { text: 'That address does not match anything here.' }), el('a', { class: 'btn', href: '#/' , text: 'Go to the dashboard' }))));
-    else fn(v, r);
+    if (!load) v.appendChild(el('div', { class: 'page-body' }, el('div', { class: 'empty' }, el('h2', { text: 'Page not found' }), el('p', { text: 'That address does not match anything here.' }), el('a', { class: 'btn', href: '#/' , text: 'Go to the dashboard' }))));
+    else {
+      // A skeleton until the module arrives; a newer navigation wins the race.
+      const seq = ++routeSeq;
+      v.appendChild(el('div', { class: 'page-body' }, skeletonBlock(6)));
+      load().then((fn) => { if (seq !== routeSeq) return; clear(v); fn(v, S.route); })
+        .catch((e) => { if (seq !== routeSeq) return; clear(v); v.appendChild(el('div', { class: 'page-body' },
+          errorBox({ message: 'This page could not be loaded (' + (e && e.message || 'network error') + ').' }, () => { lastView = null; route(); }))); });
+    }
   } else if (S.onQueryChange) S.onQueryChange(r);
   if (key !== 'r') {
     if (r.q.open) openRecordPanel(r.q.open);
@@ -251,21 +267,23 @@ function openPalette(prefill) {
     c.push({ group: 'Commands', label: 'Toggle dark mode', icon: icon('moon'), fn: () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark') });
     return c;
   };
-  let searched = '';
+  let searched = '', searchSeq = 0;
   const runSearch = async () => {
     const q = input.value.trim();
     searched = q;
+    const mine = ++searchSeq;          // only the newest search may draw (a slow reply never overwrites a newer one)
     const cmds = commands().filter((c) => !q || c.label.toLowerCase().includes(q.toLowerCase()) || c.group === 'Create');
     if (!q) { items = cmds.filter((c) => c.group !== 'Create').concat(cmds.filter((c) => c.group === 'Create').slice(0, 3)); active = 0; draw(); return; }
     try {
       const r = await api('GET', '/search' + qs({ q, limit: 12 }));
+      if (mine !== searchSeq) return;
       const found = r.nodes.map((n) => ({ group: 'Records', label: n.name, sub: typeLabel(n.type) + (n.scope_name ? ' · ' + n.scope_name : ''), icon: typeIcon(n.type),
         fn: () => setQuery({ open: n.id, res: null }), testid: 'palette-node' }))
         .concat((r.resources || []).map((x) => ({ group: 'Resources', label: x.title, sub: x.url, icon: icon('link'), fn: () => setQuery({ res: x.id, open: null }), testid: 'palette-resource' })));
       // An exact page name ("Settings", "Links") goes to that page first, never "Create 'Settings'" (run 6, F2).
       const exact = cmds.filter((c) => c.group === 'Go to' && c.label.toLowerCase() === q.toLowerCase());
       items = exact.concat(found).concat(cmds.filter((c) => c.group === 'Create').map((c) => Object.assign({}, c, { label: c.label + ' “' + q + '”' }))).concat(cmds.filter((c) => c.group !== 'Create' && !exact.includes(c)));
-    } catch (e) { items = cmds; }
+    } catch (e) { if (mine !== searchSeq) return; items = cmds; }
     active = 0; draw();
   };
   const search = debounce(runSearch, 120);

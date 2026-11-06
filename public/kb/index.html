@@ -7,6 +7,18 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='1' width='14' height='14' rx='3' fill='%23324158'/%3E%3C/svg%3E">
 <link rel="preload" href="/vendor/inter/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/kb/kb.css">
+<!-- 2026-11-07: the startup modules in parallel, not discovered import by import (each level a round trip) -->
+<link rel="modulepreload" href="/kb/js/app.js">
+<link rel="modulepreload" href="/kb/js/core.js">
+<link rel="modulepreload" href="/kb/js/live.js">
+<link rel="modulepreload" href="/kb/js/realtime.js">
+<link rel="modulepreload" href="/kb/js/detail.js">
+<link rel="modulepreload" href="/kb/js/form.js">
+<link rel="modulepreload" href="/kb/js/relpicker.js">
+<link rel="modulepreload" href="/kb/js/aliases.js">
+<link rel="modulepreload" href="/kb/js/page.js">
+<link rel="modulepreload" href="/kb/js/views/dashboard.js">
+<link rel="modulepreload" href="/kb/js/views/activity.js">
 <!-- run 6 B2: graph styles; the lead keeps this one line when merging (B3 owns this file) -->
 <link rel="stylesheet" href="/kb/graph.css">
 </head>

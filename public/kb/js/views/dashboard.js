@@ -21,6 +21,7 @@ export function viewDashboard(v) {
   const load = async () => {
     try {
       const d = await api('GET', '/dashboard');
+      if (S.applyCounts) S.applyCounts(d);          // the sidebar counts, from the same reply
       clear(body);
       const grid = el('div', { class: 'dash-grid', 'data-testid': 'dash-grid' });
       body.appendChild(grid);
@@ -71,7 +72,7 @@ export function viewDashboard(v) {
         typeIcon(c.key), el('span', { text: typeLabel(c.key, c.n !== 1) }), el('span', { class: 'count', text: c.n }))));
       side.appendChild(el('div', null, el('h3', { class: 'dash-sub', text: 'Records by type' }), types));
       cols.appendChild(block('Start here', side));
-    } catch (e) { clear(body).appendChild(errorBox(e, load)); }
+    } catch (e) { clear(body).appendChild(errorBox(e, load)); if (S.refreshCounts) S.refreshCounts(); }
   };
   S.listReload = load; load();
 }

@@ -70,7 +70,8 @@ const normEdge = (e) => ({ id: e.id, type: e.type || e.edge_type, source: e.sour
 export function viewGraph(v, r) {
   ensureCss();
   if (typeof window.cytoscape !== 'function') {
-    v.appendChild(el('div', { class: 'page-body', 'data-testid': 'graph-loading' }, el('p', { class: 'muted', text: 'Loading the graph…' })));
+    v.appendChild(el('div', { class: 'page-body', 'data-testid': 'graph-loading', 'aria-busy': 'true', 'aria-label': 'Loading the graph' },
+      el('div', { class: 'skeleton graph-skeleton' })));
     loadLib().then(() => { if (S.route && S.route.path[0] === 'graph' && (S.route.path[1] || '') === (r.path[1] || '')) { clear(v); viewGraph(v, S.route); } })
       .catch(() => { clear(v); v.appendChild(errorBox({ message: 'The graph library did not load. Reload the page.' })); });
     return;

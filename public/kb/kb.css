@@ -259,6 +259,10 @@ a.tile:hover { background: var(--surface-hover); text-decoration: none; }
 .table th:first-child, .table td:first-child { padding-left: var(--s-5); }
 .table th:last-child, .table td:last-child { padding-right: var(--s-5); }
 .table tbody tr { cursor: pointer; }
+/* Long lists (3,000+ records after "Load more"): the browser skips layout and paint
+   for rows far off screen (2026-11-07). The row height is fixed, so nothing shifts. */
+.table tbody tr { content-visibility: auto; contain-intrinsic-size: auto var(--row-h); }
+.graph-skeleton { height: calc(100vh - 160px); min-height: 320px; border-radius: var(--radius); }
 .table tbody tr:hover td { background: var(--surface-hover); }
 .table tbody tr.selected td { background: var(--accent-soft); }
 .table tbody tr.cursor td { box-shadow: inset 2px 0 0 var(--accent); }
