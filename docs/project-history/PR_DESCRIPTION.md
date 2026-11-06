@@ -14,7 +14,7 @@ and Activity. Access is limited to IK accounts, checked on the server on every
 request. Roles go from viewer to admin and are enforced in the database. The
 owner-approved legacy cleanup removes 42 legacy domains and 904 legacy modules.
 
-98 commits, 341 files changed against `main`; runs 2–6 plus the final cleanup
+102 commits, 344 files changed against `main`; runs 2–6 plus the final cleanup
 (see HANDOFF.md, PROGRESS.md in this folder).
 
 ## Changes, grouped
@@ -123,8 +123,9 @@ in run 5 the whole chain did.
   Its export and restore are rehearsed.
 - **The sync on Vercel is unmeasured in region.** On dev from a laptop it took
   24 s; batches resume, the budget is 10 s and `maxDuration` is 60 s.
-- **The preview deploy wasn't rehearsed:** the Vercel token in `.env` was
-  rejected (GO_LIVE steps 8–11 are documented, not run).
+- **The preview deploy wasn't rehearsed:** the owner chose Preview variables for
+  all previews but put the deploy on hold (GO_LIVE steps 8–11 are documented, not
+  run). The app passed end to end locally first (HANDOFF.md).
 - **One known test-isolation defect:** two graph tests hang when run back to
   back in one process; each passes alone (PROGRESS.md).
 

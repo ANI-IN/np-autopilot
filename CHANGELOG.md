@@ -8,6 +8,17 @@ is in [docs/project-history/](docs/project-history/README.md).
 
 ## Unreleased
 
+### Local end-to-end test before the preview (2026-11-06)
+
+- **Graph rename:** a rename keeps the version it started from, so another
+  person's rename arriving live during typing raises the conflict dialog instead
+  of being silently overwritten.
+- **Live updates:** the page keeps polling fast until Realtime confirms its
+  subscription. After idle, a change could otherwise show up to 20 s late.
+- **Local servers:** a listen queue of 128 fixes intermittent blank pages.
+- `eval/kb_journey_check.py`: the pre-deploy journey (real sign-in, three roles,
+  MCP, live tabs).
+
 ### Run 6: one source of truth, the graph, legacy cleanup, security (2026-11-03/04)
 
 - **One source of truth:** every view reads the `kb` schema, including the NP

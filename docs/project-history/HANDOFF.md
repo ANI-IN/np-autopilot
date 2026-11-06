@@ -1,3 +1,50 @@
+# HANDOFF: local end-to-end test before the preview deploy (2026-11-06)
+
+Branch `auto/knowledge-platform-20261102` is pushed. Nothing is on `main`, and nothing touched Vercel or Production in this run.
+
+**The app passed end to end locally, after two real bugs were found and fixed.** The Vercel preview is on hold at the owner's request, until the owner gives the go-ahead.
+
+**Owner decision (2026-11-05):** add the dev variables to the Preview environment for ALL previews, never Production. This settles "Action required" 1 in the section below, in favour of option (b). The variables are **not set yet**. On the go-ahead: set them, run `bash scripts/deploy_dev_preview.sh --check`, deploy, smoke-test, rehearse GO_LIVE steps 8–11.
+
+Left running: the demo, **http://localhost:8765/local-login**; the real-data copy, **http://localhost:8766/local-login**; the local database. A reboot stops all three. Start Docker Desktop first, then follow `docs/operations/local-demo.md`.
+
+## What was deployed and tested
+
+The demo server ran from a fresh clone of the pushed branch, so nothing ignored or left over on this machine could hide a problem. Final numbers are all on commit `bb46ac5`.
+
+| Check | Result |
+|---|---|
+| Browser and integration files, one at a time, from a fresh clone | **154 of 154**: sync 25, MCP 8, Realtime gap 1, e2e 71, UI 34, console 2, Realtime 1, propagation 1, graph 11 (one per process). No hung test |
+| `bash scripts/verify_all.sh --skip-browser` | **VERIFY: ALL PASS.** 1,339 passed, 13 failed (all 13 in `main`'s baseline), 50 skipped |
+| Journey on the demo, `eval/kb_journey_check.py` (new) | **51 of 51**: real sign-in, three roles in the UI, approvals, MCP over stdio, live Graph and `/` tabs, role limits, hostile input, sign-out |
+| Workflows on the real-data copy | **26 of 26** |
+| Dashboard fit, both servers | PASS at 1536×730 and 1920×1080 |
+| Every screen on the real-data copy | 28 screens, 0 console errors. The demo's screens were also inspected by eye |
+| "Sync now" on the real-data copy | HTTP 200, 5,015 records and 3,097 relationships unchanged |
+| A full reboot of the laptop | The data survived; the stack and both servers came back |
+| Markdown links | 0 broken |
+
+`eval/kb_sync_proof.py` was not run on the real-data copy: it leaves a made-up row behind. The sync's changes are covered by `tests/test_kb_sync.py` (25 of 25).
+
+## Found and fixed
+
+| Problem | Reach | Evidence |
+|---|---|---|
+| **A rename could silently overwrite someone else's.** The Graph page read the version on Enter, not when the rename began. If another person's rename arrived live during typing, the save passed the conflict check | **Ships** | Old code loses the conflict 3 of 3; the fix passes 25 of 25. `test_b3` now plays the real sequence |
+| **Live updates could arrive up to 20 s late after idle.** The page counted Realtime's join as "live" and slowed its polling, but after idle a change can't be delivered for a few more seconds (2.7 s measured). Nothing was lost | **Ships** | The old code polls 0 times in 9 s; the fix keeps polling until "Subscribed to PostgreSQL". The real-socket test passes on a Realtime that had really gone idle. New `tests/test_kb_realtime_gap.py` |
+| **Local pages could stay blank.** The local server's listen queue of 5 overflowed on the page's burst of about 30 modules, and Windows refused the rest | Local servers only (`eval/` never ships) | About 1 run in 3 before; 20 of 20 after. New `tests/test_kb_dev_server.py` |
+
+`test_b3` was already flaky on the commit before this run (3 of 15), which earlier runs had not shown. For a while it looked as if the server had accepted a stale write. It had not: the double-click had hit a neighbouring record, and the server's conflict check is sound.
+
+## New known limitations
+
+- **A record arriving live can land partly on top of a neighbour** on the Graph page, and a click then hits whichever is on top. Display only; Auto-layout clears it.
+- **The `/` map's chips are wrong on the demo only:** "0 current domains + 4 legacy" and "0 current instructors + 6 from older sheets". The seed has no `domain_offers` relationships or mastersheet roles. On the real-data copy they match the database (4, 20 and 25). See `docs/operations/local-demo.md`.
+- **`migrate.py status` reports 0029 as CHANGED on the local test database.** It ran before a comment in the file was reworded. The diff is comment-only, and `kb_realdata` holds the current checksum. Production is at 0021, so it will only run the final file. If `status` shows the same on DEV, check it is this comment-only change.
+- **The preview is still untested,** including Google sign-in, which local sign-in does not exercise.
+
+---
+
 # HANDOFF — FINAL: pending items, preview, production-ready repository (2026-11-04)
 
 Branch `auto/knowledge-platform-20261102` is pushed (last commit: see `git log`). Nothing is on `main`, and nothing touched Production or its settings.
