@@ -78,6 +78,18 @@ TARGET="$(vercel inspect "$URL" "${TOKEN_ARGS[@]}" 2>&1 | grep -iE '^\s*target' 
 case "$TARGET" in *production*|*Production*) die "the CLI reports a production deployment: stop and investigate" ;; esac
 echo "deployed (preview): $URL"
 
+# A fixed alias, so the preview's address stays the same across deploys (the project
+# has no Git connection, so Vercel gives no per-branch URL). A preview alias, never a
+# production domain: the name must end in .vercel.app and must not be the project's own.
+ALIAS="${DEV_PREVIEW_ALIAS:-np-autopilot-kb-dev.vercel.app}"
+case "$ALIAS" in
+  np-autopilot.vercel.app) die "$ALIAS is the production domain" ;;
+  *.vercel.app) ;;
+  *) die "DEV_PREVIEW_ALIAS must be a *.vercel.app name" ;;
+esac
+vercel alias set "$URL" "$ALIAS" "${TOKEN_ARGS[@]}" >/dev/null 2>&1 || die "could not point $ALIAS at the preview"
+echo "alias: https://$ALIAS -> this preview"
+
 # Smoke tests (docs/operations/dev-deploy.md, step 4). A protected preview answers 401 to
 # anonymous requests unless VERCEL_BYPASS (Protection Bypass for Automation) is set.
 H=()
@@ -90,5 +102,6 @@ check "/kb/ is served"                       "$(code "$URL/kb/")" 200
 check "/api/kb/me needs a session"           "$(code "$URL/api/kb/me")" 401
 check "/api/cron/kb-sync refuses no secret"  "$(code -X POST "$URL/api/cron/kb-sync")" 401
 check "/local-login does not exist"          "$(code "$URL/local-login")" 404
+check "the alias serves /kb/"                "$(code "https://$ALIAS/kb/")" 200
 [ "$fail" = 0 ] || die "smoke tests failed (above)"
 echo "smoke tests passed. Next: docs/operations/dev-deploy.md step 5 (Google sign-in) and step 6 (the schedule)."

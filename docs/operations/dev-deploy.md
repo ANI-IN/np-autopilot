@@ -98,9 +98,11 @@ deployment the CLI reports as Production.
 
 ## 4. Smoke tests (run by the script; by hand with `curl`)
 
-The stable URL of this branch's latest preview is
-`https://<project>-git-auto-knowledge-platform-20261102-<team>.vercel.app`
-(Vercel -> Deployments -> the branch). If Deployment Protection is on, add
+The stable URL of the latest preview is the fixed alias
+`https://np-autopilot-kb-dev.vercel.app`: the deploy script moves it to each new
+preview (`DEV_PREVIEW_ALIAS` overrides the name; the project has no Git
+connection, so Vercel makes no per-branch URL). Use it wherever the steps
+below say "the branch URL". If Deployment Protection is on, add
 `-H "x-vercel-protection-bypass: <bypass secret>"` (Settings -> Deployment
 Protection -> Protection Bypass for Automation).
 
@@ -175,6 +177,7 @@ Sync, admins) works whatever the schedule.
 | Admin | none yet: dev has no users. `ADMIN_EMAILS=<git e-mail>` dry run: "NO PROFILE ... sign in once first" (the git e-mail is not an IK address) | |
 | **Run 6 (2026-11-04)** | R3 legacy deletion on dev: 946 records permanently deleted; domains / modules live 4 / 20; sync after it: 0 created / 0 conflicts; RLS on 26/26 kb tables; migrations at 0037 | |
 | **Run 6: D2 preview** | **BLOCKED**: Vercel rejected the `VERCEL_TOKEN` in .env on 2026-11-04 ("token not valid"); nothing was deployed. Owner step below | |
+| **2026-11-06: preview deployed** | 8 variables set for Preview (all previews), never Production; DEV was missing migration 0035, applied after a backup (`backups/dev_backup_20261106T174719Z.sql`), so DEV now matches the chain; deployed, alias `np-autopilot-kb-dev.vercel.app`, 6/6 smoke tests; one cron call: ok, 0 changes, 22.9 s; Vault secrets and the hourly schedule installed against the alias. Google sign-in: owner steps (step 5) | |
 
 **Owner step for the preview (D2).** Create a new Vercel token with access to
 the project's team, put it in `.env` as `VERCEL_TOKEN`, run `vercel link`
