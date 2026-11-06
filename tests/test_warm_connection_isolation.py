@@ -132,6 +132,42 @@ def test_a_broken_connection_is_dropped_rather_than_reused(data):
         assert not getattr(c2, "closed", False)
 
 
+def test_concurrent_requests_never_share_a_connection(data):
+    """Vercel Fluid compute runs several requests in one instance at once. With
+    one shared connection, a fast request's closing rollback ended a slow
+    request's transaction mid-way: its identity vanished, kb.role() became
+    'none', and the dashboard answered 403 to an admin (DEV preview,
+    2026-11-07). Worse, two callers' statements could run under each other's
+    claims. Each concurrent request must hold a connection of its own."""
+    import threading
+    a_inside, b_done = threading.Event(), threading.Event()
+    seen = {}
+
+    def slow_a():
+        with data.request_connection(A) as c:
+            seen["a_conn"] = id(c)
+            a_inside.set()
+            b_done.wait(10)                 # B starts, runs and finishes meanwhile
+            seen["a_uid_after_b"] = str(_uid(c))
+
+    def fast_b():
+        a_inside.wait(10)
+        with data.request_connection(B) as c:
+            seen["b_conn"] = id(c)
+            seen["b_uid"] = str(_uid(c))
+        b_done.set()
+
+    ta, tb = threading.Thread(target=slow_a), threading.Thread(target=fast_b)
+    ta.start(); tb.start(); ta.join(20); tb.join(20)
+    assert seen.get("b_uid") == B
+    assert seen["a_conn"] != seen["b_conn"], "two concurrent requests shared one connection"
+    assert seen.get("a_uid_after_b") == A, (
+        f"the slow request lost its identity when the fast one finished: {seen.get('a_uid_after_b')}")
+    # and afterwards one warm connection is kept for reuse, not zero, not two
+    with data.request_connection(None) as c:
+        assert _uid(c) is None
+
+
 def test_the_reset_is_a_rollback_and_not_a_commit():
     """Asserted in the source: a commit would make the identity permanent."""
     src = (REPO / "web" / "lib" / "data.py").read_text(encoding="utf-8")
