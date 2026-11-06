@@ -136,7 +136,7 @@ Everyone who signs in with an @interviewkickstart.com Google account is at least
 - **Viewer**: sees everything, can flag things as incorrect, and can claim their own person record (**Claim this profile**; an admin confirms it).
 - **Contributor**: attaches links and adds relationships to existing records directly; sends new records, field edits, archive requests and new relationship types for approval. The database enforces this, whatever tool is used.
 - **Editor**: creates, edits, archives and restores directly, approves proposals, and can overwrite a conflicting change. An editor's changes to record types go to an admin for approval.
-- **Admin**: everything an editor does, plus record types (including which types should have an owner), relationship type review and merges, roles, people's e-mail addresses (**Settings → People**), profile claims, the sync (**Settings → Sync**), and permanent deletion. Admins also see a **Back to NP Autopilot** link in the sidebar.
+- **Admin**: everything an editor does, plus record types (including which types should have an owner), relationship type review and merges, roles, people's e-mail addresses (**Settings → People**), profile claims, the sync (**Settings → Sync**), and permanent deletion. Admins also see a **Map** button at the top of the sidebar that goes back to the NP Autopilot map, and the map has a matching **Workspace graph** button at the top that opens the Graph page.
 
 Admins give roles in **Settings → Members**. To add someone who has not signed in yet, invite them by their @interviewkickstart.com address with a role: the role applies the first time they sign in. The last admin cannot be removed or made a lower role; make someone else an admin first.
 

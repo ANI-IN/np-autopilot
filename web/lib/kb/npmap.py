@@ -561,10 +561,6 @@ def domain_subgraph(conn, domain_label: str) -> dict:
     return {"domain": dom, "taught": taught, "declared": declared, "sheet": sheet}
 
 
-def visible_count(conn) -> int:
-    return len(model(conn)["nodes"])
-
-
 def landing_stats(conn) -> dict:
     """The landing numbers (public/stats.json's keys), from kb at request time,
     through kb.landing_stats() (0033: counts only, no row content)."""

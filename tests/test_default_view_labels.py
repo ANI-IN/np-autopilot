@@ -144,49 +144,6 @@ def test_a_dragged_node_pulls_its_neighbours_and_all_settle_home(views):
     assert s["home"] and s["settledIn"] < 600, s
 
 
-# ---- THE 3D MAP (owner review 2026-09-30) -----------------------------------
-# The real rendering needs WebGL, which CI lacks; eval/check_3d.py drives it in
-# a GPU browser (load, chips, focus, fallback, CSP) and is run for each review.
-# Here: what does not need a GPU — the fallback, and the 3D view's data.
-
-def test_without_webgl_the_map_falls_back_to_2d(views):
-    f = views["fallback"]
-    assert f["dim"] == "2d" and f["on"] is False, f
-    assert f["failed"] and "WebGL" in f["failed"], f
-
-
-def test_the_3d_graph_holds_what_the_map_holds(views):
-    d = views["data3d"]
-    for t in ("domain", "module", SESSION, DECK, "instructor", "person", "theme", "workflow"):
-        assert d["types"].get(t), f"the 3D graph has no {t}: {d['types']}"
-    assert not d["types"].get(TOPIC), d["types"]
-    assert d["depthLayers"] >= 5, "the 3D graph must use depth, not a flat sheet"
-
-
-def test_3d_focus_lights_a_modules_things(views):
-    lit = views["data3d"]["focus"]["lit"]
-    assert lit.get(SESSION, 0) >= 5 and lit.get(DECK, 0) >= 5 and lit.get("instructor", 0) >= 3, lit
-
-
-def test_3d_chips_keep_ghost_anchors(views):
-    d = views["data3dSessions"]
-    assert set(d["visible"]) == {SESSION}, d
-    assert d["ghosts"].get("module") == 20 and d["clusterNames"] == 20, d
-    assert d["links"] >= d["visible"][SESSION], d
-
-
-def test_the_3d_bundle_is_self_hosted_lazy_and_eval_free():
-    page = (REPO / "public" / "index.html").read_text(encoding="utf-8")
-    bundle = (REPO / "public" / "vendor" / "np3d.min.js").read_text(encoding="utf-8")
-    assert '<script src="/vendor/np3d.min.js"' not in page, "the 3D bundle must load lazily"
-    assert "s.src='/vendor/np3d.min.js'" in page
-    assert "new Function" not in bundle and "eval(" not in bundle.replace(".eval(", "")
-    import json
-    csp = [h["value"] for r in json.loads((REPO / "vercel.json").read_text())["headers"]
-           for h in r["headers"] if h["key"].lower() == "content-security-policy"][0]
-    assert "unsafe-eval" not in csp and "script-src 'self'" in csp, csp
-
-
 # ---- THE URL IS ONE VIEW, NEVER A PILE (owner review 2026-09-30) --------------
 # 20 real clicks through the page's own handlers (modules, instructors, a domain,
 # a group, chips, Esc, the matrix and back), with a history that really pushes,
@@ -224,33 +181,19 @@ def test_an_old_open_list_keeps_only_its_last_item(views):
     assert "open=" not in o["url"], o
 
 
-# ---- SLOW MACHINES (owner decision 2026-09-30) --------------------------------
-# Under ~30 fps for 3 seconds, the 3D view switches to 2D with a note that lets
-# the viewer force 3D. A THROTTLED frame clock drives the page's own watcher
-# (eval/default_view_labels.mjs); eval/check_3d.py repeats it in a GPU browser
-# with requestAnimationFrame really throttled.
+# ---- THE MAP IS 2D ONLY (owner, 2026-11-07) ----------------------------------
+# The 3D view, its toggle, its bundle and its slow-machine fallback are gone. An
+# old ?dim=3d or ?dim=2d link opens the 2D map and is rewritten without it.
 
-def test_the_slow_rule_is_sustained_under_30_fps(views):
-    p = views["slow"]["pure"]
-    assert p == {"f60": False, "f31": False, "f29": True, "f10": True, "short": False}, p
-
-
-def test_a_throttled_3d_view_switches_to_2d_with_the_note(views):
-    c60, c35, c24, c12, _forced, _dip = views["slow"]["cases"]
-    assert not c60["switched"] and not c35["switched"], (c60, c35)
-    for c in (c24, c12):
-        assert c["switched"] and c["dim"] == "2d", c
-        # warm-up (1.5 s) + the 3-second window: not earlier, and not much later
-        assert 4400 <= c["at"] <= 5200, c
-        assert "Switched to 2D for smoother performance" in c["note"], c
-        assert "Try 3D anyway" in c["note"] and 'id="force3d"' in c["note"], c
+def test_an_old_dim_link_opens_the_2d_map_without_the_parameter(views):
+    for link in views["dimLinks"]:
+        assert "dim=" not in link["url"], link
+        assert link["view"] == "matrix", f"the rest of the old link was lost: {link}"
+        assert link["hasDim"] is False, link
 
 
-def test_forcing_3d_is_respected(views):
-    forced = views["slow"]["cases"][4]
-    assert not forced["switched"], forced
-
-
-def test_a_short_stall_is_not_a_slow_machine(views):
-    dip = views["slow"]["cases"][5]
-    assert not dip["switched"], dip
+def test_the_3d_bundle_and_toggle_are_gone():
+    page = (REPO / "public" / "index.html").read_text(encoding="utf-8")
+    for gone in ("np3d", "dimtog", "V3", "state.dim"):
+        assert gone not in page, f"{gone} is still in public/index.html"
+    assert not (REPO / "public" / "vendor" / "np3d.min.js").exists()

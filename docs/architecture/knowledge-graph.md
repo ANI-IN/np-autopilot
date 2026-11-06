@@ -338,16 +338,11 @@ an in-memory model of `kb` in the map's own frozen shapes ([contracts.md](contra
 `GET /api/kb/types` through `public/kb/js/graph/map.js`, and its home
 positions from the same `hierarchy` layout as the Graph page.
 
-What it renders with:
-
-- **3D** (the default view): Three.js and 3d-force-graph, vendored as one
-  bundle `public/vendor/np3d.min.js` and loaded only when the 3D view is
-  shown. This uses **WebGL**. Records start at their 2D home positions with a
-  depth per type; labels are a 2D overlay.
-- **2D**: the original network view, drawn on an HTML canvas with the 2D
-  context (not WebGL).
-- With no WebGL (or if the bundle fails to load) the page stays in 2D and
-  says so. The 2D/3D toggle is in the toolbar.
+What it renders with: a 2D network drawn on an HTML canvas with the 2D context
+(not WebGL). The map is 2D only since 2026-11-07 (owner): the 3D view, its
+toggle and its vendored bundle were removed, and an old `?dim=` link opens the
+2D map. KB admins see a "Workspace graph" button at the top that opens
+`/kb/#/graph`; the workspace's top row has a matching "Map" button.
 
 It follows the change feed by polling `/api/kb/changes` (every 2.5 s, slower
 when the tab is hidden, with back-off) and refetches the structure when a

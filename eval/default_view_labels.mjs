@@ -68,7 +68,7 @@ globalThis.window.__NP_NO_BOOT = true;
 // The page's top-level const/let (D, state, cam) are invisible to a later
 // indirect eval; an accessor appended to the SAME evaluation reaches them.
 // Harness only — the page is not changed.
-(0,eval)(blocks[1]+'\n;globalThis.__T={get D(){return D},get state(){return state},get cam(){return cam},get TYPES(){return TYPES},get DEFAULT_TYPES(){return DEFAULT_TYPES},get A(){return A},get V3(){return V3},get idx(){return idx},get VIEWMETA(){return VIEWMETA},get SPRING(){return SPRING},get DRAGGED(){return DRAGGED},set DRAGGED(v){DRAGGED=v},get E(){return E},get FITMODE(){return FITMODE}};');
+(0,eval)(blocks[1]+'\n;globalThis.__T={get D(){return D},get state(){return state},get cam(){return cam},get TYPES(){return TYPES},get DEFAULT_TYPES(){return DEFAULT_TYPES},get A(){return A},get idx(){return idx},get VIEWMETA(){return VIEWMETA},get SPRING(){return SPRING},get DRAGGED(){return DRAGGED},set DRAGGED(v){DRAGGED=v},get E(){return E},get FITMODE(){return FITMODE}};');
 const run = (src)=>(0,eval)(src);
 
 // the real payload, decoded by the page's own decoder, merged by its own merge
@@ -146,19 +146,6 @@ out.springs=run(`(()=>{
   let frames=0; while(__T.SPRING.size&&frames<600){springStep();frames++;}
   return {neighbours:nb.length,pulled:+pulled.toFixed(1),settledIn:frames,
           home:Math.hypot(o.x-home[0],o.y-home[1])<0.3&&Math.hypot(m.x-m.tx,m.y-m.ty)<0.3};})()`);
-// THE 3D MAP, without WebGL (this harness has none): the FALLBACK must have
-// switched to 2D with a note, and the 3D view's data and focus are pure
-out.fallback=run(`({dim:__T.state.dim, failed:__T.V3.failed||null, on:__T.V3.on})`);
-run(`__T.state.types=new Set(__T.DEFAULT_TYPES); __T.state.sel=null; recompute(true,'3d data')`);
-out.data3d=run(`(()=>{const d=build3D(); const t={};for(const n of d.nodes)if(!n.ghost)t[n.t]=(t[n.t]||0)+1;
-  const byId=new Map(d.nodes.map(n=>[n.id,n]));
-  const m=d.nodes.find(n=>n.t==='module'&&__T.idx.byId.get(n.id).l==='API Design');
-  const plan=focusPlan3D(m.id,byId); const lit={};for(const x of plan.lit){const o=__T.idx.byId.get(x);if(o)lit[o.t]=(lit[o.t]||0)+1;}
-  return {nodes:d.nodes.length,links:d.links.length,types:t,depthLayers:new Set(d.nodes.map(n=>Math.round(n.hz/50))).size,
-          focus:{lit:lit,distance:plan.distance}};})()`);
-run(`__T.state.types=new Set(['class_session']); recompute(true,'3d sessions')`);
-out.data3dSessions=run(`(()=>{const d=build3D();const g={},v={};for(const n of d.nodes)(n.ghost?g:v)[n.t]=((n.ghost?g:v)[n.t]||0)+1;
-  return {visible:v,ghosts:g,links:d.links.length,clusterNames:d.nodes.filter(n=>n.cl).length};})()`);
 // ---- THE URL (owner review 2026-09-30): one view, never a pile -------------
 const tick = () => new Promise(r=>setTimeout(r,0));
 const consistency = () => run(`(()=>{
@@ -231,25 +218,9 @@ for(const [u,s0] of recorded){ run(`__T.state.sel=null; __T.state.place=null; __
 location.search='?open='+[pick.mods[0],'map:legacy-domains',pick.mods[3]].join(',')+'&focus=';
 run('applyUrl()'); settle();
 out.url.oldLink={url:location.search,sel:run('__T.state.sel'),want:pick.mods[3],ok:urlOk(location.search)};
-// SLOW MACHINES: a THROTTLED frame clock drives the page's own watcher. Each
-// case starts in 3D at t=0 and feeds frames at a fixed rate for 6 s; the watch
-// must switch at under ~30 fps held for 3 s, and at nothing else.
-const slowCase=(fps,opt={})=>run(`(()=>{
-  try{ localStorage.removeItem('np.force3d'); if(${!!opt.forced})localStorage.setItem('np.force3d','1'); }catch(e){}
-  __T.state.dim='3d'; __T.V3.slowSwitched=false; __T.V3.shownAt=0; __T.V3.stamps=[];
-  const rate=t=>(${JSON.stringify(opt.dip||null)}&&t>=${(opt.dip||[0,0])[0]}&&t<${(opt.dip||[0,0])[1]})?${opt.dipFps||fps}:${fps};
-  let t=0, at=null; while(t<6000){ t+=1000/rate(t); watchSpeed3D(t); if(__T.V3.slowSwitched&&at===null)at=Math.round(t); }
-  const r={fps:${fps},switched:__T.V3.slowSwitched,at,dim:__T.state.dim,
-           note:(document.getElementById('banner')||{}).innerHTML||''};
-  __T.V3.slowSwitched=false; __T.state.dim='2d'; try{ localStorage.removeItem('np.force3d'); }catch(e){}
-  return r;})()`);
-out.slow={
-  pure:run(`(()=>{const at=f=>Array.from({length:Math.ceil(3.2*f)},(_,i)=>i*1000/f);
-    return {f60:slowFor(at(60),3200,3000,30),f31:slowFor(at(31),3200,3000,30),f29:slowFor(at(29),3200,3000,30),
-            f10:slowFor(at(10),3200,3000,30),short:slowFor(at(10).filter(x=>x>1000),3200,3000,30)};})()`),
-  cases:[slowCase(60),slowCase(35),slowCase(24),slowCase(12),slowCase(12,{forced:true}),
-         // a 2-second stall inside an otherwise smooth run is not "slow"
-         slowCase(60,{dip:[2000,4000],dipFps:10})],
-};
+// THE MAP IS 2D ONLY (owner, 2026-11-07): an old ?dim= link opens the 2D map and
+// the address is rewritten without it
+out.dimLinks=['3d','2d'].map(d=>{ location.search='?dim='+d+'&view=matrix'; run('applyUrl()'); settle();
+  return {dim:d, url:location.search, view:run('__T.state.view'), hasDim:'dim' in run('__T.state')}; });
 console.log = quiet;
 console.log(JSON.stringify(out));

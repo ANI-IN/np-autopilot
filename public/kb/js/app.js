@@ -75,9 +75,13 @@ async function boot() {
   S.session = loadSession();
   if (!S.session || !S.session.access_token) { showGate('Sign in with your Interview Kickstart Google account to continue.'); return; }
   try {
+    // /types and /people do not depend on /me: one round trip instead of two
+    // before the first page can render (2026-11-07, sign-in timing).
+    const rest = Promise.allSettled([loadTypes(), loadPeople()]);
     S.me = await api('GET', '/me');
     if (S.me.role === 'none') { showGate('Your account has no access to the knowledge base yet. Ask an admin to grant you a role.'); return; }
-    await Promise.all([loadTypes(), loadPeople()]);
+    const [types] = await rest;
+    if (types.status === 'rejected') throw types.reason;
   } catch (e) { if (e.status !== 401) showGate('The knowledge base is unavailable: ' + e.message); return; }
   document.body.dataset.role = S.me.role;
   try { if (localStorage.getItem('kb_sidebar') === 'collapsed') $('#app').classList.add('collapsed'); } catch (e) { /* ignore */ }
@@ -108,7 +112,12 @@ function renderSidebar() {
   const sb = clear($('#sidebar'));
   const collapse = el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Collapse sidebar', title: 'Collapse sidebar',
     onclick: () => { const c = $('#app').classList.toggle('collapsed'); try { localStorage.setItem('kb_sidebar', c ? 'collapsed' : 'open'); } catch (e) { /* ignore */ } } }, icon('panel-left'));
-  sb.appendChild(el('div', { class: 'brand' }, el('span', { class: 'brand-mark', text: 'IK' }), el('span', { class: 'label-text truncate', text: 'Knowledge Base' }), el('span', { class: 'spacer label-text' }), collapse));
+  // Admins switch to the map from the TOP (owner, 2026-11-07). The link comes from
+  // /me, which includes it only for a role the server verified (B5); nothing here
+  // decides who is an admin, and every route still checks the role itself.
+  const toMap = (S.me.admin_links || []).map((l) => el('a', { class: 'btn primary sm brand-map', href: l.href, 'data-testid': l.testid + '-nav', title: l.label, 'aria-label': l.label },
+    icon('arrow-left'), el('span', { class: 'label-text', text: 'Map' })));
+  sb.appendChild(el('div', { class: 'brand' }, el('span', { class: 'brand-mark', text: 'IK' }), el('span', { class: 'label-text truncate', text: 'Knowledge Base' }), el('span', { class: 'spacer label-text' }), toMap, collapse));
   sb.appendChild(el('button', { class: 'nav-search', type: 'button', 'data-testid': 'open-palette', onclick: openPalette, 'aria-label': 'Search or run a command' },
     icon('search'), el('span', { class: 'label-text', text: 'Search' }), el('span', { class: 'spacer' }), el('kbd', { text: /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K' })));
   if (can('contributor')) sb.appendChild(el('button', { class: 'btn primary w-full mb-1', type: 'button', 'data-testid': 'new-record',
@@ -128,15 +137,11 @@ function renderSidebar() {
     avatar(S.me.user_id, 'lg'), el('span', { class: 'label-text col gap-0 min-w-0' },
       el('span', { class: 'truncate', text: (S.session.user && S.session.user.email) || personName(S.me.user_id) }),
       el('span', { class: 'faint xs', text: 'Role: ' + S.me.role })));
-  // Admin-only links come from /me, which includes them only for a role the
-  // server verified (B5); nothing here decides who is an admin.
-  const adminLinks = (S.me.admin_links || []).map((l) => el('a', { href: l.href, 'data-testid': l.testid + '-nav', title: l.label }, icon('arrow-left'), el('span', { class: 'label-text', text: l.label })));
   // The local demo server's badge (eval/ only): kept across sidebar re-renders.
   const badge = S.demoBadge = document.getElementById('demo-badge-slot') || S.demoBadge;
   sb.appendChild(el('div', { class: 'sidebar-foot nav' },
     el('a', { href: '#/guide', 'data-nav': 'guide', title: 'Guide' }, icon('circle-help'), el('span', { class: 'label-text', text: 'Guide' })),
     el('a', { href: '#/settings', 'data-nav': 'settings', title: 'Settings' }, icon('settings'), el('span', { class: 'label-text', text: 'Settings' })),
-    adminLinks,
     el('div', { class: 'sidebar-slot', id: 'sidebar-slot' }),
     user));
   if (badge) $('#sidebar-slot').appendChild(badge);

@@ -130,7 +130,7 @@ flowchart TD
 
 | Path | Role |
 |---|---|
-| `public/index.html` | The NP Autopilot map at `/`. A classic script. It loads its look (colours, shapes, hierarchy levels) from `public/kb/js/graph/map.js`, reads the map routes (`/api/structure`, `/api/node`, `/api/neighbourhood`, ...) and polls `/api/kb/changes`. The default view is 3D (Three.js and 3d-force-graph, vendored as `public/vendor/np3d.min.js`, which needs WebGL); the 2D view is drawn on a canvas, and the page falls back to 2D when WebGL is not available. |
+| `public/index.html` | The NP Autopilot map at `/`. A classic script. It loads its look (colours, shapes, hierarchy levels) from `public/kb/js/graph/map.js`, reads the map routes (`/api/structure`, `/api/node`, `/api/neighbourhood`, ...) and polls `/api/kb/changes`. The map is 2D only, drawn on a canvas (the 3D view was removed on 2026-11-07); KB admins get a button at the top to the workspace Graph. |
 | `public/kb/index.html`, `public/kb/kb.css`, `public/kb/graph.css` | The knowledge base app shell and styles ([design-system.md](design-system.md)). |
 | `public/kb/js/app.js` | Boot, the sidebar, the hash router (`ROUTES`, `PAGES`, `NAV`), the Ctrl K palette and keyboard shortcuts. |
 | `public/kb/js/core.js` | Shared state, the `api()` helper that calls `/api/kb/*` with the session token, DOM helpers, `can(role)`. |
@@ -139,7 +139,7 @@ flowchart TD
 | `public/kb/js/detail.js`, `form.js`, `relpicker.js`, `page.js`, `aliases.js` | The record panel, the New record form, the relationship picker, page headers, and old-link redirects. |
 | `public/kb/js/graph/{style,layouts,labels,minimap,map}.js` | The graph's visual language and layouts, shared by the Graph page and the map at `/` (`map.js` is the adapter for `/`). |
 | `public/kb/guide.md` | The in-app Guide (rendered by `public/kb/js/views/guide.js`). |
-| `public/vendor/` | Vendored libraries: Cytoscape.js (the Graph page), the 3D map bundle, the Inter font, the Lucide icon sprite. No CDN. |
+| `public/vendor/` | Vendored libraries: Cytoscape.js (the Graph page), the Inter font, the Lucide icon sprite. No CDN. |
 
 ### API layer (`api/`)
 

@@ -70,9 +70,9 @@ production has run on kb and the owner signs off.
 
 | Item | Why it is not removed (evidence) |
 |---|---|
-| `public/index.html` (the `/` map, 4,415 lines): 2D map, 3D view, curation UI, old `#/node/<id>` links | In use: it is the NP Autopilot map; it already rewrites an old `#/node/<id>` link to the query-string form (`index.html:3710-3711`, kept). Its curation UI writes the intake (`api/aliases.py`, `api/curate.py` → `web/lib/curation_service.py`: the one recorded exception in docs/ARCHITECTURE.md). |
+| `public/index.html` (the `/` map, 4,415 lines): 2D map, curation UI, old `#/node/<id>` links | In use: it is the NP Autopilot map; it already rewrites an old `#/node/<id>` link to the query-string form (`index.html:3710-3711`, kept). Its curation UI writes the intake (`api/aliases.py`, `api/curate.py` → `web/lib/curation_service.py`: the one recorded exception in docs/ARCHITECTURE.md). |
 | `public/vendor/cytoscape.min.js` | loaded by `public/kb/js/views/graph.js:55` |
-| `public/vendor/np3d.min.js` (+ `eval/build_np3d.sh`, `eval/np3d-ngraph-stub.js` that build it) | loaded by `public/index.html:4157` (the 3D view, the map's default); tests/test_default_view_labels.py |
+| `public/vendor/np3d.min.js` (+ `eval/build_np3d.sh`, `eval/np3d-ngraph-stub.js`, `eval/check_3d.py`) | **Removed 2026-11-07** with the 3D view (owner: the map is 2D only) |
 | `public/vendor/lucide-sprite.svg` | `core.js:49`, `graph/style.js:165` |
 | `public/vendor/inter/` | `kb/index.html:8` (preload), `kb.css:7` |
 | `public/kb/guide/*.png`, `public/kb/brand/ik-logo.svg` | every image is referenced by `public/kb/guide.md`; the logo by `kb/index.html` |
@@ -83,7 +83,7 @@ production has run on kb and the owner signs off.
 | API routes (`READ_NAMES`, `curate`, `/api/config`, `/api/session`, `/api/stats`, `/api/cron/kb-sync`, `/api/kb/*`) | every one has a caller (the map, the KB, pg_cron, the MCP server); tests/test_lazy_route_table.py |
 | Python helpers with a single reference (only their definition): `web/lib/kb/sync.py::_rec_content`; `pipeline/lib/paths.py` `PIPELINE_DIR`, `PEOPLE_FILE`, `relative_to_corpus`; `pipeline/lib/redact.py::_bare_run`; `pipeline/lib/sources.py::PERSON_SOURCES`; `pipeline/lib/taxonomy.py` `seniorities`, `validate_rules` | **protected** (sync and pipeline/lib). Listed for the sync/pipeline owner; not touched. No other unreferenced top-level def exists in `web/lib/`, `web/lib/kb/` or `api/` (scan: every `def`/CONSTANT counted across `*.py *.js *.html *.sh *.yml`). |
 | `config/*.yaml` (24 files) | all read by the pipeline intake or the sync (`kb-projection-mapping.yaml` by `npmap.py` and `sync.py`); `drive.yaml.example` is the operator template for `NP_DRIVE_CONFIG` |
-| eval/ (servers, `kb_parity.py`, `kb_realdata_*`, `kb_sync_proof.py`, `local_server.py`, `mastersheet_*`, `measure_*`, `check_3d.py`, `drive_*.mjs`, fixtures) | imported by tests or named by `verify_all.sh` / ci.yml; operator tools (`kb_fit_check.py` F1, `kb_screens.py`, `kb_ui_sweep.py`, `content_eval*.py`, `screenshot_views.py`) are local-only, never deployed (vercel.json `excludeFiles`, `.vercelignore`), and documented in their docstrings or HANDOFF |
+| eval/ (servers, `kb_parity.py`, `kb_realdata_*`, `kb_sync_proof.py`, `local_server.py`, `mastersheet_*`, `measure_*`, `drive_*.mjs`, fixtures) | imported by tests or named by `verify_all.sh` / ci.yml; operator tools (`kb_fit_check.py` F1, `kb_screens.py`, `kb_ui_sweep.py`, `content_eval*.py`, `screenshot_views.py`) are local-only, never deployed (vercel.json `excludeFiles`, `.vercelignore`), and documented in their docstrings or HANDOFF |
 | `docs/run6/b2-map.patch`, `docs/run6/patches/` | records of patches the lead applied in Phase C; history |
 | `knowledge/*` (graph.json, graph.html, …) | pipeline outputs (`04_build_graph`, `05_render_html`), excluded from the deploy; intake |
 
@@ -164,8 +164,8 @@ python scripts/deploy_bundle_size.py --rev 036baf1    # after
 | Vendored JS/asset libraries | 4 (cytoscape, inter, lucide, np3d) | 4 |
 | **Dependencies** (requirements + vendored) | **19** | **19** |
 
-The bundle barely moves because nothing big was dead: the 1.5 MB np3d bundle
-and the 0.4 MB Cytoscape are both loaded. The large wins are AFTER GO-LIVE
+The bundle barely moved because nothing big was dead at the time: the 1.5 MB np3d bundle
+and the 0.4 MB Cytoscape were both loaded (np3d was removed with the 3D view on 2026-11-07). The large wins are AFTER GO-LIVE
 (§2: roughly 450 lines of data.py read paths, the switch, stats.json) and in legacy
 DATA (§7). scripts/ and eval/ are not shipped, so R7 and R8 do not change the
 numbers.

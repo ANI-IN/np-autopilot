@@ -158,6 +158,8 @@ input::placeholder, textarea::placeholder { color: var(--text-3); }
 .sidebar { background: var(--bg-subtle); border-right: 1px solid var(--border); display: flex; flex-direction: column;
   padding: var(--s-3) var(--s-2); gap: var(--s-1); overflow-y: auto; overflow-x: hidden; }
 .brand { display: flex; align-items: center; gap: var(--s-2); height: 32px; padding: 0 var(--s-2); font-weight: var(--w-strong); }
+.brand-map { flex: none; gap: var(--s-1); }
+.app.collapsed .brand-map { display: none; }   /* 56px: no room; the user menu keeps the link */
 .brand-mark { width: 20px; height: 20px; border-radius: var(--radius); background: var(--brand-mark); color: var(--on-accent);
   display: inline-flex; align-items: center; justify-content: center; font: var(--w-strong) 11px/1 var(--font); flex: none; }
 .nav-search { display: flex; align-items: center; gap: var(--s-2); height: 32px; margin: var(--s-2) 0; padding: 0 var(--s-2);

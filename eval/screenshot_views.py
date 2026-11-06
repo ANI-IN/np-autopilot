@@ -104,17 +104,9 @@ def _serve():
 
 
 #: The owner's list, 2026-09-30: taken at a 1440px-wide window at DPR 2.
-FOCUS3D = ("([slug,seq])=>{const n=D.nodes.find(x=>x.t==='module'&&x.dom===slug&&"
-           "String((x.p||{}).sequence)===seq); if(n)focus3D(n.id);}")
-ONLY3D = "(t)=>{state.types=new Set([t]); recompute(true,'shot'); renderChips(); renderCrumbs();}"
-#: 3D shots open the default view; every other shot is the 2D map (?dim=2d).
+#: The map is 2D only (owner, 2026-11-07); the 3D shots were removed with the view.
 SHOTS = [
-    ("01-3d-default", "3d:", "the 3D default view: every current type floating in depth"),
-    ("02-3d-focus-api-design", "3d:focus-module:backend:3",
-     "3D focus on API Design: its sessions, decks and instructors gathered and lit"),
-    ("03-3d-sessions-only", "3d:types:class_session",
-     "3D with only Sessions on: ghost modules as anchors, edges visible"),
-    ("04-2d-default", None, "the 2D map, for comparison"),
+    ("04-2d-default", None, "the 2D map"),
     ("05-2d-sessions-only", "types:class_session:",
      "2D with only Sessions on: modules as ghost anchors named on their clusters"),
     ("06-2d-focus-api-design", "mapfocus:module:backend:3", "2D focus on API Design"),
@@ -144,9 +136,7 @@ def main() -> int:
 
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
-        # the 3D view needs a real GPU (software GL renders it at ~6 fps)
-        b = p.chromium.launch(args=["--use-angle=metal", "--enable-gpu"] if sys.platform == "darwin"
-                              else ["--enable-gpu"])
+        b = p.chromium.launch()
         ctx = b.new_context(viewport={"width": 1440, "height": 900},
                             device_scale_factor=2)
         INIT = """
@@ -165,22 +155,7 @@ def main() -> int:
                 if m.type == "error" else None)
 
         for name, action, caption in SHOTS:
-            is3d = bool(action and action.startswith("3d:"))
-            page.goto(base + ("/" if is3d else "/?dim=2d"), wait_until="networkidle")
-            if is3d:
-                page.wait_for_function("window.__NP_3D&&window.__NP_3D.on&&window.__NP_3D.nodes>0", timeout=30000)
-                page.wait_for_timeout(3000)
-                sub = action[3:]
-                if sub.startswith("focus-module:"):
-                    _, slug, seq = sub.split(":")
-                    page.evaluate(FOCUS3D, [slug, seq])
-                    page.wait_for_timeout(2600)
-                elif sub.startswith("types:"):
-                    page.evaluate(ONLY3D, sub.split(":", 1)[1])
-                    page.wait_for_timeout(2600)
-                page.screenshot(path=str(OUT / f"{name}.png"))
-                print(f"  {OUT.name}/{name}.png  — {caption}")
-                continue
+            page.goto(base + "/", wait_until="networkidle")
             page.wait_for_timeout(2500)
             if action and action.startswith("module:"):
                 # what a double-click on the map does: open it in its domain
@@ -240,7 +215,7 @@ def main() -> int:
         ctx1 = b.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=1)
         ctx1.add_init_script(INIT)
         p1 = ctx1.new_page()
-        p1.goto(base + "/?dim=2d", wait_until="networkidle")
+        p1.goto(base + "/", wait_until="networkidle")
         p1.wait_for_timeout(3000)
         name, _, caption = DPR1_SHOT
         p1.screenshot(path=str(OUT / f"{name}.png"))

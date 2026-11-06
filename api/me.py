@@ -25,7 +25,13 @@ def _me(conn, identity, params):
         cur.execute("select np_role()")
         role = cur.fetchone()[0]
         if npmap.enabled():
-            visible = npmap.visible_count(conn)
+            # Live records this caller can read (RLS), not the map model's size:
+            # building the whole model here cost 1.2 s locally and several
+            # seconds on the DEV preview, on the path every sign-in waits for,
+            # and then /api/structure built it again (2026-11-07). Nothing reads
+            # this number; the role is what the map needs.
+            cur.execute("select count(*) from kb.nodes where archived_at is null")
+            visible = cur.fetchone()[0]
         else:
             cur.execute("select count(*) from nodes")
             visible = cur.fetchone()[0]
