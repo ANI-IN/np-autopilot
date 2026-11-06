@@ -93,7 +93,7 @@ def test_default_layout_is_the_hierarchy_with_satellites_and_bundles(server, bro
     assert len(bundle) == 1 and bundle[0][1] == "12 topics", bundle
     assert bundle[0][2]["y"] > _pos(page, ids["module"]["id"])["y"]
     expect(page.get_by_test_id("graph-info")).to_contain_text("12 more in 1 bundle")
-    page.evaluate(f"() => window.__kbGraph.cy.getElementById('{bundle[0][0]}').emit('tap')")
+    page.evaluate(f"() => {{ window.__kbGraph.cy.getElementById('{bundle[0][0]}').emit('tap'); }}")
     page.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{ids['topics'][0]['id']}').length === 1")
     m = _pos(page, ids["module"]["id"])
     for t in ids["topics"]:
@@ -245,11 +245,11 @@ def test_group_by_type_folds_and_unfolds(server, browser):
     page.get_by_test_id("graph-group").select_option("type")
     page.wait_for_function("() => window.__kbGraph.cy.nodes('.gbox').length > 0")
     head = "__head:topic"
-    page.evaluate(f"() => window.__kbGraph.cy.getElementById('{head}').emit('tap')")
+    page.evaluate(f"() => {{ window.__kbGraph.cy.getElementById('{head}').emit('tap'); }}")
     page.wait_for_function("() => window.__kbGraph.cy.getElementById('__g:topic').length === 1")
     assert not _shown(page, ids["topics"][0]["id"])
     expect(page.get_by_test_id("graph-info")).to_contain_text("3 in 1 folded group")
-    page.evaluate("() => window.__kbGraph.cy.getElementById('__g:topic').emit('tap')")
+    page.evaluate("() => { window.__kbGraph.cy.getElementById('__g:topic').emit('tap'); }")
     page.wait_for_function("() => window.__kbGraph.cy.getElementById('__g:topic').length === 0")
     assert _shown(page, ids["topics"][0]["id"])
     assert page.errors == []
@@ -275,7 +275,7 @@ def test_shortcut_sheet_hints_and_empty_state(server, browser):
     _, n = Client(USERS["admin"]).post("/api/kb/nodes", {"type": "topic", "name": "Hover me"})   # someone else
     page.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{n['id']}').length === 1", timeout=20000)
     expect(page.get_by_test_id("graph-empty")).to_be_hidden()
-    page.evaluate(f"() => window.__kbGraph.cy.center(window.__kbGraph.cy.getElementById('{n['id']}'))")
+    page.evaluate(f"() => {{ window.__kbGraph.cy.center(window.__kbGraph.cy.getElementById('{n['id']}')); }}")
     page.mouse.move(*page.evaluate(f"window.__kbGraph.renderedPosition('{n['id']}')"))
     expect(page.get_by_test_id("graph-handles")).to_be_visible()
     expect(page.get_by_test_id("graph-handle")).to_be_visible()

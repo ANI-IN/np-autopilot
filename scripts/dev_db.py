@@ -166,11 +166,22 @@ def cmd_backup() -> int:
     cmd = ["docker", "run", "--rm", "-e", "KB_DEV_DUMP_URL", "-v", f"{BACKUPS}:/out", "postgres:17",
            "sh", "-c", f'pg_dump "$KB_DEV_DUMP_URL" --no-owner --no-privileges -n public -n kb -f /out/{name}']
     p = subprocess.run(cmd, env=env, capture_output=True, text=True)
-    if p.returncode != 0:
-        print(scrub(p.stderr)[-800:])
-        return 1
     f = BACKUPS / name
+    if p.returncode != 0:
+        print(scrub(p.stderr)[-800:] or f"pg_dump exited {p.returncode} with no message")
+        if f.exists():                     # never leave a partial dump under a backup's name
+            f.rename(f.with_suffix(".INCOMPLETE.sql"))
+            print(f"BACKUP FAILED: the partial file is kept as backups/{f.with_suffix('.INCOMPLETE.sql').name} - do NOT rely on it")
+        return 1
     txt = f.read_text(encoding="utf-8", errors="replace")
+    # A dump that stopped half-way still exits 0 sometimes and leaves a file that
+    # LOOKS like a backup (2026-11-07: 2 of 44 tables, no end marker). Only a dump
+    # with pg_dump's closing marker counts; anything else is renamed and refused.
+    if "PostgreSQL database dump complete" not in txt[-2000:]:
+        bad = f.with_suffix(".INCOMPLETE.sql")
+        f.rename(bad)
+        print(f"BACKUP INCOMPLETE: no end marker; kept as backups/{bad.name} - do NOT rely on it")
+        return 1
     print(f"backup: backups/{name} ({f.stat().st_size} bytes, {txt.count(chr(10) + 'COPY ')} tables with data)")
     return 0
 

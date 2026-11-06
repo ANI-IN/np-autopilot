@@ -1116,7 +1116,7 @@ def test_b3_graph_create_connect_rename_delete_undo(server, browser):
     expect(toast(page)).to_contain_text("Connected")
     assert len(Client(USERS["viewer"]).get("/api/kb/edges", f"node={topic['id']}")[1]["items"]) == 1
     # rename in place: double-click the node (centred, clear of the minimap and the toolbar)
-    page.evaluate(f"() => window.__kbGraph.cy.center(window.__kbGraph.cy.getElementById('{topic['id']}'))")
+    page.evaluate(f"() => {{ window.__kbGraph.cy.center(window.__kbGraph.cy.getElementById('{topic['id']}')); }}")
     page.mouse.dblclick(*page.evaluate(f"window.__kbGraph.renderedPosition('{topic['id']}')"))
     page.get_by_test_id("graph-rename-input").fill("Renamed topic")
     page.keyboard.press("Enter")
@@ -1135,7 +1135,7 @@ def test_b3_graph_create_connect_rename_delete_undo(server, browser):
     assert not Client(USERS["viewer"]).get(f"/api/kb/nodes/{topic['id']}")[1]["archived_at"]
     # move: positions are saved to the shared layout and never touch the record
     v0 = Client(USERS["viewer"]).get(f"/api/kb/nodes/{mod['id']}")[1]["version"]
-    page.evaluate(f"() => window.__kbGraph.cy.center(window.__kbGraph.cy.getElementById('{mod['id']}'))")
+    page.evaluate(f"() => {{ window.__kbGraph.cy.center(window.__kbGraph.cy.getElementById('{mod['id']}')); }}")
     n0 = page.evaluate("() => window.__kbGraph.savedPositions || 0")
     mx, my = page.evaluate(f"window.__kbGraph.renderedPosition('{mod['id']}')")
     page.mouse.move(mx, my); page.mouse.down(); page.mouse.move(mx - 120, my + 90, steps=6); page.mouse.up()
