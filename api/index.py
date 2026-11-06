@@ -118,7 +118,8 @@ def _refused(start_response, exc: AuthError):
 def _respond(start_response, status: int, body: dict, *, no_store: bool = False,
              cache: str | None = None, etag: str | None = None,
              accept_encoding: str | None = None):
-    raw = json.dumps(body, default=str, separators=(",", ":") if cache else None).encode()
+    # Compact JSON always: the spaces after separators were ~10% of every body.
+    raw = json.dumps(body, default=str, separators=(",", ":")).encode()
     headers = list(BASE_HEADERS)
     # A session response carries refresh tokens; authorised data must not sit in
     # a shared cache either. An endpoint may opt into PRIVATE caching (B3):
@@ -129,7 +130,9 @@ def _respond(start_response, status: int, body: dict, *, no_store: bool = False,
         headers.append(("etag", etag))
     if cache:
         headers.append(("vary", "Authorization, Accept-Encoding"))
-    if accept_encoding is not None:
+    # Small bodies go as they are: compressing a few hundred bytes costs more
+    # than it saves.
+    if accept_encoding is not None and len(raw) >= COMPRESS_MIN_BYTES:
         raw, enc = _compress(raw, accept_encoding)
         if enc:
             headers.append(("content-encoding", enc))
@@ -150,6 +153,10 @@ _COMPRESSED: dict = {}
 #: instance paid it before its memo was warm. 14% smaller is not worth that,
 #: and q5 is still well under the 150 KB target.
 BROTLI_QUALITY = 5
+
+#: The KB routes compress too (2026-11-07): /api/kb/graph was 1.6 MB of plain
+#: JSON, /api/kb/activity ~100 KB, each crossing ~0.3 s of network from India.
+COMPRESS_MIN_BYTES = 1024
 
 
 def _compress(raw: bytes, accept_encoding: str) -> tuple[bytes, str | None]:
@@ -175,7 +182,7 @@ def _compress(raw: bytes, accept_encoding: str) -> tuple[bytes, str | None]:
         else:
             import gzip
             hit = gzip.compress(raw, compresslevel=9)
-        if len(_COMPRESSED) >= 4:
+        if len(_COMPRESSED) >= 16:
             _COMPRESSED.pop(next(iter(_COMPRESSED)))
         _COMPRESSED[key] = hit
     return hit, enc
@@ -389,7 +396,8 @@ def _serve_kb(path: str, method: str, environ, start_response):
         return _respond(start_response, 500, {"error": "internal"})
     audit(identity, "kb", {"method": method, "path": "/".join(parts[:1]),
                            "status": status}, 1 if status < 300 else 0, started)
-    return _respond(start_response, status, payload, no_store=True)
+    return _respond(start_response, status, payload, no_store=True,
+                    accept_encoding=environ.get("HTTP_ACCEPT_ENCODING", ""))
 
 
 class _Headers:

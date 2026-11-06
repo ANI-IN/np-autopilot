@@ -158,7 +158,7 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
             from lib.kb import people as pp
             out = svc.dashboard(conn)
             out["attention"] = ws.needs_attention(conn)
-            out["completeness"] = ws.course_completeness(conn)
+            # completeness lives on /quality: the dashboard never showed it (2026-11-07)
             out["owned"] = pp.owned_by_me(conn, actor, {"limit": "5"})
             out["recent_sentences"] = (act.activity(conn, {"limit": "6", "group": "1"})["items"]
                                        if svc.role(conn) in ("editor", "admin") else [])
@@ -223,7 +223,12 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
         return 200, svc.changes(conn, _int(since, None) if since not in (None, "") else None)
 
     if head == "quality" and method == "GET" and not rest:
-        return 200, svc.quality_overview(conn)
+        # Everything the Data quality page shows, in ONE request: it used to fetch
+        # the whole /dashboard beside this for two fields (2026-11-07).
+        out = svc.quality_overview(conn)
+        out["attention"] = ws.needs_attention(conn)
+        out["completeness"] = ws.course_completeness(conn)
+        return 200, out
     if head == "quality" and method == "GET" and rest == ["missing-resources"]:
         return 200, {"items": svc.find_missing_resources(conn, params.get("type"), _int(params.get("limit"), 100))}
     if head == "quality" and method == "GET" and rest == ["duplicates"]:

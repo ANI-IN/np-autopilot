@@ -12,7 +12,7 @@ export function viewQuality(v) {
   const slow = setTimeout(() => { if (out.querySelector('[aria-busy=true]')) out.prepend(el('p', { class: 'faint small mb-3', role: 'status', 'data-testid': 'q-slow', text: 'Checking every record. On a large knowledge base this takes up to a minute.' })); }, 3000);
   const load = async () => {
     try {
-      const [q, d] = await Promise.all([api('GET', '/quality'), api('GET', '/dashboard')]);
+      const q = await api('GET', '/quality'), d = q;          // one request (2026-11-07)
       clearTimeout(slow);
       const a = d.attention, t = q.totals;
       clear(out);

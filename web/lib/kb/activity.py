@@ -933,19 +933,36 @@ def _list(params, key) -> list[str]:
 #: Every audit row with its kind, and the change-only events (no content) the
 #: caller may see: admins all, editors their own and their scope's — the rule
 #: audit_log_select applies to the audit rows (0029).
-EVENTS = """
+#: The two halves of the event stream. Each is filtered and limited ON ITS OWN,
+#: newest first, before they are merged (2026-11-07): one UNION ALL over both,
+#: sorted afterwards, read the whole audit log and change feed on every request
+#: (117 ms on the real data, and growing with the log). Limited per half,
+#: Postgres walks each primary key backwards and stops at the limit.
+EVENTS_AUDIT = """
     select a.id, a.at, a.actor_id, a.actor_type, a.table_name, a.row_id, a.action, a.before, a.after,
            coalesce(c.kind, a.table_name || '.' || a.action) as kind, coalesce(c.node_ids, '{}') as node_ids
       from kb.audit_log a left join kb.changes c on c.id = a.id
-    union all
-    select c.id, c.at, c.actor_id, c.actor_type, c.table_name, c.row_id, c.action, null::jsonb, null::jsonb,
-           c.kind, c.node_ids
+"""
+EVENTS_CHANGES = """
+    select c.id, c.at, c.actor_id, c.actor_type, c.table_name, c.row_id, c.action, null::jsonb as before,
+           null::jsonb as after, c.kind, c.node_ids
       from kb.changes c
      where c.table_name in ('graph_positions', 'person_accounts', 'sync_runs')
        and ((select kb.role_at_least('admin'))
             or ((select kb.role_at_least('editor'))
                 and (c.actor_id = (select auth.uid()) or c.node_ids && (select kb.my_scope_ids()))))
 """
+EVENTS = EVENTS_AUDIT + "    union all\n" + EVENTS_CHANGES
+
+
+def _events(conn, where: list[str], args: list, fetch: int) -> list[dict]:
+    """The newest `fetch` events that pass `where` (written against `e`)."""
+    w = ("where " + " and ".join(where)) if where else ""
+    return _q(conn, f"""select u.* from (
+        (select e.* from ({EVENTS_AUDIT}) e {w} order by e.id desc limit %s)
+        union all
+        (select e.* from ({EVENTS_CHANGES}) e {w} order by e.id desc limit %s)) u
+        order by u.id desc limit %s""", (*args, fetch, *args, fetch, fetch))
 
 
 def _filters(conn, params: dict) -> tuple[list[str], list]:
@@ -1051,8 +1068,7 @@ def activity(conn, params: dict) -> dict:
     limit = max(1, min(int(params.get("limit") or 50), 5000 if csv_ else 200))
     whole = str(params.get("group") or "") in ("1", "true") and not csv_
     fetch = limit + 1 + (GROUP_EXTEND if whole else 0)
-    rows = _q(conn, f"""select e.* from ({EVENTS}) e {('where ' + ' and '.join(where)) if where else ''}
-                        order by e.id desc limit %s""", (*args, fetch))
+    rows = _events(conn, where, args, fetch)
     cut = min(limit, len(rows))
     if whole:
         while cut < len(rows) and cut < limit + GROUP_EXTEND and _joins(rows[cut - 1], rows[cut]):
