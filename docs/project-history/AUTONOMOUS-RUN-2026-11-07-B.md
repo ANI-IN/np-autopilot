@@ -12,8 +12,20 @@ option; the decision is yours (§5).
 
 ## 1. What's done
 
-**Commits** (branch `auto/knowledge-platform-20261102`, pushed) and the **DEV preview**
-redeployed to the same alias: see §6.
+**Commits** (branch `auto/knowledge-platform-20261102`, pushed):
+
+- `c8b5e4f`: the code, tests and docs of this run.
+- A follow-up commit: these deployment notes.
+
+**DEV preview** redeployed to the same alias (`np-autopilot-kb-dev.vercel.app`, functions in
+dub1), and the share link still works:
+- smoke tests 7/7;
+- the served CSP allows both of the map's inline scripts;
+- the new modules are served.
+
+Deploy note: `deploy_dev_preview.sh` must run in **Git Bash**. Started from Python, `bash` is
+WSL's and has no `node`. The script's smoke tests also need `VERCEL_BYPASS` exported; without
+it they see the login redirect (302).
 
 ### Step 1: Graph page (blocking)
 

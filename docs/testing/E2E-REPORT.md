@@ -102,6 +102,7 @@ test per process. **No test hung.**
 | Map default view, redirects, taxonomy rule, sign-in CSP (after fixes) | 141 passed | `.measure/suiteB2/fixes5.log` |
 | Re-run after the last map/icon changes: map switch, shell, propagation, console, perf | 15, 13, 1, 2, 10 passed | `.measure/suiteB3/summary.txt` |
 | Real-data UI check (final code) | 15/15 | `.measure/b/realdata_ui_check.log` |
+| DEV preview after deploy (`c8b5e4f`) | 7/7 smoke tests (config 200, /kb/ 200, me 401, cron 401, no local-login 404, new module served, dub1); the served CSP allows both map inline scripts | `.measure/b/smoke.log` |
 | `verify_all --skip-browser` (final) | **ALL PASS**: 1,338 passed, 13 failed (= the known `main` baseline), 50 skipped | `.measure/suiteB3/verify.log` |
 
 ## 7. Found by the full check and fixed
