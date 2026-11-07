@@ -2,7 +2,7 @@
    preview), Relationship types, Link kinds, Members, API tokens, Templates.
    Admins apply type changes; an editor's change becomes a proposal. */
 import { S, el, add, $, $$, clear, icon, typeIcon, typeLabel, api, toast, failToast, avatar, personName, ago, skeletonRows, empty, errorBox,
-  can, openSheet, closeSheet, openDialog, closeDialog, confirmDialog, plural, you, setQuery } from '../core.js';
+  can, openSheet, closeSheet, openDialog, closeDialog, confirmDialog, plural, you, setQuery, qs } from '../core.js';
 import { pageHead } from '../page.js';
 import { fieldInput } from '../form.js';
 import { loadTypes, refreshCounts } from '../app.js';
@@ -460,8 +460,58 @@ function templatesTab(body) {
 /* The original site's tables -> the KB, on a schedule (hourly by default; the
    schedule lives in the database) and on demand. Edits made here are never
    overwritten: they become conflicts on Data quality. */
+// ---------------------------------------------------------------- sources (run C, 2026-11-07)
+// The source catalog: everything the registry sheet reaches (Drive), every KYP page and attachment
+// (Confluence), and every access failure, with its live link, version and provenance.
+const SRC_STATUS = { extracted: ['Read', 'ok'], extracted_empty: ['Read (no text)', 'warn'], listed: ['Listed', ''], media_listed: ['Audio/video: counted only', ''],
+  failed: ['Failed', 'danger'], do_not_use: ['[Do not Use]: skipped', 'warn'], deferred: ['Deferred', 'warn'], imported: ['Imported', 'ok'], attachment_listed: ['Attachment: listed only', ''] };
+const fmtBytes = (b) => !b ? '' : b > 1e9 ? (b / 1e9).toFixed(1) + ' GB' : b > 1e6 ? (b / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1e3)) + ' KB';
+function sourcesSection(host) {
+  const st = { status: '', q: '', offset: 0 };
+  const sum = el('div', { 'data-testid': 'sources-summary' }, skeletonRows(2));
+  const list = el('div', { 'data-testid': 'sources-list' });
+  const chipsRow = el('div', { class: 'chip-row', role: 'group', 'aria-label': 'Filter by status' });
+  const search = el('input', { type: 'search', placeholder: 'Search sources by name or link…', 'aria-label': 'Search sources', 'data-testid': 'sources-search' });
+  let t = null;
+  search.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { st.q = search.value.trim(); st.offset = 0; loadList(); }, 250); });
+  add(host, [el('h3', { class: 'subhead', text: 'Sources' }),
+    el('p', { class: 'small muted', text: 'The registry sheet is the single list of sources. Every Drive folder and file it reaches, every KYP page in Confluence, and every link that could not be read, with its live link and version. Re-crawling compares each source by its id and version.' }),
+    sum, el('div', { class: 'row wrap gap-2' }, chipsRow, search), list]);
+  const loadList = () => api('GET', '/sources' + qs({ status: st.status || null, q: st.q || null, limit: 50, offset: st.offset })).then((d) => {
+    clear(list);
+    if (!d.items.length) { list.appendChild(empty('No sources match', 'Change the filter or the search.', null, 'search')); return; }
+    list.appendChild(el('table', { class: 'table', 'data-testid': 'sources-table' },
+      el('thead', {}, el('tr', {}, ['Source', 'Kind', 'Status', 'Version / modified', 'Reached from'].map((h) => el('th', { text: h })))),
+      el('tbody', {}, d.items.map((r) => el('tr', { 'data-testid': 'source-row', 'data-status': r.status },
+        el('td', {}, el('a', { href: r.url, target: '_blank', rel: 'noopener noreferrer', text: r.title || r.url, class: 'truncate', 'data-testid': 'source-link' }),
+          r.failure_reason ? el('div', { class: 'xs source-failure', 'data-testid': 'source-failure', text: r.failure_reason }) : null),
+        el('td', { class: 'small', text: [r.provider === 'confluence' ? 'KYP ' + r.kind : r.kind, fmtBytes(r.size_bytes)].filter(Boolean).join(' · ') }),
+        el('td', {}, el('span', { class: 'badge ' + ((SRC_STATUS[r.status] || [])[1] || ''), text: (SRC_STATUS[r.status] || [r.status])[0] })),
+        el('td', { class: 'small', text: [r.version ? 'v' + r.version : null, r.modified_at ? ago(r.modified_at) : null, r.last_changed ? 'changed since last crawl' : null].filter(Boolean).join(' · ') }),
+        el('td', { class: 'xs faint', text: (r.provenance || []).join(' › ') }))))),
+      el('div', { class: 'row gap-2' }, el('span', { class: 'small faint', text: (st.offset + 1) + '–' + (st.offset + d.items.length) + ' of ' + d.total }),
+        st.offset ? el('button', { class: 'btn sm', type: 'button', text: 'Previous', onclick: () => { st.offset = Math.max(0, st.offset - 50); loadList(); } }) : null,
+        st.offset + d.items.length < d.total ? el('button', { class: 'btn sm', type: 'button', 'data-testid': 'sources-next', text: 'Next', onclick: () => { st.offset += 50; loadList(); } }) : null));
+  }).catch((e) => { clear(list); list.appendChild(errorBox(e, loadList)); });
+  api('GET', '/sources/summary').then((d) => {
+    clear(sum);
+    const tot = {}; d.by_status.forEach((r) => { tot[r.status] = (tot[r.status] || 0) + r.n; });
+    sum.appendChild(el('table', { class: 'table compact', 'data-testid': 'sources-counts' },
+      el('thead', {}, el('tr', {}, ['Where', 'Status', 'Count', 'Size'].map((h) => el('th', { text: h })))),
+      el('tbody', {}, d.by_status.map((r) => el('tr', {}, el('td', { text: r.provider === 'drive' ? 'Drive (registry)' : r.provider === 'confluence' ? 'Confluence (KYPs)' : r.provider }),
+        el('td', { text: (SRC_STATUS[r.status] || [r.status])[0] }), el('td', { class: 'tabular', text: String(r.n) }), el('td', { class: 'small', text: fmtBytes(r.bytes) }))))));
+    clear(chipsRow);
+    [['', 'All']].concat(Object.keys(SRC_STATUS).filter((k) => tot[k]).map((k) => [k, SRC_STATUS[k][0] + ' (' + tot[k] + ')'])).forEach(([k, l]) => chipsRow.appendChild(
+      el('button', { type: 'button', class: 'filter-chip' + (st.status === k ? ' on' : ''), 'aria-pressed': st.status === k ? 'true' : 'false', 'data-testid': 'sources-filter-' + (k || 'all'), text: l,
+        onclick: (e) => { st.status = k; st.offset = 0; chipsRow.querySelectorAll('.filter-chip').forEach((b) => { b.classList.toggle('on', b === e.currentTarget); b.setAttribute('aria-pressed', b === e.currentTarget ? 'true' : 'false'); }); loadList(); } })));
+  }).catch((e) => { clear(sum); sum.appendChild(errorBox(e)); });
+  loadList();
+}
+
 function syncTab(body) {
+  sourcesSection(body.appendChild(el('div', { class: 'section', 'data-testid': 'sources-section' })));
   const host = el('div', { 'data-testid': 'sync-tab' }, skeletonRows(4));
+  body.appendChild(el('h3', { class: 'subhead', text: 'Sync' }));
   body.appendChild(host);
   const load = () => api('GET', '/sync').then((d) => {
     clear(host);

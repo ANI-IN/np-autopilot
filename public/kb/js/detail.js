@@ -7,6 +7,7 @@ import { onLiveChange, showLive, hideLive } from './live.js';
 import { track, onPresence, others } from './realtime.js';
 import { openRecordForm, linkKindFor, attachDialog, connectDialog, fieldInput, fieldDisplay } from './form.js';
 import { activityEntry } from './views/activity.js';
+import { entitySections } from './entity.js';
 
 // ------------------------------------------------------------------ panel host
 let panelWidth = 440;
@@ -148,29 +149,10 @@ function propsGrid(st, editable) {
   const ownerDd = [avatar(n.owner_id), el('span', { text: n.owner_id ? (you(n.owner_id) ? 'You' : personName(n.owner_id)) : 'No owner', class: n.owner_id ? '' : 'faint' })];
   if (editable) ownerDd.push(el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'change-owner', text: 'Change', onclick: (e) => menu(e.currentTarget,
     [{ label: 'No owner', fn: () => saveNode(st, { owner_id: null }) }].concat(S.people.filter((p) => p.role !== 'viewer').map((p) => ({ node: el('span', { class: 'row' }, avatar(p.user_id), personName(p.user_id) + (you(p.user_id) ? ' (you)' : '')), testid: 'owner-option', fn: () => saveNode(st, { owner_id: p.user_id }) }))), { testid: 'owner-menu' }) }));
-  row('Owner', ownerDd, 'panel-owner');
+  // The ACCOUNT that owns the record in the workspace (edit rights). Curriculum owners (NP team
+  // members) and SMEs (instructors with a role) are relationships, shown in the entity sections.
+  row('Account owner', ownerDd, 'panel-owner');
   if ((n.co_owners || []).length) row('Co-owners', n.co_owners.map((u) => avatar(u)));
-  // Owners by role (P Primary; B1-B3 Backups): person records. They become the
-  // account owner when that person's record is linked to a sign-in.
-  const personLink = (r, badge) => el('span', { class: 'token' }, badge ? el('span', { class: 'role-badge', text: badge }) : null, typeIcon(r.type, 'sm'),
-    el('a', { href: '#/records?open=' + r.id, text: r.name, class: 'truncate' }));
-  const pick = (title, cb) => {
-    const c = combobox({ label: title, placeholder: 'Search instructors and team members…', testid: 'owner-record-picker', openOnFocus: true,
-      source: nodeSource(['instructor', 'team_member']), onChange: (x) => { if (x) { closeDialog(); cb(x.id); } } });
-    openDialog([el('h2', { text: title }), c, el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }))], { label: title });
-  };
-  if (n.owner_record || editable) {
-    row('Owner by role', [n.owner_record ? personLink(n.owner_record, 'P') : el('span', { class: 'faint', text: 'None' }),
-      editable ? el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'change-owner-record', text: 'Change',
-        onclick: (e) => menu(e.currentTarget, [{ label: 'Choose a person…', fn: () => pick('Primary owner', (id) => saveNode(st, { owner_record_id: id })) },
-          n.owner_record ? { label: 'Remove', danger: true, fn: () => saveNode(st, { owner_record_id: null }) } : null]) }) : null], 'panel-owner-record');
-  }
-  if ((n.co_owner_records || []).length || (editable && n.owner_record)) {
-    const ids = (n.co_owner_records || []).map((r) => r.id);
-    row('Backups', [(n.co_owner_records || []).map((r, i) => el('span', { class: 'row gap-xs' }, personLink(r, 'B' + (i + 1)),
-      editable ? el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Remove backup ' + r.name, onclick: () => saveNode(st, { co_owner_record_ids: ids.filter((x) => x !== r.id) }) }, icon('x', 'sm')) : null)),
-      editable ? el('button', { class: 'btn ghost sm', type: 'button', 'data-testid': 'add-backup', text: 'Add', onclick: () => pick('Add a backup', (id) => saveNode(st, { co_owner_record_ids: ids.concat([id]) })) }) : null], 'panel-co-owner-records');
-  }
   // A person record's sign-in: linked by e-mail now, or the first time they sign in.
   // B1 (run 6): "Claim this profile" — any member; an admin approves it in Approvals
   if (['instructor', 'team_member'].includes(n.type) && !n.account && !can('admin') && !S.myPerson) {
@@ -230,8 +212,10 @@ function drawTab(st, body, editable) {
   clear(body);
   const n = st.node;
   if (st.tab === 'overview') {
+    body.appendChild(el('div', { class: 'section' }, entitySections(Object.assign({}, n, { summary: null }), {
+      href: (id) => '#/records?open=' + id, icon, hideType: true, edit: editable ? peopleHooks(st) : null })));
     const sec = el('div', { class: 'section' });
-    sec.append(el('h3', { text: 'Summary' }), textBlock(st, 'summary', n.summary, editable, 'Add a one-line summary…', 2000));
+    sec.append(el('h3', { text: 'Description' }), textBlock(st, 'summary', n.summary, editable, 'Add a one-line description…', 2000));
     sec.append(el('h3', { text: 'Notes' }), textBlock(st, 'body', n.body, editable, 'Add notes…', 100000));
     body.appendChild(sec);
     const c = n.completeness;
@@ -341,6 +325,58 @@ function relationshipsTab(st, editable) {
   wrap.appendChild(box);
   return wrap;
 }
+
+// ------------------------------------------------------------------ owners and SMEs (run C)
+// Owners: NP team members (owned_by). SMEs: instructors with a role (sme): Primary, Backup 1-3,
+// or another named role. The database refuses an instructor as an owner and an SME without a role.
+function pickRecord(title, types, testid) {
+  return new Promise((resolve) => {
+    const c = combobox({ label: title, placeholder: types[0] === 'team_member' ? 'Search NP team members…' : 'Search instructors…',
+      testid, openOnFocus: true, source: nodeSource(types), onChange: (x) => { if (x) { closeDialog(); resolve(x); } } });
+    openDialog([el('h2', { text: title }), c, el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: () => { closeDialog(); resolve(null); } }))], { label: title });
+  });
+}
+function roleDialog(title, current) {
+  return new Promise((resolve) => {
+    const opts = [['primary', 'Primary'], ['backup:1', 'Backup 1'], ['backup:2', 'Backup 2'], ['backup:3', 'Backup 3'], ['other', 'Another role…']];
+    const cur = current ? (current.role === 'backup' ? 'backup:' + current.rank : current.role === 'primary' ? 'primary' : 'other') : 'primary';
+    const sel = el('select', { 'aria-label': 'SME role', 'data-testid': 'sme-role-select' }, opts.map(([v, l]) => el('option', { value: v, text: l, selected: v === cur })));
+    const other = el('input', { type: 'text', maxlength: '60', 'aria-label': 'Role name', 'data-testid': 'sme-role-other', placeholder: 'Role as named in the source',
+      value: cur === 'other' && current ? current.role : '', hidden: cur !== 'other' });
+    sel.addEventListener('change', () => { other.hidden = sel.value !== 'other'; if (!other.hidden) other.focus(); });
+    const err = el('div', { class: 'field-error', role: 'alert' });
+    openDialog([el('h2', { text: title }), el('label', { class: 'field' }, el('span', { text: 'Role' }), sel), other, err,
+      el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: () => { closeDialog(); resolve(null); } }),
+        el('button', { class: 'btn primary', type: 'button', 'data-testid': 'sme-role-save', text: 'Save', onclick: () => {
+          const v = sel.value;
+          if (v === 'other' && !other.value.trim()) { err.textContent = 'Name the role (as the source names it).'; return; }
+          closeDialog();
+          resolve(v === 'primary' ? { role: 'primary' } : v.startsWith('backup:') ? { role: 'backup', rank: Number(v.split(':')[1]) } : { role: other.value.trim() });
+        } }))], { label: title });
+  });
+}
+function peopleHooks(st) {
+  const n = st.node;
+  const done = (msg) => { toast(msg); reloadPanel(true); };
+  return {
+    addOwner: async () => {
+      const x = await pickRecord('Add an owner', ['team_member'], 'owner-picker'); if (!x) return; x.name = x.name || x.label;
+      try { await api('POST', '/edges', { type: 'owned_by', source_id: n.id, target_id: x.id }); done('Owner added: ' + x.name); } catch (e) { failToast(e, 'Not added'); }
+    },
+    removeOwner: (o) => removeEdge(st, { id: o.edge_id }, 'Owner removed: ' + o.name),
+    addSme: async () => {
+      const x = await pickRecord('Add an SME', ['instructor'], 'sme-picker'); if (!x) return; x.name = x.name || x.label;
+      const role = await roleDialog('Role of ' + x.name); if (!role) return;
+      try { await api('POST', '/edges', { type: 'sme', source_id: x.id, target_id: n.id, props: role }); done('SME added: ' + x.name); } catch (e) { failToast(e, 'Not added'); }
+    },
+    changeSme: async (s) => {
+      const role = await roleDialog('Role of ' + s.name, s); if (!role) return;
+      try { await api('PATCH', '/edges/' + s.edge_id, { version: s.edge_version, props: role }); done('Role saved: ' + s.name); } catch (e) { failToast(e, 'Not saved'); }
+    },
+    removeSme: (s) => removeEdge(st, { id: s.edge_id }, 'SME removed: ' + s.name),
+  };
+}
+
 async function removeEdge(st, e, msg) {
   try {
     await api('POST', '/edges/' + e.id + '/archive');

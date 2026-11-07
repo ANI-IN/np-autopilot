@@ -1,162 +1,153 @@
 # Guide
 
-The knowledge base is where the curriculum team keeps track of what we teach: every program, course, module and live session, the slides, recordings and briefs that go with them, and who owns what. This guide explains how to use it. You do not need any technical knowledge.
+NP Autopilot is the New Programs team's knowledge base: one connected map of what Interview Kickstart teaches. It holds every program, course, module and topic, who owns them, which instructors teach them, and the live links to the slides, documents and folders that go with them. Everything in it traces back to a source: a KYP page in Confluence or a file the registry sheet points to. You do not need any technical knowledge to use it.
 
 To edit this guide, change the one file `public/kb/guide.md` in the repository.
 
-## The basics
+## How the knowledge base is built
 
-There are three kinds of things in the knowledge base.
+The curriculum is a hierarchy:
 
-- **Records** are the building blocks: a program, a course, a domain, a module, a live session, a topic, an instructor. Each record has a type, a name, an owner and, depending on its type, some extra fields.
-- **Relationships** connect two records and say how they relate: a course **contains** a module, an instructor **teaches** a session, a module **covers** a topic.
-- **Resources** (links) are the files and pages that go with a record: KYP slides, a class recording, an assignment brief, a solutions repository on GitHub, a page on UpLevel. One link can be attached to several records; the **Links** page lists each one once.
+- A **program** is what a learner signs up for (for example an Interview Preparation program). It contains **courses**, in order.
+- A **course** contains **modules**, in order. A course can be reused by several programs.
+- A **module** is one block of teaching. It covers **topics**, in order. A module that appears in several programs with the same content is one module; a module with the same title but different content is a **variant**, linked to the main (canonical) module.
+- A **topic** can name **concepts**: for now, the tools and technologies it uses.
+- **Resources** are the live links (Drive folders, Docs, Slides, Sheets, PDFs) attached to any of these.
 
-One example, from top to bottom: the course **System Design for Senior Engineers** contains the module **Scalability Fundamentals**, which contains the live session **Designing a URL shortener**. Week and order belong to each program, not to the module or topic: a program's page shows when each module is taught. That session has two links: its slides and its recording.
+A **domain** classifies programs, courses and modules. There are exactly four: **Fullstack**, **Backend**, **Frontend** and **Test**. A domain is a label, not a container: a module is "in" the Backend domain, it does not sit inside it. Searching for an old name of a domain still finds it.
 
-![A record's detail panel: where it belongs, its owner and fields, then tabs for links, relationships and history](/kb/guide/record.png)
+Weeks are not part of the structure. When a program says which week it teaches a module, that week is stored on the program's own link to that course or module, and shown as program-specific information: "Week and order belong to each program, not to the module."
+
+![A record's detail panel: where it belongs, its owners and SMEs, its topics, resources and sources](/kb/guide/record.png)
+
+## Owners and SMEs
+
+Two different kinds of people are linked to the curriculum, and they are never mixed up.
+
+- An **owner** is a member of the Interview Kickstart New Programs team who is responsible for a program, course or module. A record can have several owners, and one person can own many records. Owners are always NP team member records, never instructors.
+- An **SME** (subject-matter expert) is an instructor who teaches a module. A module can have several SMEs, and one instructor can be an SME for many modules. Every SME assignment has a role:
+  - **Primary**: the main instructor for the module.
+  - **Backup 1**, **Backup 2**, **Backup 3**: the backups, in order.
+  - Another role, when a source names one (for example a role from the older sheets).
+
+The database enforces this: it refuses an instructor as an owner, and an SME assignment without a role. When the sources list two primaries for one module, both are kept and the module is listed on **Data quality** so the team can decide.
+
+To add or change them, open a program, course or module. Under **Owners**, choose **Add owner** and pick an NP team member. Under **SMEs** (modules only), choose **Add SME**, pick an instructor and choose the role; **Role** changes it and **Remove** takes it off. You need the contributor role or higher.
+
+## Where the data comes from
+
+- **The registry sheet** is the single list of sources. Every Drive folder, sheet, document and presentation the team uses is linked from it. The crawler reads it through the Google Sheets API, including links embedded in cells, and follows every link: all tabs of linked sheets, Drive folders with all their sub-folders and files, Docs, Slides, PDFs and Word files.
+- **The KYPs** (Know Your Program pages in Confluence) are the reference for curriculum structure: each program's courses, modules, their order and topics, and the instructors it lists. Pages marked **[Do not Use]** are skipped and listed. Attachments are listed but not downloaded.
+- Each source is stored as its **live link**, its id, its **version or last-modified time**, and how the registry reaches it. Copies made while reading are only temporary.
+- **Re-crawling** reads everything again and compares each source by its id: a new version is read again, an unchanged one is not, and a source the registry no longer reaches is marked as removed (never deleted). Every link that cannot be read is recorded with the reason (no access, not found, unsupported format, missing shortcut target).
+- **Relationships come from the sources, not from guesses.** A module belongs to a course because a KYP lists it there; a Drive folder belongs to a module because the registry's domain folder holds a folder named after that module. Every record and relationship the import made shows where it came from under **Sources** in its panel.
+
+Admins see the whole catalog in **Admin → Sources & sync**: every source with its status (read, listed, deferred, failed, skipped), its version and the path that reaches it, and the failures with their reasons.
 
 ## Finding things
 
-- **Home** opens on one big search box. Type and press Enter for the full results, grouped by type; the chips below it repeat your recent searches and open each record type.
-- Press **Ctrl K** (or **⌘K** on a Mac) anywhere to search every record and link by name or text. The same box runs commands like "New course" or "Go to Outline".
-- **All records** is a table of everything. Use **Filter** to narrow it (by type, course, owner, tag, status, flagged); each filter shows as a chip you can remove. **Save view** keeps a set of filters as a tab; tick "Share with the team" to let everyone use it.
-- In a table, press **j** and **k** to move, **Enter** to open, **x** to select, and **/** to jump to the search box.
-- **Outline** shows programs and courses as a tree. It is the quickest way to see a whole course at once.
-- **Map** (in Browse) is the read-only overview for everyone.
-- **Graph editor** (Admin group, admins only) shows the whole knowledge base, or one record and what it is connected to, and lets admins arrange and connect records. Click a record to open it; the **+** next to a record expands its neighbours.
-- **Who teaches what** is a table of instructors against modules and live sessions. Each cell shows the role from the current mastersheet (**P** primary, **B1**–**B3** backups) or **T** when an older sheet says they taught it. Filter by domain, role or name, and export it as CSV.
+- **Home** opens on one big search box. Type and press Enter for the results, grouped by type. The chips below it repeat your recent searches and open each record type.
+- Press **Ctrl K** (or **⌘K** on a Mac) anywhere to search every record and link by name or text. The same box runs commands like "New course".
+- **Programs**, **Courses** and **Resources** in the sidebar list those records.
+- **All records** is a table of everything. Use **Filter** to narrow it (by type, place, owner, tag, status, flagged). **Save view** keeps a set of filters as a tab.
+- **Outline** shows programs and courses as a tree: a program's courses, their modules and topics, in order.
+- **Map** is the read-only overview for everyone. Click a record on the map to see the same detail panel the workspace uses.
+- **Who teaches what** is a table of instructors against modules: each cell shows the SME role (**P** Primary, **B1** to **B3** Backups, or the named role). Filter by domain, role or name, and export it as CSV.
 
-![The Outline: a program's courses, modules and sessions](/kb/guide/outline.png)
+![The Outline: a program's courses, modules and topics](/kb/guide/outline.png)
 
-## Creating records
+## The detail panel
+
+Click any record, on any page, to open its detail panel. The Graph editor, the Map, the Admin pages and the record page all use the same panel. It shows, when the record has them:
+
+- the **type**, **domain**, **description**, and for a variant the module it is a variant of;
+- for a module: the courses and programs it is **used in** (with each program's week label), its **owners**, its **Primary SME** and **Backup SMEs** in order, its **topics**, its variants and live sessions;
+- for a program: its **courses** in order, and the instructors its KYP lists;
+- for a course: its **modules** in order and the programs that use it;
+- for an instructor: the modules they are an SME for, with the role; for an NP team member: what they own;
+- the **resources** (open the original live link) and the **sources** (the KYP page and version, or the registry file, it came from).
+
+Sections without data are left out. Click a related record to move to it. **Open as a page** shows the same panel full width. Changes you make there appear everywhere, and stay after you close and reopen it.
+
+## Creating and editing records
 
 Click **New record** in the sidebar (or press **c**). Everything goes into one form and is saved in one step.
 
 1. Choose the **Type** and type a **Name**. If a record with the same name already exists, the form tells you and offers to open it.
-2. Under **Placement**, say where it belongs. Start typing a course or module name and pick it. If it does not exist yet, choose **Create "…"** to create it right there; you can do this at every level (for example, a new week inside a new module inside an existing course). A record can belong to more than one place: use **Add another place**.
-3. Add **Relationships**, **Links**, **People** and **Tags** if you have them. Each section shows how many items it holds.
-4. Click **Create** (or press **Ctrl Enter**). Use **Create and add another** to enter several in a row.
+2. Under **Placement**, say where it belongs: a module in a course, a course in a program. You can create the parent right there.
+3. Add **Relationships**, **Links**, **People** (owners and SMEs) and **Tags** if you have them.
+4. Click **Create** (or press **Ctrl Enter**).
 
-If anything is wrong, nothing is saved and the problem is highlighted, so you can fix it and try again. After saving, the message at the bottom offers **Open** and, for a few seconds, **Undo**.
+If anything is wrong, nothing is saved and the problem is highlighted. After saving, the message offers **Open** and, for a few seconds, **Undo**. Contributors send new records for approval: the button says **Send for approval**, and an editor reviews it in **Approvals**.
 
-If you are a **contributor**, the button says **Send for approval**: an editor reviews your new record in **Approvals** before it appears. The same goes for your changes to an existing record's fields: they wait in **Approvals** until an editor applies them. Links and relationships you add to existing records are saved straight away.
-
-The form saves a draft on your computer as you type. If you close it by accident, the next New record offers to restore it.
+To edit a record, open it and change the name, description, fields, tags, owners or SMEs in place, or click **Edit**. A course or program can be saved as a **template** from its **…** menu; **New record → Start from** creates its courses, modules and topics too.
 
 ![The New record form, with an inline new course under Placement](/kb/guide/new-record.png)
 
-## Adding links
+## Links and relationships
 
-Every link has a **URL**, a **title**, a **kind** and two short texts:
+To attach a link, open a record, go to **Links** and click **Add link**. Paste the URL: Drive files and folders, Docs, Sheets, Slides, GitHub, video and other websites are recognised. If the URL is already in the library, the form offers **Use existing** instead of a duplicate.
 
-- the **description** says what is inside the link ("90 slides, with speaker notes");
-- the **purpose** says why it is attached to this particular record ("shown in the first half of the class").
+To connect two records, open one, go to **Relationships** and click **Connect**. Each choice reads as a sentence ("This module covers a topic"), and only the relationships allowed for the two types are offered. The built-in ones:
 
-Paste the URL and the knowledge base recognises where it lives and picks an icon and a likely kind: Google Drive files and folders, Docs, Sheets, Slides, **UpLevel** (uplevel.interviewkickstart.com), GitHub, YouTube or other video, Zoom recordings, live class links, or any website. Change the **Kind** if the guess is wrong: KYP slides / lecture deck, speaker notes, recording, live class link, assignment brief, problem statement, solution, evaluation criteria, question bank, interview guide, reading or reference doc.
+- **contains / part of**: the hierarchy (program → course → module → topic). Set it with Placement.
+- **in domain**: a program, course or module belongs to one of the four domains.
+- **variant of**: a program-specific version of a module points to the canonical module.
+- **owned by**: a program, course or module and its NP team owners.
+- **subject expert for**: an instructor is an SME for a module, with a role.
+- **teaches**: an instructor listed by a program's KYP, or teaching a live session.
+- **covers**: a module or topic covers a concept; topics found in a module's content.
+- **requires**: one course, module or topic must come before another. **related to**: a looser connection.
 
-If the URL is already in the library, the form offers **Use existing** instead of making a duplicate. Use **Pick from library** to attach a link that is already there.
+Admins can add custom record types (**Settings → Record types**) and relationship types (type a new name in the relationship box). New types appear everywhere at once.
 
-To add a link to an existing record, open it, go to the **Links** tab and click **Add link**.
+![Choosing a relationship: sentences grouped by direction](/kb/guide/relationship.png)
 
-## Connecting records
+## The Graph editor
 
-Open a record, go to **Relationships** and click **Connect**. Type in the relationship box to search. Each choice reads as a sentence, grouped by direction: "This module covers a topic" under **This module …**, and "An instructor teaches this module" under **… this module**. Only the ones allowed for this type are offered. Then pick the other record. The sentence under the row shows what you are about to say, for example "Ada Example teaches Designing a rate limiter".
+The **Graph editor** (in the Admin group, admins only) shows the whole knowledge base or one record and its neighbours, and lets admins edit there.
 
-![Choosing a relationship: sentences grouped by direction, with Create relationship at the end](/kb/guide/relationship.png)
+- Click a record to open its detail panel beside the graph. Double-click it to rename it.
+- Double-click empty space to add a record. Hover a record and drag its connect handle onto another record to connect them; pairs that cannot be connected snap back with the reason.
+- Drag records to arrange them. **Auto-layout** tidies everything, **Reset** forgets the saved positions, **Save view** keeps your own arrangement.
+- **F** fits the graph to the screen, **/** searches, the minimap moves the view. The filters on the left narrow by type, by owner (NP team members) or by a course or program.
+- Select records or relationships and press **Delete** to archive them; **Undo** is in the message that follows.
 
-### A relationship that does not exist yet
-
-Type its name, for example "mentors", and choose **Create relationship "mentors"**. Give the name it reads the other way ("mentored by" is suggested for you) and the two kinds of record it connects (filled in from the records you are connecting).
-
-- **Admins**: it is available to everyone straight away.
-- **Editors**: you can use it straight away. It is marked **Awaiting review** and appears in **Approvals**, where an admin confirms it, renames it, or merges it into an existing one.
-- **Contributors**: it is sent to an admin as a proposal. Nobody can use it until it is approved.
-
-Names that already exist are refused, including small differences: "Teaches", "teach" and "taught by" all match **teaches / taught by**. You are offered the existing one instead. Admins can **Merge** two relationship types in **Settings → Relationship types**: every relationship moves to the one you keep, with a count first, and the merge is recorded in Activity.
-
-What the built-in relationships mean:
-
-- **contains / part of**: where something sits in a course. Set this with Placement.
-- **covers**: a course, module or session covers a topic or domain.
-- **teaches**: an instructor teaches a course, module or session.
-- **subject expert for**: an instructor reviews or advises on the content.
-- **requires**: one course, module or topic must come before another.
-- **related to**: a looser connection.
-
-The same pair cannot be connected twice the same way, and pairs a relationship does not allow are not offered.
-
-## Editing on the graph
-
-The **Graph** page shows the records around one record, and you can edit there as well as look. Everything uses the same rules, permissions and history as the forms.
-
-- **Add a record**: double-click empty space (or press **N**), choose the type, type the name and press **Create**. **More…** opens the full New record form. The record appears where you clicked.
-- **Connect two records**: hover a record and drag its connect handle onto another record. Choose the relationship, or **Create relationship…**. If the two kinds of record cannot be connected, the graph says why and the line snaps back.
-- **Open or rename**: click a record to open its panel beside the graph. Double-click it to rename it in place. Click a relationship to see it as a sentence, edit its note or remove it.
-- **Archive**: select one or more records or relationships (shift-click, or shift-drag a box) and press **Delete**. The confirmation shows what goes with them. **Undo** is in the message that follows.
-- **Arrange**: drag records around. Positions are saved for everyone in the shared layout, or in a **saved graph view** of your own. They never change the records. **Auto-layout** tidies everything; **Reset** forgets the saved positions.
-- **Find your way**: **F** fits the graph to the screen, **/** searches (and loads the record if it is not shown yet), the minimap moves the view, and the filters on the left narrow by type, relationship, owner or course. The **+** next to a record expands or collapses its neighbours. Arrow keys move the selected records, and **Esc** clears the selection.
-
-Changes other people make appear on your graph as they happen. A record someone is editing has a dashed green ring, and hovering it shows who.
+The server checks every change: only admins can arrange or edit the graph.
 
 ![Editing on the graph: a record's handle, the relationship picker and the legend with filters](/kb/guide/graph.png)
 
-## When someone else changed it first
+## The Admin area
 
-Two people can have the same record open. If someone saves a change while you are editing, a blue bar tells you. If you then save, you see **This record changed since you opened it**, with your version next to theirs. Choose **Use their version** (then re-apply your change), or, if you are an editor, **Overwrite with mine**. Nothing is ever overwritten silently.
+The **Admin** group at the bottom of the sidebar opens the tools your role allows:
 
-## Legacy records and the sync
-
-Most records come from the original NP Autopilot site, and a **sync** copies its changes in every hour (admins can also press **Sync now** in **Settings → Sync**). Only what changed is written. If you edited a record here and it also changed at the source, your edit is kept and the record is listed under **Sync conflicts** on Data quality. A record that disappears from the source is never deleted here: it is marked for review and listed under **Removed at the source**, and you decide whether to archive it. A relationship or link that disappears from the source is archived, and can be restored from **Archived**. The sync never brings back something you archived, and never touches records created here.
-
-A **legacy** record comes from the older sheets only (for example an instructor with no role in the current mastersheet, or a programme from the older sheets). It carries a **Legacy** badge. Lists and the graph show current records; in **All records** use **Filter → Current and legacy** (or **Legacy only (older sheets)**), on the **Graph** tick **Show legacy**, and in **Who teaches what** tick **Include legacy (older sheets)**. Legacy is not the same as archived: a legacy record is still live and can be edited; an archived one is hidden until someone restores it.
-
-With the owner's approval, the legacy domains and legacy modules are deleted permanently (only the four current domains stay), and the sync is told never to bring them back. Legacy instructors, topics, sessions and programmes stay. If a record sat inside a deleted one, it is kept and listed on Data quality so you can give it a new place.
-
-## Archive and permanent delete
-
-- **Archive** (from a record's **…** menu) hides the record from lists, the outline and the graph, along with its relationships and links. The confirmation shows exactly how many go with it. Nothing is deleted, and you can **Undo** straight away or **Restore** later.
-- Everything archived is on the **Archived** page. Admins can **Delete permanently** from there. You have to type the name to confirm, the dialog lists what is removed with it, and the deletion is recorded.
-
-Removing a single relationship or link from a record is immediate and offers **Undo**. If you are a contributor, it is sent to **Approvals** instead, like any other archive.
-
-## Record types and fields
-
-Admins can add their own record types in **Settings → Record types**, for example a "Case Study" with fields such as Difficulty (a choice of Easy, Medium or Hard), Minutes (a number) and Brief URL. A type has a name, an icon, a colour, its fields (each with a label, a kind, help text and whether it is required), where it can be placed, and who owns new records. The form preview on the right shows what the New record form will look like.
-
-New types appear everywhere at once: the New record form, table filters, search, the graph, the outline, CSV export, Data quality and the AI assistant.
-
-Changing a type that is already in use is safe. Renaming is fine. Removing a field hides it and keeps its data. A new required field never blocks existing records; it lists them on Data quality. A type in use cannot be archived until its records are moved with **Change type of N records**. Editors can propose type changes; an admin approves them in Approvals.
-
-![Settings → Record types, editing a type with a live preview of its form](/kb/guide/types.png)
+- **Overview**: one card per tool.
+- **Approvals**: new records, changes and relationship types waiting for an editor or admin.
+- **Data quality**: records without an owner, SME roles to check (two primaries, backups without a primary), missing required fields, broken links, flagged items and records not connected to anything.
+- **Activity**: every change, who made it (a person, the AI assistant for a named person, an import, the sync, the system) and its before and after values.
+- **Archived**: archived records; admins can restore them or delete them permanently.
+- **Members**: roles and invitations (admins).
+- **Sources & sync**: the source catalog and the sync's run log (admins).
 
 ## Roles
 
 Everyone who signs in with an @interviewkickstart.com Google account is at least a viewer.
 
-- **Viewer**: sees everything, can flag things as incorrect, and can claim their own person record (**Claim this profile**; an admin confirms it).
-- **Contributor**: attaches links and adds relationships to existing records directly; sends new records, field edits, archive requests and new relationship types for approval. The database enforces this, whatever tool is used.
-- **Editor**: creates, edits, archives and restores directly, approves proposals, and can overwrite a conflicting change. An editor's changes to record types go to an admin for approval.
-- **Admin**: everything an editor does, plus record types (including which types should have an owner), relationship type review and merges, roles, people's e-mail addresses (**Settings → People**), profile claims, the sync (**Settings → Sync**), and permanent deletion. Admins also see a **Map** button at the top of the sidebar that goes back to the NP Autopilot map, and the map has a matching **Workspace graph** button at the top that opens the Graph page.
+- **Viewer**: sees everything and can flag things as incorrect.
+- **Contributor**: adds links, relationships, owners and SMEs directly; sends new records and field edits for approval.
+- **Editor**: creates, edits, archives and restores directly, and approves proposals.
+- **Admin**: everything an editor does, plus the Graph editor, record and relationship types, roles, the sources and the sync, and permanent deletion.
 
-Admins give roles in **Settings → Members**. To add someone who has not signed in yet, invite them by their @interviewkickstart.com address with a role: the role applies the first time they sign in. The last admin cannot be removed or made a lower role; make someone else an admin first.
+The database enforces the roles, whatever tool is used. The AI assistant acts with your role, but anything it archives waits for a person's approval.
 
-The AI assistant (Claude with your API token, **Settings → API tokens**) acts with your role, but anything it archives always waits for a person's approval, and it can never approve, change roles, start a sync or delete permanently.
+## When someone else changed it first
 
-## Keeping things accurate
+If someone saves a change while you are editing the same record, a bar tells you. If you then save, you see **This record changed since you opened it** with both versions. Choose **Use their version**, or, as an editor, **Overwrite with mine**. Nothing is overwritten silently.
 
-- **Data quality** lists records without an owner, missing required fields, broken links, flagged items and records that are not connected to anything. Fix the top of each list first.
-- If something is wrong and it is not yours, open it and choose **Flag as incorrect** from the **…** menu. The owner gets a review in **Approvals → Reviews**.
-- Every record shows a **completeness** score: owner, summary, required fields, links and placement. A course's score covers everything inside it.
-- A course or program can be saved as a **template** from its **…** menu, and a new course can start from it under New record → Start from.
+## Archive and permanent delete
 
-## Activity
-
-**Admin → Activity** lists every change: who made it (a person, the AI assistant working for a named person, an import, the sync, or the system), what they did, to which record (with a link, or marked **deleted** if it is gone), and when. Hover the time to see the exact date. For an update, each changed field shows its value before and after.
-
-Filter by person, action, what changed (a record, a relationship, a link, a type…), source (app, AI assistant, import, sync, system) and dates, or search names and values. **Export CSV** downloads exactly what is shown.
-
-Admins see all activity. Editors see their own changes and everything about the courses and records they own. Everyone else sees a record's history in its **History** tab, which lists entries the same way. Nobody, admins included, can edit or delete an entry.
+- **Archive** (from a record's **…** menu) hides the record and its relationships and links from lists, the outline and the graph. You can **Undo** straight away or **Restore** it from **Archived**.
+- Admins can **Delete permanently** from **Archived**, after typing the name to confirm. Large clean-ups follow a safety sequence: a backup that has been restored and checked, an export of everything to be removed, archiving, checks, and only then permanent deletion.
 
 ![Activity, filtered to updates, with a before and after for each changed field](/kb/guide/activity.png)
 

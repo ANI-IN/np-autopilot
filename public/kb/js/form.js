@@ -281,7 +281,7 @@ export function openRecordForm(o) {
   if (n) { status.value = n.status === 'draft' ? 'draft' : 'active'; review.value = n.review_status || 'none'; }
   const fieldRow = (label, input, req, help, key) => el('label', { class: 'field', 'data-field': key }, el('span', { class: 'label' + (req ? ' req' : ''), text: label }), input, help ? el('span', { class: 'help', text: help }) : null);
   const templateSel = el('select', { 'aria-label': 'Start from a template', 'data-testid': 'template-select' }, el('option', { value: '', text: 'Blank' }));
-  const templateRow = el('label', { class: 'field', hidden: true }, el('span', { class: 'label', text: 'Start from' }), templateSel, el('span', { class: 'help', text: 'Creates the template’s modules, weeks and sessions too, renamed for this one.' }));
+  const templateRow = el('label', { class: 'field', hidden: true }, el('span', { class: 'label', text: 'Start from' }), templateSel, el('span', { class: 'help', text: 'Creates the template’s courses, modules and topics too, renamed for this one.' }));
   const basics = el('div', { class: 'form-section' },
     el('div', { class: 'field', 'data-field': 'type' }, el('span', { class: 'label req', text: 'Type' }), typeCb, typeHelp),
     fieldRow('Name', name, true, null, 'name'), dupBox, templateRow,
@@ -302,7 +302,9 @@ export function openRecordForm(o) {
   const instr = (et, tid) => combobox({ multi: true, testid: tid, label: et, placeholder: 'Search instructors', source: nodeSource(['instructor']),
     create: (q) => [{ id: 'new:' + q, label: 'Add person “' + q + '”', name: q }],
     onCreateRequest: (it, done) => done({ id: 'new:instructor:' + it.name, label: it.name + ' (new)', icon: typeIcon('instructor'), isNew: true, name: it.name }) });
-  const instructors = instr('Instructors', 'instructors'), smes = instr('Subject experts', 'smes');
+  // People (run C): owners are NP team members; SMEs are instructors with a role (Primary, Backup 1-3).
+  const npOwners = combobox({ multi: true, testid: 'np-owners', label: 'Owners (NP team)', placeholder: 'Search NP team members', source: nodeSource(['team_member']) });
+  const smePrimary = instr('Primary SME', 'sme-primary'), smeBackups = instr('Backup SMEs', 'sme-backups');
   const tagsCb = combobox({ multi: true, testid: 'tags', label: 'Tags', placeholder: 'Add tags', value: ((n && n.tags) || []).map((t) => ({ id: t.name, label: '#' + t.name })),
     source: async (q) => (await api('GET', '/tags')).items.filter((t) => !q || t.name.includes(q.toLowerCase())).slice(0, 10).map((t) => ({ id: t.name, label: '#' + t.name })),
     create: (q) => [{ id: q, label: 'Create tag “' + q + '”' }], onCreateRequest: (it, done) => done({ id: it.id.replace(/^new:/, ''), label: '#' + it.id.replace(/^new:/, '') }) });
@@ -311,8 +313,11 @@ export function openRecordForm(o) {
   const sPlace = section('Placement', placement, { key: 'placement', open: !editing, hint: 'where it belongs' });
   const sRels = section('Relationships', rels, { key: 'relationships' });
   const sLinks = section('Links', links, { key: 'links', open: !editing });
-  const sPeople = section('People', el('div', { class: 'col gap-3' }, fieldRow('Primary owner', owner, false, 'Defaults to you.'), fieldRow('Secondary owners', coOwners),
-    editing ? null : fieldRow('Instructors', instructors, false, 'Linked with “teaches”.'), editing ? null : fieldRow('Subject experts (SMEs)', smes)), { key: 'people' });
+  const sPeople = section('People', el('div', { class: 'col gap-3' },
+    editing ? null : fieldRow('Owners (NP team)', npOwners, false, 'For a program, course or module: the NP team members responsible for it.'),
+    editing ? null : fieldRow('Primary SME', smePrimary, false, 'For a module: the main instructor.'),
+    editing ? null : fieldRow('Backup SMEs', smeBackups, false, 'For a module: in order; the first is Backup 1 (up to 3).'),
+    fieldRow('Account owner', owner, false, 'Who can edit it in the workspace. Defaults to you.'), fieldRow('Co-owners (accounts)', coOwners)), { key: 'people' });
   const sTags = section('Tags', tagsCb, { key: 'tags' });
   const sFields = section('More fields', optionalFields, { key: 'fields' });
 
@@ -367,7 +372,7 @@ export function openRecordForm(o) {
   // --- counts + draft autosave
   function changed() {
     sRels.setCount(rels.count()); sLinks.setCount(links.count()); sTags.setCount(tagsCb.getValue().length);
-    sPeople.setCount(coOwners.getValue().length + instructors.getValue().length + smes.getValue().length);
+    sPeople.setCount(coOwners.getValue().length + npOwners.getValue().length + smePrimary.getValue().length + smeBackups.getValue().length);
     const pv = placement.firstChild && placement.firstChild.getValue ? placement.firstChild.getValue().length : 0; sPlace.setCount(pv);
     if (!editing) saveDraft();
   }
@@ -388,7 +393,7 @@ export function openRecordForm(o) {
     else if (field.startsWith('parents')) { sPlace.open = true; target = sPlace; }
     else if (field.startsWith('edges')) { sRels.open = true; target = rels.rows()[Number(field.split('.')[1])] || sRels; }
     else if (field.startsWith('resources')) { sLinks.open = true; target = links.rows()[Number(field.split('.')[1])] || sLinks; }
-    else if (field.startsWith('instructors') || field.startsWith('smes') || field === 'owner_id') { sPeople.open = true; target = sPeople; }
+    else if (field.startsWith('owners') || field.startsWith('smes') || field === 'owner_id') { sPeople.open = true; target = sPeople; }
     if (target) {
       if (target.closest('details')) target.closest('details').open = true;
       target.classList.add('invalid'); target.scrollIntoView({ block: 'center' });
@@ -425,7 +430,9 @@ export function openRecordForm(o) {
       owner_id: ownerV ? ownerV.id : null, co_owners: coOwners.getValue().map((x) => x.id),
       parents: placement.firstChild && placement.firstChild.getValue ? placement.firstChild.getValue() : [],
       edges: rels.getValue().map(({ _row, ...r }) => r), resources: links.getValue(),
-      instructors: instructors.getValue().map((x) => (x.isNew ? { new: { name: x.name } } : x.id)), smes: smes.getValue().map((x) => (x.isNew ? { new: { name: x.name } } : x.id)),
+      owners: npOwners.getValue().map((x) => x.id),
+      smes: smePrimary.getValue().map((x) => Object.assign(x.isNew ? { new: { name: x.name } } : { id: x.id }, { role: 'primary' }))
+        .concat(smeBackups.getValue().slice(0, 3).map((x, i) => Object.assign(x.isNew ? { new: { name: x.name } } : { id: x.id }, { role: 'backup', rank: i + 1 }))),
       tags: tagsCb.getValue().map((x) => x.id), props: Object.keys(props).length ? props : undefined };
     if (templateSel.value && t.is_container) {
       const out = await api('POST', '/templates/' + templateSel.value + '/instantiate', { name: body.name, parents: body.parents });

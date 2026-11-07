@@ -195,6 +195,13 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
             if actor.actor_type == "ai":
                 raise kb_routes_forbidden("the AI assistant cannot start a sync")
             return 200, sync_api.run_now("manual", str(actor.user_id))
+    if head == "sources" and method == "GET":
+        # Admin > Sources & sync: the source catalog (kb.sources, run C); admins only (RLS and here)
+        from lib.kb import sources
+        if rest == ["summary"]:
+            return 200, sources.summary(conn)
+        if not rest:
+            return 200, sources.list_sources(conn, params)
     if head == "views" and method == "GET" and rest == ["teaching"]:     # ["timeline"] retired 2026-11-07
         from lib.kb import views
         return 200, views.teaching_matrix(conn, params)
@@ -377,6 +384,10 @@ def _nodes(conn, actor, method, rest, params, body, force, fixed_type):
             return 201, svc.create_node(conn, actor, body)
     nid = rest[0] if rest else None
     sub = rest[1:] if rest else []
+    if method == "GET" and nid == "by-ref" and len(sub) == 1:
+        # The Map's ids (a record's uuid, or the NP id the sync kept) -> the same record and profile
+        # the workspace panel reads, so the Map renders the one entity component (run C).
+        return 200, svc.get_node(conn, svc.resolve_ref(conn, sub[0]))
     if not sub:
         if method == "GET":
             node = svc.get_node(conn, nid)

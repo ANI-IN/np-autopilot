@@ -1,4 +1,4 @@
-/* Outline: Program › Course › Domain › Module › Week › Session as an
+/* Outline: Program › Course › Module › Topic (and live sessions) as an
    expandable tree. Drag to reorder within a parent, link count and
    completeness per node, quick-add at any level, "Copy as text". */
 import { S, el, add, clear, icon, typeIcon, typeLabel, api, toast, failToast, setQuery, skeletonRows, empty, errorBox, can, qs } from '../core.js';
@@ -29,7 +29,7 @@ export function viewOutline(v, r) {
   S.listReload = load;
   function draw() {
     clear(body);
-    if (!data.roots.length) { body.appendChild(empty('No programs or courses yet', 'Start with a program, then add courses, modules, weeks and sessions inside it.', can('contributor') ? el('button', { class: 'btn primary sm', type: 'button', text: 'New program', onclick: () => openRecordForm({ type: 'program' }) }) : null, 'list-tree', 'finding-things')); return; }
+    if (!data.roots.length) { body.appendChild(empty('No programs or courses yet', 'Start with a program, then add courses, modules and topics inside it.', can('contributor') ? el('button', { class: 'btn primary sm', type: 'button', text: 'New program', onclick: () => openRecordForm({ type: 'program' }) }) : null, 'list-tree', 'finding-things')); return; }
     const ul = el('ul', { class: 'tree', role: 'tree', 'aria-label': 'Outline' });
     data.roots.forEach((n) => ul.appendChild(item(n, null, 0)));
     body.appendChild(ul);

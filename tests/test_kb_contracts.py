@@ -141,7 +141,7 @@ def test_change_feed_names_the_kind_and_the_records(admin):
 
 def test_owner_change_is_its_own_kind(admin):
     rec = _node(admin, "module", "Owned module")
-    person = _node(admin, "instructor", "Some Instructor")
+    person = _node(admin, "team_member", "Some Team Member")      # run C: owners are NP team members
     cur = _head(admin)
     s, out = admin.patch(f"/api/kb/nodes/{rec['id']}", {"owner_record_id": person["id"], "version": rec["version"]})
     assert s == 200, out

@@ -5,7 +5,7 @@
      #/graph/<id>       one record's neighbourhood (focus=<id>, depth 1-2), expandable
 
    Structure  the default arrangement is the hierarchy Program > Course > Domain >
-              Module > Week > Session in rows, with topics, people and links as
+              Module > Topic in rows, with topics, people and links as
               satellites under the record they hang off; more than BUNDLE_FROM of one
               type on one record become a bundle ("137 topics") that opens on click.
               Arrangements: Hierarchy, Force, Radial (rings around the focused record),
@@ -64,7 +64,9 @@ function ensureCss() {
 }
 
 const normNode = (n) => ({ id: n.id, type: n.type, name: n.name, status: n.status, scope_id: n.scope_id || null, is_legacy: !!n.is_legacy,
-  archived: !!(n.archived || n.archived_at), owner_record_id: n.owner_record_id || null, external_id: n.external_id || null,
+  archived: !!(n.archived || n.archived_at), external_id: n.external_id || null,
+  // owners = NP team members (owned_by), from the graph payload or a record's profile (run C)
+  owners: n.owners || (n.profile && n.profile.owners ? n.profile.owners.map((o) => o.id) : []),
   degree: n.degree || 0, version: n.version });
 const normEdge = (e) => ({ id: e.id, type: e.type || e.edge_type, source: e.source || e.source_id, target: e.target || e.target_id,
   role: e.role || (e.props && e.props.role) || null, is_legacy: !!e.is_legacy, archived: !!(e.archived || e.archived_at), note: e.note, version: e.version });
@@ -182,13 +184,14 @@ function buildGraph(v, r) {
 
   // ---------------------------------------------------------------- projection: model -> what is drawn
   const nodeData = (n) => { const k = nodeLook(L, n.type); return { id: n.id, label: n.name, type: n.type, color: k.color, rank: k.rank, scope: n.scope_id,
-    owner: n.owner_record_id, version: n.version, degree: n.degree }; };
+    owners: n.owners, version: n.version, degree: n.degree }; };
   const edgeData = (e) => { const k = edgeLook(L, e.type); return { id: e.id, source: e.source, target: e.target, type: e.type, label: k.label + (e.role ? ' (' + e.role.replace('_', ' ') + ')' : ''),
     version: e.version, color: k.color, lineStyle: k.style }; };
   function passes(n) {
     if (n.id === center) return true;
     if (hidden[n.type]) return false;
-    if (ownerFilter === 'none' ? !!n.owner_record_id : ownerFilter ? n.owner_record_id !== ownerFilter : false) return false;
+    const own = n.owners || [];
+    if (ownerFilter === 'none' ? own.length > 0 : ownerFilter ? !own.includes(ownerFilter) : false) return false;
     if (scopeFilter && !scopeFilter.ids.has(n.id)) return false;
     return true;
   }
@@ -319,10 +322,10 @@ function buildGraph(v, r) {
     else if (how === 'radial') pos = radial(nodes, edges, focusId() || center);
     else if (how === 'force') {
       const eles = drawn.union(drawn.connectedEdges().filter((e) => isShown(e)));
-      if (!cy.nodes('.placed').length) applyPositions(hierarchy(nodes, edges));
+      if (!cy.nodes('.placed').length) applyPositions(hierarchy(nodes, edges, { aspect: Math.max(0.6, Math.min(3.5, (cyBox.clientWidth || 1200) / Math.max(1, cyBox.clientHeight || 700))) }));
       await new Promise((done) => { const l = eles.layout({ name: 'cose', animate: false, randomize: false, fit: false, padding: 48, numIter: drawn.length > 600 ? 300 : 1000,
         idealEdgeLength: () => 110, nodeRepulsion: () => 90000, nodeOverlap: 30, componentSpacing: 120, gravity: 0.6 }); l.one('layoutstop', done); l.run(); });
-    } else pos = hierarchy(nodes, edges);
+    } else pos = hierarchy(nodes, edges, { aspect: Math.max(0.6, Math.min(3.5, (cyBox.clientWidth || 1200) / Math.max(1, cyBox.clientHeight || 700))) });
     if (how === 'saved') {
       const saved = await savedPositions();
       Object.entries(saved).forEach(([id, p]) => { if (pos.has(id)) pos.set(id, p); });
@@ -394,13 +397,27 @@ function buildGraph(v, r) {
   const focusId = () => { const s = cy.$('node:selected').filter(isRecord); if (s.length === 1) return s.id(); if (S.route && S.route.q.open && cy.getElementById(S.route.q.open).length) return S.route.q.open; return center; };
 
   // ---------------------------------------------------------------- after any change: classes, labels, legend, status
-  let lodOn = false, tier = 0;
+  let lodOn = false, tier = 0, lodZoom = 0;
   /* Semantic zoom: zoomed out, the hierarchy's labels (and bundles') grow so the
      structure stays readable; everything else waits for hover or zoom. */
   function lod() {
-    const t = cy.zoom() < 0.25 ? 2 : cy.zoom() < 0.5 ? 1 : 0;
-    if (t !== tier) { tier = t; cy.batch(() => cy.nodes().forEach((n) => { const big = (n.data('rank') !== null && n.data('rank') !== undefined) || n.hasClass('collapsed') || n.hasClass('ghead');
-      n.toggleClass('far1', big && t === 1); n.toggleClass('far2', big && t === 2); })); }
+    // Zoomed out, the TOP of the hierarchy stays readable at a constant on-screen size (run C): programs
+    // at about 14 px whenever the view is zoomed out, courses at about 12 px once it is not too far out,
+    // group headers and collapsed groups like courses. Everything else waits for zoom or hover.
+    const z = cy.zoom();
+    const t = z < 0.25 ? 2 : z < 0.6 ? 1 : 0;
+    const zk = Math.round(z * 200) / 200;
+    if (t !== tier || (t && zk !== lodZoom)) {
+      tier = t; lodZoom = zk;
+      cy.batch(() => cy.nodes().forEach((n) => {
+        const r = n.data('rank');
+        const top = r === 0 || n.hasClass('ghead');
+        const mid = r === 1 || n.hasClass('collapsed');
+        const on = t > 0 && (top || (mid && z >= 0.12));
+        n.toggleClass('farlabel', on);
+        if (on) { const px = top ? 14 : 12; n.data({ fz: Math.round(px / Math.max(z, 0.02)), fw: Math.round((top ? 260 : 200) / Math.max(z, 0.02)) }); }
+      }));
+    }
     const want = cy.zoom() < EDGE_LOD_ZOOM && cy.edges().filter((e) => !e.hasClass('hidden') && isShown(e.source()) && isShown(e.target())).length > 150;
     if (want === lodOn) return;
     lodOn = want;
@@ -482,11 +499,12 @@ function buildGraph(v, r) {
     side.appendChild(el('label', { class: 'legend-item' }, leg, el('span', { text: 'Legacy records' })));
     side.appendChild(el('label', { class: 'legend-item' }, arc, el('span', { text: 'Archived records' })));
     side.appendChild(el('h3', { text: 'Filter', style: 'margin-top:8px' }));
-    const owners = {}; M.nodes.forEach((n) => { if (n.owner_record_id) owners[n.owner_record_id] = 1; });
-    const ownerSel = el('select', { 'aria-label': 'Owner', 'data-testid': 'graph-owner-filter' }, el('option', { value: '', text: 'Any owner' }), el('option', { value: 'none', text: 'No owner', selected: ownerFilter === 'none' }),
+    // Owners are NP team members (owned_by), never instructors (run C)
+    const owners = {}; M.nodes.forEach((n) => (n.owners || []).forEach((o) => { owners[o] = 1; }));
+    const ownerSel = el('select', { 'aria-label': 'Owner (NP team member)', 'data-testid': 'graph-owner-filter' }, el('option', { value: '', text: 'Any owner' }), el('option', { value: 'none', text: 'No owner', selected: ownerFilter === 'none' }),
       Object.keys(owners).map((id) => el('option', { value: id, text: (M.nodes.get(id) || {}).name || ownerNames[id] || 'Record ' + id.slice(0, 8), selected: ownerFilter === id })));
     ownerSel.addEventListener('change', () => { ownerFilter = ownerSel.value || null; applyFilter(); });
-    side.appendChild(el('label', { class: 'field' }, el('span', { class: 'faint xs', text: 'Owner' }), ownerSel));
+    side.appendChild(el('label', { class: 'field' }, el('span', { class: 'faint xs', text: 'Owner (NP team)' }), ownerSel));
     side.appendChild(el('div', { class: 'field' }, el('span', { class: 'faint xs', text: 'Inside a course or program' }),
       combobox({ testid: 'graph-scope-filter', label: 'Inside a course or program', placeholder: 'Any', value: scopeFilter ? [scopeFilter.item] : [], source: nodeSource(['program', 'course']), onChange: async (it) => {
         if (!it) { scopeFilter = null; applyFilter(); return; }
@@ -1121,7 +1139,7 @@ function buildGraph(v, r) {
         const n = await api('GET', '/nodes/' + id);
         if ((n.archived_at && !opt.archived) || (n.is_legacy && opt.legacy !== 'all')) { if (M.nodes.has(id) || cy.getElementById(id).length) removeRecord(id, true); continue; }
         const rec = normNode(n);
-        if (M.nodes.has(id)) { rec.degree = M.nodes.get(id).degree; M.nodes.set(id, rec); const c = cy.getElementById(id); if (c.length) c.data(Object.assign({}, c.data(), { label: rec.name, version: rec.version, owner: rec.owner_record_id })); }
+        if (M.nodes.has(id)) { rec.degree = M.nodes.get(id).degree; M.nodes.set(id, rec); const c = cy.getElementById(id); if (c.length) c.data(Object.assign({}, c.data(), { label: rec.name, version: rec.version, owners: rec.owners })); }
         else if (G.pendingRestore && G.pendingRestore.has(id)) { M.nodes.set(id, rec); newIds.add(id); added = true; }
         else if (!center) { M.nodes.set(id, rec); newIds.add(id); added = true; }
         else if (cy.getElementById(id).length) { const c = cy.getElementById(id); c.data(Object.assign({}, c.data(), { label: rec.name, version: rec.version })); }

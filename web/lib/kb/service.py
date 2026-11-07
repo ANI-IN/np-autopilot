@@ -18,6 +18,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import re
 import secrets
 from dataclasses import dataclass
 
@@ -26,6 +27,7 @@ from psycopg import errors as pgerr
 
 from . import activity
 from . import validate as v
+from .profile import OWNED_BY
 from .errors import Conflict, Duplicate, Forbidden, Invalid, KbError, NeedsApproval, NotFound
 
 ROLES = ("none", "viewer", "contributor", "editor", "admin")
@@ -292,11 +294,11 @@ def get_node(conn, node_id: str, *, detail: bool = True) -> dict:
         raise NotFound(f"no record with id {node_id}")
     if not detail:
         return node
-    ids = [x for x in [node.get("owner_record_id")] + list(node.get("co_owner_record_ids") or []) if x]
-    names = {str(r["id"]): r for r in _q(conn, """select n.id, n.name, t.key as type from kb.nodes n
-             join kb.node_types t on t.id = n.type_id where n.id = any(%s::uuid[])""", ([str(i) for i in ids],))} if ids else {}
-    node["owner_record"] = names.get(str(node["owner_record_id"])) if node.get("owner_record_id") else None
-    node["co_owner_records"] = [names[str(i)] for i in (node.get("co_owner_record_ids") or []) if str(i) in names]
+    # Owners are NP team members (owned_by) and SMEs are instructors with a role (sme): both come
+    # from relationships, in node["profile"] (run C, 2026-11-07). The run-5 owner-by-role columns
+    # are no longer shown; migration 0039 limits them to team members.
+    from .profile import entity_profile
+    node["profile"] = entity_profile(conn, node)
     node["account"] = _q1(conn, "select email, user_id, linked_at from kb.person_accounts where node_id = %s", (node_id,))
     node["sync"] = _q1(conn, """select removed_at, conflict_at from kb.sync_map where unit = 'record' and kb_id = %s
                                  and key not like '%%#owners' limit 1""", (node_id,))
@@ -335,6 +337,17 @@ def get_node(conn, node_id: str, *, detail: bool = True) -> dict:
     if not node["archived_at"]:
         node["completeness"] = completeness(conn, node_id)
     return node
+
+
+def resolve_ref(conn, ref: str) -> str:
+    """A record's uuid, or the NP id the sync kept as external_id 'np:<id>' (the Map's ids)."""
+    ref = (ref or "").strip()[:200]
+    if re.fullmatch(r"[0-9a-fA-F-]{36}", ref):
+        return v.uid(ref, "id")
+    row = _q1(conn, "select id from kb.nodes where external_id = %s", ("np:" + ref,))
+    if not row:
+        raise NotFound("no record with that reference")
+    return str(row["id"])
 
 
 def breadcrumb(conn, node_id: str) -> list[dict]:
@@ -391,7 +404,7 @@ def list_nodes(conn, params: dict) -> dict:
     elif legacy != "all":
         raise Invalid("legacy must be current, only or all", field="legacy")
     if str(params.get("no_owner") or "") in ("1", "true"):
-        where.append("n.owner_id is null and n.owner_record_id is null")   # a plain list filter: every type
+        where.append(f"n.owner_id is null and not exists (select 1 from kb.edges oe join kb.edge_types oet on oet.id = oe.edge_type_id and oet.key = '{OWNED_BY}' where oe.source_id = n.id and oe.archived_at is null)")   # a plain list filter: every type
     if params.get("review_status"):
         where.append("n.review_status = %s"); args.append(params["review_status"])
     if params.get("parent"):
@@ -494,7 +507,7 @@ def _resolve_scope(conn, actor: Actor, body: dict):
 
 
 NODE_FIELDS = {"type", "name", "summary", "body", "scope", "parents", "owner_id", "co_owners", "status",
-               "review_status", "props", "resources", "edges", "tags", "instructors", "smes"}
+               "review_status", "props", "resources", "edges", "tags", "instructors", "smes", "owners"}
 
 
 def _type_def(conn, key: str) -> dict:
@@ -668,13 +681,23 @@ def create_node(conn, actor: Actor, body: dict, *, _approved: bool = False) -> d
             create_edge(conn, actor, spec)
         except KbError as exc:
             raise _with_field(exc, f"edges.{i}") from None
-    for key, etype in (("instructors", "teaches"), ("smes", "sme")):
+    # People (run C, 2026-11-07): "smes" = instructors with a role ({id | new, role, rank});
+    # "owners" = NP team members; "instructors" = a listed instructor ("teaches"), where the type allows it.
+    for key, etype, ptype in (("instructors", "teaches", SME_TYPE), ("smes", "sme", SME_TYPE),
+                              ("owners", OWNED_BY, OWNER_TYPE)):
         for i, pspec in enumerate(body.get(key) or []):
-            if isinstance(pspec, dict) and isinstance(pspec.get("new"), dict):
-                pspec = {"new": {**pspec["new"], "type": "instructor"}}
+            props = {}
+            if isinstance(pspec, dict) and not isinstance(pspec.get("new"), dict) and "id" in pspec:
+                props = {k: pspec[k] for k in ("role", "rank") if k in pspec}
+                pspec = pspec["id"]
+            elif isinstance(pspec, dict) and isinstance(pspec.get("new"), dict):
+                props = {k: pspec[k] for k in ("role", "rank") if k in pspec}
+                pspec = {"new": {**pspec["new"], "type": ptype}}
             pid = _inline_node(conn, actor, pspec, created, field=f"{key}.{i}")
             try:
-                create_edge(conn, actor, {"type": etype, "source_id": pid, "target_id": nid})
+                create_edge(conn, actor, {"type": etype, "source_id": nid, "target_id": pid, "props": props}
+                            if etype == OWNED_BY else
+                            {"type": etype, "source_id": pid, "target_id": nid, "props": props})
             except KbError as exc:
                 raise _with_field(exc, f"{key}.{i}") from None
     for i, res in enumerate(body.get("resources") or []):
@@ -692,16 +715,31 @@ def create_node(conn, actor: Actor, body: dict, *, _approved: bool = False) -> d
 
 
 PERSON_TYPES = ("instructor", "team_member")
+#: Owners are NP team members only (run C, 2026-11-07); instructors are SMEs.
+OWNER_TYPE = PERSON_TYPES[1]
+SME_TYPE = PERSON_TYPES[0]
 
 
 def _require_person_records(conn, ids, field):
+    """A sign-in account may be linked to any person record (instructor or NP team member)."""
     if not ids:
         return
     ok = _q1(conn, """select count(*) as c from kb.nodes n join kb.node_types t on t.id = n.type_id
                       where n.id = any(%s::uuid[]) and t.key = any(%s) and n.archived_at is null""",
              ([str(i) for i in ids], list(PERSON_TYPES)))["c"]
     if ok != len(set(map(str, ids))):
-        raise Invalid("owners by role must be live instructor or team member records", field=field)
+        raise Invalid("expected a live instructor or team member record", field=field)
+
+
+def _require_owner_records(conn, ids, field):
+    """Owners are NP team members only (run C, 2026-11-07); instructors are SMEs."""
+    if not ids:
+        return
+    ok = _q1(conn, """select count(*) as c from kb.nodes n join kb.node_types t on t.id = n.type_id
+                      where n.id = any(%s::uuid[]) and t.key = %s and n.archived_at is null""",
+             ([str(i) for i in ids], OWNER_TYPE))["c"]
+    if ok != len(set(map(str, ids))):
+        raise Invalid("an owner must be a live NP team member record (instructors are SMEs, not owners)", field=field)
 
 
 def set_person_account(conn, actor: Actor, node_id: str, body: dict) -> dict:
@@ -757,11 +795,11 @@ def update_node(conn, actor: Actor, node_id: str, body: dict, *, force: bool = F
     if "owner_record_id" in body:
         rid = v.uid(body["owner_record_id"], "owner_record_id", required=False)
         if rid:
-            _require_person_records(conn, [rid], "owner_record_id")
+            _require_owner_records(conn, [rid], "owner_record_id")
         sets.append("owner_record_id = %s"); args.append(rid)
     if "co_owner_record_ids" in body:
         ids = [v.uid(x, "co_owner_record_ids") for x in (body.get("co_owner_record_ids") or [])]
-        _require_person_records(conn, ids, "co_owner_record_ids")
+        _require_owner_records(conn, ids, "co_owner_record_ids")
         sets.append("co_owner_record_ids = %s::uuid[]"); args.append(ids)
     if "review_status" in body:
         sets.append("review_status = %s")
@@ -964,10 +1002,15 @@ def update_edge(conn, actor: Actor, edge_id: str, body: dict) -> dict:
     expected = v.version(body)
     with _translate(conn, "relationship"):
         with conn.cursor() as cur:
-            cur.execute("update kb.edges set note = %s, props = coalesce(%s::jsonb, props) "
-                        "where id = %s and version = %s and archived_at is null",
-                        (v.text(body, "note", max_len=v.NOTE_MAX),
-                         json.dumps(body["props"]) if "props" in body else None, edge_id, expected))
+            # An SME's role change keeps the assignment's provenance: role/rank are merged in.
+            newp = json.dumps(body["props"]) if "props" in body else None
+            cur.execute("""update kb.edges set note = %s, props = case
+                               when %s::jsonb is null then props
+                               when (select key from kb.edge_types where id = edge_type_id) = 'sme'
+                                    then (props - 'role' - 'rank') || %s::jsonb
+                               else %s::jsonb end
+                           where id = %s and version = %s and archived_at is null""",
+                        (v.text(body, "note", max_len=v.NOTE_MAX), newp, newp, newp, edge_id, expected))
             n = cur.rowcount
     if n == 0:
         cur_row = _edge_row(conn, edge_id)
@@ -1822,9 +1865,9 @@ def validate_course_structure(conn, course_id: str) -> dict:
         if not c["resources"]:
             issues.append({"severity": "warn", "issue": f"{c['type']} {c['name']!r} has no resources",
                            "node_id": c["id"]})
-    taught = [e for e in node["incoming"] if e["type"] == "teaches"]
+    taught = [e for e in node["incoming"] if e["type"] in ("teaches", "sme")]
     if not taught:
-        issues.append({"severity": "info", "issue": "no instructor linked by `teaches`"})
+        issues.append({"severity": "info", "issue": "no SME or listed instructor linked"})
     filled = sum(1 for c in children if c["resources"]) + (1 if node["resources"] else 0)
     score = round(100 * filled / (len(children) + 1)) if children else 0
     return {"course": {"id": node["id"], "name": node["name"], "type": node["type"]},
@@ -1837,7 +1880,7 @@ def find_instructors(conn, *, course_id: str | None = None, q: str | None = None
     where, args = ["i.archived_at is null", "it.key = 'instructor'"], []
     if course_id:
         where.append("""exists (select 1 from kb.edges e join kb.edge_types et on et.id = e.edge_type_id
-                        where et.key = 'teaches' and e.source_id = i.id and e.target_id = %s
+                        where et.key in ('teaches', 'sme') and e.source_id = i.id and e.target_id = %s
                           and e.archived_at is null)""")
         args.append(v.uid(course_id, "course_id"))
     if q:
@@ -1846,8 +1889,8 @@ def find_instructors(conn, *, course_id: str | None = None, q: str | None = None
     rows = _q(conn, f"""select i.id, i.name, i.summary from kb.nodes i join kb.node_types it on it.id = i.type_id
                         where {' and '.join(where)} order by i.name_norm limit %s""", (*args, min(int(limit), 200)))
     for r in rows:
-        r["teaches"] = _q(conn, """select n.id, n.name, t.key as type from kb.edges e
-                                   join kb.edge_types et on et.id = e.edge_type_id and et.key = 'teaches'
+        r["teaches"] = _q(conn, """select n.id, n.name, t.key as type, e.props ->> 'role' as role from kb.edges e
+                                   join kb.edge_types et on et.id = e.edge_type_id and et.key in ('teaches', 'sme')
                                    join kb.nodes n on n.id = e.target_id join kb.node_types t on t.id = n.type_id
                                    where e.source_id = %s and e.archived_at is null and n.archived_at is null
                                    order by n.name_norm""", (r["id"],))
@@ -1861,11 +1904,11 @@ def quality_overview(conn, limit: int = 50) -> dict:
     records only: legacy (NP Autopilot's older sheets) is out of these counts;
     "no owner" = no account owner and no owner by role (run 5), for the types
     whose "owner expected" is ON (run 6)."""
-    totals = _q1(conn, """select
+    totals = _q1(conn, f"""select
         (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy) as live,
         (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and not exists (
             select 1 from kb.edges e where e.archived_at is null and (e.source_id = n.id or e.target_id = n.id))) as orphans,
-        (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and n.owner_id is null and n.owner_record_id is null
+        (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and n.owner_id is null and not exists (select 1 from kb.edges oe join kb.edge_types oet on oet.id = oe.edge_type_id and oet.key = '{OWNED_BY}' where oe.source_id = n.id and oe.archived_at is null)
            and n.type_id in (select id from kb.node_types where owner_expected)) as no_owner,
         (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and not exists (
             select 1 from kb.node_resources r where r.node_id = n.id and r.archived_at is null)) as no_resources,
@@ -1889,8 +1932,8 @@ def quality_overview(conn, limit: int = 50) -> dict:
                      where r.node_id = m.nid and r.archived_at is null)) / count(m.nid)) as completeness
         from c join members m on m.cid = c.id group by c.id, c.name, c.type
         order by completeness asc, c.name limit %s""", (limit,))
-    unowned = _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
-                          where n.archived_at is null and not n.is_legacy and n.owner_id is null and n.owner_record_id is null
+    unowned = _q(conn, f"""select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
+                          where n.archived_at is null and not n.is_legacy and n.owner_id is null and not exists (select 1 from kb.edges oe join kb.edge_types oet on oet.id = oe.edge_type_id and oet.key = '{OWNED_BY}' where oe.source_id = n.id and oe.archived_at is null)
                             and t.owner_expected
                           order by t.sort_order, n.name_norm limit %s""", (limit,))
     links = _q1(conn, """select count(*) as resources,
@@ -1905,8 +1948,29 @@ def quality_overview(conn, limit: int = 50) -> dict:
                                  where r.archived_at is null
                                    and lc.status in ('broken', 'forbidden', 'timeout', 'unreachable')
                                  order by lc.checked_at desc limit %s""", (limit,))
+    # SME assignments the sources state ambiguously (run C): several primaries, a backup order used
+    # twice, or backups with no primary. Reported for the NP team, never rewritten.
+    smes = _q(conn, """
+        with s as (select e.target_id as module_id, e.props->>'role' as role, e.props->>'rank' as rank
+                   from kb.edges e join kb.edge_types et on et.id = e.edge_type_id and et.key = 'sme'
+                   join kb.nodes m on m.id = e.target_id and m.archived_at is null
+                   where e.archived_at is null)
+        select m.id, m.name,
+               count(*) filter (where s.role = 'primary') as primaries,
+               count(*) filter (where s.role = 'backup') as backups,
+               count(*) filter (where s.role = 'backup') - count(distinct s.rank) filter (where s.role = 'backup') as repeated_backup_orders
+        from s join kb.nodes m on m.id = s.module_id
+        group by m.id, m.name
+        having count(*) filter (where s.role = 'primary') > 1
+            or (count(*) filter (where s.role = 'backup') > 0 and count(*) filter (where s.role = 'primary') = 0)
+            or count(*) filter (where s.role = 'backup') > count(distinct s.rank) filter (where s.role = 'backup')
+        order by m.name_norm limit %s""", (limit,))
+    for r in smes:
+        r["issue"] = ("several primary SMEs" if r["primaries"] > 1 else
+                      "backups but no primary SME" if r["primaries"] == 0 else "a backup order used twice")
     return {"totals": totals, "orphans": orphans, "courses": courses, "unowned": unowned,
-            "links": links, "duplicates": find_duplicate_nodes(conn, 0.6, 20)}
+            "links": links, "duplicates": find_duplicate_nodes(conn, 0.6, 20),
+            "sme_roles": {"items": smes, "total": len(smes)}}
 
 
 def record_link_results(conn, actor: Actor, results) -> dict:

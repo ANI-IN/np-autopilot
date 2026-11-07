@@ -58,3 +58,4 @@ pipeline/*.py
 mcp_server/
 plugins/
 fixtures/
+testing/

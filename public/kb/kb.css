@@ -707,3 +707,6 @@ kbd.on-btn { border-color: transparent; color: inherit; background: transparent;
 .admin-card { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-4); color: var(--text); }
 .admin-card:hover { border-color: var(--border-strong); }
 .admin-card h2 { font-size: var(--fs-lg); }
+
+/* Admin > Sources & sync: a source that could not be read (run C) */
+.source-failure { color: var(--danger); }

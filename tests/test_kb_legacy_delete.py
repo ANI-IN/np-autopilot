@@ -40,11 +40,13 @@ def _run(cmd, data=None):
 
 
 def _expertise():
-    """A current instructor's declared expertise on the legacy domain."""
+    """Run C (2026-11-07): an SME is module-level, so an instructor can no longer declare expertise on a
+    domain (the relationship is refused); there is no expertise link for the deletion to remove."""
     a = Client(USERS["admin"])
-    s, e = a.post("/api/kb/edges", {"type": "sme", "source_id": str(rec("ins_p")["id"]), "target_id": str(rec("dom_old")["id"])})
-    assert s == 201, e
-    return e
+    s, e = a.post("/api/kb/edges", {"type": "sme", "source_id": str(rec("ins_p")["id"]), "target_id": str(rec("dom_old")["id"]),
+                                    "props": {"role": "primary"}})
+    assert s == 422, e
+    return None
 
 
 def test_delete_removes_legacy_domains_and_modules_and_nothing_else():
@@ -54,16 +56,15 @@ def test_delete_removes_legacy_domains_and_modules_and_nothing_else():
     with owner() as c:
         assert c.execute("select scope_id from kb.nodes where id = %s", (top_b["id"],)).fetchone()[0] == rec("mod_old")["id"]
     out, data = _run("delete")
-    assert out["domains"] == 1 and out["modules"] == 2 and out["expertise_links"] == 1
+    assert out["domains"] == 1 and out["modules"] == 2 and out["expertise_links"] == 0
     for gone in ("dom_old", "mod_old", "mod_lost"):
         assert rec(gone) is None, gone
     for kept in ("dom_cur", "mod_cur", "ins_p", "ins_old", "prog", "top_a", "top_b", "ses"):
         assert rec(kept) is not None, kept
     with owner() as c:
-        # the instructor lost only the expertise link; the topic is detached and flagged
+        # the topic is detached and flagged; the instructor stays (rec("ins_p") above)
         assert c.execute("select scope_id from kb.nodes where id = %s", (top_b["id"],)).fetchone()[0] is None
         assert c.execute("select count(*) from kb.flags where target_id = %s and status = 'open'", (top_b["id"],)).fetchone()[0] == 1
-        assert c.execute("select count(*) from kb.edges where source_id = %s", (rec("ins_p")["id"],)).fetchone()[0] >= 1
         assert c.execute("select count(*) from kb.sync_exclusions where unit = 'rule'").fetchone()[0] == 1
     # the old tables are untouched
     with owner() as c:
@@ -102,7 +103,7 @@ def test_restore_puts_every_row_back_with_the_same_ids():
     assert {t: kb_count(t) for t in counts_before} == counts_before
     with owner() as c:
         assert c.execute("select scope_id from kb.nodes where id = %s", (top_b["id"],)).fetchone()[0] == before["mod_old"]
-        assert c.execute("select count(*) from kb.edges where id = %s", (e["id"],)).fetchone()[0] == 1
+        assert e is None                                  # run C: no instructor -> domain expertise link exists
         assert c.execute("select count(*) from kb.flags where reason like 'Its parent was permanently deleted%%'").fetchone()[0] == 0
         assert c.execute("select count(*) from kb.sync_exclusions").fetchone()[0] == 0
     out = sync()

@@ -243,11 +243,13 @@ def update_node(node_id: str, version: int, name: str | None = None, summary: st
 
 
 @mcp.tool()
-def create_edge(type: str, source_id: str, target_id: str, note: str | None = None) -> str:
-    """Connect two records (e.g. course contains module; instructor teaches course).
+def create_edge(type: str, source_id: str, target_id: str, note: str | None = None, props: dict | None = None) -> str:
+    """Connect two records (e.g. course contains module; module in_domain domain; module owned_by an NP
+    team member; an instructor is an SME for a module: type "sme" with props {"role": "primary"} or
+    {"role": "backup", "rank": 1-3}, a role is required).
     Disallowed type pairs, self-links and duplicates are refused with a reason."""
     e = call("POST", "/edges", body={"type": type, "source_id": source_id, "target_id": target_id,
-                                     **({"note": note} if note else {})})
+                                     **({"note": note} if note else {}), **({"props": props} if props else {})})
     return wrap(e, [link(source_id), link(target_id)])
 
 

@@ -14,7 +14,7 @@ from kb_support import USERS, Client, as_user, ensure_users, owner, requires_kb,
 pytestmark = requires_kb
 
 DOMAIN = "interviewkickstart.com"
-NEW = {k: str(uuid.uuid5(uuid.NAMESPACE_URL, f"np-kb-test/people/{k}")) for k in ("ada", "una", "twin", "nobody", "mail")}
+NEW = {k: str(uuid.uuid5(uuid.NAMESPACE_URL, f"np-kb-test/people/{k}")) for k in ("ada", "una", "twin", "nobody", "mail", "bo")}
 
 
 @pytest.fixture(autouse=True)
@@ -134,7 +134,7 @@ def test_csv_confirm_links_only_the_confirmed_rows_and_keeps_addresses_private(a
 
 # ---------------------------------------------------------------------------- sign-in
 def test_sign_in_links_by_email_then_by_an_unambiguous_name(admin):
-    ada = _node(admin, "instructor", "Ada Example")
+    ada = _node(admin, "team_member", "Ada Example")        # run C: an owner by role is an NP team member
     module = _owned(admin, "Ada's Module", owner_record_id=ada["id"])
     admin.post("/api/kb/person-records/link", {"links": [{"node_id": ada["id"], "email": "ada@example.org"}]})
     uid = sign_in("ada", "ada@example.org")
@@ -182,10 +182,14 @@ def test_a_sign_in_with_no_match_links_nothing(admin):
     assert s == 200 and out["status"] == "none" and out["person"] is None and not out.get("candidates")
 
 
-def test_owned_by_you_counts_your_account_and_your_person_record(admin):
-    ada = _node(admin, "instructor", "Ada Example")
-    by_role = _owned(admin, "Owned By Role", owner_record_id=ada["id"])
-    backup = _owned(admin, "Backed Up", co_owner_record_ids=[ada["id"]])
+def test_owned_by_you_counts_your_account_your_owned_records_and_your_sme_modules(admin):
+    """Run C: what you own as an account, what your NP team member record owns (owned_by), and, for an
+    instructor's record, the modules you are an SME for, with the role."""
+    from pipeline.lib import taxonomy
+    owned_by = taxonomy.edge_for_role("domain_primary")
+    ada = _node(admin, "team_member", "Ada Example")
+    owned = _node(admin, "module", "Owned By Ada", owner_id=None)
+    assert admin.post("/api/kb/edges", {"type": owned_by, "source_id": owned["id"], "target_id": ada["id"]})[0] == 201
     _node(admin, "module", "Someone Else's", owner_id=None)
     uid = sign_in("mail", "ada.mail@example.org")
     mine = _node(admin, "module", "Owned As Account", owner_id=uid)
@@ -193,10 +197,18 @@ def test_owned_by_you_counts_your_account_and_your_person_record(admin):
     s, out = Client(uid).get("/api/kb/my/owned")
     assert s == 200, out
     got = {x["name"]: x["how"] for x in out["items"]}
-    assert got == {"Owned As Account": "owner", "Owned By Role": "owner", "Backed Up": "co-owner"} or \
-        set(got) == {"Owned As Account", "Owned By Role", "Backed Up"}
-    assert out["person"]["id"] == ada["id"] and out["total"] == 3
-    assert {by_role["id"], backup["id"], mine["id"]} == {x["id"] for x in out["items"]}
+    assert got == {"Owned As Account": "record owner", "Owned By Ada": "owner"}, got
+    assert out["person"]["id"] == ada["id"] and out["total"] == 2
+    assert {owned["id"], mine["id"]} == {x["id"] for x in out["items"]}
+    # an instructor's record: the modules they are an SME for
+    bo = _node(admin, "instructor", "Bo Teacher")
+    taught = _node(admin, "module", "Taught By Bo", owner_id=None)
+    assert admin.post("/api/kb/edges", {"type": "sme", "source_id": bo["id"], "target_id": taught["id"],
+                                        "props": {"role": "backup", "rank": 2}})[0] == 201
+    uid2 = sign_in("bo", "bo.teacher@example.org")
+    admin.post("/api/kb/person-records/link", {"links": [{"node_id": bo["id"], "email": "bo.teacher@example.org"}]})
+    s, out = Client(uid2).get("/api/kb/my/owned")
+    assert {x["name"]: x["how"] for x in out["items"]} == {"Taught By Bo": "backup SME 2"}
 
 
 # ---------------------------------------------------------------------------- Data quality lists
@@ -206,7 +218,8 @@ def test_legacy_domains_still_referenced_as_expertise(admin):
     current = _node(admin, "instructor", "Current Teacher")
     with owner() as c:
         c.execute("update kb.nodes set is_legacy = true where id = any(%s::uuid[])", ([legacy_dom["id"], other["id"]],))
-    s, e = admin.post("/api/kb/edges", {"type": "sme", "source_id": current["id"], "target_id": legacy_dom["id"]})
-    assert s == 201, e
+    # run C: an SME is module-level; expertise on a domain is refused, so nothing is listed any more
+    s, e = admin.post("/api/kb/edges", {"type": "sme", "source_id": current["id"], "target_id": legacy_dom["id"], "props": {"role": "primary"}})
+    assert s == 422, e
     s, out = Client(USERS["viewer"]).get("/api/kb/quality/legacy-expertise")
-    assert s == 200 and [x["name"] for x in out["items"]] == ["Old Domain"] and out["items"][0]["instructors"] == 1
+    assert s == 200 and out["items"] == []

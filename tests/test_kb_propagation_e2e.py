@@ -189,17 +189,19 @@ def test_change_propagation_matrix(server, browser):
              _graph_fed, _map_refetched, "stays gone; feed applied", "stays gone; refetched")
 
         # relationships
-        e = step("relationship create", "relationship.create", lambda: ok(admin.post("/api/kb/edges", {"type": "teaches", "source_id": ins["id"], "target_id": m1["id"]})),
+        # run C: an instructor's teaching of a module is an SME assignment with a role
+        e = step("relationship create", "relationship.create", lambda: ok(admin.post("/api/kb/edges", {"type": "sme", "source_id": ins["id"], "target_id": m1["id"],
+                                                                                                    "props": {"role": "primary"}})),
                  f"!!window.__kbGraph.cy.getElementById('{ins['id']}').length", _map_edge(ins["id"], m1["id"]))
         step("relationship update (role, note)", "relationship.update",
-             lambda: ok(admin.patch(f"/api/kb/edges/{e['id']}", {"version": e["version"], "note": "matrix note", "props": {"role": "backup_1"}})),
+             lambda: ok(admin.patch(f"/api/kb/edges/{e['id']}", {"version": e["version"], "note": "matrix note", "props": {"role": "backup", "rank": 1}})),
              f"window.__kbGraph.cy.getElementById('{e['id']}').data('note') === 'matrix note'",
              "window.__NP.data.edges.some((x) => x.p && x.p.instructor_role === 'backup_1')")
         step("relationship archive", "relationship.archive", lambda: ok(admin.post(f"/api/kb/edges/{e['id']}/archive")),
              f"!window.__kbGraph.cy.getElementById('{e['id']}').length", f"!({_map_edge(ins['id'], m1['id'])})")
         step("relationship permanent delete (after archive)", "relationship.delete", lambda: ok(admin.delete(f"/api/kb/edges/{e['id']}")),
              _graph_fed, _map_refetched, "stays gone; feed applied", "stays gone; refetched")
-        e = ok(admin.post("/api/kb/edges", {"type": "teaches", "source_id": ins["id"], "target_id": m1["id"]}))
+        e = ok(admin.post("/api/kb/edges", {"type": "sme", "source_id": ins["id"], "target_id": m1["id"], "props": {"role": "primary"}}))
         _wait(graph, f"!!window.__kbGraph.cy.getElementById('{e['id']}').length", 8)
 
         # custom relationship types: a new type appears in the legend and filters with its own style
@@ -257,10 +259,10 @@ def test_change_propagation_matrix(server, browser):
         step("tag detach", "tag.detach", lambda: ok(admin.delete(f"/api/kb/nodes/{m1['id']}/tags/{tag['id']}")),
              _graph_fed, _map_refetched, "refreshed", "refetched")
         cur = ok(admin.get(f"/api/kb/nodes/{m1['id']}"))
+        tm = ok(admin.post("/api/kb/nodes", {"type": "team_member", "name": "Matrix Owner"}))     # run C: owners are NP team members
         step("owner (account and by role)", "record.owner",
-             lambda: ok(admin.patch(f"/api/kb/nodes/{m1['id']}", {"version": cur["version"], "owner_id": USERS["editor"], "owner_record_id": ins["id"]})),
-             # the Graph page's owner filter is by owner record (run 6, B2 decision); the account owner is in the panel
-             f"window.__kbGraph.cy.getElementById('{m1['id']}').data('owner') === '{ins['id']}'", _map_refetched, "owner filter data", "refetched")
+             lambda: ok(admin.patch(f"/api/kb/nodes/{m1['id']}", {"version": cur["version"], "owner_id": USERS["editor"], "owner_record_id": tm["id"]})),
+             _graph_fed, _map_refetched, "refreshed", "refetched")
         v0 = graph.evaluate(f"window.__kbGraph.cy.getElementById('{m1['id']}').data('version')")
         step("bulk edit", "record.update",
              lambda: ok(admin.post("/api/kb/nodes/bulk", {"ids": [m1["id"]], "set": {"status": "draft"}})),

@@ -144,13 +144,28 @@ export function hierarchy(nodes, edges, opts) {
     placeSats(n, cx, dy + bandY[n.rank]);
   };
 
-  // Shelf-pack the trees: aim for a landscape whole rather than one long row.
-  const area = roots.reduce((s, r) => s + width.get(r.id), 0) * Math.max(treeH, CELL_H);
-  const shelfW = Math.max(SLOT_W * 6, Math.sqrt(area * (opts.aspect || 1.6)));
+  // Shelf-pack the trees so the whole fills the canvas: try every "at most k trees per row" and keep the
+  // packing whose bounding box best matches the canvas aspect (largest fitted scale). Run C: wide program
+  // trees used to stack one per row into a tall column that left most of a wide screen empty.
+  const aspect = opts.aspect || 1.6;
+  const H1 = Math.max(treeH, CELL_H) + TREE_GAP;
+  let rowCap = 1, bestScale = -1;
+  for (let k = 1; k <= Math.max(1, roots.length); k++) {
+    let wMax = 0, rows = 0;
+    for (let i = 0; i < roots.length; i += k) {
+      const row = roots.slice(i, i + k).reduce((s, r) => s + width.get(r.id) + TREE_GAP, -TREE_GAP);
+      wMax = Math.max(wMax, row); rows++;
+    }
+    const sc = Math.min(aspect / Math.max(wMax, 1), 1 / Math.max(rows * H1, 1));
+    if (sc > bestScale * 1.0001) { bestScale = sc; rowCap = wMax; }
+  }
+  // rowCap is now a WIDTH: smaller trees share a row instead of each taking one
   let sx = 0, sy = 0;
+  let shelfW = 0;
   roots.forEach((r) => {
     const w = width.get(r.id);
-    if (sx > 0 && sx + w > shelfW) { sx = 0; sy += treeH + TREE_GAP; }
+    if (sx > 0 && sx + w > rowCap + 1) { sx = 0; sy += treeH + TREE_GAP; }
+    shelfW = Math.max(shelfW, sx + w);
     // a tree only needs the bands from its own rank down
     place(r, sx, sy - bandY[r.rank] + (ranks.length ? bandY[ranks[0]] : 0));
     sx += w + TREE_GAP;

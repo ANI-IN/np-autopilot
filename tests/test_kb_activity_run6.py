@@ -142,14 +142,15 @@ def test_record_sentences_and_the_deleted_mark(admin):
 
 # ---------------------------------------------------------------------------- relationships
 def test_relationship_sentences_use_the_type_labels(admin):
-    mod, ins = _node(admin, "module", "Teaching Module"), _node(admin, "instructor", "Ada Teacher")
+    # run C: "teaches" links an instructor to a course (a module's teaching is an SME assignment with a role)
+    mod, ins = _node(admin, "course", "Teaching Module"), _node(admin, "instructor", "Ada Teacher")
     rel = "'Teaching Module' taught by instructor 'Ada Teacher'"
     cur = _cursor(admin)
     e = _edge(admin, "teaches", ins, mod)
     assert _one(admin, cur, "relationship.create", row=e["id"]) == f"{A} linked 'Teaching Module' to instructor 'Ada Teacher' as taught by"
     # From the source record's side (its History), the same change reads with the label.
     s, h = admin.get(f"/api/kb/nodes/{ins['id']}/history")
-    assert f"{A} linked 'Ada Teacher' to module 'Teaching Module' as teaches" in [x["sentence"] for x in h["items"]]
+    assert f"{A} linked 'Ada Teacher' to course 'Teaching Module' as teaches" in [x["sentence"] for x in h["items"]]
 
     cur = _cursor(admin)
     s, e = admin.patch(f"/api/kb/edges/{e['id']}", {"version": e["version"], "props": {"role": "backup_1"}})
@@ -228,7 +229,7 @@ def test_record_type_sentences(admin):
 # ---------------------------------------------------------------------------- tags, owners, bulk, graph
 def test_tag_owner_bulk_and_layout_sentences(admin):
     mod = _node(admin, "module", "Owned Module", owner_id=None)
-    ins = _node(admin, "instructor", "Owner Person")
+    ins = _node(admin, "team_member", "Owner Person")      # run C: owners are NP team members
     cur = _cursor(admin)
     s, _ = admin.post(f"/api/kb/nodes/{mod['id']}/tags", {"name": "flagship"})
     assert s in (200, 201)
@@ -249,7 +250,7 @@ def test_tag_owner_bulk_and_layout_sentences(admin):
                                                        "owner_record_id": ins["id"]})
     assert s == 200, m2
     assert _one(admin, cur, "record.owner", row=mod["id"]) == \
-        f"{A} set the owner by role of module 'Owned Module' to instructor 'Owner Person'"
+        f"{A} set the owner by role of module 'Owned Module' to team member 'Owner Person'"
 
     cur = _cursor(admin)
     s, out = admin.post("/api/kb/graph/positions", {"positions": [{"node_id": mod["id"], "x": 400.0, "y": -800.0}]})

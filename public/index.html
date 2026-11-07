@@ -365,7 +365,11 @@ details.legacy summary{cursor:pointer;color:#8b949e;font-size:11px;margin:6px 0}
 .plain{font-size:11.5px;line-height:1.55;color:#c9d1d9;margin:6px 0}
 .empty{color:#8b949e;font-size:12px;padding:10px 0}
 .sec-h{font-size:11px;color:#8b949e;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.06em}
-</style></head><body>
+/* the shared entity component on the dark map (run C): the workspace's dark tokens */
+#right .entity{--text:#e6edf3;--text-2:#c9d1d9;--text-3:#8b949e;--border:#30363d;--surface:#161b22;--surface-2:#21262d;
+  --accent:#58a6ff;--accent-text:#79c0ff;--accent-soft:#0d2a4a;--warn:#e3b341;--warn-soft:#2a2110;--danger:#f85149;
+  --fs-md:13px;--fs-sm:12px;--fs-xs:11px;margin:8px 0 12px}
+</style><link rel="stylesheet" href="/kb/entity.css"></head><body>
 
 <canvas id="c"></canvas>
 <!-- B4: the header. Where you are, what the graph holds, which types show. -->
@@ -1183,16 +1187,15 @@ function domainOf(n){
   }
   return null;
 }
-//: CURRENT domains wear their code ("SD1 · Full Stack"); every other domain
+//: CURRENT domains are shown by name only (run C: the SD codes are internal); every other domain
 //: is from the older sheets and carries a "legacy" badge wherever it appears —
 //: map, lists, search, filters (owner decision 2026-09-30, origin: hand).
 //: Kept separate from the current ones, never merged: two "Frontend" nodes
 //: are two domains, and the badge is what tells them apart.
 function domainName(d){
-  if(!d)return '';
-  const mods=model().cur.get(d.id)||[];
-  const code=mods.length?DOMAIN_CODE[mods[0].dom]:'';
-  return (code?code+' · ':'')+d.l;
+  // Run C (2026-11-07): the four domains show their NAME only (Fullstack, Frontend, Backend, Test).
+  // The SD1-SD4 codes stay internal (layout slots, sort order) and are never displayed.
+  return d?d.l:'';
 }
 function isLegacyDomain(d){return !!d&&d.t==='domain'&&!(model().cur.get(d.id)||[]).length;}
 //: plain text (options, tooltips' first line): the badge as a word
@@ -1261,8 +1264,7 @@ function contextLabel(n){
   if(n.t==='program_week'){
     // "Week 10 · SD1 Full Stack": a week means nothing without its domain
     const m=nbrs(n.id,'scheduled_in','module')[0], d=m?model().domOf.get(m.id):null;
-    const code=d&&m?DOMAIN_CODE[m.dom]:'';
-    return 'Week '+((n.p||{}).number||n.l)+(d?' \u00b7 '+(code?code+' ':'')+d.l:'');
+    return 'Week '+((n.p||{}).number||n.l)+(d?' \u00b7 '+d.l:'');
   }
   if(n.t==='assignment'||n.t==='assignment_review'){
     const m=moduleOf(n); return n.l+(m?' \u00b7 '+m.l:'');
@@ -2835,6 +2837,20 @@ function pcrumb(){
   if(b)b.onclick=()=>{const id=state.hist.pop();openNode(id,{back:true});};
 }
 
+// The shared entity component, read-only on the Map. A related record opens here when the
+// Map holds it, otherwise in the workspace.
+async function renderEntity(id){
+  const slot=document.getElementById('entity-slot'); if(!slot)return;
+  try{
+    const [E, rec]=await Promise.all([import('/kb/js/entity.js'),
+      fetch(API+'/kb/nodes/by-ref/'+encodeURIComponent(id),{headers:SESSION?{authorization:'Bearer '+SESSION.access_token}:{}})
+        .then(r=>r.ok?r.json():Promise.reject(new Error('HTTP '+r.status)))]);
+    if(state.sel!==id||!document.getElementById('entity-slot'))return;
+    slot.replaceChildren(E.entitySections(rec,{href:(kid)=>'/kb/#/r/'+kid,
+      onOpen:(ref,item)=>{ if(idx.byId.has(ref))openNode(ref); else location.href='/kb/#/r/'+item.id; }}));
+  }catch(e){ slot.innerHTML='<div class="src">Details could not be loaded ('+esc(e.message||'error')+').</div>'; }
+}
+
 async function openNode(id,opt){
   if(isGroup(id)){ const g=GROUPS.get(id.slice(4)); if(g)toggleGroup(g); return; }
   // Opening a panel must never lay the view out again. Checked by counting
@@ -2863,15 +2879,18 @@ async function openNode(id,opt){
   const facts=(TYPE_FACTS[n&&n.t]||(()=>''))(props);
   const note=TYPE_NOTE[n&&n.t];
   const pr=[];
-  if(n&&n.legacy){
+  // ONE DETAIL COMPONENT (run C, 2026-11-07): a knowledge-base record is shown with the
+  // workspace's entity component (public/kb/js/entity.js), read-only here. Links and
+  // other artefacts that are not records keep the facts below.
+  const isRecord=!!n&&!String(id).startsWith('link:');
+  if(isRecord){
+    pr.push('<div id="entity-slot" data-testid="map-entity-slot"><div class="src">loading details…</div></div>');
+  }else if(n&&n.legacy){
     pr.push('<div class="plain">Legacy module from older sheets, not in the current mastersheet.</div>');
     if(facts) pr.push('<div class="facts">'+facts+'</div>');
   }else{
     if(facts) pr.push('<div class="facts">'+facts+'</div>');
-    if(n&&n.t==='module'){ pr.push(moduleChain(id)); pr.push(peopleRows(id)); pr.push(topicLinks(id,10)); }
-    if(n&&n.t==='domain') pr.push(domainLinks(n));
-    if(n&&n.t!=='module'&&n.t!=='domain') pr.push(nodeLinks(n));
-    if(n&&n.t==='instructor') pr.push(taughtRows(id));
+    if(n) pr.push(nodeLinks(n));
   }
   pr.push(unconfirmedFlag(n));
   pr.push(mergedNote(n));
@@ -2887,6 +2906,7 @@ async function openNode(id,opt){
                           centreOn(n,1.4); };
   const x2=document.getElementById('exp2');
   if(x2)x2.onclick=async ()=>{ await expand(id); goPlace({kind:'node',id:id},'connections'); };
+  if(isRecord) renderEntity(id);
 
   // CONNECTIONS, grouped by what the relationship means, in plain words.
   const nb=neighboursOf(idx,id,CAP,state.expanded.has(id));
@@ -3033,7 +3053,7 @@ function searchBadges(r){
   const out=[];
   const d=n.t==='domain'?null:domainOf(n);
   if(d){const mods=model().cur.get(d.id)||[];
-        out.push(mods.length?(DOMAIN_CODE[mods[0].dom]||d.l):d.l);}
+        out.push(d.l);}
   if(n.t==='domain'&&isLegacyDomain(n)||d&&isLegacyDomain(d))out.push('legacy');
   const w=n.t==='module'?model().weekOf.get(n.id):null;
   if(w)out.push('Week '+w);
@@ -3475,13 +3495,15 @@ async function loadOverview(){
 // 2026-11-07). The KB role is not the map's role ("member" above), so it comes
 // from /api/kb/me. Quiet on any failure: no button. Hiding is convenience only;
 // every workspace route checks the role on the server.
-async function showWorkspaceLink(){
-  const a=document.getElementById('kbgraph'); if(!a||!SESSION)return;
+async function showWorkspaceLink(email, siteRole){
+  const a=document.getElementById('kbgraph'); if(!SESSION)return;
   try{
     const r=await fetch(API+'/kb/me',{headers:{authorization:'Bearer '+SESSION.access_token}});
     const me=r.ok?await r.json():null;
-    a.hidden=!(me&&me.role==='admin');
-  }catch(e){ a.hidden=true; }
+    if(a)a.hidden=!(me&&me.role==='admin');
+    // The SAME role the workspace shows (the knowledge-base role, not the map's site role).
+    document.getElementById('who').textContent=email+' · '+((me&&me.role)||siteRole);
+  }catch(e){ if(a)a.hidden=true; document.getElementById('who').textContent=email+' · '+siteRole; }
 }
 
 async function afterSignIn(){
@@ -3503,7 +3525,7 @@ async function afterSignIn(){
                '. Your session may still be valid — try again.');
     return;
   }
-  document.getElementById('who').textContent=me.email+' · '+me.role;
+  document.getElementById('who').textContent=me.email;   // + the knowledge-base role (showWorkspaceLink)
   if(me.role==='none'){
     // NOT an empty canvas with no explanation: "signed in and permitted
     // nothing" is otherwise indistinguishable from "the explorer is broken".
@@ -3512,7 +3534,7 @@ async function afterSignIn(){
   }
   hideGate();
   banner('');
-  showWorkspaceLink();
+  showWorkspaceLink(me.email, me.role);
   // Run 6 (B2): the knowledge base's visual language, shared with its Graph page
   // (public/kb/js/graph/style.js via map.js): type colours from GET /api/kb/types,
   // lifted for the dark ground; relationship colours and dashes. Decoration

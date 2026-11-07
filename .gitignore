@@ -176,3 +176,6 @@ docs/**/*realdata*.png
 # Other key formats
 *.p12
 *.pfx
+
+# Run C (2026-11-07): E2E screenshot evidence shows real names; the repo is public, so it stays local.
+testing/evidence/

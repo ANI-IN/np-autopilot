@@ -41,21 +41,21 @@ def test_one_save_creates_everything_with_nested_inline_placement(ed):
     _, reused = ed.post("/api/kb/resources", {"url": "https://github.com/ik-demo/shared", "title": "Shared repo"})
     s, n = ed.post("/api/kb/nodes", {
         "type": "session", "name": "Designing a rate limiter", "summary": "Token bucket vs sliding window",
-        "parents": [{"new": {"type": "week", "name": "Week 5", "parent": {"new": {"type": "module", "name": "Scalability",
-                     "parent": {"new": {"type": "course", "name": "System Design II"}}}}}}],
+        "parents": [{"new": {"type": "module", "name": "Scalability",
+                     "parent": {"new": {"type": "course", "name": "System Design II"}}}}],     # run C: no weeks
         "edges": [{"type": "covers", "direction": "out", "node": {"new": {"type": "topic", "name": "Rate limiting"}}},
                   {"type": "teaches", "direction": "in", "node": mentor["id"]}],
         "resources": [{"url": "https://drive.google.com/file/d/abc/view", "title": "Deck", "note": "Shown in class"},
                       {"url": "https://uplevel.interviewkickstart.com/update_video/9/", "title": "Recording",
                        "kind": "recording"},
                       {"resource_id": reused["id"], "note": "Starter code"}],
-        "smes": [{"new": {"name": "Sam Expert"}}], "tags": ["new-2026"]})
+        "tags": ["new-2026"]})
     assert s == 201, n
-    assert [b["name"] for b in n["breadcrumb"]] == ["System Design II", "Scalability", "Week 5"]
+    assert [b["name"] for b in n["breadcrumb"]] == ["System Design II", "Scalability"]
     assert n["scope_name"] == "System Design II"
     assert {r["link_kind"] for r in n["resources"]} == {"drive_file", "uplevel", "github"}
-    assert {e["label"] for e in n["incoming"]} >= {"taught by", "has subject expert", "part of"}
-    assert {c["name"] for c in n["created_inline"]} == {"System Design II", "Scalability", "Week 5", "Rate limiting", "Sam Expert"}
+    assert {e["label"] for e in n["incoming"]} >= {"taught by", "part of"}
+    assert {c["name"] for c in n["created_inline"]} == {"System Design II", "Scalability", "Rate limiting"}
     assert [t["name"] for t in n["tags"]] == ["new-2026"]
     assert n["owner_id"] == USERS["editor"]
 
@@ -143,7 +143,7 @@ def test_flag_assigned_to_owner_and_resolved(ed, contrib):
 def test_template_saves_structure_and_instantiates_with_name_substitution(ed):
     _, c = ed.post("/api/kb/courses", {"name": "Python Basics", "resources": [{"url": "https://example.com/py", "title": "x"}]})
     m = ed.post("/api/kb/nodes", {"type": "module", "name": "Python Basics: Syntax", "parents": [c["id"]]})[1]
-    ed.post("/api/kb/nodes", {"type": "week", "name": "Week 1", "parents": [m["id"]]})
+    ed.post("/api/kb/nodes", {"type": "topic", "name": "Python Basics: Variables", "parents": [m["id"]]})
     s, t = ed.post("/api/kb/templates", {"source_id": c["id"], "name": "Intro course"})
     assert s == 201
     s, out = ed.post(f"/api/kb/templates/{t['id']}/instantiate", {"name": "Go Basics"})

@@ -187,6 +187,16 @@ def restore(conn, data: dict) -> dict:
     return counts
 
 
+def excluded_keys(conn) -> dict[str, set]:
+    """{unit: source keys} for the relationship / link / attachment exclusions (0041); {} before 0041."""
+    if not conn.execute("select to_regclass('kb.sync_exclusions') is not null").fetchone()[0]:
+        return {}
+    out: dict[str, set] = {}
+    for u, k in conn.execute("select unit, key from kb.sync_exclusions where unit in ('relationship', 'link', 'attachment')").fetchall():
+        out.setdefault(u, set()).add(k)
+    return out
+
+
 def excluded(conn) -> tuple[bool, set]:
     """(rule on?, excluded source ids) for the sync; (False, set()) before 0037."""
     if not conn.execute("select to_regclass('kb.sync_exclusions') is not null").fetchone()[0]:

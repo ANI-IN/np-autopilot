@@ -1,0 +1,49 @@
+# Curriculum scope for the KYP import (owner decisions, 2026-11-07, run C).
+#
+# Exactly four domains. The display name is the only name shown anywhere; the
+# aliases are HIDDEN search aliases (old folder codes and long names) and are
+# never displayed. Matching is case-insensitive on whole words.
+domains:
+  - name: Fullstack
+    slug: full-stack
+    aliases: ["SD1", "SD1: Full Stack", "SD1 · Full Stack", "Full Stack", "Full-Stack", "Fullstack Engineering",
+              "Full Stack Engineering", "Full-Stack Engineering"]
+  - name: Frontend
+    slug: frontend
+    aliases: ["SD2", "SD2: Frontend", "SD2 · Frontend", "Front End", "Front-End", "Front-end", "Frontend Engineering",
+              "Front End Engineering", "Front-end Engineering"]
+  - name: Backend
+    slug: backend
+    aliases: ["SD3", "SD3: Backend Engineering", "SD3 · Backend Engineering", "Backend Engineering", "Back End",
+              "Back-End", "Back End Engineering"]
+  - name: Test
+    slug: testing
+    aliases: ["SD4", "SD4: Test Engineering", "SD4 · Test Engineering", "Test Engineering", "Testing"]
+
+# Which KYP families are imported in this run, and how each one is read.
+# family -> {title pattern (regex, case-insensitive), shape}
+families:
+  ip-2026:
+    root_label: "2026 IP Domain KYPs"
+    title: "Interview Preparation Program$"
+    shape: curriculum-table          # Week | Class / Module | Agenda
+  india:
+    root_label: "India KYPs and Course Outlines"
+    title: "India KYP$"
+    shape: kyp-with-outline          # the KYP includes a course-outline page holding the curriculum
+  sprintup-domain-course:
+    include_title: "^Module - (.+) Domain \\(Self-paced\\)$"
+    shape: module-table              # Sr. No | Module | Agenda; a reusable domain course
+
+# Deferred in this run (listed in the report and on the Sources page, never imported):
+# Agentic AI and combined programs (EdgeUp, SprintUP wrappers, Applied Agentic AI,
+# GenAI + Interview Lab), PM / TPM / EM, and domains outside the four.
+deferred_title_patterns:
+  - "EdgeUP"
+  - "Agentic"
+  - "GenAI|Gen AI"
+  - "\\bPM\\b|\\bTPM\\b|\\bEM\\b|Product Management|Engineering Management"
+  - "SprintUP"
+
+# Pages and attachments that are never imported but are always listed.
+do_not_use_pattern: "\\[\\s*do\\s*not\\s*use\\s*\\]|do not use"

@@ -194,7 +194,8 @@ def test_records_create_update_archive_restore_delete(admin, viewer):
 
 # ---------------------------------------------------------------------------- relationships
 def test_relationships_create_update_archive_delete(admin, viewer):
-    mod, ins = _node(admin, "module", "Teaching Module"), _node(admin, "instructor", "Ada Teacher")
+    # run C: "teaches" links an instructor to a course; a module's teaching is an SME assignment with a role
+    mod, ins = _node(admin, "course", "Teaching Module"), _node(admin, "instructor", "Ada Teacher")
     cur = _cursor(viewer)
     e = _edge(admin, "teaches", ins, mod)
     _with(_feed(viewer, cur), "relationship.create", ins["id"], mod["id"])
@@ -202,14 +203,17 @@ def test_relationships_create_update_archive_delete(admin, viewer):
     assert (ins["id"], mod["id"], "teaches") in _map(viewer)[0]["edges"]
     _row("relationship create", "relationship.create", True, True, True)
 
+    # an SME's role change (run C: SMEs are instructor -> module with a role) reaches the graph and the map
+    sm = _node(admin, "module", "SME Module")
+    se = _edge(admin, "sme", ins, sm, props={"role": "primary"})
     cur = _cursor(viewer)
-    s, e = admin.patch(f"/api/kb/edges/{e['id']}", {"version": e["version"], "props": {"role": "backup_1"}})
-    assert s == 200, e
-    _with(_feed(viewer, cur), "relationship.update", ins["id"], mod["id"])
-    assert {x["id"]: x["role"] for x in _graph(viewer)["edges"]}[e["id"]] == "backup_1"
+    s, se = admin.patch(f"/api/kb/edges/{se['id']}", {"version": se["version"], "props": {"role": "backup", "rank": 1}})
+    assert s == 200, se
+    _with(_feed(viewer, cur), "relationship.update", ins["id"], sm["id"])
+    assert {x["id"]: x["role"] for x in _graph(viewer)["edges"]}[se["id"]] == "backup 1"
     edges = _map(viewer)[0]["edges"]
-    assert (mod["id"], ins["id"], ROLES["teaching_reversed"]) in edges     # the map's current-mastersheet relation
-    s, det = viewer.get("/api/node", f"id={mod['id']}&detail=1")
+    assert (sm["id"], ins["id"], ROLES["teaching_reversed"]) in edges     # the map's role-bearing relation
+    s, det = viewer.get("/api/node", f"id={sm['id']}&detail=1")
     assert any(x["props"].get("instructor_role") == "backup_1" for x in det["edges"])
     _row("relationship update (role)", "relationship.update", True, True, True)
 
@@ -332,12 +336,13 @@ def test_tags_owners_bulk_and_graph_edits(admin, viewer):
     _with(_feed(viewer, cur), "tag.detach", mod["id"])
     _row("tag detach", "tag.detach", True, True, True)
 
+    tm = _node(admin, "team_member", "Owner Person")              # run C: owners are NP team members
     cur = _cursor(viewer)
     s, m2 = admin.patch(f"/api/kb/nodes/{mod['id']}", {"version": admin.get(f"/api/kb/nodes/{mod['id']}")[1]["version"],
-                                                       "owner_record_id": ins["id"]})
+                                                       "owner_record_id": tm["id"]})
     assert s == 200, m2
     _with(_feed(viewer, cur), "record.owner", mod["id"])
-    assert {x["id"]: x["owner_record_id"] for x in _graph(viewer)["nodes"]}[mod["id"]] == ins["id"]
+    assert str(admin.get(f"/api/kb/nodes/{mod['id']}")[1]["owner_record_id"]) == tm["id"]
     _row("owner (by role)", "record.owner", True, True, True)
 
     ids = [_node(admin, "topic", f"Bulk {i}")["id"] for i in range(3)]
@@ -478,7 +483,8 @@ def test_contributors_attach_links_and_relationships_directly_but_edits_wait_for
     assert s == 201, r
     s, att = contrib.post(f"/api/kb/nodes/{mod['id']}/resources", {"resource_id": r["id"]})
     assert s == 201, att                                                # direct
-    assert contrib.post("/api/kb/edges", {"type": "teaches", "source_id": ins["id"], "target_id": mod["id"]})[0] == 201
+    assert contrib.post("/api/kb/edges", {"type": "sme", "source_id": ins["id"], "target_id": mod["id"],
+                                          "props": {"role": "primary"}})[0] == 201
     s, out = contrib.patch(f"/api/kb/nodes/{mod['id']}", {"version": mod["version"], "name": "Changed by a contributor"})
     assert s == 202 and out["proposal_id"]                              # waits
     assert admin.get(f"/api/kb/nodes/{mod['id']}")[1]["name"] == "Contrib Module"

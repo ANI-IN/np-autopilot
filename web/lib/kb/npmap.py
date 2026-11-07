@@ -204,6 +204,25 @@ def _build(conn, h: str) -> dict:
         if not sm or not tm:
             continue
         props = props or {}
+        st_, tt_ = nodes[sm]["type"], nodes[tm]["type"]
+        # Run C (2026-11-07): the KB's SME assignments and domain classification, spoken back in the
+        # map's vocabulary. An SME with role primary / backup N is the module -> instructor relation
+        # with that role; a role named otherwise is the instructor -> module relation with it.
+        if rel == "sme" and st_ == R["instructor"] and tt_ == R["module"]:
+            role = props.get("role") or ""
+            if role in ("primary", "backup"):
+                ir = "primary" if role == "primary" else f"backup_{props.get('rank')}"
+                edges.append((new_id(kid), teach_rev, tm, sm, {"tier": "mastersheet", "instructor_role": ir}, kid))
+            else:
+                edges.append((new_id(kid), teach, sm, tm, {"tier": "legacy", "role": role.replace("older sheets: ", "")}, kid))
+            continue
+        if rel == "in_domain" and tt_ == R["domain"] and st_ in (R["module"], R["programme"]):
+            back = R["domain_offers"] if st_ == R["module"] else R["programme_covers"]
+            if st_ == R["module"]:
+                edges.append((new_id(kid), back, tm, sm, {}, kid))      # domain offers module
+            else:
+                edges.append((new_id(kid), back, sm, tm, {}, kid))      # programme covers domain
+            continue
         cands = X["rel_back"].get((rel, nodes[sm]["kb_type"], nodes[tm]["kb_type"]), [])
         names = {c[0] for c in cands}
         if teach in names and teach_rev in names:

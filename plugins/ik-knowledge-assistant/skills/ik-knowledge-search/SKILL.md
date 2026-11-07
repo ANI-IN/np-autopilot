@@ -1,6 +1,6 @@
 ---
 name: ik-knowledge-search
-description: Answer questions about Interview Kickstart programs, courses, modules, topics, instructors, processes and their resources by querying the live IK knowledge base through the ik-kb MCP tools. Use when someone asks what a course covers, who teaches something, where the material for a topic lives, how programs and courses relate, or asks to add or connect knowledge-base records.
+description: Answer questions about Interview Kickstart programs, courses, modules, topics, domains, owners, SMEs (instructors) and their resources by querying the live IK knowledge base through the ik-kb MCP tools. Use when someone asks what a course covers, who teaches something, where the material for a topic lives, how programs and courses relate, or asks to add or connect knowledge-base records.
 ---
 
 # IK knowledge search
@@ -48,6 +48,17 @@ may have changed it a minute ago. This skill holds no copy of the knowledge; the
   fields must be present. Place records with `parent_ids` (a topic under its
   module, a module under its course). Weeks are not records: week and order
   belong to each program (2026-11-07).
+- **The curriculum model (2026-11-07).** Program → Course → Module → Topic →
+  Concept; resources attach to any of them. Exactly four domains classify
+  programs, courses and modules: Fullstack, Backend, Frontend, Test (relationship
+  `in_domain`). `get_node` returns a `profile` with the record's domains, owners,
+  SMEs, where a module is used, its topics and its sources.
+- **Owners are not SMEs.** An owner is an NP team member responsible for a
+  program, course or module (`owned_by` → team member). An SME is an instructor
+  who teaches a module (`sme`, instructor → module) with a role: `primary`,
+  `backup` with `rank` 1–3, or a role named in the sources. Never call an
+  instructor an owner. To add an SME: `create_edge(type="sme", source_id=<instructor>,
+  target_id=<module>, props={"role": "backup", "rank": 1})` — a role is required.
 - **Contributors propose.** With a contributor's token, `create_node` returns
   `approval_required`: tell the user an editor will approve it in Approvals.
 - **Edits need the version you read.** `update_node(node_id, version, …)` with
@@ -78,8 +89,9 @@ may have changed it a minute ago. This skill holds no copy of the knowledge; the
 list its `contains`/`covers` relationships and its resources, each cited. If no
 resource has kind `slides`, say so.
 
-**"Who teaches Algorithms?"** → find the course id → `find_instructors(course_id=…)`.
-Empty → "No instructor is linked to Algorithms in the knowledge base."
+**"Who teaches Database Design?"** → find the module → `get_node(<id>)` → its
+`profile.smes`, Primary first, then Backup 1–3. Empty → "No SME is linked to
+Database Design in the knowledge base."
 
 **"Add a module 'Caching' to System Design."** → `get_course("System Design")`
 → `create_node(type="module", name="Caching", scope_id=<course id>)` →

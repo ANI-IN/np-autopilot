@@ -158,7 +158,9 @@ def desired_state(conn, M: dict, source: str = "public", exclusions: tuple | Non
     q = lambda sql, p=(): conn.execute(sql.replace("public.", source + "."), p).fetchall()     # noqa: E731
     R, TYPE_MAP = M["roles"], M["types"]
     ARTIFACTS, ARTIFACT_KIND = tuple(M["artifacts"]), M["artifact_kind"]
-    EDGE_MAP = {(r["rel"], r["source"], r["target"]): (r["kb"], bool(r.get("flip"))) for r in M["relationships"]}
+    RETIRED_RELS = {(r["rel"], r["source"], r["target"]) for r in (M.get("retired_relationships") or [])}
+    EDGE_MAP = {(r["rel"], r["source"], r["target"]): (r["kb"], bool(r.get("flip"))) for r in M["relationships"]
+                if (r["rel"], r["source"], r["target"]) not in RETIRED_RELS}
     ATTACH_MAP = {(r["rel"], r["source"], r["target"]): (r["record"], r["note"]) for r in M["attachments"]}
     nodes = {r[0]: {"id": r[0], "type": r[1], "label": r[2], "props": r[3] or {}}
              for r in q("select id, type, label, props from public.nodes where not sensitive")}
@@ -365,6 +367,8 @@ def desired_state(conn, M: dict, source: str = "public", exclusions: tuple | Non
             else:
                 rep["problems"]["attachment_without_record_or_link"].append(f"edge {eid}")
             continue
+        if key3 in RETIRED_RELS:            # run C: no longer written by the sync (see the mapping)
+            rep["retired_relationships"] = rep.get("retired_relationships", 0) + 1; continue
         if key3 not in EDGE_MAP:
             rep["problems"]["relationship_shape_unmapped"].append(f"edge {eid}"); continue
         etype, flip = EDGE_MAP[key3]
@@ -396,11 +400,27 @@ def desired_state(conn, M: dict, source: str = "public", exclusions: tuple | Non
         older = sorted(d["older_roles"])
         d["props"] = {k: v for k, v in {"role": role[0] if role and role[0] in rank else None,
                                        "older_role": ", ".join(older) or None,
-                                       "tier": "mastersheet" if "mastersheet" in d["tiers"] else ("older_sheets" if d["type"] == "teaches" else None)}.items() if v}
+                                       "tier": "mastersheet" if "mastersheet" in d["tiers"] else ("older_sheets" if d["type"] in ("teaches", "sme") else None)}.items() if v}
         note = "; ".join(x for x in (("role: " + ", ".join(role)) if role else "",
                                      ("older sheets: " + ", ".join(older)) if older else "",
                                      ("class dates: " + ", ".join(sorted(d["dates"]))) if d["dates"] else "") if x)
         d["note"] = note[:2000] or None
+        # Run C (2026-11-07): instructor -> module teaching is an SME assignment with a REQUIRED role.
+        # The mastersheet's P / B1-B3 become primary / backup with an order; a role only the older
+        # sheets give is kept under its own name; no role at all cannot be an SME assignment (reported).
+        if d["type"] == "sme":
+            r0 = d["props"].get("role")
+            if r0 == "primary":
+                pass
+            elif r0 and r0.startswith("backup_") and r0[7:].isdigit():
+                d["props"].update(role="backup", rank=int(r0[7:]))
+            elif d["props"].get("older_role"):
+                d["props"]["role"] = "older sheets: " + d["props"]["older_role"]
+            else:
+                d["skip"] = True
+    for k in [k for k, d in rels.items() if d.get("skip")]:
+        del rels[k]
+        rep["sme_without_any_role"] = rep.get("sme_without_any_role", 0) + 1
     # provenance: every cited file -> a "Source" link on the record
     file_link = {}
     for n in nodes.values():
@@ -530,6 +550,16 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
         ensure_config(conn, M, actor_id, operator)
         D = src_conn.desired_state(conn, M, source=source)
         out["report"] = D["report"]
+        # Run C (migration 0041): relationships, links and attachments a cleanup removed on purpose are
+        # never written again, even though both their records still exist.
+        from .legacy_delete import excluded_keys
+        ex = excluded_keys(conn)
+        for unit, dkey in (("relationship", "rels"), ("link", "links"), ("attachment", "attachments")):
+            gone = [k for k in D.get(dkey, {}) if k in ex.get(unit, set())]
+            for k in gone:
+                del D[dkey][k]
+            if gone:
+                D["report"].setdefault("excluded_by_cleanup", {})[unit] = len(gone)
         q = lambda sql, p=(): conn.execute(sql, p).fetchall()             # noqa: E731
         types = {t["key"]: t["id"] for t in td.all_types(conn)["node_types"]}
         etypes = {e["key"]: e["id"] for e in td.all_types(conn)["edge_types"]}
@@ -690,7 +720,7 @@ def run(conn, *, trigger: str = "cli", actor_id: str | None = None, apply: bool 
         owners_now = {str(i): (o, c, a) for i, o, c, a in q("""select id, owner_record_id, co_owner_record_ids, archived_at
                                                                from kb.nodes where external_id like 'np:%%'""")}
         flusher[0] = None
-        for r in recs:
+        for r in (recs if M.get("owners_by_role", True) else []):   # off since run C (owners are NP team members)
             nid = kb_rec.get(r["np"])
             if not nid or done_before("owners", [order.get(r["type"], 3), r["np"]]):
                 continue

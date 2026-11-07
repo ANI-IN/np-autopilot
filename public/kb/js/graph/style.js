@@ -12,15 +12,16 @@
      iconUri(markup)        a white icon as a data: URI, for a node's background
    An unknown or custom type without metadata gets a neutral "generic" look. */
 
-/* The hierarchy the default layout shows, top to bottom. Every other type is a
-   satellite of the record it hangs off (topics, people, links, custom types). */
-export const RANK = { program: 0, course: 1, domain: 2, module: 3, week: 4, session: 5 };
+/* The hierarchy the default layout shows, top to bottom (run C, 2026-11-07: Program > Course > Module,
+   a module's live sessions below it). Every other type is a satellite of the record it hangs off:
+   topics, people, links, custom types, and DOMAINS, which classify records instead of containing them. */
+export const RANK = { program: 0, course: 1, module: 2, session: 3 };
 
 /* Contract shape names -> Cytoscape shapes (rounded where Cytoscape has one). */
 const CY_SHAPE = { 'round-rectangle': 'round-rectangle', ellipse: 'ellipse', diamond: 'round-diamond', hexagon: 'round-hexagon',
   triangle: 'round-triangle', rectangle: 'rectangle', tag: 'round-tag', barrel: 'barrel' };
-const SIZE = [46, 42, 40, 34, 28, 28];          // by rank; satellites 24
-const FONT = [15, 14, 14, 13, 12, 12];          // labels of higher levels stay legible further out
+const SIZE = [48, 42, 36, 28];                  // by rank; satellites 24
+const FONT = [15, 14, 13, 12];                  // labels of higher levels stay legible further out
 const NEUTRAL = '#64748b';
 
 /* Shown or not, from the classes alone: Cytoscape's ':visible' lags behind a
@@ -99,8 +100,9 @@ export function cyStyle(meta, tok, icons) {
     { selector: 'node.collapsed', style: { width: 'data(size)', height: 'data(size)', 'border-width': 2, 'border-color': 'data(color)',
       'background-color': 'data(color)', 'background-opacity': 0.22, 'font-weight': 600, 'background-image': 'none' } },
     // semantic zoom: zoomed out, the hierarchy's labels grow (labels.js keeps them apart)
-    { selector: 'node.far1', style: { 'font-size': 26, 'text-max-width': 300, 'text-margin-y': 8 } },
-    { selector: 'node.far2', style: { 'font-size': 48, 'text-max-width': 560, 'text-margin-y': 12 } },
+    // zoomed out: the top of the hierarchy keeps a constant on-screen size (graph.js lod())
+    { selector: 'node.farlabel', style: { 'font-size': 'data(fz)', 'text-max-width': 'data(fw)', 'text-margin-y': 4,
+      'font-weight': 600, 'text-opacity': 1, 'text-background-opacity': 0.92, 'min-zoomed-font-size': 0 } },
     // reading aids
     { selector: 'node.center', style: { 'border-width': 3, 'border-color': text } },
     { selector: 'node.nolabel', style: { 'text-opacity': 0 } },

@@ -27,8 +27,18 @@ def _script():
     return m
 
 
+_OLD_SHAPE = """from kb.edge_types e, kb.node_types s, kb.node_types t
+     where r.edge_type_id = e.id and r.source_type_id = s.id and r.target_type_id = t.id
+       and e.key = 'contains' and s.key = 'module' and t.key = 'week'"""
+
+
 @pytest.fixture()
 def data():
+    # Migration 0039 (run C) retired weeks for good. This test exercises the run-B script that retired
+    # them, so it re-allows the old shape for its own records and puts 0039's state back afterwards.
+    with owner() as c:
+        c.execute("update kb.node_types set archived_at = null, status = 'active' where key = 'week'")
+        c.execute("update kb.edge_type_rules r set archived_at = null, status = 'active' " + _OLD_SHAPE)
     reset()
     ed = Client(USERS["editor"])
     _, course = ed.post("/api/kb/courses", {"name": "Retire Course"})
@@ -44,6 +54,9 @@ def data():
         c.execute("insert into kb.edges (edge_type_id, source_id, target_id) values (%s, %s, %s)", (contains, mod["id"], week))
     yield {"course": course["id"], "module": mod["id"], "week": str(week), "process": str(proc)}
     reset()
+    with owner() as c:
+        c.execute("update kb.edge_type_rules r set archived_at = now(), status = 'archived' " + _OLD_SHAPE)
+        c.execute("update kb.node_types set archived_at = coalesce(archived_at, now()), status = 'archived' where key = 'week'")
 
 
 def _state(c, d):

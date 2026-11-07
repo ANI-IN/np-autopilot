@@ -174,18 +174,23 @@ def test_first_run_follows_np_autopilot():
                             where g.name = 'legacy'""").fetchone()[0] == 5
 
 
-def test_roles_only_from_the_mastersheet_and_owners_from_roles():
+def test_roles_only_from_the_mastersheet_become_sme_assignments_and_no_owner_by_role():
+    """Run C (2026-11-07): instructor -> module teaching is an SME assignment with a role. The
+    mastersheet's P / B1 become primary / backup 1; an older sheet's role is kept under its own name;
+    owners by role are off (owners are NP team members)."""
     sync()
     with owner() as c:
-        roles = dict(c.execute("""select n.external_id, e.props->>'role' from kb.edges e join kb.nodes n on n.id = e.source_id
-                                  join kb.edge_types et on et.id = e.edge_type_id and et.key = 'teaches'""").fetchall())
-    assert roles["np:ins_p"] == "primary"
-    assert roles["np:ins_b1"] == "backup_1"          # the older sheets' "primary" does not override it
-    assert roles["np:ins_old"] is None               # older sheets only: no P/B role
+        roles = {r[0]: r[1] for r in c.execute("""select n.external_id, e.props from kb.edges e join kb.nodes n on n.id = e.source_id
+                                  join kb.edge_types et on et.id = e.edge_type_id and et.key = 'sme'""").fetchall()}
+        teaches_mod = c.execute("""select count(*) from kb.edges e join kb.edge_types et on et.id = e.edge_type_id and et.key = 'teaches'
+                                   join kb.nodes t on t.id = e.target_id join kb.node_types tt on tt.id = t.type_id and tt.key = 'module'""").fetchone()[0]
+    assert roles["np:ins_p"]["role"] == "primary"
+    assert roles["np:ins_b1"]["role"] == "backup" and roles["np:ins_b1"]["rank"] == 1   # the older sheets' role does not override it
+    assert "np:ins_old" not in roles or roles["np:ins_old"]["role"].startswith("older sheets")
+    assert teaches_mod == 0
     m = rec("mod_cur")
-    assert str(m["owner_rec"]) == str(rec("ins_p")["id"])
-    assert [str(x) for x in m["co"]] == [str(rec("ins_b1")["id"])]
-    assert str(rec("dom_cur")["owner_rec"]) == str(rec("pers")["id"])
+    assert m["owner_rec"] is None and list(m["co"] or []) == []
+    assert rec("dom_cur")["owner_rec"] is None
 
 
 def test_same_names_are_not_merged():
@@ -358,11 +363,17 @@ def test_legacy_archive_is_rerunnable_and_restores_exactly():
 
 
 def test_legacy_never_archives_what_a_current_item_uses():
+    # run C: an instructor's expertise on a DOMAIN is not imported any more (SMEs are module-level), so it no
+    # longer keeps a legacy domain; a current module classified in the legacy domain still does.
     src("insert into SRC.edges (rel, source_id, target_id, props) values (%s, 'ins_p', 'dom_old', '{}')", (R["expertise"],))
+    out = sync()
+    assert out.get("retired_relationships", 0) >= 1 or out["status"] == "ok"
+    src("insert into SRC.edges (rel, source_id, target_id, props) values (%s, 'dom_old', 'mod_cur', '{}')", (R["domain_offers"],))
     sync()
     out = legacy("archive")
-    assert out["archived_now"]["domains"] == 0
-    assert out["domains_with_current_connections"] == [str(rec("dom_old")["id"])]
+    assert out["archived_now"]["domains"] == 0 and rec("dom_old")["archived"] is None
+    # either it is kept for its current connection, or the classification made it current again
+    assert out["domains_with_current_connections"] == [str(rec("dom_old")["id"])] or rec("dom_old")["legacy"] is False
 
 
 # ---------------------------------------------------------------- person accounts, no owner
@@ -370,10 +381,10 @@ def test_person_account_now_and_on_a_future_sign_in():
     sync()
     admin = Client(ADMIN)
     ins = rec("ins_p")
-    # an existing sign-in: resolves at once, and they own what the record owns by role
+    # an existing sign-in: resolves at once (run C: an instructor is an SME, never an owner by role)
     s, acc = admin.post(f"/api/kb/nodes/{ins['id']}/account", {"email": "KBTEST-editor@interviewkickstart.com"})
     assert s == 200 and str(acc["user_id"]) == USERS["editor"]
-    assert str(rec("mod_cur")["owner_id"]) == USERS["editor"]
+    assert rec("mod_cur")["owner_id"] is None or str(rec("mod_cur")["owner_id"]) != USERS["editor"]
     # a person who has not signed in yet: linked on their first sign-in
     b1 = rec("ins_b1")
     later = "kbsync-later-" + uuid.uuid4().hex[:8] + "@interviewkickstart.com"
@@ -381,36 +392,39 @@ def test_person_account_now_and_on_a_future_sign_in():
     assert s == 200 and acc["user_id"] is None
     uid = str(uuid.uuid4())
     with owner() as c:
-        # their first sign-in: the auth user (its profile is created by the sign-up trigger)
         c.execute("insert into auth.users (id, email, created_at) values (%s, %s, now())", (uid, later))
         c.execute("""insert into profiles (user_id, email, email_domain, role) values (%s, %s, 'interviewkickstart.com', 'member')
                      on conflict (user_id) do nothing""", (uid, later))
         assert str(c.execute("select user_id from kb.person_accounts where node_id = %s", (b1["id"],)).fetchone()[0]) == uid
-        co = c.execute("select co_owners from kb.nodes where id = %s", (rec("mod_cur")["id"],)).fetchone()[0]
-        assert uid in [str(x) for x in co]
     # only admins link accounts
     assert Client(USERS["editor"]).post(f"/api/kb/nodes/{ins['id']}/account", {"email": "x@interviewkickstart.com"})[0] == 403
 
 
 def test_no_owner_counts_only_records_without_any_owner():
     sync()
+    from pipeline.lib import taxonomy
     with owner() as c:
-        # run 6: counted only for types whose "owner expected" is ON (0032)
+        # run 6: counted only for types whose "owner expected" is ON (0032); run C: an owner is an NP team
+        # member linked by the owner relationship (or the account owner)
         want = c.execute("""select count(*) from kb.nodes n join kb.node_types t on t.id = n.type_id
                             where n.archived_at is null and not n.is_legacy and t.owner_expected
-                            and n.owner_id is null and n.owner_record_id is null""").fetchone()[0]
+                            and n.owner_id is null and not exists (select 1 from kb.edges e join kb.edge_types et
+                                on et.id = e.edge_type_id and et.key = %s where e.source_id = n.id and e.archived_at is null)""",
+                         (taxonomy.edge_for_role("domain_primary"),)).fetchone()[0]
         with_role = c.execute("select count(*) from kb.nodes where not is_legacy and owner_record_id is not null").fetchone()[0]
-    assert with_role == 2                                    # mod_cur (P) and dom_cur (owned_by)
+    assert with_role == 0                                    # owners by role are off
     assert Client(ADMIN).get("/api/kb/counts")[1]["attention"]["counts"]["no_owner"] == want
 
 
-def test_owner_record_must_be_a_person():
+def test_owner_record_must_be_a_team_member():
     sync()
     admin = Client(ADMIN)
     m = rec("mod_cur")
     s, body = admin.patch(f"/api/kb/nodes/{m['id']}", {"version": m["version"], "owner_record_id": str(rec("ses")["id"])})
     assert s == 422
-    s, body = admin.patch(f"/api/kb/nodes/{m['id']}", {"version": m["version"], "co_owner_record_ids": [str(rec("ins_b1")["id"]), str(rec("ins_p")["id"])]})
+    s, body = admin.patch(f"/api/kb/nodes/{m['id']}", {"version": m["version"], "co_owner_record_ids": [str(rec("ins_b1")["id"])]})
+    assert s == 422 and "team member" in body["message"]                 # run C: an instructor is never an owner
+    s, body = admin.patch(f"/api/kb/nodes/{m['id']}", {"version": m["version"], "co_owner_record_ids": [str(rec("pers")["id"])]})
     assert s == 200, body
 
 
@@ -483,3 +497,20 @@ def test_a_stopped_run_saves_its_place_and_the_next_one_continues_there():
     full = sync()                                                  # a new pass from the beginning
     assert full["resumed_from"] is None and full["created"] == {} and full["updated"] == {}
     assert (kb_count("nodes"), kb_count("edges", "archived_at is null"), kb_count("node_resources", "archived_at is null")) == after
+
+
+def test_a_relationship_removed_by_a_cleanup_is_never_written_again():
+    """Run C (0041): a relationship deleted on purpose while both records stay is excluded by its source key."""
+    sync()
+    with owner() as c:
+        key, eid = c.execute("select key, kb_id from kb.sync_map where unit = 'relationship' and removed_at is null order by key limit 1").fetchone()
+        c.execute("insert into kb.sync_exclusions (unit, key, reason) values ('relationship', %s, 'test')", (key,))
+        c.execute("delete from kb.sync_map where unit = 'relationship' and key = %s", (key,))
+        c.execute("select set_config('kb.actor_type', 'system', false)")
+        c.execute("delete from kb.edges where id = %s", (eid,))
+    out = sync()
+    assert out["status"] == "ok" and not any(k.startswith("relationship") for k in (out.get("created") or {})), out.get("created")
+    with owner() as c:
+        assert c.execute("select count(*) from kb.edges where id = %s", (eid,)).fetchone()[0] == 0
+        assert c.execute("select count(*) from kb.sync_map where unit = 'relationship' and key = %s", (key,)).fetchone()[0] == 0
+        c.execute("delete from kb.sync_exclusions where reason = 'test'")

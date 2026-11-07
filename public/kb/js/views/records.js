@@ -111,7 +111,7 @@ export function viewRecords(v, r) {
     openDialog([el('h2', { text: title }), c, el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }),
       el('button', { class: 'btn primary', type: 'button', text: 'Apply', 'data-testid': 'filter-apply', onclick: () => { if (val) { closeDialog(); apply(val); } } }))], { label: title });
   }
-  function parentPicker() { pickDialog('Show records in…', (on) => combobox({ testid: 'filter-parent-picker', placeholder: 'Search programs, courses, modules…', source: nodeSource(['program', 'course', 'domain', 'module', 'week']), onChange: on }), (x) => setQuery({ parent: x.id, view: null })); }
+  function parentPicker() { pickDialog('Show records in…', (on) => combobox({ testid: 'filter-parent-picker', placeholder: 'Search programs, courses, modules…', source: nodeSource(['program', 'course', 'module']), onChange: on }), (x) => setQuery({ parent: x.id, view: null })); }
   function ownerPicker() { pickDialog('Owner', (on) => combobox({ placeholder: 'Search people', source: async (q) => S.people.filter((p) => !q || p.email.includes(q)).map((p) => ({ id: p.user_id, label: personName(p.user_id), sub: p.email, icon: avatar(p.user_id) })), onChange: on }), (x) => setQuery({ owner: x.id, view: null })); }
   function tagPicker() { pickDialog('Tag', (on) => combobox({ placeholder: 'Search tags', source: async (q) => (await api('GET', '/tags')).items.filter((t) => !q || t.name.includes(q)).map((t) => ({ id: t.id, label: '#' + t.name })), onChange: on }), (x) => setQuery({ tag: x.id, tag_name: x.label, view: null })); }
   // A list of one type shows that type's custom fields as optional columns.
@@ -288,7 +288,7 @@ export function viewRecords(v, r) {
   function bulkPlace() {
     let val = null;
     openDialog([el('h2', { text: 'Add ' + plural(selected.size, 'record') + ' to…' }), el('p', { class: 'muted small', text: 'Each record is also placed under the parent you choose. Existing placements stay.' }),
-      combobox({ placeholder: 'Search programs, courses, modules, weeks…', source: nodeSource(['program', 'course', 'domain', 'module', 'week', 'session']), onChange: (x) => { val = x; } }),
+      combobox({ placeholder: 'Search programs, courses, modules…', source: nodeSource(['program', 'course', 'module']), onChange: (x) => { val = x; } }),
       el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }),
         el('button', { class: 'btn primary', type: 'button', text: 'Add', onclick: () => { if (val) { closeDialog(); bulkSet({ add_parent: val.id }); } } }))], { label: 'Add to' });
   }

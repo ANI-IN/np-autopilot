@@ -40,11 +40,15 @@ def plan(conn) -> dict:
         where e.archived_at is null""")]
     typ = lambda i: nodes.get(i, {}).get("type")                            # noqa: E731
     covers = defaultdict(set)                                              # programme -> domains
+    # Run C (2026-11-07): a domain CLASSIFIES (in_domain: program / module -> domain); the older
+    # shapes (domain contains module, program covers domain) are read too, for data not yet converted.
     for s, t, k in edges:
-        if k == "covers" and typ(s) == "program" and typ(t) == "domain":
+        if typ(s) == "program" and typ(t) == "domain" and k in ("covers", "in_domain"):
             covers[s].add(t)
     mod_dom = defaultdict(set)
     for s, t, k in edges:
+        if k == "in_domain" and typ(s) == "module" and typ(t) == "domain":
+            mod_dom[s].add(t)
         if k == "contains" and typ(t) == "module":
             if typ(s) == "domain":
                 mod_dom[t].add(s)
@@ -54,7 +58,7 @@ def plan(conn) -> dict:
     for s, t, k in edges:
         if typ(s) == "instructor" and k == "sme" and typ(t) == "domain":
             ins_dom[s].add(t)
-        if typ(s) == "instructor" and k == "teaches" and typ(t) == "module":
+        if typ(s) == "instructor" and k in ("teaches", "sme") and typ(t) == "module":
             ins_dom[s] |= mod_dom.get(t, set())
     nbrs = defaultdict(set)
     for s, t, _ in edges:

@@ -43,18 +43,19 @@ def browser():
 
 
 def _tree(topics: int = 3) -> dict:
-    """Program > Course > Domain > Module > Week > Session, plus topics on the module."""
+    """Program > Course > Module > Session, plus topics on the module; the domain CLASSIFIES the module
+    (run C, 2026-11-07: no weeks; a domain is not a container)."""
     ed = Client(USERS["editor"])
     ids = {}
     _, ids["program"] = ed.post("/api/kb/programs", {"name": "Run6 Program"})
     _, ids["course"] = ed.post("/api/kb/nodes", {"type": "course", "name": "Run6 Course", "parents": [ids["program"]["id"]]})
-    _, ids["domain"] = ed.post("/api/kb/nodes", {"type": "domain", "name": "Run6 Domain", "parents": [ids["course"]["id"]]})
-    _, ids["module"] = ed.post("/api/kb/nodes", {"type": "module", "name": "Run6 Module", "parents": [ids["domain"]["id"]]})
-    _, ids["week"] = ed.post("/api/kb/nodes", {"type": "week", "name": "Run6 Week", "parents": [ids["module"]["id"]]})
-    _, ids["session"] = ed.post("/api/kb/nodes", {"type": "session", "name": "Run6 Session", "parents": [ids["week"]["id"]]})
+    _, ids["module"] = ed.post("/api/kb/nodes", {"type": "module", "name": "Run6 Module", "parents": [ids["course"]["id"]]})
+    _, ids["session"] = ed.post("/api/kb/nodes", {"type": "session", "name": "Run6 Session", "parents": [ids["module"]["id"]]})
+    _, ids["domain"] = ed.post("/api/kb/nodes", {"type": "domain", "name": "Run6 Domain"})
+    ed.post("/api/kb/edges", {"type": "in_domain", "source_id": ids["module"]["id"], "target_id": ids["domain"]["id"]})
     ids["topics"] = [ed.post("/api/kb/nodes", {"type": "topic", "name": f"Run6 Topic {i:02d}", "parents": [ids["module"]["id"]]})[1]
                      for i in range(topics)]
-    for k in ("program", "course", "domain", "module", "week", "session"):
+    for k in ("program", "course", "module", "session", "domain"):
         assert "id" in ids[k], (k, ids[k])
     return ids
 
@@ -86,8 +87,8 @@ def test_default_layout_is_the_hierarchy_with_satellites_and_bundles(server, bro
     _open(page, server)
     assert page.evaluate("() => window.__kbGraph.arrangement()") == "hierarchy"
     expect(page.get_by_test_id("graph-arrange")).to_have_value("hierarchy")
-    ys = [_pos(page, ids[k]["id"])["y"] for k in ("program", "course", "domain", "module", "week", "session")]
-    assert ys == sorted(ys) and len(set(ys)) == 6, ys                  # one row per level, top to bottom
+    ys = [_pos(page, ids[k]["id"])["y"] for k in ("program", "course", "module", "session")]
+    assert ys == sorted(ys) and len(set(ys)) == 4, ys                  # one row per level, top to bottom
     # 12 topics on one module: one bundle under the module, which opens on click
     bundle = page.evaluate("() => window.__kbGraph.cy.nodes('.bundle').map((b) => [b.id(), b.data('label'), b.position()])")
     assert len(bundle) == 1 and bundle[0][1] == "12 topics", bundle
@@ -99,7 +100,7 @@ def test_default_layout_is_the_hierarchy_with_satellites_and_bundles(server, bro
     for t in ids["topics"]:
         p = _pos(page, t["id"])
         assert p["y"] > m["y"], "a satellite sits under its record"
-    expect(page.get_by_test_id("graph-info")).to_contain_text("Showing 18 record(s)")
+    expect(page.get_by_test_id("graph-info")).to_contain_text("Showing 17 record(s)")
     assert page.errors == []
 
 
@@ -107,19 +108,19 @@ def test_legend_is_a_filter(server, browser):
     ids = _tree(topics=3)
     page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server)
-    expect(page.get_by_test_id("graph-info")).to_contain_text("Showing 9 record(s)")
+    expect(page.get_by_test_id("graph-info")).to_contain_text("Showing 8 record(s)")
     page.get_by_test_id("graph-filter-topic").uncheck()
-    expect(page.get_by_test_id("graph-info")).to_contain_text("Showing 6 record(s)")
+    expect(page.get_by_test_id("graph-info")).to_contain_text("Showing 5 record(s)")
     assert not _shown(page, ids["topics"][0]["id"])
     page.get_by_test_id("graph-filter-topic").check()
-    expect(page.get_by_test_id("graph-info")).to_contain_text("Showing 9 record(s)")
+    expect(page.get_by_test_id("graph-info")).to_contain_text("Showing 8 record(s)")
     # "Only": just that type; again: everything back
     page.get_by_test_id("graph-filter-module").hover()
     page.get_by_test_id("graph-only-module").click()
     expect(page.get_by_test_id("graph-info")).to_contain_text("Showing 1 record(s)")
     page.get_by_test_id("graph-filter-module").hover()
     page.get_by_test_id("graph-only-module").click()
-    expect(page.get_by_test_id("graph-info")).to_contain_text("Showing 9 record(s)")
+    expect(page.get_by_test_id("graph-info")).to_contain_text("Showing 8 record(s)")
     # relationship types filter too, and the legend shows each one's line style
     expect(page.get_by_test_id("graph-legend").locator(".legend-edge").first).to_be_visible()
     page.get_by_test_id("graph-edge-filter-contains").uncheck()
@@ -134,19 +135,19 @@ def test_focus_mode_and_breadcrumbs(server, browser):
     page.evaluate(f"() => {{ const cy = window.__kbGraph.cy; cy.$(':selected').unselect(); cy.getElementById('{ids['session']['id']}').select(); }}")
     crumbs = page.get_by_test_id("graph-breadcrumbs")
     expect(crumbs).to_be_visible()
-    expect(crumbs.get_by_test_id("graph-crumb")).to_have_text(["Run6 Program", "Run6 Course", "Run6 Domain", "Run6 Module", "Run6 Week", "Run6 Session"])
+    expect(crumbs.get_by_test_id("graph-crumb")).to_have_text(["Run6 Program", "Run6 Course", "Run6 Module", "Run6 Session"])
     # a crumb jumps to that record
-    crumbs.get_by_test_id("graph-crumb").filter(has_text="Run6 Domain").click()
-    page.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{ids['domain']['id']}').selected()")
-    expect(crumbs.get_by_test_id("graph-crumb").last).to_have_text("Run6 Domain")
-    # focus mode, 1 step: the domain and its neighbours stay, the rest dims
+    crumbs.get_by_test_id("graph-crumb").filter(has_text="Run6 Course").click()
+    page.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{ids['course']['id']}').selected()")
+    expect(crumbs.get_by_test_id("graph-crumb").last).to_have_text("Run6 Course")
+    # focus mode, 1 step: the course and its neighbours stay, the rest dims
     page.get_by_test_id("graph-focus").select_option("1")
     page.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{ids['session']['id']}').hasClass('dim')")
     assert not page.evaluate(f"() => window.__kbGraph.cy.getElementById('{ids['module']['id']}').hasClass('dim')")
-    assert not page.evaluate(f"() => window.__kbGraph.cy.getElementById('{ids['course']['id']}').hasClass('dim')")
+    assert not page.evaluate(f"() => window.__kbGraph.cy.getElementById('{ids['program']['id']}').hasClass('dim')")
     assert "focus=1" in page.url
     page.get_by_test_id("graph-focus").select_option("2")
-    page.wait_for_function(f"() => !window.__kbGraph.cy.getElementById('{ids['week']['id']}').hasClass('dim')")
+    page.wait_for_function(f"() => !window.__kbGraph.cy.getElementById('{ids['session']['id']}').hasClass('dim')")
     page.get_by_test_id("graph-focus").select_option("0")
     page.wait_for_function("() => window.__kbGraph.cy.nodes('.dim').length === 0")
     assert page.errors == []
@@ -214,7 +215,7 @@ def test_switching_layouts(server, browser):
     page.get_by_test_id("graph-canvas").focus()
     page.keyboard.press("1")                                           # back to the hierarchy
     page.wait_for_function("() => window.__kbGraph.arrangement() === 'hierarchy'")
-    ys = [_pos(page, ids[k]["id"])["y"] for k in ("program", "course", "domain", "module")]
+    ys = [_pos(page, ids[k]["id"])["y"] for k in ("program", "course", "module")]
     assert ys == sorted(ys)
     assert page.errors == []
 
@@ -222,7 +223,7 @@ def test_switching_layouts(server, browser):
 def test_legacy_records_are_hidden_until_asked(server, browser):
     ids = _tree(topics=1)
     ed = Client(USERS["editor"])
-    _, old = ed.post("/api/kb/nodes", {"type": "module", "name": "Old Module", "parents": [ids["domain"]["id"]]})
+    _, old = ed.post("/api/kb/nodes", {"type": "module", "name": "Old Module", "parents": [ids["course"]["id"]]})
     with owner() as c:
         c.execute("select set_config('kb.actor_type', 'system', false)")
         c.execute("update kb.nodes set is_legacy = true where id = %s", (old["id"],))
@@ -286,7 +287,7 @@ def test_live_change_arrives_through_apply_changes(server, browser):
     ids = _tree(topics=1)
     page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server)
-    _, new = Client(USERS["editor"]).post("/api/kb/nodes", {"type": "week", "name": "Arrives live", "parents": [ids["module"]["id"]]})
+    _, new = Client(USERS["editor"]).post("/api/kb/nodes", {"type": "session", "name": "Arrives live", "parents": [ids["module"]["id"]]})
     page.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{new['id']}').length === 1", timeout=20000)
     Client(USERS["editor"]).post(f"/api/kb/nodes/{new['id']}/archive", {})
     page.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{new['id']}').length === 0", timeout=20000)
@@ -294,11 +295,12 @@ def test_live_change_arrives_through_apply_changes(server, browser):
 
 
 def test_labels_never_overlap_at_normal_zoom(server, browser):
-    _tree(topics=8)
+    ids = _tree(topics=8)
     ed = Client(USERS["editor"])
     _, d2 = ed.post("/api/kb/nodes", {"type": "domain", "name": "A second domain with a rather long name for labels"})
     for i in range(6):
-        ed.post("/api/kb/nodes", {"type": "module", "name": f"Module with a long descriptive title number {i}", "parents": [d2["id"]]})
+        _, m = ed.post("/api/kb/nodes", {"type": "module", "name": f"Module with a long descriptive title number {i}", "parents": [ids["course"]["id"]]})
+        ed.post("/api/kb/edges", {"type": "in_domain", "source_id": m["id"], "target_id": d2["id"]})
     page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server, "#/graph?expand=all")
     page.evaluate("() => { const cy = window.__kbGraph.cy; cy.zoom(1); cy.center(); }")

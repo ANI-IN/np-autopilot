@@ -86,6 +86,7 @@ KB_ROUTES = [
     ("POST", f"tags/{RID}/merge", E, {}), ("POST", f"tags/{RID}/archive", E, {}), ("POST", f"tags/{RID}/restore", E, {}),
     ("GET", "search?q=kbsweep", V, None),
     ("GET", "sync", A, None), ("POST", "sync/run", A, {}), ("GET", "quality/sync", E, None),
+    ("GET", "sources", A, None), ("GET", "sources/summary", A, None), ("GET", f"nodes/by-ref/{RID}", V, None),
     ("POST", f"nodes/{RID}/account", A, {}), ("DELETE", f"nodes/{RID}/account", A, None),
     ("GET", "graph", V, None), ("GET", "graph/positions", V, None),
     ("POST", "graph/positions", A, {}), ("DELETE", "graph/positions", A, None),   # the graph editor is admin-only (2026-11-07)

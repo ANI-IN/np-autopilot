@@ -446,12 +446,13 @@ def test_course_shape_types_and_new_resource_kinds(contrib):
     c = _mk(contrib, "course", "Shape Course")
     d = _mk(contrib, "domain", "Shape Domain")
     m = _mk(contrib, "module", "Shape Module", scope=c["id"])
-    w = _mk(contrib, "week", "Shape Week")
-    se = _mk(contrib, "session", "Shape Session", parents=[w["id"]])     # placement creates week contains session
-    assert [p["node_name"] for p in se["parents"]] == ["Shape Week"]
-    for t, a, b in (("covers", c, d), ("contains", m, w)):
-        assert contrib.post("/api/kb/edges", {"type": t, "source_id": a["id"], "target_id": b["id"]})[0] == 201
-    assert contrib.post("/api/kb/edges", {"type": "contains", "source_id": se["id"], "target_id": w["id"]})[0] == 422
+    # run C (2026-11-07): week-agnostic, and a domain classifies (in_domain) instead of being covered
+    assert Client(USERS["editor"]).post("/api/kb/nodes", {"type": "week", "name": "Shape Week"})[0] == 422
+    se = _mk(contrib, "session", "Shape Session", parents=[m["id"]])     # placement creates module contains session
+    assert [p["node_name"] for p in se["parents"]] == ["Shape Module"]
+    assert contrib.post("/api/kb/edges", {"type": "in_domain", "source_id": c["id"], "target_id": d["id"]})[0] == 201
+    assert contrib.post("/api/kb/edges", {"type": "covers", "source_id": c["id"], "target_id": d["id"]})[0] == 422
+    assert contrib.post("/api/kb/edges", {"type": "contains", "source_id": se["id"], "target_id": m["id"]})[0] == 422
     for kind in ("recording", "assignment", "solution", "repo"):  # taxonomy-literal-ok: a KB resource kind (migration 0026 CHECK), not the corpus-graph taxonomy
         s, r = contrib.post("/api/kb/resources", {"url": f"https://example.com/{kind}", "title": kind, "kind": kind})
         assert s == 201 and r["kind"] == kind, r

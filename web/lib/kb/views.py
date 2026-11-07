@@ -2,12 +2,10 @@
 caller's connection, so RLS decides what is visible.
 
   teaching_matrix   "Who teaches what": instructors x modules (and the
-                    sessions they teach), each cell the role from the current
-                    mastersheet (P Primary, B1-B3 Backups) or "teaches"
-                    (older sheets). Current only by default, like NP Autopilot.
-  (programme_timeline was retired with the week records, 2026-11-07) "Programme timeline": each programme's modules by week
-                    (module -> week, week number), with the module's sessions
-                    and slide decks.
+                    sessions they teach), each cell the SME role (Primary,
+                    Backup 1-3, or a role named in the sources). Current only
+                    by default.
+  (programme_timeline was retired with the week records, 2026-11-07.)
 """
 from __future__ import annotations
 
@@ -31,25 +29,30 @@ def teaching_matrix(conn, params: dict) -> dict:
     role = params.get("role") or None
     if role and role not in ROLE_ORDER and role != "any_role":
         raise Invalid("role must be primary, backup_1, backup_2, backup_3 or any_role", field="role")
+    # SME assignments (instructor -> module, with a role: primary, backup + order, or a named role)
+    # and listed teaching of live sessions (run C, 2026-11-07).
     rows = _q(conn, """
         select e.source_id as instructor_id, i.name as instructor, i.is_legacy as instructor_legacy,
                e.target_id as target_id, m.name as target, tt.key as target_type, m.is_legacy as target_legacy,
-               e.props ->> 'role' as role, coalesce(e.props ->> 'tier', '') as tier
-          from kb.edges e join kb.edge_types et on et.id = e.edge_type_id and et.key = 'teaches'
+               case when et.key = 'sme' and e.props ->> 'role' = 'backup' then 'backup_' || coalesce(e.props ->> 'rank', '')
+                    else e.props ->> 'role' end as role,
+               coalesce(e.props ->> 'tier', '') as tier
+          from kb.edges e join kb.edge_types et on et.id = e.edge_type_id
           join kb.nodes i on i.id = e.source_id join kb.node_types it on it.id = i.type_id and it.key = 'instructor'
-          join kb.nodes m on m.id = e.target_id join kb.node_types tt on tt.id = m.type_id and tt.key in ('module', 'session')
-         where e.archived_at is null and i.archived_at is null and m.archived_at is null""")
+          join kb.nodes m on m.id = e.target_id join kb.node_types tt on tt.id = m.type_id
+         where e.archived_at is null and i.archived_at is null and m.archived_at is null
+           and ((et.key = 'sme' and tt.key = 'module') or (et.key = 'teaches' and tt.key = 'session'))""")
     if lg == "current":
         rows = [r for r in rows if not r["instructor_legacy"] and not r["target_legacy"]]
     if role == "any_role":
         rows = [r for r in rows if r["role"]]
     elif role:
         rows = [r for r in rows if r["role"] == role]
-    # a module's domains (domain contains module), and a session's module
+    # a module's domains (module in_domain domain: a classification), and a session's module
     doms = defaultdict(list)
-    for r in _q(conn, """select e.target_id, d.id, d.name from kb.edges e
-                          join kb.edge_types et on et.id = e.edge_type_id and et.key = 'contains'
-                          join kb.nodes d on d.id = e.source_id join kb.node_types dt on dt.id = d.type_id and dt.key = 'domain'
+    for r in _q(conn, """select e.source_id as target_id, d.id, d.name from kb.edges e
+                          join kb.edge_types et on et.id = e.edge_type_id and et.key = 'in_domain'
+                          join kb.nodes d on d.id = e.target_id join kb.node_types dt on dt.id = d.type_id and dt.key = 'domain'
                          where e.archived_at is null and d.archived_at is null"""):
         doms[str(r["target_id"])].append({"id": str(r["id"]), "name": r["name"]})
     parent_mod = {}

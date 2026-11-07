@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from . import validate as v
 from .errors import Invalid, NotFound
+from .profile import OWNED_BY
 from .service import _q, _q1, _cursor_decode, _cursor_encode
 
 DEFAULT_LIMIT = 2000
@@ -90,9 +91,12 @@ def read(conn, params: dict) -> dict:
         ids = [r["id"] for r in rows[:limit]]
         next_cursor = _cursor_encode(str(ids[-1])) if len(rows) > limit and ids else None
 
-    nodes = _q(conn, """
+    nodes = _q(conn, f"""
         select n.id, t.key as type, n.name, n.status, n.scope_id, n.is_legacy,
-               n.archived_at is not null as archived, n.owner_record_id, n.external_id, n.version,
+               n.archived_at is not null as archived, n.external_id, n.version,
+               (select array_agg(e.target_id::text order by e.target_id) from kb.edges e
+                  join kb.edge_types et on et.id = e.edge_type_id and et.key = '{OWNED_BY}'
+                 where e.source_id = n.id and e.archived_at is null) as owners,
                (select count(*) from kb.edges e where (%(archived)s or e.archived_at is null)
                   and (e.source_id = n.id or e.target_id = n.id)) as degree
         from kb.nodes n join kb.node_types t on t.id = n.type_id
@@ -102,7 +106,8 @@ def read(conn, params: dict) -> dict:
     # same filters (focus mode: both ends in the returned set).
     edge_sql = scope_cte + """
         select e.id, et.key as type, e.source_id as source, e.target_id as target,
-               e.props ->> 'role' as role, (s.is_legacy or tn.is_legacy) as is_legacy,
+               case when e.props ->> 'role' = 'backup' and e.props ? 'rank' then 'backup ' || (e.props ->> 'rank')
+                    else e.props ->> 'role' end as role, (s.is_legacy or tn.is_legacy) as is_legacy,
                e.archived_at is not null as archived, e.version, e.note
         from kb.edges e join kb.edge_types et on et.id = e.edge_type_id
         join kb.nodes s on s.id = e.source_id

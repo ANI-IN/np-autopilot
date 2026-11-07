@@ -31,6 +31,7 @@ import re
 from . import validate as v
 from .errors import Invalid
 from .service import PERSON_TYPES, Actor, _q, _q1, _translate, require
+from .profile import OWNED_BY
 
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MAX_ROWS = 2000
@@ -221,23 +222,33 @@ def link_me(conn, actor: Actor) -> dict:
 
 
 def owned_by_me(conn, actor: Actor, params: dict | None = None) -> dict:
-    """Records owned by your account (owner / co-owner) or by your person
-    record (owner / backup by role)."""
+    """Records owned by your account (owner / co-owner), records your person record OWNS (owned_by:
+    an NP team member), and the modules it is an SME for (with the role)."""
     require(conn, "viewer", "listing what you own")
     limit = max(1, min(int((params or {}).get("limit") or 50), 500))
-    rows = _q(conn, """
+    rows = _q(conn, f"""
         with me as (select auth.uid() as uid,
-                           (select node_id from kb.person_accounts where user_id = auth.uid()) as pid)
+                           (select node_id from kb.person_accounts where user_id = auth.uid()) as pid),
+        rel as (
+            select e.source_id as node_id, 'owner' as how, 0 as rank from kb.edges e cross join me
+              join kb.edge_types et on et.id = e.edge_type_id and et.key = '{OWNED_BY}'
+             where me.pid is not null and e.target_id = me.pid and e.archived_at is null
+            union all
+            select e.target_id, case e.props->>'role' when 'primary' then 'primary SME'
+                                    when 'backup' then 'backup SME ' || coalesce(e.props->>'rank', '')
+                                    else 'SME (' || coalesce(e.props->>'role', '') || ')' end, 1
+              from kb.edges e cross join me
+              join kb.edge_types et on et.id = e.edge_type_id and et.key = 'sme'
+             where me.pid is not null and e.source_id = me.pid and e.archived_at is null)
         select n.id, n.name, t.key as type, n.updated_at,
-               case when n.owner_id = me.uid then 'owner'
-                    when me.uid = any(n.co_owners) then 'co-owner'
-                    when n.owner_record_id = me.pid then 'owner by role'
-                    else 'backup by role' end as how
+               coalesce(case when n.owner_id = me.uid then 'record owner'
+                             when me.uid = any(n.co_owners) then 'co-owner' end,
+                        (select r.how from rel r where r.node_id = n.id order by r.rank limit 1)) as how
         from kb.nodes n join kb.node_types t on t.id = n.type_id cross join me
         where n.archived_at is null
-          and (n.owner_id = me.uid or me.uid = any(n.co_owners)
-               or (me.pid is not null and (n.owner_record_id = me.pid or me.pid = any(n.co_owner_record_ids))))
-        order by (n.owner_id = me.uid or n.owner_record_id = me.pid) desc, n.updated_at desc""")
+          and (n.owner_id = me.uid or me.uid = any(n.co_owners) or exists (select 1 from rel r where r.node_id = n.id))
+        order by (n.owner_id = me.uid or exists (select 1 from rel r where r.node_id = n.id and r.rank = 0)) desc,
+                 n.updated_at desc""")
     me = _q1(conn, """select pa.node_id as id, n.name, t.key as type from kb.person_accounts pa
                       join kb.nodes n on n.id = pa.node_id join kb.node_types t on t.id = n.type_id
                       where pa.user_id = auth.uid()""")
@@ -262,11 +273,13 @@ def legacy_expertise_domains(conn) -> dict:
 def no_owner(conn, limit: int = 100) -> dict:
     """Data quality: current records with no owner, of the types whose
     "owner expected" is ON (0032; editable in Settings -> Types)."""
-    rows = _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
+    rows = _q(conn, f"""select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
                        where n.archived_at is null and not n.is_legacy and t.owner_expected and t.archived_at is null
-                         and n.owner_id is null and n.owner_record_id is null
+                         and n.owner_id is null and not exists (select 1 from kb.edges e join kb.edge_types et
+                             on et.id = e.edge_type_id and et.key = '{OWNED_BY}' where e.source_id = n.id and e.archived_at is null)
                        order by t.sort_order, n.name_norm limit %s""", (max(1, min(int(limit), 500)),))
-    total = _q1(conn, """select count(*) as c from kb.nodes n join kb.node_types t on t.id = n.type_id
+    total = _q1(conn, f"""select count(*) as c from kb.nodes n join kb.node_types t on t.id = n.type_id
                          where n.archived_at is null and not n.is_legacy and t.owner_expected and t.archived_at is null
-                           and n.owner_id is null and n.owner_record_id is null""")["c"]
+                           and n.owner_id is null and not exists (select 1 from kb.edges e join kb.edge_types et
+                               on et.id = e.edge_type_id and et.key = '{OWNED_BY}' where e.source_id = n.id and e.archived_at is null)""")["c"]
     return {"items": rows, "total": total}

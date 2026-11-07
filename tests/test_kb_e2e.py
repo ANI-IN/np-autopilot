@@ -525,9 +525,9 @@ def test_one_save_with_nested_inline_course_relationships_and_links(server, brow
     page.get_by_test_id("rel-target").last.fill("Rate limiting")
     page.get_by_test_id("rel-target-create").last.click()
     expect(page.get_by_test_id("rel-sentence").last).to_contain_text("“Scalability” covers “Rate limiting”")
-    page.get_by_test_id("add-relationship").click()
-    choose_rel(page, "^An instructor teaches this module")
-    pick(page, "rel-target", "Ada Example")
+    # run C: an instructor's teaching of a module is an SME assignment with a role (People section)
+    page.get_by_test_id("section-people").locator("summary").click()
+    pick(page, "sme-primary", "Ada Example")
     # three links: Drive, UpLevel, GitHub (reused from the library)
     for url, title in (("https://drive.google.com/file/d/abc123/view", "Deck"),
                        ("https://uplevel.interviewkickstart.com/update_video/75226/", "Recording")):
@@ -702,8 +702,7 @@ def test_outline_quick_add_reorder_and_copy(server, browser):
     expect(toast(page)).to_contain_text("Order saved")
     eventually(lambda: names().index("Beta") < names().index("Alpha"), what="the saved order")
     rows.filter(has_text="Outline Course").hover()
-    rows.filter(has_text="Outline Course").get_by_test_id("outline-add").click()
-    page.get_by_test_id("outline-add-module").click()
+    rows.filter(has_text="Outline Course").get_by_test_id("outline-add").click()   # a course holds modules only: the form opens
     expect(page.get_by_test_id("placement-picker-picked")).to_contain_text("Outline Course")
     page.get_by_test_id("create-name").fill("Gamma")
     page.get_by_test_id("create-submit").click()
@@ -735,7 +734,7 @@ def test_save_course_as_template_and_create_from_it(server, browser):
     api = Client(USERS["editor"])
     _, c = api.post("/api/kb/courses", {"name": "Python Basics"})
     m = api.post("/api/kb/nodes", {"type": "module", "name": "Python Basics: Syntax", "parents": [c["id"]]})[1]
-    api.post("/api/kb/nodes", {"type": "week", "name": "Week 1", "parents": [m["id"]]})
+    api.post("/api/kb/nodes", {"type": "topic", "name": "Python Basics: Variables", "parents": [m["id"]]})
     page = page_as(browser, server, "editor")
     open_record(page, server, c["id"])
     more(page, "save-template")
@@ -1050,7 +1049,8 @@ def test_b2_duplicate_relationship_type_is_blocked_with_the_existing_one_offered
     expect(page.get_by_test_id("newrel-save")).to_be_disabled()
     page.get_by_test_id("newrel-use-existing").click()
     assert not [t for t in Client(USERS["admin"]).get("/api/kb/types")[1]["edge_types"] if t["key"] not in
-                ("contains", "covers", "teaches", "prerequisite", "sme", "related")]
+                ("contains", "covers", "teaches", "prerequisite", "sme", "related", "in_domain", "variant_of",
+                 __import__("pipeline.lib.taxonomy", fromlist=["x"]).edge_for_role("domain_primary"))]
     assert page.errors == []
 
 

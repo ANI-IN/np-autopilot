@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 
 from . import validate as v
+from .profile import OWNED_BY
 from .errors import Conflict, Forbidden, Invalid, KbError, NeedsApproval, NotFound
 from .service import (ROLES, Actor, _q, _q1, _translate, archive_node, create_node, get_node, require,
                       role, tag_node)
@@ -157,7 +158,7 @@ def delete_impact(conn, table: str, row_id: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def outline(conn, params: dict) -> dict:
-    """Program › Course › Domain › Module › Week › Session as a tree, built from
+    """Program › Course › Module › Topic (and a module's live sessions) as a tree, built from
     `contains` relationships (ordered by position, then name). Roots: programs,
     plus containers no live program contains. Each node carries a link count
     and its completeness."""
@@ -218,8 +219,8 @@ def reorder(conn, actor: Actor, body: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 def _record_checks(r: dict, tdef: dict, links: int, placed: bool) -> list[dict]:
-    # an owner by role (P, run 5) counts: the record has an owner, linked to a sign-in or not yet
-    checks = [{"check": "owner", "ok": r["owner_id"] is not None or r.get("owner_record_id") is not None, "label": "Has an owner"},
+    # an NP team member owner (owned_by, run C) counts, as does the account that owns the record
+    checks = [{"check": "owner", "ok": r["owner_id"] is not None or bool(r.get("has_owner_rel")), "label": "Has an owner"},
               {"check": "summary", "ok": bool((r["summary"] or "").strip()), "label": "Has a summary"}]
     for f in tdef["fields"]:
         if f.get("required") and not f.get("archived"):
@@ -236,7 +237,9 @@ def _record_checks(r: dict, tdef: dict, links: int, placed: bool) -> list[dict]:
 def completeness_map(conn, ids: list | None = None) -> dict:
     """{node_id: {score, missing: [labels]}} for live records (or `ids`)."""
     types = {t["id"]: t for t in _q(conn, "select id, key, fields, allowed_parents from kb.node_types")}
-    rows = _q(conn, """select n.id, n.type_id, n.owner_id, n.owner_record_id, n.summary, n.props,
+    rows = _q(conn, f"""select n.id, n.type_id, n.owner_id, n.summary, n.props,
+                              exists (select 1 from kb.edges oe join kb.edge_types oet on oet.id = oe.edge_type_id and oet.key = '{OWNED_BY}'
+                                      where oe.source_id = n.id and oe.archived_at is null) as has_owner_rel,
                               (select count(*) from kb.node_resources nr where nr.node_id = n.id and nr.archived_at is null) as links,
                               exists (select 1 from kb.edges e join kb.edge_types et on et.id = e.edge_type_id and et.key = 'contains'
                                       where e.target_id = n.id and e.archived_at is null) as placed
@@ -299,8 +302,8 @@ def resource_completeness(conn, rid: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def needs_attention(conn, limit: int = 12) -> dict:
-    no_owner = _q(conn, """select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
-                           where n.archived_at is null and not n.is_legacy and n.owner_id is null and n.owner_record_id is null
+    no_owner = _q(conn, f"""select n.id, n.name, t.key as type from kb.nodes n join kb.node_types t on t.id = n.type_id
+                           where n.archived_at is null and not n.is_legacy and n.owner_id is null and not exists (select 1 from kb.edges oe join kb.edge_types oet on oet.id = oe.edge_type_id and oet.key = '{OWNED_BY}' where oe.source_id = n.id and oe.archived_at is null)
                              and t.owner_expected
                            order by n.updated_at desc limit %s""", (limit,))
     broken = _q(conn, """select r.id, r.title as name, lc.http_status from kb.resources r
@@ -354,7 +357,7 @@ def attention_counts(conn) -> dict:
     c = _q1(conn, f"""select
         (select count(*) from kb.nodes n join kb.node_types t on t.id = n.type_id
           where n.archived_at is null and not n.is_legacy and t.owner_expected
-          and n.owner_id is null and n.owner_record_id is null) as no_owner,
+          and n.owner_id is null and not exists (select 1 from kb.edges oe join kb.edge_types oet on oet.id = oe.edge_type_id and oet.key = '{OWNED_BY}' where oe.source_id = n.id and oe.archived_at is null)) as no_owner,
         (select count(*) from kb.link_checks lc join kb.resources r on r.id = lc.resource_id
           where r.archived_at is null and lc.status in {BROKEN}) as broken_links,
         (select count(*) from kb.nodes n where n.archived_at is null and not n.is_legacy and not exists (select 1 from kb.edges e

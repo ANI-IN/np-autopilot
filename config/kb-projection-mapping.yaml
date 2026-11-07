@@ -57,7 +57,7 @@ roles:
   person: person                  # curation notes from people.yaml
   workflow: workflow              # curation notes and owner suggestions
   week_link: scheduled_in         # module -> week: the week sits in its module
-  placement: [contains, offers, delivers_session, scheduled_in]
+  placement: [contains, delivers_session]
   teaching: teaches               # role and class dates become the note
   teaching_reversed: taught_by
 
@@ -91,10 +91,9 @@ type_fields:
             {label: Alerts, kind: long_text}, {label: Tools, kind: long_text},
             {label: Suggested owner, kind: short_text, help: "Unconfirmed suggestion from the workflow-owner sheet; not an owner."}]
 
-# Allowed parents added to KB types (placement).
-placement:
-  process: [theme]
-  week: [module, course]
+# Allowed parents added to KB types (placement). None since run C (2026-11-07): weeks, workflows and
+# themes are retired, and a domain classifies records instead of containing them.
+placement: {}
 
 # KB relationship types the import creates (when missing) for relationships the
 # KB has no built-in type for. Reviewed (the import runs as an admin).
@@ -106,19 +105,37 @@ new_relationship_types:
 # projection relationship -> KB relationship (flip: reverse the direction)
 relationships:
   - {rel: covers_topic, source: module, target: content_topic, kb: covers}
-  - {rel: teaches, source: instructor, target: module, kb: teaches}
+  - {rel: teaches, source: instructor, target: module, kb: sme}              # run C: an SME assignment (role required)
   - {rel: teaches, source: instructor, target: class_session, kb: teaches}
-  - {rel: taught_by, source: module, target: instructor, kb: teaches, flip: true}
+  - {rel: taught_by, source: module, target: instructor, kb: sme, flip: true}
   - {rel: expert_in, source: instructor, target: domain, kb: sme}
   - {rel: delivers_session, source: module, target: class_session, kb: contains}
   - {rel: contains, source: program, target: module, kb: contains}
-  - {rel: offers, source: domain, target: module, kb: contains}
-  - {rel: covers, source: program, target: domain, kb: covers}
+  - {rel: offers, source: domain, target: module, kb: in_domain, flip: true}  # run C: a domain classifies
+  - {rel: covers, source: program, target: domain, kb: in_domain}
   - {rel: scheduled_in, source: module, target: program_week, kb: contains}
   - {rel: belongs_to, source: workflow, target: theme, kb: contains, flip: true}
   - {rel: owned_by, source: domain, target: person, kb: owned_by}
   - {rel: supported_by, source: domain, target: person, kb: supported_by}
   - {rel: delivered_by, source: domain, target: person, kb: delivered_by}
+
+# Relationships the sync NO LONGER writes (owner decisions 2026-11-07, run C). The KYPs and the registry
+# sheet are the curriculum sources now; migration 0039 retired these shapes and
+# scripts/curriculum_model_data.py converted the existing ones ONCE:
+#   expert_in (instructor -> domain): an SME is module-level
+# (teaches / taught_by instructor -> module now become SME assignments with the mastersheet's role, and
+#  offers / covers become in_domain, above.)
+#   scheduled_in (module -> week), belongs_to (workflow -> theme): weeks, workflows, themes retired
+#   owned_by (domain -> person): owners are of programs, courses and modules, and are NP team members
+retired_relationships:
+  - {rel: expert_in, source: instructor, target: domain}
+  - {rel: scheduled_in, source: module, target: program_week}
+  - {rel: belongs_to, source: workflow, target: theme}
+  - {rel: owned_by, source: domain, target: person}
+
+# The run-5 "owners by role" (an instructor as a module's owner) is OFF: owners are NP team members
+# (owned_by), and the instructors it named are the modules' SMEs.
+owners_by_role: false
 
 # projection relationship -> a LINK on a record (record: which end is the record)
 attachments:

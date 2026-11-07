@@ -15,12 +15,16 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 // "related to", "part of", "subject expert for" read as "is related to" in a sentence.
 const verb = (label) => (/ (to|of|for|by|with)$/.test(label) && !/^(is|has|belongs|reports|leads|links|refers|maps|points|moves|leads) /.test(label) ? 'is ' + label : label);
 
+const PEOPLE_ONLY = new Set(['sme', 'owned_by']);
+
 /* Every relationship this type can take part in, as sentences. `otherType`
    (optional) keeps only options that reach that type. */
 export function relItems(typeKey, otherType) {
   const out = [];
   const me = lower(typeKey);
-  S.edgeTypes.filter((et) => !et.archived_at).forEach((et) => (et.rules || []).forEach((r) => {
+  // Owners and SMEs have their own controls (Owners / SMEs in the record panel, People in the form):
+  // an SME needs a role, so they are not offered as plain relationships here (run C, 2026-11-07).
+  S.edgeTypes.filter((et) => !et.archived_at && !PEOPLE_ONLY.has(et.key)).forEach((et) => (et.rules || []).forEach((r) => {
     const sub = et.review_status === 'unreviewed' ? 'New · awaiting admin review' : null;
     if (r.source === typeKey && (!otherType || r.target === otherType)) {
       out.push({ id: et.key + '|out|' + r.target, type: et.key, direction: 'out', other: r.target, sub, group: 'This ' + me + ' …',
