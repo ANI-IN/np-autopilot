@@ -145,7 +145,7 @@ def test_change_propagation_matrix(server, browser):
     ws = ok(admin.post("/api/kb/nodes", {"type": "workshop", "name": "Matrix Workshop", "parents": [course["id"]]}))
     contexts = []
     try:
-        gctx, graph = _page(browser, server + f"/kb/#/graph/{course['id']}?depth=2")
+        gctx, graph = _page(browser, server + f"/kb/#/graph/{course['id']}?depth=2", role="admin")
         mctx, npmap = _page(browser, server + "/")
         contexts += [gctx, mctx]
         _wait(graph, _graph_has(m1["id"]), 20)

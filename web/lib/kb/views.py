@@ -5,7 +5,7 @@ caller's connection, so RLS decides what is visible.
                     sessions they teach), each cell the role from the current
                     mastersheet (P Primary, B1-B3 Backups) or "teaches"
                     (older sheets). Current only by default, like NP Autopilot.
-  programme_timeline "Programme timeline": each programme's modules by week
+  (programme_timeline was retired with the week records, 2026-11-07) "Programme timeline": each programme's modules by week
                     (module -> week, week number), with the module's sessions
                     and slide decks.
 """
@@ -88,38 +88,3 @@ def teaching_matrix(conn, params: dict) -> dict:
     return {"instructors": inst, "columns": cols, "cells": list(cells.values()), "domains": all_domains, "legacy": lg,
             "counts": {r: sum(1 for c in cells.values() if c["role"] == r) for r in ROLE_ORDER} |
                       {"teaches_without_role": sum(1 for c in cells.values() if not c["role"])}}
-
-
-def programme_timeline(conn, params: dict) -> dict:
-    """Programmes (all from the older sheets in today's data, so legacy is
-    shown here, badged) -> modules -> the weeks they are scheduled in."""
-    progs = _q(conn, """select n.id, n.name, n.is_legacy from kb.nodes n join kb.node_types t on t.id = n.type_id
-                         where t.key = 'program' and n.archived_at is null order by n.name_norm""")
-    if params.get("program"):
-        progs = [p for p in progs if str(p["id"]) == str(params["program"])]
-    contains = defaultdict(list)
-    for r in _q(conn, """select e.source_id, o.id, o.name, ot.key as type, o.is_legacy, o.props
-                          from kb.edges e join kb.edge_types et on et.id = e.edge_type_id and et.key = 'contains'
-                          join kb.nodes o on o.id = e.target_id join kb.node_types ot on ot.id = o.type_id
-                         where e.archived_at is null and o.archived_at is null and ot.key in ('module', 'week', 'session')"""):
-        contains[str(r["source_id"])].append(r)
-    decks = defaultdict(list)
-    for r in _q(conn, """select nr.node_id, r.id, r.title, r.url from kb.node_resources nr join kb.resources r on r.id = nr.resource_id
-                         where nr.archived_at is null and r.archived_at is null and (r.kind = 'slides' or nr.note = 'Slides')"""):
-        decks[str(r["node_id"])].append({"id": str(r["id"]), "title": r["title"], "url": r["url"]})
-    out = []
-    for p in progs:
-        weeks = defaultdict(list)
-        for m in (x for x in contains[str(p["id"])] if x["type"] == "module"):
-            mid = str(m["id"])
-            entry = {"id": mid, "name": m["name"], "legacy": m["is_legacy"],
-                     "sessions": [{"id": str(s["id"]), "name": s["name"]} for s in contains[mid] if s["type"] == "session"],
-                     "decks": decks.get(mid, [])}
-            wk = [w for w in contains[mid] if w["type"] == "week"]
-            nums = sorted({(w["props"] or {}).get("week_number") for w in wk if isinstance((w["props"] or {}).get("week_number"), int)})
-            for n in nums or [None]:
-                weeks[n].append(entry)
-        out.append({"id": str(p["id"]), "name": p["name"], "legacy": p["is_legacy"],
-                    "weeks": [{"week": k, "modules": sorted(v, key=lambda e: e["name"].lower())}
-                              for k, v in sorted(weeks.items(), key=lambda kv: (kv[0] is None, kv[0] or 0))]})
-    return {"programmes": out}

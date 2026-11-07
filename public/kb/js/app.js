@@ -20,13 +20,13 @@ const ROUTES = {
   archived: lazy('./views/archived.js', 'viewArchived'), settings: lazy('./views/settings.js', 'viewSettings'),
   guide: lazy('./views/guide.js', 'viewGuide'), r: () => Promise.resolve(renderFullRecord),
   activity: lazy('./views/activity.js', 'viewActivity'), teaching: lazy('./views/teaching.js', 'viewTeaching'),
-  timeline: lazy('./views/teaching.js', 'viewTimeline'),
+  search: lazy('./views/search.js', 'viewSearch'), admin: lazy('./views/admin.js', 'viewAdmin'),
 };
 /* Prefetch a page's module when the pointer or focus reaches its sidebar link. */
 function prefetchView(nav) { const load = ROUTES[nav === 'dashboard' ? '' : nav]; if (load) load().catch(() => {}); }
 /* Page template widths (B1): tables and the graph use the full width; reading
    content is centred at a readable measure; everything else is contained. */
-const LAYOUT = { records: 'full', programs: 'full', courses: 'full', resources: 'full', graph: 'full', teaching: 'full', timeline: 'full', guide: 'reading', r: 'reading' };
+const LAYOUT = { records: 'full', programs: 'full', courses: 'full', resources: 'full', graph: 'full', teaching: 'full', guide: 'reading', r: 'reading' };
 
 // ------------------------------------------------------------------ theme
 function applyTheme(t) {
@@ -34,6 +34,17 @@ function applyTheme(t) {
   try { localStorage.setItem('kb_theme', t || 'system'); } catch (e) { /* ignore */ }
 }
 function currentTheme() { try { return localStorage.getItem('kb_theme') || 'system'; } catch (e) { return 'system'; } }
+/* The sidebar's theme button: System -> Light -> Dark -> System. System follows
+   the operating system (prefers-color-scheme), the default (owner, 2026-11-07). */
+const THEME_NEXT = { system: 'light', light: 'dark', dark: 'system' };
+const THEME_ICON = { system: 'monitor', light: 'sun', dark: 'moon' };
+function themeButton() {
+  const t = currentTheme();
+  return el('button', { class: 'btn ghost sm icon theme-toggle', type: 'button', 'data-testid': 'theme-toggle', 'data-theme-choice': t,
+    title: 'Theme: ' + t[0].toUpperCase() + t.slice(1) + ' (click to change)', 'aria-label': 'Theme: ' + t + '. Change theme',
+    onclick: (e) => { applyTheme(THEME_NEXT[currentTheme()]); e.currentTarget.replaceWith(themeButton()); document.querySelector('[data-testid="theme-toggle"]').focus(); } },
+    icon(THEME_ICON[t] || 'monitor'));
+}
 applyTheme(currentTheme());
 
 // ------------------------------------------------------------------ boot
@@ -99,16 +110,32 @@ async function boot() {
 
 // ------------------------------------------------------------------ sidebar
 /* Every page, for the palette's "Go to" and the browser tab's title (run 6, F2). */
-const PAGES = [['Dashboard', ''], ['All records', 'records'], ['Programs', 'programs'], ['Courses', 'courses'], ['Links', 'resources'],
-  ['Outline', 'outline'], ['Graph', 'graph'], ['Who teaches what', 'teaching'], ['Program timeline', 'timeline'],
-  ['Data quality', 'quality'], ['Approvals', 'approvals'], ['Activity', 'activity', 'editor'], ['Archived', 'archived'],
+const PAGES = [['Home', ''], ['Search', 'search'], ['All records', 'records'], ['Programs', 'programs'], ['Courses', 'courses'], ['Resources', 'resources'],
+  ['Outline', 'outline'], ['Graph editor', 'graph', 'admin'], ['Who teaches what', 'teaching'], ['Admin', 'admin', 'contributor'],
+  ['Data quality', 'quality', 'contributor'], ['Approvals', 'approvals', 'contributor'], ['Activity', 'activity', 'editor'], ['Archived', 'archived', 'editor'],
   ['Guide', 'guide'], ['Settings', 'settings'], ['People', 'settings?tab=people', 'admin'], ['Members', 'settings?tab=members', 'admin'],
-  ['Sync', 'settings?tab=sync', 'admin']];
+  ['Sources & sync', 'settings?tab=sync', 'admin']];
+/* Navigation (Direction A, owner decision 2026-11-07, docs/design/phase1/DECISION.md):
+   Home; Browse for everyone (the read-only Map included); the Admin group at the
+   bottom, each item shown only to the role that can use it. Hiding is
+   convenience: every route and API checks the role on the server. */
 const NAV = [
-  ['Workspace', [['', 'Dashboard', 'layout-dashboard'], ['records', 'All records', 'list', 'records'], ['outline', 'Outline', 'list-tree'], ['graph', 'Graph', 'network']]],
-  ['Browse', [['programs', 'Programs', 'graduation-cap', 'program'], ['courses', 'Courses', 'book-open', 'course'], ['resources', 'Links', 'link', 'resources'], ['teaching', 'Who teaches what', 'users'], ['timeline', 'Program timeline', 'calendar-days']]],
-  ['Maintain', [['quality', 'Data quality', 'shield-check', 'attention'], ['approvals', 'Approvals', 'circle-check', 'pending'], ['activity', 'Activity', 'history', null, 'editor'], ['archived', 'Archived', 'archive', 'archived']]],
+  [null, [['', 'Home', 'layout-dashboard']]],
+  ['Browse', [['programs', 'Programs', 'graduation-cap', 'program'], ['courses', 'Courses', 'book-open', 'course'], ['resources', 'Resources', 'link', 'resources'],
+    ['teaching', 'Who teaches what', 'users'], ['records', 'All records', 'list', 'records'], ['outline', 'Outline', 'list-tree'], ['/', 'Map', 'globe']]],
 ];
+export const ADMIN_NAV = [
+  ['admin', 'Overview', 'shield-check', null, 'contributor'], ['graph', 'Graph editor', 'network', null, 'admin'],
+  ['approvals', 'Approvals', 'circle-check', 'pending', 'contributor'], ['quality', 'Data quality', 'list-checks', 'attention', 'contributor'],
+  ['activity', 'Activity', 'history', null, 'editor'], ['archived', 'Archived', 'archive', 'archived', 'editor'],
+  ['settings?tab=members', 'Members', 'user', null, 'admin'], ['settings?tab=sync', 'Sources & sync', 'refresh-cw', null, 'admin'],
+];
+function navLink([path, label, ic, countKey]) {
+  const ext = path.startsWith('/');
+  const key = ext ? 'map' : (path || 'home').replace(/\W+/g, '-');
+  return el('a', { href: ext ? path : '#/' + path, 'data-nav': ext ? 'map' : (path || 'dashboard'), title: label, 'data-testid': 'nav-' + key },
+    icon(ic), el('span', { class: 'label-text', text: label }), countKey ? el('span', { class: 'count', 'data-count': countKey }) : null);
+}
 function renderSidebar() {
   const sb = clear($('#sidebar'));
   const collapse = el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Collapse sidebar', title: 'Collapse sidebar',
@@ -123,15 +150,16 @@ function renderSidebar() {
     icon('search'), el('span', { class: 'label-text', text: 'Search' }), el('span', { class: 'spacer' }), el('kbd', { text: /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K' })));
   if (can('contributor')) sb.appendChild(el('button', { class: 'btn primary w-full mb-1', type: 'button', 'data-testid': 'new-record',
     onclick: () => newRecordFromContext() }, icon('plus'), el('span', { class: 'label-text', text: 'New record' })));
-  const nav = el('nav', { class: 'nav', id: 'nav' });
+  const nav = el('nav', { class: 'nav', id: 'nav', 'aria-label': 'Main' });
   for (const [group, items] of NAV) {
-    const g = el('div', { class: 'nav-group' }, el('div', { class: 'nav-group-label', text: group }));
-    for (const [path, label, ic, countKey, minRole] of items) {
-      if (minRole && !can(minRole)) continue;
-      g.appendChild(el('a', { href: '#/' + path, 'data-nav': path || 'dashboard', title: label }, icon(ic), el('span', { class: 'label-text', text: label }),
-        countKey ? el('span', { class: 'count', 'data-count': countKey }) : null));
-    }
+    const g = el('div', { class: 'nav-group' }, group ? el('div', { class: 'nav-group-label', text: group }) : null);
+    for (const item of items) if (!item[4] || can(item[4])) g.appendChild(navLink(item));
     nav.appendChild(g);
+  }
+  const adminItems = ADMIN_NAV.filter((x) => can(x[4]));
+  if (adminItems.length) {
+    nav.appendChild(el('div', { class: 'nav-group nav-admin', 'data-testid': 'nav-admin-group' },
+      el('div', { class: 'nav-group-label', text: 'Admin' }), adminItems.map(navLink)));
   }
   sb.appendChild(nav);
   // Hover or focus on a page link starts loading that page's module.
@@ -145,7 +173,9 @@ function renderSidebar() {
   const badge = S.demoBadge = document.getElementById('demo-badge-slot') || S.demoBadge;
   sb.appendChild(el('div', { class: 'sidebar-foot nav' },
     el('a', { href: '#/guide', 'data-nav': 'guide', title: 'Guide' }, icon('circle-help'), el('span', { class: 'label-text', text: 'Guide' })),
-    el('a', { href: '#/settings', 'data-nav': 'settings', title: 'Settings' }, icon('settings'), el('span', { class: 'label-text', text: 'Settings' })),
+    el('div', { class: 'row gap-1 foot-row' },
+      el('a', { href: '#/settings', 'data-nav': 'settings', title: 'Settings', class: 'grow' }, icon('settings'), el('span', { class: 'label-text', text: 'Settings' })),
+      themeButton()),
     el('div', { class: 'sidebar-slot', id: 'sidebar-slot' }),
     user));
   if (badge) $('#sidebar-slot').appendChild(badge);
@@ -211,6 +241,10 @@ export function route() {
   const v = $('#view');
   const page = PAGES.find(([, p]) => p === key) || (key === 'proposals' && ['Approvals']) || (key === 'r' && ['Record']);
   document.title = (page ? page[0] + ' · ' : '') + 'IK Knowledge Base';
+  // The graph editor is for admins (owner, 2026-11-07). The server refuses its
+  // writes to anyone else; this only says so instead of showing a page of
+  // buttons that would fail.
+  const blocked = key === 'graph' && !can('admin');
   if (viewKey !== lastView || r.q.__force) {
     lastView = viewKey;
     // The view being left releases what it holds (run 6, F7: the graph's listeners, poll and canvas).
@@ -219,7 +253,11 @@ export function route() {
     S.listReload = null; S.onSelect = null; S.onQueryChange = null; S.tableKeys = null;
     if (S.panel && S.panel.full) S.panel = null;          // leaving a full-page record
     clear(v); v.scrollTop = 0;
-    if (!load) v.appendChild(el('div', { class: 'page-body' }, el('div', { class: 'empty' }, el('h2', { text: 'Page not found' }), el('p', { text: 'That address does not match anything here.' }), el('a', { class: 'btn', href: '#/' , text: 'Go to the dashboard' }))));
+    // Every branch is a new navigation: a page still loading must not draw over it.
+    if (blocked || !load) ++routeSeq;
+    if (blocked) v.appendChild(el('div', { class: 'page-body', 'data-testid': 'admins-only' }, el('div', { class: 'empty' }, el('h2', { text: 'Admins only' }),
+      el('p', { text: 'The graph editor is for admins. The Map shows the same records for everyone.' }), el('a', { class: 'btn primary', href: '/', text: 'Open the Map' }))));
+    else if (!load) v.appendChild(el('div', { class: 'page-body' }, el('div', { class: 'empty' }, el('h2', { text: 'Page not found' }), el('p', { text: 'That address does not match anything here.' }), el('a', { class: 'btn', href: '#/' , text: 'Go to Home' }))));
     else {
       // A skeleton until the module arrives; a newer navigation wins the race.
       const seq = ++routeSeq;

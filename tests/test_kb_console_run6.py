@@ -22,7 +22,7 @@ from playwright.sync_api import expect, sync_playwright                # noqa: E
 pytestmark = [requires_kb]
 
 SCREENS = ["#/", "#/records", "#/programs", "#/courses", "#/resources", "#/outline", "#/graph", "#/teaching",
-           "#/timeline", "#/activity", "#/quality", "#/approvals", "#/archived", "#/guide",
+           "#/activity", "#/quality", "#/approvals", "#/archived", "#/guide",
            "#/settings?tab=types", "#/settings?tab=relationships", "#/settings?tab=links", "#/settings?tab=tags",
            "#/settings?tab=members", "#/settings?tab=tokens", "#/settings?tab=templates", "#/settings?tab=sync",
            "#/settings?tab=people"]
@@ -96,8 +96,11 @@ def test_every_screen_and_flow_without_console_errors(server, data, role):
         _settle(page)
         page.where["at"] = "graph"
         page.goto(server + f"/kb/#/graph/{data['course']}?depth=1")
-        page.wait_for_function("() => window.__kbGraph && window.__kbGraph.loadedAt", timeout=30000)
-        page.evaluate(f"() => window.__kbGraph.expand('{data['module']}')")
+        if role == "admin":                  # the graph editor is admin-only (2026-11-07); others see "Admins only"
+            page.wait_for_function("() => window.__kbGraph && window.__kbGraph.loadedAt", timeout=30000)
+            page.evaluate(f"() => window.__kbGraph.expand('{data['module']}')")
+        else:
+            expect(page.get_by_test_id("admins-only")).to_be_visible()
         _settle(page)
         if role == "admin":
             page.where["at"] = "new record sheet"

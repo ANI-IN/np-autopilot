@@ -195,9 +195,9 @@ def handle(conn, actor: svc.Actor, method: str, parts: list[str], params: dict,
             if actor.actor_type == "ai":
                 raise kb_routes_forbidden("the AI assistant cannot start a sync")
             return 200, sync_api.run_now("manual", str(actor.user_id))
-    if head == "views" and method == "GET" and rest in (["teaching"], ["timeline"]):
+    if head == "views" and method == "GET" and rest == ["teaching"]:     # ["timeline"] retired 2026-11-07
         from lib.kb import views
-        return 200, (views.teaching_matrix if rest == ["teaching"] else views.programme_timeline)(conn, params)
+        return 200, views.teaching_matrix(conn, params)
     if head == "quality" and rest == ["sync"] and method == "GET":
         svc.require(conn, "editor", "sync conflicts")
         return 200, ws.sync_issues(conn)

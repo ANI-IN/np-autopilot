@@ -176,8 +176,9 @@ def desired_state(conn, M: dict, source: str = "public", exclusions: tuple | Non
 
     # records -----------------------------------------------------------------
     recs: dict[str, dict] = {}
+    RETIRED = set(M.get("retired_types") or ())      # never imported (2026-11-07: weeks, workflows, themes)
     for n in nodes.values():
-        if n["type"] not in TYPE_MAP:
+        if n["type"] not in TYPE_MAP or n["type"] in RETIRED:
             continue
         p, lab = n["props"], (n["label"] or "").strip()
         if n["type"] == R["topic"] and p.get("not_a_topic"):

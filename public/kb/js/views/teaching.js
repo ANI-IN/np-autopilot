@@ -3,7 +3,8 @@
    role from the current mastersheet (P Primary, B1-B3 Backups) or T (teaches,
    older sheets). Filter by domain, role, name; current only unless legacy is
    included; export as CSV.
-   "Programme timeline": each programme's modules by week, with their
+   (The "Programme timeline" view was retired with the week records, 2026-11-07:
+   week and order belong to each program.) Formerly: each programme's modules by week, with their
    sessions and slide decks. */
 import { S, el, clear, icon, api, skeletonRows, empty, errorBox, setQuery, plural } from '../core.js';
 import { pageHead } from '../page.js';
@@ -68,47 +69,4 @@ export function viewTeaching(v, r) {
   const keys = (x) => ['domain', 'role', 'legacy', 'q'].map((k) => x[k] || '').join('|');
   let last = keys(q);
   S.onQueryChange = (nr) => { if (keys(nr.q) !== last) { last = keys(nr.q); load(nr.q); } };
-}
-
-// ------------------------------------------------------------------ programme timeline
-export function viewTimeline(v, r) {
-  v.appendChild(pageHead({ title: 'Program timeline', sub: 'Each program’s modules by week, with their live sessions and slide decks. Programs come from the older sheets.' }));
-  const progSel = el('select', { 'aria-label': 'Program', 'data-testid': 'timeline-program' }, el('option', { value: '', text: 'All programs' }));
-  progSel.addEventListener('change', () => setQuery({ program: progSel.value || null }));
-  v.appendChild(el('div', { class: 'view-toolbar' }, progSel));
-  const box = el('div', { class: 'page-body', 'data-testid': 'timeline' }, skeletonRows(8));
-  v.appendChild(box);
-  const load = async (rq) => {
-    try {
-      const all = await api('GET', '/views/timeline');
-      clear(progSel); progSel.appendChild(el('option', { value: '', text: 'All programs' }));
-      all.programmes.forEach((p) => progSel.appendChild(el('option', { value: p.id, text: p.name, selected: rq.program === p.id })));
-      const progs = rq.program ? all.programmes.filter((p) => p.id === rq.program) : all.programmes;
-      clear(box);
-      if (!progs.length) { box.appendChild(empty('No programs', 'Programs appear here with their modules by week.', null, 'calendar-days')); return; }
-      const open = (id) => '#/timeline?' + new URLSearchParams(Object.assign({}, rq, { open: id })).toString();
-      progs.forEach((p) => {
-        const sec = el('section', { class: 'section', 'data-testid': 'timeline-programme' },
-          el('div', { class: 'timeline-head' }, el('h2', null, el('a', { href: open(p.id), text: p.name })), p.legacy ? el('span', { class: 'badge', text: 'Legacy' }) : null,
-            el('span', { class: 'faint small', text: plural(p.weeks.reduce((a, w) => a + w.modules.length, 0), 'module') })));
-        if (!p.weeks.length) sec.appendChild(el('p', { class: 'faint small', text: 'No modules recorded for this program yet.' }));
-        const lane = el('div', { class: 'timeline-lane' });
-        p.weeks.forEach((w) => lane.appendChild(el('div', { class: 'timeline-week', 'data-testid': 'timeline-week' },
-          el('div', { class: 'timeline-week-head', text: w.week === null ? 'No week' : 'Week ' + w.week }),
-          w.modules.map((m) => el('div', { class: 'timeline-card' },
-            el('a', { href: open(m.id), class: 'strong', text: m.name }),
-            m.sessions.length ? el('ul', { class: 'small' }, m.sessions.slice(0, 12).map((s) => el('li', {}, el('a', { href: open(s.id), text: s.name })))) : null,
-            m.sessions.length > 12 ? el('div', { class: 'faint xs', text: plural(m.sessions.length - 12, 'more live session') }) : null,
-            m.decks.length ? el('ul', { class: 'deck-list xs', 'aria-label': 'Slide decks' }, m.decks.slice(0, 6).map((d) => el('li', null, icon('presentation', 'sm'),
-              el('a', { href: d.url, target: '_blank', rel: 'noopener noreferrer', class: 'truncate', text: d.title }))),
-              m.decks.length > 6 ? el('li', { class: 'faint', text: plural(m.decks.length - 6, 'more deck') }) : null) : null)))));
-        if (p.weeks.length) sec.appendChild(lane);
-        box.appendChild(sec);
-      });
-    } catch (e) { clear(box); box.appendChild(errorBox(e, () => load(rq))); }
-  };
-  load(r.q);
-  S.listReload = () => load((S.route && S.route.q) || r.q);   // B1 (run 6): live updates reload this view
-  let last = r.q.program || '';
-  S.onQueryChange = (nr) => { if ((nr.q.program || '') !== last) { last = nr.q.program || ''; load(nr.q); } };
 }

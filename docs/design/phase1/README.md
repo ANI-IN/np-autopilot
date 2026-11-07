@@ -1,7 +1,8 @@
 # Phase 1 design: UX audit, target navigation, visual directions
 
-Status: **proposal, awaiting the owner's choice of direction** (2026-11-07). Nothing here
-is implemented except the performance work. The mockups are static HTML with
+Status: **decided on 2026-11-07: A · Clarity with C's search-first Home and B's dark
+theme.** See [DECISION.md](DECISION.md) for the decision, its refinements and what is built.
+The proposal below is kept as it was presented. The mockups are static HTML with
 fictional content; open them in a browser:
 
 | Direction | File | In one line |

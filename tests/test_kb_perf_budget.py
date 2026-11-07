@@ -118,8 +118,8 @@ def test_the_first_page_loads_within_budget_and_views_load_lazily():
         page.wait_for_selector("[data-testid=dash-grid]", timeout=30000)
         ms = (time.monotonic() - t0) * 1000
         assert ms < 3000, f"the dashboard took {ms:.0f} ms to load locally (budget 3000)"
-        # the dashboard, and activity.js (the record panel's History uses its sentences)
-        lazy = [m for m in modules if m.startswith("views/") and m not in ("views/dashboard.js", "views/activity.js")]
+        # the dashboard (Home), activity.js (the record panel's History uses its sentences) and search.js (Home's search box)
+        lazy = [m for m in modules if m.startswith("views/") and m not in ("views/dashboard.js", "views/activity.js", "views/search.js")]
         assert not lazy, f"views loaded at startup instead of on first use: {lazy}"
         assert "views/graph.js" not in modules
         page.click("[data-nav=graph]")

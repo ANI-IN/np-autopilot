@@ -130,7 +130,23 @@ export async function api(method, path, body, retried) {
     onSignedOut('Your session expired. Sign in again to continue.');
     throw new ApiError(401, { message: 'signed out' });
   }
-  const data = await r.json().catch(() => ({}));
+  // Read the body as text first. A 2xx reply that is not JSON used to become {}
+  // silently, and the caller then failed somewhere unrelated ("reading 'forEach'",
+  // the 2026-11-07 Graph report). Now it is an error that says what arrived.
+  let text = '';
+  try { text = await r.text(); }
+  catch (e) { throw new ApiError(r.status || 0, { message: 'The reply from the server was cut off (HTTP ' + r.status + '). Try again.' }); }
+  let data = {};
+  if (text) {
+    try { data = JSON.parse(text); }
+    catch (e) {
+      if (r.status < 400) {
+        console.error('kb api: unreadable reply', { path, status: r.status, type: r.headers.get('content-type'), encoding: r.headers.get('content-encoding'), length: text.length });
+        throw new ApiError(r.status, { message: 'The reply from the server could not be read (HTTP ' + r.status + ', ' + text.length + ' characters). Try again.' });
+      }
+      data = {};
+    }
+  }
   if (r.status >= 400 || r.status === 202) throw new ApiError(r.status, data);
   return data;
 }

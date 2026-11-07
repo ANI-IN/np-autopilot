@@ -14,21 +14,24 @@
   --fs-xs: 12px; --fs-sm: 13px; --fs-md: 14px; --fs-lg: 16px; --fs-title: 20px;
   --w-regular: 400; --w-strong: 600;
   --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px;
-  --radius: 6px;
+  --radius: 8px; --radius-sm: 4px; --radius-lg: 12px; --radius-pill: 999px;
+  --z-sticky: 10; --z-panel: 20; --z-menu: 40; --z-dialog: 50; --z-toast: 60;
   --sidebar-w: 240px; --panel-w: 440px; --row-h: 36px; --row-h-compact: 30px;
   --page-max: 1440px; --read-max: 760px; --toc-w: 220px;
   --motion: 150ms cubic-bezier(.2, .8, .2, 1);
 
+  /* Direction A · Clarity (owner decision 2026-11-07, docs/design/phase1/DECISION.md):
+     light, calm, dense; IK blue the only accent. Dark = Direction B · Atlas below. */
   --bg: #ffffff;
-  --bg-subtle: #f7f7f8;
+  --bg-subtle: #f7f8fa;
   --surface: #ffffff;
-  --surface-2: #f4f4f5;
-  --surface-hover: #f0f0f2;
-  --border: #e6e6e9;
-  --border-strong: #d4d4d8;
-  --text: #18181b;
-  --text-2: #52525b;
-  --text-3: #6b6b74;
+  --surface-2: #f1f3f6;
+  --surface-hover: #eef1f5;
+  --border: #e3e6eb;
+  --border-strong: #cfd4dc;
+  --text: #16181d;
+  --text-2: #4a515c;
+  --text-3: #626a77;
   /* Interview Kickstart brand (run 6, F1; source in docs/architecture/design-system.md "Brand"):
      the logo's blue #3996D2, darkened to #2670A6 where it carries text (5.3:1 on white);
      the logo's navy #324158 for the brand mark. */
@@ -37,12 +40,12 @@
   --brand-mark: #324158;
   --accent: #2670A6;
   --accent-hover: #1d5c8b;
-  --accent-soft: #edf6fe;
-  --accent-text: #2670A6;
+  --accent-soft: #e8f1f8;
+  --accent-text: #1d5a87;
   --on-accent: #ffffff;
-  --danger: #b91c1c; --danger-soft: #fef2f2;
+  --danger: #b42318; --danger-soft: #fef3f2;
   --warn: #a16207;   --warn-soft: #fefce8;
-  --ok: #15803d;     --ok-soft: #f0fdf4;
+  --ok: #1f7a4d;     --ok-soft: #eefaf3;
   --focus: 0 0 0 2px var(--bg), 0 0 0 4px color-mix(in srgb, var(--accent) 55%, transparent);
   --shadow-float: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.10);
   --overlay: rgba(9, 9, 11, .32);
@@ -50,22 +53,24 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f1012; --bg-subtle: #141518; --surface: #16171a; --surface-2: #1d1e22; --surface-hover: #222327;
-    --border: #2a2b30; --border-strong: #3a3b42;
-    --text: #ececef; --text-2: #a8a8b1; --text-3: #8d8d97;
-    --accent: #3996D2; --accent-hover: #5aaee6; --accent-soft: #12263a; --accent-text: #6fb8e8; --on-accent: #0b1020; --brand-mark: #3996D2;
-    --danger: #f87171; --danger-soft: #2a1414; --warn: #facc15; --warn-soft: #29240e; --ok: #4ade80; --ok-soft: #10261a;
+    /* Direction B · Atlas as A's dark theme: deep navy surfaces. */
+    --bg: #0b1220; --bg-subtle: #0e1728; --surface: #111a2b; --surface-2: #162236; --surface-hover: #1b2a42;
+    --border: #22314a; --border-strong: #2f4262;
+    --text: #e7edf6; --text-2: #b3c0d4; --text-3: #93a2b9;
+    --accent: #3996D2; --accent-hover: #5aaee6; --accent-soft: #12324d; --accent-text: #7cc0ec; --on-accent: #0b1220; --brand-mark: #3996D2;
+    --danger: #ef6b5b; --danger-soft: #2c1414; --warn: #e0a63a; --warn-soft: #2a2110; --ok: #3fb27f; --ok-soft: #0f2a1f;
     --shadow-float: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
     --overlay: rgba(0, 0, 0, .55);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0f1012; --bg-subtle: #141518; --surface: #16171a; --surface-2: #1d1e22; --surface-hover: #222327;
-  --border: #2a2b30; --border-strong: #3a3b42;
-  --text: #ececef; --text-2: #a8a8b1; --text-3: #8d8d97;
-  --accent: #3996D2; --accent-hover: #5aaee6; --accent-soft: #12263a; --accent-text: #6fb8e8; --on-accent: #0b1020; --brand-mark: #3996D2;
-  --danger: #f87171; --danger-soft: #2a1414; --warn: #facc15; --warn-soft: #29240e; --ok: #4ade80; --ok-soft: #10261a;
+  /* Direction B · Atlas as A's dark theme: deep navy surfaces. */
+  --bg: #0b1220; --bg-subtle: #0e1728; --surface: #111a2b; --surface-2: #162236; --surface-hover: #1b2a42;
+  --border: #22314a; --border-strong: #2f4262;
+  --text: #e7edf6; --text-2: #b3c0d4; --text-3: #93a2b9;
+  --accent: #3996D2; --accent-hover: #5aaee6; --accent-soft: #12324d; --accent-text: #7cc0ec; --on-accent: #0b1220; --brand-mark: #3996D2;
+  --danger: #ef6b5b; --danger-soft: #2c1414; --warn: #e0a63a; --warn-soft: #2a2110; --ok: #3fb27f; --ok-soft: #0f2a1f;
   --shadow-float: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
   --overlay: rgba(0, 0, 0, .55);
   color-scheme: dark;
@@ -670,3 +675,35 @@ kbd.on-btn { border-color: transparent; color: inherit; background: transparent;
   border-radius: var(--radius); font-size: var(--fs-xs); color: var(--text); text-decoration: none; }
 .dash-types .chip:hover { background: var(--surface-hover); }
 @media (max-width: 1100px) { .dash-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } .dash-cols { grid-template-columns: 1fr; height: auto; } }
+
+/* ------------------------------------------------------------------ Direction A shell (owner decision 2026-11-07)
+   docs/design/phase1/DECISION.md: Home = C's search-first top above A's cards;
+   the Admin group sits at the bottom of the sidebar; dark = B's navy (tokens above). */
+#nav { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; }
+.nav-admin { margin-top: auto; padding-top: var(--s-2); border-top: 1px dashed var(--border); }
+.foot-row { display: flex; align-items: center; }
+.foot-row > a { flex: 1; }
+.app.collapsed .foot-row { flex-direction: column; }
+.home-hero { max-width: 760px; margin: var(--s-6) auto var(--s-4); padding: 0 var(--s-4); text-align: center; display: flex; flex-direction: column; gap: var(--s-3); }
+.home-title { font-size: 24px; color: var(--text); }
+.search-box { display: flex; align-items: center; gap: var(--s-2); padding: 4px 4px 4px var(--s-3); background: var(--surface);
+  border: 1px solid var(--border-strong); border-radius: var(--radius); max-width: 760px; }
+.search-box:focus-within { border-color: var(--accent); }
+.search-box input { flex: 1; border: 0; background: transparent; box-shadow: none; min-width: 0; height: 32px; }
+.search-box input:focus { box-shadow: var(--focus); border-radius: var(--radius-sm); }
+.search-box.big { padding: 6px 6px 6px var(--s-4); border-radius: var(--radius-lg); box-shadow: var(--shadow-float); }
+.search-box.big input { height: 44px; font-size: var(--fs-lg); }
+.chip-row { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: var(--s-2) 0 var(--s-3); }
+.chip-row.center { justify-content: center; }
+.filter-chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: var(--radius-pill);
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-2); font-size: var(--fs-sm); }
+.filter-chip:hover { border-color: var(--border-strong); color: var(--text); }
+.filter-chip.on { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: var(--accent-text); }
+.search-page { display: flex; flex-direction: column; gap: var(--s-3); max-width: 960px; }
+.search-results { display: flex; flex-direction: column; gap: var(--s-3); }
+.search-group .card-head { gap: var(--s-2); }
+.search-hit { min-height: 40px; }
+.admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s-3); }
+.admin-card { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-4); color: var(--text); }
+.admin-card:hover { border-color: var(--border-strong); }
+.admin-card h2 { font-size: var(--fs-lg); }

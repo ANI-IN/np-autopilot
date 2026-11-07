@@ -38,8 +38,10 @@ EXPECTED = {
     "tokens": "#/settings?tab=tokens&open=x",
     "reviews": "#/approvals?tab=reviews&open=x",
     "dashboard": "#/?open=x",
-    "program-timeline": "#/timeline?open=x",
-    "programme-timeline": "#/timeline?open=x",
+    "program-timeline": "#/programs?open=x",
+    "programme-timeline": "#/programs?open=x",
+    "timeline": "#/programs?open=x",          # the retired Program timeline (2026-11-07)
+    "sources": "#/resources?open=x",          # Browse "Sources" became "Resources" (2026-11-07)
     "who-teaches-what": "#/teaching?open=x",
     "record": "#/r?open=x",
 }

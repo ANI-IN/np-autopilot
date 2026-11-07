@@ -77,7 +77,8 @@ def test_the_map_offers_the_workspace_graph_to_admins_only(base, browser, role):
     btn = page.get_by_test_id("open-workspace-graph")
     if role == "admin":
         expect(btn).to_be_visible(timeout=15000)
-        expect(btn).to_have_attribute("href", "/kb/#/graph")
+        expect(btn).to_have_attribute("href", "/kb/#/admin")   # the Admin area (owner, 2026-11-07)
+        expect(btn).to_contain_text("Admin")
         box = btn.bounding_box()
         assert box and box["y"] < 80, f"the button must sit at the top of the map, got y={box and box['y']}"
     else:
@@ -137,3 +138,21 @@ def test_the_map_asks_for_its_structure_without_waiting_for_me(base, browser):
     order = [e for e in seen]
     assert ("start", "structure") in order and ("done", "me") in order, order
     assert order.index(("start", "structure")) < order.index(("done", "me")), f"structure waited for /me: {order}"
+
+
+@pytest.mark.parametrize("q", ["week=10", "week=10&domain=x", "view=timeline", "types=program_week,workflow,theme,module"])
+def test_retired_weeks_workflows_and_themes_are_gone_from_the_map(base, browser, q):
+    """Owner, 2026-11-07: the programme-week filter, ?week= links, the timeline view and the
+    week/workflow/theme types are gone. An old link opens with no week filter (the
+    address is rewritten without it) and the map still works."""
+    page = _open(browser, base + "/?" + q, "viewer")
+    _map_ready(page)
+    page.wait_for_function("() => !location.search.includes('week=')", timeout=10000)
+    expect(page.locator("#fwk")).to_have_count(0)
+    expect(page.locator('#vbar [data-view="timeline"]')).to_have_count(0)
+    assert page.evaluate("() => location.search.includes('timeline')") is False
+    html = page.content()
+    for gone in ("Programme week", "Programme weeks", "Programme timeline"):
+        assert gone not in page.locator("body").inner_text(), gone
+    assert "Workflows" not in page.locator("#legend, .legend, #chips").all_inner_texts().__str__()
+    assert html

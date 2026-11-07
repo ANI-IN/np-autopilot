@@ -73,6 +73,11 @@ want to do. New here? Read the [README](../README.md), then
 | [design/phase4-pilot-plan.md](design/phase4-pilot-plan.md) | Ingestion, extraction and search: source inventory, design, embeddings, scheduled runs, the pilot, the quality test set |
 | [design/phase5-plugin-platform.md](design/phase5-plugin-platform.md) | The Claude plugin platform: one MCP server, OAuth for Claude.ai, internal plugin catalog, plugins → tools → missing data |
 | [design/team-test-script.md](design/team-test-script.md) | A 10-minute test script and feedback form for NP team members |
+| [design/phase1/DECISION.md](design/phase1/DECISION.md) | The approved visual direction (A · Clarity, C's search-first Home, B's dark theme) and what is built |
+| [design/kyp-structure-and-model.md](design/kyp-structure-and-model.md) | The KYP pages' real structure, the proposed data model mapping, what does not fit, the pilot's quality |
+| [design/live-sources.md](design/live-sources.md) | Where the pipeline relies on downloaded files, and the design for live sources stored by ID |
+| [operations/sources-inventory-2026-11-07.md](operations/sources-inventory-2026-11-07.md) | Redacted counts from the read-only Google Sheets and Drive inventory |
+| [testing/E2E-REPORT.md](testing/E2E-REPORT.md) | End-to-end test report for the 2026-11-07 (B) run: one row per test, with evidence |
 
 ## The pipeline's decision records
 

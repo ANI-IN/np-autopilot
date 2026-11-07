@@ -42,6 +42,8 @@ const BIG_FROM = 800;          // above: straight edges, texture while moving, e
 const BUNDLE_FROM = 9;         // this many satellites of one type on one record become one bundle
 const EDGE_LOD_ZOOM = 0.3;     // below this zoom only the hierarchy's lines are drawn
 const POLL_MS = 4000;
+const PAGE_NODES = 1000;      // records per /graph page (~0.5 MB of JSON, ~80 KB compressed)
+const MAX_PAGES = 20;        // 20,000 records; above that the graph says it is truncated
 const DASH_UPTO = 400;       // above this many lines, dashed and dotted relationships draw solid
 const ICONS_UPTO = 400;      // icons inside the shapes only while few records are drawn (each is an image per frame)
 const ARRANGE = [['hierarchy', 'Hierarchy'], ['force', 'Force'], ['radial', 'Radial'], ['saved', 'Saved positions']];
@@ -103,7 +105,7 @@ function buildGraph(v, r) {
   layoutSel.addEventListener('change', () => { const w = (G.views || []).find((x) => x.id === layoutSel.value);
     location.hash = '#/graph' + (w ? '/' + w.config.center : center ? '/' + center : '') + qs({ depth: w ? w.config.depth || 1 : center ? opt.depth : null, view: w ? w.id : null }); });
   const connectBtn = canEdit ? el('button', { class: 'btn', type: 'button', 'data-testid': 'graph-connect', title: 'Or drag from a record’s handle',
-    onclick: () => { connectFrom = connectFrom === null ? false : null; connectBtn.classList.toggle('primary', connectFrom === false);
+    onclick: () => { if (!ready()) return; connectFrom = connectFrom === null ? false : null; connectBtn.classList.toggle('primary', connectFrom === false);
       info.textContent = connectFrom === false ? 'Connect: click the first record, then the second.' : status(); } }, icon('git-branch', 'sm'), 'Connect') : null;
   const head1 = pageHead({ title: 'Graph', actions: [
     center ? el('a', { class: 'btn ghost', href: '#/graph', 'data-testid': 'graph-overview', title: 'The whole graph' }, icon('network', 'sm'), 'Whole graph') : null,
@@ -161,14 +163,20 @@ function buildGraph(v, r) {
   async function fetchAll() {
     if (center) {
       const resp = await api('GET', '/graph' + qs(params({ focus: center, depth: opt.depth, limit: r.q.limit || 1000 })));
+      if (!resp || !Array.isArray(resp.nodes) || !Array.isArray(resp.edges)) throw new Error('The graph reply was incomplete. Try again.');
       ingest(resp); total = resp.total_nodes; truncated = resp.truncated; expanded[center] = true;
       return;
     }
+    // Pages of PAGE_NODES records, not one 5,000-record reply: the whole graph in
+    // one reply is 1.6 MB of JSON, the largest in the app, and it is the request
+    // that failed on the DEV preview (2026-11-07). A page is the size of replies
+    // that are known to arrive intact there.
     let cursor = null, pages = 0;
     do {
-      const resp = await api('GET', '/graph' + qs(params({ limit: r.q.limit || 5000, cursor })));
+      const resp = await api('GET', '/graph' + qs(params({ limit: r.q.limit || PAGE_NODES, cursor })));
+      if (!resp || !Array.isArray(resp.nodes) || !Array.isArray(resp.edges)) throw new Error('The graph reply was incomplete. Try again.');
       ingest(resp); total = resp.total_nodes; cursor = resp.next_cursor; pages++;
-    } while (cursor && pages < 6);
+    } while (cursor && pages < MAX_PAGES);
     truncated = !!cursor;
   }
 
@@ -591,11 +599,16 @@ function buildGraph(v, r) {
     } catch (e) { failToast(e, 'Layout not saved'); }
   }, 400);
   function queueSave(nodes) { nodes.forEach((n) => { if (isRecord(n)) pendingSave[n.id()] = Object.assign({}, n.position()); }); flushPositions(); }
+  // The toolbar exists before the graph has loaded (and stays if loading fails):
+  // its buttons must say so instead of failing on a missing canvas.
+  function ready() { if (cy) return true; toast(info.textContent === 'Not loaded' ? 'The graph did not load. Use Try again first.' : 'The graph is still loading.', { error: true }); return false; }
   async function autoLayout(save) {
+    if (!ready()) return;
     await arrange(opt.arrange === 'saved' ? 'hierarchy' : opt.arrange); fit();
     if (save) { queueSave(visibleNodes()); toast('Arranged and saved to ' + (layoutId === 'default' ? 'the shared layout' : 'this view')); }
   }
   async function resetLayout() {
+    if (!ready()) return;
     const ok = await confirmDialog({ title: 'Reset this layout?', body: 'Forgets every saved position in ' + (layoutId === 'default' ? 'the shared layout' : 'this view') + ' and arranges the graph automatically. Records do not change.', confirmLabel: 'Reset', danger: false });
     if (!ok) return;
     try { await api('DELETE', '/graph/positions' + qs({ layout: layoutId })); await autoLayout(false); toast('Layout reset'); } catch (e) { failToast(e, 'Not reset'); }
@@ -643,7 +656,10 @@ function buildGraph(v, r) {
       const t0 = performance.now();
       const [, ic] = await Promise.all([fetchAll(), loadIcons(S.types.map((t) => t.icon).concat(['box']))]);
       icons = ic; G.timing = { fetch: Math.round(performance.now() - t0) };
-    } catch (e) { canvas.appendChild(errorBox(e, () => { clear(v); buildGraph(v, S.route); })); info.textContent = ''; return; }
+    } catch (e) {
+      // The empty canvas covered the error box, so "Try again" could not be clicked.
+      cyBox.hidden = true;
+      canvas.appendChild(errorBox(e, () => { clear(v); buildGraph(v, S.route); })); info.textContent = 'Not loaded'; return; }
     if (S.graph !== G) return;
     // the expected drawn size decides the renderer and the large-graph settings
     const expect = Math.min(M.nodes.size, opt.unbundled ? M.nodes.size : 600);
@@ -994,8 +1010,13 @@ function buildGraph(v, r) {
   /* The URL holds the view options; controls only change the URL, and this
      applies the difference (same view: the router does not rebuild it). */
   S.onQueryChange = (r2) => {
-    if (S.graph !== G || !cy) return;
+    if (S.graph !== G) return;
     const q = r2.q;
+    // Another saved view (or none) is a different page: its own positions, filters
+    // and menu selection. After "Save view" the URL gains ?view= and the page used
+    // to stay on "Shared layout" with the old positions (2026-11-07).
+    if ((q.view || 'default') !== layoutId) { S.graph = null; clear(v); buildGraph(v, r2); return; }
+    if (!cy) return;
     const next = { depth: q.depth === '2' ? 2 : 1, arrange: q.arrange || (q.view ? 'saved' : 'hierarchy'), group: q.group || 'none',
       legacy: q.legacy === 'all' ? 'all' : 'current', archived: q.archived === '1', focus: Number(q.focus) || 0, unbundled: q.bundle === '0' || q.expand === 'all' };
     const refetch = next.legacy !== opt.legacy || next.archived !== opt.archived || (center && next.depth !== opt.depth);
@@ -1049,6 +1070,7 @@ function buildGraph(v, r) {
     } catch (e) { G.views = []; }
   }
   function saveViewDialog() {
+    if (!ready()) return;
     const name = el('input', { 'aria-label': 'View name', 'data-testid': 'graph-view-name', placeholder: 'e.g. Backend course map' });
     const shared = el('input', { type: 'checkbox', checked: true, 'aria-label': 'Shared' });
     openDialog([el('h2', { text: 'Save graph view' }), el('p', { class: 'muted small', text: 'Keeps the starting record, depth, filters, grouping and the positions as they are now. Moving records later changes only this view.' }),

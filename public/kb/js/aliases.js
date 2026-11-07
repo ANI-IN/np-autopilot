@@ -7,15 +7,19 @@
    it became (with its own query, if any). A query on the old address is kept,
    except where the target sets the same key. */
 export const ALIASES = {
-  links: 'resources',                    // the sidebar says "Links" (F2); the page is #/resources
+  links: 'resources',                    // the page is #/resources ("Resources" in Browse)
   people: 'settings?tab=people',         // People is a Settings tab (B1), never its own page
   members: 'settings?tab=members',
   sync: 'settings?tab=sync',
   tokens: 'settings?tab=tokens',
   reviews: 'approvals?tab=reviews',      // Reviews is a tab of Approvals
   dashboard: '',                         // the dashboard is #/
-  'program-timeline': 'timeline',        // "Programme timeline" became "Program timeline" (F2)
-  'programme-timeline': 'timeline',
+  // The Program timeline was retired with the week records (owner, 2026-11-07):
+  // week and order belong to each program; its old addresses open Programs.
+  timeline: 'programs',
+  'program-timeline': 'programs',
+  'programme-timeline': 'programs',
+  sources: 'resources',                  // "Sources" became "Resources" in Browse (2026-11-07)
   'who-teaches-what': 'teaching',
   record: 'r',                           // #/record/<id> -> #/r/<id>
 };

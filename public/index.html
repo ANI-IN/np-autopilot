@@ -377,7 +377,6 @@ details.legacy summary{cursor:pointer;color:#8b949e;font-size:11px;margin:6px 0}
 <div id="vbar">
   <button type="button" data-view="graph" aria-pressed="true">Map</button>
   <button type="button" data-view="matrix" aria-pressed="false">Who teaches what</button>
-  <button type="button" data-view="timeline" aria-pressed="false">Programme timeline</button>
 </div>
 <div id="sheet"></div>
 <div id="tip"></div>
@@ -395,7 +394,7 @@ details.legacy summary{cursor:pointer;color:#8b949e;font-size:11px;margin:6px 0}
 </div></div>
 
 <div id="tools">
-  <a id="kbgraph" class="kblink" href="/kb/#/graph" data-testid="open-workspace-graph" title="Open the knowledge base's Graph page" hidden>Workspace graph &rarr;</a>
+  <a id="kbgraph" class="kblink" href="/kb/#/admin" data-testid="open-workspace-graph" title="Open the Admin area of the knowledge base" hidden>Admin &rarr;</a>
   <button type="button" id="curbtn" hidden>curation</button>
   <button type="button" id="fit" title="Fit the view to the screen">fit</button>
   <button type="button" id="zin" title="Zoom in">+</button>
@@ -460,15 +459,12 @@ details.legacy summary{cursor:pointer;color:#8b949e;font-size:11px;margin:6px 0}
     <div class="lp-col">
       <h2>What it answers well</h2>
       <div class="lp-item"><span class="k">A module&rsquo;s full picture.</span>
-        <span class="v">Its sessions and the programme week each one falls in, its
+        <span class="v">Its sessions, its
           instructors by role, and every Uplevel and Drive link the corpus gives
           for it.</span></div>
       <div class="lp-item"><span class="k">Who teaches what, by role.</span>
         <span class="v">For each domain, which instructors are primary and which are
           backups, and on which modules.</span></div>
-      <div class="lp-item"><span class="k">The programme timeline.</span>
-        <span class="v">What is taught in which week, domain by domain, with older
-          programmes kept apart and marked as legacy.</span></div>
       <div class="lp-item"><span class="k">The whole map, to explore.</span>
         <span class="v">Domains, modules, sessions, decks and people as one network.
           Click anything to see what it connects to; the link in the address bar
@@ -657,7 +653,16 @@ function neighboursOf(index,id,cap,expanded){
 // merging must be IDEMPOTENT: fetching the same neighbourhood twice must not
 // duplicate a node, double a degree, or move anything that has settled.
 const EDGE_SEP=String.fromCharCode(1);
+// Programme weeks, workflows and themes were retired (owner, 2026-11-07). They never
+// reach the map, whatever the data holds (the old-tables rollback included).
+const RETIRED_TYPES=new Set(['program_week','workflow','theme']);
+function dropRetired(g){
+  const gone=new Set((g.nodes||[]).filter(n=>RETIRED_TYPES.has(n.t)).map(n=>n.id));
+  if(!gone.size)return g;
+  return Object.assign({},g,{nodes:g.nodes.filter(n=>!gone.has(n.id)),edges:(g.edges||[]).filter(e=>!gone.has(e.s)&&!gone.has(e.t))});
+}
 function mergeGraph(D,incoming,budget){
+  incoming=dropRetired(incoming);
   const have=new Set(D.nodes.map(n=>n.id));
   // AN EDGE'S IDENTITY IS ITS DATABASE ID. Keying on (source, rel, target)
   // silently dropped 675 of the structure view's 4,970 edges: a module joins
@@ -820,11 +825,13 @@ const API=window.__NP.api, BUDGET=window.__NP.nodeBudget;
 // is reachable only by search and looks like it was not projected.
 // `file` stays out on purpose: 1,443 of them are provenance-only and carry no
 // edge, which is why coverage's isolated CTE excludes them too.
-const TYPES=['domain','program','module','program_week','class_session',
+// Programme weeks, workflows and themes were retired (owner, 2026-11-07): week
+// numbers belong to each program, and the operational workflows are not part of
+// the knowledge graph.
+const TYPES=['domain','program','module','class_session',
              'assignment','assignment_review','person','instructor',
-             'workflow','theme',
              'slide_deck','content_topic','curriculum_doc','code_repo'];
-// Everything after `theme` is the content layer, hidden behind a toggle in the
+// Everything after `instructor` is the content layer, hidden behind a toggle in the
 // default view (docs/DEFAULT-VIEW.md D1).
 const CONTENT_TYPES=['slide_deck','content_topic','curriculum_doc','code_repo'];
 let idx=buildIndex(D);
@@ -965,12 +972,12 @@ function centreOn(n,k){
 // nothing in that view is isolated (all 42 have a deliverer, which is why the
 // unowned three are reported by name instead; see data.overview), so this costs
 // nothing now and prevents a silent drop later.
-const state={types:new Set(['domain','module','program_week','class_session','assignment',
-  'assignment_review','slide_deck','instructor','person','theme','workflow']),listMode:false,showIso:true,showDash:true,separate:false,
+const state={types:new Set(['domain','module','class_session','assignment',
+  'assignment_review','slide_deck','instructor','person']),listMode:false,showIso:true,showDash:true,separate:false,
   place:null,open:new Set(),hist:[],
   sel:null,expanded:new Set(),depth:1,
   // B2 additions. `hideLegacy` is an opt-out, never a default.
-  hideLegacy:false,view:'graph',fDomain:null,fWeek:null,fRole:null,
+  hideLegacy:false,view:'graph',fDomain:null,fRole:null,
   showContent:false};
 let allDeg=new Map();
 let A=[],E=[],anchors=new Map();
@@ -1214,16 +1221,14 @@ function filterDomain(){
   const m=D.nodes.find(n=>n.t==='module'&&n.dom===v&&!n.legacy);
   return m?(model().domOf.get(m.id)||null):null;
 }
-function filtersOn(){return !!(state.fDomain||state.fWeek||state.fRole);}
+function filtersOn(){return !!(state.fDomain||state.fRole);}
 function filterText(){
   const b=[];
   if(state.fDomain){const d=filterDomain();b.push(d?domainText(d):String(state.fDomain));}
-  if(state.fWeek)b.push('Week '+state.fWeek);
   if(state.fRole)b.push(ROLE_LABEL[state.fRole]||state.fRole);
   return b.join(' · ');
 }
 function passDomain(d){if(!state.fDomain)return true; const f=filterDomain(); return !!(f&&d&&f.id===d.id);}
-function passWeek(m){return !state.fWeek||String(model().weekOf.get(m.id))===String(state.fWeek);}
 //: the current-mastersheet role an instructor holds on one module ('' if none)
 function roleOn(modId,insId){
   for(const x of (idx.adj.get(modId)||[]))
@@ -1238,7 +1243,7 @@ function passRoleModule(m){
 function filteredModules(){
   const M=model(), f=state.fDomain?filterDomain():null;
   return M.current.filter(d=>!f||f.id===d.id).flatMap(d=>M.cur.get(d.id)||[])
-    .filter(m=>passWeek(m)&&passRoleModule(m));
+    .filter(m=>passRoleModule(m));
 }
 function filterNote(v,x,y,w){
   if(!filtersOn())return;
@@ -1330,8 +1335,8 @@ const MAP_SLOT={SD1:[-640,-310],SD3:[640,-310],SD2:[-640,360],SD4:[640,360]};
 const MAP_R=165;
 //: the map's default types — topics, files, repos, curriculum docs and the
 //: older sheets' programmes stay behind their chips
-const DEFAULT_TYPES=['domain','module','program_week','class_session','assignment',
-  'assignment_review','slide_deck','instructor','person','theme','workflow'];
+const DEFAULT_TYPES=['domain','module','class_session','assignment',
+  'assignment_review','slide_deck','instructor','person'];
 const PRI={domain:10,module:8,group:7,theme:6,instructor:5,person:4,workflow:3,
   program_week:3,class_session:3,assignment:3,assignment_review:3,slide_deck:2,content_topic:2};
 let MAPPOS=null, MAPPOS_KEY='';
@@ -1662,7 +1667,7 @@ function layoutDomain(d){
   const M=model(), v=V();
   put(v,d,0,-70,10,'r',domainName(d),COL*3);
   filterNote(v,0,-40,COL*3);
-  const mods=(M.cur.get(d.id)||[]).filter(m=>passWeek(m)&&passRoleModule(m));
+  const mods=(M.cur.get(d.id)||[]).filter(m=>passRoleModule(m));
   // WRAPPED, NOT WIDENED: as many module columns as fit beside an open panel,
   // then a new row — nothing runs off the right edge (owner review 2026-09-30)
   const per=colsFit(COL,mods.length||1);
@@ -1749,8 +1754,8 @@ function currentInstructors(){
 function passFilters(n){
   if(!filtersOn())return true;
   const mods=filteredModules(), ids=new Set(mods.map(m=>m.id));
-  if(n.t==='module')return ids.has(n.id)||(!state.fWeek&&!state.fRole&&passDomain(model().domOf.get(n.id)));
-  if(n.t==='domain')return passDomain(n)&&(!state.fWeek&&!state.fRole||!isLegacyDomain(n));
+  if(n.t==='module')return ids.has(n.id)||(!state.fRole&&passDomain(model().domOf.get(n.id)));
+  if(n.t==='domain')return passDomain(n)&&(!state.fRole||!isLegacyDomain(n));
   if(n.t==='instructor'){
     for(const x of (idx.adj.get(n.id)||[])){
       if(!ids.has(x.o))continue;
@@ -1760,7 +1765,7 @@ function passFilters(n){
     return false;
   }
   if(BY_MODULE[n.t])return nbrs(n.id,null,'module').some(m=>ids.has(m.id));
-  const d=domainOf(n); return !!d&&passDomain(d)&&!state.fWeek&&!state.fRole;
+  const d=domainOf(n); return !!d&&passDomain(d)&&!state.fRole;
 }
 function layoutTypes(){
   // the type chips: each chosen type as a labelled list, no edges. Fitted to
@@ -1857,7 +1862,7 @@ function renderCrumbs(){
   const c=document.getElementById('crumbs'); if(!c)return;
   const parts=['<a data-go="map">Map</a>'];
   if(state.view&&state.view!=='graph'){
-    parts.push('<span>'+(state.view==='matrix'?'Who teaches what':'Programme timeline')+'</span>');
+    parts.push('<span>Who teaches what</span>');
     c.innerHTML=parts.join('<span class="sep">›</span>');
     for(const a of c.querySelectorAll('a'))a.onclick=()=>setView('graph',true);
     return;
@@ -2659,7 +2664,7 @@ function domainLinks(n){
     '</div></div>';
   if(mods.length){
     h+='<div class="tier"><div class="tk">Modules in the current mastersheet</div>'+
-      mods.map(m=>'<div class="item"><span class="ik">Week '+esc(String(M.weekOf.get(m.id)||'?'))+
+      mods.map(m=>'<div class="item"><span class="ik">Module'+
         '</span><a class="nbl" data-id="'+esc(m.id)+'">'+esc(m.l)+'</a></div>').join('')+'</div>';
   }
   return h;
@@ -3856,7 +3861,6 @@ function renderTimeline(){
   const lanes=new Map(), M=model();
   for(const m of modulesFor(state.fDomain)){
     const wk=M.weekOf.get(m.id)||null;
-    if(state.fWeek&&String(wk)!==String(state.fWeek))continue;
     if(!lanes.has(m.dom))lanes.set(m.dom,[]);
     lanes.get(m.dom).push({m,wk});
   }
@@ -3896,7 +3900,6 @@ function setView(v,push){
   try{ document.body.classList.toggle('table', v!=='graph'); }catch(e){}
   renderCrumbs();
   if(v==='matrix')renderMatrix();
-  if(v==='timeline')renderTimeline();
   if(push!==false)writeUrl('push');
 }
 for(const b of VBAR.querySelectorAll('button'))
@@ -3920,7 +3923,6 @@ function urlFor(){
   if(!typesAreDefault())q.set('types',TYPES.filter(t=>state.types.has(t)).join(','));
   if(state.listMode)q.set('list','1');
   if(state.fDomain)q.set('domain',state.fDomain);
-  if(state.fWeek)q.set('week',state.fWeek);
   if(state.fRole)q.set('role',state.fRole);
   if(state.mxSort==='az')q.set('sort','az');
   const pl=state.place;
@@ -3945,11 +3947,15 @@ function writeUrl(mode){
 //: LAST item; domain_at=, group=, at=<id> and #/node/<id> are read as before.
 function parseUrl(search,hash){
   const q=new URLSearchParams(search||''), o={view:q.get('view')||'graph',
-    list:q.get('list')==='1',types:null,domain:q.get('domain')||null,week:q.get('week')||null,
+    list:q.get('list')==='1',types:null,domain:q.get('domain')||null,
     role:q.get('role')||null,sort:q.get('sort')==='az'?'az':null,place:null,focus:q.get('focus')||null,old:false};
   // The map is 2D only (owner, 2026-11-07). An old ?dim=2d or ?dim=3d link opens
   // the 2D map, and the address is rewritten without it.
   if(q.has('dim'))o.old=true;
+  // ?week= (the retired programme-week filter, 2026-11-07): opens with no filter
+  // and the address is rewritten without it.
+  if(q.has('week'))o.old=true;
+  if(q.get('view')==='timeline')o.old=true;      // the retired timeline view
   const t=q.get('types');
   if(t){const want=t.split(',').filter(x=>TYPES.indexOf(x)>=0); if(want.length)o.types=want;}
   const at=q.get('at');
@@ -3973,10 +3979,10 @@ function applyUrl(){
   let o; try{ o=parseUrl(location.search,location.hash); }catch(e){ return; }
   _applying=true;
   try{
-    state.view=['graph','matrix','timeline'].indexOf(o.view)>=0?o.view:'graph';
+    state.view=['graph','matrix'].indexOf(o.view)>=0?o.view:'graph';
     state.listMode=o.list;
     state.types=new Set(o.types||DEFAULT_TYPES);
-    state.fDomain=o.domain; state.fWeek=o.week; state.fRole=o.role; state.mxSort=o.sort;
+    state.fDomain=o.domain; state.fRole=o.role; state.mxSort=o.sort;
     state.place=null; state.open=new Set(); state.sel=null; FOCUS_MOD=null; TOPIC_MODS=new Set();
     closePanel();
     if(o.place){
@@ -4012,21 +4018,16 @@ function renderFilters(){
   const legs=model().other;
   const legacyOpts=legs.length?'<optgroup label="Legacy \u2014 older sheets">'+
     legs.map(d=>opt('legacy:'+d.id,d.l+' \u2014 legacy',state.fDomain)).join('')+'</optgroup>':'';
-  const weeks=[...new Set(D.nodes.filter(n=>n.t==='program_week')
-      .map(n=>(n.p||{}).number).filter(x=>x!=null))].sort((a,b)=>a-b);
   host.innerHTML=
     sel('fdom','Domain',doms.map(d=>[d,domainTitle(d)]),state.fDomain||'',legacyOpts)+
-    sel('fwk','Programme week',weeks.map(w=>[w,'Week '+w]),state.fWeek||'')+
     sel('frole','Role',Object.keys(ROLE_LABEL).map(r=>[r,ROLE_LABEL[r]]),state.fRole||'');
   const on=(id,fn)=>{const el=document.getElementById(id); if(el)el.onchange=fn;};
   on('fdom',e=>{state.fDomain=e.target.value||null;refreshView()});
-  on('fwk',e=>{state.fWeek=e.target.value||null;refreshView()});
   on('frole',e=>{state.fRole=e.target.value||null;refreshView()});
 }
 function refreshView(){
   writeUrl('replace');
   if(state.view==='matrix')renderMatrix();
-  else if(state.view==='timeline')renderTimeline();
   else recompute(true,'filters');        // the MAP follows the filters too
 }
 

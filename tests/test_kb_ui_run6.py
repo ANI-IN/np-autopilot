@@ -110,7 +110,7 @@ def test_no_one_off_inline_styles(name):
 pw = pytest.importorskip("playwright.sync_api", reason="kb ui: needs the playwright package")
 expect = pw.expect
 
-SCREENS = ["#/", "#/records", "#/programs", "#/courses", "#/resources", "#/outline", "#/graph", "#/teaching", "#/timeline",
+SCREENS = ["#/", "#/records", "#/programs", "#/courses", "#/resources", "#/outline", "#/graph", "#/teaching",
            "#/activity", "#/quality", "#/approvals", "#/archived", "#/guide",
            "#/settings?tab=types", "#/settings?tab=relationships", "#/settings?tab=links", "#/settings?tab=tags",
            "#/settings?tab=members", "#/settings?tab=tokens", "#/settings?tab=templates", "#/settings?tab=sync"]

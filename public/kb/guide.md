@@ -1,6 +1,6 @@
 # Guide
 
-The knowledge base is where the curriculum team keeps track of what we teach: every program, course, module, week and live session, the slides, recordings and briefs that go with them, and who owns what. This guide explains how to use it. You do not need any technical knowledge.
+The knowledge base is where the curriculum team keeps track of what we teach: every program, course, module and live session, the slides, recordings and briefs that go with them, and who owns what. This guide explains how to use it. You do not need any technical knowledge.
 
 To edit this guide, change the one file `public/kb/guide.md` in the repository.
 
@@ -8,32 +8,33 @@ To edit this guide, change the one file `public/kb/guide.md` in the repository.
 
 There are three kinds of things in the knowledge base.
 
-- **Records** are the building blocks: a program, a course, a domain, a module, a week, a live session, a topic, an instructor. Each record has a type, a name, an owner and, depending on its type, some extra fields.
+- **Records** are the building blocks: a program, a course, a domain, a module, a live session, a topic, an instructor. Each record has a type, a name, an owner and, depending on its type, some extra fields.
 - **Relationships** connect two records and say how they relate: a course **contains** a module, an instructor **teaches** a session, a module **covers** a topic.
-- **Links** are the files and pages that go with a record: KYP slides, a class recording, an assignment brief, a solutions repository on GitHub, a page on UpLevel. One link can be attached to several records; the **Links** page lists each one once.
+- **Resources** (links) are the files and pages that go with a record: KYP slides, a class recording, an assignment brief, a solutions repository on GitHub, a page on UpLevel. One link can be attached to several records; the **Links** page lists each one once.
 
-One example, from top to bottom: the course **System Design for Senior Engineers** contains the module **Scalability Fundamentals**, which contains **Week 1 · Caching and load balancing**, which contains the live session **Designing a URL shortener**. That session has two links: its slides and its recording.
+One example, from top to bottom: the course **System Design for Senior Engineers** contains the module **Scalability Fundamentals**, which contains the live session **Designing a URL shortener**. Week and order belong to each program, not to the module or topic: a program's page shows when each module is taught. That session has two links: its slides and its recording.
 
 ![A record's detail panel: where it belongs, its owner and fields, then tabs for links, relationships and history](/kb/guide/record.png)
 
 ## Finding things
 
+- **Home** opens on one big search box. Type and press Enter for the full results, grouped by type; the chips below it repeat your recent searches and open each record type.
 - Press **Ctrl K** (or **⌘K** on a Mac) anywhere to search every record and link by name or text. The same box runs commands like "New course" or "Go to Outline".
 - **All records** is a table of everything. Use **Filter** to narrow it (by type, course, owner, tag, status, flagged); each filter shows as a chip you can remove. **Save view** keeps a set of filters as a tab; tick "Share with the team" to let everyone use it.
 - In a table, press **j** and **k** to move, **Enter** to open, **x** to select, and **/** to jump to the search box.
 - **Outline** shows programs and courses as a tree. It is the quickest way to see a whole course at once.
-- **Graph** shows the whole knowledge base, or one record and what it is connected to. Click a record to open it; the **+** next to a record expands its neighbours (if you cannot edit, double-clicking a record does the same).
+- **Map** (in Browse) is the read-only overview for everyone.
+- **Graph editor** (Admin group, admins only) shows the whole knowledge base, or one record and what it is connected to, and lets admins arrange and connect records. Click a record to open it; the **+** next to a record expands its neighbours.
 - **Who teaches what** is a table of instructors against modules and live sessions. Each cell shows the role from the current mastersheet (**P** primary, **B1**–**B3** backups) or **T** when an older sheet says they taught it. Filter by domain, role or name, and export it as CSV.
-- **Program timeline** shows each program's modules week by week, with their live sessions and slide decks.
 
-![The Outline: a program's courses, modules, weeks and sessions](/kb/guide/outline.png)
+![The Outline: a program's courses, modules and sessions](/kb/guide/outline.png)
 
 ## Creating records
 
 Click **New record** in the sidebar (or press **c**). Everything goes into one form and is saved in one step.
 
 1. Choose the **Type** and type a **Name**. If a record with the same name already exists, the form tells you and offers to open it.
-2. Under **Placement**, say where it belongs. Start typing a course, module or week name and pick it. If it does not exist yet, choose **Create "…"** to create it right there; you can do this at every level (for example, a new week inside a new module inside an existing course). A record can belong to more than one place: use **Add another place**.
+2. Under **Placement**, say where it belongs. Start typing a course or module name and pick it. If it does not exist yet, choose **Create "…"** to create it right there; you can do this at every level (for example, a new week inside a new module inside an existing course). A record can belong to more than one place: use **Add another place**.
 3. Add **Relationships**, **Links**, **People** and **Tags** if you have them. Each section shows how many items it holds.
 4. Click **Create** (or press **Ctrl Enter**). Use **Create and add another** to enter several in a row.
 
@@ -151,7 +152,7 @@ The AI assistant (Claude with your API token, **Settings → API tokens**) acts 
 
 ## Activity
 
-**Maintain → Activity** lists every change: who made it (a person, the AI assistant working for a named person, an import, the sync, or the system), what they did, to which record (with a link, or marked **deleted** if it is gone), and when. Hover the time to see the exact date. For an update, each changed field shows its value before and after.
+**Admin → Activity** lists every change: who made it (a person, the AI assistant working for a named person, an import, the sync, or the system), what they did, to which record (with a link, or marked **deleted** if it is gone), and when. Hover the time to see the exact date. For an update, each changed field shows its value before and after.
 
 Filter by person, action, what changed (a record, a relationship, a link, a type…), source (app, AI assistant, import, sync, system) and dates, or search names and values. **Export CSV** downloads exactly what is shown.
 

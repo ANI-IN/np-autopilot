@@ -78,7 +78,7 @@ KB_ROUTES = [
     ("POST", f"templates/{RID}/restore", E, {}), ("PATCH", f"templates/{RID}", E, {}),
     ("GET", "views", V, None), ("POST", "views", V, {}),
     ("PATCH", f"views/{RID}", V, {}, "owner_rows"), ("DELETE", f"views/{RID}", V, None, "owner_rows"),
-    ("GET", "views/teaching", V, None), ("GET", "views/timeline", V, None),
+    ("GET", "views/teaching", V, None),
     ("GET", "realtime", V, None), ("PATCH", f"attachments/{RID}", C, {}),
     ("POST", f"attachments/{RID}/detach", C, {}),
     ("GET", "dashboard", V, None), ("GET", "counts", V, None),
@@ -88,7 +88,7 @@ KB_ROUTES = [
     ("GET", "sync", A, None), ("POST", "sync/run", A, {}), ("GET", "quality/sync", E, None),
     ("POST", f"nodes/{RID}/account", A, {}), ("DELETE", f"nodes/{RID}/account", A, None),
     ("GET", "graph", V, None), ("GET", "graph/positions", V, None),
-    ("POST", "graph/positions", C, {}), ("DELETE", "graph/positions", C, None),
+    ("POST", "graph/positions", A, {}), ("DELETE", "graph/positions", A, None),   # the graph editor is admin-only (2026-11-07)
     ("GET", "activity", V, None), ("GET", "activity?format=csv", V, None),
     ("GET", "changes", V, None), ("GET", "changes?since=0", V, None),
     ("GET", "quality", V, None), ("GET", "quality/missing-resources", V, None),

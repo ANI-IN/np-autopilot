@@ -617,7 +617,7 @@ def graph_positions(conn, params: dict) -> dict:
 
 
 def save_graph_positions(conn, actor: Actor, body: dict) -> dict:
-    require(conn, "contributor", "arranging the graph")
+    require(conn, "admin", "arranging the graph (the graph editor is for admins, 2026-11-07)")
     v.only(body, {"layout", "positions"})
     lay = _layout(body.get("layout"))
     pos = body.get("positions")
@@ -640,7 +640,7 @@ def save_graph_positions(conn, actor: Actor, body: dict) -> dict:
 
 
 def reset_graph_positions(conn, actor: Actor, params: dict) -> dict:
-    require(conn, "contributor", "arranging the graph")
+    require(conn, "admin", "arranging the graph (the graph editor is for admins, 2026-11-07)")
     lay = _layout(params.get("layout"))
     ids = [str(v.uid(x, "ids")) for x in str(params.get("ids") or "").split(",") if x]
     if ids:

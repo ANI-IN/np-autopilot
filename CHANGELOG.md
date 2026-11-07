@@ -8,6 +8,24 @@ is in [docs/project-history/](docs/project-history/README.md).
 
 ## Unreleased
 
+### Autonomous run B (2026-11-07)
+
+- **Graph page:** an unreadable or incomplete server reply is now reported as such
+  (it used to become `{}` and fail with "reading 'forEach'"). The whole graph loads
+  in pages of 1,000 records. The toolbar is safe before the graph loads, "Try again"
+  can be clicked, and "Save view" switches to the saved view.
+- **Weeks, workflows and themes retired:** the map's week filter, `?week=` links,
+  the timeline views, and the week, workflow and theme types are gone. The data is
+  archived reversibly by `scripts/retire_legacy_sections.py`, with week numbers kept
+  on the course→module links. The sync skips `retired_types`.
+- **Visual direction A** (with C's search-first Home and B's dark theme): a new
+  navigation with an Admin group, a search results page, an Admin overview, a
+  light/dark toggle that follows the system, and WCAG AA chips. The graph editor
+  is admin-only, and its layout writes require admin.
+- Docs: `docs/design/phase1/DECISION.md`, `kyp-structure-and-model.md`,
+  `live-sources.md`, `docs/operations/sources-inventory-2026-11-07.md`,
+  `docs/testing/E2E-REPORT.md`.
+
 ### Local end-to-end test before the preview (2026-11-06)
 
 - **Graph rename:** a rename keeps the version it started from, so another

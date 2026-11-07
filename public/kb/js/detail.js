@@ -90,7 +90,7 @@ function renderNode(st, keepTab) {
   const acts = el('div', { class: 'row gap-xs flex-none' });
   if (!st.full) acts.appendChild(el('a', { class: 'btn ghost sm icon', href: '#/r/' + n.id, title: 'Open as a page', 'aria-label': 'Open as a page', 'data-testid': 'open-full' }, icon('maximize-2', 'sm')));
   else acts.appendChild(el('a', { class: 'btn ghost sm', href: '#/records?open=' + n.id, 'data-testid': 'back-to-list' }, icon('arrow-left', 'sm'), 'Back to list'));
-  acts.appendChild(el('a', { class: 'btn ghost sm icon', href: '#/graph/' + n.id, title: 'Show in graph', 'aria-label': 'Show in graph', 'data-testid': 'open-graph' }, icon('network', 'sm')));
+  if (can('admin')) acts.appendChild(el('a', { class: 'btn ghost sm icon', href: '#/graph/' + n.id, title: 'Show in graph', 'aria-label': 'Show in graph', 'data-testid': 'open-graph' }, icon('network', 'sm')));
   if (editable) acts.appendChild(el('button', { class: 'btn sm', type: 'button', 'data-testid': 'edit-record', onclick: () => openRecordForm({ edit: n }) }, icon('pencil', 'sm'), 'Edit'));
   acts.appendChild(el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'More actions', 'data-testid': 'more-actions', onclick: (e) => moreMenu(e.currentTarget, st) }, icon('ellipsis')));
   if (!st.full) acts.appendChild(el('button', { class: 'btn ghost sm icon', type: 'button', 'aria-label': 'Close details', 'data-testid': 'close-panel', onclick: () => closePanel() }, icon('x')));

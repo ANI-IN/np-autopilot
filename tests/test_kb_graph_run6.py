@@ -82,7 +82,7 @@ OVERLAPS = """() => { const G = window.__kbGraph; G.declutter(); const bx = G.la
 
 def test_default_layout_is_the_hierarchy_with_satellites_and_bundles(server, browser):
     ids = _tree(topics=12)
-    page = page_as(browser, server, "editor", viewport=(1536, 900))
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server)
     assert page.evaluate("() => window.__kbGraph.arrangement()") == "hierarchy"
     expect(page.get_by_test_id("graph-arrange")).to_have_value("hierarchy")
@@ -105,7 +105,7 @@ def test_default_layout_is_the_hierarchy_with_satellites_and_bundles(server, bro
 
 def test_legend_is_a_filter(server, browser):
     ids = _tree(topics=3)
-    page = page_as(browser, server, "viewer", viewport=(1536, 900))
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server)
     expect(page.get_by_test_id("graph-info")).to_contain_text("Showing 9 record(s)")
     page.get_by_test_id("graph-filter-topic").uncheck()
@@ -129,7 +129,7 @@ def test_legend_is_a_filter(server, browser):
 
 def test_focus_mode_and_breadcrumbs(server, browser):
     ids = _tree(topics=2)
-    page = page_as(browser, server, "viewer", viewport=(1536, 900))
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server)
     page.evaluate(f"() => {{ const cy = window.__kbGraph.cy; cy.$(':selected').unselect(); cy.getElementById('{ids['session']['id']}').select(); }}")
     crumbs = page.get_by_test_id("graph-breadcrumbs")
@@ -154,7 +154,7 @@ def test_focus_mode_and_breadcrumbs(server, browser):
 
 def test_search_jumps_into_a_bundle(server, browser):
     ids = _tree(topics=10)
-    page = page_as(browser, server, "viewer", viewport=(1536, 900))
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server)
     target = ids["topics"][7]
     assert page.evaluate(f"() => window.__kbGraph.cy.getElementById('{target['id']}').length") == 0   # inside the bundle
@@ -173,7 +173,7 @@ def test_search_jumps_into_a_bundle(server, browser):
 
 def test_minimap_and_fit(server, browser):
     _tree(topics=3)
-    page = page_as(browser, server, "viewer", viewport=(1536, 900))
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server)
     mini = page.get_by_test_id("minimap")
     expect(mini).to_be_visible()
@@ -197,7 +197,7 @@ def test_minimap_and_fit(server, browser):
 
 def test_switching_layouts(server, browser):
     ids = _tree(topics=3)
-    page = page_as(browser, server, "viewer", viewport=(1536, 900))
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server)
     page.evaluate(f"() => {{ const cy = window.__kbGraph.cy; cy.getElementById('{ids['module']['id']}').select(); }}")
     page.get_by_test_id("graph-arrange").select_option("radial")
@@ -226,7 +226,7 @@ def test_legacy_records_are_hidden_until_asked(server, browser):
     with owner() as c:
         c.execute("select set_config('kb.actor_type', 'system', false)")
         c.execute("update kb.nodes set is_legacy = true where id = %s", (old["id"],))
-    page = page_as(browser, server, "viewer", viewport=(1536, 900))
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server)
     assert page.evaluate(f"() => window.__kbGraph.cy.getElementById('{old['id']}').length") == 0
     page.get_by_test_id("graph-legacy").check()
@@ -240,7 +240,7 @@ def test_legacy_records_are_hidden_until_asked(server, browser):
 
 def test_group_by_type_folds_and_unfolds(server, browser):
     ids = _tree(topics=3)
-    page = page_as(browser, server, "viewer", viewport=(1536, 900))
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server)
     page.get_by_test_id("graph-group").select_option("type")
     page.wait_for_function("() => window.__kbGraph.cy.nodes('.gbox').length > 0")
@@ -256,7 +256,7 @@ def test_group_by_type_folds_and_unfolds(server, browser):
 
 
 def test_shortcut_sheet_hints_and_empty_state(server, browser):
-    page = page_as(browser, server, "editor", viewport=(1536, 900))
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server)
     expect(page.get_by_test_id("graph-empty")).to_contain_text("Nothing to show yet")
     expect(page.get_by_test_id("graph-empty-new")).to_be_visible()
@@ -284,7 +284,7 @@ def test_shortcut_sheet_hints_and_empty_state(server, browser):
 
 def test_live_change_arrives_through_apply_changes(server, browser):
     ids = _tree(topics=1)
-    page = page_as(browser, server, "viewer", viewport=(1536, 900))
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server)
     _, new = Client(USERS["editor"]).post("/api/kb/nodes", {"type": "week", "name": "Arrives live", "parents": [ids["module"]["id"]]})
     page.wait_for_function(f"() => window.__kbGraph.cy.getElementById('{new['id']}').length === 1", timeout=20000)
@@ -299,7 +299,7 @@ def test_labels_never_overlap_at_normal_zoom(server, browser):
     _, d2 = ed.post("/api/kb/nodes", {"type": "domain", "name": "A second domain with a rather long name for labels"})
     for i in range(6):
         ed.post("/api/kb/nodes", {"type": "module", "name": f"Module with a long descriptive title number {i}", "parents": [d2["id"]]})
-    page = page_as(browser, server, "viewer", viewport=(1536, 900))
+    page = page_as(browser, server, "admin", viewport=(1536, 900))
     _open(page, server, "#/graph?expand=all")
     page.evaluate("() => { const cy = window.__kbGraph.cy; cy.zoom(1); cy.center(); }")
     page.wait_for_timeout(300)

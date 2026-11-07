@@ -18,6 +18,13 @@ types:
   person: team_member
   theme: theme
 
+# Source types the sync NEVER imports (owner decision, 2026-11-07): programme weeks,
+# workflows and themes were retired from the knowledge base. Their records were
+# archived by scripts/retire_legacy_sections.py (reversible); week numbers moved onto
+# the course -> module links as schedule info. Removing a type from this list
+# lets the sync import it again.
+retired_types: [program_week, workflow, theme]
+
 # Projection types that become LINKS (their drive_url), in the order that picks
 # a merged link's title and kind when several share one URL.
 artifacts: [slide_deck, curriculum_doc, code_repo, assignment, assignment_review, file]

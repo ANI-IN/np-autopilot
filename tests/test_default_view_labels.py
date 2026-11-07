@@ -34,6 +34,8 @@ def _end(role: str, i: int = 1) -> str:
 
 
 DECK, SESSION, WEEK = _end("module_deck"), _end("module_session"), _end("module_week")
+#: Retired types (2026-11-07): read from the mapping, never spelled here (the taxonomy rule).
+RETIRED = tuple(__import__("yaml").safe_load((Path(__file__).resolve().parents[1] / "config" / "kb-projection-mapping.yaml").read_text(encoding="utf-8"))["retired_types"])
 ASSIGNMENT, TOPIC, CODE_REPO = _end("module_assignment"), _end("module_topic"), _end("module_repo")
 CURRIC = _end("curriculum_module", 0)
 key = lambda a, b: "-".join(sorted((a, b)))                                 # noqa: E731
@@ -97,10 +99,12 @@ def test_the_default_map_holds_every_current_type(views):
     """Owner review 2026-09-30: one network of everything current; topics,
     files, repos, curriculum docs and programmes stay behind their chips."""
     got = views["defaultMap"]["nodes"]
-    for t in ("domain", "module", WEEK, SESSION, ASSIGNMENT,
-              DECK, "instructor", "person", "theme", "workflow", "group"):
+    for t in ("domain", "module", SESSION, ASSIGNMENT,
+              DECK, "instructor", "person", "group"):
         assert got.get(t), f"the default map shows no {t}: {got}"
-    for t in (TOPIC, "file", CODE_REPO, CURRIC, "program"):
+    # Programme weeks, workflows and themes were retired (owner, 2026-11-07): never
+    # on the map, even when the data still holds them (the old-tables rollback).
+    for t in (TOPIC, "file", CODE_REPO, CURRIC, "program", *RETIRED):
         assert not got.get(t), f"{t} is on the default map: {got}"
     assert views["defaultMap"]["list"] is False
     # decks hang off their session (or module), instructors off their modules
