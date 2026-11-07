@@ -119,7 +119,7 @@ Both are in §3 and §4.
 
 ### Step 6: End-to-end report
 
-`docs/testing/E2E-REPORT.md` has one row per test. **Bugs found and fixed:** 11 (graph: 4;
+`docs/testing/E2E-REPORT-run-B.md` has one row per test. **Bugs found and fixed:** 11 (graph: 4;
 script: 2; shell and UI: 5, i.e. the route race, focus ring, autofocus, radius tokens and missing icons). The one row **not verified** is the graph on
 DEV signed in.
 

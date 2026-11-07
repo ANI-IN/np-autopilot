@@ -188,7 +188,7 @@ def test_ui_sources_page_for_admins(server, browser):
 
 
 def test_ui_new_record_form_sets_owners_and_sme_roles(server, browser):
-    d = _curriculum()
+    _curriculum()
     page = page_as(browser, server, "editor")
     page.get_by_test_id("new-record").click()
     from test_kb_e2e import choose_type

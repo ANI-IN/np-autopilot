@@ -158,6 +158,7 @@ def main() -> int:
 
         # ---- Graph editor: loads, auto-layout, reset, owner filter (NP team only)
         pg.goto(base + "/kb/#/graph")
+        pg.reload()                                            # a fresh page load, as a person opening the page
         pg.wait_for_function("() => window.__kbGraph && window.__kbGraph.loadedAt", timeout=120000)
         info = pg.get_by_test_id("graph-info").inner_text()
         check("RD-GR-01", "graph", "Graph editor loads on real data (paged)", pg.locator(".error-box").count() == 0 and "Showing" in info, info,

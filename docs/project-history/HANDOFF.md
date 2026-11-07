@@ -1,3 +1,9 @@
+# HANDOFF: run C done on DEV (2026-11-07)
+
+**Latest:** run C finished. The curriculum model (four domains, owners and SMEs enforced, week-agnostic), the registry and KYP sources, the cleanup of obsolete data and one detail panel are on the branch, on DEV (migration 0041) and on the redeployed preview. Full report: [RUN-2026-11-07-C.md](RUN-2026-11-07-C.md); tests: [../testing/E2E-REPORT.md](../testing/E2E-REPORT.md). Production and `main` were not touched. The owner's decisions are listed in the report, §5.
+
+---
+
 # HANDOFF: DEV preview deployed, Google sign-in working, manual testing (2026-11-07)
 
 Branch `auto/knowledge-platform-20261102` is pushed. Nothing is on `main`. Production (Vercel Production and the production Supabase project) was not touched.

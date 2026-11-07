@@ -522,9 +522,7 @@ class Extract:
     def run(self, structure: dict, includes: dict):
         self.listing(structure)
         fam = SCOPE["families"]
-        P = {p["page_id"]: p for p in self.D["pages"]}
         by_title = {norm(p["title"]): p for p in self.D["pages"]}
-        deferred = [re.compile(x, re.I) for x in SCOPE["deferred_title_patterns"]]
         for row in self.D["pages"]:
             if row["do_not_use"]:
                 continue

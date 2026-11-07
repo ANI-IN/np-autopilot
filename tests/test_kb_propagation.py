@@ -320,7 +320,6 @@ def test_record_type_and_field_changes(admin, viewer):
 # ---------------------------------------------------------------------------- tags, owners, bulk, graph edits
 def test_tags_owners_bulk_and_graph_edits(admin, viewer):
     mod = _node(admin, "module", "Owned Module", owner_id=None)
-    ins = _node(admin, "instructor", "Owner Person")
     cur = _cursor(viewer)
     s, _ = admin.post(f"/api/kb/nodes/{mod['id']}/tags", {"name": "flagship"})
     assert s in (200, 201)

@@ -1,116 +1,176 @@
-# End-to-end test report: autonomous run B (2026-11-07)
+# End-to-end test report: run C (2026-11-07)
 
-Every change in this run, tested end to end. Each row gives the test data, the steps, the
-expected and actual result, and any bug found with its fix and retest. There are no real names
-or e-mails here. Raw logs and real-data evidence stay local in `.measure/` (gitignored); the
-**Evidence** column names the file. A row without evidence is marked **not verified**.
+Every feature of run C, tested end to end: the data was prepared, the real workflow run, and the API, the database and the UI checked, including error and permission cases. One row per test.
 
-**Test data:**
-- **Synthetic:** records created through the API in the local test database. `kb_support`
-  resets the kb tables around each test.
-- **Real-data copy:** the local `kb_realdata` database, a copy of production, served on :8766.
-- **DEV:** the DEV Supabase project (database only).
+**Screenshots** are named in the *Screenshot* column. They are stored **locally only** under `testing/evidence/<feature>/` and are gitignored: the GitHub repository is **public** and real-data screenshots show real names. This report contains no real names or e-mail addresses.
 
-Production was not touched.
+**Data used**
+- *Synthetic*: records created through the API in the local test database (reset around each test).
+- *Local copy*: the local `kb_realdata` database, mirrored from DEV at the start of this run (from the restore-tested DEV backup), then put through exactly the same scripts as DEV. Served on :8766.
+- *DEV preview*: the DEV project and the redeployed DEV preview, signed in with the owner's API token. The Map is checked on the local copy only: on the preview it needs a Google session.
 
-## 1. Graph page (the DEV report: "reading 'forEach'" on load, "reading 'edges'" on Reset)
+Production was not touched. Destructive steps ran on the local copy first, then on DEV.
 
-| # | Scenario | Steps | Expected | Actual | Result | Bug found → fix | Retest | Evidence |
-|---|---|---|---|---|---|---|---|---|
-| 1.1 | Reproduce locally | Real-data copy, admin, `#/graph`, also with 400 ms latency and 2 MB/s simulated | The error appears | Loads correctly; Reset works | Not reproduced locally | — | — | debug script output (session) |
-| 1.2 | Root cause, client side | Read `api()` | A 2xx reply that isn't JSON is an error | `r.json().catch(() => ({}))` turned it into `{}`, so `resp.nodes.forEach` threw | **Bug** | `api()` reads the text and throws "The reply from the server could not be read (HTTP n, size)", logging the status, content type and encoding | 1.4 passes | `public/kb/js/core.js` |
-| 1.3 | Likely trigger on Vercel | Payload size on DEV and the local copy (read-only) | — | Whole graph in one reply: 1,597,530 B (241 KB brotli), the largest reply in the app; identical data on DEV and local | — | Whole graph now fetched in pages of 1,000 records (~0.5 MB each, the size of replies known to arrive intact on the preview); each page's shape is checked | 1.5 passes | session output |
-| 1.4 | Unreadable reply | Synthetic; the `/graph` reply replaced with HTML | Error box: "could not be read"; toolbar safe | As expected | Pass | — | — | `.measure/suiteB2/test_kb_graph_toolbar.log` |
-| 1.5 | Incomplete reply `{}` | Same, with `{}` | Error box: "incomplete" | As expected | Pass | — | — | same |
-| 1.6 | Toolbar before or without a graph | Click Reset, Auto-layout, Save view, Connect after a failed load | A toast: "did not load. Use Try again first" | As expected; no confirm dialog opens | Pass | **Bug:** Reset dereferenced a null canvas ("reading 'edges'") → `ready()` guard | Pass | same |
-| 1.7 | Try again after a failure | Click "Try again" in the error box | The graph reloads | First run: the click was blocked | Fail, then pass | **Bug:** the empty canvas covered the error box → canvas hidden on failure | Pass | same |
-| 1.8 | Paged load | 5 records, `?limit=2` | ≥ 3 `/graph` requests; every record drawn | As expected | Pass | — | — | same |
-| 1.9 | Auto-layout then Reset | Admin clicks Auto-layout, then Reset → confirm | Positions saved, then forgotten | As expected (≥ 5 saved, then 0) | Pass | — | — | same |
-| 1.10 | Save view | Name it, then Save | The page switches to the new view, with positions saved | First run: stayed on "Shared layout" | Fail, then pass | **Bug:** a `?view=` change did not rebuild the page → rebuild on a view change | Pass | same |
-| 1.11 | Connect | Admin: Connect, click two records, pick a relationship, Submit | "Connected"; one relationship in the API | As expected | Pass | — | — | same |
-| 1.12 | Real data | Real-data copy as admin: load, Auto-layout, Reset | Paged load, no error, toasts | 3 pages; "Showing 226 record(s) · 2,733 more in 20 bundles"; both toasts | Pass | — | — | `.measure/b/realdata_ui_check.log`, `screens/b-graph-light.png` |
-| 1.13 | **On DEV, signed in** | Owner opens `/kb/#/graph` on the preview | Loads | **Not verified.** A signed-in request on DEV wasn't possible this run (no token; minting one was refused) | **Not verified** | If it still fails, the error now says what arrived (status, size) | Owner | — |
-
-## 2. Weeks, workflows and themes retired
-
-| # | Scenario | Steps | Expected | Actual | Result | Bug → fix | Retest | Evidence |
-|---|---|---|---|---|---|---|---|---|
-| 2.1 | Plan, apply, revert, apply on the real-data copy | `scripts/retire_legacy_sections.py` | Exact counts; revert restores every count | Apply: 92 processes, 16 themes and 20 weeks archived, 112 relationships with them, 20 schedules moved, 39 suggestions exported and cleared, 3 types archived; live records 4,342 → 4,214, relationships 3,097 → 2,985. Revert: all back to the "before" counts | Pass | — | — | `.measure/b/retire_local.log` |
-| 2.2 | DEV backup verified by restore | `dev_db.py backup`, then restore into a scratch database, then compare every table's row count with DEV | Identical | 45/45 tables, 188,259/188,259 rows, 0 differences; 62.6 MB with end marker | Pass | — | — | `.measure/b/dev_restore_check.log` |
-| 2.3 | Apply on DEV | `apply --remote-ok` | Same counts as 2.1 | Identical to 2.1; 4.9 s | Pass | — | — | `.measure/b/retire_dev.log` |
-| 2.4 | Owner suggestions exported outside git | After apply | A local admin-only file; not on the records | 39 rows in `.measure/private/workflow-owner-suggestions-{local,dev}.json`; `git check-ignore` confirms; `suggested_owner` count 0 | Pass | — | — | 2.1 and 2.3 logs |
-| 2.5 | Week numbers kept, program-specific, not on modules | After apply | The number on the course→module link with `program: null`; the module unchanged | 20 links carry `schedule.week`; synthetic test asserts the module has no week | Pass | — | — | `tests/test_retire_legacy_sections.py` (3 passed, `.measure/suiteB2/retire2.log`) |
-| 2.6 | The sync does not re-create them | Sync preview on the real-data copy after apply | 0 created | created {}, updated {}, conflicts {}; records seen as gone at source (128 records, 112 relationships, 108 source attachments; already archived) | Pass (side effect noted) | The 108 source attachments of the retired records get archived by the next sync. Undo = remove `retired_types` + `revert` + one sync | — | `.measure/b/sync_dryrun_after_retire.log` |
-| 2.7 | Refuses production and remote databases | Run with the production ref, and with a remote host without `--remote-ok` | Exit 2, "refused" | As expected | Pass | — | — | test 2.5 file |
-| 2.8 | Types gone from the API | `/api/kb/types` on the real-data copy | No week, process or theme | `program, domain, course, module, session, topic, instructor, team_member` | Pass | — | — | `.measure/b/realdata_ui_check.log` |
-| 2.9 | Script crashes on a database without one of the types | Test database has no "theme" type | Counts work | Crashed (`None[0]`) | Fail, then pass | **Bug** → tolerate a missing type | Pass | 2.5 |
-| 2.10 | Report path for a file outside the repo | Synthetic test with a temporary folder | The path is reported | `relative_to` raised | Fail, then pass | **Bug** → only relativise inside the repo | Pass | 2.5 |
-
-## 3. Map and workspace cleanup
-
-| # | Scenario | Steps | Expected | Actual | Result | Bug → fix | Retest | Evidence |
-|---|---|---|---|---|---|---|---|---|
-| 3.1 | Old `?week=` links | `/?week=10`, `/?week=10&domain=x` | No week filter; address rewritten | As expected | Pass | — | — | `.measure/suiteB2/test_kb_map_switch.log` (15 passed) |
-| 3.2 | Timeline view gone | `/?view=timeline` | Map opens; no timeline button; address rewritten | As expected | Pass | — | — | same |
-| 3.3 | Retired types in old links | `/?types=program_week,workflow,theme,module` | Map works without them | As expected | Pass | — | — | same |
-| 3.4 | Map admin button | Admin vs viewer on `/` | Admin: "Admin →" to `/kb/#/admin`, at the top; viewer: hidden | As expected | Pass | — | — | same, plus `.measure/b/realdata_ui_check.log` |
-| 3.5 | Workspace timeline retired | `#/timeline`, `#/program-timeline` | Redirect to Programs; `/api/kb/views/timeline` 404 | As expected | Pass | — | — | `tests/test_kb_redirects_run6.py` (verify_all), real-data check |
-| 3.6 | Map on real data | `/?week=10` on :8766 | No week filter, timeline or "Programme week" text | As expected | Pass | — | — | `.measure/b/screens/b-map.png` |
-
-## 4. Navigation shell and visual direction
-
-| # | Scenario | Steps | Expected | Actual | Result | Bug → fix | Retest | Evidence |
-|---|---|---|---|---|---|---|---|---|
-| 4.1 | Navigation by role | viewer, contributor, editor, admin | Browse identical for all; Admin group only with the role's items, at the bottom; no "Graph" in Browse; Map → `/` | As expected for all 4 | Pass | Test-ID collision (group vs Overview link) → `nav-admin-group` | Pass | `.measure/suiteB2/test_kb_shell.log` (13 passed) |
-| 4.2 | Graph editor admin-only | viewer, contributor, editor: `#/graph`; API `POST`/`DELETE /graph/positions` | "Admins only"; no "Show in graph" button; API 403; admin 200 | As expected | Pass | **Bug:** a slow Home could draw over "Admins only" (router counter not bumped) → fixed | Pass | same |
-| 4.3 | Members and Sources & sync server-side | `GET /api/kb/sync` per role | 403 unless admin | As expected | Pass | — | — | same; `tests/test_kb_access_sweep.py` |
-| 4.4 | Admin overview | admin, contributor | 7 and 2 cards | As expected | Pass | — | — | same |
-| 4.5 | Theme toggle | Follow system dark/light; click Light, Dark (persist on reload), System | System by default; an explicit choice wins; persisted | As expected; dark = `rgb(11,18,32)` | Pass | — | — | same |
-| 4.6 | Home and search | Synthetic: 7 topics; type "hashing", Enter; See all; open a hit; recent chip; no results | Search-first above cards; 5 per group then "See all"; type filter; the record opens beside the results | As expected | Pass | — | — | same |
-| 4.7 | AA contrast | light and dark: Home, Search, All records, Admin | Every chip, filter chip, badge, count and group label ≥ 4.5:1 | 0 below 4.5 | Pass | — | — | same |
-| 4.8 | Focus ring on Home's search box | `test_every_tab_stop_shows_a_focus_ring[#/]` | Visible ring | None | Fail, then pass | **Bug** → ring on the input | Pass | `.measure/suiteB2/test_kb_ui_run6_final.log` (36 passed) |
-| 4.9 | Keyboard: Ctrl K from Home | Palette search, open, menu, Settings | Palette keeps focus | Home's autofocus stole it | Fail, then pass | **Bug** → autofocus only when nothing has focus | Pass | same |
-| 4.10 | One radius set | Stylesheet check | No new literal radii | 12px and 999px | Fail, then pass | **Bug** → `--radius-lg`, `--radius-pill` tokens | Pass | same |
-| 4.11 | Real data, light and dark | :8766 Home, Search, Admin | Renders; grouped results | As expected | Pass | **Bug (visual):** 4 nav icons not in the icon sprite → existing icons used | Screenshot retaken | `.measure/b/screens/` |
-
-## 5. Crawling (read-only)
-
-| # | Scenario | Steps | Expected | Actual | Result | Notes | Evidence |
-|---|---|---|---|---|---|---|---|
-| 5.1 | Registry and linked Sheets | Service account, read-only | Every link read or recorded | 3 sheets, 41 tabs, 2,940 rows, 64 links (47 targets) | Pass | `KB_SHEETS_ID` is empty in `.env` (id taken from the registry doc); the **Sheets API is disabled** in the service account's project → read through Drive's read-only export instead | `.measure/inventory/sheets_drive_inventory.md` |
-| 5.2 | Drive folders, recursive | 27 folders | Full tree | 2,890 sub-folders, 10,261 files, 51.3 GB, 2021-08-10 → 2026-11-07; cap 30k not reached | Pass | — | same |
-| 5.3 | Access failures recorded | — | Every failure listed with a reason | 38: 20 links 404/not shared, 18 shortcut targets missing | Pass | Nothing skipped silently | same; redacted: `docs/operations/sources-inventory-2026-11-07.md` |
-| 5.4 | KYP pages, 5 starting points | GET only | Structure, includes, attachments listed | 182 pages; 53 include targets resolved; 1,635 attachments listed (not downloaded) | Pass | Search 403 and user lookup 403 (token scope); the newer attachments API returns 401 (the older one works) | `.measure/kyp/kyp_structure.md` |
-| 5.5 | KYP pilot into staging | Applied Agentic AI → `.measure/staging/` (local files, not the live graph) | Entities with provenance; "[Do not Use]" and attachments listed | 6 programs, 4 courses, 66 module variants, 337 topics, 102 tool concepts, 205 resources; 1 page and 45 attachments skipped and listed | Pass | Quality: `docs/design/kyp-structure-and-model.md` §5 | `.measure/staging/kyp-applied-agentic-ai/quality.md` |
-
-## 6. Suites
-
-Run on the final code, one browser file at a time with ≥ 2.5 GB free; the graph file ran one
-test per process. **No test hung.**
+## Suites
 
 | Suite | Result | Evidence |
 |---|---|---|
-| graph toolbar (new) | 6 passed | `.measure/suiteB2/test_kb_graph_toolbar.log` |
-| shell (new) | 13 passed | `.measure/suiteB2/test_kb_shell.log` |
-| retire script (new) | 3 passed | `.measure/suiteB2/retire2.log` |
-| e2e | 71 passed | `.measure/suiteB2/test_kb_e2e.log` |
-| UI | 36 passed | `.measure/suiteB2/test_kb_ui_run6_final.log` |
-| map switch | 15 passed | `.measure/suiteB2/test_kb_map_switch.log` |
-| perf budget | 10 passed | `.measure/suiteB/test_kb_perf_budget.log` |
-| Realtime gap / Realtime / propagation / console | 1 / 1 / 1 / 2 passed | `.measure/suiteB/` |
-| graph (one test per process) | 11 passed | `.measure/suiteB/graph__*.log` |
-| Map default view, redirects, taxonomy rule, sign-in CSP (after fixes) | 141 passed | `.measure/suiteB2/fixes5.log` |
-| Re-run after the last map/icon changes: map switch, shell, propagation, console, perf | 15, 13, 1, 2, 10 passed | `.measure/suiteB3/summary.txt` |
-| Real-data UI check (final code) | 15/15 | `.measure/b/realdata_ui_check.log` |
-| DEV preview after deploy (`c8b5e4f`) | 7/7 smoke tests (config 200, /kb/ 200, me 401, cron 401, no local-login 404, new module served, dub1); the served CSP allows both map inline scripts | `.measure/b/smoke.log` |
-| `verify_all --skip-browser` (final) | **ALL PASS**: 1,338 passed, 13 failed (= the known `main` baseline), 50 skipped | `.measure/suiteB3/verify.log` |
+| Non-browser suite (`verify_all.sh --skip-browser`) | 1,346 passed, 13 failed (the **same 13** as `main`'s baseline), 50 skipped: **0 new failures**. Static checks pass (ruff flagged 2 unused test variables after this run; fixed and re-checked) | `.measure/suiteC/verify_5.log` |
+| Browser files, one at a time, at least 2.5 GB free, 10-minute HUNG watchdog | 11 files and 11 graph tests (one per process): **all pass**, none hung (`test_kb_e2e` 71, `test_kb_ui_run6` 36, `test_kb_map_switch` 15, `test_kb_shell` 13, `test_kb_perf_budget` 10, `test_kb_run_c_ui` 7, `test_kb_graph_toolbar` 6, `test_kb_console_run6` 2, realtime, realtime gap, propagation matrix, 11 graph tests) | `.measure/suiteC/browser/summary_final.txt` |
+| Real-data checks, local copy (`eval/run_c_e2e.py`) | **40 / 40** | `testing/evidence/run_c_e2e_local.json` |
+| Real-data checks, DEV preview | **39 / 39** | `testing/evidence/run_c_e2e_dev.json` |
+| DEV smoke after redeploy | **7 / 7**, functions in dub1 | deploy output (session) |
 
-## 7. Found by the full check and fixed
+## 1. Sources: registry sheet, Drive, KYPs
 
-The first `verify_all` run flagged 5 new failures, all caused by this run's changes:
+| ID | Feature | Scenario | Expected | Actual | Result | Screenshot | Issues | Fixes | Retest |
+|---|---|---|---|---|---|---|---|---|---|
+| SRC-01 | Sheets API | Read the registry through the Sheets API (not a Drive export): every tab, column and row, with cell hyperlinks, rich-text links and smart chips | All tabs read; links found | Registry and 2 linked sheets (41 tabs); 818 link occurrences | Pass | — | First crawl read only 2 of 3 sheets | A linked sheet already listed by a folder walk was not read; fixed | Re-crawl: 3 sheets, 818 links |
+| SRC-02 | Sheets API vs export | Compare with the earlier Drive-export inventory | Report what the export missed | Every Google target the export found is found again (47); **754 web links the export never captured** (UpLevel 638, LinkedIn 97, others 19) | Pass | — | — | — | — |
+| SRC-03 | Recursive Drive crawl | Follow every link: folders recursively (shared drives included), shortcuts to their targets | Every reachable item listed with live URL, id, version, modified time, size, provenance | 13,148 items (2,890 folders); not capped | Pass | — | — | — | — |
+| SRC-04 | First-pass extraction | Docs, Slides, Sheets, PDF, Word, PowerPoint, Excel; audio and video counted only | Text cached locally (a cache, not the source of truth) | 2,699 read (2 with no text); 4,297 audio/video listed with sizes | Pass | — | — | — | — |
+| SRC-05 | Failures recorded | Every inaccessible link recorded with link and reason | No silent skip | 151 failures: 96 download not permitted, 17 export not permitted, 20 not found or not shared, 18 shortcut targets missing | Pass | `testing/evidence/source-crawling/local-RD-SC-02-failures.png` | — | — | — |
+| SRC-06 | Re-crawl by resource id | Second crawl compared with the first | Unchanged reused, changed re-read, removed marked | 13,140 unchanged, 8 changed (4 re-extracted, 2,695 reused), 0 removed | Pass | — | — | — | — |
+| SRC-07 | KYP extraction | Fetch in-scope pages at their current version; parse the structure | Four domains' programs, courses, modules, topics, with provenance | 8 programs, 34 courses, 91 modules (38 variants), 356 topics, 25 instructor listings; 182 pages re-checked (0 changed since run B) | Pass | — | Three page shapes; India outlines use bold paragraphs and repeated course rows | Parser handles bold-paragraph modules, "Course: Module" titles, merges repeated module rows | 7 ambiguities listed, none guessed |
+| SRC-08 | Do-not-use pages and attachments | Skip "[Do not Use]" pages and attachments, list them | Listed on the Sources page | 1 do-not-use page, 1,635 attachments listed; 122 pages deferred | Pass | `testing/evidence/source-crawling/UI-SC-01-sources-page.png` | — | — | — |
+| SRC-09 | Source catalog in the database | Load into `kb.sources` by resource id; load again | Idempotent; admins only | 15,000 sources; second load: 15,000 unchanged; viewer and editor get 403 | Pass | `testing/evidence/source-crawling/UI-SC-01-sources-page.png` | — | — | — |
+| SRC-10 | Folder links | Registry domain folders and `Module-N: <name>` folders attached to their domain and module | Exact matches only | 4 domain folders, 5 module folders (Backend) | Pass | — | — | — | — |
 
-- the alias table: 2 new redirects needed test cases;
-- the taxonomy rule: 2 literals in new files;
-- 3 map default-view tests: themes and workflows still drawn from older data, and `DEFAULT_TYPES` still listed them, so a reloaded link didn't match.
+## 2. Model, owners and SMEs (synthetic: `tests/test_kb_run_c.py`, `tests/test_kb_run_c_ui.py`)
 
-The map now drops the retired types where its data arrives (`mergeGraph`), for any data source. All are fixed, and the final run passes.
+| ID | Feature | Scenario | Expected | Actual | Result | Screenshot | Issues | Fixes | Retest |
+|---|---|---|---|---|---|---|---|---|---|
+| API-01 | Owners | Instructor as owner; two team-member owners on a module; one on a program | Instructor refused (API and database); many-to-many works | As expected | Pass | — | Fresh databases lacked the team-member type and the owner relationship | 0039 creates both and marks them core | Pass |
+| API-02 | SME roles | No role; backup rank 4; SME on a course; primary + backup 1 + backup 2; role change | Refused, refused, refused; ordered Primary, Backup 1, Backup 2; role change keeps provenance | As expected | Pass | — | — | Role change merges into the assignment's data | Pass |
+| API-03 | Two primaries | Two primaries on one module | Kept and listed by Data quality | As expected | Pass | — | The mastersheet has this on 3 modules | Not unique on purpose; reported | Pass |
+| API-04 | Week-agnostic | Create a week; place a module under a domain | Refused | As expected | Pass | — | — | — | — |
+| API-05 | Hidden aliases | Search "SD3" | Finds the domain; the alias is never returned | As expected | Pass | — | — | — | — |
+| API-06 | Program schedule and provenance | Module used in a course with a program week label; KYP provenance | Profile shows course, program, week label, source page and version | As expected | Pass | — | — | — | — |
+| API-07 | Source catalog permissions | Viewer, editor, admin | 403, 403, 200 | As expected | Pass | — | — | — | — |
+| API-08 | One save with people | Module with two owners, a Primary and two Backup SMEs (one new) | All created; an instructor as owner refused with the field named | As expected | Pass | — | — | — | — |
+| API-09 | Sync never re-creates a removed relationship | Exclude a relationship key, delete it, sync | Not written again | As expected | Pass | — | — | — | — |
+| UI-OS-01 | Detail panel | Module panel: domain, used in, SMEs Primary first, live resource link | As described | As expected | Pass | `testing/evidence/owner-sme/UI-OS-01-module-panel.png` | Toasts said "undefined"; the "Used in" note sat in its header; Type shown twice | All three fixed | Pass |
+| UI-OS-02 | Owner picker | Add owner | Only NP team members offered | As expected | Pass | `testing/evidence/owner-sme/UI-OS-02-owner-picker-team-only.png` | — | — | — |
+| UI-OS-03/04 | Add SME with a role | Pick an instructor, choose Backup 2 | Listed after the primary and backup 1 | As expected | Pass | `testing/evidence/owner-sme/UI-OS-04-sme-added.png` | — | — | — |
+| UI-OS-05 | Persistence | Change the role to Backup 3; go to the course; close; reopen | Database, API and panel agree after reopening | As expected | Pass | `testing/evidence/owner-sme/UI-OS-05-reopened-persisted.png` | — | — | — |
+| UI-OS-06 | Permissions | Viewer opens the module; tries to add an owner through the API | No edit controls; 403 | As expected | Pass | `testing/evidence/owner-sme/UI-OS-06-viewer-read-only.png` | — | — | — |
+| UI-OS-07 | New record form | Owners (NP team), Primary SME, Backup SMEs | Roles Primary, Backup 1, Backup 2 saved | As expected | Pass | `testing/evidence/owner-sme/UI-OS-07-new-record-people.png` | The form sent SMEs without a role (now refused) | People section rebuilt | Pass |
+| UI-CU-01 | Navigate | Click the course in "Used in" | Course panel with its modules | As expected | Pass | `testing/evidence/curriculum/UI-CU-01-course-panel.png` | — | — | — |
+| UI-GR-01 | Graph owner filter | Owner filter options | Team members only, never instructors | As expected | Pass | `testing/evidence/graph/UI-GR-01-owner-filter-team-members.png` | It listed instructors (run-5 owners by role) | Owners come from `owned_by` | Pass |
+| UI-MP-01 | Map panel and role | Open a module on the Map | Same entity component, read-only; KB role "admin"; no SD code | As expected | Pass | `testing/evidence/graph/UI-MP-01-map-entity-panel.png` | The Map showed "SD3 · Backend" | The Map shows domain names only | Pass |
+| UI-SC-01/02 | Sources page | Counts, failed filter, search | Failures with reasons; live links | As expected | Pass | `testing/evidence/source-crawling/UI-SC-02-failures-with-reason.png` | Test race (count read before the reload) | Test waits for each state | Pass |
+| UI-GU-01 | Guide | Sections and terms | Owners and SMEs, the four domains, registry, re-crawl; no workflow, theme, programme week, SD1–SD4, mastersheet | As expected | Pass | `testing/evidence/guide/UI-GU-01-guide.png` | — | — | — |
+
+## 3. Data on DEV (the safety sequence)
+
+| ID | Feature | Scenario | Expected | Actual | Result | Screenshot | Issues | Fixes | Retest |
+|---|---|---|---|---|---|---|---|---|---|
+| DATA-01 | Restore-tested backup | Full DEV backup restored into a scratch database | Every table identical | 45 / 45 tables, 189,094 rows identical (at the start, and again just before the first write) | Pass | — | — | — | — |
+| DATA-02 | Migrations | 0039, 0040, 0041 on DEV (up, down, up rehearsed locally) | Applied | Applied | Pass | — | — | — | — |
+| DATA-03 | Model conversion | Domains renamed with hidden aliases; domain links become `in_domain`; teaching becomes SME assignments with roles; owner-by-role cleared | Counts as rehearsed locally | 4 renamed, 20 `in_domain`, 64 SME assignments (23 primary, 34 backup, 7 named older-sheet roles), 20 owner fields cleared after checking each equals an SME | Pass | — | Local rehearsal overwrote its before-state (my piped command chain did not stop on a failure) | Before-state rebuilt from provenance and the audit log; the script now refuses to overwrite; revert proven (down, revert, up) | Pass |
+| DATA-04 | KYP import | Apply twice | Second run changes nothing | 4 programs adopted + 4 created, 34 courses, 15 modules adopted + 76 created, 356 topics, 38 variants, 537 placements; second run unchanged | Pass | — | Adopted programs kept the old legacy flag (hidden from lists); domain-scoped old modules were not adopted | The importer clears the flag; the conversion clears domain scopes | Pass |
+| DATA-05 | Cleanup: export, archive, verify, delete | Run the sequence | Every check passes before and after | 839 records (801 already archived, 38 old document programs), 98 relationships and 39 links removed; export in `backups/`; restore rehearsed locally (exact counts back) | Pass | — | — | — | — |
+| DATA-06 | Graph validation | `cleanup_obsolete.py verify` | 4 domains; no week records or links; owners only team members; no SME without a role; no live link to an archived record; no duplicates; every curriculum link has provenance | All true | Pass | — | — | — | — |
+| DATA-07 | Nothing comes back | Sync preview on DEV (rolled back) | Creates nothing | First preview would re-create 14 relationships and 39 links | **Bug** | — | Exclusions covered deleted records only | Migration 0041 and key exclusions; the sync skips them | Second preview: creates nothing |
+
+## 4. Real-data checks (local copy and DEV preview)
+
+| ID | Feature | Scenario | Expected | Actual | Result | Screenshot | Issues | Fixes | Retest |
+|---|---|---|---|---|---|---|---|---|---|
+| RD-AU-01 (local copy) | admin-dashboard | signed in as admin (workspace role) | Pass condition in the scenario | As expected | Pass | `testing/evidence/admin-dashboard/local-RD-AU-01-home.png` | — | — | — |
+| RD-DM-01 (local copy) | curriculum | exactly four domains: Backend, Frontend, Fullstack, Test | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-DM-02 (local copy) | curriculum | old code SD3 finds Backend (hidden alias), never displayed | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-WK-01 (local copy) | curriculum | no week, workflow or theme record types | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-OS-01 (local copy) | owner-sme | module panel: SMEs with Primary first, then backups in order | Pass condition in the scenario | As expected | Pass | `testing/evidence/owner-sme/local-RD-OS-01-module-smes.png` | — | — | — |
+| RD-CU-01 (local copy) | curriculum | module panel shows domain, used-in (course + program + week), topics, sources | Pass condition in the scenario | As expected | Pass | `testing/evidence/curriculum/local-RD-CU-01-module-panel.png` | — | — | — |
+| RD-CU-02 (local copy) | curriculum | module sources are KYP pages with version | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-CU-03 (local copy) | curriculum | click a related course from the module panel | Pass condition in the scenario | As expected | Pass | `testing/evidence/curriculum/local-RD-CU-03-course-panel.png` | — | — | — |
+| RD-CU-04 (local copy) | curriculum | program panel lists its courses in order | Pass condition in the scenario | As expected | Pass | `testing/evidence/curriculum/local-RD-CU-04-program-panel.png` | — | — | — |
+| RD-CU-05 (local copy) | curriculum | domain panel lists the programs, courses and modules it classifies | Pass condition in the scenario | As expected | Pass | `testing/evidence/curriculum/local-RD-CU-05-domain-panel.png` | — | — | — |
+| RD-AD-01 (local copy) | admin-dashboard | Admin overview cards | Pass condition in the scenario | As expected | Pass | `testing/evidence/admin-dashboard/local-RD-AD-01-admin-overview.png` | — | — | — |
+| RD-SC-01 (local copy) | source-crawling | Sources & sync: catalog counts by provider and status | Pass condition in the scenario | As expected | Pass | `testing/evidence/source-crawling/local-RD-SC-01-sources.png` | — | — | — |
+| RD-SC-02 (local copy) | source-crawling | failures listed with link and reason | Pass condition in the scenario | As expected | Pass | `testing/evidence/source-crawling/local-RD-SC-02-failures.png` | — | — | — |
+| RD-AD-02 (local copy) | admin-dashboard | Data quality lists SME role issues from the sources | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-GU-01 (local copy) | guide | Guide explains the model; no legacy terms | Pass condition in the scenario | As expected | Pass | `testing/evidence/guide/local-RD-GU-01-guide.png` | — | — | — |
+| RD-GR-01 (local copy) | graph | Graph editor loads on real data (paged) | Pass condition in the scenario | As expected | Pass | `testing/evidence/graph/local-RD-GR-01-graph.png` | — | — | — |
+| RD-GR-02 (local copy) | graph | owner filter lists NP team members, never instructors | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-GR-03 (local copy) | graph | auto-layout then reset | Pass condition in the scenario | As expected | Pass | `testing/evidence/graph/local-RD-GR-04-reset.png` | — | — | — |
+| RD-GR-04 (local copy) | graph | no page errors on the graph | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-RS-1366x768@1 (local copy) | responsive | graph at 1366x768, device scale 1: fills the space, no sideways scroll | Pass condition in the scenario | canvas 906×703 of 1366, no sideways scroll | Pass | `testing/evidence/responsive/local-RD-RS-graph-1366x768-dpr1.png` | — | — | — |
+| RD-RP-1366x768@1 (local copy) | responsive | detail panel at 1366x768, scale 1: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/local-RD-RP-panel-1366x768-dpr1.png` | — | — | — |
+| RD-RS-1366x768@2 (local copy) | responsive | graph at 1366x768, device scale 2: fills the space, no sideways scroll | Pass condition in the scenario | canvas 906×703 of 1366, no sideways scroll | Pass | `testing/evidence/responsive/local-RD-RS-graph-1366x768-dpr2.png` | — | — | — |
+| RD-RP-1366x768@2 (local copy) | responsive | detail panel at 1366x768, scale 2: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/local-RD-RP-panel-1366x768-dpr2.png` | — | — | — |
+| RD-RS-1440x900@1 (local copy) | responsive | graph at 1440x900, device scale 1: fills the space, no sideways scroll | Pass condition in the scenario | canvas 980×835 of 1440, no sideways scroll | Pass | `testing/evidence/responsive/local-RD-RS-graph-1440x900-dpr1.png` | — | — | — |
+| RD-RP-1440x900@1 (local copy) | responsive | detail panel at 1440x900, scale 1: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/local-RD-RP-panel-1440x900-dpr1.png` | — | — | — |
+| RD-RS-1440x900@2 (local copy) | responsive | graph at 1440x900, device scale 2: fills the space, no sideways scroll | Pass condition in the scenario | canvas 980×835 of 1440, no sideways scroll | Pass | `testing/evidence/responsive/local-RD-RS-graph-1440x900-dpr2.png` | — | — | — |
+| RD-RP-1440x900@2 (local copy) | responsive | detail panel at 1440x900, scale 2: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/local-RD-RP-panel-1440x900-dpr2.png` | — | — | — |
+| RD-RS-1920x1080@1 (local copy) | responsive | graph at 1920x1080, device scale 1: fills the space, no sideways scroll | Pass condition in the scenario | canvas 1460×1015 of 1920, no sideways scroll | Pass | `testing/evidence/responsive/local-RD-RS-graph-1920x1080-dpr1.png` | — | — | — |
+| RD-RP-1920x1080@1 (local copy) | responsive | detail panel at 1920x1080, scale 1: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/local-RD-RP-panel-1920x1080-dpr1.png` | — | — | — |
+| RD-RS-1920x1080@2 (local copy) | responsive | graph at 1920x1080, device scale 2: fills the space, no sideways scroll | Pass condition in the scenario | canvas 1460×1015 of 1920, no sideways scroll | Pass | `testing/evidence/responsive/local-RD-RS-graph-1920x1080-dpr2.png` | — | — | — |
+| RD-RP-1920x1080@2 (local copy) | responsive | detail panel at 1920x1080, scale 2: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/local-RD-RP-panel-1920x1080-dpr2.png` | — | — | — |
+| RD-RS-2560x1440@1 (local copy) | responsive | graph at 2560x1440, device scale 1: fills the space, no sideways scroll | Pass condition in the scenario | canvas 2100×1375 of 2560, no sideways scroll | Pass | `testing/evidence/responsive/local-RD-RS-graph-2560x1440-dpr1.png` | — | — | — |
+| RD-RP-2560x1440@1 (local copy) | responsive | detail panel at 2560x1440, scale 1: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/local-RD-RP-panel-2560x1440-dpr1.png` | — | — | — |
+| RD-RS-2560x1440@2 (local copy) | responsive | graph at 2560x1440, device scale 2: fills the space, no sideways scroll | Pass condition in the scenario | canvas 2100×1375 of 2560, no sideways scroll | Pass | `testing/evidence/responsive/local-RD-RS-graph-2560x1440-dpr2.png` | — | — | — |
+| RD-RP-2560x1440@2 (local copy) | responsive | detail panel at 2560x1440, scale 2: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/local-RD-RP-panel-2560x1440-dpr2.png` | — | — | — |
+| RD-RS-3840x2160@1 (local copy) | responsive | graph at 3840x2160, device scale 1: fills the space, no sideways scroll | Pass condition in the scenario | canvas 3242×2080 of 3840, no sideways scroll | Pass | `testing/evidence/responsive/local-RD-RS-graph-3840x2160-dpr1.png` | — | — | — |
+| RD-RP-3840x2160@1 (local copy) | responsive | detail panel at 3840x2160, scale 1: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/local-RD-RP-panel-3840x2160-dpr1.png` | — | — | — |
+| RD-RS-3840x2160@2 (local copy) | responsive | graph at 3840x2160, device scale 2: fills the space, no sideways scroll | Pass condition in the scenario | canvas 3242×2080 of 3840, no sideways scroll | Pass | `testing/evidence/responsive/local-RD-RS-graph-3840x2160-dpr2.png` | — | — | — |
+| RD-RP-3840x2160@2 (local copy) | responsive | detail panel at 3840x2160, scale 2: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/local-RD-RP-panel-3840x2160-dpr2.png` | — | — | — |
+| RD-MP-01 (local copy) | graph | the Map shows the same entity panel and the KB role | Pass condition in the scenario | As expected | Pass | `testing/evidence/graph/local-RD-MP-01-map-panel.png` | — | — | — |
+| RD-AU-01 (DEV preview) | admin-dashboard | signed in as admin (workspace role) | Pass condition in the scenario | As expected | Pass | `testing/evidence/admin-dashboard/dev-RD-AU-01-home.png` | — | — | — |
+| RD-DM-01 (DEV preview) | curriculum | exactly four domains: Backend, Frontend, Fullstack, Test | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-DM-02 (DEV preview) | curriculum | old code SD3 finds Backend (hidden alias), never displayed | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-WK-01 (DEV preview) | curriculum | no week, workflow or theme record types | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-OS-01 (DEV preview) | owner-sme | module panel: SMEs with Primary first, then backups in order | Pass condition in the scenario | As expected | Pass | `testing/evidence/owner-sme/dev-RD-OS-01-module-smes.png` | — | — | — |
+| RD-CU-01 (DEV preview) | curriculum | module panel shows domain, used-in (course + program + week), topics, sources | Pass condition in the scenario | As expected | Pass | `testing/evidence/curriculum/dev-RD-CU-01-module-panel.png` | — | — | — |
+| RD-CU-02 (DEV preview) | curriculum | module sources are KYP pages with version | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-CU-03 (DEV preview) | curriculum | click a related course from the module panel | Pass condition in the scenario | As expected | Pass | `testing/evidence/curriculum/dev-RD-CU-03-course-panel.png` | — | — | — |
+| RD-CU-04 (DEV preview) | curriculum | program panel lists its courses in order | Pass condition in the scenario | As expected | Pass | `testing/evidence/curriculum/dev-RD-CU-04-program-panel.png` | — | — | — |
+| RD-CU-05 (DEV preview) | curriculum | domain panel lists the programs, courses and modules it classifies | Pass condition in the scenario | As expected | Pass | `testing/evidence/curriculum/dev-RD-CU-05-domain-panel.png` | — | — | — |
+| RD-AD-01 (DEV preview) | admin-dashboard | Admin overview cards | Pass condition in the scenario | As expected | Pass | `testing/evidence/admin-dashboard/dev-RD-AD-01-admin-overview.png` | — | — | — |
+| RD-SC-01 (DEV preview) | source-crawling | Sources & sync: catalog counts by provider and status | Pass condition in the scenario | As expected | Pass | `testing/evidence/source-crawling/dev-RD-SC-01-sources.png` | — | — | — |
+| RD-SC-02 (DEV preview) | source-crawling | failures listed with link and reason | Pass condition in the scenario | As expected | Pass | `testing/evidence/source-crawling/dev-RD-SC-02-failures.png` | — | — | — |
+| RD-AD-02 (DEV preview) | admin-dashboard | Data quality lists SME role issues from the sources | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-GU-01 (DEV preview) | guide | Guide explains the model; no legacy terms | Pass condition in the scenario | As expected | Pass | `testing/evidence/guide/dev-RD-GU-01-guide.png` | — | — | — |
+| RD-GR-01 (DEV preview) | graph | Graph editor loads on real data (paged) | Pass condition in the scenario | As expected | Pass | `testing/evidence/graph/dev-RD-GR-01-graph.png` | — | — | — |
+| RD-GR-02 (DEV preview) | graph | owner filter lists NP team members, never instructors | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-GR-03 (DEV preview) | graph | auto-layout then reset | Pass condition in the scenario | As expected | Pass | `testing/evidence/graph/dev-RD-GR-04-reset.png` | — | — | — |
+| RD-GR-04 (DEV preview) | graph | no page errors on the graph | Pass condition in the scenario | As expected | Pass | `—` | — | — | — |
+| RD-RS-1366x768@1 (DEV preview) | responsive | graph at 1366x768, device scale 1: fills the space, no sideways scroll | Pass condition in the scenario | canvas 906×703 of 1366, no sideways scroll | Pass | `testing/evidence/responsive/dev-RD-RS-graph-1366x768-dpr1.png` | — | — | — |
+| RD-RP-1366x768@1 (DEV preview) | responsive | detail panel at 1366x768, scale 1: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/dev-RD-RP-panel-1366x768-dpr1.png` | — | — | — |
+| RD-RS-1366x768@2 (DEV preview) | responsive | graph at 1366x768, device scale 2: fills the space, no sideways scroll | Pass condition in the scenario | canvas 906×703 of 1366, no sideways scroll | Pass | `testing/evidence/responsive/dev-RD-RS-graph-1366x768-dpr2.png` | — | — | — |
+| RD-RP-1366x768@2 (DEV preview) | responsive | detail panel at 1366x768, scale 2: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/dev-RD-RP-panel-1366x768-dpr2.png` | — | — | — |
+| RD-RS-1440x900@1 (DEV preview) | responsive | graph at 1440x900, device scale 1: fills the space, no sideways scroll | Pass condition in the scenario | canvas 980×835 of 1440, no sideways scroll | Pass | `testing/evidence/responsive/dev-RD-RS-graph-1440x900-dpr1.png` | — | — | — |
+| RD-RP-1440x900@1 (DEV preview) | responsive | detail panel at 1440x900, scale 1: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/dev-RD-RP-panel-1440x900-dpr1.png` | — | — | — |
+| RD-RS-1440x900@2 (DEV preview) | responsive | graph at 1440x900, device scale 2: fills the space, no sideways scroll | Pass condition in the scenario | canvas 980×835 of 1440, no sideways scroll | Pass | `testing/evidence/responsive/dev-RD-RS-graph-1440x900-dpr2.png` | — | — | — |
+| RD-RP-1440x900@2 (DEV preview) | responsive | detail panel at 1440x900, scale 2: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/dev-RD-RP-panel-1440x900-dpr2.png` | — | — | — |
+| RD-RS-1920x1080@1 (DEV preview) | responsive | graph at 1920x1080, device scale 1: fills the space, no sideways scroll | Pass condition in the scenario | canvas 1460×1015 of 1920, no sideways scroll | Pass | `testing/evidence/responsive/dev-RD-RS-graph-1920x1080-dpr1.png` | — | — | — |
+| RD-RP-1920x1080@1 (DEV preview) | responsive | detail panel at 1920x1080, scale 1: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/dev-RD-RP-panel-1920x1080-dpr1.png` | — | — | — |
+| RD-RS-1920x1080@2 (DEV preview) | responsive | graph at 1920x1080, device scale 2: fills the space, no sideways scroll | Pass condition in the scenario | canvas 1460×1015 of 1920, no sideways scroll | Pass | `testing/evidence/responsive/dev-RD-RS-graph-1920x1080-dpr2.png` | — | — | — |
+| RD-RP-1920x1080@2 (DEV preview) | responsive | detail panel at 1920x1080, scale 2: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/dev-RD-RP-panel-1920x1080-dpr2.png` | — | — | — |
+| RD-RS-2560x1440@1 (DEV preview) | responsive | graph at 2560x1440, device scale 1: fills the space, no sideways scroll | Pass condition in the scenario | canvas 2100×1375 of 2560, no sideways scroll | Pass | `testing/evidence/responsive/dev-RD-RS-graph-2560x1440-dpr1.png` | — | — | — |
+| RD-RP-2560x1440@1 (DEV preview) | responsive | detail panel at 2560x1440, scale 1: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/dev-RD-RP-panel-2560x1440-dpr1.png` | — | — | — |
+| RD-RS-2560x1440@2 (DEV preview) | responsive | graph at 2560x1440, device scale 2: fills the space, no sideways scroll | Pass condition in the scenario | canvas 2100×1375 of 2560, no sideways scroll | Pass | `testing/evidence/responsive/dev-RD-RS-graph-2560x1440-dpr2.png` | — | — | — |
+| RD-RP-2560x1440@2 (DEV preview) | responsive | detail panel at 2560x1440, scale 2: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/dev-RD-RP-panel-2560x1440-dpr2.png` | — | — | — |
+| RD-RS-3840x2160@1 (DEV preview) | responsive | graph at 3840x2160, device scale 1: fills the space, no sideways scroll | Pass condition in the scenario | canvas 3242×2080 of 3840, no sideways scroll | Pass | `testing/evidence/responsive/dev-RD-RS-graph-3840x2160-dpr1.png` | — | — | — |
+| RD-RP-3840x2160@1 (DEV preview) | responsive | detail panel at 3840x2160, scale 1: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/dev-RD-RP-panel-3840x2160-dpr1.png` | — | — | — |
+| RD-RS-3840x2160@2 (DEV preview) | responsive | graph at 3840x2160, device scale 2: fills the space, no sideways scroll | Pass condition in the scenario | canvas 3242×2080 of 3840, no sideways scroll | Pass | `testing/evidence/responsive/dev-RD-RS-graph-3840x2160-dpr2.png` | — | — | — |
+| RD-RP-3840x2160@2 (DEV preview) | responsive | detail panel at 3840x2160, scale 2: proportionate width | Pass condition in the scenario | As expected | Pass | `testing/evidence/responsive/dev-RD-RP-panel-3840x2160-dpr2.png` | — | — | — |
+
+
+The real-data rows above give no record details: some show people's names. The details are in the local JSON files.
+
+## 5. Bugs found and fixed in this run
+
+1. A linked sheet was skipped by the crawler when a folder walk had listed it first (SRC-01).
+2. India outline shapes (bold-paragraph modules, repeated course rows) were mis-parsed (SRC-07).
+3. Owner fields accepted instructors, and the Graph editor's owner filter listed instructors (UI-GR-01).
+4. The New record form and the generic relationship picker created SMEs without a role (UI-OS-07). Owners and SMEs now have their own controls.
+5. Linking an instructor to a sign-in account was refused after the owner change (the checks are now separate).
+6. The Map displayed SD codes (UI-MP-01).
+7. Detail panel: "undefined" toasts, a squeezed note, a duplicate Type row, and no description for viewers.
+8. Databases built from the migrations alone lacked the team-member type and the owner relationship (0039 creates them).
+9. Adopted programs were hidden as legacy; domain-scoped old modules were not adopted (DATA-04).
+10. The sync would have re-created removed relationships and links (DATA-07, migration 0041).
+11. Graph: trees stacked in a tall column, and nothing was readable when zoomed out (fixed: packing fitted to the canvas, program and course labels at a constant on-screen size).
+12. A local rehearsal command chain did not stop on a failure and overwrote a local before-state (local only; recovered; the scripts now refuse).

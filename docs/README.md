@@ -75,9 +75,10 @@ want to do. New here? Read the [README](../README.md), then
 | [design/team-test-script.md](design/team-test-script.md) | A 10-minute test script and feedback form for NP team members |
 | [design/phase1/DECISION.md](design/phase1/DECISION.md) | The approved visual direction (A · Clarity, C's search-first Home, B's dark theme) and what is built |
 | [design/kyp-structure-and-model.md](design/kyp-structure-and-model.md) | The KYP pages' real structure, the proposed data model mapping, what does not fit, the pilot's quality |
+| [design/curriculum-model.md](design/curriculum-model.md) | The curriculum model of run C: hierarchy, domains, owners and SMEs, sources, what the database enforces |
 | [design/live-sources.md](design/live-sources.md) | Where the pipeline relies on downloaded files, and the design for live sources stored by ID |
 | [operations/sources-inventory-2026-11-07.md](operations/sources-inventory-2026-11-07.md) | Redacted counts from the read-only Google Sheets and Drive inventory |
-| [testing/E2E-REPORT.md](testing/E2E-REPORT.md) | End-to-end test report for the 2026-11-07 (B) run: one row per test, with evidence |
+| [testing/E2E-REPORT.md](testing/E2E-REPORT.md) | End-to-end test report for run C (2026-11-07): one row per test, with screenshot references ([run B](testing/E2E-REPORT-run-B.md)) |
 
 ## The pipeline's decision records
 

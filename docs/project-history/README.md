@@ -14,6 +14,7 @@ deleted; git history keeps every one of them.
 |---|---|
 | [HANDOFF.md](HANDOFF.md) | The hand-over after each run; the top section is current |
 | [PROGRESS.md](PROGRESS.md) | The timestamped log of every run, with each decision and how to reverse it |
+| [RUN-2026-11-07-C.md](RUN-2026-11-07-C.md) | Run C: curriculum model, KYP import, sources, cleanup on DEV; status per definition-of-done item and decisions needed |
 | [PLAN.md](PLAN.md) | The last run's plan and work-stream ownership |
 | [PR_DESCRIPTION.md](PR_DESCRIPTION.md) | The pull request for `auto/knowledge-platform-20261102` → `main` |
 | [audit.md](audit.md) | The September 2026 repository audit (the "AUDIT §n" references in tests) |

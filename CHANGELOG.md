@@ -8,6 +8,14 @@ is in [docs/project-history/](docs/project-history/README.md).
 
 ## Unreleased
 
+### Run C (2026-11-07)
+
+- Curriculum model (migrations 0039–0041): Program → Course → Module → Topic → Concept; four domains (Fullstack, Backend, Frontend, Test) as a classification with hidden search aliases; week-agnostic; owners are NP team members (`owned_by`, enforced); SMEs are instructor → module with a required role (Primary, Backup 1–3, named), enforced; module variants; source catalog; sync exclusions by relationship and link key.
+- Sources: the registry sheet is read through the Sheets API (cell hyperlinks); Drive crawled recursively with first-pass text extraction and every failure recorded; KYP structure imported for the four domains with provenance on every record and relationship.
+- DEV: model converted, KYP curriculum imported, 15,000 sources catalogued, obsolete data removed after a restore-tested backup and an export (839 records, 98 relationships, 39 links).
+- One entity detail component for the record panel, the Graph editor and the Map; owners and SMEs edited in place and in New record; the Map shows the KB role and domain names only; graph packed to the canvas with readable labels when zoomed out; Admin → Sources & sync lists every source and failure; Guide rewritten.
+- Reports: [RUN-2026-11-07-C.md](docs/project-history/RUN-2026-11-07-C.md), [E2E-REPORT.md](docs/testing/E2E-REPORT.md).
+
 ### Autonomous run B (2026-11-07)
 
 - **Graph page:** an unreadable or incomplete server reply is now reported as such
